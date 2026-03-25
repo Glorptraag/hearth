@@ -1,0 +1,1506 @@
+<!-- Version: 2 | Date: 2026-03-18 | Changes: Renamed --ember-orange→--ember, --deep-coffee→--surface-body, --coffee-mid→--surface-panel, --coffee-light→--surface-raised, --surface-elevated→--surface-hover; fixed --sage hex to #4ADE80; removed --sage-text (replaced with --sage directly); section-title weight 700→600; removed hardcoded radius 12px/20px/3px (mapped to canonical tokens); --font-mono retained for AC code display (documented); all references to old variable names updated throughout -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth – Our Story · Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* === CANONICAL SURFACE TOKENS (Dark Mode) === */
+            --surface-body:     #0F0D0B;    /* Page background */
+            --surface-panel:    #1A1612;    /* Sidebar, card surface */
+            --surface-raised:   #252117;    /* Elevated cards, interactive panels */
+            --surface-hover:    #2D2621;    /* Hover states, highest elevation */
+
+            /* Text Colors */
+            --text-primary:     #E8DFD4;
+            --text-secondary:   #9B8B7E;
+            --text-muted:       #6B5D52;
+            --text-inverse:     #0F0D0B;
+
+            /* === CANONICAL ACCENT TOKENS === */
+            --ember:            #D97B3A;    /* Primary actions, active states — not body text, not decoration */
+            --ember-hover:      #E88F4E;
+            --ember-glow:       rgba(217, 123, 58, 0.15);
+            --ember-strong:     rgba(217, 123, 58, 0.25);
+
+            /* === CANONICAL SAGE TOKENS === */
+            /* --sage is #4ADE80 (lime-green) for dark mode growth/success states.
+               --sage-text has been removed. In dark mode, --sage (#4ADE80) has sufficient
+               contrast on surface-panel (#1A1612) for text use: ~5.6:1 against surface-panel.
+               All prior --sage-text references now use --sage directly. */
+            --sage:             #4ADE80;
+            --sage-muted:       rgba(74, 222, 128, 0.12);   /* bg tint for badges/pills */
+            --sage-border:      #22C55E;                     /* border accent for sage elements */
+
+            /* Status: Amber */
+            --amber:            #FBBF24;
+            --amber-muted:      rgba(251, 191, 36, 0.12);
+            --amber-text:       #FCD34D;
+
+            /* Status: Rose */
+            --rose:             #FB7185;
+            --rose-muted:       rgba(251, 113, 133, 0.12);
+            --rose-text:        #FDA4AF;
+
+            /* Supporting */
+            --blue:             #60A5FA;
+            --blue-muted:       rgba(96, 165, 250, 0.12);
+            --violet:           #A78BFA;
+
+            /* Typography */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            /* --font-mono is used for Australian Curriculum code display (e.g. AC9M2N03).
+               These are alphanumeric codes requiring tabular/monospaced alignment in
+               coverage tables. This is a legitimate data-display use case, not decorative. */
+            --font-mono:  'SF Mono', 'Roboto Mono', monospace;
+
+            /* Spacing — 8px base unit */
+            --space-xs:   4px;
+            --space-sm:   8px;
+            --space-md:   16px;
+            --space-lg:   24px;
+            --space-xl:   32px;
+            --space-2xl:  48px;
+            --space-3xl:  64px;
+            --space-4xl:  96px;
+
+            /* Border Radius — canonical tokens only */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* Borders */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+
+            /* Transitions */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+
+        body {
+            font-family: var(--font-serif);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.015;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ========== LEFT NAVIGATION ========== */
+        .nav-sidebar {
+            background: var(--surface-panel);
+            border-right: 1px solid var(--border-subtle);
+            padding: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .brand-icon {
+            width: 40px; height: 40px;
+            background: var(--ember);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 12px rgba(217, 123, 58, 0.3), var(--shadow-glow);
+            font-size: 1.2rem;
+        }
+
+        .brand-text {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-section { margin-bottom: var(--space-xl); }
+
+        .nav-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition-quick);
+            margin-bottom: var(--space-xs);
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--ember-glow);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .nav-item.active {
+            background: var(--surface-raised);
+            color: var(--ember);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item svg { width: 18px; height: 18px; opacity: 0.6; flex-shrink: 0; }
+        .nav-item:hover svg, .nav-item.active svg { opacity: 1; }
+
+        .nav-spacer { flex: 1; }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--surface-raised);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--ember), var(--ember-hover));
+            border-radius: var(--radius-full);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-serif);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--surface-body);
+            box-shadow: 0 2px 8px rgba(217, 123, 58, 0.3);
+        }
+
+        .user-info { flex: 1; }
+
+        .user-name {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            padding: var(--space-2xl) var(--space-3xl);
+            max-width: 960px;
+            overflow-y: auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .page-breadcrumb {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .page-breadcrumb span { color: var(--text-secondary); }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            font-weight: 700;       /* 700 is correct here — page display/brand level */
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            margin-bottom: var(--space-sm);
+        }
+
+        .page-subtitle {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        /* ========== TIMELINE HERO ========== */
+        .timeline-hero {
+            background: linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-panel) 100%);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl) var(--space-2xl);
+            margin-bottom: var(--space-2xl);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-warm);
+        }
+
+        .timeline-hero::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: var(--space-2xl); right: var(--space-2xl);
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ember), transparent);
+            opacity: 0.6;
+        }
+
+        .timeline-dates {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: var(--space-xl);
+        }
+
+        .timeline-date-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-date-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        .timeline-date-value {
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timeline-date-block.upcoming .timeline-date-value {
+            color: var(--ember);
+        }
+
+        .timeline-countdown {
+            text-align: center;
+        }
+
+        .countdown-number {
+            font-family: var(--font-mono);     /* mono justified: numeric data display */
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--ember);
+            line-height: 1;
+            text-shadow: 0 0 30px rgba(217, 123, 58, 0.3);
+        }
+
+        .countdown-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 2px;
+        }
+
+        /* Progress Track */
+        .timeline-track {
+            position: relative;
+            height: 6px;
+            background: var(--surface-hover);
+            border-radius: var(--radius-sm);   /* was 3px — nearest token is --radius-sm (6px); acceptable for thin track */
+            margin-bottom: var(--space-md);
+        }
+
+        .timeline-track-fill {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            background: linear-gradient(90deg, var(--ember), var(--ember-hover));
+            border-radius: var(--radius-sm);
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(217, 123, 58, 0.4);
+        }
+
+        .timeline-track-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 14px; height: 14px;
+            background: var(--ember);
+            border: 2px solid var(--surface-raised);
+            border-radius: var(--radius-full);
+            box-shadow: 0 0 8px rgba(217, 123, 58, 0.5);
+            z-index: 2;
+        }
+
+        .timeline-meta {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ========== OVERALL POSTURE CARD ========== */
+        .posture-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .posture-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .posture-title {
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            font-weight: 600;       /* was 600 — correct */
+        }
+
+        .posture-badge {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: var(--space-xs) var(--space-md);   /* was 6px 14px — mapped to 4px 16px (xs/md) */
+            border-radius: var(--radius-xl);             /* was 20px — nearest canonical is --radius-xl (24px) */
+            letter-spacing: 0.02em;
+        }
+
+        .posture-badge.on-track {
+            background: var(--sage-muted);
+            color: var(--sage);                         /* was --sage-text (#6EE7A0) — now uses --sage directly */
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+
+        .posture-badge.needs-attention {
+            background: var(--amber-muted);
+            color: var(--amber-text);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .posture-badge.at-risk {
+            background: var(--rose-muted);
+            color: var(--rose-text);
+            border: 1px solid rgba(251, 113, 133, 0.2);
+        }
+
+        .posture-summary {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* ========== WORK SAMPLES SECTION ========== */
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
+            font-weight: 600;       /* was 700 — fixed to canonical 600 for section titles */
+            color: var(--text-primary);
+        }
+
+        .section-count {
+            font-family: var(--font-mono);     /* mono justified: numeric count display */
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .sample-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);    /* was --radius-md (10px) — already canonical */
+            padding: var(--space-lg);
+            transition: all var(--transition-quick);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sample-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .sample-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;            /* was 3px — aligned to canonical 2px accent line */
+        }
+
+        .sample-card.complete::before { background: var(--sage); }
+        .sample-card.partial::before  { background: var(--amber); }
+        .sample-card.empty::before    { background: var(--surface-hover); }
+
+        .sample-area-tag {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-sm);
+        }
+
+        .sample-area-tag.english { color: var(--blue); }
+        .sample-area-tag.maths   { color: var(--ember); }
+        .sample-area-tag.science { color: var(--sage); }     /* was --sage-text — now --sage */
+        .sample-area-tag.hass    { color: var(--violet); }
+
+        .sample-label {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .sample-timing {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: var(--space-md);
+        }
+
+        .sample-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+        }
+
+        .sample-status-dot {
+            width: 8px; height: 8px;
+            border-radius: var(--radius-full);
+        }
+
+        .sample-status-dot.complete { background: var(--sage); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+        .sample-status-dot.partial  { background: var(--amber); box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+        .sample-status-dot.empty    { background: var(--text-muted); }
+
+        .sample-status.complete { color: var(--sage); }        /* was --sage-text — now --sage */
+        .sample-status.partial  { color: var(--amber-text); }
+        .sample-status.empty    { color: var(--text-muted); }
+
+        .sample-detail {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: var(--space-sm);
+            line-height: 1.5;
+        }
+
+        .sample-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--ember);
+            cursor: pointer;
+            margin-top: var(--space-md);
+            text-decoration: none;
+            transition: color var(--transition-quick);
+        }
+
+        .sample-action:hover { color: var(--ember-hover); }
+        .sample-action svg { width: 12px; height: 12px; }
+
+        /* ========== LEARNING AREA COVERAGE ========== */
+        .coverage-section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .coverage-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: var(--space-md);
+            transition: all var(--transition-quick);
+        }
+
+        .coverage-card:hover {
+            border-color: var(--border-medium);
+        }
+
+        .coverage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-lg) var(--space-xl);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .coverage-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .coverage-icon {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .coverage-icon.english { background: var(--blue-muted); }
+        .coverage-icon.maths   { background: var(--ember-glow); }
+        .coverage-icon.science { background: var(--sage-muted); }
+        .coverage-icon.hass    { background: rgba(167, 139, 250, 0.12); }
+        .coverage-icon.hpe     { background: var(--rose-muted); }
+
+        .coverage-name {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .coverage-subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .coverage-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+        }
+
+        .coverage-stats {
+            text-align: right;
+        }
+
+        .coverage-fraction {
+            font-family: var(--font-mono);     /* mono justified: fraction/numeric alignment */
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .coverage-percent {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .coverage-bar-container {
+            width: 140px;
+            height: 6px;
+            background: var(--surface-hover);
+            border-radius: var(--radius-sm);   /* was 3px — nearest canonical token */
+            overflow: hidden;
+        }
+
+        .coverage-bar {
+            height: 100%;
+            border-radius: var(--radius-sm);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .coverage-bar.english { background: var(--blue); }
+        .coverage-bar.maths   { background: var(--ember); }
+        .coverage-bar.science { background: var(--sage); }
+        .coverage-bar.hass    { background: var(--violet); }
+        .coverage-bar.hpe     { background: var(--rose); }
+
+        .coverage-chevron {
+            width: 20px; height: 20px;
+            color: var(--text-muted);
+            transition: transform var(--transition-quick);
+        }
+
+        .coverage-card.open .coverage-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Expanded Detail */
+        .coverage-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-gentle);
+        }
+
+        .coverage-card.open .coverage-detail {
+            max-height: 800px;
+        }
+
+        .coverage-detail-inner {
+            padding: 0 var(--space-xl) var(--space-xl);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .strand-group {
+            padding-top: var(--space-lg);
+        }
+
+        .strand-name {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .cd-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .cd-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            transition: background var(--transition-quick);
+        }
+
+        .cd-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .cd-status-pip {
+            width: 8px; height: 8px;
+            border-radius: var(--radius-full);
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .cd-status-pip.covered     { background: var(--sage); box-shadow: 0 0 6px rgba(74, 222, 128, 0.3); }
+        .cd-status-pip.partial     { background: var(--amber); box-shadow: 0 0 6px rgba(251, 191, 36, 0.3); }
+        .cd-status-pip.not-started { background: var(--surface-hover); }
+
+        .cd-code {
+            font-family: var(--font-mono);     /* mono justified: AC code alignment in table */
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            width: 90px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .cd-text {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            flex: 1;
+        }
+
+        .cd-activities {
+            font-family: var(--font-mono);     /* mono justified: numeric count alignment */
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 50px;
+            margin-top: 2px;
+        }
+
+        /* ========== RECOMMENDED FOCUS ========== */
+        .focus-section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .focus-intro {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: var(--space-lg);
+            line-height: 1.6;
+        }
+
+        .focus-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+        }
+
+        .focus-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            transition: all var(--transition-gentle);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .focus-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+
+        .focus-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .focus-card:hover::before {
+            opacity: 1;
+        }
+
+        .focus-priority {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;       /* was 700 — fixed; overlines use 600 */
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ember);
+            margin-bottom: var(--space-md);
+        }
+
+        .focus-module-name {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;       /* was 700 — fixed to canonical card title weight */
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+            line-height: 1.3;
+        }
+
+        .focus-reason {
+            font-family: var(--font-serif);     /* was sans — content description should be serif per system rules */
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--space-lg);
+        }
+
+        .focus-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-lg);
+        }
+
+        .focus-tag {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: var(--space-xs) var(--space-sm);   /* was 3px 10px — mapped to 4px 8px (xs/sm) */
+            border-radius: var(--radius-sm);             /* was 12px — fixed to --radius-sm (6px) */
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .focus-tag.english { background: var(--blue-muted); color: var(--blue); }
+        .focus-tag.maths   { background: var(--ember-glow); color: var(--ember); }
+        .focus-tag.science { background: var(--sage-muted); color: var(--sage); }   /* was --sage-text */
+        .focus-tag.hass    { background: rgba(167, 139, 250, 0.12); color: var(--violet); }
+        .focus-tag.hpe     { background: var(--rose-muted); color: var(--rose); }
+
+        .focus-cds {
+            font-family: var(--font-mono);     /* mono justified: AC code strings */
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .focus-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);   /* was 10px — mapped to 8px 16px (sm/md) */
+            background: var(--surface-raised);
+            border: 1px solid var(--ember);
+            border-radius: var(--radius-sm);             /* ghost button uses --radius-sm per canonical */
+            color: var(--ember);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            margin-top: var(--space-lg);
+        }
+
+        .focus-btn:hover {
+            background: var(--ember-glow);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .focus-btn svg { width: 14px; height: 14px; }
+
+        /* ========== EXPORT SECTION ========== */
+        .export-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg) var(--space-xl);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .export-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .export-title {
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .export-desc {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .export-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-lg);   /* was 10px 20px — mapped to 8px 24px (sm/lg) */
+            background: var(--ember);
+            color: var(--text-inverse);
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            box-shadow: 0 4px 12px rgba(217, 123, 58, 0.3);
+        }
+
+        .export-btn:hover {
+            background: var(--ember-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(217, 123, 58, 0.4);
+        }
+
+        .export-btn svg { width: 16px; height: 16px; }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.5s ease-out forwards; }
+        .d1 { animation-delay: 0.05s; opacity: 0; }
+        .d2 { animation-delay: 0.1s;  opacity: 0; }
+        .d3 { animation-delay: 0.15s; opacity: 0; }
+        .d4 { animation-delay: 0.2s;  opacity: 0; }
+        .d5 { animation-delay: 0.25s; opacity: 0; }
+        .d6 { animation-delay: 0.3s;  opacity: 0; }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1200px) {
+            .main-content { padding: var(--space-xl); }
+            .samples-grid, .focus-cards { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .app-container { grid-template-columns: 1fr; }
+            .nav-sidebar { display: none; }
+            .samples-grid, .focus-cards { grid-template-columns: 1fr; }
+            .coverage-bar-container { width: 80px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Navigation -->
+        <nav class="nav-sidebar">
+            <div class="brand">
+                <div class="brand-icon">🔥</div>
+                <span class="brand-text">Hearth</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Home</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                    Your Hearth
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    This Week
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Learning</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+                    Activities
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 14l4.5 7H4l4.5-7"/></svg>
+                    Capabilities
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    Portfolios
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Discover</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    Explore
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    Guidance
+                </a>
+            </div>
+
+            <!-- Our Story nav section — correct for Report screen, not present on Dashboard -->
+            <div class="nav-section">
+                <div class="nav-label">Our Story</div>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Plan
+                </a>
+                <a href="#" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    Report
+                </a>
+            </div>
+
+            <div class="nav-spacer"></div>
+
+            <div class="user-badge">
+                <div class="user-avatar">SM</div>
+                <div class="user-info">
+                    <div class="user-name">Sarah Morrison</div>
+                    <div class="user-role">Facilitator</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header animate-in d1">
+                <div class="page-breadcrumb">Our Story <span>›</span> Report <span>›</span> Emma Morrison</div>
+                <h1 class="page-title">Emma's Year 2 Report</h1>
+                <p class="page-subtitle">How your learning year is building, tracked against the Australian Curriculum V9 and your QHE registration requirements.</p>
+            </div>
+
+            <!-- Timeline Hero -->
+            <div class="timeline-hero animate-in d2">
+                <div class="timeline-dates">
+                    <div class="timeline-date-block">
+                        <div class="timeline-date-label">Registered</div>
+                        <div class="timeline-date-value">14 March 2025</div>
+                    </div>
+                    <div class="timeline-countdown">
+                        <div class="countdown-number">127</div>
+                        <div class="countdown-label">days until report due</div>
+                    </div>
+                    <div class="timeline-date-block upcoming">
+                        <div class="timeline-date-label">Report Due</div>
+                        <div class="timeline-date-value">14 January 2026</div>
+                    </div>
+                </div>
+                <div class="timeline-track">
+                    <div class="timeline-track-fill" style="width: 58%;"></div>
+                    <div class="timeline-track-marker" style="left: 58%;"></div>
+                </div>
+                <div class="timeline-meta">
+                    <span>Month 1</span>
+                    <span>Today — Month 6 of 10</span>
+                    <span>Month 10</span>
+                </div>
+            </div>
+
+            <!-- Overall Posture -->
+            <div class="posture-card animate-in d3">
+                <div class="posture-header">
+                    <div class="posture-title">Overall Position</div>
+                    <div class="posture-badge needs-attention">Needs Attention</div>
+                </div>
+                <p class="posture-summary">
+                    You're 58% through the reporting year. English and Mathematics coverage is strong, with clear evidence of progression. Science has good depth in 2 of 3 understanding areas. HASS and HPE have gaps that are worth addressing in the coming weeks — particularly around the local history and geography content descriptions that produce strong work samples for your report.
+                </p>
+            </div>
+
+            <!-- Work Samples -->
+            <div class="animate-in d3">
+                <div class="section-header">
+                    <h2 class="section-title">Work Samples</h2>
+                    <span class="section-count">6 required · 4 complete · 2 in progress</span>
+                </div>
+                <div class="samples-grid">
+                    <!-- Sample 1 -->
+                    <div class="sample-card complete">
+                        <div class="sample-area-tag english">English</div>
+                        <div class="sample-label">Extended Written Piece</div>
+                        <div class="sample-timing">Term 1 — April 2025</div>
+                        <div class="sample-status complete">
+                            <div class="sample-status-dot complete"></div>
+                            Complete
+                        </div>
+                        <div class="sample-detail">Emma's illustrated story about the backyard garden — 3 pages, shows narrative structure and phonics application.</div>
+                        <a href="#" class="sample-action">
+                            View sample
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Sample 2 -->
+                    <div class="sample-card complete">
+                        <div class="sample-area-tag maths">Mathematics</div>
+                        <div class="sample-label">Mathematical Reasoning</div>
+                        <div class="sample-timing">Term 2 — June 2025</div>
+                        <div class="sample-status complete">
+                            <div class="sample-status-dot complete"></div>
+                            Complete
+                        </div>
+                        <div class="sample-detail">Documented problem-solving session — doubling and halving using Cuisenaire rods. Clear reasoning shown.</div>
+                        <a href="#" class="sample-action">
+                            View sample
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Sample 3 -->
+                    <div class="sample-card complete">
+                        <div class="sample-area-tag science">Science</div>
+                        <div class="sample-label">Investigation Record</div>
+                        <div class="sample-timing">Term 2 — May 2025</div>
+                        <div class="sample-status complete">
+                            <div class="sample-status-dot complete"></div>
+                            Complete
+                        </div>
+                        <div class="sample-detail">Living vs non-living sorting activity with annotated photographs. Covers AC9S2U01 and AC9S2U02.</div>
+                        <a href="#" class="sample-action">
+                            View sample
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Sample 4 -->
+                    <div class="sample-card complete">
+                        <div class="sample-area-tag english">English</div>
+                        <div class="sample-label">Reading Response</div>
+                        <div class="sample-timing">Term 3 — August 2025</div>
+                        <div class="sample-status complete">
+                            <div class="sample-status-dot complete"></div>
+                            Complete
+                        </div>
+                        <div class="sample-detail">Oral reading session recording with comprehension discussion. Demonstrates fluency at Level 20.</div>
+                        <a href="#" class="sample-action">
+                            View sample
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Sample 5 -->
+                    <div class="sample-card partial">
+                        <div class="sample-area-tag hass">HASS</div>
+                        <div class="sample-label">Local Community Study</div>
+                        <div class="sample-timing">In progress</div>
+                        <div class="sample-status partial">
+                            <div class="sample-status-dot partial"></div>
+                            Partial — needs annotation
+                        </div>
+                        <div class="sample-detail">Photo essay from library visit exists. Needs written reflection and curriculum mapping to complete.</div>
+                        <a href="#" class="sample-action">
+                            Continue curating
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Sample 6 -->
+                    <div class="sample-card empty">
+                        <div class="sample-area-tag hass">HASS</div>
+                        <div class="sample-label">6th Work Sample</div>
+                        <div class="sample-timing">Not yet curated</div>
+                        <div class="sample-status empty">
+                            <div class="sample-status-dot empty"></div>
+                            Not started
+                        </div>
+                        <div class="sample-detail">One more sample required. The "Our Local Story" module below would produce strong evidence here.</div>
+                        <a href="#" class="sample-action">
+                            Curate from logs
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coverage Section -->
+            <div class="coverage-section animate-in d4">
+                <div class="section-header">
+                    <h2 class="section-title">Learning Area Coverage</h2>
+                    <span class="section-count">73 of 110 content descriptions</span>
+                </div>
+
+                <!-- English -->
+                <div class="coverage-card" onclick="toggleCoverage(this)">
+                    <div class="coverage-header">
+                        <div class="coverage-left">
+                            <div class="coverage-icon english">📖</div>
+                            <div>
+                                <div class="coverage-name">English</div>
+                                <div class="coverage-subtitle">Language · Literature · Literacy</div>
+                            </div>
+                        </div>
+                        <div class="coverage-right">
+                            <div class="coverage-stats">
+                                <div class="coverage-fraction">18 / 22</div>
+                                <div class="coverage-percent">82% covered</div>
+                            </div>
+                            <div class="coverage-bar-container">
+                                <div class="coverage-bar english" style="width: 82%;"></div>
+                            </div>
+                            <svg class="coverage-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="coverage-detail"><div class="coverage-detail-inner">
+                        <div class="strand-group">
+                            <div class="strand-name">Gaps remaining — 4 content descriptions</div>
+                            <div class="cd-list">
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9E2LY07</div><div class="cd-text">Create and edit informative texts with subject-specific vocabulary</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9E2LY08</div><div class="cd-text">Use grammatical knowledge to read and interpret texts</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip partial"></div><div class="cd-code">AC9E2LE03</div><div class="cd-text">Identify and discuss figurative language in poetry and stories</div><div class="cd-activities">2</div></div>
+                                <div class="cd-item"><div class="cd-status-pip partial"></div><div class="cd-code">AC9E2LA05</div><div class="cd-text">Understand how punctuation supports meaning</div><div class="cd-activities">3</div></div>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Mathematics -->
+                <div class="coverage-card" onclick="toggleCoverage(this)">
+                    <div class="coverage-header">
+                        <div class="coverage-left">
+                            <div class="coverage-icon maths">🔢</div>
+                            <div>
+                                <div class="coverage-name">Mathematics</div>
+                                <div class="coverage-subtitle">Number · Algebra · Measurement · Space · Statistics</div>
+                            </div>
+                        </div>
+                        <div class="coverage-right">
+                            <div class="coverage-stats">
+                                <div class="coverage-fraction">19 / 24</div>
+                                <div class="coverage-percent">79% covered</div>
+                            </div>
+                            <div class="coverage-bar-container">
+                                <div class="coverage-bar maths" style="width: 79%;"></div>
+                            </div>
+                            <svg class="coverage-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="coverage-detail"><div class="coverage-detail-inner">
+                        <div class="strand-group">
+                            <div class="strand-name">Gaps remaining — 5 content descriptions</div>
+                            <div class="cd-list">
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9M2N03</div><div class="cd-text">Use mathematical modelling to solve practical problems involving additive and multiplicative situations</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9M2M02</div><div class="cd-text">Measure and compare objects using familiar metric units</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9M2M03</div><div class="cd-text">Read and interpret clocks, calendars and timetables</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9M2M04</div><div class="cd-text">Identify fractions in everyday situations</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9M2SP02</div><div class="cd-text">Describe half and quarter turns; connect with compass directions</div><div class="cd-activities">—</div></div>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Science -->
+                <div class="coverage-card" onclick="toggleCoverage(this)">
+                    <div class="coverage-header">
+                        <div class="coverage-left">
+                            <div class="coverage-icon science">🔬</div>
+                            <div>
+                                <div class="coverage-name">Science</div>
+                                <div class="coverage-subtitle">Biological · Chemical · Earth · Physical</div>
+                            </div>
+                        </div>
+                        <div class="coverage-right">
+                            <div class="coverage-stats">
+                                <div class="coverage-fraction">14 / 18</div>
+                                <div class="coverage-percent">78% covered</div>
+                            </div>
+                            <div class="coverage-bar-container">
+                                <div class="coverage-bar science" style="width: 78%;"></div>
+                            </div>
+                            <svg class="coverage-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="coverage-detail"><div class="coverage-detail-inner">
+                        <div class="strand-group">
+                            <div class="strand-name">Gaps remaining — 4 content descriptions</div>
+                            <div class="cd-list">
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9S2U03</div><div class="cd-text">Describe how pushes and pulls affect the movement of objects</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip partial"></div><div class="cd-code">AC9S2H01</div><div class="cd-text">Describe how science knowledge helps people understand the effect of actions</div><div class="cd-activities">1</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9S2I04</div><div class="cd-text">Compare observations with predictions and suggest reasons for differences</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9S2I05</div><div class="cd-text">Represent and communicate findings using drawings, simple tables</div><div class="cd-activities">—</div></div>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- HASS -->
+                <div class="coverage-card" onclick="toggleCoverage(this)">
+                    <div class="coverage-header">
+                        <div class="coverage-left">
+                            <div class="coverage-icon hass">🌏</div>
+                            <div>
+                                <div class="coverage-name">Humanities &amp; Social Sciences</div>
+                                <div class="coverage-subtitle">History · Geography · Civics</div>
+                            </div>
+                        </div>
+                        <div class="coverage-right">
+                            <div class="coverage-stats">
+                                <div class="coverage-fraction">9 / 15</div>
+                                <div class="coverage-percent">60% covered</div>
+                            </div>
+                            <div class="coverage-bar-container">
+                                <div class="coverage-bar hass" style="width: 60%;"></div>
+                            </div>
+                            <svg class="coverage-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="coverage-detail"><div class="coverage-detail-inner">
+                        <div class="strand-group">
+                            <div class="strand-name">Gaps remaining — 6 content descriptions</div>
+                            <div class="cd-list">
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2K01</div><div class="cd-text">Local individual/group/place significance</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2K04</div><div class="cd-text">First Nations Peoples' interconnections to local Country/Place</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2S01</div><div class="cd-text">Develop questions about objects, people, places, events</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2S03</div><div class="cd-text">Interpret information; compare objects past and present</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2S04</div><div class="cd-text">Discuss perspectives</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HS2S05</div><div class="cd-text">Draw conclusions and make proposals</div><div class="cd-activities">—</div></div>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- HPE -->
+                <div class="coverage-card" onclick="toggleCoverage(this)">
+                    <div class="coverage-header">
+                        <div class="coverage-left">
+                            <div class="coverage-icon hpe">🏃</div>
+                            <div>
+                                <div class="coverage-name">Health &amp; Physical Education</div>
+                                <div class="coverage-subtitle">Personal Health · Movement · Physical Activity</div>
+                            </div>
+                        </div>
+                        <div class="coverage-right">
+                            <div class="coverage-stats">
+                                <div class="coverage-fraction">5 / 11</div>
+                                <div class="coverage-percent">45% covered</div>
+                            </div>
+                            <div class="coverage-bar-container">
+                                <div class="coverage-bar hpe" style="width: 45%;"></div>
+                            </div>
+                            <svg class="coverage-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="coverage-detail"><div class="coverage-detail-inner">
+                        <div class="strand-group">
+                            <div class="strand-name">Gaps remaining — 6 content descriptions</div>
+                            <div class="cd-list">
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2P03</div><div class="cd-text">How situations influence emotional responses</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2P04</div><div class="cd-text">Seeking, giving, denying permission respectfully</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2P05</div><div class="cd-text">Protective behaviours and help-seeking strategies</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2P06</div><div class="cd-text">Health messages and practices in community</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2M04</div><div class="cd-text">Co-construct rules for fair play</div><div class="cd-activities">—</div></div>
+                                <div class="cd-item"><div class="cd-status-pip not-started"></div><div class="cd-code">AC9HP2M05</div><div class="cd-text">Collaborative participation strategies</div><div class="cd-activities">—</div></div>
+                            </div>
+                        </div>
+                    </div></div>
+                </div>
+            </div>
+
+            <!-- Recommended Focus -->
+            <div class="focus-section animate-in d6">
+                <div class="section-header">
+                    <h2 class="section-title">Recommended Focus</h2>
+                </div>
+                <p class="focus-intro">Based on your coverage gaps and remaining timeline, these three modules would have the highest impact on your report readiness. Each one touches multiple learning areas simultaneously.</p>
+
+                <div class="focus-cards">
+                    <!-- Focus 1 -->
+                    <div class="focus-card">
+                        <div class="focus-priority">Priority 1 — Fills biggest gap</div>
+                        <div class="focus-module-name">Our Local Story</div>
+                        <div class="focus-reason">Covers 7 uncovered HASS content descriptions in a single project. Visit a local landmark, research its history, and create a presentation — this also produces a strong work sample for your 6th required piece.</div>
+                        <div class="focus-tags">
+                            <span class="focus-tag hass">HASS</span>
+                            <span class="focus-tag english">English</span>
+                        </div>
+                        <div class="focus-cds">AC9HS2K01 · AC9HS2K04 · AC9HS2S01 · AC9HS2S03 · AC9HS2S04 · AC9HS2S05 · AC9E2LY07</div>
+                        <button class="focus-btn">
+                            Explore Module
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Focus 2 -->
+                    <div class="focus-card">
+                        <div class="focus-priority">Priority 2 — Quick wins</div>
+                        <div class="focus-module-name">Time, Fractions &amp; Turns</div>
+                        <div class="focus-reason">Four Maths content descriptions you haven't touched yet — clocks, calendars, fractions, and turns. These are all easily woven into daily routines: cooking, scheduling, telling time. A week of intentional logging closes these gaps.</div>
+                        <div class="focus-tags">
+                            <span class="focus-tag maths">Maths</span>
+                            <span class="focus-tag science">Science</span>
+                        </div>
+                        <div class="focus-cds">AC9M2N03 · AC9M2M02 · AC9M2M03 · AC9M2M04 · AC9M2SP02</div>
+                        <button class="focus-btn">
+                            Explore Module
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Focus 3 -->
+                    <div class="focus-card">
+                        <div class="focus-priority">Priority 3 — Natural fit</div>
+                        <div class="focus-module-name">Safety, Feelings &amp; Fair Play</div>
+                        <div class="focus-reason">Six HPE content descriptions around emotions, boundaries, and collaborative games. Most families cover these naturally — you may just need to log activities you're already doing. Think: board games, playground visits, conversations about feelings.</div>
+                        <div class="focus-tags">
+                            <span class="focus-tag hpe">HPE</span>
+                            <span class="focus-tag english">English</span>
+                        </div>
+                        <div class="focus-cds">AC9HP2P03 · AC9HP2P04 · AC9HP2P05 · AC9HP2P06 · AC9HP2M04 · AC9HP2M05</div>
+                        <button class="focus-btn">
+                            Explore Module
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Bar -->
+            <div class="export-bar animate-in d6">
+                <div class="export-info">
+                    <div class="export-title">Export Report Package</div>
+                    <div class="export-desc">Generate your QHE submission with annotated samples and year in review narrative</div>
+                </div>
+                <button class="export-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export PDF
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleCoverage(card) {
+            document.querySelectorAll('.coverage-card.open').forEach(c => {
+                if (c !== card) c.classList.remove('open');
+            });
+            card.classList.toggle('open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.coverage-bar').forEach(bar => {
+                    bar.style.width = bar.style.width;
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>

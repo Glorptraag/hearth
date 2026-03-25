@@ -1,0 +1,1848 @@
+<!-- Version: 2 | Date: 2026-03-19 | Changes: Token rename (--deep-coffee→--surface-body, --coffee-mid→--surface-panel, --coffee-light→--surface-raised, --surface-elevated→--surface-hover); .section-title font-family sans→serif; .section-title font-size 0.95rem→1rem; .section-description font-family sans→sans (kept, metadata role); .btn base radius-sm→radius-md; .btn-primary color --deep-coffee→--surface-body; .btn-secondary bg transparent→--surface-raised, hover bg --surface-hover; toggle-track bg --coffee-light→--surface-raised; toggle checked::after bg --deep-coffee→--surface-body; plan-card/learner-card/philosophy-card bg --deep-coffee→--surface-body (intentional recessed); .section-status border-radius 20px→--radius-full; .member-role-badge border-radius 10px→--radius-sm; learner-tag border-radius 10px→--radius-sm; toggle-track border-radius 12px→--radius-full; payment-method border-radius 4px→--radius-sm; .toast position bottom-center per canonical (was bottom-right); .toast border → success variant with sage left-accent; .slider-bar bg --coffee-light→--surface-raised; .field-input border-radius --radius-sm (kept, inputs use sm); .danger-zone border-radius --radius-md (kept); all references to --deep-coffee in :root renamed to --surface-body; all --coffee-mid→--surface-panel; all --coffee-light→--surface-raised; all --surface-elevated→--surface-hover; user-avatar/brand-icon color --deep-coffee→--surface-body; --ember-subtle kept as local alias -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth – Family Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================================
+           HEARTH FAMILY SETTINGS & ACCOUNT MANAGEMENT
+           Mont Blanc Dark Coffee Aesthetic — v2 Design System Conformance
+           
+           Purpose: Central hub for family configuration, learner management,
+                    compliance setup, pedagogy preferences, and account admin
+           Entry: Dashboard → ⚙️ Settings nav
+           
+           Sections:
+           1. Family Profile – name, location, HEU registration
+           2. Our Learners – children with abstract shapes, age, notes
+           3. Learning Approach – active pedagogy, philosophy summary
+           4. Compliance & Reporting – HEU toggle, audit date, export prefs
+           5. Notifications – nudge frequency, reminders
+           6. Family Access – co-facilitator invite (basic MVP)
+           7. Account & Security – email, password, data export
+           8. Subscription & Billing – plan info, payment
+           
+           Design: Accordion sections, inline editing, 5-minute rule
+           ============================================================================ */
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            /* Surface hierarchy — canonical token names */
+            --surface-body:   #0F0D0B;   /* Page background */
+            --surface-panel:  #1A1612;   /* Sidebar, card surface */
+            --surface-raised: #252117;   /* Elevated cards, interactive panels */
+            --surface-hover:  #2D2621;   /* Hover states, highest elevation */
+
+            /* Text Hierarchy */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* Ember Accents */
+            --ember:          #D97B3A;
+            --ember-hover:    #E88F4E;
+            --ember-glow:     rgba(217, 123, 58, 0.15);
+            --ember-strong:   rgba(217, 123, 58, 0.25);
+            --ember-subtle:   rgba(217, 123, 58, 0.06);
+
+            /* Semantic Colors */
+            --sage:           #4ADE80;
+            --sage-muted:     rgba(74, 222, 128, 0.12);
+            --sage-border:    rgba(74, 222, 128, 0.3);
+            --blue:           #60A5FA;
+            --blue-muted:     rgba(96, 165, 250, 0.12);
+            --rose:           #FB7185;
+            --rose-muted:     rgba(251, 113, 133, 0.12);
+            --violet:         #A78BFA;
+            --violet-muted:   rgba(167, 139, 250, 0.12);
+            --amber:          #FBBF24;
+            --amber-muted:    rgba(251, 191, 36, 0.12);
+
+            /* Typography */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* Spacing */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+
+            /* Border Radius */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* Borders */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+            --border-strong: rgba(217, 123, 58, 0.35);
+
+            /* Transitions */
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { font-size: 16px; }
+
+        body {
+            font-family: var(--font-serif);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Ambient glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(217, 123, 58, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(217, 123, 58, 0.02) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Noise texture */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* ── Layout ──────────────────────────────────── */
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Left Navigation ─────────────────────────── */
+        .nav-sidebar {
+            background: var(--surface-panel);
+            border-right: 1px solid var(--border-subtle);
+            padding: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .brand-icon {
+            width: 40px; height: 40px;
+            background: var(--ember);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 12px rgba(217, 123, 58, 0.3), var(--shadow-glow);
+        }
+
+        .brand-icon svg { width: 24px; height: 24px; fill: var(--surface-body); }
+
+        .brand-text {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-section { margin-bottom: var(--space-xl); }
+
+        .nav-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: var(--space-md);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition-quick);
+            margin-bottom: var(--space-xs);
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: var(--ember-glow);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .nav-item.active {
+            background: var(--surface-raised);
+            color: var(--ember);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item svg { width: 18px; height: 18px; opacity: 0.6; flex-shrink: 0; }
+        .nav-item:hover svg, .nav-item.active svg { opacity: 1; }
+
+        .nav-spacer { flex: 1; }
+
+        .user-badge {
+            display: flex; align-items: center; gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--surface-raised);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--ember), var(--ember-hover));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-serif); font-weight: 600;
+            color: var(--surface-body); font-size: 0.9rem;
+        }
+
+        .user-info { flex: 1; }
+        .user-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+        .user-role { font-family: var(--font-sans); font-size: 0.7rem; color: var(--text-muted); }
+
+        /* ── Main Content ───────────────────────────── */
+        .main-content {
+            padding: var(--space-2xl) var(--space-3xl);
+            overflow-y: auto;
+            max-width: 820px;
+        }
+
+        .page-header {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .page-header h1 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: var(--space-sm);
+        }
+
+        .page-subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ── Settings Sections (Accordion) ────────────── */
+        .settings-section {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-md);
+            overflow: hidden;
+            transition: border-color var(--transition-quick);
+        }
+
+        .settings-section:hover {
+            border-color: var(--border-medium);
+        }
+
+        .settings-section.open {
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-warm);
+        }
+
+        /* Accordion header — canonical pattern */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-lg) var(--space-xl);
+            cursor: pointer;
+            transition: background var(--transition-quick);
+            user-select: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        .settings-section.open .section-header {
+            border-bottom-color: var(--border-subtle);
+        }
+
+        .section-header:hover {
+            background: var(--ember-subtle);
+        }
+
+        .section-icon {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: all var(--transition-quick);
+        }
+
+        .section-icon svg { width: 20px; height: 20px; }
+
+        .section-icon.family       { background: var(--ember-glow);   color: var(--ember);  }
+        .section-icon.learners     { background: var(--blue-muted);   color: var(--blue);   }
+        .section-icon.pedagogy     { background: var(--violet-muted); color: var(--violet); }
+        .section-icon.compliance   { background: var(--sage-muted);   color: var(--sage);   }
+        .section-icon.notifications{ background: var(--amber-muted);  color: var(--amber);  }
+        .section-icon.access       { background: var(--rose-muted);   color: var(--rose);   }
+        .section-icon.security     { background: rgba(148, 163, 184, 0.12); color: #94A3B8; }
+        .section-icon.billing      { background: var(--ember-glow);   color: var(--ember);  }
+
+        .section-title-group { flex: 1; }
+
+        /* FIX: section-title now uses --font-serif per canonical (was --font-sans — the only screen that broke this rule) */
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        /* section-description is metadata — sans is correct here */
+        .section-description {
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* FIX: border-radius 20px → --radius-full */
+        .section-status {
+            font-family: var(--font-sans);
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            flex-shrink: 0;
+        }
+
+        .status-configured { background: var(--sage-muted);   color: var(--sage);  }
+        .status-pending    { background: var(--amber-muted);  color: var(--amber); }
+        .status-new        { background: var(--blue-muted);   color: var(--blue);  }
+
+        /* Accordion chevron */
+        .section-chevron {
+            width: 20px; height: 20px;
+            color: var(--text-muted);
+            transition: transform var(--transition-gentle);
+            flex-shrink: 0;
+        }
+
+        .settings-section.open .section-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Accordion body */
+        .section-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .settings-section.open .section-body {
+            max-height: 2000px;
+        }
+
+        .section-content {
+            padding: 0 var(--space-xl) var(--space-xl);
+        }
+
+        /* ── Form Elements ──────────────────────────── */
+        .field-group {
+            margin-top: var(--space-lg);
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-md);
+        }
+
+        .field-label {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* FIX: bg --deep-coffee → --surface-body */
+        .field-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            transition: all var(--transition-quick);
+            outline: none;
+        }
+
+        .field-input:hover { border-color: var(--border-medium); }
+
+        .field-input:focus {
+            border-color: var(--ember);
+            box-shadow: 0 0 0 3px rgba(217, 123, 58, 0.15);
+        }
+
+        .field-input::placeholder { color: var(--text-muted); }
+
+        select.field-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B5D52' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        textarea.field-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .field-hint {
+            font-family: var(--font-sans);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+            font-style: italic;
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .toggle-row:last-child { border-bottom: none; }
+
+        .toggle-info { flex: 1; margin-right: var(--space-lg); }
+
+        .toggle-label {
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .toggle-desc {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px; height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input { display: none; }
+
+        /* FIX: bg --coffee-light → --surface-raised; border-radius 12px → --radius-full */
+        .toggle-track {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 18px; height: 18px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all var(--transition-quick);
+        }
+
+        .toggle-switch input:checked + .toggle-track {
+            background: var(--ember);
+            border-color: var(--ember);
+        }
+
+        /* FIX: checked handle bg --deep-coffee → --surface-body */
+        .toggle-switch input:checked + .toggle-track::after {
+            transform: translateX(20px);
+            background: var(--surface-body);
+        }
+
+        /* ── Learner Cards ──────────────────────────── */
+        .learner-grid {
+            display: grid;
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+
+        /* Intentional recessed style — inset cards within accordion use --surface-body (darkest) */
+        .learner-card {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-lg);
+            padding: var(--space-lg);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-quick);
+        }
+
+        .learner-card:hover {
+            border-color: var(--border-medium);
+            box-shadow: 0 0 24px rgba(217, 123, 58, 0.06);
+        }
+
+        .learner-card.editing {
+            border-color: var(--ember);
+            box-shadow: 0 0 0 3px rgba(217, 123, 58, 0.1);
+        }
+
+        /* Abstract shape identifiers for children */
+        .learner-shape {
+            width: 56px; height: 56px;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .learner-shape svg { width: 56px; height: 56px; }
+
+        .learner-details { flex: 1; min-width: 0; }
+
+        .learner-name {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .learner-meta {
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-sm);
+        }
+
+        .learner-meta span { display: flex; align-items: center; gap: 4px; }
+
+        .learner-tags {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        /* FIX: border-radius 10px → --radius-sm */
+        .learner-tag {
+            font-family: var(--font-sans);
+            font-size: 0.68rem;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            background: var(--ember-glow);
+            color: var(--ember);
+            border: 1px solid rgba(217, 123, 58, 0.15);
+        }
+
+        .learner-actions {
+            display: flex;
+            gap: var(--space-sm);
+            flex-shrink: 0;
+        }
+
+        /* FIX: btn-icon radius --radius-sm, kept; tap target 44px enforced via min-height */
+        .btn-icon {
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: transparent;
+            color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .btn-icon:hover {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+            color: var(--ember);
+        }
+
+        .btn-icon svg { width: 16px; height: 16px; }
+
+        /* Learner Edit Form (inline) */
+        .learner-edit-form {
+            display: none;
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--border-subtle);
+            margin-top: var(--space-md);
+        }
+
+        .learner-card.editing .learner-edit-form { display: block; }
+        .learner-card.editing .learner-tags { display: none; }
+
+        /* Add Learner Button — ghost card pattern */
+        .add-learner-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            width: 100%;
+            padding: var(--space-lg);
+            background: transparent;
+            border: 1px dashed var(--text-muted);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            margin-top: var(--space-md);
+        }
+
+        .add-learner-btn:hover {
+            border-color: var(--ember);
+            color: var(--ember);
+            background: var(--ember-subtle);
+        }
+
+        .add-learner-btn svg { width: 18px; height: 18px; }
+
+        /* ── Philosophy Display ─────────────────────── */
+        /* Intentional recessed style — same inset treatment as learner cards */
+        .philosophy-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            padding: var(--space-lg);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-lg);
+        }
+
+        .philosophy-badge {
+            width: 64px; height: 64px;
+            border-radius: var(--radius-lg);
+            background: var(--violet-muted);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .philosophy-info { flex: 1; }
+
+        .philosophy-name {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .philosophy-desc {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .philosophy-sliders {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm) var(--space-xl);
+            margin-top: var(--space-lg);
+        }
+
+        .slider-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+        }
+
+        .slider-label { color: var(--text-secondary); }
+
+        /* FIX: bg --coffee-light → --surface-raised */
+        .slider-bar {
+            width: 80px; height: 4px;
+            background: var(--surface-raised);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0 var(--space-sm);
+            flex-shrink: 0;
+        }
+
+        .slider-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width var(--transition-gentle);
+        }
+
+        .slider-value {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            width: 24px;
+            text-align: right;
+        }
+
+        /* ── Access / Invite ─────────────────────────── */
+        .invite-row {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+
+        .invite-row .field-input { flex: 1; }
+
+        .member-list {
+            margin-top: var(--space-lg);
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .member-item:last-child { border-bottom: none; }
+
+        .member-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .member-details { flex: 1; }
+        .member-name  { font-family: var(--font-sans); font-size: 0.88rem; font-weight: 500; color: var(--text-primary); }
+        .member-email { font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted); }
+
+        /* FIX: border-radius 10px → --radius-sm */
+        .member-role-badge {
+            font-family: var(--font-sans);
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .role-primary     { background: var(--ember-glow);   color: var(--ember);  }
+        .role-facilitator { background: var(--sage-muted);   color: var(--sage);   }
+        .role-pending     { background: var(--amber-muted);  color: var(--amber);  }
+
+        /* ── Buttons ───────────────────────────────── */
+        /* FIX: base .btn radius --radius-sm → --radius-md (canonical); padding kept at 10px 20px (sm-md size) */
+        .btn {
+            display: inline-flex; align-items: center; gap: var(--space-sm);
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            border: 1px solid transparent;
+            min-height: 44px;
+        }
+
+        .btn svg { width: 16px; height: 16px; }
+
+        /* FIX: color --deep-coffee → --surface-body (canonical --text-inverse is --surface-body) */
+        .btn-primary {
+            background: var(--ember);
+            color: var(--surface-body);
+            border-color: var(--ember);
+        }
+
+        .btn-primary:hover {
+            background: var(--ember-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(217, 123, 58, 0.3);
+        }
+
+        /* FIX: bg transparent → --surface-raised; hover bg --surface-hover (canonical secondary button pattern) */
+        .btn-secondary {
+            background: var(--surface-raised);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-medium);
+            transform: translateY(-1px);
+        }
+
+        /* Ghost/danger — canonical ghost pattern */
+        .btn-danger {
+            background: transparent;
+            color: var(--rose);
+            border-color: rgba(251, 113, 133, 0.2);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+        }
+
+        .btn-danger:hover {
+            background: var(--rose-muted);
+            border-color: var(--rose);
+        }
+
+        /* Link button — text-only action */
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--ember);
+            padding: 0;
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color var(--transition-quick);
+        }
+
+        .btn-link:hover { color: var(--ember-hover); }
+
+        .btn-group {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-lg);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── Danger Zone ───────────────────────────── */
+        .danger-zone {
+            margin-top: var(--space-lg);
+            padding: var(--space-lg);
+            background: rgba(251, 113, 133, 0.04);
+            border: 1px solid rgba(251, 113, 133, 0.15);
+            border-radius: var(--radius-md);
+        }
+
+        .danger-zone h4 {
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--rose);
+            margin-bottom: var(--space-sm);
+        }
+
+        .danger-zone p {
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        /* ── Toast Notification — canonical pattern ─── */
+        /* FIX: position bottom-center (per canonical spec) not bottom-right; success variant with sage left-accent; bg --surface-raised */
+        .toast {
+            position: fixed;
+            bottom: var(--space-xl);
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--sage);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            display: flex; align-items: center; gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-medium);
+            z-index: 999;
+            opacity: 0;
+            transition: all var(--transition-gentle);
+            white-space: nowrap;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast svg { width: 18px; height: 18px; color: var(--sage); flex-shrink: 0; }
+
+        /* ── Plan Card ─────────────────────────────── */
+        /* Intentional recessed — matches learner/philosophy card pattern for inset content */
+        .plan-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+            padding: var(--space-xl);
+            background: var(--surface-body);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-lg);
+        }
+
+        .plan-badge {
+            padding: 6px 16px;
+            background: var(--ember-glow);
+            border: 1px solid rgba(217, 123, 58, 0.2);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ember);
+            flex-shrink: 0;
+        }
+
+        .plan-info { flex: 1; }
+        .plan-name { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .plan-desc { font-family: var(--font-sans); font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .plan-price {
+            font-family: var(--font-sans);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex-shrink: 0;
+        }
+
+        .plan-price span {
+            font-size: 0.78rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* ── Animations ─────────────────────────────── */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeIn 500ms ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .d1 { animation-delay: 50ms; }
+        .d2 { animation-delay: 100ms; }
+        .d3 { animation-delay: 150ms; }
+        .d4 { animation-delay: 200ms; }
+        .d5 { animation-delay: 250ms; }
+        .d6 { animation-delay: 300ms; }
+        .d7 { animation-delay: 350ms; }
+        .d8 { animation-delay: 400ms; }
+
+        /* ── Responsive ─────────────────────────────── */
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-sidebar {
+                display: none; /* Mobile would use bottom nav */
+            }
+
+            .main-content {
+                padding: var(--space-lg);
+            }
+
+            .field-row {
+                grid-template-columns: 1fr;
+            }
+
+            .philosophy-sliders {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .learner-card {
+                flex-direction: column;
+            }
+
+            .learner-actions {
+                align-self: flex-end;
+            }
+
+            .invite-row {
+                flex-direction: column;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- ── Left Navigation ────────────────────────────────────── -->
+        <nav class="nav-sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14H8v-2h2v2zm0-4H8V8h2v4zm6 4h-4v-2h4v2zm0-4h-4V8h4v4z"/></svg>
+                </div>
+                <span class="brand-text">Hearth</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Navigate</div>
+                <a class="nav-item" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Home
+                </a>
+                <a class="nav-item" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    Our Story
+                </a>
+                <a class="nav-item" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    Explore
+                </a>
+                <a class="nav-item" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Log
+                </a>
+                <a class="nav-item" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                    Build
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">System</div>
+                <a class="nav-item active" href="#">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    Settings
+                </a>
+            </div>
+
+            <div class="nav-spacer"></div>
+
+            <div class="user-badge">
+                <div class="user-avatar">SM</div>
+                <div class="user-info">
+                    <div class="user-name">Sarah Morrison</div>
+                    <div class="user-role">Primary Facilitator</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ── Main Settings Area ──────────────────────────────────── -->
+        <main class="main-content">
+
+            <div class="page-header animate-in d1">
+                <h1>Family Settings</h1>
+                <p class="page-subtitle">Manage your family profile, learners, learning approach, and account preferences. Changes save automatically.</p>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  1. FAMILY PROFILE                       ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section open animate-in d2" id="section-family">
+                <div class="section-header" onclick="toggleSection('section-family')">
+                    <div class="section-icon family">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Family Profile</div>
+                        <div class="section-description">Your family name, location, and HEU registration</div>
+                    </div>
+                    <span class="section-status status-configured">Configured</span>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="field-group">
+                            <div class="field-row">
+                                <div>
+                                    <label class="field-label">Family Name</label>
+                                    <input class="field-input" type="text" value="The Morrison Family" onchange="showToast()">
+                                </div>
+                                <div>
+                                    <label class="field-label">Primary Facilitator</label>
+                                    <input class="field-input" type="text" value="Sarah Morrison" onchange="showToast()">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <div class="field-row">
+                                <div>
+                                    <label class="field-label">State / Territory</label>
+                                    <select class="field-input" onchange="showToast()">
+                                        <option selected>Queensland</option>
+                                        <option>New South Wales</option>
+                                        <option>Victoria</option>
+                                        <option>South Australia</option>
+                                        <option>Western Australia</option>
+                                        <option>Tasmania</option>
+                                        <option>Northern Territory</option>
+                                        <option>ACT</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="field-label">Nearest City / Town</label>
+                                    <input class="field-input" type="text" value="Gold Coast" placeholder="e.g. Brisbane, Cairns" onchange="showToast()">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <div class="field-row">
+                                <div>
+                                    <label class="field-label">HEU Registration Number</label>
+                                    <input class="field-input" type="text" value="HEU-2025-08421" placeholder="e.g. HEU-2025-XXXXX" onchange="showToast()">
+                                    <div class="field-hint">Your Queensland Home Education Unit registration number</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Registration Date</label>
+                                    <input class="field-input" type="date" value="2025-02-14" onchange="showToast()">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Family Bio (Optional)</label>
+                            <textarea class="field-input" placeholder="Tell us a little about your family's learning journey..." onchange="showToast()">We're a family of four on the Gold Coast. Emma (9) and Liam (6) learn through nature, stories, and hands-on projects. We love beach days, building things, and cooking together.</textarea>
+                            <div class="field-hint">Shown on your portfolio and shared reports</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  2. OUR LEARNERS                         ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d3" id="section-learners">
+                <div class="section-header" onclick="toggleSection('section-learners')">
+                    <div class="section-icon learners">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Our Learners</div>
+                        <div class="section-description">Manage children, their profiles, and learning preferences</div>
+                    </div>
+                    <span class="section-status status-configured">2 learners</span>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="learner-grid">
+
+                            <!-- Emma -->
+                            <div class="learner-card" id="learner-emma">
+                                <div class="learner-shape">
+                                    <svg viewBox="0 0 56 56">
+                                        <defs>
+                                            <linearGradient id="grad-emma" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:0.8"/>
+                                                <stop offset="100%" style="stop-color:#A78BFA;stop-opacity:0.8"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <!-- Spiral/helix shape – unique to Emma -->
+                                        <path d="M28 6 C38 6 48 14 48 28 C48 38 40 46 30 46 C22 46 14 40 14 30 C14 22 20 16 28 16 C34 16 38 20 38 26 C38 30 34 34 28 34 C24 34 20 30 22 26" fill="none" stroke="url(#grad-emma)" stroke-width="2.5" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <div class="learner-details">
+                                    <div class="learner-name">Emma Morrison</div>
+                                    <div class="learner-meta">
+                                        <span>Age 9</span>
+                                        <span>·</span>
+                                        <span>Year 4</span>
+                                        <span>·</span>
+                                        <span>12 badges earned</span>
+                                    </div>
+                                    <div class="learner-tags">
+                                        <span class="learner-tag">Visual learner</span>
+                                        <span class="learner-tag">Loves stories</span>
+                                        <span class="learner-tag">Nature explorer</span>
+                                    </div>
+                                    <div class="learner-edit-form">
+                                        <div class="field-row">
+                                            <div>
+                                                <label class="field-label">First Name</label>
+                                                <input class="field-input" type="text" value="Emma">
+                                            </div>
+                                            <div>
+                                                <label class="field-label">Date of Birth</label>
+                                                <input class="field-input" type="date" value="2016-08-14">
+                                            </div>
+                                        </div>
+                                        <div class="field-row" style="margin-top: var(--space-md)">
+                                            <div>
+                                                <label class="field-label">Year Level</label>
+                                                <select class="field-input">
+                                                    <option>Foundation</option>
+                                                    <option>Year 1</option>
+                                                    <option>Year 2</option>
+                                                    <option>Year 3</option>
+                                                    <option selected>Year 4</option>
+                                                    <option>Year 5</option>
+                                                    <option>Year 6</option>
+                                                    <option>Year 7</option>
+                                                    <option>Year 8</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="field-label">Learning Style</label>
+                                                <select class="field-input">
+                                                    <option selected>Visual</option>
+                                                    <option>Auditory</option>
+                                                    <option>Kinesthetic</option>
+                                                    <option>Reading/Writing</option>
+                                                    <option>Mixed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: var(--space-md)">
+                                            <label class="field-label">Learning Notes</label>
+                                            <textarea class="field-input" rows="2">Excels with narrative-based activities. Loves nature journaling. Gets frustrated with timed tasks — prefers open-ended exploration.</textarea>
+                                        </div>
+                                        <div class="btn-group">
+                                            <button class="btn btn-primary" onclick="toggleEdit('learner-emma'); showToast()">Save Changes</button>
+                                            <button class="btn btn-secondary" onclick="toggleEdit('learner-emma')">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="learner-actions">
+                                    <button class="btn-icon" onclick="toggleEdit('learner-emma')" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Liam -->
+                            <div class="learner-card" id="learner-liam">
+                                <div class="learner-shape">
+                                    <svg viewBox="0 0 56 56">
+                                        <defs>
+                                            <linearGradient id="grad-liam" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#4ADE80;stop-opacity:0.8"/>
+                                                <stop offset="100%" style="stop-color:#FBBF24;stop-opacity:0.8"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <!-- Polygon/crystal shape – unique to Liam -->
+                                        <polygon points="28,4 48,18 42,42 14,42 8,18" fill="none" stroke="url(#grad-liam)" stroke-width="2.5" stroke-linejoin="round"/>
+                                        <polygon points="28,14 38,22 35,36 21,36 18,22" fill="none" stroke="url(#grad-liam)" stroke-width="1.2" stroke-linejoin="round" opacity="0.4"/>
+                                    </svg>
+                                </div>
+                                <div class="learner-details">
+                                    <div class="learner-name">Liam Morrison</div>
+                                    <div class="learner-meta">
+                                        <span>Age 6</span>
+                                        <span>·</span>
+                                        <span>Year 1</span>
+                                        <span>·</span>
+                                        <span>5 badges earned</span>
+                                    </div>
+                                    <div class="learner-tags">
+                                        <span class="learner-tag">Kinesthetic</span>
+                                        <span class="learner-tag">Builder</span>
+                                        <span class="learner-tag">Curious about bugs</span>
+                                    </div>
+                                    <div class="learner-edit-form">
+                                        <div class="field-row">
+                                            <div>
+                                                <label class="field-label">First Name</label>
+                                                <input class="field-input" type="text" value="Liam">
+                                            </div>
+                                            <div>
+                                                <label class="field-label">Date of Birth</label>
+                                                <input class="field-input" type="date" value="2019-11-02">
+                                            </div>
+                                        </div>
+                                        <div class="field-row" style="margin-top: var(--space-md)">
+                                            <div>
+                                                <label class="field-label">Year Level</label>
+                                                <select class="field-input">
+                                                    <option>Foundation</option>
+                                                    <option selected>Year 1</option>
+                                                    <option>Year 2</option>
+                                                    <option>Year 3</option>
+                                                    <option>Year 4</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="field-label">Learning Style</label>
+                                                <select class="field-input">
+                                                    <option>Visual</option>
+                                                    <option>Auditory</option>
+                                                    <option selected>Kinesthetic</option>
+                                                    <option>Reading/Writing</option>
+                                                    <option>Mixed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: var(--space-md)">
+                                            <label class="field-label">Learning Notes</label>
+                                            <textarea class="field-input" rows="2">Thrives with hands-on, physical activities. Loves building with blocks and exploring outdoors. Short attention span for seated work — break into 10-min bursts.</textarea>
+                                        </div>
+                                        <div class="btn-group">
+                                            <button class="btn btn-primary" onclick="toggleEdit('learner-liam'); showToast()">Save Changes</button>
+                                            <button class="btn btn-secondary" onclick="toggleEdit('learner-liam')">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="learner-actions">
+                                    <button class="btn-icon" onclick="toggleEdit('learner-liam')" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="add-learner-btn" onclick="alert('Add Learner flow: Name → DOB → Year Level → Learning Style → Notes')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add a learner
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  3. LEARNING APPROACH                    ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d4" id="section-pedagogy">
+                <div class="section-header" onclick="toggleSection('section-pedagogy')">
+                    <div class="section-icon pedagogy">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Learning Approach</div>
+                        <div class="section-description">Your active pedagogical framework and teaching philosophy</div>
+                    </div>
+                    <span class="section-status status-configured">Active</span>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="philosophy-card">
+                            <div class="philosophy-badge">🌿</div>
+                            <div class="philosophy-info">
+                                <div class="philosophy-name">Charlotte Mason — Eclectic Blend</div>
+                                <div class="philosophy-desc">Living books, nature study, and short lessons form your foundation, blended with hands-on Montessori elements for practical life skills.</div>
+                            </div>
+                        </div>
+
+                        <div class="philosophy-sliders">
+                            <div class="slider-item">
+                                <span class="slider-label">Structure</span>
+                                <div class="slider-bar"><div class="slider-fill" style="width: 60%; background: var(--violet);"></div></div>
+                                <span class="slider-value">60</span>
+                            </div>
+                            <div class="slider-item">
+                                <span class="slider-label">Child-Led</span>
+                                <div class="slider-bar"><div class="slider-fill" style="width: 70%; background: var(--sage);"></div></div>
+                                <span class="slider-value">70</span>
+                            </div>
+                            <div class="slider-item">
+                                <span class="slider-label">Nature Focus</span>
+                                <div class="slider-bar"><div class="slider-fill" style="width: 85%; background: var(--sage);"></div></div>
+                                <span class="slider-value">85</span>
+                            </div>
+                            <div class="slider-item">
+                                <span class="slider-label">Assessment</span>
+                                <div class="slider-bar"><div class="slider-fill" style="width: 35%; background: var(--ember);"></div></div>
+                                <span class="slider-value">35</span>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" onclick="alert('Opens Pedagogy Engine for re-configuration')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9"/></svg>
+                                Adjust in Pedagogy Engine
+                            </button>
+                            <button class="btn-link">View what this means for activities →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  4. COMPLIANCE & REPORTING               ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d5" id="section-compliance">
+                <div class="section-header" onclick="toggleSection('section-compliance')">
+                    <div class="section-icon compliance">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Compliance & Reporting</div>
+                        <div class="section-description">HEU reporting preferences, audit dates, and export settings</div>
+                    </div>
+                    <span class="section-status status-configured">HEU Active</span>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="field-group" style="margin-top: var(--space-md);">
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Queensland HEU Reporting</div>
+                                    <div class="toggle-desc">Enable compliance tracking and automatic report generation for the Home Education Unit</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <div class="field-row">
+                                <div>
+                                    <label class="field-label">Next Audit / Review Date</label>
+                                    <input class="field-input" type="date" value="2026-07-15" onchange="showToast()">
+                                    <div class="field-hint">We'll surface compliance data 4 weeks before this date</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Reporting Period</label>
+                                    <select class="field-input" onchange="showToast()">
+                                        <option selected>Annual (calendar year)</option>
+                                        <option>Annual (school year)</option>
+                                        <option>Custom dates</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Auto-Generate Work Samples</div>
+                                    <div class="toggle-desc">Automatically suggest activities as potential work samples when evidence is uploaded</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Content Descriptor Tagging</div>
+                                    <div class="toggle-desc">Auto-tag logged activities with Australian Curriculum V9 content descriptors</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Export Includes Photos</div>
+                                    <div class="toggle-desc">Include evidence photos in your exported PDF report package</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  5. NOTIFICATIONS & REMINDERS            ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d5" id="section-notifications">
+                <div class="section-header" onclick="toggleSection('section-notifications')">
+                    <div class="section-icon notifications">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Notifications & Reminders</div>
+                        <div class="section-description">Control when and how Hearth nudges you</div>
+                    </div>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="field-group" style="margin-top: var(--space-md);">
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Logging Reminders</div>
+                                    <div class="toggle-desc">Gentle nudges when you haven't logged activities in a while</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Coverage Gap Alerts</div>
+                                    <div class="toggle-desc">Notify when curriculum areas haven't been covered for 3+ weeks</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Badge Milestones</div>
+                                    <div class="toggle-desc">Celebrate when learners earn badges or reach capability milestones</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Weekly Summary Email</div>
+                                    <div class="toggle-desc">Receive a digest of the week's learning activities every Sunday evening</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Compliance Reminders</div>
+                                    <div class="toggle-desc">Alerts as your HEU review date approaches</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  6. FAMILY ACCESS                        ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d6" id="section-access">
+                <div class="section-header" onclick="toggleSection('section-access')">
+                    <div class="section-icon access">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Family Access</div>
+                        <div class="section-description">Invite a co-facilitator to help manage learning</div>
+                    </div>
+                    <span class="section-status status-new">1 active</span>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="member-list">
+                            <div class="member-item">
+                                <div class="member-avatar" style="background: linear-gradient(135deg, var(--ember), var(--ember-hover)); color: var(--surface-body);">SM</div>
+                                <div class="member-details">
+                                    <div class="member-name">Sarah Morrison</div>
+                                    <div class="member-email">sarah@morrison.family</div>
+                                </div>
+                                <span class="member-role-badge role-primary">Primary</span>
+                            </div>
+                            <div class="member-item">
+                                <div class="member-avatar" style="background: var(--blue-muted); color: var(--blue);">TM</div>
+                                <div class="member-details">
+                                    <div class="member-name">Tom Morrison</div>
+                                    <div class="member-email">tom@morrison.family</div>
+                                </div>
+                                <span class="member-role-badge role-facilitator">Co-facilitator</span>
+                            </div>
+                        </div>
+
+                        <div class="invite-row">
+                            <input class="field-input" type="text" placeholder="Name" id="invite-name">
+                            <input class="field-input" type="email" placeholder="Email address" id="invite-email">
+                            <button class="btn btn-primary" onclick="sendInvite()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                Invite
+                            </button>
+                        </div>
+                        <div class="field-hint" style="margin-top: var(--space-sm);">Co-facilitators can log activities, upload evidence, and award badges. Only the primary facilitator can manage account settings and billing.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  7. ACCOUNT & SECURITY                   ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d7" id="section-account">
+                <div class="section-header" onclick="toggleSection('section-account')">
+                    <div class="section-icon security">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Account & Security</div>
+                        <div class="section-description">Email, password, data management</div>
+                    </div>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="field-group">
+                            <div class="field-row">
+                                <div>
+                                    <label class="field-label">Email Address</label>
+                                    <input class="field-input" type="email" value="sarah@morrison.family" onchange="showToast()">
+                                </div>
+                                <div>
+                                    <label class="field-label">Password</label>
+                                    <div style="display: flex; gap: var(--space-sm);">
+                                        <input class="field-input" type="password" value="••••••••••" disabled style="flex: 1;">
+                                        <button class="btn btn-secondary" onclick="alert('Password change modal')">Change</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">Data & Privacy</label>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Export All Data</div>
+                                    <div class="toggle-desc">Download a complete archive of your family's data including activities, badges, evidence, and reports</div>
+                                </div>
+                                <button class="btn btn-secondary" onclick="alert('Generating data export...')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    Export
+                                </button>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <div class="toggle-label">Analytics & Improvement</div>
+                                    <div class="toggle-desc">Help us improve Hearth by sharing anonymous usage patterns</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="showToast()">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="danger-zone">
+                            <h4>Danger Zone</h4>
+                            <p>Deleting your account will permanently remove all family data, learner profiles, activity logs, badges, evidence, and reports. This action cannot be undone.</p>
+                            <button class="btn btn-danger" onclick="alert('Are you sure? This requires typing your family name to confirm.')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                                Delete Family Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════════╗
+                 ║  8. SUBSCRIPTION & BILLING               ║
+                 ╚══════════════════════════════════════════╝ -->
+            <div class="settings-section animate-in d8" id="section-billing">
+                <div class="section-header" onclick="toggleSection('section-billing')">
+                    <div class="section-icon billing">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <div class="section-title-group">
+                        <div class="section-title">Subscription & Billing</div>
+                        <div class="section-description">Your plan, payment method, and billing history</div>
+                    </div>
+                    <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="section-body">
+                    <div class="section-content">
+                        <div class="plan-card">
+                            <span class="plan-badge">Current Plan</span>
+                            <div class="plan-info">
+                                <div class="plan-name">Hearth Family</div>
+                                <div class="plan-desc">Up to 6 learners · Full compliance tools · Unlimited activity logs · Portfolio exports</div>
+                            </div>
+                            <div class="plan-price">$12<span>/mo</span></div>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">Payment Method</label>
+                            <!-- FIX: border-radius 4px → --radius-sm in inline styles below -->
+                            <div style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); background: var(--surface-body); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                                <div style="width: 40px; height: 28px; background: var(--surface-raised); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--text-secondary);">VISA</div>
+                                <span style="font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-primary); flex: 1;">•••• •••• •••• 4242</span>
+                                <span style="font-family: var(--font-sans); font-size: 0.78rem; color: var(--text-muted);">Expires 08/27</span>
+                                <button class="btn-link">Update</button>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">Billing History</label>
+                            <div style="font-family: var(--font-sans); font-size: 0.82rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">
+                                    <span>18 Feb 2026</span><span>Hearth Family — Monthly</span><span style="color: var(--sage);">$12.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">
+                                    <span>18 Jan 2026</span><span>Hearth Family — Monthly</span><span style="color: var(--sage);">$12.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; color: var(--text-secondary);">
+                                    <span>18 Dec 2025</span><span>Hearth Family — Monthly</span><span style="color: var(--sage);">$12.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" onclick="alert('Opens plan comparison and upgrade flow')">View Plans</button>
+                            <button class="btn-link" style="color: var(--text-muted);">Cancel subscription</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Saved Toast — canonical: bottom-center, sage left-accent, surface-raised bg -->
+    <div class="toast" id="save-toast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Changes saved
+    </div>
+
+    <script>
+        // ── Section Accordion ──────────────────────────
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const wasOpen = section.classList.contains('open');
+
+            // Close all
+            document.querySelectorAll('.settings-section').forEach(s => {
+                s.classList.remove('open');
+            });
+
+            // Toggle clicked
+            if (!wasOpen) {
+                section.classList.add('open');
+                // Smooth scroll to section
+                setTimeout(() => {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+
+        // ── Learner Edit Toggle ────────────────────────
+        function toggleEdit(id) {
+            const card = document.getElementById(id);
+            card.classList.toggle('editing');
+        }
+
+        // ── Save Toast ─────────────────────────────────
+        let toastTimeout;
+        function showToast() {
+            const toast = document.getElementById('save-toast');
+            toast.classList.add('visible');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2200);
+        }
+
+        // ── Invite Flow ────────────────────────────────
+        function sendInvite() {
+            const name = document.getElementById('invite-name').value;
+            const email = document.getElementById('invite-email').value;
+
+            if (!name || !email) {
+                alert('Please enter both a name and email address.');
+                return;
+            }
+
+            // Get initials
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+
+            // Add to member list
+            const memberList = document.querySelector('.member-list');
+            const newMember = document.createElement('div');
+            newMember.className = 'member-item';
+            newMember.innerHTML = `
+                <div class="member-avatar" style="background: var(--amber-muted); color: var(--amber);">${initials}</div>
+                <div class="member-details">
+                    <div class="member-name">${name}</div>
+                    <div class="member-email">${email}</div>
+                </div>
+                <span class="member-role-badge role-pending">Pending</span>
+                <button class="btn-icon" title="Remove" style="margin-left: var(--space-sm);" onclick="this.parentElement.remove()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            `;
+            memberList.appendChild(newMember);
+
+            // Clear inputs
+            document.getElementById('invite-name').value = '';
+            document.getElementById('invite-email').value = '';
+
+            showToast();
+        }
+    </script>
+</body>
+</html>

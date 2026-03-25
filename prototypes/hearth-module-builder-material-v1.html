@@ -1,0 +1,743 @@
+<!-- Version: 1 | Date: 2026-03-21 | Changes: First build of Material-Anchored pathway. Entry screen: resource type chips (single-select), resource name, description, "what drew you", usage intent multi-select chips (max 3). Standard loading → shared editor flow with session template steps pre-populated. Design brief: hearth-module-builder-pathways-design-brief-v1.md. Spec: hearth-module-builder-pathways-architecture-v2.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Material-Anchored Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-coffee: #0F0D0B;
+      --coffee-mid: #1A1612;
+      --coffee-light: #252117;
+      --surface-elevated: #2D2621;
+      --surface-hover: #352E28;
+      --text-primary: #E8DFD4;
+      --text-secondary: #9B8B7E;
+      --text-muted: #6B5D52;
+      --ember: #D97B3A;
+      --ember-hover: #E88F4E;
+      --ember-glow: rgba(217, 123, 58, 0.15);
+      --ember-glow-strong: rgba(217, 123, 58, 0.25);
+      --sage: #4ADE80;
+      --sage-glow: rgba(74, 222, 128, 0.12);
+      --rose: #E8A0BF;
+      --blue: #7BA7CC;
+      --purple: #C084FC;
+      --font-serif: 'Crimson Text', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --border-subtle: rgba(45, 38, 33, 0.6);
+      --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--deep-coffee);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 90%, rgba(217,123,58,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 10%, rgba(217,123,58,0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
+
+    /* HEADER */
+    .header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; position: sticky; top: 0; background: var(--deep-coffee); z-index: 10; }
+    .back-btn { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-family: var(--font-sans); cursor: pointer; padding: 6px 0; transition: color var(--transition); }
+    .back-btn:hover { color: var(--text-primary); }
+    .header-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--text-primary); flex: 1; }
+    .header-save { background: none; border: 1px solid var(--border-subtle); color: var(--text-secondary); font-family: var(--font-sans); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+    .header-save:hover:not(:disabled) { border-color: var(--ember); color: var(--ember); }
+    .header-save:disabled { opacity: 0.35; cursor: default; }
+    .header-save.ready { background: var(--ember); border-color: var(--ember); color: #fff; }
+    .header-save.ready:hover { background: var(--ember-hover); }
+
+    /* VIEW MANAGEMENT */
+    .view { display: none; animation: fadeSlideIn 250ms ease-out; }
+    .view.active { display: block; }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* ENTRY SCREEN */
+    .entry-intro { padding: 8px 16px 20px; }
+    .entry-intro h1 { font-family: var(--font-serif); font-size: 26px; font-weight: 600; line-height: 1.25; margin-bottom: 4px; }
+    .entry-intro .pathway-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .entry-intro p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* FORM ELEMENTS */
+    .field { margin-bottom: 20px; padding: 0 16px; }
+    .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .field-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+    textarea, input[type="text"] { width: 100%; background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; padding: 10px 12px; line-height: 1.5; transition: border-color var(--transition); resize: vertical; }
+    textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--ember); }
+    textarea::placeholder, input[type="text"]::placeholder { color: var(--text-muted); }
+
+    select { width: 100%; background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; padding: 10px 12px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B8B7E' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    select:focus { outline: none; border-color: var(--ember); }
+
+    .settings-row { display: flex; gap: 12px; padding: 0 16px; margin-bottom: 20px; }
+    .settings-row .field { flex: 1; padding: 0; margin-bottom: 0; }
+
+    /* PILLS */
+    .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill { background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: 20px; color: var(--text-secondary); font-family: var(--font-sans); font-size: 13px; padding: 6px 14px; cursor: pointer; transition: all var(--transition); white-space: nowrap; }
+    .pill:hover { border-color: rgba(217, 123, 58, 0.3); color: var(--text-primary); }
+    .pill.selected { background: var(--ember-glow); border-color: var(--ember); color: var(--ember); }
+    .pill.maxed { opacity: 0.35; pointer-events: none; }
+
+    /* CONTINUE */
+    .continue-btn { display: block; width: calc(100% - 32px); margin: 24px 16px 0; background: var(--ember); color: #fff; border: none; border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 15px; font-weight: 500; padding: 14px 24px; cursor: pointer; transition: all var(--transition); }
+    .continue-btn:hover { background: var(--ember-hover); }
+    .continue-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* LOADING */
+    .loading-screen { padding: 60px 16px; text-align: center; }
+    .loading-emoji { font-size: 40px; margin-bottom: 16px; animation: pulse 1.8s ease-in-out infinite; }
+    .loading-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .loading-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .loading-steps { text-align: left; max-width: 300px; margin: 0 auto; }
+    .loading-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-muted); transition: color var(--transition); }
+    .loading-step.active { color: var(--text-secondary); }
+    .loading-step.done { color: var(--sage); }
+    .loading-step .step-indicator { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; transition: all var(--transition); }
+    .loading-step.active .step-indicator { border-color: var(--ember); color: var(--ember); animation: pulse 1.2s ease-in-out infinite; }
+    .loading-step.done .step-indicator { border-color: var(--sage); background: var(--sage-glow); color: var(--sage); }
+
+    /* COMPLETENESS BAR */
+    .completeness-bar { margin: 0 16px 16px; padding: 10px 14px; background: var(--coffee-mid); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+    .completeness-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .completeness-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .completeness-pct { font-size: 12px; font-weight: 600; color: var(--ember); }
+    .completeness-track { height: 4px; background: var(--coffee-light); border-radius: 2px; overflow: hidden; }
+    .completeness-fill { height: 100%; background: var(--ember); border-radius: 2px; transition: width 400ms ease; }
+    .completeness-fill.ready { background: var(--sage); }
+    .completeness-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* EDITOR SECTIONS */
+    .editor-section { margin-bottom: 8px; }
+    .section-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .section-header:hover { background: rgba(255,255,255,0.02); }
+    .section-emoji { font-size: 16px; flex-shrink: 0; }
+    .section-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; flex: 1; }
+    .section-status { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+    .section-status.complete { background: var(--sage-glow); color: var(--sage); }
+    .section-status.partial { background: var(--ember-glow); color: var(--ember); }
+    .section-status.empty { background: rgba(107, 93, 82, 0.2); color: var(--text-muted); }
+    .section-chevron { color: var(--text-muted); font-size: 14px; transition: transform var(--transition); }
+    .section-chevron.open { transform: rotate(90deg); }
+    .section-body { display: none; padding: 0 0 12px; }
+    .section-body.open { display: block; animation: fadeSlideIn 200ms ease-out; }
+    .section-divider { height: 1px; background: var(--border-subtle); margin: 0 16px; }
+
+    /* AI SUGGESTION */
+    .ai-suggested-field { position: relative; }
+    .ai-suggested-field textarea, .ai-suggested-field input[type="text"] { border-left: 3px solid var(--ember-glow-strong); }
+    .ai-suggested-field textarea:focus, .ai-suggested-field input[type="text"]:focus { border-left-color: var(--ember); }
+    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ember); margin-top: 4px; opacity: 0.8; }
+    .ai-badge::before { content: '✨'; font-size: 10px; }
+
+    /* STEP CARDS */
+    .step-list { padding: 0 16px; }
+    .step-card { background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden; transition: border-color var(--transition); }
+    .step-card:focus-within { border-color: rgba(217, 123, 58, 0.3); }
+    .step-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--coffee-mid); cursor: grab; }
+    .step-number { font-size: 12px; font-weight: 600; color: var(--ember); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--ember-glow); border-radius: 50%; flex-shrink: 0; }
+    .step-title-input { flex: 1; background: none; border: none; color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; font-weight: 500; padding: 0; }
+    .step-title-input:focus { outline: none; }
+    .step-title-input::placeholder { color: var(--text-muted); }
+    .step-actions { display: flex; gap: 4px; }
+    .step-action-btn { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 4px; transition: color var(--transition); line-height: 1; }
+    .step-action-btn:hover { color: var(--text-primary); }
+    .step-action-btn.delete:hover { color: #ef4444; }
+    .step-card-body { padding: 10px 12px; }
+    .step-card-body textarea { width: 100%; background: none; border: none; color: var(--text-primary); font-family: var(--font-sans); font-size: 13px; padding: 0; line-height: 1.5; resize: none; min-height: 40px; }
+    .step-card-body textarea:focus { outline: none; }
+    .step-card-body textarea::placeholder { color: var(--text-muted); }
+    .step-say-this { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+    .step-say-this label { font-size: 11px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 4px; }
+    .step-say-this textarea { font-style: italic; font-size: 12px; min-height: 30px; }
+    .step-observation-hint { margin-top: 8px; padding: 6px 8px; background: var(--ember-glow); border-radius: var(--radius-sm); border-left: 2px solid rgba(217, 123, 58, 0.4); }
+    .step-observation-hint p { font-size: 12px; font-style: italic; color: var(--text-secondary); line-height: 1.4; }
+    .step-observation-hint .hint-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .hint-action { background: none; border: none; font-size: 11px; color: var(--text-muted); cursor: pointer; padding: 0; transition: color var(--transition); }
+    .hint-action:hover { color: var(--text-primary); }
+    .add-step-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: none; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); color: var(--text-muted); font-family: var(--font-sans); font-size: 13px; cursor: pointer; transition: all var(--transition); margin-top: 2px; }
+    .add-step-btn:hover { border-color: var(--ember); color: var(--ember); background: var(--ember-glow); }
+
+    /* CAPABILITY TAGS */
+    .capability-tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px; }
+    .cap-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all var(--transition); }
+    .cap-tag.explicit { background: var(--ember-glow); border: 1px solid var(--ember); color: var(--ember); }
+    .cap-tag.suggested { background: transparent; border: 1px dashed rgba(217, 123, 58, 0.4); color: var(--text-secondary); }
+    .cap-tag.suggested:hover { border-color: var(--ember); color: var(--ember); }
+    .cap-tag .tag-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .cap-tag .dismiss { font-size: 14px; margin-left: 2px; opacity: 0.5; transition: opacity var(--transition); }
+    .cap-tag:hover .dismiss { opacity: 1; }
+    .cap-hint { padding: 8px 16px 0; font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+    /* COHERENCE BANNER */
+    .coherence-banner { margin: 12px 16px; padding: 12px 14px; background: rgba(217, 123, 58, 0.08); border: 1px solid rgba(217, 123, 58, 0.2); border-radius: var(--radius-md); display: none; }
+    .coherence-banner.visible { display: block; animation: fadeSlideIn 300ms ease-out; }
+    .coherence-banner .banner-content { display: flex; align-items: flex-start; gap: 10px; }
+    .coherence-banner .banner-emoji { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .coherence-banner .banner-text { flex: 1; }
+    .coherence-banner .banner-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+    .coherence-banner .banner-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .coherence-banner .banner-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .banner-action-btn { background: none; border: 1px solid var(--border-subtle); color: var(--text-secondary); font-family: var(--font-sans); font-size: 12px; padding: 5px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+    .banner-action-btn:hover { border-color: var(--ember); color: var(--ember); }
+    .banner-action-btn.dismiss-banner { border: none; padding-left: 0; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface-elevated); border: 1px solid var(--sage); color: var(--text-primary); font-size: 14px; padding: 12px 20px; border-radius: var(--radius-md); z-index: 100; opacity: 0; transition: all 400ms ease; display: flex; align-items: center; gap: 8px; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Resource core-material badge in editor */
+    .core-material-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--ember); background: var(--ember-glow); padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 500; }
+
+    @media (max-width: 400px) {
+      .entry-intro h1 { font-size: 22px; }
+      .settings-row { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <div class="header">
+      <button class="back-btn" onclick="handleBack()">← Back</button>
+      <div class="header-title" id="header-title"></div>
+      <button class="header-save" id="save-btn" disabled onclick="handleSave()">Save Draft</button>
+    </div>
+
+    <!-- VIEW 1: ENTRY SCREEN -->
+    <div class="view active" id="view-entry">
+      <div class="entry-intro">
+        <div class="pathway-tag">📖 Material-Anchored</div>
+        <h1>Build learning around a resource</h1>
+        <p>You have something you love — a book, kit, video, or place. Describe it and we'll structure the learning.</p>
+      </div>
+
+      <!-- Section A: The Resource -->
+      <div class="field">
+        <label class="field-label">What is it?</label>
+        <div class="pill-group" id="resource-type-pills">
+          <button class="pill" onclick="selectResourceType(this, 'book')" data-value="book">📚 Book</button>
+          <button class="pill" onclick="selectResourceType(this, 'documentary')" data-value="documentary">🎬 Video</button>
+          <button class="pill" onclick="selectResourceType(this, 'kit')" data-value="kit">🧰 Kit</button>
+          <button class="pill" onclick="selectResourceType(this, 'app')" data-value="app">📱 App</button>
+          <button class="pill" onclick="selectResourceType(this, 'place')" data-value="place">📍 Place</button>
+          <button class="pill" onclick="selectResourceType(this, 'audio')" data-value="audio">🎵 Audio</button>
+          <button class="pill" onclick="selectResourceType(this, 'other')" data-value="other">📦 Other</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What's it called?</label>
+        <input type="text" id="entry-name" placeholder="e.g., 'The Very Hungry Caterpillar' by Eric Carle" oninput="checkEntryReady()">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Tell us about it in a sentence or two</label>
+        <textarea id="entry-desc" placeholder="e.g., A picture book about a caterpillar eating through different foods before becoming a butterfly" style="min-height: 70px;" oninput="checkEntryReady()"></textarea>
+        <div class="field-hint">This helps us understand the resource</div>
+      </div>
+
+      <!-- Section B: Your Vision -->
+      <div class="field">
+        <label class="field-label">What drew you to this?</label>
+        <textarea id="entry-vision" placeholder="e.g., Emma loves caterpillars and I thought we could explore lifecycles" style="min-height: 56px;"></textarea>
+        <div class="field-hint">This helps us understand what you want the learning to focus on</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">How do you imagine using it?</label>
+        <div class="pill-group" id="intent-pills">
+          <button class="pill" onclick="toggleIntent(this)" data-value="read-together">📖 Read / watch together</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="inspire-project">🎨 Inspire a project</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="explore-topic">🔍 Explore a topic</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="discuss">🗣️ Discuss and reflect</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="do-activity">🧪 Do the activity</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="writing-drawing">✍️ Writing / drawing</button>
+          <button class="pill" onclick="toggleIntent(this)" data-value="memorise">🧠 Memorise</button>
+        </div>
+        <div class="field-hint">Pick 1–3</div>
+      </div>
+
+      <!-- Section C: Quick Settings -->
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select id="entry-duration">
+            <option value="15">15 minutes</option>
+            <option value="30" selected>30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="120">1–2 hours</option>
+            <option value="360">Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="entry-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'entry-setting-pills')" data-value="either">Either</button>
+            <button class="pill" onclick="selectPill(this, 'entry-setting-pills')" data-value="indoor">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'entry-setting-pills')" data-value="outdoor">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" id="entry-continue" disabled onclick="startInference()">
+        Build the learning around this →
+      </button>
+    </div>
+
+    <!-- VIEW 2: LOADING -->
+    <div class="view" id="view-loading">
+      <div class="loading-screen">
+        <div class="loading-emoji">📖</div>
+        <div class="loading-title">Building your module</div>
+        <div class="loading-desc">Using your resource to prepare the editor…</div>
+        <div class="loading-steps">
+          <div class="loading-step" id="load-step-1"><div class="step-indicator">1</div><span>Inferring the learning</span></div>
+          <div class="loading-step" id="load-step-2"><div class="step-indicator">2</div><span>Selecting session structure</span></div>
+          <div class="loading-step" id="load-step-3"><div class="step-indicator">3</div><span>Preparing the editor</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: SHARED EDITOR -->
+    <div class="view" id="view-editor">
+      <div class="completeness-bar">
+        <div class="completeness-top">
+          <span class="completeness-label">Module completeness</span>
+          <span class="completeness-pct" id="completeness-pct">0%</span>
+        </div>
+        <div class="completeness-track"><div class="completeness-fill" id="completeness-fill" style="width: 0%"></div></div>
+        <div class="completeness-hint" id="completeness-hint">Add a title and steps to get started</div>
+      </div>
+
+      <div class="coherence-banner" id="coherence-banner">
+        <div class="banner-content">
+          <div class="banner-emoji">🤔</div>
+          <div class="banner-text">
+            <div class="banner-title">Steps and goal might not align</div>
+            <div class="banner-desc">Your steps seem focused on a different topic than your understanding goal. Would you like to adjust either one?</div>
+            <div class="banner-actions">
+              <button class="banner-action-btn" onclick="scrollToSection('section-learning')">Review learning goal</button>
+              <button class="banner-action-btn" onclick="scrollToSection('section-steps')">Review steps</button>
+              <button class="banner-action-btn dismiss-banner" onclick="dismissCoherence()">Looks fine to me</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 1: BASICS -->
+      <div class="editor-section" id="section-basics">
+        <div class="section-header" onclick="toggleSection('section-basics')">
+          <span class="section-emoji">📝</span><span class="section-title">The Basics</span>
+          <span class="section-status empty" id="status-basics">Empty</span>
+          <span class="section-chevron open" id="chevron-basics">›</span>
+        </div>
+        <div class="section-body open" id="body-basics">
+          <div class="field">
+            <label class="field-label">Module title</label>
+            <div class="ai-suggested-field" id="field-title">
+              <input type="text" id="ed-title" placeholder="e.g., Exploring Lifecycles" oninput="handleFieldEdit('field-title'); updateCompleteness();">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Description</label>
+            <div class="ai-suggested-field" id="field-desc">
+              <textarea id="ed-description" placeholder="A sentence or two about what this module is" style="min-height: 48px;" oninput="handleFieldEdit('field-desc'); updateCompleteness();"></textarea>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="field"><label class="field-label">Duration</label><select id="ed-duration"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="120">1–2 hrs</option><option value="360">Half day</option></select></div>
+            <div class="field"><label class="field-label">Setting</label><div class="pill-group" id="ed-setting-pills"><button class="pill selected" onclick="selectPill(this, 'ed-setting-pills')">Either</button><button class="pill" onclick="selectPill(this, 'ed-setting-pills')">Indoor</button><button class="pill" onclick="selectPill(this, 'ed-setting-pills')">Outdoor</button></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- SECTION 2: STEPS -->
+      <div class="editor-section" id="section-steps">
+        <div class="section-header" onclick="toggleSection('section-steps')">
+          <span class="section-emoji">📋</span><span class="section-title">The Steps</span>
+          <span class="section-status empty" id="status-steps">Empty</span>
+          <span class="section-chevron open" id="chevron-steps">›</span>
+        </div>
+        <div class="section-body open" id="body-steps">
+          <div class="step-list" id="step-list"></div>
+          <div style="padding: 0 16px;">
+            <button class="add-step-btn" onclick="addStep()">+ Add a step</button>
+            <button class="add-step-btn" onclick="regenerateHints()" style="margin-top: 6px; border-style: solid; border-color: rgba(217,123,58,0.2);">✨ Regenerate observation hints</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- SECTION 3: MATERIALS -->
+      <div class="editor-section" id="section-materials">
+        <div class="section-header" onclick="toggleSection('section-materials')">
+          <span class="section-emoji">🧰</span><span class="section-title">Materials Needed</span>
+          <span class="section-status empty" id="status-materials">Optional</span>
+          <span class="section-chevron open" id="chevron-materials">›</span>
+        </div>
+        <div class="section-body open" id="body-materials">
+          <div class="field">
+            <label class="field-label">What do you need?</label>
+            <div id="material-list"></div>
+            <button class="add-step-btn" onclick="addMaterial()" style="margin-top: 4px;">+ Add material</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- SECTION 4: LEARNING -->
+      <div class="editor-section" id="section-learning">
+        <div class="section-header" onclick="toggleSection('section-learning')">
+          <span class="section-emoji">💡</span><span class="section-title">The Learning</span>
+          <span class="section-status empty" id="status-learning">Empty</span>
+          <span class="section-chevron open" id="chevron-learning">›</span>
+        </div>
+        <div class="section-body open" id="body-learning">
+          <div class="field"><label class="field-label">What are they learning?</label><div class="ai-suggested-field" id="field-understanding"><textarea id="ed-understanding" placeholder="The understanding goal" style="min-height: 70px;" oninput="handleFieldEdit('field-understanding'); updateCompleteness();"></textarea></div></div>
+          <div class="field"><label class="field-label">What to watch for</label><div class="ai-suggested-field" id="field-watchfor"><textarea id="ed-watchfor" placeholder="Signs that they're getting it" oninput="handleFieldEdit('field-watchfor'); updateCompleteness();"></textarea></div></div>
+          <div class="field"><label class="field-label">If they're not getting it</label><div class="ai-suggested-field" id="field-pivot"><textarea id="ed-pivot" placeholder="What to try instead" style="min-height: 48px;" oninput="handleFieldEdit('field-pivot'); updateCompleteness();"></textarea></div></div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- SECTION 5: CAPABILITIES -->
+      <div class="editor-section" id="section-capabilities">
+        <div class="section-header" onclick="toggleSection('section-capabilities')">
+          <span class="section-emoji">🧭</span><span class="section-title">Capabilities</span>
+          <span class="section-status empty" id="status-capabilities">Empty</span>
+          <span class="section-chevron open" id="chevron-capabilities">›</span>
+        </div>
+        <div class="section-body open" id="body-capabilities">
+          <div class="capability-tags" id="cap-tags"></div>
+          <div class="cap-hint" id="cap-hint">Tap a suggested tag to confirm it, or ✕ to dismiss</div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- SECTION 6: CONNECT -->
+      <div class="editor-section" id="section-connect">
+        <div class="section-header" onclick="toggleSection('section-connect')">
+          <span class="section-emoji">🔗</span><span class="section-title">Connect</span>
+          <span class="section-status empty" id="status-connect">Optional</span>
+          <span class="section-chevron" id="chevron-connect">›</span>
+        </div>
+        <div class="section-body" id="body-connect">
+          <div class="field"><label class="field-label">Prerequisites</label><div class="field-hint" style="margin-top: 0; margin-bottom: 8px;">Link modules that should come before this one</div><select><option value="">None — this module stands alone</option><option value="nature-walks">Nature Observation Walks</option></select></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">✅ Draft saved</div>
+  </div>
+
+  <script>
+    // STATE
+    let currentView = 'entry';
+    let selectedResourceType = null;
+    let selectedIntents = [];
+    let moduleData = {
+      id: 'mod_' + Date.now(),
+      createdVia: 'material',
+      title: '', description: '', duration: 30, setting: 'either',
+      steps: [], materials: [], targetUnderstanding: '', watchFor: '', pivot: '',
+      capabilities: [], sourceResource: null, status: 'draft',
+    };
+    let aiSuggestions = new Set();
+
+    const SIMULATED_AI = {
+      title: "Exploring Lifecycles with The Very Hungry Caterpillar",
+      description: "Read through this beloved picture book together, then explore the real science of metamorphosis and lifecycles",
+      understanding: "Living things go through stages of change as they grow, and we can observe these stages in the world around us",
+      watchFor: "They start noticing lifecycles elsewhere — asking about tadpoles, seeds growing, or other transformations they see",
+      pivot: "If the concept feels abstract, focus on just one lifecycle they can observe directly — plant a bean seed and watch it day by day",
+      capabilities: [
+        { id: 'S2', name: 'Living Systems', domain: 'Scientific', color: '#4ADE80', confidence: 'suggested' },
+        { id: 'S5', name: 'Scientific Observation', domain: 'Scientific', color: '#4ADE80', confidence: 'suggested' },
+        { id: 'L3', name: 'Reading Comprehension', domain: 'Language', color: '#E8A0BF', confidence: 'suggested' },
+        { id: 'EF1', name: 'Sustained Attention', domain: 'Executive Function', color: '#C084FC', confidence: 'suggested' },
+      ],
+      steps: [
+        { title: "Before reading", instructions: "Look at the cover together. What do you think this will be about?", hint: "Notice what predictions they make and what details they pick up on" },
+        { title: "Read aloud", instructions: "Read through the book together. Pause at natural points to wonder aloud.", hint: "Watch for questions they ask or connections they make" },
+        { title: "Talk about it", instructions: "Ask what they noticed, what surprised them, or what they want to know more about. Follow their lead.", hint: "Listen for new understanding — are they connecting the story to the wider world?" },
+        { title: "Explore lifecycles", instructions: "Go outside and look for examples of things changing and growing — caterpillars, seeds, tadpoles. Draw or photograph what you find.", hint: "Notice whether they can transfer the lifecycle concept from the book to the real world — that's the conceptual leap" },
+      ],
+    };
+
+    // ENTRY SCREEN
+    function selectResourceType(pill, type) {
+      const group = document.getElementById('resource-type-pills');
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      selectedResourceType = type;
+      checkEntryReady();
+    }
+
+    function toggleIntent(pill) {
+      const val = pill.dataset.value;
+      if (pill.classList.contains('selected')) {
+        pill.classList.remove('selected');
+        selectedIntents = selectedIntents.filter(i => i !== val);
+      } else {
+        if (selectedIntents.length >= 3) return;
+        pill.classList.add('selected');
+        selectedIntents.push(val);
+      }
+      // Max enforcement
+      const allPills = document.querySelectorAll('#intent-pills .pill');
+      allPills.forEach(p => {
+        if (!p.classList.contains('selected') && selectedIntents.length >= 3) {
+          p.classList.add('maxed');
+        } else {
+          p.classList.remove('maxed');
+        }
+      });
+      checkEntryReady();
+    }
+
+    function checkEntryReady() {
+      const name = document.getElementById('entry-name').value.trim();
+      const desc = document.getElementById('entry-desc').value.trim();
+      const btn = document.getElementById('entry-continue');
+      btn.disabled = !(selectedResourceType && name.length >= 3 && desc.length >= 10 && selectedIntents.length >= 1);
+    }
+
+    function selectPill(pill, groupId) {
+      const group = document.getElementById(groupId);
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+    }
+
+    // INFERENCE
+    function startInference() {
+      moduleData.sourceResource = {
+        title: document.getElementById('entry-name').value.trim(),
+        type: selectedResourceType,
+        description: document.getElementById('entry-desc').value.trim(),
+      };
+      moduleData.duration = parseInt(document.getElementById('entry-duration').value);
+      const settingPill = document.querySelector('#entry-setting-pills .pill.selected');
+      if (settingPill) moduleData.setting = settingPill.dataset.value || settingPill.textContent.trim().toLowerCase();
+
+      switchView('loading');
+
+      const steps = ['load-step-1', 'load-step-2', 'load-step-3'];
+      let i = 0;
+      function advance() {
+        if (i > 0) { document.getElementById(steps[i-1]).classList.remove('active'); document.getElementById(steps[i-1]).classList.add('done'); }
+        if (i < steps.length) { document.getElementById(steps[i]).classList.add('active'); i++; setTimeout(advance, 600 + Math.random() * 400); }
+        else { setTimeout(populateEditor, 400); }
+      }
+      setTimeout(advance, 300);
+    }
+
+    function populateEditor() {
+      // Title & description (AI-suggested)
+      document.getElementById('ed-title').value = SIMULATED_AI.title;
+      markAsSuggested('field-title');
+      document.getElementById('ed-description').value = SIMULATED_AI.description;
+      markAsSuggested('field-desc');
+
+      // Duration & setting
+      document.getElementById('ed-duration').value = moduleData.duration;
+      const settingText = moduleData.setting.charAt(0).toUpperCase() + moduleData.setting.slice(1);
+      document.querySelectorAll('#ed-setting-pills .pill').forEach(p => { p.classList.toggle('selected', p.textContent.trim() === settingText); });
+
+      // Steps (from template)
+      SIMULATED_AI.steps.forEach(s => addStep(s.title, s.instructions, s.hint));
+
+      // Materials — auto-add the resource as core material
+      addMaterial(moduleData.sourceResource.title, '', true);
+
+      // Learning fields (AI-suggested)
+      document.getElementById('ed-understanding').value = SIMULATED_AI.understanding;
+      markAsSuggested('field-understanding');
+      document.getElementById('ed-watchfor').value = SIMULATED_AI.watchFor;
+      markAsSuggested('field-watchfor');
+      document.getElementById('ed-pivot').value = SIMULATED_AI.pivot;
+      markAsSuggested('field-pivot');
+
+      renderCapabilities();
+      switchView('editor');
+      updateCompleteness();
+    }
+
+    // AI SUGGESTION DISPLAY
+    function markAsSuggested(fieldId) {
+      aiSuggestions.add(fieldId);
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.classList.add('ai-suggested-field');
+        let badge = field.querySelector('.ai-badge');
+        if (!badge) { badge = document.createElement('div'); badge.className = 'ai-badge'; badge.textContent = 'Suggested'; field.appendChild(badge); }
+      }
+    }
+    function removeSuggestion(fieldId) {
+      aiSuggestions.delete(fieldId);
+      const field = document.getElementById(fieldId);
+      if (field) { field.classList.remove('ai-suggested-field'); const badge = field.querySelector('.ai-badge'); if (badge) badge.remove(); }
+    }
+    function handleFieldEdit(fieldId) { removeSuggestion(fieldId); updateCompleteness(); }
+
+    // CAPABILITIES
+    function renderCapabilities() {
+      const container = document.getElementById('cap-tags');
+      container.innerHTML = '';
+      SIMULATED_AI.capabilities.forEach((cap, idx) => {
+        const tag = document.createElement('button');
+        tag.className = `cap-tag ${cap.confidence}`;
+        tag.innerHTML = `<span class="tag-dot" style="background: ${cap.color}"></span><span>${cap.id}: ${cap.name}</span><span class="dismiss" onclick="event.stopPropagation(); removeCapability(${idx})">✕</span>`;
+        tag.onclick = () => promoteCapability(idx);
+        container.appendChild(tag);
+      });
+      updateCompleteness();
+    }
+    function promoteCapability(idx) { if (SIMULATED_AI.capabilities[idx].confidence === 'suggested') { SIMULATED_AI.capabilities[idx].confidence = 'explicit'; renderCapabilities(); } }
+    function removeCapability(idx) { SIMULATED_AI.capabilities.splice(idx, 1); renderCapabilities(); }
+
+    // STEPS
+    let stepCounter = 0;
+    function addStep(title, instructions, hint) {
+      stepCounter++;
+      const id = stepCounter;
+      const list = document.getElementById('step-list');
+      const card = document.createElement('div');
+      card.className = 'step-card'; card.id = `step-${id}`;
+      const hintHTML = hint ? `<div class="step-observation-hint" id="hint-${id}"><p>${hint}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${id})">Edit</button><button class="hint-action" onclick="removeHint(${id})">Remove</button></div></div>` : '';
+      card.innerHTML = `<div class="step-card-header"><div class="step-number">${getStepCount()}</div><input type="text" class="step-title-input" placeholder="Step title" value="${title || ''}" oninput="updateCompleteness()"><div class="step-actions"><button class="step-action-btn" onclick="moveStep(${id}, -1)">↑</button><button class="step-action-btn" onclick="moveStep(${id}, 1)">↓</button><button class="step-action-btn delete" onclick="removeStep(${id})">✕</button></div></div><div class="step-card-body"><textarea placeholder="What happens in this step?" oninput="updateCompleteness()">${instructions || ''}</textarea><div class="step-say-this"><label>💬 What to say (optional)</label><textarea placeholder="e.g., 'What do you notice about…'"></textarea></div>${hintHTML}</div>`;
+      list.appendChild(card);
+      renumberSteps(); updateCompleteness();
+      if (!title) card.querySelector('.step-title-input').focus();
+    }
+    function removeStep(id) { const c = document.getElementById(`step-${id}`); if (c) { c.remove(); renumberSteps(); updateCompleteness(); } }
+    function moveStep(id, dir) { const c = document.getElementById(`step-${id}`); const l = document.getElementById('step-list'); if (!c) return; if (dir === -1 && c.previousElementSibling) l.insertBefore(c, c.previousElementSibling); else if (dir === 1 && c.nextElementSibling) l.insertBefore(c.nextElementSibling, c); renumberSteps(); }
+    function getStepCount() { return document.querySelectorAll('#step-list .step-card').length + 1; }
+    function renumberSteps() { document.querySelectorAll('#step-list .step-card').forEach((c, i) => { const n = c.querySelector('.step-number'); if (n) n.textContent = i + 1; }); }
+    function removeHint(id) { const h = document.getElementById(`hint-${id}`); if (h) h.remove(); }
+    function editHint(id) { const h = document.getElementById(`hint-${id}`); if (!h) return; const p = h.querySelector('p'); const t = p.textContent; const inp = document.createElement('textarea'); inp.style.cssText = 'width:100%;background:none;border:none;color:var(--text-secondary);font-size:12px;font-style:italic;line-height:1.4;resize:none;padding:0;min-height:30px;'; inp.value = t; inp.onblur = () => { p.textContent = inp.value; inp.replaceWith(p); }; p.replaceWith(inp); inp.focus(); }
+    function regenerateHints() {
+      const steps = document.querySelectorAll('#step-list .step-card'); if (steps.length === 0) return;
+      const btn = event.target; const orig = btn.textContent; btn.textContent = '✨ Generating…'; btn.disabled = true;
+      setTimeout(() => {
+        const hints = SIMULATED_AI.steps.map(s => s.hint);
+        steps.forEach((card, i) => { const ex = card.querySelector('.step-observation-hint'); if (ex) ex.remove(); const hid = card.id.replace('step-',''); const hEl = document.createElement('div'); hEl.className = 'step-observation-hint'; hEl.id = `hint-${hid}`; hEl.innerHTML = `<p>${hints[i % hints.length]}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${hid})">Edit</button><button class="hint-action" onclick="removeHint(${hid})">Remove</button></div>`; card.querySelector('.step-card-body').appendChild(hEl); });
+        btn.textContent = orig; btn.disabled = false;
+      }, 1200);
+    }
+
+    // MATERIALS
+    let materialCounter = 0;
+    function addMaterial(name, alt, isCore) {
+      materialCounter++;
+      const id = materialCounter;
+      const list = document.getElementById('material-list');
+      const row = document.createElement('div');
+      row.id = `material-${id}`;
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+      const coreBadge = isCore ? `<span class="core-material-badge">Core</span>` : '';
+      row.innerHTML = `<input type="text" placeholder="e.g., Magnifying glass" style="flex:1;" value="${name || ''}" oninput="updateCompleteness()"><input type="text" placeholder="Alternative" style="flex:0.6;font-size:12px;" value="${alt || ''}">${coreBadge}<button onclick="document.getElementById('material-${id}').remove(); updateCompleteness();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;">✕</button>`;
+      list.appendChild(row);
+      if (!name) row.querySelector('input').focus();
+    }
+
+    // SECTIONS
+    function toggleSection(sectionId) { const b = document.getElementById(`body-${sectionId.replace('section-','')}`); const c = document.getElementById(`chevron-${sectionId.replace('section-','')}`); if (!b) return; const o = b.classList.contains('open'); b.classList.toggle('open', !o); if (c) c.classList.toggle('open', !o); }
+    function scrollToSection(sectionId) { const el = document.getElementById(sectionId); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); const k = sectionId.replace('section-',''); const b = document.getElementById(`body-${k}`); const c = document.getElementById(`chevron-${k}`); if (b && !b.classList.contains('open')) { b.classList.add('open'); if (c) c.classList.add('open'); } } }
+
+    // COMPLETENESS
+    function updateCompleteness() {
+      let score = 0;
+      const title = document.getElementById('ed-title')?.value.trim(); if (title) score += 20;
+      const desc = document.getElementById('ed-description')?.value.trim(); if (desc) score += 10;
+      const steps = document.querySelectorAll('#step-list .step-card'); let hasStep = false;
+      steps.forEach(c => { if (c.querySelector('.step-title-input')?.value.trim() && c.querySelector('.step-card-body > textarea')?.value.trim()) hasStep = true; });
+      if (hasStep) score += 20;
+      const und = document.getElementById('ed-understanding')?.value.trim(); if (und) score += 20;
+      const wf = document.getElementById('ed-watchfor')?.value.trim(); if (wf) score += 15;
+      if (SIMULATED_AI.capabilities.length > 0) score += 15;
+
+      document.getElementById('completeness-pct').textContent = score + '%';
+      document.getElementById('completeness-fill').style.width = score + '%';
+      const fill = document.getElementById('completeness-fill');
+      const hint = document.getElementById('completeness-hint');
+      const saveBtn = document.getElementById('save-btn');
+
+      if (score >= 60) { fill.classList.add('ready'); saveBtn.disabled = false; saveBtn.classList.add('ready'); saveBtn.textContent = 'Save'; hint.textContent = 'Ready to save'; }
+      else { fill.classList.remove('ready'); saveBtn.disabled = true; saveBtn.classList.remove('ready'); saveBtn.textContent = 'Save Draft'; if (!title) hint.textContent = 'Add a title'; else if (!hasStep) hint.textContent = 'Add at least one step'; else if (!und) hint.textContent = 'Add a learning goal'; else hint.textContent = 'Keep going — almost there'; }
+
+      updateSectionStatus('basics', (title?1:0)+(desc?1:0), 2);
+      updateSectionStatus('steps', hasStep?1:0, 1);
+      updateSectionStatus('learning', (und?1:0)+(wf?1:0), 2);
+      updateSectionStatus('capabilities', SIMULATED_AI.capabilities.length>0?1:0, 1);
+      checkCoherence();
+    }
+    function updateSectionStatus(key, filled, total) { const el = document.getElementById(`status-${key}`); if (!el) return; if (filled >= total) { el.className = 'section-status complete'; el.textContent = 'Done'; } else if (filled > 0) { el.className = 'section-status partial'; el.textContent = `${filled}/${total}`; } else { el.className = 'section-status empty'; el.textContent = key === 'materials' || key === 'connect' ? 'Optional' : 'Empty'; } }
+
+    // COHERENCE
+    let coherenceDismissed = false;
+    function checkCoherence() { if (coherenceDismissed) return; const u = (document.getElementById('ed-understanding')?.value||'').toLowerCase(); const steps = document.querySelectorAll('#step-list .step-card'); if (steps.length < 2 || u.length < 10) { document.getElementById('coherence-banner').classList.remove('visible'); return; } let st = ''; steps.forEach(c => { st += ' '+(c.querySelector('.step-title-input')?.value||''); st += ' '+(c.querySelector('.step-card-body > textarea')?.value||''); }); st = st.toLowerCase(); const words = u.split(/\s+/).filter(w => w.length > 4); const mc = words.filter(w => st.includes(w)).length; const r = words.length > 0 ? mc/words.length : 1; if (r < 0.15 && st.length > 30) document.getElementById('coherence-banner').classList.add('visible'); else document.getElementById('coherence-banner').classList.remove('visible'); }
+    function dismissCoherence() { coherenceDismissed = true; document.getElementById('coherence-banner').classList.remove('visible'); }
+
+    // NAVIGATION
+    function switchView(view) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(`view-${view}`).classList.add('active'); currentView = view; window.scrollTo(0, 0); const s = document.getElementById('save-btn'); const h = document.getElementById('header-title'); if (view === 'entry') { s.style.display='none'; h.textContent=''; } else if (view === 'loading') { s.style.display='none'; h.textContent=''; } else if (view === 'editor') { s.style.display='inline-block'; h.textContent='Material-Anchored'; } }
+    function handleBack() { if (currentView === 'editor') { if (confirm('Go back? Your progress will be preserved.')) switchView('entry'); } else if (currentView === 'loading') { switchView('entry'); } else { history.back(); } }
+
+    // SAVE
+    function handleSave() {
+      moduleData.title = document.getElementById('ed-title').value.trim();
+      moduleData.description = document.getElementById('ed-description').value.trim();
+      moduleData.targetUnderstanding = document.getElementById('ed-understanding').value.trim();
+      moduleData.watchFor = document.getElementById('ed-watchfor').value.trim();
+      moduleData.pivot = document.getElementById('ed-pivot').value.trim();
+      moduleData.capabilities = SIMULATED_AI.capabilities.map(c => ({ threadId: c.id, name: c.name, confidence: c.confidence }));
+      moduleData.steps = []; document.querySelectorAll('#step-list .step-card').forEach(c => { moduleData.steps.push({ title: c.querySelector('.step-title-input')?.value.trim()||'', instructions: c.querySelector('.step-card-body > textarea')?.value.trim()||'', sayThis: c.querySelectorAll('.step-card-body textarea')[1]?.value.trim()||'', observationHint: c.querySelector('.step-observation-hint p')?.textContent.trim()||'' }); });
+      moduleData.status = 'draft'; moduleData.updatedAt = new Date().toISOString();
+      console.log('Module saved:', moduleData);
+      const toast = document.getElementById('toast'); toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // INIT
+    document.getElementById('save-btn').style.display = 'none';
+    function loadDemoData() {
+      selectResourceType(document.querySelector('#resource-type-pills .pill[data-value="book"]'), 'book');
+      document.getElementById('entry-name').value = "The Very Hungry Caterpillar by Eric Carle";
+      document.getElementById('entry-desc').value = "A picture book about a caterpillar eating through different foods before becoming a butterfly";
+      document.getElementById('entry-vision').value = "Emma loves caterpillars and I thought we could explore lifecycles";
+      // Select two intents
+      const readPill = document.querySelector('#intent-pills .pill[data-value="read-together"]');
+      const explorePill = document.querySelector('#intent-pills .pill[data-value="explore-topic"]');
+      if (readPill) toggleIntent(readPill);
+      if (explorePill) toggleIntent(explorePill);
+      checkEntryReady();
+    }
+    loadDemoData();
+  </script>
+</body>
+</html>

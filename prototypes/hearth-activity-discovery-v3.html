@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth — Explore Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================================
+           HEARTH ACTIVITY DISCOVERY — EXPLORE LEARNING
+           Mont Blanc Dark Coffee Aesthetic
+
+           Version: 3 | Date: 2026-03-19 | Changes: Design system token conformance pass.
+           Renamed --deep-coffee (#0A0806) → --surface-body (#0F0D0B, canonical hex).
+           Added --surface-panel/raised/hover aliasing all legacy --coffee-* names.
+           Fixed --border: #2D2621 → --border-subtle: rgba(217,123,58,0.1).
+           Fixed --border-subtle from rgba(255,255,255,0.06) → rgba(217,123,58,0.1).
+           Added --border-medium token. btn-primary radius --radius-sm → --radius-md (10px).
+           btn-primary padding hardcoded 12px → var(--space-md) 12px top/bottom variant.
+           btn-secondary/btn-day-picker radius --radius-sm → --radius-md.
+           Replaced hardcoded border-radius 3px/4px/20px → --radius-sm (6px) tokens.
+           Transitions standardised to var(--transition-quick) / var(--transition-gentle).
+           Added shadow tokens for card hover. Added ember-glow var corrected to 0.15.
+           All other functionality, interactivity, and JS logic preserved from v2.
+           ============================================================================ */
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            /* ── Canonical Surface Tokens (Mont Blanc Dark Coffee) ── */
+            --surface-body:     #0F0D0B;    /* Page background */
+            --surface-panel:    #1A1612;    /* Card/panel surface */
+            --surface-raised:   #252117;    /* Elevated cards, interactive panels */
+            --surface-hover:    #2D2621;    /* Hover states, highest elevation */
+
+            /* Legacy aliases — map to canonical names; removes all --coffee-* refs */
+            --coffee-dark:      var(--surface-body);
+            --coffee-mid:       var(--surface-panel);
+            --coffee-light:     var(--surface-raised);
+            --surface-elevated: var(--surface-hover);
+
+            /* ── Text Hierarchy ── */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* ── Ember — primary action color ── */
+            --ember:        #D97B3A;
+            --ember-hover:  #E88F4E;
+            --ember-glow:   rgba(217, 123, 58, 0.15);
+            --ember-strong: rgba(217, 123, 58, 0.25);
+
+            /* ── Sage — growth / success / positive ── */
+            --sage:         #4ADE80;
+            --sage-muted:   #22C55E;
+
+            /* ── Subject Colors ── */
+            --english:        #60A5FA;
+            --english-muted:  rgba(96, 165, 250, 0.12);
+            --english-border: rgba(96, 165, 250, 0.3);
+
+            --maths:        #D97B3A;
+            --maths-muted:  rgba(217, 123, 58, 0.12);
+            --maths-border: rgba(217, 123, 58, 0.3);
+
+            --science:        #4ADE80;
+            --science-muted:  rgba(74, 222, 128, 0.12);
+            --science-border: rgba(74, 222, 128, 0.3);
+
+            --hass:        #A78BFA;
+            --hass-muted:  rgba(167, 139, 250, 0.12);
+            --hass-border: rgba(167, 139, 250, 0.3);
+
+            --hpe:        #FB7185;
+            --hpe-muted:  rgba(251, 113, 133, 0.12);
+            --hpe-border: rgba(251, 113, 133, 0.3);
+
+            /* ── Borders — canonical ember-tinted ── */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+
+            /* ── Shadows ── */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+
+            /* ── Typography ── */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Spacing (8px base) ── */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+            --space-4xl: 96px;
+
+            /* ── Border Radius ── */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* ── Transitions ── */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Atmospheric background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 20%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 80%, rgba(217, 123, 58, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Layout Shell ── */
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: var(--space-lg);
+        }
+
+        /* ── Top Nav Bar ── */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) 0;
+            margin-bottom: var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            transition: color var(--transition-quick);
+            cursor: pointer;
+        }
+        .nav-back:hover { color: var(--ember); }
+        .nav-back svg { width: 16px; height: 16px; }
+
+        .nav-saved {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color var(--transition-quick), border-color var(--transition-quick);
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-xs) var(--space-md);
+        }
+        .nav-saved:hover { color: var(--ember); border-color: var(--ember); }
+        .nav-saved svg { width: 14px; height: 14px; }
+        .saved-count {
+            background: var(--ember);
+            color: var(--text-inverse);
+            font-size: 0.625rem;
+            font-weight: 700;
+            border-radius: var(--radius-full);
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            margin-bottom: var(--space-xl);
+        }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.75rem, 4vw, 2.25rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+        .page-title-icon { margin-right: var(--space-sm); }
+
+        .page-subtitle {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        /* ── Curriculum Coverage Nudge ── */
+        .coverage-nudge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            margin-bottom: var(--space-xl);
+            flex-wrap: wrap;
+        }
+        .coverage-nudge-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .coverage-pips {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+        .coverage-pip {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 500;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);   /* was 20px — now canonical */
+            border: 1px solid;
+        }
+        .coverage-pip.english { color: var(--english); background: var(--english-muted); border-color: var(--english-border); }
+        .coverage-pip.maths   { color: var(--maths);   background: var(--maths-muted);   border-color: var(--maths-border); }
+        .coverage-pip.science { color: var(--science); background: var(--science-muted); border-color: var(--science-border); }
+        .coverage-pip.hass    { color: var(--hass);    background: var(--hass-muted);    border-color: var(--hass-border); }
+        .coverage-pip.hpe     { color: var(--hpe);     background: var(--hpe-muted);     border-color: var(--hpe-border); }
+        .coverage-pip .pip-dot { width: 6px; height: 6px; border-radius: var(--radius-full); }
+        .coverage-pip.english .pip-dot { background: var(--english); }
+        .coverage-pip.maths   .pip-dot { background: var(--maths); }
+        .coverage-pip.science .pip-dot { background: var(--science); }
+        .coverage-pip.hass    .pip-dot { background: var(--hass); }
+        .coverage-pip.hpe     .pip-dot { background: var(--hpe); }
+
+        .coverage-link {
+            margin-left: auto;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--ember);
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .coverage-link:hover { text-decoration: underline; }
+
+        /* ── Browse Layout (Desktop: sidebar + grid) ── */
+        .browse-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: var(--space-xl);
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .browse-layout {
+                grid-template-columns: 1fr;
+                gap: var(--space-md);
+            }
+        }
+
+        /* ── Filter Sidebar ── */
+        .filter-sidebar {
+            position: sticky;
+            top: var(--space-lg);
+        }
+
+        @media (max-width: 900px) {
+            .filter-sidebar {
+                position: static;
+            }
+        }
+
+        .filter-section {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-md);
+        }
+
+        .filter-section-title {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Subject filter tabs */
+        .subject-filters {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .subject-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            text-align: left;
+        }
+        .subject-btn:hover {
+            background: var(--surface-raised);
+            color: var(--text-primary);
+        }
+        .subject-btn.active {
+            border-color: var(--border-subtle);
+            background: var(--surface-raised);
+            color: var(--text-primary);
+        }
+        .subject-btn .subject-dot { width: 8px; height: 8px; border-radius: var(--radius-full); flex-shrink: 0; }
+        .subject-btn.all     .subject-dot { background: var(--text-secondary); }
+        .subject-btn.english .subject-dot { background: var(--english); }
+        .subject-btn.english.active { border-color: var(--english-border); }
+        .subject-btn.maths   .subject-dot { background: var(--maths); }
+        .subject-btn.maths.active   { border-color: var(--maths-border); }
+        .subject-btn.science .subject-dot { background: var(--science); }
+        .subject-btn.science.active { border-color: var(--science-border); }
+        .subject-btn.hass    .subject-dot { background: var(--hass); }
+        .subject-btn.hass.active    { border-color: var(--hass-border); }
+        .subject-btn.hpe     .subject-dot { background: var(--hpe); }
+        .subject-btn.hpe.active     { border-color: var(--hpe-border); }
+
+        .subject-btn .subject-count {
+            margin-left: auto;
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        /* Age range */
+        .age-range-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: var(--space-sm);
+        }
+        .age-range-value {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .age-slider-container {
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .age-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border-subtle);
+            border-radius: var(--radius-sm);
+            outline: none;
+        }
+        .age-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            background: var(--ember);
+            border-radius: var(--radius-full);
+            border: 2px solid var(--surface-body);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(217,123,58,0.4);
+            transition: transform var(--transition-quick);
+        }
+        .age-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .age-slider::-moz-range-thumb {
+            width: 18px; height: 18px;
+            background: var(--ember);
+            border-radius: var(--radius-full);
+            border: 2px solid var(--surface-body);
+            cursor: pointer;
+        }
+
+        .age-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Duration filter */
+        .duration-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .duration-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: 7px var(--space-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .duration-btn:hover { background: var(--surface-raised); color: var(--text-primary); }
+        .duration-btn.active {
+            background: var(--surface-raised);
+            border-color: var(--border-subtle);
+            color: var(--text-primary);
+        }
+        .duration-icon { font-size: 0.875rem; }
+
+        /* Reset filters */
+        .filter-reset {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color var(--transition-quick);
+            margin-top: var(--space-sm);
+        }
+        .filter-reset:hover { color: var(--ember); }
+
+        /* Mobile filter toggle */
+        .filter-toggle-mobile {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: var(--space-md);
+        }
+        .filter-toggle-mobile svg { width: 16px; height: 16px; color: var(--text-secondary); transition: transform var(--transition-quick); }
+        .filter-toggle-mobile.open svg { transform: rotate(180deg); }
+
+        @media (max-width: 900px) {
+            .filter-toggle-mobile { display: flex; }
+            .filter-sidebar.collapsed { display: none; }
+        }
+
+        .active-filter-pills {
+            display: none;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-md);
+        }
+        @media (max-width: 900px) {
+            .active-filter-pills { display: flex; }
+        }
+        .filter-pill {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            padding: var(--space-xs) 10px;
+            border-radius: var(--radius-sm);   /* was 20px */
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .filter-pill-remove {
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+            line-height: 1;
+        }
+        .filter-pill-remove:hover { color: var(--ember); }
+
+        /* ── Results Area ── */
+        .results-area { min-height: 400px; }
+
+        .results-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .results-count {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .results-count strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .results-sort {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-xs) 10px;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .results-sort:hover { border-color: var(--ember); color: var(--text-secondary); }
+
+        /* ── Module Cards Grid ── */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-lg);
+        }
+        @media (max-width: 1100px) { .module-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px)  { .module-grid { grid-template-columns: 1fr; } }
+
+        /* Module Card */
+        .module-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            cursor: pointer;
+            transition: all var(--transition-gentle);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Subject colour top-line (always visible at 0.7) */
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            opacity: 0.7;
+        }
+        .module-card[data-subject="english"]::before { background: var(--english); }
+        .module-card[data-subject="maths"]::before   { background: var(--maths); }
+        .module-card[data-subject="science"]::before { background: var(--science); }
+        .module-card[data-subject="hass"]::before    { background: var(--hass); }
+        .module-card[data-subject="hpe"]::before     { background: var(--hpe); }
+
+        .module-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .card-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-sm);
+        }
+
+        .card-subject-tag {
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);   /* was 4px */
+            border: 1px solid;
+        }
+        .card-subject-tag.english { color: var(--english); background: var(--english-muted); border-color: var(--english-border); }
+        .card-subject-tag.maths   { color: var(--maths);   background: var(--maths-muted);   border-color: var(--maths-border); }
+        .card-subject-tag.science { color: var(--science); background: var(--science-muted); border-color: var(--science-border); }
+        .card-subject-tag.hass    { color: var(--hass);    background: var(--hass-muted);    border-color: var(--hass-border); }
+        .card-subject-tag.hpe     { color: var(--hpe);     background: var(--hpe-muted);     border-color: var(--hpe-border); }
+
+        .card-duration-tag {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;           /* canonical card title size */
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .card-description {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;          /* canonical body text */
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--space-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-understanding {
+            font-family: var(--font-serif);
+            font-size: 0.8125rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            margin-bottom: var(--space-md);
+            padding-left: var(--space-md);
+            border-left: 2px solid var(--border-subtle);
+        }
+
+        .card-meta-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .card-meta-chip {
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            padding: var(--space-xs) 7px;
+            border-radius: var(--radius-sm);   /* was 3px */
+            background: var(--surface-raised);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .card-age-tag {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* Save button on card */
+        .card-save-btn {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 28px; height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
+            background: var(--surface-body);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            z-index: 2;
+            opacity: 0;
+        }
+        .module-card:hover .card-save-btn { opacity: 1; }
+        .card-save-btn:hover { border-color: var(--ember); color: var(--ember); }
+        .card-save-btn.saved {
+            color: var(--ember);
+            border-color: var(--ember);
+            background: var(--ember-glow);
+            opacity: 1;
+        }
+        .card-save-btn svg { width: 14px; height: 14px; }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl) var(--space-lg);
+            color: var(--text-secondary);
+        }
+        .empty-state-icon { font-size: 3rem; margin-bottom: var(--space-md); opacity: 0.4; }
+        .empty-state-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+        .empty-state-text {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            margin-bottom: var(--space-lg);
+        }
+        .empty-state-action {
+            display: inline-block;
+            padding: var(--space-sm) var(--space-lg);
+            background: none;
+            border: 1px solid var(--ember);
+            color: var(--ember);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .empty-state-action:hover { background: var(--ember); color: var(--text-inverse); }
+
+        /* ── Module Preview Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 13, 11, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+        .modal-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        @media (min-width: 768px) {
+            .modal-overlay { align-items: center; }
+        }
+
+        .modal-content {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            width: 100%;
+            max-width: 640px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform var(--transition-gentle);
+            box-shadow:
+                0 -8px 40px rgba(0,0,0,0.5),
+                0 0 80px rgba(217,123,58,0.05);
+        }
+        .modal-overlay.visible .modal-content {
+            transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+            .modal-content {
+                border-radius: var(--radius-lg);
+                max-height: 85vh;
+            }
+        }
+
+        /* Modal scrollbar */
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: var(--radius-sm);
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: var(--surface-panel);
+            padding: var(--space-lg) var(--space-lg) var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            z-index: 2;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 32px; height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
+            background: var(--surface-body);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            font-size: 1rem;
+        }
+        .modal-close:hover { border-color: var(--ember); color: var(--ember); }
+
+        .modal-subject-tag {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);   /* was 4px */
+            margin-bottom: var(--space-sm);
+            border: 1px solid;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.35rem, 3vw, 1.6rem);
+            font-weight: 600;             /* canonical: 600 for titles, 700 for display/brand only */
+            line-height: 1.25;
+            margin-bottom: var(--space-xs);
+            padding-right: 40px;
+            color: var(--text-primary);
+        }
+
+        .modal-meta {
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .modal-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .modal-meta-item svg { width: 14px; height: 14px; opacity: 0.6; }
+
+        .modal-body { padding: var(--space-lg); }
+
+        .modal-section { margin-bottom: var(--space-lg); }
+
+        .modal-section-label {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        .modal-understanding {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .modal-child-understanding {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            padding-left: var(--space-md);
+            border-left: 2px solid var(--ember-glow);
+        }
+
+        .modal-indicators { list-style: none; }
+        .modal-indicators li {
+            font-family: var(--font-serif);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+        }
+        .modal-indicators li:last-child { border-bottom: none; }
+        .indicator-check {
+            color: var(--science);
+            font-size: 0.75rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Approaches in preview */
+        .modal-approaches {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+        .modal-approach-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: 10px var(--space-md);
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+        }
+        .approach-icon {
+            width: 28px; height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);   /* was hardcoded 6px — now token */
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        .approach-info { flex: 1; }
+        .approach-title {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .approach-detail {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        /* Materials preview */
+        .modal-materials {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+        }
+        .material-chip {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            padding: var(--space-xs) 10px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .material-chip.required { border-left: 2px solid var(--ember); }
+
+        /* Compatibility note */
+        .compatibility-note {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+        }
+        .compatibility-note strong { color: var(--text-secondary); }
+
+        /* Modal Actions — 3-button bar */
+        .modal-actions {
+            padding: var(--space-md) var(--space-lg) var(--space-lg);
+            display: flex;
+            gap: var(--space-sm);
+            border-top: 1px solid var(--border-subtle);
+            position: sticky;
+            bottom: 0;
+            background: var(--surface-panel);
+            flex-wrap: wrap;
+        }
+
+        /* Primary button — canonical anatomy */
+        .btn-primary {
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);   /* 16px top/bottom, 24px sides */
+            background: var(--ember);
+            border: none;
+            border-radius: var(--radius-md);            /* was --radius-sm; canonical buttons = --radius-md */
+            color: var(--text-inverse);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            box-shadow:
+                0 4px 12px rgba(217,123,58,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            min-width: 0;
+        }
+        .btn-primary:hover {
+            background: var(--ember-hover);
+            box-shadow:
+                0 6px 20px rgba(217,123,58,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary {
+            padding: var(--space-md);
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);            /* was --radius-sm */
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+        }
+        .btn-secondary:hover {
+            border-color: var(--ember);
+            color: var(--ember);
+        }
+
+        /* Day picker button — has dropdown */
+        .btn-day-picker-wrap { position: relative; }
+
+        .btn-day-picker {
+            padding: var(--space-md);
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);            /* was --radius-sm */
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .btn-day-picker:hover {
+            border-color: var(--ember);
+            color: var(--ember);
+        }
+        .btn-day-picker svg {
+            width: 14px; height: 14px;
+            transition: transform var(--transition-quick);
+        }
+        .btn-day-picker.open svg { transform: rotate(180deg); }
+
+        .day-picker-dropdown {
+            position: absolute;
+            bottom: calc(100% + var(--space-xs));
+            left: 0;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-xs);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 160px;
+            box-shadow:
+                0 8px 24px rgba(0,0,0,0.5),
+                0 0 40px rgba(217,123,58,0.04);
+            z-index: 10;
+        }
+        .day-picker-dropdown.open { display: flex; }
+
+        .day-picker-dropdown .day-option {
+            padding: var(--space-sm) var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            border: none;
+            background: none;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        .day-picker-dropdown .day-option:hover {
+            background: var(--surface-panel);
+            color: var(--text-primary);
+        }
+        .day-picker-dropdown .day-option .day-emoji {
+            font-size: 0.875rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .day-added-confirm {
+            position: absolute;
+            bottom: calc(100% + var(--space-xs));
+            left: 0;
+            background: var(--surface-raised);
+            border: 1px solid var(--science-border);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--sage);
+            white-space: nowrap;
+            box-shadow: var(--shadow-medium);
+            z-index: 10;
+            display: none;
+        }
+        .day-added-confirm.show {
+            display: block;
+            animation: fadeUp 0.25s ease;
+        }
+
+        /* ── Animations ── */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeUp 0.4s ease forwards;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .d1 { animation-delay: 0.05s; }
+        .d2 { animation-delay: 0.1s; }
+        .d3 { animation-delay: 0.15s; }
+        .d4 { animation-delay: 0.2s; }
+        .d5 { animation-delay: 0.25s; }
+
+        /* Card stagger */
+        .module-card {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeUp 0.35s ease forwards;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface-body); }
+        ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: var(--radius-sm); }
+
+        /* ── Reduced motion ── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+
+        <!-- Top Navigation -->
+        <nav class="top-nav animate-in d1">
+            <a class="nav-back" onclick="history.back()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+                Dashboard
+            </a>
+            <button class="nav-saved" id="savedBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                Saved
+                <span class="saved-count" id="savedCount">0</span>
+            </button>
+        </nav>
+
+        <!-- Page Header -->
+        <header class="page-header animate-in d2">
+            <h1 class="page-title"><span class="page-title-icon">🗺️</span>Explore Learning</h1>
+            <p class="page-subtitle">Find activities that match your family's learning journey</p>
+        </header>
+
+        <!-- Curriculum Coverage Nudge (stub — will integrate with report tool) -->
+        <div class="coverage-nudge animate-in d3" id="coverageNudge">
+            <span class="coverage-nudge-label">This week</span>
+            <div class="coverage-pips">
+                <span class="coverage-pip english"><span class="pip-dot"></span> English ✓</span>
+                <span class="coverage-pip maths"><span class="pip-dot"></span> Maths ✓</span>
+                <span class="coverage-pip science"><span class="pip-dot"></span> Science</span>
+                <span class="coverage-pip hass"><span class="pip-dot"></span> HASS</span>
+                <span class="coverage-pip hpe"><span class="pip-dot"></span> HPE</span>
+            </div>
+            <a class="coverage-link" href="#">View full report →</a>
+        </div>
+
+        <!-- Mobile filter toggle -->
+        <button class="filter-toggle-mobile" id="filterToggle" onclick="toggleFilters()">
+            <span>Filters</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+
+        <!-- Active filter pills (mobile) -->
+        <div class="active-filter-pills" id="activeFilterPills"></div>
+
+        <!-- Browse Layout -->
+        <div class="browse-layout">
+
+            <!-- Filter Sidebar -->
+            <aside class="filter-sidebar collapsed" id="filterSidebar">
+
+                <!-- Subject -->
+                <div class="filter-section animate-in d3">
+                    <div class="filter-section-title">Learning Area</div>
+                    <div class="subject-filters" id="subjectFilters">
+                        <button class="subject-btn all active" data-subject="all" onclick="filterBySubject('all', this)">
+                            <span class="subject-dot"></span>
+                            All Subjects
+                            <span class="subject-count" id="countAll"></span>
+                        </button>
+                        <button class="subject-btn english" data-subject="english" onclick="filterBySubject('english', this)">
+                            <span class="subject-dot"></span>
+                            English
+                            <span class="subject-count" id="countEnglish"></span>
+                        </button>
+                        <button class="subject-btn maths" data-subject="maths" onclick="filterBySubject('maths', this)">
+                            <span class="subject-dot"></span>
+                            Mathematics
+                            <span class="subject-count" id="countMaths"></span>
+                        </button>
+                        <button class="subject-btn science" data-subject="science" onclick="filterBySubject('science', this)">
+                            <span class="subject-dot"></span>
+                            Science
+                            <span class="subject-count" id="countScience"></span>
+                        </button>
+                        <button class="subject-btn hass" data-subject="hass" onclick="filterBySubject('hass', this)">
+                            <span class="subject-dot"></span>
+                            HASS
+                            <span class="subject-count" id="countHass"></span>
+                        </button>
+                        <button class="subject-btn hpe" data-subject="hpe" onclick="filterBySubject('hpe', this)">
+                            <span class="subject-dot"></span>
+                            HPE
+                            <span class="subject-count" id="countHpe"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Age Range -->
+                <div class="filter-section animate-in d4">
+                    <div class="filter-section-title">Age Range</div>
+                    <div class="age-range-display">
+                        <span class="age-range-value" id="ageDisplay">Ages 5–12</span>
+                    </div>
+                    <div class="age-slider-container">
+                        <input type="range" class="age-slider" id="ageMinSlider" min="3" max="12" value="5" oninput="updateAgeFilter()">
+                    </div>
+                    <div class="age-labels">
+                        <span>3</span>
+                        <span>5</span>
+                        <span>7</span>
+                        <span>9</span>
+                        <span>12</span>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="filter-section animate-in d5">
+                    <div class="filter-section-title">Session Time</div>
+                    <div class="duration-options">
+                        <button class="duration-btn active" data-duration="all" onclick="filterByDuration('all', this)">
+                            <span class="duration-icon">⏱</span> Any length
+                        </button>
+                        <button class="duration-btn" data-duration="quick" onclick="filterByDuration('quick', this)">
+                            <span class="duration-icon">⚡</span> Quick (5–15 min)
+                        </button>
+                        <button class="duration-btn" data-duration="medium" onclick="filterByDuration('medium', this)">
+                            <span class="duration-icon">☕</span> Medium (15–45 min)
+                        </button>
+                        <button class="duration-btn" data-duration="long" onclick="filterByDuration('long', this)">
+                            <span class="duration-icon">🌿</span> Deep (45+ min)
+                        </button>
+                    </div>
+                </div>
+
+                <button class="filter-reset" onclick="resetFilters()">Reset all filters</button>
+
+            </aside>
+
+            <!-- Results -->
+            <main class="results-area">
+                <div class="results-header">
+                    <span class="results-count" id="resultsCount"></span>
+                    <button class="results-sort">Suggested order</button>
+                </div>
+
+                <div class="module-grid" id="moduleGrid"></div>
+
+                <div class="empty-state" id="emptyState" style="display:none;">
+                    <div class="empty-state-icon">🔍</div>
+                    <div class="empty-state-title">No modules match those filters</div>
+                    <div class="empty-state-text">Try adjusting the age range or session time</div>
+                    <button class="empty-state-action" onclick="resetFilters()">Reset filters</button>
+                </div>
+            </main>
+
+        </div>
+    </div>
+
+    <!-- Module Preview Modal -->
+    <div class="modal-overlay" id="previewModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closePreview()">✕</button>
+                <div class="modal-subject-tag" id="modalSubjectTag"></div>
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <div class="modal-meta" id="modalMeta"></div>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="modalStartBtn" onclick="startModule()">
+                    Start Now
+                </button>
+                <div class="btn-day-picker-wrap">
+                    <button class="btn-day-picker" id="modalDayBtn" onclick="toggleDayPicker(event)">
+                        📅 Add to Day
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div class="day-picker-dropdown" id="dayPickerDropdown">
+                        <button class="day-option" onclick="addToDay('Monday')"><span class="day-emoji">M</span> Monday</button>
+                        <button class="day-option" onclick="addToDay('Tuesday')"><span class="day-emoji">T</span> Tuesday</button>
+                        <button class="day-option" onclick="addToDay('Wednesday')"><span class="day-emoji">W</span> Wednesday</button>
+                        <button class="day-option" onclick="addToDay('Thursday')"><span class="day-emoji">T</span> Thursday</button>
+                        <button class="day-option" onclick="addToDay('Friday')"><span class="day-emoji">F</span> Friday</button>
+                    </div>
+                    <div class="day-added-confirm" id="dayAddedConfirm"></div>
+                </div>
+                <button class="btn-secondary" id="modalSaveBtn" onclick="saveToLibrary()">
+                    Save to Library
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ════════════════════════════════════════════════════════════
+       HEARTH ACTIVITY DISCOVERY — DATA + INTERACTIONS
+       (unchanged from v2)
+       ════════════════════════════════════════════════════════════ */
+
+    // ── Sample Module Data (MVP — matches content hierarchy) ──
+    const MODULES = [
+        {
+            id: 'mod-observe',
+            title: 'Observing Closely',
+            description: 'A foundation module that builds careful observation skills through multi-sensory exploration of the natural world.',
+            targetUnderstanding: 'Careful observation reveals details that quick looking misses',
+            childFriendlyUnderstanding: 'When you look really carefully, you notice things you didn\'t see before',
+            subject: 'science',
+            ageRange: { min: 5, max: 7 },
+            duration: { min: 15, max: 30 },
+            sessionCount: 4,
+            approaches: [
+                { title: 'Nature Walk Detective', icon: '🔍', modality: 'Kinesthetic', chunks: 3 },
+                { title: 'Sound Safari', icon: '👂', modality: 'Auditory', chunks: 3 },
+                { title: 'Texture Collectors', icon: '🤚', modality: 'Tactile', chunks: 3 },
+                { title: 'Nature Photographer', icon: '📸', modality: 'Visual', chunks: 2 },
+            ],
+            materials: ['Magnifying glass', 'Nature journal', 'Pencils', 'Camera (optional)'],
+            understandingIndicators: [
+                'Notices fine details others might miss',
+                'Uses multiple senses to describe an object',
+                'Asks questions about what they observe',
+            ],
+            pack: 'Little Nature Scientists',
+            compatibleApproaches: null,
+        },
+        {
+            id: 'mod-bread',
+            title: 'The Magic of Bread',
+            description: 'Explore the science of yeast, chemistry and patience through the ancient art of bread making.',
+            targetUnderstanding: 'Living organisms (yeast) create chemical changes we can observe and control',
+            childFriendlyUnderstanding: 'Tiny living things called yeast make bread rise — and we can watch it happen!',
+            subject: 'science',
+            ageRange: { min: 6, max: 12 },
+            duration: { min: 45, max: 90 },
+            sessionCount: 3,
+            approaches: [
+                { title: 'Traditional Sourdough', icon: '🍞', modality: 'Hands-on', chunks: 5 },
+                { title: 'Yeast Experiment', icon: '🔬', modality: 'Scientific', chunks: 4 },
+                { title: 'Bread Journal', icon: '📖', modality: 'Reflective', chunks: 3 },
+            ],
+            materials: ['Flour', 'Yeast', 'Salt', 'Water', 'Bowl', 'Loaf tin'],
+            understandingIndicators: [
+                'Explains what yeast does to dough',
+                'Can predict and test what affects rising',
+                'Documents observations over time',
+            ],
+            pack: 'Kitchen Scientists',
+            compatibleApproaches: null,
+        },
+        {
+            id: 'mod-stories',
+            title: 'Stories That Travel',
+            description: 'Explore how oral traditions carry wisdom across generations, through storytelling, retelling, and creating.',
+            targetUnderstanding: 'Stories are vessels for culture, memory, and meaning',
+            childFriendlyUnderstanding: 'Stories can carry important ideas from one person to another, even across many years',
+            subject: 'english',
+            ageRange: { min: 7, max: 12 },
+            duration: { min: 20, max: 45 },
+            sessionCount: 5,
+            approaches: [
+                { title: 'Story Circle', icon: '💬', modality: 'Oral', chunks: 3 },
+                { title: 'Story Map', icon: '🗺️', modality: 'Visual', chunks: 4 },
+                { title: 'Written Retelling', icon: '✍️', modality: 'Written', chunks: 4 },
+            ],
+            materials: ['Story journals', 'Art supplies', 'Recording device (optional)'],
+            understandingIndicators: [
+                'Can retell a story with key elements intact',
+                'Identifies themes and meaning in stories',
+                'Creates original stories with purpose',
+            ],
+            pack: 'The Storyteller\'s Kit',
+            compatibleApproaches: null,
+        },
+        {
+            id: 'mod-money',
+            title: 'How Money Works',
+            description: 'A gentle introduction to earning, saving, spending and giving through real family-life scenarios.',
+            targetUnderstanding: 'Money represents value we create and exchange with others',
+            childFriendlyUnderstanding: 'Money is how we share the work we\'ve done with other people',
+            subject: 'maths',
+            ageRange: { min: 6, max: 10 },
+            duration: { min: 15, max: 30 },
+            sessionCount: 4,
+            approaches: [
+                { title: 'Pocket Money Tracker', icon: '💰', modality: 'Practical', chunks: 3 },
+                { title: 'Mini Market', icon: '🛒', modality: 'Play', chunks: 4 },
+                { title: 'Giving Plan', icon: '🤝', modality: 'Reflective', chunks: 2 },
+            ],
+            materials: ['Coins/notes (real or printed)', 'Ledger notebook'],
+            understandingIndicators: [
+                'Can make correct change for simple transactions',
+                'Explains the difference between needs and wants',
+                'Has made at least one saving goal',
+            ],
+            pack: 'Everyday Maths',
+            compatibleApproaches: null,
+        },
+        {
+            id: 'mod-maps',
+            title: 'Reading the World',
+            description: 'Develop spatial thinking and map literacy through local exploration and map-making.',
+            targetUnderstanding: 'Maps are representations that help us understand and navigate our world',
+            childFriendlyUnderstanding: 'A map is a picture that shows us where things are and how to get there',
+            subject: 'hass',
+            ageRange: { min: 5, max: 9 },
+            duration: { min: 20, max: 40 },
+            sessionCount: 4,
+            approaches: [
+                { title: 'Neighbourhood Map', icon: '🏘️', modality: 'Kinesthetic', chunks: 4 },
+                { title: 'Treasure Hunt Design', icon: '📍', modality: 'Creative', chunks: 3 },
+                { title: 'Aerial View Sketching', icon: '✏️', modality: 'Visual', chunks: 3 },
+            ],
+            materials: ['Large paper', 'Coloured pencils', 'Rulers', 'Local street map'],
+            understandingIndicators: [
+                'Can create a simple map with a key',
+                'Uses directional language (north, left, etc.)',
+                'Understands scale at a basic level',
+            ],
+            pack: 'Young Geographers',
+            compatibleApproaches: null,
+        },
+        {
+            id: 'mod-body',
+            title: 'Amazing Machines: Our Bodies',
+            description: 'Discover how the human body works through movement, observation and hands-on exploration.',
+            targetUnderstanding: 'Our bodies are complex systems that work together to keep us alive and moving',
+            childFriendlyUnderstanding: 'Your body has lots of different parts that all work together — like a really amazing machine',
+            subject: 'hpe',
+            ageRange: { min: 5, max: 8 },
+            duration: { min: 15, max: 45 },
+            sessionCount: 5,
+            approaches: [
+                { title: 'Movement Explorer', icon: '🤸', modality: 'Kinesthetic', chunks: 4 },
+                { title: 'Body Systems Craft', icon: '🎨', modality: 'Creative', chunks: 3 },
+                { title: 'Heartbeat Science', icon: '💓', modality: 'Scientific', chunks: 3 },
+            ],
+            materials: ['Large body outline paper', 'Stethoscope (optional)', 'Art supplies'],
+            understandingIndicators: [
+                'Names major body parts and their functions',
+                'Explains how exercise affects heart rate',
+                'Can describe one body system in their own words',
+            ],
+            pack: 'Health Explorers',
+            compatibleApproaches: null,
+        },
+    ];
+
+    // ── State ──
+    let currentSubject = 'all';
+    let currentDuration = 'all';
+    let currentAgeMin = 3;
+    let currentPreviewModule = null;
+    const savedModules = new Set();
+
+    // ── Init ──
+    function init() {
+        updateCounts();
+        renderGrid(MODULES);
+    }
+
+    // ── Filtering ──
+    function getFilteredModules() {
+        return MODULES.filter(m => {
+            const subjectOk = currentSubject === 'all' || m.subject === currentSubject;
+            const ageOk = m.ageRange.max >= currentAgeMin;
+            let durationOk = true;
+            if (currentDuration === 'quick')  durationOk = m.duration.min <= 15;
+            if (currentDuration === 'medium') durationOk = m.duration.min >= 15 && m.duration.max <= 45;
+            if (currentDuration === 'long')   durationOk = m.duration.max >= 45;
+            return subjectOk && ageOk && durationOk;
+        });
+    }
+
+    function filterBySubject(subject, btn) {
+        currentSubject = subject;
+        document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGrid(getFilteredModules());
+        updateMobileFilterPills();
+    }
+
+    function filterByDuration(duration, btn) {
+        currentDuration = duration;
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGrid(getFilteredModules());
+        updateMobileFilterPills();
+    }
+
+    function updateAgeFilter() {
+        const slider = document.getElementById('ageMinSlider');
+        currentAgeMin = parseInt(slider.value);
+        document.getElementById('ageDisplay').textContent = `Ages ${currentAgeMin}–12`;
+        renderGrid(getFilteredModules());
+        updateMobileFilterPills();
+    }
+
+    function resetFilters() {
+        currentSubject = 'all';
+        currentDuration = 'all';
+        currentAgeMin = 3;
+        document.getElementById('ageMinSlider').value = 3;
+        document.getElementById('ageDisplay').textContent = 'Ages 3–12';
+        document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.subject-btn.all').classList.add('active');
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.duration-btn[data-duration="all"]').classList.add('active');
+        renderGrid(MODULES);
+        updateMobileFilterPills();
+    }
+
+    function updateCounts() {
+        const subjects = ['english','maths','science','hass','hpe'];
+        document.getElementById('countAll').textContent = MODULES.length;
+        subjects.forEach(s => {
+            const el = document.getElementById('count' + s.charAt(0).toUpperCase() + s.slice(1));
+            if (el) el.textContent = MODULES.filter(m => m.subject === s).length;
+        });
+    }
+
+    function updateMobileFilterPills() {
+        const container = document.getElementById('activeFilterPills');
+        container.innerHTML = '';
+        if (currentSubject !== 'all') {
+            container.innerHTML += `<span class="filter-pill">${currentSubject} <span class="filter-pill-remove" onclick="filterBySubject('all', document.querySelector('.subject-btn.all'))">✕</span></span>`;
+        }
+        if (currentDuration !== 'all') {
+            const labels = { quick: 'Quick', medium: 'Medium', long: 'Deep' };
+            container.innerHTML += `<span class="filter-pill">${labels[currentDuration]} <span class="filter-pill-remove" onclick="filterByDuration('all', document.querySelector('.duration-btn[data-duration=all]'))">✕</span></span>`;
+        }
+        if (currentAgeMin > 3) {
+            container.innerHTML += `<span class="filter-pill">Age ${currentAgeMin}+ <span class="filter-pill-remove" onclick="document.getElementById('ageMinSlider').value=3; updateAgeFilter()">✕</span></span>`;
+        }
+    }
+
+    // ── Grid Rendering ──
+    function renderGrid(modules) {
+        const grid = document.getElementById('moduleGrid');
+        const empty = document.getElementById('emptyState');
+        const count = document.getElementById('resultsCount');
+
+        if (modules.length === 0) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            count.innerHTML = '';
+            return;
+        }
+
+        empty.style.display = 'none';
+        count.innerHTML = `<strong>${modules.length}</strong> module${modules.length !== 1 ? 's' : ''}`;
+
+        grid.innerHTML = modules.map((m, i) => {
+            const delay = Math.min(i * 0.05, 0.3);
+            const durationLabel = m.duration.min < 15 ? 'Quick' : m.duration.max > 45 ? 'Deep dive' : 'Medium';
+            const saved = savedModules.has(m.id);
+            return `
+                <article class="module-card" data-subject="${m.subject}" data-id="${m.id}"
+                         style="animation-delay:${delay}s"
+                         onclick="openPreview('${m.id}')">
+                    <button class="card-save-btn ${saved ? 'saved' : ''}"
+                            onclick="event.stopPropagation(); toggleSaveCard('${m.id}', this)"
+                            title="${saved ? 'Remove from library' : 'Save to library'}">
+                        <svg viewBox="0 0 24 24" fill="${saved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                        </svg>
+                    </button>
+                    <div class="card-top-row">
+                        <span class="card-subject-tag ${m.subject}">${m.subject.toUpperCase()}</span>
+                        <span class="card-duration-tag">${m.duration.min}–${m.duration.max} min</span>
+                    </div>
+                    <h3 class="card-title">${m.title}</h3>
+                    <p class="card-description">${m.description}</p>
+                    <p class="card-understanding">"${m.targetUnderstanding}"</p>
+                    <div class="card-meta-row">
+                        <span class="card-meta-chip">${m.sessionCount} sessions</span>
+                        <span class="card-meta-chip">${m.approaches.length} approaches</span>
+                        <span class="card-meta-chip">${durationLabel}</span>
+                        <span class="card-age-tag">Ages ${m.ageRange.min}–${m.ageRange.max}</span>
+                    </div>
+                </article>`;
+        }).join('');
+    }
+
+    function toggleSaveCard(id, btn) {
+        if (savedModules.has(id)) {
+            savedModules.delete(id);
+            btn.classList.remove('saved');
+            btn.querySelector('svg').setAttribute('fill', 'none');
+        } else {
+            savedModules.add(id);
+            btn.classList.add('saved');
+            btn.querySelector('svg').setAttribute('fill', 'currentColor');
+        }
+        updateSavedCount();
+    }
+
+    function updateSavedCount() {
+        document.getElementById('savedCount').textContent = savedModules.size;
+    }
+
+    // ── Mobile filter toggle ──
+    function toggleFilters() {
+        const sidebar = document.getElementById('filterSidebar');
+        const toggle = document.getElementById('filterToggle');
+        sidebar.classList.toggle('collapsed');
+        toggle.classList.toggle('open');
+    }
+
+    // ── Module Preview ──
+    function openPreview(id) {
+        const m = MODULES.find(mod => mod.id === id);
+        if (!m) return;
+        currentPreviewModule = m;
+
+        // Subject tag
+        const subjectTag = document.getElementById('modalSubjectTag');
+        subjectTag.className = `modal-subject-tag ${m.subject}`;
+        subjectTag.style.color = `var(--${m.subject})`;
+        subjectTag.style.background = `var(--${m.subject}-muted)`;
+        subjectTag.style.borderColor = `var(--${m.subject}-border)`;
+        subjectTag.textContent = m.subject.toUpperCase();
+
+        // Title + meta
+        document.getElementById('modalTitle').textContent = m.title;
+        document.getElementById('modalMeta').innerHTML = `
+            <span class="modal-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                ${m.duration.min}–${m.duration.max} min
+            </span>
+            <span class="modal-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                Ages ${m.ageRange.min}–${m.ageRange.max}
+            </span>
+            <span class="modal-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                ${m.sessionCount} sessions
+            </span>
+            ${m.pack ? `<span class="modal-meta-item">📦 ${m.pack}</span>` : ''}
+        `;
+
+        // Body
+        let bodyHTML = '';
+
+        // Understanding
+        bodyHTML += `
+            <div class="modal-section">
+                <div class="modal-section-label">The big understanding</div>
+                <p class="modal-understanding">${m.targetUnderstanding}</p>
+                <p class="modal-child-understanding">"${m.childFriendlyUnderstanding}"</p>
+            </div>
+        `;
+
+        // Indicators
+        bodyHTML += `
+            <div class="modal-section">
+                <div class="modal-section-label">You'll know it's working when…</div>
+                <ul class="modal-indicators">
+                    ${m.understandingIndicators.map(ind => `
+                        <li>
+                            <span class="indicator-check">✓</span>
+                            ${ind}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+
+        // Approaches
+        bodyHTML += `
+            <div class="modal-section">
+                <div class="modal-section-label">${m.approaches.length} approaches included</div>
+                <div class="modal-approaches">
+                    ${m.approaches.map(a => `
+                        <div class="modal-approach-item">
+                            <div class="approach-icon">${a.icon}</div>
+                            <div class="approach-info">
+                                <div class="approach-title">${a.title}</div>
+                                <div class="approach-detail">${a.modality} · ${a.chunks} chunks</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Materials
+        bodyHTML += `
+            <div class="modal-section">
+                <div class="modal-section-label">What you'll need</div>
+                <div class="modal-materials">
+                    ${m.materials.map(mat => `<span class="material-chip">${mat}</span>`).join('')}
+                </div>
+            </div>
+        `;
+
+        // Compatibility note (if applicable)
+        if (m.compatibleApproaches) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <div class="compatibility-note">
+                        <strong>Note:</strong> This module works best with ${m.compatibleApproaches.join(', ')} approaches.
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('modalBody').innerHTML = bodyHTML;
+
+        // Update save button state
+        const saveBtn = document.getElementById('modalSaveBtn');
+        saveBtn.textContent = savedModules.has(m.id) ? 'In Library ✓' : 'Save to Library';
+
+        // Reset day picker state
+        const dropdown = document.getElementById('dayPickerDropdown');
+        const dayBtn = document.getElementById('modalDayBtn');
+        const confirm = document.getElementById('dayAddedConfirm');
+        if (dropdown) dropdown.classList.remove('open');
+        if (dayBtn) dayBtn.classList.remove('open');
+        if (confirm) confirm.classList.remove('show');
+
+        // Show modal
+        const modal = document.getElementById('previewModal');
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => modal.classList.add('visible'));
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(e) {
+        if (e.target === document.getElementById('previewModal')) {
+            closePreview();
+        }
+    }
+
+    function closePreview() {
+        const modal = document.getElementById('previewModal');
+        modal.classList.remove('visible');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 300);
+        currentPreviewModule = null;
+    }
+
+    function startModule() {
+        if (!currentPreviewModule) return;
+        const btn = document.getElementById('modalStartBtn');
+        btn.textContent = '→ Opening Module Experience...';
+        btn.style.opacity = '0.7';
+        setTimeout(() => {
+            btn.textContent = 'Start Now';
+            btn.style.opacity = '1';
+            closePreview();
+            // window.location.href = `hearth-module-experience-v2.html?module=${currentPreviewModule.id}`;
+        }, 1200);
+    }
+
+    // ── Day Picker ──
+    function toggleDayPicker(e) {
+        e.stopPropagation();
+        const dropdown = document.getElementById('dayPickerDropdown');
+        const btn = document.getElementById('modalDayBtn');
+        const isOpen = dropdown.classList.contains('open');
+        dropdown.classList.toggle('open', !isOpen);
+        btn.classList.toggle('open', !isOpen);
+    }
+
+    function addToDay(day) {
+        if (!currentPreviewModule) return;
+        const dropdown = document.getElementById('dayPickerDropdown');
+        const btn = document.getElementById('modalDayBtn');
+        const confirm = document.getElementById('dayAddedConfirm');
+
+        dropdown.classList.remove('open');
+        btn.classList.remove('open');
+
+        confirm.textContent = `✓ Added to ${day}`;
+        confirm.classList.add('show');
+
+        // In production: plannerAPI.addModule(currentPreviewModule.id, day);
+
+        setTimeout(() => {
+            confirm.classList.remove('show');
+        }, 2000);
+    }
+
+    // Close day picker when clicking elsewhere
+    document.addEventListener('click', () => {
+        const dropdown = document.getElementById('dayPickerDropdown');
+        const btn = document.getElementById('modalDayBtn');
+        if (dropdown) dropdown.classList.remove('open');
+        if (btn) btn.classList.remove('open');
+    });
+
+    function saveToLibrary() {
+        if (!currentPreviewModule) return;
+        const id = currentPreviewModule.id;
+        if (savedModules.has(id)) {
+            savedModules.delete(id);
+        } else {
+            savedModules.add(id);
+        }
+        updateSavedCount();
+
+        const saveBtn = document.getElementById('modalSaveBtn');
+        saveBtn.textContent = savedModules.has(id) ? 'In Library ✓' : 'Save to Library';
+
+        // Update card save button if visible
+        const card = document.querySelector(`.module-card[data-id="${id}"] .card-save-btn`);
+        if (card) {
+            card.classList.toggle('saved', savedModules.has(id));
+            card.querySelector('svg').setAttribute('fill', savedModules.has(id) ? 'currentColor' : 'none');
+        }
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePreview();
+    });
+
+    // Responsive: show sidebar on resize
+    window.addEventListener('resize', () => {
+        const sidebar = document.getElementById('filterSidebar');
+        if (window.innerWidth > 900) {
+            sidebar.classList.remove('collapsed');
+        }
+    });
+
+    // Boot
+    init();
+    </script>
+</body>
+</html>

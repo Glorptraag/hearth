@@ -1,0 +1,898 @@
+<!-- Version: 2 | Date: 2026-03-20 | Changes: Full design token audit pass — fixed surface/border/transition variable names and values, added missing shadow tokens, corrected radius tokens, replaced hardcoded px font sizes with canonical type scale, fixed notif-title to serif, canonical spacing tokens corrected to 8px base unit, --border-subtle fixed to rgba(217,123,58,0.1), --transition replaced with --transition-quick/gentle with proper easing curve, bell-badge uses --radius-full, dashboard-notif-action uses --radius-md, removed bespoke --border alias, collapsed --deep-coffee into --surface-body -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearth — Notifications</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   HEARTH NOTIFICATION CENTRE v2
+   Mont Blanc Dark Coffee Aesthetic — canonical token conformance pass
+   
+   Purpose: Connective tissue between all screens.
+   Principle: Notifications revolve around half-completed state.
+   Voice: "I noticed" not "You should"
+   
+   Tiers:
+     1. RESUME — half-completed work (drafts, paused sessions)
+     2. RESPOND — system-detected opportunities (badges, compliance)
+     3. RECONNECT — re-engagement invitations (log prompts, streaks)
+   ============================================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    /* ── Canonical surface tokens (depth hierarchy, darkest → lightest) ── */
+    --surface-body:     #0F0D0B;    /* Page background — was --coffee-dark / --deep-coffee */
+    --surface-panel:    #1A1612;    /* Cards, sidebar — was --coffee-mid */
+    --surface-raised:   #252117;    /* Elevated cards, interactive — was --coffee-light (WRONG HEX FIXED) */
+    --surface-hover:    #2D2621;    /* Hover states, highest elevation — was --surface-elevated */
+
+    /* ── Text hierarchy ── */
+    --text-primary:     #E8DFD4;
+    --text-secondary:   #9B8B7E;
+    --text-muted:       #6B5D52;
+    --text-inverse:     #0F0D0B;
+
+    /* ── Ember — primary action only ── */
+    --ember:            #D97B3A;
+    --ember-hover:      #E88F4E;
+    --ember-glow:       rgba(217, 123, 58, 0.15);
+    --ember-strong:     rgba(217, 123, 58, 0.25);
+
+    /* ── Sage — growth/success/positive states ── */
+    --sage:             #4ADE80;
+    --sage-muted:       rgba(74, 222, 128, 0.10);
+
+    /* ── Supporting palette ── */
+    --blue:             #60A5FA;
+    --blue-muted:       rgba(96, 165, 250, 0.10);
+    --rose:             #F9A8D4;
+    --rose-muted:       rgba(249, 168, 212, 0.10);
+    --violet:           #A78BFA;
+    --violet-muted:     rgba(167, 139, 250, 0.10);
+    --amber:            #FBBF24;
+    --amber-muted:      rgba(251, 191, 36, 0.10);
+
+    /* ── Child identity aliases ── */
+    --child-rose:       #F9A8D4;
+    --child-blue:       #60A5FA;
+
+    /* ── Font stacks ── */
+    --font-serif: 'Crimson Text', Georgia, serif;
+    --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* ── Spacing (8px base unit) ── */
+    --space-xs:   4px;
+    --space-sm:   8px;
+    --space-md:   16px;
+    --space-lg:   24px;
+    --space-xl:   32px;
+    --space-2xl:  48px;
+    --space-3xl:  64px;
+
+    /* ── Border radius ── */
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --radius-full: 9999px;
+
+    /* ── Borders — ember-tinted ── */
+    --border-subtle:  rgba(217, 123, 58, 0.1);
+    --border-medium:  rgba(217, 123, 58, 0.2);
+
+    /* ── Shadows ── */
+    --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+    --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+    /* ── Transitions — canonical easing ── */
+    --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--surface-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+/* ── Header ── */
+.header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15, 13, 11, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--space-md);
+}
+.header-row {
+    display: flex; align-items: center; justify-content: space-between;
+}
+.header-back {
+    display: flex; align-items: center; gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 500;
+    cursor: pointer; background: none; border: none;
+    padding: var(--space-sm); margin: calc(-1 * var(--space-sm));
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-quick);
+    min-height: 44px;
+}
+.header-back:hover {
+    color: var(--text-primary);
+    background: var(--surface-raised);
+}
+.header-title {
+    font-family: var(--font-serif);
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+}
+.quiet-day-btn {
+    display: flex; align-items: center; gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.75rem; /* 12px */
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    min-height: 44px;
+}
+.quiet-day-btn:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+.quiet-day-btn.active {
+    background: var(--violet-muted);
+    border-color: rgba(167, 139, 250, 0.3);
+    color: var(--violet);
+}
+
+/* ── Filter Tabs ── */
+.filter-tabs {
+    display: flex; gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md) 0;
+    overflow-x: auto; scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar { display: none; }
+.filter-tab {
+    flex-shrink: 0;
+    padding: var(--space-sm) var(--space-sm);
+    padding-left: 14px; padding-right: 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    min-height: 36px;
+    white-space: nowrap;
+}
+.filter-tab:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+.filter-tab.active {
+    background: var(--ember);
+    border-color: var(--ember);
+    color: var(--text-inverse);
+}
+.tab-count {
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-full);
+    padding: 1px 7px;
+    font-size: 0.6875rem; /* 11px */
+    margin-left: var(--space-xs);
+}
+
+/* ── Notification List ── */
+.notif-list {
+    padding: var(--space-md);
+    display: flex; flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* ── Tier Divider ── */
+.tier-divider {
+    display: flex; align-items: center; gap: var(--space-md);
+    padding: var(--space-md) 0 var(--space-xs);
+}
+.tier-divider-line {
+    flex: 1; height: 1px; background: var(--border-subtle);
+}
+.tier-divider-label {
+    font-family: var(--font-sans);
+    font-size: 0.625rem; /* 10px */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* ── Notification Card — canonical card anatomy ── */
+.notif-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    position: relative;
+    transition: all var(--transition-gentle);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+}
+.notif-card:hover {
+    border-color: var(--border-medium);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-warm);
+    transform: translateY(-2px);
+}
+/* Tier accent lines — ember left-border per tier colour */
+.notif-card.tier-1 { border-left: 3px solid var(--ember); }
+.notif-card.tier-2 { border-left: 3px solid var(--violet); }
+.notif-card.tier-3 { border-left: 3px solid var(--text-muted); }
+
+.notif-top { display: flex; align-items: flex-start; gap: var(--space-md); }
+.notif-emoji { font-size: 1.25rem; /* 20px */ line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.notif-content { flex: 1; min-width: 0; }
+
+/* notif-title: sans font for label, serif for Hearth voice body */
+.notif-title {
+    font-family: var(--font-serif);
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: var(--space-xs);
+}
+.notif-body {
+    font-family: var(--font-serif);
+    font-size: 0.875rem; /* 14px */
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.notif-dismiss {
+    position: absolute; top: var(--space-md); right: var(--space-md);
+    width: 44px; height: 44px; border-radius: 50%;
+    border: none; background: transparent; color: var(--text-muted);
+    font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition-quick);
+    margin: -8px -8px 0 0;
+}
+.notif-dismiss:hover {
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+}
+.notif-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: var(--space-md); padding-top: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+}
+
+/* ── Notification Action Buttons ── */
+.notif-action {
+    display: inline-flex; align-items: center; gap: var(--space-xs);
+    padding: var(--space-xs) 14px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    min-height: 36px;
+}
+.notif-action.primary {
+    background: var(--ember);
+    color: var(--text-inverse);
+}
+.notif-action.primary:hover {
+    background: var(--ember-hover);
+}
+.notif-action.secondary {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+.notif-action.secondary:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-medium);
+}
+.notif-time {
+    font-family: var(--font-sans);
+    font-size: 0.75rem; /* 12px */
+    color: var(--text-muted);
+}
+
+/* ── Child Tag ── */
+.child-tag {
+    display: inline-flex; align-items: center; gap: var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 500;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-sm);
+}
+.child-tag.emma { background: var(--rose-muted); color: var(--child-rose); }
+.child-tag.liam { background: var(--blue-muted); color: var(--child-blue); }
+
+/* ── Compliance urgency ── */
+.notif-card.compliance-urgent {
+    border-left-color: var(--amber);
+    background: rgba(251, 191, 36, 0.04);
+}
+.notif-card.compliance-urgent .notif-action.primary {
+    background: var(--amber);
+    color: var(--text-inverse);
+}
+.notif-card.compliance-urgent .notif-action.primary:hover {
+    background: #F8C93A;
+}
+
+/* ── Empty States ── */
+.empty-state, .first-week-state {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-xl);
+}
+.empty-emoji {
+    font-size: 2.5rem; /* 40px */
+    margin-bottom: var(--space-md);
+}
+.empty-title {
+    font-family: var(--font-serif);
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+.empty-body {
+    font-family: var(--font-serif);
+    font-size: 0.875rem; /* 14px */
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 280px;
+    margin: 0 auto;
+}
+.empty-tip {
+    margin-top: var(--space-xl);
+    padding: var(--space-md);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    text-align: left;
+}
+.empty-tip-label {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+}
+.empty-tip-text {
+    font-family: var(--font-serif);
+    font-size: 0.8125rem; /* 13px */
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ── Dashboard Preview ── */
+.dashboard-preview { padding: var(--space-md); }
+.dashboard-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+.dashboard-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.dashboard-card-title {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+.dashboard-card-link {
+    font-family: var(--font-sans);
+    font-size: 0.75rem; /* 12px */
+    color: var(--ember);
+    cursor: pointer;
+    transition: color var(--transition-quick);
+}
+.dashboard-card-link:hover { text-decoration: underline; }
+.dashboard-notif {
+    padding: var(--space-md);
+    display: flex; gap: var(--space-md); align-items: flex-start;
+}
+.dashboard-notif-emoji { font-size: 1.125rem; /* 18px */ flex-shrink: 0; }
+.dashboard-notif-text {
+    font-family: var(--font-serif);
+    font-size: 0.875rem; /* 14px */
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex: 1;
+}
+/* Canonical button pattern — radius-md, sans 600 */
+.dashboard-notif-action {
+    display: inline-block;
+    margin-top: var(--space-sm);
+    padding: 5px var(--space-md);
+    border-radius: var(--radius-md);
+    background: var(--ember);
+    color: var(--text-inverse);
+    font-family: var(--font-sans);
+    font-size: 0.75rem; /* 12px */
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+}
+.dashboard-notif-action:hover { background: var(--ember-hover); }
+
+/* ── Bell indicator ── */
+.bell-indicator {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    font-size: 1.125rem; /* 18px */
+    transition: all var(--transition-quick);
+}
+.bell-indicator:hover { background: var(--surface-hover); }
+/* bell-badge: --radius-full for correct pill/count badge shape */
+.bell-badge {
+    position: absolute; top: -2px; right: -2px;
+    min-width: 18px; height: 18px;
+    border-radius: var(--radius-full);
+    background: var(--ember);
+    color: var(--text-inverse);
+    font-family: var(--font-sans);
+    font-size: 0.625rem; /* 10px */
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 var(--space-xs);
+    box-shadow: 0 0 8px rgba(217, 123, 58, 0.4);
+}
+
+/* ── Demo Switcher ── */
+.demo-switcher {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface-panel);
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-sm) var(--space-md);
+    z-index: 100;
+    display: flex; gap: var(--space-xs);
+    justify-content: center; flex-wrap: wrap;
+}
+.demo-btn {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+}
+.demo-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.demo-btn.active {
+    background: var(--ember);
+    border-color: var(--ember);
+    color: var(--text-inverse);
+}
+
+/* ── Toast ── */
+.toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface-raised);
+    border: 1px solid var(--ember);
+    border-radius: var(--radius-md);
+    padding: 10px var(--space-xl);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 500;
+    color: var(--text-primary);
+    z-index: 200;
+    box-shadow: var(--shadow-medium);
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.swipe-hint {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px */
+    color: var(--text-muted);
+    text-align: center;
+    padding: var(--space-sm) var(--space-md) 0;
+    font-style: italic;
+}
+
+/* ── Animations ── */
+.animate-in {
+    opacity: 0; transform: translateY(10px);
+    animation: fadeUp 0.35s ease forwards;
+}
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
+.d4{animation-delay:.2s}.d5{animation-delay:.25s}.d6{animation-delay:.3s}
+.d7{animation-delay:.35s}.d8{animation-delay:.4s}.d9{animation-delay:.45s}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+@media (min-width: 768px) {
+    .app-shell {
+        max-width: 560px;
+        border-left: 1px solid var(--border-subtle);
+        border-right: 1px solid var(--border-subtle);
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- VIEW: Populated -->
+<div class="app-shell" id="view-populated">
+    <div class="header animate-in d1">
+        <div class="header-row">
+            <button class="header-back" onclick="showToast('Back to Dashboard')">&#8592; Dashboard</button>
+            <span class="header-title">Notifications</span>
+            <button class="quiet-day-btn" id="quietDayBtn" onclick="toggleQuietDay()">&#128564; Quiet day</button>
+        </div>
+    </div>
+    <div class="filter-tabs animate-in d2">
+        <button class="filter-tab active" onclick="filterNotifs('all',this)">All <span class="tab-count">5</span></button>
+        <button class="filter-tab" onclick="filterNotifs('resume',this)">Resume <span class="tab-count">2</span></button>
+        <button class="filter-tab" onclick="filterNotifs('respond',this)">Respond <span class="tab-count">1</span></button>
+        <button class="filter-tab" onclick="filterNotifs('info',this)">Info <span class="tab-count">2</span></button>
+    </div>
+    <div class="swipe-hint animate-in d2">Swipe left on any card to dismiss</div>
+    <div class="notif-list" id="notifList">
+        <div class="tier-divider animate-in d3" data-tier="resume"><span class="tier-divider-line"></span><span class="tier-divider-label">Pick up where you left off</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-1 animate-in d4" data-tier="resume">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#128221;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Continue logging?</div>
+                    <div class="notif-body">You were partway through logging that creek walk &#8212; pick up where you left off?</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening Logger with draft loaded')">Continue</button>
+                <span class="notif-time">2 hours ago</span>
+            </div>
+        </div>
+        <div class="notif-card tier-1 animate-in d5" data-tier="resume">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#9208;&#65039;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Saved your spot</div>
+                    <div class="notif-body">Looks like life called &#8212; we've saved your place in Bread Mathematics. No rush.</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening Module at saved position')">Resume</button>
+                <span class="notif-time">Yesterday</span>
+            </div>
+        </div>
+        <div class="tier-divider animate-in d6" data-tier="respond"><span class="tier-divider-line"></span><span class="tier-divider-label">Worth a look</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-2 animate-in d7" data-tier="respond">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#127941;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Badge milestone</div>
+                    <div class="notif-body">Emma might be ready for her Number Navigator badge &#8212; want to check?</div>
+                    <span class="child-tag emma">&#127800; Emma</span>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening Badge Assessment for Emma')">Check now</button>
+                <span class="notif-time">1 day ago</span>
+            </div>
+        </div>
+        <div class="tier-divider animate-in d8" data-tier="info"><span class="tier-divider-line"></span><span class="tier-divider-label">Gentle nudges</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-3 animate-in d8" data-tier="info">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#128161;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Capture today's learning?</div>
+                    <div class="notif-body">You ran Bridge Builder Challenge today &#8212; want to capture what happened?</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening Logger')">Log it</button>
+                <span class="notif-time">4 hours ago</span>
+            </div>
+        </div>
+        <div class="notif-card tier-3 animate-in d9" data-tier="info">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#127807;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Keep the story going</div>
+                    <div class="notif-body">It's been a little while &#8212; even a quick note keeps the learning visible.</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action secondary" onclick="showToast('Opening Logger')">Quick log</button>
+                <span class="notif-time">3 days ago</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: Compliance Urgent -->
+<div class="app-shell" id="view-compliance" style="display:none;">
+    <div class="header">
+        <div class="header-row">
+            <button class="header-back" onclick="showToast('Back to Dashboard')">&#8592; Dashboard</button>
+            <span class="header-title">Notifications</span>
+            <button class="quiet-day-btn">&#128564; Quiet day</button>
+        </div>
+    </div>
+    <div class="filter-tabs">
+        <button class="filter-tab active">All <span class="tab-count">3</span></button>
+        <button class="filter-tab">Resume <span class="tab-count">1</span></button>
+        <button class="filter-tab">Respond <span class="tab-count">1</span></button>
+        <button class="filter-tab">Info <span class="tab-count">1</span></button>
+    </div>
+    <div class="notif-list">
+        <div class="tier-divider"><span class="tier-divider-line"></span><span class="tier-divider-label">Pick up where you left off</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-1">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#128221;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Continue logging?</div>
+                    <div class="notif-body">There's an unfinished entry about the nature walk. Ready to wrap it up?</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening Logger with draft')">Continue</button>
+                <span class="notif-time">5 hours ago</span>
+            </div>
+        </div>
+        <div class="tier-divider"><span class="tier-divider-line"></span><span class="tier-divider-label">Worth a look</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-2 compliance-urgent">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#128203;</span>
+                <div class="notif-content">
+                    <div class="notif-title">HEU check-in in 9 days</div>
+                    <div class="notif-body">Let's make sure your story is complete. Science and HASS could use a session or two &#8212; and you need 2 more work samples.</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action primary" onclick="showToast('Opening HEU Report with gaps')">View report</button>
+                <span class="notif-time">Today</span>
+            </div>
+        </div>
+        <div class="tier-divider"><span class="tier-divider-line"></span><span class="tier-divider-label">Gentle nudges</span><span class="tier-divider-line"></span></div>
+        <div class="notif-card tier-3">
+            <button class="notif-dismiss" onclick="dismissNotif(this)">&#215;</button>
+            <div class="notif-top">
+                <span class="notif-emoji">&#128197;</span>
+                <div class="notif-content">
+                    <div class="notif-title">Heads up</div>
+                    <div class="notif-body">Pond Life Investigation is planned for this afternoon &#8212; materials list ready when you are.</div>
+                </div>
+            </div>
+            <div class="notif-footer">
+                <button class="notif-action secondary" onclick="showToast('Opening Module Prep')">View prep</button>
+                <span class="notif-time">1 hour ago</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: Empty -->
+<div class="app-shell" id="view-empty" style="display:none;">
+    <div class="header">
+        <div class="header-row">
+            <button class="header-back" onclick="showToast('Back to Dashboard')">&#8592; Dashboard</button>
+            <span class="header-title">Notifications</span>
+            <button class="quiet-day-btn">&#128564; Quiet day</button>
+        </div>
+    </div>
+    <div class="filter-tabs">
+        <button class="filter-tab active">All <span class="tab-count">0</span></button>
+        <button class="filter-tab">Resume</button>
+        <button class="filter-tab">Respond</button>
+        <button class="filter-tab">Info</button>
+    </div>
+    <div class="notif-list">
+        <div class="empty-state">
+            <div class="empty-emoji">&#128237;</div>
+            <div class="empty-title">All caught up.</div>
+            <div class="empty-body">Your family's learning story is unfolding beautifully.</div>
+            <div class="empty-tip">
+                <div class="empty-tip-label">&#128161; How notifications work</div>
+                <div class="empty-tip-text">Hearth sends gentle nudges when you have unfinished logs, badge milestones, or compliance dates approaching. You control everything in Family Settings.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: First Week -->
+<div class="app-shell" id="view-firstweek" style="display:none;">
+    <div class="header">
+        <div class="header-row">
+            <button class="header-back" onclick="showToast('Back to Dashboard')">&#8592; Dashboard</button>
+            <span class="header-title">Notifications</span>
+            <button class="quiet-day-btn" disabled style="opacity:0.4">&#128564; Quiet day</button>
+        </div>
+    </div>
+    <div class="filter-tabs"><button class="filter-tab active">All</button></div>
+    <div class="notif-list">
+        <div class="first-week-state">
+            <div class="empty-emoji">&#127793;</div>
+            <div class="empty-title">Welcome to your first week.</div>
+            <div class="empty-body">Take your time exploring &#8212; we'll start sending gentle nudges once you've settled in.</div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: Dashboard Card -->
+<div class="app-shell" id="view-dashboard" style="display:none;">
+    <div class="header">
+        <div class="header-row">
+            <span class="header-title" style="font-size:1rem;">Dashboard Preview</span>
+            <div class="bell-indicator" onclick="switchView('view-populated')">&#128276;<span class="bell-badge">5</span></div>
+        </div>
+    </div>
+    <div class="dashboard-preview">
+        <p style="font-family:var(--font-serif);font-size:0.875rem;color:var(--text-secondary);margin-bottom:var(--space-md);line-height:1.6;">
+            How the highest-priority notification appears on the Dashboard &#8212; a condensed card linking to the full Notification Centre.
+        </p>
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <span class="dashboard-card-title">&#128221; Notification</span>
+                <a class="dashboard-card-link" onclick="switchView('view-populated')">View all (5) &#8594;</a>
+            </div>
+            <div class="dashboard-notif">
+                <span class="dashboard-notif-emoji">&#128221;</span>
+                <div>
+                    <div class="dashboard-notif-text">You were partway through logging that creek walk &#8212; pick up where you left off?</div>
+                    <button class="dashboard-notif-action" onclick="showToast('Opening Logger with draft')">Continue</button>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:var(--space-xl);">
+            <p style="font-family:var(--font-sans);font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:var(--space-md);">Bell indicator states</p>
+            <div style="display:flex;gap:var(--space-xl);align-items:center;flex-wrap:wrap;">
+                <div style="text-align:center;"><div class="bell-indicator" style="margin-bottom:var(--space-sm);">&#128276;<span class="bell-badge">3</span></div><div style="font-family:var(--font-sans);font-size:0.6875rem;color:var(--text-muted);">Has Tier 1</div></div>
+                <div style="text-align:center;"><div class="bell-indicator" style="margin-bottom:var(--space-sm);">&#128276;<span class="bell-badge" style="background:var(--violet);">2</span></div><div style="font-family:var(--font-sans);font-size:0.6875rem;color:var(--text-muted);">Tier 2 only</div></div>
+                <div style="text-align:center;"><div class="bell-indicator" style="margin-bottom:var(--space-sm);">&#128276;<span class="bell-badge" style="background:var(--text-muted);">1</span></div><div style="font-family:var(--font-sans);font-size:0.6875rem;color:var(--text-muted);">Tier 3 only</div></div>
+                <div style="text-align:center;"><div class="bell-indicator" style="margin-bottom:var(--space-sm);">&#128276;</div><div style="font-family:var(--font-sans);font-size:0.6875rem;color:var(--text-muted);">No notifs</div></div>
+            </div>
+        </div>
+        <div style="margin-top:var(--space-xl);">
+            <p style="font-family:var(--font-sans);font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:var(--space-md);">Compliance urgent variant</p>
+            <div class="dashboard-card" style="border-color:rgba(251,191,36,0.3);">
+                <div class="dashboard-card-header">
+                    <span class="dashboard-card-title">&#128203; HEU Check-in</span>
+                    <a class="dashboard-card-link" onclick="switchView('view-compliance')">View all &#8594;</a>
+                </div>
+                <div class="dashboard-notif">
+                    <span class="dashboard-notif-emoji">&#128203;</span>
+                    <div>
+                        <div class="dashboard-notif-text">Your HEU check-in is in 9 days. Science and HASS need attention.</div>
+                        <button class="dashboard-notif-action" style="background:var(--amber);" onclick="showToast('Opening HEU Report')">View report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="demo-switcher">
+    <button class="demo-btn active" id="btn-populated" onclick="switchView('view-populated')">Populated</button>
+    <button class="demo-btn" id="btn-compliance" onclick="switchView('view-compliance')">Compliance</button>
+    <button class="demo-btn" id="btn-empty" onclick="switchView('view-empty')">Empty</button>
+    <button class="demo-btn" id="btn-firstweek" onclick="switchView('view-firstweek')">First Week</button>
+    <button class="demo-btn" id="btn-dashboard" onclick="switchView('view-dashboard')">Dashboard</button>
+</div>
+
+<script>
+function switchView(id) {
+    document.querySelectorAll('.app-shell').forEach(function(v){v.style.display='none';});
+    document.getElementById(id).style.display='block';
+    document.querySelectorAll('.demo-btn').forEach(function(b){b.classList.remove('active');});
+    var btn=document.getElementById('btn-'+id.replace('view-',''));
+    if(btn)btn.classList.add('active');
+}
+function filterNotifs(tier,btn) {
+    btn.parentElement.querySelectorAll('.filter-tab').forEach(function(t){t.classList.remove('active');});
+    btn.classList.add('active');
+    var list=document.getElementById('notifList');
+    list.querySelectorAll('.notif-card,.tier-divider').forEach(function(card){
+        if(tier==='all'){card.style.display='';}
+        else{card.style.display=card.dataset.tier===tier?'':'none';}
+    });
+}
+function dismissNotif(btn) {
+    var card=btn.closest('.notif-card');
+    card.style.transition='opacity 0.3s, transform 0.3s';
+    card.style.opacity='0';card.style.transform='translateX(60px)';
+    setTimeout(function(){card.style.display='none';showToast('Notification dismissed');updateCounts();},300);
+}
+function updateCounts() {
+    var list=document.getElementById('notifList');
+    var all=list.querySelectorAll('.notif-card:not([style*="display: none"])');
+    var resume=list.querySelectorAll('.notif-card[data-tier="resume"]:not([style*="display: none"])').length;
+    var respond=list.querySelectorAll('.notif-card[data-tier="respond"]:not([style*="display: none"])').length;
+    var info=list.querySelectorAll('.notif-card[data-tier="info"]:not([style*="display: none"])').length;
+    var tabs=document.querySelectorAll('#view-populated .filter-tab');
+    if(tabs[0])tabs[0].innerHTML='All <span class="tab-count">'+all.length+'</span>';
+    if(tabs[1])tabs[1].innerHTML='Resume <span class="tab-count">'+resume+'</span>';
+    if(tabs[2])tabs[2].innerHTML='Respond <span class="tab-count">'+respond+'</span>';
+    if(tabs[3])tabs[3].innerHTML='Info <span class="tab-count">'+info+'</span>';
+    list.querySelectorAll('.tier-divider').forEach(function(div){
+        var t=div.dataset.tier;
+        var cards=list.querySelectorAll('.notif-card[data-tier="'+t+'"]:not([style*="display: none"])');
+        div.style.display=cards.length===0?'none':'';
+    });
+    if(all.length===0){
+        list.innerHTML='<div class="empty-state"><div class="empty-emoji">&#128237;</div><div class="empty-title">All caught up.</div><div class="empty-body">Your family\'s learning story is unfolding beautifully.</div></div>';
+    }
+}
+function toggleQuietDay() {
+    var btn=document.getElementById('quietDayBtn');
+    btn.classList.toggle('active');
+    if(btn.classList.contains('active')){btn.innerHTML='&#128564; Quiet day on';showToast('Quiet day \u2014 notifications paused for 24 hours');}
+    else{btn.innerHTML='&#128564; Quiet day';showToast('Notifications resumed');}
+}
+function showToast(msg) {
+    var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},2500);
+}
+</script>
+</body>
+</html>

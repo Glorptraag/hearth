@@ -1,0 +1,783 @@
+<!-- Version: 4 | Date: 2026-03-18 | Changes: Full canonical token conformance from v3. Replaced entire :root block with canonical tokens (--surface-body/panel/raised/hover, --ember, --sage, --border-subtle as ember-tinted). Renamed --ember-orange → --ember, --sage-green → --sage, --deep-coffee → --surface-body, --coffee-mid → --surface-panel, --coffee-light → --surface-raised, --surface-elevated → --surface-hover. Replaced all hardcoded px padding/margin/gap with --space-* tokens. Replaced all non-canonical border-radius values (8px, 9px, 20px) with --radius-* tokens. Added missing shadow tokens. Added --transition-quick/gentle (already present in v3, confirmed correct). Fixed .back-link hover: --text-primary instead of --ember. Fixed Music domain color: #FBBF24 amber/gold instead of #D97B3A ember. Fixed .opening-card: canonical card anatomy (surface-panel bg, border-subtle, radius-lg, space-xl padding). Fixed font-weight 700 on .opening-card-name → 600. Fixed .tip-title font-weight 700 → 600. Fixed .page-title font-size to canonical 1.4rem (unchanged, already reasonable) with correct serif font. All constellation/SVG rendering logic preserved intact. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth – Capabilities Constellation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* === SURFACES === */
+            --surface-body:     #0F0D0B;
+            --surface-panel:    #1A1612;
+            --surface-raised:   #252117;
+            --surface-hover:    #2D2621;
+
+            /* === TEXT === */
+            --text-primary:     #E8DFD4;
+            --text-secondary:   #9B8B7E;
+            --text-muted:       #6B5D52;
+            --text-inverse:     #0F0D0B;
+
+            /* === EMBER === */
+            --ember:            #D97B3A;
+            --ember-hover:      #E88F4E;
+            --ember-glow:       rgba(217, 123, 58, 0.15);
+            --ember-strong:     rgba(217, 123, 58, 0.25);
+
+            /* === SAGE === */
+            --sage:             #4ADE80;
+            --sage-muted:       rgba(74, 222, 128, 0.12);
+
+            /* === SUPPORTING ACCENTS === */
+            --deep-blue:        #60A5FA;
+            --blue-muted:       rgba(96, 165, 250, 0.10);
+            --child-rose:       #F9A8D4;
+            --rose-muted:       rgba(249, 168, 212, 0.10);
+            --child-violet:     #A78BFA;
+
+            /* === BORDERS === */
+            --border-subtle:    rgba(217, 123, 58, 0.1);
+            --border-medium:    rgba(217, 123, 58, 0.2);
+
+            /* === SHADOWS === */
+            --shadow-soft:      0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium:    0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:      0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:      0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* === TYPOGRAPHY === */
+            --font-serif:       'Crimson Text', Georgia, serif;
+            --font-sans:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* === SPACING (8px base) === */
+            --space-xs:   4px;
+            --space-sm:   8px;
+            --space-md:   16px;
+            --space-lg:   24px;
+            --space-xl:   32px;
+            --space-2xl:  48px;
+            --space-3xl:  64px;
+            --space-4xl:  96px;
+
+            /* === BORDER RADIUS === */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* === TRANSITIONS === */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-serif);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           FIXED HEADER
+           ============================================================ */
+        .fixed-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--surface-body) 60%, transparent);
+            padding: var(--space-md) var(--space-lg) var(--space-xl);
+        }
+
+        .header-row {
+            display: flex; align-items: center; justify-content: space-between;
+            max-width: 800px; margin: 0 auto;
+            margin-bottom: var(--space-sm);
+        }
+        .back-link {
+            display: flex; align-items: center; gap: var(--space-xs);
+            color: var(--text-secondary); text-decoration: none;
+            font-family: var(--font-sans); font-size: 0.85rem;
+            transition: color var(--transition-quick);
+        }
+        /* Back navigation → text-primary on hover, NOT ember */
+        .back-link:hover { color: var(--text-primary); }
+        .back-link svg { width: 16px; height: 16px; }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .child-selector {
+            display: flex; gap: var(--space-sm);
+            max-width: 800px; margin: 0 auto;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+        }
+        .child-tab {
+            display: flex; align-items: center; gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border-subtle);
+            background: rgba(15, 13, 11, 0.8);
+            backdrop-filter: blur(8px);
+            color: var(--text-secondary); cursor: pointer;
+            font-family: var(--font-sans); font-size: 0.85rem;
+            font-weight: 500; transition: all var(--transition-gentle);
+            white-space: nowrap;
+        }
+        .child-tab .sym {
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .child-tab .sym svg { width: 13px; height: 13px; }
+        .child-tab.emma .sym  { background: var(--rose-muted);      color: var(--child-rose); }
+        .child-tab.liam .sym  { background: var(--blue-muted);       color: var(--deep-blue); }
+        .child-tab.oliver .sym { background: var(--sage-muted);      color: var(--sage); }
+        .child-tab:hover { border-color: var(--border-medium); }
+        .child-tab.active {
+            border-color: var(--ember); background: var(--ember-glow);
+            color: var(--text-primary);
+        }
+
+        /* ============================================================
+           MAIN SCROLL AREA
+           ============================================================ */
+        .scroll-body {
+            padding-top: 120px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* ============================================================
+           NARRATIVE BLOCK
+           ============================================================ */
+        .narrative {
+            padding: 0 var(--space-lg) var(--space-2xl);
+            opacity: 0; animation: fadeUp 500ms ease forwards;
+        }
+        .narrative-label {
+            font-family: var(--font-sans); font-size: 0.65rem;
+            font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+        .narrative-text {
+            font-family: var(--font-serif);
+            font-size: 1.25rem; line-height: 1.75;
+            color: var(--text-secondary); font-style: italic;
+            padding-left: var(--space-lg);
+            border-left: 2px solid rgba(217, 123, 58, 0.25);
+            margin-bottom: var(--space-lg);
+        }
+        .stats-row {
+            display: flex; gap: var(--space-lg);
+        }
+        .stat-pill {
+            font-family: var(--font-sans); font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .stat-pill strong { color: var(--text-primary); font-weight: 600; }
+        .stat-pill .green { color: var(--sage); }
+        .stat-pill .blue  { color: var(--deep-blue); }
+
+        /* ============================================================
+           LEGEND
+           ============================================================ */
+        .legend-bar {
+            display: flex; gap: var(--space-lg); flex-wrap: wrap;
+            padding: var(--space-md) var(--space-lg);
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: var(--space-xl);
+            opacity: 0; animation: fadeUp 500ms 80ms ease forwards;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: var(--space-xs);
+            font-family: var(--font-sans); font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+        .leg-dot {
+            width: 9px; height: 9px; border-radius: var(--radius-full);
+        }
+        .leg-dot.dem { background: var(--sage);      box-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .leg-dot.dev { background: var(--deep-blue); box-shadow: 0 0 8px rgba(96,165,250,0.4); }
+        /* Emerging: amber/gold — kept from v3 threadColors but now uses a local amber since Music also moved */
+        .leg-dot.emr { background: #FBBF24;          box-shadow: 0 0 8px rgba(251,191,36,0.4); }
+        .leg-dot.gho { background: transparent; border: 1.5px dashed var(--text-muted); opacity: 0.5; }
+
+        /* ============================================================
+           CONSTELLATION SVG CONTAINER
+           ============================================================ */
+        .constellation-wrap {
+            position: relative;
+            padding: 0 var(--space-sm);
+        }
+
+        #constellationSVG {
+            width: 100%;
+            display: block;
+        }
+
+        /* SVG node styles */
+        .thread-spine { fill: none; stroke-width: 2; opacity: 0.15; }
+        .thread-spine-glow { fill: none; stroke-width: 6; opacity: 0.04; }
+
+        .obs-node { cursor: pointer; }
+        .obs-node:hover .node-outer { opacity: 1; }
+
+        /* ============================================================
+           TOOLTIP
+           ============================================================ */
+        .tooltip {
+            position: fixed;
+            max-width: 320px;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--surface-hover);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-warm);
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity var(--transition-quick), transform var(--transition-quick);
+        }
+        .tooltip.show { opacity: 1; transform: translateY(0); }
+        .tip-title {
+            font-family: var(--font-serif);
+            font-size: 1.05rem; font-weight: 600;
+            color: var(--text-primary); margin-bottom: var(--space-xs);
+        }
+        .tip-date {
+            font-family: var(--font-sans); font-size: 0.7rem;
+            color: var(--text-muted); margin-bottom: var(--space-sm);
+        }
+        .tip-desc {
+            font-family: var(--font-serif); font-size: 0.92rem;
+            color: var(--text-secondary); line-height: 1.55;
+            margin-bottom: var(--space-sm);
+        }
+        .tip-threads {
+            display: flex; flex-wrap: wrap; gap: var(--space-xs);
+        }
+        .tip-thread-tag {
+            font-family: var(--font-sans); font-size: 0.65rem;
+            font-weight: 500; padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+        }
+        .tip-thread-tag.dem { background: var(--sage-muted);          color: var(--sage); }
+        .tip-thread-tag.dev { background: var(--blue-muted);           color: var(--deep-blue); }
+        .tip-thread-tag.emr { background: rgba(251,191,36,0.12);       color: #FBBF24; }
+
+        /* ============================================================
+           THREAD LABEL — inline in SVG
+           ============================================================ */
+        .thread-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            fill: var(--text-muted);
+            opacity: 0.6;
+        }
+        .thread-label-bg {
+            fill: var(--surface-body);
+            opacity: 0.85;
+        }
+
+        /* ============================================================
+           OPENING UP SECTION
+           ============================================================ */
+        .opening-section {
+            padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
+            opacity: 0; animation: fadeUp 500ms ease forwards;
+        }
+        .opening-label {
+            font-family: var(--font-sans); font-size: 0.7rem;
+            font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--text-muted);
+            margin-bottom: var(--space-lg);
+            display: flex; align-items: center; gap: var(--space-sm);
+        }
+        .ghost-pulse {
+            width: 8px; height: 8px; border-radius: var(--radius-full);
+            border: 1.5px dashed var(--text-muted); opacity: 0.4;
+            animation: pulse 3s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 0.3; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        /* Canonical card anatomy: surface-panel bg, border-subtle, radius-lg, space-xl padding, shadow-soft */
+        .opening-card {
+            padding: var(--space-xl);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            margin-bottom: var(--space-lg);
+            transition: transform var(--transition-gentle), border-color var(--transition-gentle), box-shadow var(--transition-gentle);
+        }
+        .opening-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-warm);
+        }
+        .opening-card-name {
+            font-family: var(--font-serif);
+            font-size: 1.1rem; font-weight: 600;
+            color: var(--text-muted); margin-bottom: var(--space-xs);
+        }
+        .opening-card-desc {
+            font-family: var(--font-serif);
+            font-size: 0.95rem; color: var(--text-muted);
+            opacity: 0.7; line-height: 1.55; margin-bottom: var(--space-sm);
+        }
+        .opening-prereqs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-sm); }
+        .prereq-pill {
+            font-family: var(--font-sans); font-size: 0.68rem;
+            font-weight: 500; padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+        }
+        .prereq-pill.met    { background: var(--sage-muted);           color: var(--sage); }
+        .prereq-pill.needed { background: rgba(107,93,82,0.12);         color: var(--text-muted); }
+        .readiness-row {
+            display: flex; align-items: center; gap: var(--space-sm);
+        }
+        .r-bar {
+            flex: 1; max-width: 140px; height: 3px;
+            background: rgba(107,93,82,0.15);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .r-fill { height: 100%; border-radius: var(--radius-sm); }
+        .r-fill.high { background: var(--sage); }
+        .r-fill.mid  { background: var(--deep-blue); }
+        .r-fill.low  { background: #FBBF24; }
+        .r-label { font-family: var(--font-sans); font-size: 0.65rem; color: var(--text-muted); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .narrative-text  { font-size: 1.1rem; }
+            .fixed-header    { padding: var(--space-sm) var(--space-sm) var(--space-lg); }
+            .scroll-body     { padding-top: 110px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="tooltip" id="tooltip">
+    <div class="tip-title" id="tipTitle"></div>
+    <div class="tip-date"  id="tipDate"></div>
+    <div class="tip-desc"  id="tipDesc"></div>
+    <div class="tip-threads" id="tipThreads"></div>
+</div>
+
+<div class="fixed-header">
+    <div class="header-row">
+        <a href="#" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Dashboard
+        </a>
+        <h1 class="page-title">Capabilities</h1>
+        <div style="width:70px"></div>
+    </div>
+    <div class="child-selector">
+        <button class="child-tab emma active" data-child="emma" onclick="selectChild('emma')">
+            <div class="sym"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z"/></svg></div>
+            Emma
+        </button>
+        <button class="child-tab liam" data-child="liam" onclick="selectChild('liam')">
+            <div class="sym"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 16h16L12 4zm0 4l4.5 9h-9L12 8z"/></svg></div>
+            Liam
+        </button>
+        <button class="child-tab oliver" data-child="oliver" onclick="selectChild('oliver')">
+            <div class="sym"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.2 3.8 21.5c-.1.3.1.5.4.5.5 0 1.2-.1 2-.4C11 19.9 18 14 18 5c0-1-.8-2-2-2-3 0-8 2-8 10 0 2 .5 4 1.5 6"/></svg></div>
+            Oliver
+        </button>
+    </div>
+</div>
+
+<div class="scroll-body" id="scrollBody"></div>
+
+<script>
+// ============================================================
+// THREAD COLORS
+// Music: was #D97B3A (ember) — changed to #FBBF24 amber/gold to avoid ember collision
+// ============================================================
+const threadColors = {
+    'Numeracy':         { color: '#A78BFA', muted: 'rgba(167,139,250,0.12)' },
+    'Pattern & Logic':  { color: '#818CF8', muted: 'rgba(129,140,248,0.12)' },
+    'Measurement':      { color: '#C084FC', muted: 'rgba(192,132,252,0.12)' },
+    'Data':             { color: '#E879F9', muted: 'rgba(232,121,249,0.12)' },
+    'Fractions':        { color: '#D946EF', muted: 'rgba(217,70,239,0.12)' },
+    'Reading':          { color: '#F9A8D4', muted: 'rgba(249,168,212,0.12)' },
+    'Writing':          { color: '#FDA4AF', muted: 'rgba(253,164,175,0.12)' },
+    'Communication':    { color: '#FCA5A5', muted: 'rgba(252,165,165,0.12)' },
+    'Inquiry':          { color: '#60A5FA', muted: 'rgba(96,165,250,0.12)' },
+    'Observation':      { color: '#67E8F9', muted: 'rgba(103,232,249,0.12)' },
+    'Social':           { color: '#2DD4BF', muted: 'rgba(45,212,191,0.12)' },
+    'Historical':       { color: '#FBBF24', muted: 'rgba(251,191,36,0.12)' },
+    'Physical':         { color: '#4ADE80', muted: 'rgba(74,222,128,0.12)' },
+    'Music':            { color: '#F59E0B', muted: 'rgba(245,158,11,0.12)' },  /* amber/gold — was #D97B3A ember */
+    'Sensory':          { color: '#67E8F9', muted: 'rgba(103,232,249,0.12)' },
+    'Vocabulary':       { color: '#F9A8D4', muted: 'rgba(249,168,212,0.12)' },
+    'Motor':            { color: '#4ADE80', muted: 'rgba(74,222,128,0.12)' },
+};
+
+const tierColor = { demonstrating: '#4ADE80', developing: '#60A5FA', emerging: '#FBBF24' };
+
+// ============================================================
+// EMMA DATA — granular observations
+// ============================================================
+const emmaData = {
+    narrative: "Emma's observation skills have deepened remarkably this term. Her fraction work and science inquiry are starting to weave together — she's beginning to design her own small experiments. The way she explained magnetism to Liam showed genuine peer teaching instincts emerging.",
+    stats: { total: 87, threads: 14, thisMonth: 12 },
+    threads: ['Numeracy','Pattern & Logic','Fractions','Measurement','Data','Reading','Writing','Communication','Inquiry','Observation','Social','Historical','Physical','Music'],
+    observations: [
+        { id:1,  title:'Explained magnets to Liam',              desc:'Showed Liam the fridge experiment, explained which metals respond. Used "attract" and "repel" correctly. Scaffolded without giving answers.',          date:'12 Feb', threads:['Inquiry','Social','Communication'],        tier:'developing' },
+        { id:2,  title:'Measured flour by cups and half-cups',   desc:'Doubled the banana bread recipe, converting ½ cups to whole cups and explaining her reasoning step by step.',                                         date:'11 Feb', threads:['Fractions','Measurement','Numeracy'],     tier:'developing' },
+        { id:3,  title:'Asked "Can we test if all metals are magnetic?"', desc:'Formulated a testable question without prompting. Wanted to gather metals from the kitchen to try.',                                         date:'10 Feb', threads:['Inquiry','Pattern & Logic'],             tier:'developing' },
+        { id:4,  title:'Wrote story about a "scientist bird"',   desc:'Three paragraphs with beginning, middle, end. Used dialogue and descriptive language. Bird character does experiments.',                               date:'9 Feb',  threads:['Writing','Communication'],               tier:'demonstrating' },
+        { id:5,  title:"Noticed the magnet didn't attract aluminium", desc:'Tested fridge magnets on different objects. Recorded which ones stuck. Surprised by aluminium.',                                                 date:'8 Feb',  threads:['Inquiry','Observation','Data'],           tier:'developing' },
+        { id:6,  title:'Drew a simple bar chart of magnetic objects', desc:'Created columns for "yes" and "no" with counts. First unprompted data visualization.',                                                           date:'8 Feb',  threads:['Data','Numeracy'],                        tier:'emerging' },
+        { id:7,  title:'Read chapter 7 of Rowan of Rin independently', desc:'Read for 35 minutes without stopping. Retold key events to Sarah with detail about character motivations.',                                     date:'7 Feb',  threads:['Reading','Communication'],               tier:'demonstrating' },
+        { id:8,  title:'Compared fractions: "⅓ is less than ½"', desc:"While cutting pizza, explained that thirds are smaller than halves because you're cutting into more pieces.",                                         date:'6 Feb',  threads:['Fractions','Numeracy','Communication'],   tier:'developing' },
+        { id:9,  title:'Sorted buttons by size, colour, then holes', desc:'Spontaneously created three different sorting systems for the same collection. Named each system.',                                                date:'5 Feb',  threads:['Pattern & Logic','Data','Observation'],   tier:'demonstrating' },
+        { id:10, title:'Predicted rain based on clouds',          desc:'"Those grey puffy ones usually mean rain." Checked her prediction against the afternoon weather.',                                                    date:'5 Feb',  threads:['Inquiry','Observation'],                  tier:'developing' },
+        { id:11, title:'Used a ruler to measure her bookshelf',   desc:"Measured in centimetres, wrote it down. Then measured Liam's shelf and compared.",                                                                   date:'4 Feb',  threads:['Measurement','Numeracy'],                  tier:'developing' },
+        { id:12, title:'Asked why old photos are black and white', desc:"Noticed grandmother's photo album has no colour. Asked detailed follow-up questions about cameras and technology.",                                  date:'3 Feb',  threads:['Historical','Inquiry','Communication'],    tier:'developing' },
+        { id:13, title:'Helped Liam count his marble collection', desc:'Guided him through grouping by 10s. Was patient when he lost count.',                                                                                date:'2 Feb',  threads:['Numeracy','Social'],                      tier:'developing' },
+        { id:14, title:'Wrote a list of "things I want to investigate"', desc:'Unprompted list of 6 questions including "Do plants grow faster in music?" and "Why is the sky blue at day but dark at night?"',             date:'1 Feb',  threads:['Inquiry','Writing'],                      tier:'developing' },
+        { id:15, title:'Identified recorder, guitar, drums by sound', desc:'Closed eyes, named instruments from a playlist. Got 7 out of 10.',                                                                              date:'31 Jan', threads:['Music','Observation'],                    tier:'emerging' },
+        { id:16, title:'Measured water with measuring cups',       desc:'Followed a recipe requiring 1¼ cups. Combined 1 cup + ¼ cup correctly.',                                                                            date:'30 Jan', threads:['Measurement','Fractions','Numeracy'],     tier:'developing' },
+        { id:17, title:"Retold the chapter's plot to Dad",         desc:'Structured retelling with "first... then... but then... and finally." Included character feelings.',                                                date:'29 Jan', threads:['Reading','Communication'],               tier:'demonstrating' },
+        { id:18, title:'Compared two leaves side by side',         desc:'Without prompting, held up two different leaves and described differences in shape, colour, vein patterns.',                                         date:'28 Jan', threads:['Observation','Inquiry'],                  tier:'developing' },
+        { id:19, title:'Counted backwards from 50',                desc:'Accurate countdown without hesitation. Used it as a timer for a game.',                                                                             date:'27 Jan', threads:['Numeracy'],                               tier:'demonstrating' },
+        { id:20, title:'Explained why she chose red paint',        desc:'Articulated colour choice in artwork: "Red feels angry and the character is angry here."',                                                          date:'26 Jan', threads:['Communication','Writing'],               tier:'developing' },
+        { id:21, title:'Grouped animals by habitat',               desc:'Sorted animal cards into ocean, forest, desert groups. Debated where bears go.',                                                                    date:'25 Jan', threads:['Pattern & Logic','Observation','Inquiry'], tier:'developing' },
+        { id:22, title:'Read aloud to Oliver for 10 minutes',      desc:'Chose a picture book and read it to Oliver with expression. Changed voices for characters.',                                                        date:'24 Jan', threads:['Reading','Social','Communication'],       tier:'demonstrating' },
+        { id:23, title:'Threaded beads in ABAB pattern',           desc:'Created alternating colour pattern, then tried AABB and ABC patterns without instruction.',                                                         date:'23 Jan', threads:['Pattern & Logic','Physical'],            tier:'demonstrating' },
+        { id:24, title:'Estimated how many grapes in the bowl',    desc:'Guessed 30, actual was 27. Said "I was close!" and tried estimating the other bowl.',                                                               date:'22 Jan', threads:['Numeracy','Data'],                        tier:'developing' },
+        { id:25, title:'Asked "What did kids do before TV?"',      desc:'Led to a 20-minute conversation about life in the 1950s. Drew a picture of "old-fashioned play."',                                                 date:'21 Jan', threads:['Historical','Communication','Inquiry'],    tier:'developing' },
+        { id:26, title:'Balanced on a log for 15 seconds',         desc:'Practised balance on a fallen log at the park. Counted her own seconds.',                                                                           date:'20 Jan', threads:['Physical','Numeracy'],                    tier:'emerging' },
+        { id:27, title:'Wrote a letter to Grandma',                desc:'Full letter with greeting, body, sign-off. Described her week in sequence with descriptive details.',                                               date:'19 Jan', threads:['Writing','Communication'],               tier:'demonstrating' },
+        { id:28, title:'Shared fraction pizza equally with Liam',  desc:'Cut paper pizza into 6 slices and distributed 3 each. Said "We each get ½."',                                                                      date:'18 Jan', threads:['Fractions','Social','Numeracy'],          tier:'developing' },
+        { id:29, title:'Found a pattern in house numbers',         desc:'Walking to shops, noticed even numbers on one side, odd on the other. Asked "Is it always like that?"',                                             date:'17 Jan', threads:['Pattern & Logic','Numeracy','Observation'], tier:'demonstrating' },
+        { id:30, title:'Observed caterpillar for 5 minutes',       desc:'Watched a caterpillar on a leaf without touching. Described its movement: "It scrunches up then stretches."',                                      date:'16 Jan', threads:['Observation','Inquiry'],                  tier:'developing' },
+        { id:31, title:'Multiplied by skip counting',              desc:'Figured out 3×4 by counting 4, 8, 12. Applied this to other small multiplications.',                                                               date:'15 Jan', threads:['Numeracy','Pattern & Logic'],            tier:'developing' },
+        { id:32, title:'Used "because" in three explanations',     desc:"Noticed she's starting to give reasons: \"I think it's cold because the puddle froze.\"",                                                          date:'14 Jan', threads:['Communication','Inquiry'],               tier:'developing' },
+        { id:33, title:'Sorted the laundry by colour',             desc:'Created three piles independently. Explained her sorting rule when asked.',                                                                         date:'13 Jan', threads:['Pattern & Logic'],                        tier:'demonstrating' },
+        { id:34, title:'Traced her hand and measured fingers',     desc:'Used a ruler to measure each finger length in cm. Recorded in a table.',                                                                            date:'12 Jan', threads:['Measurement','Data','Numeracy'],          tier:'developing' },
+        { id:35, title:'Looked up "platypus" after seeing one in a book', desc:'Wanted to know if it was real. Asked to find more information. Led to a nature documentary.',                                               date:'11 Jan', threads:['Inquiry','Reading'],                      tier:'developing' },
+    ],
+    ghost: [
+        { name:'Experimental Design',   emoji:'🧪', desc:'Planning experiments with controlled variables.',     prereqs:[{name:'Scientific Inquiry',met:true},{name:'Data Recording',met:false}], readiness:70 },
+        { name:'Persuasive Writing',    emoji:'📝', desc:'Constructing arguments with evidence.',               prereqs:[{name:'Creative Writing',met:true},{name:'Communication',met:true}],     readiness:85 },
+        { name:'Proportional Thinking', emoji:'⚖️', desc:'Ratios, scaling, and proportional reasoning.',       prereqs:[{name:'Fractions',met:true},{name:'Measurement',met:true}],              readiness:60 },
+    ],
+};
+
+const liamData = {
+    narrative: "Liam's constant 'why?' questions are turning into real scientific thinking. Since discovering The Wild Robot, reading has taken off — he now asks questions about feelings, what makes something alive, and whether robots can be kind.",
+    stats: { total: 52, threads: 9, thisMonth: 8 },
+    threads: ['Numeracy','Pattern & Logic','Reading','Communication','Inquiry','Observation','Social','Physical','Writing'],
+    observations: [
+        { id:1,  title:'Tested magnets on the fridge with Emma',        desc:"Tried every fridge magnet on different surfaces. Shouted \"This one doesn't stick!\" when trying wood.",        date:'12 Feb', threads:['Inquiry','Observation'],         tier:'emerging' },
+        { id:2,  title:'Asked "Why do magnets only like some things?"',  desc:'Genuine curiosity question after magnet play. Wanted to test more objects.',                                  date:'12 Feb', threads:['Inquiry'],                       tier:'developing' },
+        { id:3,  title:'Counted all the magnets: 14',                   desc:'Counted the fridge magnet collection accurately without losing track.',                                         date:'11 Feb', threads:['Numeracy'],                      tier:'demonstrating' },
+        { id:4,  title:'Noticed odd/even pattern on dice',              desc:'Rolling dice for a game, said "1, 3, 5 are all the ones without partners."',                                   date:'10 Feb', threads:['Pattern & Logic','Numeracy'],    tier:'emerging' },
+        { id:5,  title:'Read chapter 4 of The Wild Robot alone',        desc:'20 minutes of independent reading. Came to tell Sarah about Roz meeting the goslings.',                        date:'9 Feb',  threads:['Reading'],                       tier:'developing' },
+        { id:6,  title:'Asked "Can a robot actually feel lonely?"',      desc:'Deep question after reading. Led to a conversation about feelings and consciousness.',                         date:'9 Feb',  threads:['Inquiry','Communication','Reading'], tier:'developing' },
+        { id:7,  title:'Took turns building with Emma',                 desc:'Shared blocks for a bridge project. Negotiated who builds which part.',                                         date:'8 Feb',  threads:['Social','Communication'],        tier:'emerging' },
+        { id:8,  title:'Ran the backyard obstacle course',               desc:'Completed the course Sarah set up. Tried to beat his own time. Counted his jumps.',                            date:'7 Feb',  threads:['Physical','Numeracy'],           tier:'developing' },
+        { id:9,  title:'Described a spider web in detail',              desc:'"It goes round and round and has sticky lines going out like a star." Pointed out dew drops.',                 date:'6 Feb',  threads:['Observation','Communication'],   tier:'developing' },
+        { id:10, title:'Wrote his name and "I like bugs"',              desc:'Unprompted writing on paper. Letters mostly formed correctly.',                                                 date:'5 Feb',  threads:['Writing','Communication'],       tier:'emerging' },
+        { id:11, title:'Sorted cars by colour then by size',            desc:'Two different sorting methods for his car collection without being asked.',                                     date:'4 Feb',  threads:['Pattern & Logic','Observation'], tier:'emerging' },
+        { id:12, title:'Counted to 47 without mistakes',                desc:"Counting steps on a walk. Didn't skip any numbers.",                                                           date:'3 Feb',  threads:['Numeracy'],                      tier:'demonstrating' },
+        { id:13, title:'Predicted "the caterpillar will eat the leaf"', desc:'Made a prediction about a caterpillar, then watched to check. Said "I was right!"',                           date:'2 Feb',  threads:['Inquiry','Observation'],         tier:'developing' },
+        { id:14, title:'Told Oliver a story about a brave dog',         desc:'Made up a story with beginning and end. Used "and then" to connect events.',                                   date:'1 Feb',  threads:['Communication','Social'],        tier:'developing' },
+        { id:15, title:'Subtracted using fingers: 8-3=5',               desc:'Used fingers to solve subtraction problem. Checked by counting what was left.',                                date:'31 Jan', threads:['Numeracy'],                      tier:'developing' },
+        { id:16, title:'Read chapter 2 with some help',                 desc:'Read most words independently, asked for help with 4 words. Very engaged with story.',                         date:'30 Jan', threads:['Reading'],                       tier:'developing' },
+        { id:17, title:'Asked "Why do leaves change colour?"',          desc:'Noticed autumn leaves and wanted to understand the mechanism.',                                                 date:'29 Jan', threads:['Inquiry','Observation'],         tier:'developing' },
+        { id:18, title:'Climbed the big tree at the park',              desc:'First time reaching the second branch. Very proud. Careful and deliberate movements.',                         date:'28 Jan', threads:['Physical'],                      tier:'developing' },
+        { id:19, title:'Grouped buttons into "big" and "small"',        desc:'Simple sorting exercise. Also tried grouping by number of holes.',                                             date:'27 Jan', threads:['Pattern & Logic'],               tier:'emerging' },
+        { id:20, title:'Added 5+3 mentally',                            desc:'Didn\'t use fingers. Said "I just know it." Beginning of number fact fluency.',                                date:'26 Jan', threads:['Numeracy','Pattern & Logic'],    tier:'developing' },
+    ],
+    ghost: [
+        { name:'Scientific Inquiry', emoji:'🔬', desc:'Following experiment steps and testing predictions.', prereqs:[{name:'Curiosity & Questioning',met:true},{name:'Observation',met:true}], readiness:80 },
+        { name:'Creative Writing',   emoji:'✏️', desc:'Writing original stories with structure.',            prereqs:[{name:'Reading',met:true},{name:'Handwriting',met:false}],               readiness:55 },
+    ],
+};
+
+const oliverData = {
+    narrative: "Oliver is discovering the world in his own gentle way. He counts everything — birds at the feeder, steps to the letterbox, grapes on his plate. New words appear every day, and his sentences are getting longer and more expressive.",
+    stats: { total: 28, threads: 5, thisMonth: 5 },
+    threads: ['Numeracy','Vocabulary','Sensory','Social','Motor'],
+    observations: [
+        { id:1,  title:'Said "I don\'t like that, it makes me sad"', desc:'Responded to Liam taking his toy by naming his emotion instead of crying.',                              date:'10 Feb', threads:['Social','Vocabulary'],  tier:'emerging' },
+        { id:2,  title:'Counted 7 birds at the feeder',              desc:'Pointed at each bird and counted. Got to 7 accurately with one-to-one pointing.',                       date:'9 Feb',  threads:['Numeracy'],             tier:'emerging' },
+        { id:3,  title:'Used the word "enormous" correctly',         desc:'Called a tree "enormous." Has been picking up new descriptive words quickly.',                          date:'8 Feb',  threads:['Vocabulary'],           tier:'developing' },
+        { id:4,  title:'Squished playdough and said "squishy!"',     desc:'Explored texture with hands. Made a ball, squished it, rolled it, described each feeling.',            date:'7 Feb',  threads:['Sensory','Vocabulary'],  tier:'demonstrating' },
+        { id:5,  title:'Jumped off the bottom step',                 desc:'Practised jumping from the step 6 times. Landed on both feet by the 4th try.',                         date:'6 Feb',  threads:['Motor'],                tier:'developing' },
+        { id:6,  title:'Shared his snack with Emma',                 desc:'Offered a cracker unprompted. Said "For you."',                                                        date:'5 Feb',  threads:['Social'],               tier:'emerging' },
+        { id:7,  title:'Counted to 5 with Duplo blocks',             desc:'Stacked 5 blocks and counted each one as he placed it.',                                               date:'4 Feb',  threads:['Numeracy'],             tier:'emerging' },
+        { id:8,  title:'Asked "What\'s that noise?"',                desc:'Heard a bird call and asked what it was. Tried to imitate the sound.',                                  date:'3 Feb',  threads:['Sensory','Vocabulary'],  tier:'developing' },
+        { id:9,  title:'Ran to the letterbox and back',              desc:'Confident running with good coordination. Laughed the whole way.',                                      date:'2 Feb',  threads:['Motor'],                tier:'developing' },
+        { id:10, title:'Said "More grapes please" at lunch',         desc:'Full 3-word sentence with a polite word. Progressing from pointing.',                                   date:'1 Feb',  threads:['Vocabulary'],           tier:'developing' },
+        { id:11, title:'Touched sand, water, leaves in the garden',  desc:'Systematic sensory exploration. Spent 15 minutes feeling different textures.',                         date:'31 Jan', threads:['Sensory'],              tier:'demonstrating' },
+        { id:12, title:'Held up 3 fingers when asked his age',       desc:"Not quite right (he's 4) but understands fingers represent numbers.",                                  date:'30 Jan', threads:['Numeracy'],             tier:'emerging' },
+    ],
+    ghost: [
+        { name:'Storytelling',          emoji:'📖', desc:'Telling simple stories about experiences.', prereqs:[{name:'Vocabulary',met:true}],                          readiness:65 },
+        { name:'Colour & Shape Naming', emoji:'🔶', desc:'Naming colours and basic shapes.',          prereqs:[{name:'Vocabulary',met:true},{name:'Counting',met:false}], readiness:55 },
+    ],
+};
+
+const allChildren = { emma: emmaData, liam: liamData, oliver: oliverData };
+let active = 'emma';
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(key) {
+    const data = allChildren[key];
+    const body = document.getElementById('scrollBody');
+
+    // Thread X positions — distribute threads across width
+    const W = 760; // svg viewbox width
+    const threadCount = data.threads.length;
+    const margin = 60;
+    const spacing = (W - margin * 2) / Math.max(threadCount - 1, 1);
+    const threadX = {};
+    data.threads.forEach((t, i) => {
+        threadX[t] = margin + i * spacing;
+    });
+
+    // Vertical layout — each observation gets generous space
+    const ROW_H = 90;
+    const TOP_PAD = 60;
+    const totalH = TOP_PAD + data.observations.length * ROW_H + 200;
+
+    // Build HTML
+    let html = '';
+
+    // Narrative
+    html += `
+    <div class="narrative">
+        <div class="narrative-label">Current Stream</div>
+        <p class="narrative-text">${data.narrative}</p>
+        <div class="stats-row">
+            <span class="stat-pill"><strong>${data.stats.total}</strong> observations</span>
+            <span class="stat-pill"><strong>${data.stats.threads}</strong> threads</span>
+            <span class="stat-pill"><strong class="green">+${data.stats.thisMonth}</strong> this month</span>
+        </div>
+    </div>`;
+
+    // Legend
+    html += `
+    <div class="legend-bar">
+        <div class="legend-item"><div class="leg-dot dem"></div>Demonstrating</div>
+        <div class="legend-item"><div class="leg-dot dev"></div>Developing</div>
+        <div class="legend-item"><div class="leg-dot emr"></div>Emerging</div>
+        <div class="legend-item"><div class="leg-dot gho"></div>Opening up</div>
+    </div>`;
+
+    // SVG constellation
+    html += `<div class="constellation-wrap"><svg id="constellationSVG" viewBox="0 0 ${W} ${totalH}" preserveAspectRatio="xMidYMid meet">`;
+
+    // Defs
+    html += `<defs>`;
+    data.threads.forEach(t => {
+        const c = threadColors[t] || { color: '#9B8B7E' };
+        html += `<linearGradient id="glow-${t.replace(/[^a-zA-Z]/g,'')}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="${c.color}" stop-opacity="0.01"/>
+            <stop offset="50%"  stop-color="${c.color}" stop-opacity="0.06"/>
+            <stop offset="100%" stop-color="${c.color}" stop-opacity="0.01"/>
+        </linearGradient>`;
+    });
+    html += `</defs>`;
+
+    // Thread spine lines (vertical guides)
+    data.threads.forEach(t => {
+        const x = threadX[t];
+        const c = threadColors[t] || { color: '#9B8B7E' };
+        // Glow band
+        html += `<rect x="${x - 12}" y="0" width="24" height="${totalH}" fill="url(#glow-${t.replace(/[^a-zA-Z]/g,'')})" />`;
+        // Spine
+        html += `<line x1="${x}" y1="0" x2="${x}" y2="${totalH}" stroke="${c.color}" stroke-width="1" opacity="0.08"/>`;
+    });
+
+    // Thread labels at top
+    data.threads.forEach(t => {
+        const x = threadX[t];
+        const c = threadColors[t] || { color: '#9B8B7E' };
+        html += `<text x="${x}" y="28" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" font-weight="600" fill="${c.color}" opacity="0.55" letter-spacing="0.08em" text-transform="uppercase">${t}</text>`;
+    });
+
+    // Date markers on left
+    let lastDate = '';
+
+    // Build thread→observation index for connections
+    const obs = data.observations;
+    const threadObs = {};
+    obs.forEach((o, i) => {
+        o.threads.forEach(t => {
+            if (!threadObs[t]) threadObs[t] = [];
+            threadObs[t].push(i);
+        });
+    });
+
+    // Draw thread connections (sequential within each thread)
+    Object.entries(threadObs).forEach(([thread, indices]) => {
+        const c = threadColors[thread] || { color: '#9B8B7E' };
+        const tx = threadX[thread];
+        for (let k = 0; k < indices.length - 1; k++) {
+            const y1 = TOP_PAD + indices[k]     * ROW_H;
+            const y2 = TOP_PAD + indices[k + 1] * ROW_H;
+            html += `<line x1="${tx}" y1="${y1}" x2="${tx}" y2="${y2}" stroke="${c.color}" stroke-width="2.5" opacity="0.18"/>`;
+        }
+    });
+
+    // Cross-thread connections within same observation
+    obs.forEach((o, i) => {
+        const y = TOP_PAD + i * ROW_H;
+        if (o.threads.length > 1) {
+            const xs = o.threads.map(t => threadX[t]).sort((a, b) => a - b);
+            for (let k = 0; k < xs.length - 1; k++) {
+                const tc = tierColor[o.tier] || '#9B8B7E';
+                html += `<line x1="${xs[k]}" y1="${y}" x2="${xs[k+1]}" y2="${y}" stroke="${tc}" stroke-width="1" opacity="0.12"/>`;
+            }
+        }
+    });
+
+    // Observation nodes
+    obs.forEach((o, i) => {
+        const y = TOP_PAD + i * ROW_H;
+        const tc = tierColor[o.tier];
+        const nodeR = o.tier === 'demonstrating' ? 7 : o.tier === 'developing' ? 5.5 : 4.5;
+        const glowR = nodeR + 8;
+
+        // Date label
+        if (o.date !== lastDate) {
+            html += `<text x="12" y="${y + 4}" font-family="Inter,sans-serif" font-size="9" fill="#6B5D52" opacity="0.6">${o.date}</text>`;
+            lastDate = o.date;
+        }
+
+        // For each thread this observation touches, draw a node
+        o.threads.forEach((t) => {
+            const x = threadX[t];
+            const threadC = (threadColors[t] || { color: tc }).color;
+
+            html += `<g class="obs-node" data-idx="${i}" data-thread="${t}" onmouseenter="showTip(event,${i})" onmouseleave="hideTip()" onclick="showTip(event,${i})">`;
+            // Glow
+            html += `<circle cx="${x}" cy="${y}" r="${glowR}"        fill="${threadC}" opacity="0.08" class="node-outer"/>`;
+            // Ring
+            html += `<circle cx="${x}" cy="${y}" r="${nodeR}"        fill="none" stroke="${threadC}" stroke-width="1.5" opacity="0.7"/>`;
+            // Core
+            html += `<circle cx="${x}" cy="${y}" r="${nodeR * 0.45}" fill="${threadC}" opacity="0.9"/>`;
+            html += `</g>`;
+        });
+
+        // Observation title — to the right of rightmost node for this observation
+        const maxX = Math.max(...o.threads.map(t => threadX[t]));
+        const labelX = Math.min(maxX + 20, W - 200);
+        html += `<text x="${labelX}" y="${y + 3}" font-family="'Crimson Text',Georgia,serif" font-size="12" fill="#E8DFD4" opacity="0.75">${truncate(o.title, 40)}</text>`;
+    });
+
+    html += `</svg></div>`;
+
+    // Opening Up
+    if (data.ghost && data.ghost.length > 0) {
+        html += `
+        <section class="opening-section">
+            <div class="opening-label"><span class="ghost-pulse"></span> Opening Up — Within Reach</div>
+            ${data.ghost.map(g => {
+                const r = g.readiness;
+                const lvl = r >= 75 ? 'high' : r >= 50 ? 'mid' : 'low';
+                return `
+                <div class="opening-card">
+                    <div class="opening-card-name">${g.emoji} ${g.name}</div>
+                    <div class="opening-card-desc">${g.desc}</div>
+                    <div class="opening-prereqs">
+                        ${g.prereqs.map(p => `<span class="prereq-pill ${p.met?'met':'needed'}">${p.met?'✓':'○'} ${p.name}</span>`).join('')}
+                    </div>
+                    <div class="readiness-row">
+                        <div class="r-bar"><div class="r-fill ${lvl}" style="width:${r}%"></div></div>
+                        <span class="r-label">${r}% ready</span>
+                    </div>
+                </div>`;
+            }).join('')}
+        </section>`;
+    }
+
+    body.innerHTML = html;
+}
+
+function truncate(s, n) { return s.length > n ? s.substring(0, n) + '…' : s; }
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+function showTip(evt, idx) {
+    const data = allChildren[active];
+    const o = data.observations[idx];
+    if (!o) return;
+    const tip = document.getElementById('tooltip');
+    document.getElementById('tipTitle').textContent  = o.title;
+    document.getElementById('tipDate').textContent   = o.date;
+    document.getElementById('tipDesc').textContent   = o.desc;
+    document.getElementById('tipThreads').innerHTML  = o.threads.map(t => {
+        const cls = o.tier === 'demonstrating' ? 'dem' : o.tier === 'developing' ? 'dev' : 'emr';
+        return `<span class="tip-thread-tag ${cls}">${t}</span>`;
+    }).join('');
+
+    // Position
+    const rect = evt.target.getBoundingClientRect();
+    let left = rect.right + 12;
+    let top  = rect.top - 10;
+    if (left + 320 > window.innerWidth)  left = rect.left - 330;
+    if (left < 10)                       left = 10;
+    if (top + 200 > window.innerHeight)  top  = window.innerHeight - 210;
+    if (top < 10)                        top  = 10;
+    tip.style.left = left + 'px';
+    tip.style.top  = top  + 'px';
+    tip.classList.add('show');
+}
+
+function hideTip() {
+    document.getElementById('tooltip').classList.remove('show');
+}
+
+// ============================================================
+// CHILD SELECTOR
+// ============================================================
+function selectChild(key) {
+    active = key;
+    document.querySelectorAll('.child-tab').forEach(t => t.classList.toggle('active', t.dataset.child === key));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    render(key);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => render('emma'));
+</script>
+</body>
+</html>

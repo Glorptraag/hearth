@@ -1,0 +1,647 @@
+<!-- Version: 2 | Date: 2026-03-20 | Changes: Renamed --deep-coffee→--surface-body, --coffee-mid→--surface-panel, --coffee-light→--surface-raised, --surface-elevated→--surface-hover, --ember-orange→--ember, --sage-green→--sage. Added --shadow-warm token. Fixed --transition to split into --transition-quick and --transition-gentle with canonical cubic-bezier. Fixed nav-item active state: added border:1px solid transparent at rest, box-shadow on active. Fixed nav-card::before top-line to canonical 2px height, gradient(90deg, ember, transparent), ember-only (not per-card color variants). Fixed nav-card hover to use --shadow-warm. Fixed child-name font-weight 700→600 (display title not brand). Fixed child-switcher background --coffee-light→--surface-raised. Fixed section-title color added --text-primary. Added --radius-xl and --space-4xl tokens. Fixed --shadow-glow value to canonical 20px. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth – Emma's Story</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Surfaces — canonical names */
+            --surface-body:    #0F0D0B;
+            --surface-panel:   #1A1612;
+            --surface-raised:  #252117;
+            --surface-hover:   #2D2621;
+
+            /* Text */
+            --text-primary:    #E8DFD4;
+            --text-secondary:  #9B8B7E;
+            --text-muted:      #6B5D52;
+            --text-inverse:    #0F0D0B;
+
+            /* Ember — canonical name */
+            --ember:           #D97B3A;
+            --ember-hover:     #E88F4E;
+            --ember-glow:      rgba(217, 123, 58, 0.15);
+            --ember-strong:    rgba(217, 123, 58, 0.25);
+
+            /* Sage — canonical name */
+            --sage:            #4ADE80;
+            --sage-muted:      #22C55E;
+
+            /* Child identity */
+            --child-rose:      #F9A8D4;
+            --child-blue:      #60A5FA;
+            --child-sage:      #4ADE80;
+            --child-violet:    #A78BFA;
+
+            /* Supporting */
+            --deep-blue:       #60A5FA;
+
+            /* Typography */
+            --font-serif:      'Crimson Text', Georgia, serif;
+            --font-sans:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* Spacing */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+            --space-4xl: 96px;
+
+            /* Border Radius */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* Borders */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+
+            /* Transitions — canonical split */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Ambient glow */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(217, 123, 58, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(217, 123, 58, 0.02) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Layout */
+        .app {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--surface-panel);
+            border-right: 1px solid var(--border-subtle);
+            padding: var(--space-xl);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--ember);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .brand-text {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .nav-section {
+            margin-bottom: var(--space-xl);
+        }
+
+        .nav-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Nav item — canonical pattern from Dashboard Dark */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition-quick);
+            margin-bottom: var(--space-xs);
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--ember-glow);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .nav-item.active {
+            background: var(--surface-raised);
+            color: var(--ember);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item .icon {
+            font-size: 1.1rem;
+            opacity: 0.6;
+        }
+
+        .nav-item:hover .icon,
+        .nav-item.active .icon {
+            opacity: 1;
+        }
+
+        /* Main Content */
+        .main {
+            padding: var(--space-2xl) var(--space-3xl);
+            max-width: 900px;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-2xl);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+        }
+
+        .breadcrumb a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color var(--transition-quick);
+        }
+
+        .breadcrumb a:hover {
+            color: var(--ember);
+        }
+
+        .breadcrumb .separator {
+            color: var(--text-muted);
+        }
+
+        /* Child switcher — uses surface-raised per canonical elevation */
+        .child-switcher {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .child-switcher:hover {
+            border-color: var(--border-medium);
+            background: var(--surface-hover);
+        }
+
+        .child-switcher .symbol {
+            width: 20px;
+            height: 20px;
+            background: rgba(249, 168, 212, 0.12);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--child-rose);
+        }
+
+        /* Child Header */
+        .child-header {
+            text-align: center;
+            margin-bottom: var(--space-3xl);
+        }
+
+        /* Child symbol — uses canonical child-rose token */
+        .child-symbol {
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, rgba(249, 168, 212, 0.15), rgba(249, 168, 212, 0.08));
+            border: 2px solid rgba(249, 168, 212, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-lg);
+            font-size: 2.5rem;
+            color: var(--child-rose);
+        }
+
+        /* child-name: serif content title — 600 (not 700; 700 reserved for brand only) */
+        .child-name {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .child-meta {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Term Summary — Hearth voice panel */
+        .term-summary {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        /* Canonical ember gradient line — centered gradient, 0.6 opacity */
+        .term-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ember), transparent);
+            opacity: 0.6;
+        }
+
+        .term-summary-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .term-summary-text {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Navigation Cards Grid */
+        .nav-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        /* nav-card — canonical comfortable card anatomy */
+        .nav-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            text-decoration: none;
+            color: inherit;
+            transition: all var(--transition-gentle);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Ember top-line — canonical: gradient(90deg, ember, transparent), 2px, opacity 0 → 1 on hover */
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+
+        .nav-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .nav-card:hover::before {
+            opacity: 1;
+        }
+
+        .nav-card-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-md);
+            opacity: 0.9;
+        }
+
+        /* nav-card-title: serif, 600 — canonical card title */
+        .nav-card-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* nav-card-stat: sans metadata */
+        .nav-card-stat {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-xs);
+        }
+
+        /* sage for positive/growth states — canonical sage usage */
+        .nav-card-stat.highlight {
+            color: var(--sage);
+        }
+
+        /* action link — ember, sans, 500 */
+        .nav-card-action {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ember);
+            margin-top: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        /* Recent Evidence */
+        .evidence-section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        /* section-header — canonical */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        /* section-title — serif, 600, text-primary */
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* section-link — ember action link */
+        .section-link {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ember);
+            text-decoration: none;
+            transition: color var(--transition-quick);
+        }
+
+        .section-link:hover {
+            color: var(--ember-hover);
+        }
+
+        .evidence-grid {
+            display: flex;
+            gap: var(--space-md);
+            overflow-x: auto;
+            padding-bottom: var(--space-sm);
+        }
+
+        .evidence-thumb {
+            flex-shrink: 0;
+            width: 120px;
+            height: 90px;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .evidence-thumb:hover {
+            border-color: var(--border-medium);
+            transform: scale(1.02);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.15s; opacity: 0; }
+        .delay-3 { animation-delay: 0.2s; opacity: 0; }
+        .delay-4 { animation-delay: 0.25s; opacity: 0; }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main {
+                padding: var(--space-xl);
+            }
+            .nav-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">🔥</div>
+                <span class="brand-text">Hearth</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Home</div>
+                <a href="#" class="nav-item">
+                    <span class="icon">🏠</span>
+                    Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Reflect</div>
+                <a href="#" class="nav-item active">
+                    <span class="icon">📖</span>
+                    Our Story
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Learn</div>
+                <a href="#" class="nav-item">
+                    <span class="icon">🧭</span>
+                    Explore
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">✏️</span>
+                    Log
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Create</div>
+                <a href="#" class="nav-item">
+                    <span class="icon">🧱</span>
+                    Build
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb animate delay-1">
+                <a href="#">← Dashboard</a>
+                <span class="separator">/</span>
+                <span>Our Story</span>
+
+                <button class="child-switcher">
+                    <span class="symbol">⭐</span>
+                    Emma
+                    <span>▾</span>
+                </button>
+            </div>
+
+            <!-- Child Header -->
+            <header class="child-header animate delay-1">
+                <div class="child-symbol">⭐</div>
+                <h1 class="child-name">Emma's Story</h1>
+                <p class="child-meta">Age 9 · Learning at the Morrison Hearth since March 2025</p>
+            </header>
+
+            <!-- Term Summary -->
+            <section class="term-summary animate delay-2">
+                <div class="term-summary-label">Term Summary</div>
+                <p class="term-summary-text">
+                    "Emma has demonstrated strong growth in Scientific Thinking and Mathematical Reasoning this term, with emerging confidence in Creative Expression. Her collaborative work with Liam shows developing leadership in peer teaching."
+                </p>
+            </section>
+
+            <!-- Navigation Cards -->
+            <div class="nav-cards">
+                <a href="#" class="nav-card animate delay-2">
+                    <div class="nav-card-icon">📁</div>
+                    <h2 class="nav-card-title">Portfolio</h2>
+                    <p class="nav-card-stat">47 entries</p>
+                    <p class="nav-card-stat">12 this term</p>
+                    <span class="nav-card-action">View →</span>
+                </a>
+
+                <a href="#" class="nav-card animate delay-2">
+                    <div class="nav-card-icon">📋</div>
+                    <h2 class="nav-card-title">HEU Report</h2>
+                    <p class="nav-card-stat highlight">3 of 6 samples ready</p>
+                    <p class="nav-card-stat">8 weeks until deadline</p>
+                    <span class="nav-card-action">View →</span>
+                </a>
+
+                <a href="#" class="nav-card animate delay-3">
+                    <div class="nav-card-icon">✦</div>
+                    <h2 class="nav-card-title">Capabilities</h2>
+                    <p class="nav-card-stat">14 threads active</p>
+                    <p class="nav-card-stat highlight">2 near milestone</p>
+                    <span class="nav-card-action">View →</span>
+                </a>
+
+                <a href="#" class="nav-card animate delay-3">
+                    <div class="nav-card-icon">👤</div>
+                    <h2 class="nav-card-title">Learner Profile</h2>
+                    <p class="nav-card-stat">Who Emma is</p>
+                    <p class="nav-card-stat">Last updated Feb 2026</p>
+                    <span class="nav-card-action">View →</span>
+                </a>
+            </div>
+
+            <!-- Recent Evidence -->
+            <section class="evidence-section animate delay-4">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Evidence</h2>
+                    <a href="#" class="section-link">See all →</a>
+                </div>
+                <div class="evidence-grid">
+                    <div class="evidence-thumb">📷</div>
+                    <div class="evidence-thumb">📷</div>
+                    <div class="evidence-thumb">📄</div>
+                    <div class="evidence-thumb">📷</div>
+                    <div class="evidence-thumb">🎨</div>
+                    <div class="evidence-thumb">📷</div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

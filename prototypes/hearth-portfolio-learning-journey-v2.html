@@ -1,0 +1,1477 @@
+<!-- Version: 2 | Date: 2026-03-18 | Changes: 
+  - Renamed --deep-coffee (#0A0806) to --surface-darkest; renamed --coffee-dark to --surface-body; --coffee-mid to --surface-panel; --coffee-light to --surface-raised; --surface-elevated to --surface-hover
+  - Fixed --border-subtle from rgba(255,255,255,0.06) → rgba(217,123,58,0.1)
+  - Fixed --border-medium from rgba(255,255,255,0.1) → rgba(217,123,58,0.2)
+  - Added --transition-quick and --transition-gentle; removed bespoke --transition / --transition-slow
+  - Added --shadow-warm (was --shadow-card); added --text-inverse confirmation
+  - Card title font-size: 0.95rem → 1.1rem
+  - Card description: added explicit font-family: var(--font-serif)
+  - Card metadata (.card-date, .stat-label, .focus-label, etc): confirmed font-family: var(--font-sans)
+  - Child tab strip: updated active state to use child-color bg at 0.12 opacity + child-color border per UI kit pattern (was solid ember bg)
+  - All --coffee-* variable references in CSS updated to --surface-* equivalents
+  - body background updated to --surface-body (was --deep-coffee)
+  - Preserved all existing functionality and interactivity
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth – Learning Journey Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================================
+           HEARTH PORTFOLIO – LEARNING JOURNEY VIEW
+           Mont Blanc Dark Coffee Aesthetic
+           
+           Purpose: External-facing documentation of learner growth
+           Audience: Schools, HEU compliance, applications, transfers
+           Architecture: Capability Threads with Milestone markers
+           
+           Card Types:
+           - Evidence Cards: Concrete, verifiable (neutral treatment)
+           - Journey Cards: Interpreted observations (warm ember treatment)
+           - Milestone Cards: Growth synthesis (sage/green treatment)
+           ============================================================================ */
+
+        :root {
+            /* Surfaces — depth hierarchy, canonical --surface-* naming */
+            --surface-darkest: #0A0806;   /* Deepest inset (was --deep-coffee) */
+            --surface-body:    #0F0D0B;   /* Page background (was --coffee-dark) */
+            --surface-panel:   #1A1612;   /* Card/panel surface (was --coffee-mid) */
+            --surface-raised:  #252117;   /* Elevated cards (was --coffee-light) */
+            --surface-hover:   #2D2621;   /* Hover states (was --surface-elevated) */
+
+            /* Text Hierarchy */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* Ember — primary action color */
+            --ember:        #D97B3A;
+            --ember-hover:  #E88F4E;
+            --ember-glow:   rgba(217, 123, 58, 0.15);
+            --ember-strong: rgba(217, 123, 58, 0.25);
+
+            /* Sage — growth/success/positive states */
+            --sage:       #4ADE80;
+            --sage-muted: #22C55E;
+
+            /* Child identity colors */
+            --child-rose:   #F9A8D4;
+            --child-blue:   #60A5FA;
+            --child-sage:   #4ADE80;
+            --child-violet: #A78BFA;
+
+            /* Supporting subject accents */
+            --blue:         #60A5FA;
+            --blue-muted:   rgba(96, 165, 250, 0.12);
+            --rose:         #F9A8D4;
+            --rose-muted:   rgba(249, 168, 212, 0.12);
+            --violet:       #A78BFA;
+            --violet-muted: rgba(167, 139, 250, 0.12);
+            --amber:        #FBBF24;
+            --amber-muted:  rgba(251, 191, 36, 0.12);
+
+            /* Semantic convenience aliases for card types */
+            --sage-bg:     rgba(74, 222, 128, 0.08);
+            --sage-border: rgba(74, 222, 128, 0.3);
+
+            /* Typography */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* Spacing — 8px base unit */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+
+            /* Border Radius */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* Borders — ember-tinted canonical values */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+            --border-ember:  rgba(217, 123, 58, 0.25);
+
+            /* Transitions — canonical names */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Ambient Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 15% 85%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 15%, rgba(217, 123, 58, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(217, 123, 58, 0.02) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============================================================================
+           LAYOUT SHELL
+           ============================================================================ */
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 13, 11, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: var(--space-md) var(--space-2xl);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-lg);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-quick);
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+            background: var(--surface-raised);
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ============================================================================
+           CHILD SELECTOR TAB STRIP
+           Canonical pattern: pill-shaped tabs, child-color bg at 0.12 + border at 0.3
+           ============================================================================ */
+
+        .child-tabs {
+            display: flex;
+            gap: var(--space-xs);
+            overflow-x: auto;
+        }
+
+        .child-tab {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+        }
+
+        .child-tab:hover {
+            color: var(--text-primary);
+            background: var(--surface-raised);
+        }
+
+        /* Active state: child-color bg at 0.12, border at 0.3, text = child-color */
+        .child-tab.active[data-child="emma"] {
+            background: rgba(249, 168, 212, 0.12);
+            border-color: rgba(249, 168, 212, 0.3);
+            color: var(--child-rose);
+        }
+
+        .child-tab.active[data-child="liam"] {
+            background: rgba(96, 165, 250, 0.12);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: var(--child-blue);
+        }
+
+        .child-tab .tab-shape {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Shape bg matches child color system */
+        .child-tab[data-child="emma"] .tab-shape {
+            background: rgba(249, 168, 212, 0.2);
+            color: var(--child-rose);
+        }
+
+        .child-tab[data-child="liam"] .tab-shape {
+            background: rgba(96, 165, 250, 0.2);
+            color: var(--child-blue);
+        }
+
+        /* Header Controls */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .search-input {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            min-width: 200px;
+            transition: all var(--transition-quick);
+        }
+
+        .search-input svg {
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .search-input input {
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            width: 100%;
+        }
+
+        .search-input input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus-within {
+            border-color: var(--border-ember);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .export-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            min-height: 44px;
+        }
+
+        .export-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-ember);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .export-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ============================================================================
+           MAIN CONTENT
+           ============================================================================ */
+
+        .main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-2xl);
+            width: 100%;
+        }
+
+        /* ============================================================================
+           SUMMARY CARD
+           ============================================================================ */
+
+        .summary-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+            box-shadow: var(--shadow-warm);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-gentle);
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--ember), var(--ember-hover), var(--ember));
+            opacity: 0.6;
+        }
+
+        .summary-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .summary-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .summary-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ember);
+        }
+
+        .summary-title {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .summary-period {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--surface-raised);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+        }
+
+        .summary-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-xl);
+        }
+
+        .summary-focus {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .focus-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .focus-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .focus-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+        }
+
+        .focus-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--ember-glow);
+            border: 1px solid var(--border-ember);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--ember-hover);
+        }
+
+        .focus-tag.developing {
+            background: var(--amber-muted);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: var(--amber);
+        }
+
+        .focus-tag svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .summary-narrative {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            padding-left: var(--space-lg);
+            border-left: 2px solid var(--border-ember);
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: var(--space-lg);
+            margin-top: var(--space-lg);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .stat-value {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================================================
+           CAPABILITY THREADS
+           ============================================================================ */
+
+        .threads-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .threads-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .threads-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .threads-subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Individual Thread */
+        .capability-thread {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all var(--transition-gentle);
+        }
+
+        .capability-thread:hover {
+            border-color: var(--border-medium);
+        }
+
+        .thread-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) var(--space-lg);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            min-height: 44px;
+        }
+
+        .thread-header:hover {
+            background: var(--surface-raised);
+        }
+
+        .thread-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .thread-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .thread-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .thread-icon.inquiry      { background: var(--blue-muted);   color: var(--blue); }
+        .thread-icon.math         { background: var(--violet-muted); color: var(--violet); }
+        .thread-icon.expression   { background: var(--rose-muted);   color: var(--rose); }
+        .thread-icon.collaboration{ background: rgba(74, 222, 128, 0.12); color: var(--sage); }
+        .thread-icon.physical     { background: var(--amber-muted);  color: var(--amber); }
+        .thread-icon.creative     { background: var(--ember-glow);   color: var(--ember); }
+
+        .thread-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .thread-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .thread-subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .thread-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .thread-count {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            background: var(--surface-raised);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+        }
+
+        .thread-expand {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .thread-expand svg {
+            width: 16px;
+            height: 16px;
+            transition: transform var(--transition-quick);
+        }
+
+        .capability-thread.expanded .thread-expand svg {
+            transform: rotate(180deg);
+        }
+
+        /* Thread Content */
+        .thread-content {
+            display: none;
+            padding: 0 var(--space-lg) var(--space-lg);
+        }
+
+        .capability-thread.expanded .thread-content {
+            display: block;
+        }
+
+        .thread-timeline {
+            position: relative;
+            padding-left: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        /* Timeline connector line */
+        .thread-timeline::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--border-medium), var(--border-subtle));
+        }
+
+        /* ============================================================================
+           CARD TYPES
+           ============================================================================ */
+
+        /* Base Card */
+        .timeline-card {
+            position: relative;
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+        }
+
+        .timeline-card::before {
+            content: '';
+            position: absolute;
+            left: calc(-1 * var(--space-xl) + 7px);
+            top: var(--space-md);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+
+        /* Evidence Card — Documentary, neutral */
+        .card-evidence {
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .card-evidence::before {
+            background: var(--surface-panel);
+            border-color: var(--text-muted);
+        }
+
+        .card-evidence .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+
+        .evidence-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-panel);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .evidence-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .evidence-thumb svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .card-title-group {
+            flex: 1;
+        }
+
+        /* Card metadata — sans, 0.75rem, --text-muted */
+        .card-date {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        /* Card title — serif, 1.1rem, 600, --text-primary */
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        /* Card description — serif, 0.95rem, 400, --text-secondary */
+        .card-description {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+        }
+
+        .card-tag {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            background: var(--surface-panel);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Journey Card — Warm, interpretive */
+        .card-journey {
+            background: var(--ember-glow);
+            border: 1px solid var(--border-ember);
+        }
+
+        .card-journey::before {
+            background: var(--ember);
+            border-color: var(--ember);
+            box-shadow: 0 0 8px rgba(217, 123, 58, 0.4);
+        }
+
+        .journey-icon {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+            color: var(--ember);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .journey-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .journey-observation {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .journey-connection {
+            margin-top: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .journey-connection svg {
+            width: 12px;
+            height: 12px;
+            color: var(--ember);
+        }
+
+        /* Milestone Card — Celebratory, conclusive */
+        .card-milestone {
+            background: var(--sage-bg);
+            border: 1px solid var(--sage-border);
+            padding: var(--space-md) var(--space-lg);
+        }
+
+        .card-milestone::before {
+            background: var(--sage);
+            border-color: var(--sage);
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+            width: 14px;
+            height: 14px;
+            left: calc(-1 * var(--space-xl) + 5px);
+        }
+
+        .milestone-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+        }
+
+        .milestone-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--sage);
+            color: var(--surface-body);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .milestone-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .milestone-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sage);
+        }
+
+        .milestone-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .milestone-date {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================================
+           HEU COMPANION NOTICE
+           ============================================================================ */
+
+        .heu-notice {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            margin-top: var(--space-2xl);
+        }
+
+        .heu-notice svg {
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .heu-notice p {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* ============================================================================
+           ANIMATIONS
+           ============================================================================ */
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+        /* ============================================================================
+           RESPONSIVE
+           ============================================================================ */
+
+        @media (max-width: 900px) {
+            .header-inner {
+                flex-wrap: wrap;
+            }
+
+            .summary-body {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-narrative {
+                padding-left: 0;
+                border-left: none;
+                border-top: 1px solid var(--border-subtle);
+                padding-top: var(--space-md);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main {
+                padding: var(--space-lg);
+            }
+
+            .header {
+                padding: var(--space-md);
+            }
+
+            .search-input {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <a href="#" class="back-link">
+                        ← Dashboard
+                    </a>
+                    <h1 class="page-title">Learning Journey</h1>
+                </div>
+
+                <div class="child-tabs">
+                    <button class="child-tab active" data-child="emma" onclick="switchChild('emma', this)">
+                        <span class="tab-shape">🔴</span>
+                        Emma
+                    </button>
+                    <button class="child-tab" data-child="liam" onclick="switchChild('liam', this)">
+                        <span class="tab-shape">🔵</span>
+                        Liam
+                    </button>
+                </div>
+
+                <div class="header-controls">
+                    <div class="search-input">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <input type="text" placeholder="Search moments..." />
+                    </div>
+                    <button class="export-btn">
+                        ⬇ Export PDF
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main" id="portfolio-content">
+            <!-- Content injected by JavaScript -->
+        </main>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DEMO DATA
+        // ============================================================================
+
+        const portfolioData = {
+            emma: {
+                name: "Emma",
+                age: 9,
+                summaryPeriod: "March 2026",
+                currentlyDeveloping: ["Scientific Inquiry", "Mathematical Reasoning"],
+                hotNow: ["Connecting math to real-world contexts"],
+                narrative: "Emma continues to show a methodical approach to learning, preferring to understand 'why' before 'how'. This month she's made meaningful connections between abstract mathematical concepts and practical applications through baking and measurement activities.",
+                stats: {
+                    moments: 14,
+                    capabilities: 5,
+                    weeks: 4
+                },
+                threads: [
+                    {
+                        id: "inquiry",
+                        title: "Scientific Inquiry",
+                        subtitle: "Questioning, hypothesizing, testing",
+                        icon: "inquiry",
+                        count: 4,
+                        expanded: true,
+                        entries: [
+                            {
+                                type: "milestone",
+                                title: "Consistent questioning observed across activities",
+                                date: "March 2026"
+                            },
+                            {
+                                type: "evidence",
+                                title: "Magnetic Discoveries",
+                                date: "March 15, 2026",
+                                description: "Emma and Liam explored which household objects respond to magnets, creating a classification chart.",
+                                tags: ["Science", "Collaboration"],
+                                hasPhoto: true
+                            },
+                            {
+                                type: "journey",
+                                observation: "Asked 'why do some metals work and others don't?' — demonstrates emerging hypothesis formation and desire to understand underlying principles.",
+                                connection: "Builds on kitchen chemistry questions from March 8"
+                            },
+                            {
+                                type: "evidence",
+                                title: "Kitchen Chemistry Experiment",
+                                date: "March 8, 2026",
+                                description: "Tested reactions between vinegar and baking soda, measured quantities and recorded observations in a journal.",
+                                tags: ["Science", "Math", "Writing"],
+                                hasPhoto: false
+                            }
+                        ]
+                    },
+                    {
+                        id: "math",
+                        title: "Mathematical Reasoning",
+                        subtitle: "Numbers, patterns, problem-solving",
+                        icon: "math",
+                        count: 3,
+                        expanded: true,
+                        entries: [
+                            {
+                                type: "evidence",
+                                title: "Baking Fractions",
+                                date: "March 14, 2026",
+                                description: "Doubled a cookie recipe, converting fractions throughout. Successfully identified that 3/4 doubled is 1 1/2 cups.",
+                                tags: ["Math", "Life Skills"],
+                                hasPhoto: true
+                            },
+                            {
+                                type: "journey",
+                                observation: "Made unprompted connection: 'So fractions are just like cutting pizza!' — abstract concept clicking into concrete understanding.",
+                                connection: null
+                            },
+                            {
+                                type: "evidence",
+                                title: "Measurement Practice",
+                                date: "March 2, 2026",
+                                description: "Measured furniture for room rearrangement project using tape measure, converted between inches and feet.",
+                                tags: ["Math", "Practical"],
+                                hasPhoto: false
+                            }
+                        ]
+                    },
+                    {
+                        id: "expression",
+                        title: "Written Expression",
+                        subtitle: "Communicating ideas through writing",
+                        icon: "expression",
+                        count: 2,
+                        expanded: false,
+                        entries: []
+                    },
+                    {
+                        id: "collaboration",
+                        title: "Collaborative Learning",
+                        subtitle: "Working and learning with others",
+                        icon: "collaboration",
+                        count: 3,
+                        expanded: false,
+                        entries: []
+                    }
+                ]
+            },
+            liam: {
+                name: "Liam",
+                age: 7,
+                summaryPeriod: "March 2026",
+                currentlyDeveloping: ["Physical Exploration", "Creative Problem-Solving"],
+                hotNow: ["Building and construction", "Cross-domain connections"],
+                narrative: "Liam learns best through movement and making. He has an intuitive ability to see connections between different activities — this month he's linked building concepts to storytelling and mathematical patterns to physical arrangements.",
+                stats: {
+                    moments: 11,
+                    capabilities: 4,
+                    weeks: 4
+                },
+                threads: [
+                    {
+                        id: "physical",
+                        title: "Physical Exploration",
+                        subtitle: "Learning through movement and touch",
+                        icon: "physical",
+                        count: 4,
+                        expanded: true,
+                        entries: [
+                            {
+                                type: "evidence",
+                                title: "Block Tower Engineering",
+                                date: "March 16, 2026",
+                                description: "Built a tower taller than himself, experimenting with different base widths and discovering that wider bases support taller structures.",
+                                tags: ["Engineering", "Physics"],
+                                hasPhoto: true
+                            },
+                            {
+                                type: "journey",
+                                observation: "Noticed: 'It falls when it's skinny at the bottom!' — kinesthetic discovery of structural principles without formal instruction.",
+                                connection: null
+                            },
+                            {
+                                type: "evidence",
+                                title: "Garden Planting Day",
+                                date: "March 10, 2026",
+                                description: "Dug holes, measured spacing between seedlings, and created labels for each plant variety.",
+                                tags: ["Nature", "Math", "Writing"],
+                                hasPhoto: true
+                            },
+                            {
+                                type: "journey",
+                                observation: "Connected planting depth to seed size without prompting — shows emerging pattern recognition across domains.",
+                                connection: "Similar pattern-finding seen in block building"
+                            }
+                        ]
+                    },
+                    {
+                        id: "creative",
+                        title: "Creative Problem-Solving",
+                        subtitle: "Finding novel solutions",
+                        icon: "creative",
+                        count: 3,
+                        expanded: true,
+                        entries: [
+                            {
+                                type: "milestone",
+                                title: "Shows consistent inventive thinking",
+                                date: "March 2026"
+                            },
+                            {
+                                type: "evidence",
+                                title: "Marble Run Creation",
+                                date: "March 12, 2026",
+                                description: "Designed a marble run using cardboard tubes, tape, and found objects. Iterated through 4 versions to get the marble to travel the full length.",
+                                tags: ["Engineering", "Persistence"],
+                                hasPhoto: true
+                            },
+                            {
+                                type: "journey",
+                                observation: "When asked why version 4 worked, explained: 'The marble needs to go down but not too fast' — intuitive understanding of velocity and angle.",
+                                connection: null
+                            }
+                        ]
+                    },
+                    {
+                        id: "collaboration-liam",
+                        title: "Collaborative Learning",
+                        subtitle: "Working and learning with others",
+                        icon: "collaboration",
+                        count: 3,
+                        expanded: false,
+                        entries: []
+                    },
+                    {
+                        id: "verbal",
+                        title: "Verbal Expression",
+                        subtitle: "Communicating ideas through speech",
+                        icon: "expression",
+                        count: 2,
+                        expanded: false,
+                        entries: []
+                    }
+                ]
+            }
+        };
+
+        let currentChild = 'emma';
+
+        // ============================================================================
+        // RENDER FUNCTIONS
+        // ============================================================================
+
+        function renderPortfolio(childId) {
+            const data = portfolioData[childId];
+            const container = document.getElementById('portfolio-content');
+
+            container.innerHTML = `
+                <!-- Summary Card -->
+                <div class="summary-card animate-in delay-1">
+                    <div class="summary-header">
+                        <div class="summary-title-group">
+                            <span class="summary-label">Where ${data.name} Is Now</span>
+                            <h2 class="summary-title">${data.name}'s Learning Journey</h2>
+                        </div>
+                        <span class="summary-period">${data.summaryPeriod}</span>
+                    </div>
+                    <div class="summary-body">
+                        <div class="summary-focus">
+                            <div class="focus-section">
+                                <span class="focus-label">Currently Developing</span>
+                                <div class="focus-items">
+                                    ${data.currentlyDeveloping.map(cap => `
+                                        <span class="focus-tag developing">✦ ${cap}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="focus-section">
+                                <span class="focus-label">What's Hot Now</span>
+                                <div class="focus-items">
+                                    ${data.hotNow.map(item => `
+                                        <span class="focus-tag">🔥 ${item}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <p class="summary-narrative">${data.narrative}</p>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">${data.stats.moments}</span>
+                            <span class="stat-label">Moments Logged</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${data.stats.capabilities}</span>
+                            <span class="stat-label">Capabilities Tracked</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${data.stats.weeks}</span>
+                            <span class="stat-label">Weeks Documented</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capability Threads -->
+                <section class="threads-section animate-in delay-2">
+                    <div class="threads-header">
+                        <h2 class="threads-title">Capability Threads</h2>
+                        <span class="threads-subtitle">Track growth over time in each area</span>
+                    </div>
+                    ${data.threads.map((thread, idx) => renderThread(thread, idx)).join('')}
+                </section>
+
+                <!-- HEU Notice -->
+                <div class="heu-notice animate-in delay-4">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <path d="M14 2v6h6"/>
+                        <path d="M16 13H8"/>
+                        <path d="M16 17H8"/>
+                    </svg>
+                    <p>This portfolio accompanies HEU compliance records. It focuses on demonstrating progressive learning, skill development, and the learner's educational journey — complementing formal evidence with growth narrative.</p>
+                </div>
+            `;
+        }
+
+        function renderThread(thread, index) {
+            const delayClass = `delay-${Math.min(index + 2, 4)}`;
+
+            return `
+                <div class="capability-thread ${thread.expanded ? 'expanded' : ''} animate-in ${delayClass}" id="thread-${thread.id}">
+                    <div class="thread-header" onclick="toggleThread('${thread.id}')">
+                        <div class="thread-info">
+                            <div class="thread-icon ${thread.icon}">
+                                ${getThreadIcon(thread.icon)}
+                            </div>
+                            <div class="thread-title-group">
+                                <span class="thread-title">${thread.title}</span>
+                                <span class="thread-subtitle">${thread.subtitle}</span>
+                            </div>
+                        </div>
+                        <div class="thread-meta">
+                            <span class="thread-count">${thread.count} moments</span>
+                            <div class="thread-expand">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="thread-content">
+                        <div class="thread-timeline">
+                            ${thread.entries.map(entry => renderEntry(entry)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEntry(entry) {
+            switch (entry.type) {
+                case 'milestone': return renderMilestone(entry);
+                case 'evidence':  return renderEvidence(entry);
+                case 'journey':   return renderJourney(entry);
+                default: return '';
+            }
+        }
+
+        function renderMilestone(entry) {
+            return `
+                <div class="timeline-card card-milestone">
+                    <div class="milestone-header">
+                        <div class="milestone-icon">⭐</div>
+                        <span class="milestone-label">Milestone</span>
+                    </div>
+                    <h4 class="milestone-title">${entry.title}</h4>
+                    <span class="milestone-date">${entry.date}</span>
+                </div>
+            `;
+        }
+
+        function renderEvidence(entry) {
+            return `
+                <div class="timeline-card card-evidence">
+                    <div class="card-header">
+                        <div class="evidence-thumb">
+                            ${entry.hasPhoto ? '📷' : '📄'}
+                        </div>
+                        <div class="card-title-group">
+                            <span class="card-date">${entry.date}</span>
+                            <h4 class="card-title">${entry.title}</h4>
+                            <p class="card-description">${entry.description}</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        ${entry.tags.map(tag => `<span class="card-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderJourney(entry) {
+            return `
+                <div class="timeline-card card-journey">
+                    <div class="journey-icon">
+                        💡 Observation
+                    </div>
+                    <p class="journey-observation">${entry.observation}</p>
+                    ${entry.connection ? `
+                        <div class="journey-connection">
+                            🔗 ${entry.connection}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getThreadIcon(type) {
+            const icons = {
+                inquiry:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+                math:          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+                expression:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>`,
+                collaboration: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+                physical:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0020 0h-3"/></svg>`,
+                creative:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
+            };
+            return icons[type] || icons.inquiry;
+        }
+
+        // ============================================================================
+        // INTERACTIONS
+        // ============================================================================
+
+        function switchChild(childId, tabEl) {
+            currentChild = childId;
+
+            // Update tab active state
+            document.querySelectorAll('.child-tab').forEach(t => t.classList.remove('active'));
+            tabEl.classList.add('active');
+
+            // Re-render content
+            renderPortfolio(childId);
+        }
+
+        function toggleThread(threadId) {
+            const thread = document.getElementById(`thread-${threadId}`);
+            thread.classList.toggle('expanded');
+        }
+
+        // ============================================================================
+        // INIT
+        // ============================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPortfolio(currentChild);
+        });
+    </script>
+</body>
+</html>

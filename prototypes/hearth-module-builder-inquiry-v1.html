@@ -1,0 +1,478 @@
+<!-- Version: 1 | Date: 2026-03-21 | Changes: First build of Inquiry pathway. Entry screen: question text, child selector (multi-select), prior knowledge textarea, investigation approach cards (dynamic, max 2 selectable). Standard loading → shared editor flow. Steps from investigation type template. Design brief: hearth-module-builder-pathways-design-brief-v1.md. Spec: hearth-module-builder-pathways-architecture-v2.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Inquiry Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-coffee: #0F0D0B; --coffee-mid: #1A1612; --coffee-light: #252117;
+      --surface-elevated: #2D2621; --surface-hover: #352E28;
+      --text-primary: #E8DFD4; --text-secondary: #9B8B7E; --text-muted: #6B5D52;
+      --ember: #D97B3A; --ember-hover: #E88F4E; --ember-glow: rgba(217,123,58,0.15); --ember-glow-strong: rgba(217,123,58,0.25);
+      --sage: #4ADE80; --sage-glow: rgba(74,222,128,0.12);
+      --rose: #E8A0BF; --blue: #7BA7CC; --purple: #C084FC;
+      --font-serif: 'Crimson Text', Georgia, serif; --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+      --border-subtle: rgba(45,38,33,0.6); --transition: 300ms cubic-bezier(0.4,0,0.2,1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-sans); background: var(--deep-coffee); color: var(--text-primary); min-height: 100vh; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 30% 90%, rgba(217,123,58,0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 10%, rgba(217,123,58,0.03) 0%, transparent 50%); pointer-events: none; z-index: 0; }
+    .app { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
+
+    .header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; position: sticky; top: 0; background: var(--deep-coffee); z-index: 10; }
+    .back-btn { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-family: var(--font-sans); cursor: pointer; padding: 6px 0; transition: color var(--transition); }
+    .back-btn:hover { color: var(--text-primary); }
+    .header-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--text-primary); flex: 1; }
+    .header-save { background: none; border: 1px solid var(--border-subtle); color: var(--text-secondary); font-family: var(--font-sans); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+    .header-save:hover:not(:disabled) { border-color: var(--ember); color: var(--ember); }
+    .header-save:disabled { opacity: 0.35; cursor: default; }
+    .header-save.ready { background: var(--ember); border-color: var(--ember); color: #fff; }
+    .header-save.ready:hover { background: var(--ember-hover); }
+
+    .view { display: none; animation: fadeSlideIn 250ms ease-out; }
+    .view.active { display: block; }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .entry-intro { padding: 8px 16px 20px; }
+    .entry-intro h1 { font-family: var(--font-serif); font-size: 26px; font-weight: 600; line-height: 1.25; margin-bottom: 4px; }
+    .entry-intro .pathway-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .entry-intro p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+    .field { margin-bottom: 20px; padding: 0 16px; }
+    .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .field-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+    textarea, input[type="text"] { width: 100%; background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; padding: 10px 12px; line-height: 1.5; transition: border-color var(--transition); resize: vertical; }
+    textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--ember); }
+    textarea::placeholder, input[type="text"]::placeholder { color: var(--text-muted); }
+    select { width: 100%; background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; padding: 10px 12px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B8B7E' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    select:focus { outline: none; border-color: var(--ember); }
+    .settings-row { display: flex; gap: 12px; padding: 0 16px; margin-bottom: 20px; }
+    .settings-row .field { flex: 1; padding: 0; margin-bottom: 0; }
+
+    .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill { background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: 20px; color: var(--text-secondary); font-family: var(--font-sans); font-size: 13px; padding: 6px 14px; cursor: pointer; transition: all var(--transition); white-space: nowrap; }
+    .pill:hover { border-color: rgba(217,123,58,0.3); color: var(--text-primary); }
+    .pill.selected { background: var(--ember-glow); border-color: var(--ember); color: var(--ember); }
+
+    /* Child selector chips */
+    .child-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all var(--transition); background: var(--coffee-light); border: 1px solid var(--border-subtle); color: var(--text-secondary); }
+    .child-chip:hover { border-color: rgba(217,123,58,0.3); }
+    .child-chip.selected { border-color: var(--ember); background: var(--ember-glow); }
+    .child-chip .child-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Investigation approach cards */
+    .investigation-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    .investigation-card { background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; cursor: pointer; transition: all var(--transition); display: flex; align-items: center; gap: 12px; }
+    .investigation-card:hover { border-color: rgba(217,123,58,0.3); }
+    .investigation-card.selected { border-color: var(--ember); background: var(--ember-glow); }
+    .investigation-card.maxed { opacity: 0.35; pointer-events: none; }
+    .investigation-card .inv-emoji { font-size: 20px; flex-shrink: 0; }
+    .investigation-card .inv-content { flex: 1; }
+    .investigation-card .inv-label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .investigation-card .inv-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .investigation-card .inv-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border-subtle); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all var(--transition); font-size: 12px; }
+    .investigation-card.selected .inv-check { border-color: var(--ember); background: var(--ember-glow); color: var(--ember); }
+
+    .investigations-loading { padding: 8px 16px; font-size: 12px; color: var(--text-muted); font-style: italic; animation: pulse 1.5s ease-in-out infinite; }
+
+    .continue-btn { display: block; width: calc(100% - 32px); margin: 24px 16px 0; background: var(--ember); color: #fff; border: none; border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 15px; font-weight: 500; padding: 14px 24px; cursor: pointer; transition: all var(--transition); }
+    .continue-btn:hover { background: var(--ember-hover); }
+    .continue-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .loading-screen { padding: 60px 16px; text-align: center; }
+    .loading-emoji { font-size: 40px; margin-bottom: 16px; animation: pulse 1.8s ease-in-out infinite; }
+    .loading-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .loading-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .loading-steps { text-align: left; max-width: 300px; margin: 0 auto; }
+    .loading-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-muted); transition: color var(--transition); }
+    .loading-step.active { color: var(--text-secondary); }
+    .loading-step.done { color: var(--sage); }
+    .loading-step .step-indicator { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; transition: all var(--transition); }
+    .loading-step.active .step-indicator { border-color: var(--ember); color: var(--ember); animation: pulse 1.2s ease-in-out infinite; }
+    .loading-step.done .step-indicator { border-color: var(--sage); background: var(--sage-glow); color: var(--sage); }
+
+    /* Editor shared styles (identical to other pathways) */
+    .completeness-bar { margin: 0 16px 16px; padding: 10px 14px; background: var(--coffee-mid); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+    .completeness-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .completeness-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .completeness-pct { font-size: 12px; font-weight: 600; color: var(--ember); }
+    .completeness-track { height: 4px; background: var(--coffee-light); border-radius: 2px; overflow: hidden; }
+    .completeness-fill { height: 100%; background: var(--ember); border-radius: 2px; transition: width 400ms ease; }
+    .completeness-fill.ready { background: var(--sage); }
+    .completeness-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .editor-section { margin-bottom: 8px; }
+    .section-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .section-header:hover { background: rgba(255,255,255,0.02); }
+    .section-emoji { font-size: 16px; flex-shrink: 0; }
+    .section-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; flex: 1; }
+    .section-status { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+    .section-status.complete { background: var(--sage-glow); color: var(--sage); }
+    .section-status.partial { background: var(--ember-glow); color: var(--ember); }
+    .section-status.empty { background: rgba(107,93,82,0.2); color: var(--text-muted); }
+    .section-chevron { color: var(--text-muted); font-size: 14px; transition: transform var(--transition); }
+    .section-chevron.open { transform: rotate(90deg); }
+    .section-body { display: none; padding: 0 0 12px; }
+    .section-body.open { display: block; animation: fadeSlideIn 200ms ease-out; }
+    .section-divider { height: 1px; background: var(--border-subtle); margin: 0 16px; }
+    .ai-suggested-field { position: relative; }
+    .ai-suggested-field textarea, .ai-suggested-field input[type="text"] { border-left: 3px solid var(--ember-glow-strong); }
+    .ai-suggested-field textarea:focus, .ai-suggested-field input[type="text"]:focus { border-left-color: var(--ember); }
+    .ai-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ember); margin-top: 4px; opacity: 0.8; }
+    .ai-badge::before { content: '✨'; font-size: 10px; }
+    .step-list { padding: 0 16px; }
+    .step-card { background: var(--coffee-light); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden; transition: border-color var(--transition); }
+    .step-card:focus-within { border-color: rgba(217,123,58,0.3); }
+    .step-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--coffee-mid); cursor: grab; }
+    .step-number { font-size: 12px; font-weight: 600; color: var(--ember); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--ember-glow); border-radius: 50%; flex-shrink: 0; }
+    .step-title-input { flex: 1; background: none; border: none; color: var(--text-primary); font-family: var(--font-sans); font-size: 14px; font-weight: 500; padding: 0; }
+    .step-title-input:focus { outline: none; }
+    .step-title-input::placeholder { color: var(--text-muted); }
+    .step-actions { display: flex; gap: 4px; }
+    .step-action-btn { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 4px; transition: color var(--transition); line-height: 1; }
+    .step-action-btn:hover { color: var(--text-primary); }
+    .step-action-btn.delete:hover { color: #ef4444; }
+    .step-card-body { padding: 10px 12px; }
+    .step-card-body textarea { width: 100%; background: none; border: none; color: var(--text-primary); font-family: var(--font-sans); font-size: 13px; padding: 0; line-height: 1.5; resize: none; min-height: 40px; }
+    .step-card-body textarea:focus { outline: none; }
+    .step-card-body textarea::placeholder { color: var(--text-muted); }
+    .step-say-this { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+    .step-say-this label { font-size: 11px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 4px; }
+    .step-say-this textarea { font-style: italic; font-size: 12px; min-height: 30px; }
+    .step-observation-hint { margin-top: 8px; padding: 6px 8px; background: var(--ember-glow); border-radius: var(--radius-sm); border-left: 2px solid rgba(217,123,58,0.4); }
+    .step-observation-hint p { font-size: 12px; font-style: italic; color: var(--text-secondary); line-height: 1.4; }
+    .step-observation-hint .hint-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .hint-action { background: none; border: none; font-size: 11px; color: var(--text-muted); cursor: pointer; padding: 0; transition: color var(--transition); }
+    .hint-action:hover { color: var(--text-primary); }
+    .add-step-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: none; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); color: var(--text-muted); font-family: var(--font-sans); font-size: 13px; cursor: pointer; transition: all var(--transition); margin-top: 2px; }
+    .add-step-btn:hover { border-color: var(--ember); color: var(--ember); background: var(--ember-glow); }
+    .capability-tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px; }
+    .cap-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all var(--transition); }
+    .cap-tag.explicit { background: var(--ember-glow); border: 1px solid var(--ember); color: var(--ember); }
+    .cap-tag.suggested { background: transparent; border: 1px dashed rgba(217,123,58,0.4); color: var(--text-secondary); }
+    .cap-tag.suggested:hover { border-color: var(--ember); color: var(--ember); }
+    .cap-tag .tag-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .cap-tag .dismiss { font-size: 14px; margin-left: 2px; opacity: 0.5; transition: opacity var(--transition); }
+    .cap-tag:hover .dismiss { opacity: 1; }
+    .cap-hint { padding: 8px 16px 0; font-size: 12px; color: var(--text-muted); font-style: italic; }
+    .coherence-banner { margin: 12px 16px; padding: 12px 14px; background: rgba(217,123,58,0.08); border: 1px solid rgba(217,123,58,0.2); border-radius: var(--radius-md); display: none; }
+    .coherence-banner.visible { display: block; animation: fadeSlideIn 300ms ease-out; }
+    .coherence-banner .banner-content { display: flex; align-items: flex-start; gap: 10px; }
+    .coherence-banner .banner-emoji { font-size: 18px; flex-shrink: 0; }
+    .coherence-banner .banner-text { flex: 1; }
+    .coherence-banner .banner-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+    .coherence-banner .banner-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .coherence-banner .banner-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .banner-action-btn { background: none; border: 1px solid var(--border-subtle); color: var(--text-secondary); font-family: var(--font-sans); font-size: 12px; padding: 5px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+    .banner-action-btn:hover { border-color: var(--ember); color: var(--ember); }
+    .banner-action-btn.dismiss-banner { border: none; padding-left: 0; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface-elevated); border: 1px solid var(--sage); color: var(--text-primary); font-size: 14px; padding: 12px 20px; border-radius: var(--radius-md); z-index: 100; opacity: 0; transition: all 400ms ease; display: flex; align-items: center; gap: 8px; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 400px) { .entry-intro h1 { font-size: 22px; } .settings-row { flex-direction: column; gap: 16px; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <button class="back-btn" onclick="handleBack()">← Back</button>
+      <div class="header-title" id="header-title"></div>
+      <button class="header-save" id="save-btn" disabled onclick="handleSave()">Save Draft</button>
+    </div>
+
+    <!-- ENTRY -->
+    <div class="view active" id="view-entry">
+      <div class="entry-intro">
+        <div class="pathway-tag">❓ Inquiry</div>
+        <h1>Follow a question</h1>
+        <p>Something sparked a wonder. Share it and we'll help structure the investigation.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What came up?</label>
+        <input type="text" id="entry-question" placeholder="e.g., Why do leaves change colour in autumn?" oninput="onQuestionInput()">
+        <div class="field-hint">Use their exact words if you remember them — it doesn't need to be perfect</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Who's wondering?</label>
+        <div class="pill-group" id="child-selector">
+          <button class="child-chip selected" onclick="toggleChild(this)" data-child="emma"><span class="child-dot" style="background: var(--rose)"></span> Emma</button>
+          <button class="child-chip selected" onclick="toggleChild(this)" data-child="liam"><span class="child-dot" style="background: var(--blue)"></span> Liam</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What do you or your children already know (or think) about this?</label>
+        <textarea id="entry-prior" placeholder="e.g., We know leaves fall off trees. Emma thinks it's because they get old. Liam thinks the wind blows them off." style="min-height: 56px;"></textarea>
+        <div class="field-hint">Starting from what you know helps build the exploration</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">How might you explore this?</label>
+        <div class="investigations-loading" id="inv-loading" style="display: none;">Thinking about investigation approaches…</div>
+        <div class="investigation-cards" id="investigation-cards" style="padding: 0;"></div>
+        <div class="field-hint" id="inv-hint" style="padding: 0 16px;">Type your question above and we'll suggest approaches</div>
+      </div>
+
+      <div class="settings-row">
+        <div class="field"><label class="field-label">How long?</label><select id="entry-duration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="120">1–2 hours</option><option value="360">Half day</option></select></div>
+        <div class="field"><label class="field-label">Setting</label><div class="pill-group" id="entry-setting-pills"><button class="pill selected" onclick="selectPill(this,'entry-setting-pills')" data-value="either">Either</button><button class="pill" onclick="selectPill(this,'entry-setting-pills')" data-value="indoor">Indoor</button><button class="pill" onclick="selectPill(this,'entry-setting-pills')" data-value="outdoor">Outdoor</button></div></div>
+      </div>
+
+      <button class="continue-btn" id="entry-continue" disabled onclick="startInference()">Plan the exploration →</button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="view" id="view-loading">
+      <div class="loading-screen">
+        <div class="loading-emoji">❓</div>
+        <div class="loading-title">Planning the exploration</div>
+        <div class="loading-desc">Turning your question into an investigation…</div>
+        <div class="loading-steps">
+          <div class="loading-step" id="load-step-1"><div class="step-indicator">1</div><span>Reverse-engineering understanding</span></div>
+          <div class="loading-step" id="load-step-2"><div class="step-indicator">2</div><span>Structuring the investigation</span></div>
+          <div class="loading-step" id="load-step-3"><div class="step-indicator">3</div><span>Preparing the editor</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="view" id="view-editor">
+      <div class="completeness-bar"><div class="completeness-top"><span class="completeness-label">Module completeness</span><span class="completeness-pct" id="completeness-pct">0%</span></div><div class="completeness-track"><div class="completeness-fill" id="completeness-fill" style="width:0%"></div></div><div class="completeness-hint" id="completeness-hint"></div></div>
+
+      <div class="coherence-banner" id="coherence-banner"><div class="banner-content"><div class="banner-emoji">🤔</div><div class="banner-text"><div class="banner-title">Steps and goal might not align</div><div class="banner-desc">Your steps seem focused on a different topic than your understanding goal.</div><div class="banner-actions"><button class="banner-action-btn" onclick="scrollToSection('section-learning')">Review learning goal</button><button class="banner-action-btn" onclick="scrollToSection('section-steps')">Review steps</button><button class="banner-action-btn dismiss-banner" onclick="dismissCoherence()">Looks fine to me</button></div></div></div></div>
+
+      <div class="editor-section" id="section-basics"><div class="section-header" onclick="toggleSection('section-basics')"><span class="section-emoji">📝</span><span class="section-title">The Basics</span><span class="section-status empty" id="status-basics">Empty</span><span class="section-chevron open" id="chevron-basics">›</span></div><div class="section-body open" id="body-basics"><div class="field"><label class="field-label">Module title</label><div class="ai-suggested-field" id="field-title"><input type="text" id="ed-title" placeholder="e.g., Exploring: Why Leaves Change Colour" oninput="handleFieldEdit('field-title'); updateCompleteness();"></div></div><div class="field"><label class="field-label">Description</label><div class="ai-suggested-field" id="field-desc"><textarea id="ed-description" placeholder="A sentence or two" style="min-height:48px;" oninput="handleFieldEdit('field-desc'); updateCompleteness();"></textarea></div></div><div class="settings-row"><div class="field"><label class="field-label">Duration</label><select id="ed-duration"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="120">1–2 hrs</option><option value="360">Half day</option></select></div><div class="field"><label class="field-label">Setting</label><div class="pill-group" id="ed-setting-pills"><button class="pill selected" onclick="selectPill(this,'ed-setting-pills')">Either</button><button class="pill" onclick="selectPill(this,'ed-setting-pills')">Indoor</button><button class="pill" onclick="selectPill(this,'ed-setting-pills')">Outdoor</button></div></div></div></div></div>
+      <div class="section-divider"></div>
+
+      <div class="editor-section" id="section-steps"><div class="section-header" onclick="toggleSection('section-steps')"><span class="section-emoji">📋</span><span class="section-title">The Steps</span><span class="section-status empty" id="status-steps">Empty</span><span class="section-chevron open" id="chevron-steps">›</span></div><div class="section-body open" id="body-steps"><div class="step-list" id="step-list"></div><div style="padding:0 16px;"><button class="add-step-btn" onclick="addStep()">+ Add a step</button><button class="add-step-btn" onclick="regenerateHints()" style="margin-top:6px;border-style:solid;border-color:rgba(217,123,58,0.2);">✨ Regenerate observation hints</button></div></div></div>
+      <div class="section-divider"></div>
+
+      <div class="editor-section" id="section-materials"><div class="section-header" onclick="toggleSection('section-materials')"><span class="section-emoji">🧰</span><span class="section-title">Materials Needed</span><span class="section-status empty" id="status-materials">Optional</span><span class="section-chevron open" id="chevron-materials">›</span></div><div class="section-body open" id="body-materials"><div class="field"><label class="field-label">What do you need?</label><div id="material-list"></div><button class="add-step-btn" onclick="addMaterial()" style="margin-top:4px;">+ Add material</button></div></div></div>
+      <div class="section-divider"></div>
+
+      <div class="editor-section" id="section-learning"><div class="section-header" onclick="toggleSection('section-learning')"><span class="section-emoji">💡</span><span class="section-title">The Learning</span><span class="section-status empty" id="status-learning">Empty</span><span class="section-chevron open" id="chevron-learning">›</span></div><div class="section-body open" id="body-learning"><div class="field"><label class="field-label">What are they learning?</label><div class="ai-suggested-field" id="field-understanding"><textarea id="ed-understanding" placeholder="The understanding goal" style="min-height:70px;" oninput="handleFieldEdit('field-understanding'); updateCompleteness();"></textarea></div></div><div class="field"><label class="field-label">What would finding out look like?</label><div class="ai-suggested-field" id="field-watchfor"><textarea id="ed-watchfor" placeholder="Signs the exploration is working" oninput="handleFieldEdit('field-watchfor'); updateCompleteness();"></textarea></div></div><div class="field"><label class="field-label">If the question leads somewhere new…</label><div class="ai-suggested-field" id="field-pivot"><textarea id="ed-pivot" placeholder="What to do with branching questions" style="min-height:48px;" oninput="handleFieldEdit('field-pivot'); updateCompleteness();"></textarea></div></div></div></div>
+      <div class="section-divider"></div>
+
+      <div class="editor-section" id="section-capabilities"><div class="section-header" onclick="toggleSection('section-capabilities')"><span class="section-emoji">🧭</span><span class="section-title">Capabilities</span><span class="section-status empty" id="status-capabilities">Empty</span><span class="section-chevron open" id="chevron-capabilities">›</span></div><div class="section-body open" id="body-capabilities"><div class="capability-tags" id="cap-tags"></div><div class="cap-hint">Tap a suggested tag to confirm it, or ✕ to dismiss</div></div></div>
+      <div class="section-divider"></div>
+
+      <div class="editor-section" id="section-connect"><div class="section-header" onclick="toggleSection('section-connect')"><span class="section-emoji">🔗</span><span class="section-title">Connect</span><span class="section-status empty" id="status-connect">Optional</span><span class="section-chevron" id="chevron-connect">›</span></div><div class="section-body" id="body-connect"><div class="field"><label class="field-label">Prerequisites</label><div class="field-hint" style="margin-top:0;margin-bottom:8px;">Link modules that should come before this one</div><select><option value="">None — this module stands alone</option></select></div></div></div>
+    </div>
+
+    <div class="toast" id="toast">✅ Draft saved</div>
+  </div>
+
+  <script>
+    let currentView = 'entry';
+    let selectedApproaches = [];
+    let questionDebounce = null;
+    let moduleData = { id: 'mod_' + Date.now(), createdVia: 'inquiry', title: '', description: '', duration: 30, setting: 'either', steps: [], materials: [], targetUnderstanding: '', watchFor: '', pivot: '', capabilities: [], sourceQuestion: '', status: 'draft' };
+    let aiSuggestions = new Set();
+
+    // Investigation types
+    const INVESTIGATIONS = [
+      { id: 'observe', emoji: '🔍', label: 'Observe closely', desc: 'Go look at the real thing', domains: ['natural_phenomena','living_things','physical','places'] },
+      { id: 'experiment', emoji: '🧪', label: 'Test it out', desc: 'Design a simple experiment', domains: ['cause_effect','physical_science','predictions','natural_phenomena'] },
+      { id: 'research', emoji: '📚', label: 'Look it up', desc: 'Find answers in books or reliable sources', domains: ['historical','how_things_work','factual','geography','natural_phenomena'] },
+      { id: 'ask', emoji: '🗣️', label: 'Ask an expert', desc: 'Talk to someone who knows', domains: ['specialist','community','career'] },
+      { id: 'visit', emoji: '📍', label: 'Go somewhere', desc: 'Visit a place to find out', domains: ['places','nature','cultural','how_things_work'] },
+      { id: 'make', emoji: '🔧', label: 'Build or make something', desc: 'Learn by creating', domains: ['how_things_work','engineering','design'] },
+    ];
+
+    // Simple domain classifier
+    function classifyQuestion(q) {
+      q = q.toLowerCase();
+      if (/why.*(leaf|leaves|plant|tree|grow|flower|season|autumn|spring|rain|weather|cloud|star|moon|sun|sky)/.test(q)) return 'natural_phenomena';
+      if (/how.*(bridge|build|engine|machine|work|fly|float|magnet|electric)/.test(q)) return 'how_things_work';
+      if (/why.*(animal|bird|fish|bug|insect|cat|dog|live|eat|sleep|breathe)/.test(q)) return 'living_things';
+      if (/how.*(people|lived|ancient|history|old|war|castle|king|queen)/.test(q)) return 'historical';
+      if (/what.*(happen|if|when|would)/.test(q)) return 'cause_effect';
+      if (/where.*(live|find|go|come)/.test(q)) return 'places';
+      return 'natural_phenomena'; // default
+    }
+
+    const SIMULATED_AI = {
+      title: "Exploring: Why Leaves Change Colour",
+      description: "Investigate why leaves change colour in autumn through close observation, simple experiments, and research",
+      understanding: "Plants respond to seasonal changes in daylight and temperature by withdrawing nutrients from their leaves, causing the colour change we observe",
+      watchFor: "They start forming their own theories about why the colour changes. Do they connect it to the seasons? Are they noticing patterns?",
+      pivot: "If new questions come up during the investigation (they will!), note them down. Each one could become its own module. For now, gently steer back to the original question.",
+      capabilities: [
+        { id: 'S5', name: 'Scientific Observation', domain: 'Scientific', color: '#4ADE80', confidence: 'suggested' },
+        { id: 'S2', name: 'Living Systems', domain: 'Scientific', color: '#4ADE80', confidence: 'suggested' },
+        { id: 'EF1', name: 'Sustained Attention', domain: 'Executive Function', color: '#C084FC', confidence: 'suggested' },
+        { id: 'L1', name: 'Oral Communication', domain: 'Language', color: '#E8A0BF', confidence: 'suggested' },
+      ],
+      steps: [
+        { title: "Collect and observe", instructions: "Go outside and collect 5-6 leaves in different stages of colour change. Sort them from greenest to most changed — what patterns do you notice?", hint: "Watch for how they categorise — are they noticing gradients or just 'green' and 'brown'?" },
+        { title: "Look closely", instructions: "Examine each leaf with a magnifying glass if you have one. Can you see the colour underneath the green? What's happening at the edges vs the centre?", hint: "Notice whether they're making detailed observations or surface-level ones" },
+        { title: "Form a theory", instructions: "Why do you think the colour changes? Draw or write your theory. It doesn't have to be right — scientists start with guesses too.", hint: "Listen for reasoning beyond 'because it's autumn.' Are they trying to explain the mechanism?" },
+        { title: "Research and compare", instructions: "Look up why leaves change colour in a book or reliable website. How does the real answer compare to your theory?", hint: "Watch for how they handle the gap between their theory and the real answer — curiosity or frustration?" },
+      ],
+      materials: [
+        { name: 'Collected autumn leaves (variety of colours)', isCore: true },
+        { name: 'Magnifying glass', isCore: false },
+        { name: 'Drawing / notebook supplies', isCore: false },
+      ],
+    };
+
+    // Entry screen logic
+    function onQuestionInput() {
+      const q = document.getElementById('entry-question').value.trim();
+      clearTimeout(questionDebounce);
+      if (q.length < 5) {
+        document.getElementById('investigation-cards').innerHTML = '';
+        document.getElementById('inv-hint').style.display = 'block';
+        document.getElementById('inv-loading').style.display = 'none';
+        selectedApproaches = [];
+        checkEntryReady();
+        return;
+      }
+      document.getElementById('inv-hint').style.display = 'none';
+      document.getElementById('inv-loading').style.display = 'block';
+
+      questionDebounce = setTimeout(() => {
+        const domain = classifyQuestion(q);
+        const matching = INVESTIGATIONS.filter(i => i.domains.includes(domain)).slice(0, 4);
+        if (matching.length === 0) matching.push(...INVESTIGATIONS.slice(0, 3));
+        renderInvestigationCards(matching);
+        document.getElementById('inv-loading').style.display = 'none';
+      }, 1200);
+      checkEntryReady();
+    }
+
+    function renderInvestigationCards(cards) {
+      const container = document.getElementById('investigation-cards');
+      container.innerHTML = '';
+      selectedApproaches = [];
+      cards.forEach(inv => {
+        const card = document.createElement('div');
+        card.className = 'investigation-card';
+        card.dataset.id = inv.id;
+        card.innerHTML = `<div class="inv-emoji">${inv.emoji}</div><div class="inv-content"><div class="inv-label">${inv.label}</div><div class="inv-desc">${inv.desc}</div></div><div class="inv-check"></div>`;
+        card.onclick = () => toggleApproach(card, inv.id);
+        container.appendChild(card);
+      });
+    }
+
+    function toggleApproach(card, id) {
+      if (card.classList.contains('selected')) {
+        card.classList.remove('selected');
+        card.querySelector('.inv-check').textContent = '';
+        selectedApproaches = selectedApproaches.filter(a => a !== id);
+      } else {
+        if (selectedApproaches.length >= 2) return;
+        card.classList.add('selected');
+        card.querySelector('.inv-check').textContent = '✓';
+        selectedApproaches.push(id);
+      }
+      // Max enforcement
+      document.querySelectorAll('.investigation-card').forEach(c => {
+        if (!c.classList.contains('selected') && selectedApproaches.length >= 2) c.classList.add('maxed');
+        else c.classList.remove('maxed');
+      });
+      checkEntryReady();
+    }
+
+    function toggleChild(chip) { chip.classList.toggle('selected'); }
+
+    function checkEntryReady() {
+      const q = document.getElementById('entry-question').value.trim();
+      document.getElementById('entry-continue').disabled = !(q.length >= 5 && selectedApproaches.length >= 1);
+    }
+
+    function selectPill(pill, groupId) { const g = document.getElementById(groupId); g.querySelectorAll('.pill').forEach(p => p.classList.remove('selected')); pill.classList.add('selected'); }
+
+    // Inference
+    function startInference() {
+      moduleData.sourceQuestion = document.getElementById('entry-question').value.trim();
+      moduleData.duration = parseInt(document.getElementById('entry-duration').value);
+      const sp = document.querySelector('#entry-setting-pills .pill.selected');
+      if (sp) moduleData.setting = sp.dataset.value || sp.textContent.trim().toLowerCase();
+      switchView('loading');
+      const steps = ['load-step-1','load-step-2','load-step-3']; let i = 0;
+      function advance() { if (i>0){document.getElementById(steps[i-1]).classList.remove('active');document.getElementById(steps[i-1]).classList.add('done');} if(i<steps.length){document.getElementById(steps[i]).classList.add('active');i++;setTimeout(advance,600+Math.random()*400);}else{setTimeout(populateEditor,400);} }
+      setTimeout(advance, 300);
+    }
+
+    function populateEditor() {
+      document.getElementById('ed-title').value = SIMULATED_AI.title; markAsSuggested('field-title');
+      document.getElementById('ed-description').value = SIMULATED_AI.description; markAsSuggested('field-desc');
+      document.getElementById('ed-duration').value = moduleData.duration;
+      const st = moduleData.setting.charAt(0).toUpperCase()+moduleData.setting.slice(1);
+      document.querySelectorAll('#ed-setting-pills .pill').forEach(p => p.classList.toggle('selected', p.textContent.trim()===st));
+      SIMULATED_AI.steps.forEach(s => addStep(s.title, s.instructions, s.hint));
+      SIMULATED_AI.materials.forEach(m => addMaterial(m.name, '', m.isCore));
+      document.getElementById('ed-understanding').value = SIMULATED_AI.understanding; markAsSuggested('field-understanding');
+      document.getElementById('ed-watchfor').value = SIMULATED_AI.watchFor; markAsSuggested('field-watchfor');
+      document.getElementById('ed-pivot').value = SIMULATED_AI.pivot; markAsSuggested('field-pivot');
+      renderCapabilities();
+      switchView('editor');
+      updateCompleteness();
+    }
+
+    // AI suggestions
+    function markAsSuggested(fid) { aiSuggestions.add(fid); const f=document.getElementById(fid); if(f){f.classList.add('ai-suggested-field');let b=f.querySelector('.ai-badge');if(!b){b=document.createElement('div');b.className='ai-badge';b.textContent='Suggested';f.appendChild(b);}} }
+    function removeSuggestion(fid) { aiSuggestions.delete(fid); const f=document.getElementById(fid); if(f){f.classList.remove('ai-suggested-field');const b=f.querySelector('.ai-badge');if(b)b.remove();} }
+    function handleFieldEdit(fid) { removeSuggestion(fid); updateCompleteness(); }
+
+    // Capabilities
+    function renderCapabilities() { const c=document.getElementById('cap-tags');c.innerHTML='';SIMULATED_AI.capabilities.forEach((cap,i)=>{const t=document.createElement('button');t.className=`cap-tag ${cap.confidence}`;t.innerHTML=`<span class="tag-dot" style="background:${cap.color}"></span><span>${cap.id}: ${cap.name}</span><span class="dismiss" onclick="event.stopPropagation();removeCapability(${i})">✕</span>`;t.onclick=()=>promoteCapability(i);c.appendChild(t);});updateCompleteness(); }
+    function promoteCapability(i) { if(SIMULATED_AI.capabilities[i].confidence==='suggested'){SIMULATED_AI.capabilities[i].confidence='explicit';renderCapabilities();} }
+    function removeCapability(i) { SIMULATED_AI.capabilities.splice(i,1); renderCapabilities(); }
+
+    // Steps
+    let stepCounter = 0;
+    function addStep(title,instructions,hint) { stepCounter++;const id=stepCounter;const list=document.getElementById('step-list');const card=document.createElement('div');card.className='step-card';card.id=`step-${id}`;const hH=hint?`<div class="step-observation-hint" id="hint-${id}"><p>${hint}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${id})">Edit</button><button class="hint-action" onclick="removeHint(${id})">Remove</button></div></div>`:'';card.innerHTML=`<div class="step-card-header"><div class="step-number">${getStepCount()}</div><input type="text" class="step-title-input" placeholder="Step title" value="${title||''}" oninput="updateCompleteness()"><div class="step-actions"><button class="step-action-btn" onclick="moveStep(${id},-1)">↑</button><button class="step-action-btn" onclick="moveStep(${id},1)">↓</button><button class="step-action-btn delete" onclick="removeStep(${id})">✕</button></div></div><div class="step-card-body"><textarea placeholder="What happens in this step?" oninput="updateCompleteness()">${instructions||''}</textarea><div class="step-say-this"><label>💬 What to say (optional)</label><textarea placeholder="e.g., 'What do you notice…'"></textarea></div>${hH}</div>`;list.appendChild(card);renumberSteps();updateCompleteness();if(!title)card.querySelector('.step-title-input').focus(); }
+    function removeStep(id){const c=document.getElementById(`step-${id}`);if(c){c.remove();renumberSteps();updateCompleteness();}}
+    function moveStep(id,dir){const c=document.getElementById(`step-${id}`);const l=document.getElementById('step-list');if(!c)return;if(dir===-1&&c.previousElementSibling)l.insertBefore(c,c.previousElementSibling);else if(dir===1&&c.nextElementSibling)l.insertBefore(c.nextElementSibling,c);renumberSteps();}
+    function getStepCount(){return document.querySelectorAll('#step-list .step-card').length+1;}
+    function renumberSteps(){document.querySelectorAll('#step-list .step-card').forEach((c,i)=>{const n=c.querySelector('.step-number');if(n)n.textContent=i+1;});}
+    function removeHint(id){const h=document.getElementById(`hint-${id}`);if(h)h.remove();}
+    function editHint(id){const h=document.getElementById(`hint-${id}`);if(!h)return;const p=h.querySelector('p');const t=p.textContent;const inp=document.createElement('textarea');inp.style.cssText='width:100%;background:none;border:none;color:var(--text-secondary);font-size:12px;font-style:italic;line-height:1.4;resize:none;padding:0;min-height:30px;';inp.value=t;inp.onblur=()=>{p.textContent=inp.value;inp.replaceWith(p);};p.replaceWith(inp);inp.focus();}
+    function regenerateHints(){const steps=document.querySelectorAll('#step-list .step-card');if(!steps.length)return;const btn=event.target;const o=btn.textContent;btn.textContent='✨ Generating…';btn.disabled=true;setTimeout(()=>{const hints=SIMULATED_AI.steps.map(s=>s.hint);steps.forEach((card,i)=>{const ex=card.querySelector('.step-observation-hint');if(ex)ex.remove();const hid=card.id.replace('step-','');const hEl=document.createElement('div');hEl.className='step-observation-hint';hEl.id=`hint-${hid}`;hEl.innerHTML=`<p>${hints[i%hints.length]}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${hid})">Edit</button><button class="hint-action" onclick="removeHint(${hid})">Remove</button></div>`;card.querySelector('.step-card-body').appendChild(hEl);});btn.textContent=o;btn.disabled=false;},1200);}
+
+    // Materials
+    let materialCounter = 0;
+    function addMaterial(name,alt,isCore){materialCounter++;const id=materialCounter;const list=document.getElementById('material-list');const row=document.createElement('div');row.id=`material-${id}`;row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;';const badge=isCore?'<span style="font-size:10px;color:var(--ember);background:var(--ember-glow);padding:2px 8px;border-radius:10px;white-space:nowrap;">Core</span>':'';row.innerHTML=`<input type="text" placeholder="e.g., Magnifying glass" style="flex:1;" value="${name||''}" oninput="updateCompleteness()"><input type="text" placeholder="Alternative" style="flex:0.6;font-size:12px;" value="${alt||''}">${badge}<button onclick="document.getElementById('material-${id}').remove();updateCompleteness();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;">✕</button>`;list.appendChild(row);if(!name)row.querySelector('input').focus();}
+
+    // Sections
+    function toggleSection(sid){const b=document.getElementById(`body-${sid.replace('section-','')}`);const c=document.getElementById(`chevron-${sid.replace('section-','')}`);if(!b)return;const o=b.classList.contains('open');b.classList.toggle('open',!o);if(c)c.classList.toggle('open',!o);}
+    function scrollToSection(sid){const el=document.getElementById(sid);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});const k=sid.replace('section-','');const b=document.getElementById(`body-${k}`);const c=document.getElementById(`chevron-${k}`);if(b&&!b.classList.contains('open')){b.classList.add('open');if(c)c.classList.add('open');}}}
+
+    // Completeness
+    function updateCompleteness(){let s=0;const t=document.getElementById('ed-title')?.value.trim();if(t)s+=20;const d=document.getElementById('ed-description')?.value.trim();if(d)s+=10;let hasStep=false;document.querySelectorAll('#step-list .step-card').forEach(c=>{if(c.querySelector('.step-title-input')?.value.trim()&&c.querySelector('.step-card-body > textarea')?.value.trim())hasStep=true;});if(hasStep)s+=20;const u=document.getElementById('ed-understanding')?.value.trim();if(u)s+=20;const w=document.getElementById('ed-watchfor')?.value.trim();if(w)s+=15;if(SIMULATED_AI.capabilities.length>0)s+=15;document.getElementById('completeness-pct').textContent=s+'%';document.getElementById('completeness-fill').style.width=s+'%';const fill=document.getElementById('completeness-fill');const hint=document.getElementById('completeness-hint');const sb=document.getElementById('save-btn');if(s>=60){fill.classList.add('ready');sb.disabled=false;sb.classList.add('ready');sb.textContent='Save';hint.textContent='Ready to save';}else{fill.classList.remove('ready');sb.disabled=true;sb.classList.remove('ready');sb.textContent='Save Draft';if(!t)hint.textContent='Add a title';else if(!hasStep)hint.textContent='Add at least one step';else if(!u)hint.textContent='Add a learning goal';else hint.textContent='Keep going — almost there';}updateSectionStatus('basics',(t?1:0)+(d?1:0),2);updateSectionStatus('steps',hasStep?1:0,1);updateSectionStatus('learning',(u?1:0)+(w?1:0),2);updateSectionStatus('capabilities',SIMULATED_AI.capabilities.length>0?1:0,1);checkCoherence();}
+    function updateSectionStatus(k,f,t){const el=document.getElementById(`status-${k}`);if(!el)return;if(f>=t){el.className='section-status complete';el.textContent='Done';}else if(f>0){el.className='section-status partial';el.textContent=`${f}/${t}`;}else{el.className='section-status empty';el.textContent=k==='materials'||k==='connect'?'Optional':'Empty';}}
+    let coherenceDismissed=false;
+    function checkCoherence(){if(coherenceDismissed)return;const u=(document.getElementById('ed-understanding')?.value||'').toLowerCase();const steps=document.querySelectorAll('#step-list .step-card');if(steps.length<2||u.length<10){document.getElementById('coherence-banner').classList.remove('visible');return;}let st='';steps.forEach(c=>{st+=' '+(c.querySelector('.step-title-input')?.value||'');st+=' '+(c.querySelector('.step-card-body > textarea')?.value||'');});st=st.toLowerCase();const words=u.split(/\s+/).filter(w=>w.length>4);const mc=words.filter(w=>st.includes(w)).length;const r=words.length>0?mc/words.length:1;if(r<0.15&&st.length>30)document.getElementById('coherence-banner').classList.add('visible');else document.getElementById('coherence-banner').classList.remove('visible');}
+    function dismissCoherence(){coherenceDismissed=true;document.getElementById('coherence-banner').classList.remove('visible');}
+
+    // Nav
+    function switchView(v){document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));document.getElementById(`view-${v}`).classList.add('active');currentView=v;window.scrollTo(0,0);const s=document.getElementById('save-btn');const h=document.getElementById('header-title');if(v==='entry'){s.style.display='none';h.textContent='';}else if(v==='loading'){s.style.display='none';h.textContent='';}else if(v==='editor'){s.style.display='inline-block';h.textContent='Inquiry';}}
+    function handleBack(){if(currentView==='editor'){if(confirm('Go back? Your progress will be preserved.'))switchView('entry');}else if(currentView==='loading'){switchView('entry');}else{history.back();}}
+
+    // Save
+    function handleSave(){moduleData.title=document.getElementById('ed-title').value.trim();moduleData.description=document.getElementById('ed-description').value.trim();moduleData.targetUnderstanding=document.getElementById('ed-understanding').value.trim();moduleData.watchFor=document.getElementById('ed-watchfor').value.trim();moduleData.pivot=document.getElementById('ed-pivot').value.trim();moduleData.capabilities=SIMULATED_AI.capabilities.map(c=>({threadId:c.id,name:c.name,confidence:c.confidence}));moduleData.steps=[];document.querySelectorAll('#step-list .step-card').forEach(c=>{moduleData.steps.push({title:c.querySelector('.step-title-input')?.value.trim()||'',instructions:c.querySelector('.step-card-body > textarea')?.value.trim()||'',sayThis:c.querySelectorAll('.step-card-body textarea')[1]?.value.trim()||'',observationHint:c.querySelector('.step-observation-hint p')?.textContent.trim()||''});});moduleData.status='draft';moduleData.updatedAt=new Date().toISOString();console.log('Module saved:',moduleData);const toast=document.getElementById('toast');toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2500);}
+
+    // Init
+    document.getElementById('save-btn').style.display = 'none';
+    function loadDemoData() {
+      document.getElementById('entry-question').value = "Why do leaves change colour in autumn?";
+      document.getElementById('entry-prior').value = "We know leaves fall off trees. Emma thinks it's because they get old. Liam thinks the wind blows them off.";
+      onQuestionInput();
+      // Pre-select "observe" after cards render
+      setTimeout(() => {
+        const cards = document.querySelectorAll('.investigation-card');
+        if (cards.length > 0) { toggleApproach(cards[0], cards[0].dataset.id); }
+        checkEntryReady();
+      }, 1500);
+    }
+    loadDemoData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+import type { InferSelectModel } from 'drizzle-orm';
+import type {
+  families,
+  learners,
+  familySettings,
+  learningEntries,
+  capabilityObservations,
+  badgeDefinitions,
+  badgeAwards,
+  plannerEntries,
+  notifications,
+  facilitatorNotes,
+  familyIntelligenceSnapshots,
+  badgeAssessmentLogs,
+  familyLibrary,
+} from '@/lib/db/schema';
+
+// ─── Entity types inferred from schema ───
+
+export type Family = InferSelectModel<typeof families>;
+export type Learner = InferSelectModel<typeof learners>;
+export type FamilySettings = InferSelectModel<typeof familySettings>;
+export type LearningEntry = InferSelectModel<typeof learningEntries>;
+export type CapabilityObservation = InferSelectModel<typeof capabilityObservations>;
+export type BadgeDefinition = InferSelectModel<typeof badgeDefinitions>;
+export type BadgeAward = InferSelectModel<typeof badgeAwards>;
+export type BadgeAssessmentLog = InferSelectModel<typeof badgeAssessmentLogs>;
+export type PlannerEntry = InferSelectModel<typeof plannerEntries>;
+export type Notification = InferSelectModel<typeof notifications>;
+export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
+export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
+export type FamilyLibraryEntry = InferSelectModel<typeof familyLibrary>;
+
+// ─── Enum / Union types ───
+
+export const SUBJECTS = [
+  'english',
+  'mathematics',
+  'science',
+  'hass',
+  'arts',
+  'technologies',
+  'hpe',
+  'languages',
+] as const;
+export type Subject = (typeof SUBJECTS)[number];
+
+export const LEARNER_COLOURS = ['rose', 'blue', 'sage', 'amber'] as const;
+export type LearnerColour = (typeof LEARNER_COLOURS)[number];
+
+export const ENTRY_SOURCES = ['logger', 'module_log', 'project_stage'] as const;
+export type EntrySource = (typeof ENTRY_SOURCES)[number];
+
+export const ENTRY_STATUSES = ['draft', 'complete'] as const;
+export type EntryStatus = (typeof ENTRY_STATUSES)[number];
+
+export const OBSERVATION_STATUSES = ['emerging', 'developing', 'demonstrating'] as const;
+export type ObservationStatus = (typeof OBSERVATION_STATUSES)[number];
+
+export const NOTIFICATION_TIERS = ['whisper', 'nudge', 'chime', 'flare'] as const;
+export type NotificationTier = (typeof NOTIFICATION_TIERS)[number];
+
+export const NOTIFICATION_STATES = ['visible', 'dismissed', 'actioned', 'expired'] as const;
+export type NotificationState = (typeof NOTIFICATION_STATES)[number];
+
+export const PEDAGOGIES = [
+  'charlotte_mason',
+  'classical',
+  'montessori',
+  'waldorf_steiner',
+  'unschooling',
+  'eclectic',
+] as const;
+export type Pedagogy = (typeof PEDAGOGIES)[number];

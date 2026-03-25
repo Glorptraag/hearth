@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<!-- Version: 3 | Date: 2026-03-19 | Changes: Token rename pass — --ember-orange→--ember, --sage-green→--sage, --deep-coffee→--surface-body, --coffee-mid→--surface-panel, --coffee-light→--surface-raised, --surface-elevated→--surface-hover. Fixed --radius-xl to canonical 24px (was 20px). Fixed .section-title to serif 1.1rem/600 (was sans overline style). Fixed hardcoded border-radius 8px→--radius-sm, 10px→--radius-md, 12px/14px/20px→--radius-md. Fixed hardcoded spacing (6px gaps→--space-xs, 4px gaps→--space-xs, 12px padding→--space-md). Fixed .btn-primary padding to canonical md size (12px 24px). Fixed .stage-detail-title font-weight to 600 (was 700 — display weight reserved for brand only). Fixed .project-back and .stage-detail-back to follow back-header pattern (sans 0.85rem 500 --text-secondary). Fixed .material-chip border-radius to --radius-full (pill-shaped chip). Connector gradient sage-to-ember retained as intentional in-progress semantic. Progress ring ember fill retained as acceptable active indicator. All JS logic intact. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Project Experience: My Imaginary Friend</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* ── Canonical surface tokens ── */
+      --surface-body:    #0F0D0B;
+      --surface-panel:   #1A1612;
+      --surface-raised:  #252117;
+      --surface-hover:   #2D2621;
+
+      --text-primary:    #E8DFD4;
+      --text-secondary:  #9B8B7E;
+      --text-muted:      #6B5D52;
+
+      /* ── Canonical accent tokens ── */
+      --ember:           #D97B3A;
+      --ember-hover:     #E88F4E;
+      --ember-glow:      rgba(217, 123, 58, 0.15);
+      --ember-strong:    rgba(217, 123, 58, 0.25);
+
+      --sage:            #4ADE80;
+      --sage-muted:      #22C55E;
+      --sage-glow:       rgba(74, 222, 128, 0.12);
+
+      /* ── Supporting palette ── */
+      --lavender:        #A78BFA;
+      --lavender-glow:   rgba(167, 139, 250, 0.12);
+      --sky:             #60A5FA;
+      --sky-glow:        rgba(96, 165, 250, 0.12);
+      --rose:            #FB7185;
+      --rose-glow:       rgba(251, 113, 133, 0.12);
+      --amber:           #FBBF24;
+      --amber-glow:      rgba(251, 191, 36, 0.12);
+      --teal:            #2DD4BF;
+      --teal-glow:       rgba(45, 212, 191, 0.12);
+
+      --font-serif: 'Crimson Text', Georgia, serif;
+      --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+      --space-xs:   4px;
+      --space-sm:   8px;
+      --space-md:   16px;
+      --space-lg:   24px;
+      --space-xl:   32px;
+      --space-2xl:  48px;
+      --space-3xl:  64px;
+
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   16px;
+      --radius-xl:   24px;
+      --radius-full: 9999px;
+
+      --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+
+      --border-subtle: rgba(217, 123, 58, 0.1);
+      --border-medium: rgba(217, 123, 58, 0.2);
+
+      --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--surface-body);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ===== SCREEN MANAGEMENT ===== */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: block; }
+
+    /* ===== PROJECT OVERVIEW SCREEN ===== */
+    .project-hero {
+      position: relative;
+      padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+        var(--surface-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Back header — canonical pattern: sans 0.85rem 500 --text-secondary */
+    .project-back {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      margin-bottom: var(--space-lg);
+      cursor: pointer;
+      transition: color var(--transition-quick);
+    }
+    .project-back:hover { color: var(--text-primary); }
+
+    .project-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--lavender-glow);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: var(--radius-full);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--lavender);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: var(--space-md);
+    }
+
+    .project-title {
+      font-family: var(--font-serif);
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+      margin-bottom: var(--space-sm);
+    }
+
+    .project-subtitle {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+      max-width: 600px;
+    }
+
+    .project-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    .project-meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+    .project-meta-item .icon { font-size: 1rem; }
+
+    .subject-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .subject-pill {
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .subject-pill.english    { background: rgba(96, 165, 250, 0.12); color: var(--sky);     border: 1px solid rgba(96, 165, 250, 0.2); }
+    .subject-pill.visual-arts{ background: var(--lavender-glow);     color: var(--lavender); border: 1px solid rgba(167, 139, 250, 0.2); }
+    .subject-pill.technologies{ background: var(--teal-glow);         color: var(--teal);     border: 1px solid rgba(45, 212, 191, 0.2); }
+    .subject-pill.hpe        { background: var(--rose-glow);          color: var(--rose);     border: 1px solid rgba(251, 113, 133, 0.2); }
+    .subject-pill.hass       { background: var(--amber-glow);         color: var(--amber);    border: 1px solid rgba(251, 191, 36, 0.2); }
+
+    /* Understanding Block */
+    .understanding-block {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--ember);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      margin: var(--space-xl) auto;
+      max-width: 960px;
+    }
+
+    .understanding-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ember);
+      margin-bottom: var(--space-sm);
+    }
+
+    .understanding-text {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .child-understanding {
+      margin-top: var(--space-md);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+    }
+    .child-understanding::before {
+      content: 'For your child: ';
+      font-style: normal;
+      font-weight: 600;
+      color: var(--sage);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ===== STAGE JOURNEY MAP ===== */
+    .journey-section {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-xl);
+    }
+
+    /* Section header — canonical: serif 1.1rem/600 --text-primary */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-xl);
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .overall-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Progress ring — ember fill is acceptable for active progress indicator */
+    .progress-ring {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: conic-gradient(var(--ember) 0deg, var(--ember) calc(var(--progress, 0) * 3.6deg), var(--surface-raised) calc(var(--progress, 0) * 3.6deg));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .progress-ring-inner {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--surface-body);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5625rem;
+      font-weight: 600;
+      color: var(--ember);
+    }
+
+    /* Stage Cards */
+    .stage-list { display: flex; flex-direction: column; gap: 0; }
+
+    .stage-connector {
+      display: flex;
+      align-items: center;
+      padding-left: 42px;
+      height: 32px;
+    }
+    .connector-line {
+      width: 2px;
+      height: 100%;
+      background: var(--border-subtle);
+      position: relative;
+    }
+    .connector-line.completed { background: var(--sage); }
+    /* Intentional: sage-to-ember gradient signals transition from complete to active */
+    .connector-line.active {
+      background: linear-gradient(to bottom, var(--sage), var(--ember));
+    }
+
+    /* Card anatomy: surface-panel bg, border-subtle, radius-lg, shadow-soft */
+    .stage-card {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-lg);
+      background: var(--surface-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-gentle);
+      position: relative;
+    }
+    /* Card hover: translateY, border-medium, shadow-warm */
+    .stage-card:hover {
+      border-color: var(--border-medium);
+      background: var(--surface-raised);
+      transform: translateX(4px);
+    }
+    /* Ember top-line on hover */
+    .stage-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--ember), transparent);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      opacity: 0;
+      transition: opacity var(--transition-gentle);
+    }
+    .stage-card:hover::before { opacity: 1; }
+
+    .stage-card.completed {
+      border-color: rgba(74, 222, 128, 0.15);
+    }
+    .stage-card.completed:hover {
+      border-color: rgba(74, 222, 128, 0.3);
+    }
+    .stage-card.active {
+      border-color: var(--ember);
+      box-shadow: 0 0 24px rgba(217, 123, 58, 0.1);
+    }
+    .stage-card.locked {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .stage-card.locked:hover {
+      transform: none;
+      border-color: var(--border-subtle);
+      background: var(--surface-panel);
+    }
+
+    .stage-number {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      background: var(--surface-raised);
+      color: var(--text-muted);
+      border: 2px solid var(--border-subtle);
+      transition: all var(--transition-quick);
+    }
+    .stage-card.completed .stage-number {
+      background: var(--sage);
+      color: var(--surface-body);
+      border-color: var(--sage);
+    }
+    .stage-card.active .stage-number {
+      background: var(--ember);
+      color: var(--surface-body);
+      border-color: var(--ember);
+    }
+
+    .stage-content { flex: 1; min-width: 0; }
+
+    .stage-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xs);
+    }
+
+    .stage-name {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .stage-card.completed .stage-name { color: var(--sage); }
+
+    .stage-domain-pill {
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.625rem;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .stage-description {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+      line-height: 1.5;
+    }
+
+    .stage-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .stage-meta-item { display: flex; align-items: center; gap: var(--space-xs); }
+
+    .artifact-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      background: var(--ember-glow);
+      color: var(--ember);
+      border: 1px solid rgba(217, 123, 58, 0.15);
+    }
+    .stage-card.completed .artifact-tag {
+      background: var(--sage-glow);
+      color: var(--sage);
+      border-color: rgba(74, 222, 128, 0.15);
+    }
+
+    .stage-badge-earned {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      background: var(--amber-glow);
+      color: var(--amber);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+    }
+
+    .dependency-note {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      margin-top: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: rgba(217, 123, 58, 0.06);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== BADGE JOURNEY ===== */
+    .badge-journey {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 var(--space-xl) var(--space-2xl);
+    }
+
+    .badge-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding: var(--space-lg) 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .badge-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .badge-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      background: var(--surface-raised);
+      border: 2px solid var(--border-subtle);
+      transition: all var(--transition-gentle);
+    }
+    .badge-node.earned .badge-icon {
+      background: var(--amber-glow);
+      border-color: var(--amber);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.2);
+    }
+    .badge-node.current .badge-icon {
+      border-color: var(--ember);
+      box-shadow: 0 0 12px rgba(217, 123, 58, 0.15);
+    }
+    .badge-node.capstone .badge-icon {
+      width: 56px;
+      height: 56px;
+      font-size: 1.5rem;
+    }
+    .badge-node.capstone.earned .badge-icon {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(217, 123, 58, 0.2));
+      border-color: var(--amber);
+      box-shadow: 0 0 24px rgba(251, 191, 36, 0.3);
+    }
+
+    .badge-label {
+      font-family: var(--font-sans);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 80px;
+      line-height: 1.3;
+    }
+    .badge-node.earned .badge-label  { color: var(--amber); }
+    .badge-node.current .badge-label { color: var(--ember); }
+
+    .badge-connector {
+      width: 24px;
+      height: 2px;
+      background: var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .badge-connector.earned { background: var(--amber); }
+    .badge-connector.active {
+      background: linear-gradient(to right, var(--amber), var(--border-subtle));
+    }
+
+    /* ===== CURRICULUM COVERAGE ===== */
+    .curriculum-section {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 var(--space-xl) var(--space-2xl);
+    }
+
+    .curriculum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .curriculum-card {
+      padding: var(--space-lg);
+      background: var(--surface-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      border-top: 3px solid var(--card-color, var(--text-muted));
+    }
+
+    .curriculum-subject {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--card-color, var(--text-muted));
+      margin-bottom: var(--space-sm);
+    }
+
+    .curriculum-items {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .curriculum-item {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      padding-left: var(--space-md);
+      position: relative;
+    }
+    .curriculum-item::before {
+      content: '·';
+      position: absolute;
+      left: var(--space-xs);
+      color: var(--text-muted);
+    }
+
+    /* ===== STAGE DETAIL SCREEN ===== */
+    .stage-detail-header {
+      background: var(--surface-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-xl);
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Back header — canonical pattern: sans 0.85rem 500 --text-secondary */
+    .stage-detail-back {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      margin-bottom: var(--space-lg);
+      transition: color var(--transition-quick);
+    }
+    .stage-detail-back:hover { color: var(--text-primary); }
+
+    .stage-detail-breadcrumb {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      margin-bottom: var(--space-sm);
+    }
+    .stage-detail-breadcrumb span { color: var(--ember); }
+
+    .stage-detail-title {
+      font-family: var(--font-serif);
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .stage-detail-tagline {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+    }
+
+    .stage-detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* Stage Detail Body */
+    .stage-detail-body {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--space-xl);
+    }
+
+    @media (min-width: 768px) {
+      .stage-detail-body {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: var(--space-xl);
+      }
+    }
+
+    .stage-main { }
+    .stage-sidebar { }
+
+    /* Detail card — canonical: surface-panel bg, border-subtle, radius-lg, padding space-lg */
+    .detail-card {
+      background: var(--surface-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--ember), transparent);
+      opacity: 0;
+      transition: opacity var(--transition-gentle);
+    }
+    .detail-card:hover::before { opacity: 1; }
+
+    .detail-card-title {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .detail-card-title.ember   { color: var(--ember); }
+    .detail-card-title.sage    { color: var(--sage); }
+    .detail-card-title.lavender{ color: var(--lavender); }
+
+    .activity-step {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-md) 0;
+      border-bottom: 1px solid rgba(217, 123, 58, 0.05);
+    }
+    .activity-step:last-child { border-bottom: none; }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      background: var(--surface-raised);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .step-text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Material chip — full pill radius for chip style */
+    .material-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 2px;
+    }
+
+    .watch-for-item {
+      display: flex;
+      gap: var(--space-sm);
+      padding: var(--space-sm) 0;
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .watch-for-item::before {
+      content: '👁';
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .depends-on-card {
+      padding: var(--space-md);
+      background: var(--ember-glow);
+      border: 1px solid rgba(217, 123, 58, 0.15);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-md);
+    }
+
+    .depends-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+
+    .depends-text {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .produces-card {
+      padding: var(--space-md);
+      background: var(--sage-glow);
+      border: 1px solid rgba(74, 222, 128, 0.15);
+      border-radius: var(--radius-md);
+    }
+
+    .produces-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--sage);
+      margin-bottom: var(--space-xs);
+    }
+
+    .produces-text {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .badge-milestone-card {
+      padding: var(--space-md);
+      background: var(--amber-glow);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
+
+    .badge-milestone-icon {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 50%;
+      background: rgba(251, 191, 36, 0.15);
+      border: 2px solid var(--amber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+    }
+
+    .badge-milestone-info {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .badge-milestone-sub {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* Philosophy Lens */
+    .philosophy-block {
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-sm);
+    }
+
+    /* Artifact Thumbnails */
+    .artifact-thumbnails {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+    .artifact-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+    .artifact-thumb:hover {
+      border-color: var(--ember);
+      transform: scale(1.05);
+    }
+    .artifact-thumb-label {
+      font-family: var(--font-sans);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      margin-top: var(--space-xs);
+      text-align: center;
+    }
+    .artifact-thumb-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Artifact Capture Prompt */
+    .capture-prompt {
+      padding: var(--space-lg);
+      background: var(--ember-glow);
+      border: 1px dashed rgba(217, 123, 58, 0.3);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-md);
+    }
+    .capture-prompt-title {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+    .capture-prompt-text {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-md);
+      line-height: 1.5;
+    }
+    .capture-prompt-actions {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+    .capture-action-btn {
+      padding: var(--space-xs) var(--space-md);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+    .capture-action-btn:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+    .capture-action-btn.skip {
+      border-color: transparent;
+      color: var(--text-muted);
+    }
+
+    /* Stage Milestone */
+    .stage-milestone-note {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: var(--space-xs);
+    }
+
+    /* Log Mode Context Preview */
+    .log-context-preview {
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-md);
+    }
+    .log-context-title {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-sm);
+    }
+    .log-context-breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface-body);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      margin-bottom: var(--space-sm);
+    }
+    .log-context-breadcrumb span { color: var(--ember); }
+
+    /* Capstone Reflection Screen */
+    .reflection-screen {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: var(--space-2xl) var(--space-xl);
+    }
+    .reflection-header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+    .reflection-emoji { font-size: 2.5rem; margin-bottom: var(--space-md); }
+    .reflection-title {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+    }
+    .reflection-subtitle {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+    .reflection-question {
+      margin-bottom: var(--space-xl);
+    }
+    .reflection-question-label {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+    }
+    .reflection-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color var(--transition-quick);
+    }
+    .reflection-textarea:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+    .reflection-textarea::placeholder { color: var(--text-muted); }
+    .reflection-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--space-xl);
+      padding-top: var(--space-xl);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .skip-link {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color var(--transition-quick);
+    }
+    .skip-link:hover { color: var(--text-secondary); }
+    .philosophy-name {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+    .philosophy-text {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== BUTTONS — canonical anatomy ===== */
+    /* Primary: ember bg, surface-body text, radius-md, sans 600, md size (12px 24px) */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: 12px 24px;
+      background: var(--ember);
+      color: var(--surface-body);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      box-shadow: 0 4px 16px rgba(217, 123, 58, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--ember-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(217, 123, 58, 0.4);
+    }
+
+    /* Secondary */
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+    .btn-secondary:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+
+    .cta-row {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+      flex-wrap: wrap;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .project-hero { padding: var(--space-xl) var(--space-md) var(--space-lg); }
+      .project-title { font-size: 1.625rem; }
+      .project-subtitle { font-size: 1rem; }
+      .journey-section, .badge-journey, .curriculum-section { padding-left: var(--space-md); padding-right: var(--space-md); }
+      .stage-card { padding: var(--space-md); }
+      .stage-name { font-size: 1rem; }
+      .curriculum-grid { grid-template-columns: 1fr; }
+      .stage-detail-header, .stage-detail-body { padding: var(--space-lg) var(--space-md); }
+      .stage-detail-body { display: block; }
+      .stage-sidebar { margin-top: var(--space-lg); }
+    }
+
+    /* ===== ANIMATION ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stage-card { animation: fadeInUp 0.4s ease both; }
+    .stage-card:nth-child(1) { animation-delay: 0s; }
+    .stage-card:nth-child(2) { animation-delay: 0.05s; }
+    .stage-card:nth-child(3) { animation-delay: 0.1s; }
+    .stage-card:nth-child(4) { animation-delay: 0.15s; }
+    .stage-card:nth-child(5) { animation-delay: 0.2s; }
+    .stage-card:nth-child(6) { animation-delay: 0.25s; }
+    .stage-card:nth-child(7) { animation-delay: 0.3s; }
+    .stage-card:nth-child(8) { animation-delay: 0.35s; }
+
+    .stage-connector { animation: fadeInUp 0.3s ease both; }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== SCREEN: PROJECT OVERVIEW ==================== -->
+  <div class="screen active" id="screen-overview">
+
+    <div class="project-hero">
+      <a class="project-back" onclick="history.back()">← Explore Activities</a>
+
+      <div class="project-type-badge">
+        <span>◆</span> Multi-Stage Project · 8 Stages
+      </div>
+
+      <h1 class="project-title">My Imaginary Friend</h1>
+      <p class="project-subtitle">Bring a character to life — from your imagination, through paper, into your hands, and out into a story you share with the world.</p>
+
+      <div class="project-meta-row">
+        <div class="project-meta-item"><span class="icon">📅</span> 3–4 weeks</div>
+        <div class="project-meta-item"><span class="icon">⏱</span> 20–60 min per stage</div>
+        <div class="project-meta-item"><span class="icon">👤</span> Ages 5–8</div>
+        <div class="project-meta-item"><span class="icon">🏠</span> Indoor / Either</div>
+      </div>
+
+      <div class="subject-pills">
+        <span class="subject-pill english">English</span>
+        <span class="subject-pill visual-arts">Visual Arts</span>
+        <span class="subject-pill technologies">Technologies</span>
+        <span class="subject-pill hpe">HPE</span>
+        <span class="subject-pill hass">HASS</span>
+      </div>
+    </div>
+
+    <div class="understanding-block">
+      <div class="understanding-label">We're building toward</div>
+      <div class="understanding-text">Creative ideas can be developed and expressed through multiple mediums, and each medium reveals different aspects of the same idea.</div>
+      <div class="child-understanding">Your imagination can come to life — first in your mind, then on paper, then in your hands, and finally in a story you share with others.</div>
+    </div>
+
+    <!-- Stage Journey -->
+    <div class="journey-section">
+      <div class="section-header">
+        <div class="section-title">Project Stages</div>
+        <div class="overall-progress">
+          <div class="progress-ring" style="--progress: 25;">
+            <div class="progress-ring-inner">2/8</div>
+          </div>
+          <span>2 of 8 complete</span>
+        </div>
+      </div>
+
+      <div class="stage-list">
+
+        <!-- Stage 1 — Completed -->
+        <div class="stage-card completed" onclick="showStageDetail(0)">
+          <div class="stage-number">✓</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">The Spark — Who Will My Friend Be?</div>
+              <div class="stage-domain-pill" style="background: var(--sky-glow); color: var(--sky); border: 1px solid rgba(96,165,250,0.2);">Imagination</div>
+            </div>
+            <div class="stage-description">Brainstorm your friend's personality, quirks, fears and favourite things through guided imagination prompts.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 20–30 min</div>
+              <div class="artifact-tag">✓ Character concept captured</div>
+              <div class="stage-badge-earned">🌟 Character Dreamer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line completed"></div></div>
+
+        <!-- Stage 2 — Completed -->
+        <div class="stage-card completed" onclick="showStageDetail(1)">
+          <div class="stage-number">✓</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">The Profile — Writing My Friend's Story</div>
+              <div class="stage-domain-pill" style="background: var(--sky-glow); color: var(--sky); border: 1px solid rgba(96,165,250,0.2);">Narrative</div>
+            </div>
+            <div class="stage-description">Turn your brainstorm into a character profile or backstory — their name, where they're from, their biggest adventure.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 20–40 min</div>
+              <div class="artifact-tag">✓ Written profile complete</div>
+              <div class="stage-badge-earned">📝 Story Writer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line active"></div></div>
+
+        <!-- Stage 3 — Active (current) -->
+        <div class="stage-card active" onclick="showStageDetail(2)">
+          <div class="stage-number">3</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">First Sight — Drawing My Friend in 2D</div>
+              <div class="stage-domain-pill" style="background: var(--lavender-glow); color: var(--lavender); border: 1px solid rgba(167,139,250,0.2);">Visual Arts</div>
+            </div>
+            <div class="stage-description">Translate the character description into a visual portrait. Choose colours that match their personality, add details that tell their story.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 25–40 min</div>
+              <div class="artifact-tag">📎 Produces: 2D character drawing</div>
+            </div>
+            <div class="dependency-note">
+              <span>📋</span> You'll need your character profile from Stage 2
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line"></div></div>
+
+        <!-- Stage 4 -->
+        <div class="stage-card" onclick="showStageDetail(3)">
+          <div class="stage-number">4</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">Taking Shape — Drawing My Friend in 3D</div>
+              <div class="stage-domain-pill" style="background: var(--teal-glow); color: var(--teal); border: 1px solid rgba(45,212,191,0.2);">Design</div>
+            </div>
+            <div class="stage-description">Create multi-angle sketches — front, side, back. Think like a real character designer building a turnaround sheet.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 25–40 min</div>
+              <div class="artifact-tag">📎 Produces: 3D blueprint</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line"></div></div>
+
+        <!-- Stage 5 -->
+        <div class="stage-card" onclick="showStageDetail(4)">
+          <div class="stage-number">5</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">Coming to Life — Sculpting My Friend</div>
+              <div class="stage-domain-pill" style="background: var(--rose-glow); color: var(--rose); border: 1px solid rgba(251,113,133,0.2);">Construction</div>
+            </div>
+            <div class="stage-description">Build a physical 3D sculpture from clay, papier-mâché, cardboard, or mixed materials. Bring the drawings into your hands.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 30–60 min (may span 2 sessions)</div>
+              <div class="artifact-tag">📎 Produces: Physical sculpture</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line"></div></div>
+
+        <!-- Stage 6 -->
+        <div class="stage-card" onclick="showStageDetail(5)">
+          <div class="stage-number">6</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">My Friend's World — Creating a Habitat</div>
+              <div class="stage-domain-pill" style="background: var(--teal-glow); color: var(--teal); border: 1px solid rgba(45,212,191,0.2);">Design</div>
+            </div>
+            <div class="stage-description">Build the world your friend lives in — a diorama, backdrop, or scene that brings their backstory to life in physical form.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 25–45 min</div>
+              <div class="artifact-tag">📎 Produces: Diorama / scene</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line"></div></div>
+
+        <!-- Stage 7 -->
+        <div class="stage-card" onclick="showStageDetail(6)">
+          <div class="stage-number">7</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">The Adventure — Writing a Story Together</div>
+              <div class="stage-domain-pill" style="background: var(--sky-glow); color: var(--sky); border: 1px solid rgba(96,165,250,0.2);">Narrative</div>
+            </div>
+            <div class="stage-description">Write an illustrated adventure story featuring you and your imaginary friend. Use the sculpture and scene as props for your illustrations.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 30–45 min (may span 2–3 sessions)</div>
+              <div class="artifact-tag">📎 Produces: Illustrated story</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-connector"><div class="connector-line"></div></div>
+
+        <!-- Stage 8 — Capstone -->
+        <div class="stage-card" onclick="showStageDetail(7)">
+          <div class="stage-number">8</div>
+          <div class="stage-content">
+            <div class="stage-header-row">
+              <div class="stage-name">Introducing My Friend — The Showcase</div>
+              <div class="stage-domain-pill" style="background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(251,191,36,0.2);">★ Capstone</div>
+            </div>
+            <div class="stage-description">Present your complete imaginary friend to an audience — display the sculpture, read the story, explain your creative journey.</div>
+            <div class="stage-meta">
+              <div class="stage-meta-item">⏱ 15–25 min</div>
+              <div class="artifact-tag">📎 Produces: Presentation / exhibition</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Badge Journey -->
+    <div class="badge-journey">
+      <div class="section-header">
+        <div class="section-title">Badge Journey</div>
+        <span style="font-family: var(--font-sans); font-size: 0.6875rem; color: var(--text-muted);">● milestone · ★ assessed badge</span>
+      </div>
+
+      <div class="badge-track">
+        <div class="badge-node earned">
+          <div class="badge-icon">💭</div>
+          <div class="badge-label">Character Dreamer ●</div>
+        </div>
+        <div class="badge-connector earned"></div>
+        <div class="badge-node earned">
+          <div class="badge-icon">📝</div>
+          <div class="badge-label">Story Writer ●</div>
+        </div>
+        <div class="badge-connector active"></div>
+        <div class="badge-node current">
+          <div class="badge-icon">🎨</div>
+          <div class="badge-label">Portrait Artist ●</div>
+        </div>
+        <div class="badge-connector"></div>
+        <div class="badge-node">
+          <div class="badge-icon">📐</div>
+          <div class="badge-label">Designer ●</div>
+        </div>
+        <div class="badge-connector"></div>
+        <div class="badge-node">
+          <div class="badge-icon">🏺</div>
+          <div class="badge-label">Sculptor ●</div>
+        </div>
+        <div class="badge-connector"></div>
+        <div class="badge-node">
+          <div class="badge-icon">🌍</div>
+          <div class="badge-label">World Builder ●</div>
+        </div>
+        <div class="badge-connector"></div>
+        <div class="badge-node">
+          <div class="badge-icon">📖</div>
+          <div class="badge-label">Story Weaver ●</div>
+        </div>
+        <div class="badge-connector"></div>
+        <div class="badge-node capstone">
+          <div class="badge-icon">⭐</div>
+          <div class="badge-label">★ Imaginary Friend Maker</div>
+        </div>
+      </div>
+      <div style="font-family: var(--font-sans); font-size: 0.6875rem; color: var(--text-muted); margin-top: var(--space-sm); text-align: center;">Stage milestones (●) mark progress. The capstone badge (★) includes a full assessment with structured confidence questions.</div>
+
+      <div style="text-align: center; margin-top: var(--space-lg);">
+        <button class="btn-secondary" onclick="showScreen('screen-reflection')" style="font-size: 0.75rem;">Preview: Capstone Reflection Flow →</button>
+      </div>
+    </div>
+
+    <!-- Curriculum Coverage -->
+    <div class="curriculum-section">
+      <div class="section-header">
+        <div class="section-title">Curriculum Coverage</div>
+        <span style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">5 subjects · 1 project</span>
+      </div>
+
+      <div class="curriculum-grid">
+        <div class="curriculum-card" style="--card-color: var(--sky);">
+          <div class="curriculum-subject">English</div>
+          <div class="curriculum-items">
+            <div class="curriculum-item">Narrative writing</div>
+            <div class="curriculum-item">Character development</div>
+            <div class="curriculum-item">Descriptive language</div>
+            <div class="curriculum-item">Oral presentation</div>
+          </div>
+        </div>
+        <div class="curriculum-card" style="--card-color: var(--lavender);">
+          <div class="curriculum-subject">Visual Arts</div>
+          <div class="curriculum-items">
+            <div class="curriculum-item">2D drawing & colour</div>
+            <div class="curriculum-item">3D construction</div>
+            <div class="curriculum-item">Design process</div>
+            <div class="curriculum-item">Material exploration</div>
+          </div>
+        </div>
+        <div class="curriculum-card" style="--card-color: var(--teal);">
+          <div class="curriculum-subject">Technologies</div>
+          <div class="curriculum-items">
+            <div class="curriculum-item">Design thinking</div>
+            <div class="curriculum-item">Iterative prototyping</div>
+            <div class="curriculum-item">Material selection</div>
+          </div>
+        </div>
+        <div class="curriculum-card" style="--card-color: var(--rose);">
+          <div class="curriculum-subject">HPE</div>
+          <div class="curriculum-items">
+            <div class="curriculum-item">Fine motor development</div>
+            <div class="curriculum-item">Persistence & resilience</div>
+            <div class="curriculum-item">Self-expression</div>
+          </div>
+        </div>
+        <div class="curriculum-card" style="--card-color: var(--amber);">
+          <div class="curriculum-subject">HASS</div>
+          <div class="curriculum-items">
+            <div class="curriculum-item">Personal identity</div>
+            <div class="curriculum-item">Narrative & belonging</div>
+            <div class="curriculum-item">Perspective-taking</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <button class="btn-primary" onclick="showStageDetail(2)">Continue Stage 3 →</button>
+        <button class="btn-secondary">♡ Save Project</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== SCREEN: STAGE DETAIL ==================== -->
+  <div class="screen" id="screen-stage-detail">
+
+    <div class="stage-detail-header">
+      <a class="stage-detail-back" onclick="showScreen('screen-overview')">← Back to Project</a>
+
+      <div class="stage-detail-breadcrumb">My Imaginary Friend · Stage <span id="detail-stage-num">3</span> of 8</div>
+      <h1 class="stage-detail-title" id="detail-title">First Sight — Drawing My Friend in 2D</h1>
+      <p class="stage-detail-tagline" id="detail-tagline">Translate personality into colour, shape, and expression</p>
+
+      <div class="stage-detail-meta">
+        <div class="project-meta-item"><span class="icon">⏱</span> <span id="detail-duration">25–40 min</span></div>
+        <div class="project-meta-item"><span class="icon">🎨</span> <span id="detail-domain">Visual Arts · Fine Motor</span></div>
+        <div class="project-meta-item"><span class="icon">🏠</span> <span id="detail-setting">Indoor</span></div>
+      </div>
+    </div>
+
+    <div class="stage-detail-body">
+      <div class="stage-main">
+
+        <!-- Artifact Dependencies -->
+        <div class="detail-card">
+          <div class="detail-card-title ember">What you'll need from earlier stages</div>
+          <div class="depends-on-card">
+            <div class="depends-label">From Stage 2 — The Profile</div>
+            <div class="depends-text">Your child's written character profile or backstory. Pull it out so you can reference personality traits, favourite colours, and physical details as you draw.</div>
+            <div class="artifact-thumbnails">
+              <div class="artifact-thumb-item">
+                <div class="artifact-thumb" title="Character profile page 1">📄</div>
+                <div class="artifact-thumb-label">Profile p1</div>
+              </div>
+              <div class="artifact-thumb-item">
+                <div class="artifact-thumb" title="Character profile page 2">📄</div>
+                <div class="artifact-thumb-label">Profile p2</div>
+              </div>
+              <div class="artifact-thumb-item">
+                <div class="artifact-thumb" title="Voice recording of character brainstorm">🔊</div>
+                <div class="artifact-thumb-label">Audio note</div>
+              </div>
+            </div>
+          </div>
+          <div class="depends-on-card" style="margin-top: var(--space-sm);">
+            <div class="depends-label">From Stage 1 — The Spark</div>
+            <div class="depends-text">The original character concept — personality, quirks, fears, and favourite things. Reference this to keep your drawing consistent with the imagination session.</div>
+            <div class="artifact-thumbnails">
+              <div class="artifact-thumb-item">
+                <div class="artifact-thumb" title="Brainstorm notes">📝</div>
+                <div class="artifact-thumb-label">Notes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activities -->
+        <div class="detail-card">
+          <div class="detail-card-title">Activities</div>
+
+          <div class="activity-step">
+            <div class="step-number">1</div>
+            <div class="step-text"><strong>Re-read the profile together.</strong> Ask your child to close their eyes and picture their friend. What colours do they see? What's the first feature they notice — eyes, hair, a hat, wings?</div>
+          </div>
+          <div class="activity-step">
+            <div class="step-number">2</div>
+            <div class="step-text"><strong>Start with basic shapes.</strong> Draw a large oval for the head, a body shape below. Don't worry about detail yet — get the proportions and posture first. Is the friend tall? Bouncy? Shy and hunched?</div>
+          </div>
+          <div class="activity-step">
+            <div class="step-number">3</div>
+            <div class="step-text"><strong>Add personality features.</strong> Big curious eyes for an adventurous friend. Wild hair for an energetic one. A gentle smile for a kind one. Each design choice should connect to a character trait from the profile.</div>
+          </div>
+          <div class="activity-step">
+            <div class="step-number">4</div>
+            <div class="step-text"><strong>Choose and apply colours.</strong> Why those colours? Ask: "If your friend were a colour, what would they be?" Let the child experiment with pencils, watercolours, collage, or digital drawing.</div>
+          </div>
+          <div class="activity-step">
+            <div class="step-number">5</div>
+            <div class="step-text"><strong>Add the finishing details.</strong> Clothes, accessories, a background hint. Maybe they're holding something from their backstory. Maybe there's a detail only someone who read the profile would understand.</div>
+          </div>
+        </div>
+
+        <!-- Watch For -->
+        <div class="detail-card">
+          <div class="detail-card-title sage">What to watch for</div>
+          <div class="watch-for-item">Deliberate design choices that reference character traits from the written profile — not just random decoration</div>
+          <div class="watch-for-item">Willingness to iterate ("That doesn't look right, let me try the eyes again") — shows self-assessment developing</div>
+          <div class="watch-for-item">Colour choices explained with reasoning ("Blue because she loves the ocean")</div>
+          <div class="watch-for-item">Attention to expressive details — body language, facial expression, gesture</div>
+          <div class="watch-for-item">Comparison to the written profile ("Wait, I said she had curly hair — I need to change this")</div>
+        </div>
+
+        <!-- Pedagogical Lenses -->
+        <div class="detail-card">
+          <div class="detail-card-title lavender">Pedagogical Lens</div>
+          <div class="philosophy-block">
+            <div class="philosophy-name">Charlotte Mason</div>
+            <div class="philosophy-text">This is picture study in reverse — instead of observing someone else's art, the child externalises their own mental image. Encourage careful, unhurried work. Quality of attention matters more than artistic skill.</div>
+          </div>
+          <div class="philosophy-block" style="margin-top: var(--space-sm);">
+            <div class="philosophy-name" style="color: var(--sage);">Montessori</div>
+            <div class="philosophy-text">Prepare the environment with multiple art materials available. Let the child choose their medium. The act of translating abstract (personality) into concrete (drawing) develops classification and representation skills.</div>
+          </div>
+          <div class="philosophy-block" style="margin-top: var(--space-sm);">
+            <div class="philosophy-name" style="color: var(--lavender);">Waldorf</div>
+            <div class="philosophy-text">Begin with wet-on-wet watercolour to capture mood and colour before form. Let the character emerge from colour rather than starting with outlines. The friend is born from feeling first, shape second.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-sidebar">
+        <!-- Materials -->
+        <div class="detail-card">
+          <div class="detail-card-title">Materials</div>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-xs);">
+            <span class="material-chip">📄 Large paper</span>
+            <span class="material-chip">✏️ Pencils</span>
+            <span class="material-chip">🖍 Crayons / markers</span>
+            <span class="material-chip">🎨 Watercolours (optional)</span>
+            <span class="material-chip">✂️ Coloured paper (for collage)</span>
+            <span class="material-chip">📋 Character profile (from Stage 2)</span>
+          </div>
+        </div>
+
+        <!-- Produces -->
+        <div class="detail-card">
+          <div class="detail-card-title sage">This stage produces</div>
+          <div class="produces-card">
+            <div class="produces-label">Artifact</div>
+            <div class="produces-text">A 2D character portrait — drawing, painting, or collage showing the imaginary friend's appearance, expression, and personality through visual design.</div>
+          </div>
+          <div class="badge-milestone-card">
+            <div class="badge-milestone-icon">🎨</div>
+            <div>
+              <div class="badge-milestone-info">Portrait Artist</div>
+              <div class="badge-milestone-sub">Stage milestone · marked on your project journey</div>
+            </div>
+          </div>
+          <div class="stage-milestone-note">Stage milestones are progress markers, not assessed badges. The capstone badge ("Imaginary Friend Maker") includes a full assessment at the end of the project.</div>
+        </div>
+
+        <!-- Artifact Capture Prompt -->
+        <div class="detail-card">
+          <div class="detail-card-title ember">When logging this stage</div>
+          <div class="capture-prompt">
+            <div class="capture-prompt-title">📸 Capture the stage artifact</div>
+            <div class="capture-prompt-text">Take a photo of the character drawing. This becomes part of your project portfolio and Stage 4 will reference it.</div>
+            <div class="capture-prompt-actions">
+              <button class="capture-action-btn">📷 Take Photo</button>
+              <button class="capture-action-btn">📁 Upload</button>
+              <button class="capture-action-btn skip">Skip</button>
+            </div>
+          </div>
+          <div class="log-context-preview">
+            <div class="log-context-title">Log mode will show</div>
+            <div class="log-context-breadcrumb">My Imaginary Friend · <span>Stage 3 of 8</span></div>
+            <div style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">Standard log fields (engagement, discoveries, evidence) plus the directed artifact capture prompt above. On completion: "Stage 3 complete ✓ · 3 of 8 stages done" → returns to Project Overview.</div>
+          </div>
+        </div>
+
+        <!-- What Comes Next -->
+        <div class="detail-card">
+          <div class="detail-card-title">Coming next</div>
+          <div style="font-family: var(--font-serif); font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+            <strong style="color: var(--text-primary);">Stage 4: Taking Shape</strong> — Your child will draw their friend from multiple angles, creating a "character turnaround" like a real animator. They'll use today's 2D drawing as their starting reference.
+          </div>
+        </div>
+
+        <div style="margin-top: var(--space-lg);">
+          <button class="btn-primary" style="width: 100%;" onclick="showScreen('screen-stage-detail'); alert('→ Module Experience: Prep → Facilitate → Log\n\nLog mode receives projectContext:\n• Project breadcrumb\n• Directed artifact capture\n• Stage completion counter\n• Return to Project Overview')">Start This Stage →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== SCREEN: CAPSTONE REFLECTION ==================== -->
+  <div class="screen" id="screen-reflection">
+    <div class="reflection-screen">
+      <div class="reflection-header">
+        <div class="reflection-emoji">✨</div>
+        <h1 class="reflection-title">Project Complete — My Imaginary Friend</h1>
+        <p class="reflection-subtitle">Before we celebrate, take a moment to reflect on the whole journey.</p>
+      </div>
+
+      <div class="reflection-question">
+        <div class="reflection-question-label">What are you most proud of?</div>
+        <textarea class="reflection-textarea" placeholder="The moment that stands out most from this project..."></textarea>
+      </div>
+
+      <div class="reflection-question">
+        <div class="reflection-question-label">What growth did you notice from start to finish?</div>
+        <textarea class="reflection-textarea" placeholder="How did your child change or develop over these weeks..."></textarea>
+      </div>
+
+      <div class="reflection-question">
+        <div class="reflection-question-label">What surprised you?</div>
+        <textarea class="reflection-textarea" placeholder="Something unexpected that happened along the way..."></textarea>
+      </div>
+
+      <div class="reflection-actions">
+        <a class="skip-link" onclick="showScreen('screen-overview')">Skip for now</a>
+        <button class="btn-primary" onclick="showScreen('screen-overview'); alert('Synthesis entry saved ✓\n\n→ Capstone badge assessment interface would appear next\n→ 3–5 structured questions\n→ Parent awards or defers badge')">Save & Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Screen management
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    // Stage data for detail view
+    const stages = [
+      {
+        num: 1, title: 'The Spark — Who Will My Friend Be?',
+        tagline: 'Imagination, personality, identity exploration',
+        duration: '20–30 min', domain: 'Imagination · Oral Language', setting: 'Indoor / Either'
+      },
+      {
+        num: 2, title: 'The Profile — Writing My Friend\'s Story',
+        tagline: 'Narrative writing, character backstory, creative expression',
+        duration: '20–40 min', domain: 'English · Narrative', setting: 'Indoor'
+      },
+      {
+        num: 3, title: 'First Sight — Drawing My Friend in 2D',
+        tagline: 'Translate personality into colour, shape, and expression',
+        duration: '25–40 min', domain: 'Visual Arts · Fine Motor', setting: 'Indoor'
+      },
+      {
+        num: 4, title: 'Taking Shape — Drawing My Friend in 3D',
+        tagline: 'Spatial reasoning, design thinking, technical drawing',
+        duration: '25–40 min', domain: 'Design · Spatial Reasoning', setting: 'Indoor'
+      },
+      {
+        num: 5, title: 'Coming to Life — Sculpting My Friend',
+        tagline: 'Fine motor, 3D construction, material problem-solving',
+        duration: '30–60 min', domain: 'Construction · Fine Motor', setting: 'Indoor'
+      },
+      {
+        num: 6, title: 'My Friend\'s World — Creating a Habitat',
+        tagline: 'Environmental storytelling, spatial design, narrative extension',
+        duration: '25–45 min', domain: 'Design · Narrative', setting: 'Indoor'
+      },
+      {
+        num: 7, title: 'The Adventure — Writing a Story Together',
+        tagline: 'Extended narrative, illustration, creative integration',
+        duration: '30–45 min', domain: 'English · Visual Arts', setting: 'Indoor'
+      },
+      {
+        num: 8, title: 'Introducing My Friend — The Showcase',
+        tagline: 'Oral presentation, reflection, celebration',
+        duration: '15–25 min', domain: 'Presentation · Reflection', setting: 'Indoor / Either'
+      }
+    ];
+
+    function showStageDetail(index) {
+      const stage = stages[index];
+      document.getElementById('detail-stage-num').textContent = stage.num;
+      document.getElementById('detail-title').textContent = stage.title;
+      document.getElementById('detail-tagline').textContent = stage.tagline;
+      document.getElementById('detail-duration').textContent = stage.duration;
+      document.getElementById('detail-domain').textContent = stage.domain;
+      document.getElementById('detail-setting').textContent = stage.setting;
+      showScreen('screen-stage-detail');
+    }
+  </script>
+</body>
+</html>

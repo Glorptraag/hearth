@@ -1,0 +1,2982 @@
+<!-- Version: 3 | Date: 2026-03-18 | Changes: Full canonical token conformance pass.
+     - Renamed --deep-coffee → --surface-body (canonical #0F0D0B, not the drifted #0A0806 from v2)
+     - Renamed --coffee-dark → --surface-body-alt (input backgrounds), --coffee-mid → --surface-panel, --coffee-light → --surface-raised
+     - Renamed --surface-elevated → --surface-hover
+     - Fixed --border-subtle: rgba(255,255,255,0.06) → rgba(217,123,58,0.1) (ember-tinted)
+     - Fixed --border-medium: rgba(255,255,255,0.1) → rgba(217,123,58,0.2)
+     - Renamed --border-ember → --ember-strong (canonical name)
+     - Added --shadow-warm to :root
+     - Renamed --transition → --transition-quick, --transition-slow → --transition-gentle
+     - Added --space-* token declarations; replaced hardcoded px padding with space tokens
+     - .insight-card: adopted canonical Hearth Voice gradient bg + ember top-line + border-medium
+     - .activity-type-card: bg corrected to --surface-body (was --coffee-dark)
+     - .header-back hover: color now --text-primary (was --ember which violated ember-is-earned rule)
+     - All updated references throughout CSS and inline JS-generated HTML
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hearth — Log a Learning Moment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================================
+           HEARTH RETROSPECTIVE LOGGER — WORKSPACE EDITION v3
+           Mont Blanc Dark Coffee Aesthetic — Canonical Token Conformance
+           
+           Structured workspace with tap-driven interactions.
+           AI insights update live as sections complete.
+           Completeness gate prevents saving until minimum evidence gathered.
+           
+           NOTE: AI processing uses pre-built scenarios in this demo.
+           In production, replace with Claude API calls.
+           ============================================================================ */
+
+        :root {
+            /* ── Canonical surface hierarchy (darkest → lightest) ── */
+            --surface-body:     #0F0D0B;   /* Page background */
+            --surface-panel:    #1A1612;   /* Sidebar, right panel, card surface */
+            --surface-raised:   #252117;   /* Elevated cards, interactive panels */
+            --surface-hover:    #2D2621;   /* Hover states, highest elevation */
+
+            /* Input backgrounds sit between body and panel */
+            --surface-input:    #1E1A16;
+
+            /* ── Text hierarchy ── */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* ── Ember — primary action color ── */
+            --ember:        #D97B3A;
+            --ember-hover:  #E88F4E;
+            --ember-glow:   rgba(217, 123, 58, 0.15);
+            --ember-strong: rgba(217, 123, 58, 0.25);
+
+            /* ── Sage — growth/success/positive ── */
+            --sage:       #4ADE80;
+            --sage-muted: #22C55E;
+
+            /* ── Child identity colors ── */
+            --child-rose:   #F9A8D4;
+            --child-blue:   #60A5FA;
+
+            /* ── Supporting palette (inline use only) ── */
+            --blue:        #60A5FA;
+            --blue-muted:  rgba(96, 165, 250, 0.15);
+            --rose:        #F9A8D4;
+            --rose-muted:  rgba(249, 168, 212, 0.15);
+            --violet:      #A78BFA;
+            --violet-muted: rgba(167, 139, 250, 0.15);
+            --yellow:      #FBBF24;
+            --yellow-muted: rgba(251, 191, 36, 0.12);
+
+            /* ── Typography ── */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Spacing (8px base) ── */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+
+            /* ── Border radius ── */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* ── Shadows ── */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+            --shadow-focus:  0 0 0 2px rgba(217, 123, 58, 0.3);
+
+            /* ── Borders — ember-tinted (canonical) ── */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+
+            /* ── Transitions ── */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { font-size: 16px; }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        /* ============================================================================
+           APP SHELL
+           ============================================================================ */
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--surface-panel);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .header-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        /* Back button hover: --text-primary only (ember-is-earned rule) */
+        .header-back:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .header-back svg { width: 18px; height: 18px; }
+
+        .header-info { flex: 1; }
+
+        .header-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .header-subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Completeness in header */
+        .header-completeness {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .completeness-ring {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .completeness-ring svg {
+            width: 40px;
+            height: 40px;
+            transform: rotate(-90deg);
+        }
+
+        .completeness-ring .track {
+            fill: none;
+            stroke: var(--surface-raised);
+            stroke-width: 3;
+        }
+
+        .completeness-ring .fill {
+            fill: none;
+            stroke: var(--ember);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 100.53;
+            stroke-dashoffset: 100.53;
+            transition: stroke-dashoffset 0.6s ease;
+        }
+
+        .completeness-ring .fill.complete {
+            stroke: var(--sage);
+        }
+
+        .completeness-pct {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .completeness-label {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .completeness-label strong {
+            display: block;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Save Button */
+        .save-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transition: all var(--transition-quick);
+            opacity: 0.5;
+        }
+
+        .save-btn.ready {
+            background: var(--ember);
+            border-color: var(--ember);
+            color: var(--text-inverse);
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .save-btn.ready:hover {
+            background: var(--ember-hover);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .save-btn svg { width: 16px; height: 16px; }
+
+        /* ============================================================================
+           WORKSPACE LAYOUT
+           ============================================================================ */
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Left: Capture Panel */
+        .capture-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+            scrollbar-width: thin;
+            scrollbar-color: var(--surface-raised) transparent;
+        }
+
+        .capture-panel::-webkit-scrollbar { width: 6px; }
+        .capture-panel::-webkit-scrollbar-track { background: transparent; }
+        .capture-panel::-webkit-scrollbar-thumb { background: var(--surface-raised); border-radius: 3px; }
+
+        .capture-inner {
+            max-width: 560px;
+        }
+
+        /* Right: Insights Panel */
+        .insights-panel {
+            width: 400px;
+            flex-shrink: 0;
+            background: var(--surface-panel);
+            border-left: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            scrollbar-width: thin;
+            scrollbar-color: var(--surface-raised) transparent;
+        }
+
+        .insights-panel::-webkit-scrollbar { width: 6px; }
+        .insights-panel::-webkit-scrollbar-track { background: transparent; }
+        .insights-panel::-webkit-scrollbar-thumb { background: var(--surface-raised); border-radius: 3px; }
+
+        /* ============================================================================
+           SECTION BLOCKS
+           ============================================================================ */
+
+        .section {
+            margin-bottom: var(--space-xl);
+            animation: sectionIn 0.3s ease-out;
+        }
+
+        @keyframes sectionIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .section-number {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: 50%;
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all var(--transition-quick);
+        }
+
+        .section-number.done {
+            background: var(--ember);
+            border-color: var(--ember);
+            color: var(--text-inverse);
+        }
+
+        .section-number.done::after {
+            content: '✓';
+            font-size: 0.75rem;
+        }
+
+        .section-number.done span { display: none; }
+
+        .section-label {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            transition: color var(--transition-quick);
+        }
+
+        .section.active .section-label {
+            color: var(--text-secondary);
+        }
+
+        .section.completed .section-label {
+            color: var(--ember);
+        }
+
+        .section-optional {
+            margin-left: auto;
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* ============================================================================
+           CHILD CHIPS
+           ============================================================================ */
+
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+        }
+
+        .chip {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-raised);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .chip:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .chip.selected {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+            color: var(--text-primary);
+        }
+
+        .chip-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .chip-avatar.emma { background: linear-gradient(135deg, #F9A8D4, #EC4899); }
+        .chip-avatar.liam { background: linear-gradient(135deg, #60A5FA, #3B82F6); }
+
+        .chip-check {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-quick);
+        }
+
+        .chip.selected .chip-check {
+            background: var(--ember);
+            border-color: var(--ember);
+        }
+
+        .chip.selected .chip-check svg { opacity: 1; }
+
+        .chip-check svg {
+            width: 10px;
+            height: 10px;
+            stroke: var(--text-inverse);
+            stroke-width: 3;
+            fill: none;
+            opacity: 0;
+            transition: opacity var(--transition-quick);
+        }
+
+        /* Together toggle */
+        .together-toggle {
+            display: none;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .together-toggle.visible { display: flex; }
+
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.on {
+            background: var(--ember);
+            border-color: var(--ember);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform var(--transition-quick);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(16px);
+        }
+
+        /* ============================================================================
+           DESCRIPTION INPUT
+           ============================================================================ */
+
+        .description-box {
+            position: relative;
+        }
+
+        .description-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            color: var(--text-primary);
+            line-height: 1.7;
+            resize: vertical;
+            transition: border-color var(--transition-quick), box-shadow var(--transition-quick);
+        }
+
+        .description-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .description-textarea:focus {
+            outline: none;
+            border-color: var(--ember);
+            box-shadow: var(--shadow-focus);
+        }
+
+        .description-tools {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+        }
+
+        .desc-tool-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .desc-tool-btn:hover {
+            border-color: var(--border-medium);
+            color: var(--text-secondary);
+        }
+
+        .desc-tool-btn.recording {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+            color: var(--ember);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .desc-tool-btn svg { width: 14px; height: 14px; }
+
+        .char-count {
+            margin-left: auto;
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        /* ============================================================================
+           ACTIVITY TYPE CARDS
+           ============================================================================ */
+
+        .activity-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--space-sm);
+        }
+
+        .activity-type-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-md) var(--space-sm);
+            background: var(--surface-body);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .activity-type-card:hover {
+            border-color: var(--border-medium);
+            background: var(--surface-raised);
+        }
+
+        .activity-type-card.selected {
+            border-color: var(--ember);
+            background: var(--ember-glow);
+        }
+
+        .activity-type-card .icon {
+            font-size: 1.375rem;
+            line-height: 1;
+        }
+
+        .activity-type-card .label {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .activity-type-card.selected .label {
+            color: var(--text-primary);
+        }
+
+        /* ============================================================================
+           WHEN & WHERE
+           ============================================================================ */
+
+        .when-where-row {
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+
+        .when-group, .where-group, .duration-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .mini-label {
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        .select-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+        }
+
+        .select-chip {
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .select-chip:hover {
+            border-color: var(--border-medium);
+            color: var(--text-secondary);
+        }
+
+        .select-chip.selected {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+            color: var(--text-primary);
+        }
+
+        /* ============================================================================
+           OBSERVATION CHIPS
+           ============================================================================ */
+
+        .observation-group {
+            margin-bottom: var(--space-md);
+        }
+
+        .observation-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .obs-category {
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .obs-category .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .obs-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+        }
+
+        .obs-chip {
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            user-select: none;
+        }
+
+        .obs-chip:hover {
+            border-color: var(--border-medium);
+            color: var(--text-secondary);
+        }
+
+        .obs-chip.selected {
+            color: var(--text-primary);
+        }
+
+        .obs-chip.selected.engagement { background: rgba(74, 222, 128, 0.15); border-color: var(--sage); }
+        .obs-chip.selected.social     { background: var(--blue-muted); border-color: var(--blue); }
+        .obs-chip.selected.thinking   { background: var(--violet-muted); border-color: var(--violet); }
+        .obs-chip.selected.emotional  { background: var(--rose-muted); border-color: var(--rose); }
+
+        /* ============================================================================
+           EVIDENCE TOOLS
+           ============================================================================ */
+
+        .evidence-tools {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm);
+        }
+
+        .evidence-tool {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1.5px dashed var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .evidence-tool:hover {
+            border-color: var(--border-medium);
+            border-style: solid;
+            background: var(--surface-raised);
+        }
+
+        .evidence-tool.has-content {
+            border-style: solid;
+            border-color: var(--sage);
+            background: rgba(74, 222, 128, 0.08);
+        }
+
+        .evidence-tool .tool-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .evidence-tool.has-content .tool-icon {
+            background: rgba(74, 222, 128, 0.2);
+        }
+
+        .evidence-tool .tool-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+            fill: none;
+        }
+
+        .evidence-tool.has-content .tool-icon svg {
+            stroke: var(--sage);
+        }
+
+        .evidence-tool .tool-text {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .evidence-tool .tool-hint {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Evidence collected items */
+        .evidence-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+
+        .evidence-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            animation: sectionIn 0.3s ease-out;
+        }
+
+        .evidence-item .ev-type {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ember);
+            flex-shrink: 0;
+        }
+
+        .evidence-item .ev-content {
+            flex: 1;
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-style: italic;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .evidence-item .ev-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+        }
+
+        .evidence-item .ev-remove {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all var(--transition-quick);
+            flex-shrink: 0;
+        }
+
+        .evidence-item .ev-remove:hover {
+            background: var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .evidence-item .ev-remove svg { width: 14px; height: 14px; }
+
+        /* Photo preview in evidence */
+        .photo-preview-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+        }
+
+        /* ============================================================================
+           INSIGHT PANEL COMPONENTS
+           ============================================================================ */
+
+        .insight-panel-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .insight-panel-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--ember);
+            border-radius: 50%;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .insight-panel-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-inverse);
+        }
+
+        .insight-panel-title {
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Empty state */
+        .insight-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            padding: var(--space-2xl) var(--space-lg);
+            color: var(--text-muted);
+        }
+
+        .insight-empty svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            fill: none;
+            opacity: 0.4;
+            margin-bottom: var(--space-md);
+        }
+
+        .insight-empty p {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            max-width: 260px;
+        }
+
+        /* ============================================================================
+           INSIGHT CARDS — Canonical Hearth Voice pattern
+           background: gradient surface-raised → surface-panel
+           border: border-medium (ember 0.2 tinted)
+           ember top-line via ::before
+           ============================================================================ */
+        .insight-card {
+            position: relative;
+            background: linear-gradient(135deg, var(--surface-raised), var(--surface-panel));
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            animation: sectionIn 0.3s ease-out;
+        }
+
+        /* Ember gradient top-line — Hearth signature */
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ember), transparent);
+            opacity: 0.6;
+        }
+
+        .insight-card-label {
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .insight-card-label .label-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .insight-card h4 {
+            font-family: var(--font-serif);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: var(--space-sm);
+        }
+
+        .insight-card p {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Subject tags in insights */
+        .insight-subjects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+        }
+
+        .insight-subject {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .insight-subject.primary {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+            color: var(--ember);
+        }
+
+        /* Next steps in insights */
+        .next-step-mini {
+            display: flex;
+            gap: var(--space-sm);
+            padding: var(--space-sm) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .next-step-mini:last-child { border-bottom: none; }
+
+        .next-step-mini .step-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-body);
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .next-step-mini .step-text {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .next-step-mini .step-desc {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .next-step-mini .step-meta {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Badge in insights */
+        .badge-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border-radius: var(--radius-md);
+        }
+
+        .badge-card .badge-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--ember), var(--ember-hover));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-glow);
+            flex-shrink: 0;
+        }
+
+        .badge-card .badge-icon svg { width: 20px; height: 20px; fill: var(--text-inverse); }
+
+        .badge-card .badge-info { flex: 1; }
+        
+        .badge-card .badge-name {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .badge-card .badge-meta {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        .badge-bar {
+            height: 4px;
+            background: var(--surface-raised);
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .badge-bar-fill {
+            height: 100%;
+            background: var(--ember);
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        /* ============================================================================
+           MODALS (Photo, Quote)
+           ============================================================================ */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 440px;
+            padding: var(--space-lg);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.96) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 50%;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .modal-close:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .modal-close svg { width: 16px; height: 16px; }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            resize: vertical;
+            transition: all var(--transition-quick);
+        }
+
+        .modal-input::placeholder { color: var(--text-muted); }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--ember);
+            box-shadow: var(--shadow-focus);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .modal-btn.secondary {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .modal-btn.secondary:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.primary {
+            background: var(--ember);
+            border: 1px solid var(--ember);
+            color: var(--text-inverse);
+        }
+
+        .modal-btn.primary:hover {
+            background: var(--ember-hover);
+        }
+
+        /* Photo dropzone in modal */
+        .modal-dropzone {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            background: var(--surface-body);
+            border: 2px dashed var(--border-medium);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .modal-dropzone:hover {
+            border-color: var(--ember);
+            background: var(--ember-glow);
+        }
+
+        .modal-dropzone svg {
+            width: 36px;
+            height: 36px;
+            stroke: var(--text-muted);
+            fill: none;
+        }
+
+        .modal-dropzone span {
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .modal-dropzone img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Demo notice */
+        .demo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 3px var(--space-sm);
+            background: var(--yellow-muted);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--yellow);
+        }
+
+        /* ============================================================================
+           MOBILE LAYOUT
+           ============================================================================ */
+
+        @media (max-width: 1023px) {
+            .workspace {
+                flex-direction: column;
+            }
+
+            .capture-panel {
+                flex: none;
+                padding: var(--space-lg) var(--space-md);
+                overflow-y: auto;
+            }
+
+            .capture-inner {
+                max-width: 100%;
+            }
+
+            .insights-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-subtle);
+                flex-shrink: 0;
+                max-height: none;
+            }
+
+            /* Mobile: Insights as collapsible drawer */
+            .insights-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                max-height: 60vh;
+                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                transform: translateY(calc(100% - 56px));
+                transition: transform var(--transition-gentle);
+                z-index: 90;
+                box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+            }
+
+            .insights-panel.expanded {
+                transform: translateY(0);
+            }
+
+            .insights-drawer-handle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: var(--space-sm) 0 var(--space-xs);
+                cursor: pointer;
+            }
+
+            .insights-drawer-handle::before {
+                content: '';
+                width: 36px;
+                height: 4px;
+                background: var(--surface-hover);
+                border-radius: 2px;
+            }
+
+            .capture-panel {
+                padding-bottom: 80px;
+            }
+
+            .header-completeness .completeness-label { display: none; }
+
+            .activity-types {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .evidence-tools {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .insights-drawer-handle { display: none; }
+
+            .workspace {
+                flex-direction: row;
+            }
+
+            .capture-panel {
+                display: flex;
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .insights-panel {
+                width: 440px;
+            }
+
+            .capture-inner {
+                max-width: 600px;
+            }
+        }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+
+        /* ============================================================================
+           PER-CHILD ENGAGEMENT & DISCOVERY
+           ============================================================================ */
+
+        .per-child-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--child-color-muted, var(--surface-body));
+            border: 1px solid var(--child-color, var(--border-subtle));
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-sm);
+        }
+
+        .per-child-row:last-child { margin-bottom: 0; }
+
+        .per-child-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .child-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .engagement-emojis {
+            display: flex;
+            gap: var(--space-xs);
+        }
+
+        .emoji-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-body);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            opacity: 0.6;
+        }
+
+        .emoji-btn:hover {
+            opacity: 1;
+            border-color: var(--border-medium);
+            transform: scale(1.05);
+        }
+
+        .emoji-btn.selected {
+            opacity: 1;
+            background: var(--child-color-muted, var(--ember-glow));
+            border-color: var(--child-color, var(--ember));
+            transform: scale(1.1);
+        }
+
+        .per-child-discovery {
+            margin-bottom: var(--space-md);
+            padding: var(--space-md);
+            background: var(--child-color-muted, var(--surface-body));
+            border: 1px solid var(--child-color, var(--border-subtle));
+            border-radius: var(--radius-md);
+        }
+
+        .per-child-discovery:last-child { margin-bottom: 0; }
+
+        .discovery-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .discovery-textarea {
+            width: 100%;
+            min-height: 70px;
+            padding: var(--space-sm);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-family: var(--font-serif);
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color var(--transition-quick), box-shadow var(--transition-quick);
+        }
+
+        .discovery-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .discovery-textarea:focus {
+            outline: none;
+            border-color: var(--child-color, var(--ember));
+            box-shadow: 0 0 0 2px var(--child-color-muted, var(--ember-glow));
+        }
+
+        .empty-state {
+            font-family: var(--font-serif);
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-style: italic;
+            padding: var(--space-md);
+            text-align: center;
+        }
+
+        /* Section divider for multi-child */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin: var(--space-lg) 0 var(--space-md);
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .section-divider span {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        /* File input */
+        .file-input-hidden { display: none; }
+
+        /* Saved success overlay */
+        .save-success {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 13, 11, 0.92);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: var(--space-lg);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .save-success.active { display: flex; }
+
+        .save-success .check-circle {
+            width: 80px;
+            height: 80px;
+            background: var(--sage);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: popIn 0.4s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.6); opacity: 0; }
+            60% { transform: scale(1.1); }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .save-success .check-circle svg {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            fill: none;
+            stroke-width: 3;
+        }
+
+        .save-success h2 {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .save-success p {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.6;
+        }
+
+        .save-success .success-actions {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <button class="header-back" onclick="goBack()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-info">
+                <div class="header-title">Log a Learning Moment</div>
+                <div class="header-subtitle">Capture what happened, we'll find the learning</div>
+            </div>
+            <div class="header-completeness">
+                <div class="completeness-ring">
+                    <svg viewBox="0 0 40 40">
+                        <circle class="track" cx="20" cy="20" r="16"/>
+                        <circle class="fill" id="completeness-fill" cx="20" cy="20" r="16"/>
+                    </svg>
+                    <span class="completeness-pct" id="completeness-pct">0%</span>
+                </div>
+                <div class="completeness-label">
+                    <strong id="completeness-level">Getting Started</strong>
+                    <span id="completeness-hint">Select who was learning</span>
+                </div>
+            </div>
+            <button class="save-btn" id="save-btn" onclick="saveEntry()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Save</span>
+            </button>
+        </header>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Capture Panel (Left) -->
+            <div class="capture-panel">
+                <div class="capture-inner">
+
+                    <!-- Section 1: Who -->
+                    <div class="section active" id="section-who">
+                        <div class="section-header">
+                            <div class="section-number" id="num-who"><span>1</span></div>
+                            <span class="section-label">Who was learning?</span>
+                        </div>
+                        <div class="chip-group">
+                            <div class="chip" data-child="emma" onclick="toggleChild('emma')">
+                                <span class="chip-avatar emma">E</span>
+                                <span>Emma, 7</span>
+                                <span class="chip-check">
+                                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                            </div>
+                            <div class="chip" data-child="liam" onclick="toggleChild('liam')">
+                                <span class="chip-avatar liam">L</span>
+                                <span>Liam, 5</span>
+                                <span class="chip-check">
+                                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="together-toggle" id="together-toggle">
+                            <div class="toggle-switch" id="together-switch" onclick="toggleTogether()"></div>
+                            <span>They did this together</span>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: What Happened (Shared) -->
+                    <div class="section" id="section-what">
+                        <div class="section-header">
+                            <div class="section-number" id="num-what"><span>2</span></div>
+                            <span class="section-label">What happened?</span>
+                        </div>
+                        <div class="description-box">
+                            <textarea 
+                                class="description-textarea" 
+                                id="description" 
+                                placeholder="Describe the activity or moment... What were they doing? Where did it happen?"
+                                oninput="onDescriptionChange()"
+                            ></textarea>
+                            <div class="description-tools">
+                                <button class="desc-tool-btn" id="voice-btn" onclick="toggleVoice()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                                        <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+                                    </svg>
+                                    <span id="voice-label">Voice</span>
+                                </button>
+                                <span class="char-count" id="char-count"></span>
+                            </div>
+                        </div>
+
+                        <!-- Per-child discoveries -->
+                        <div class="section-divider"><span>Individual Discoveries</span></div>
+                        <div id="per-child-discoveries">
+                            <p class="empty-state">Select learners above to capture what each child noticed</p>
+                        </div>
+
+                        <div style="margin-top: var(--space-lg);">
+                            <div class="mini-label">Activity type</div>
+                            <div class="activity-types">
+                                <div class="activity-type-card" data-type="nature" onclick="toggleActivityType('nature')">
+                                    <span class="icon">🌿</span>
+                                    <span class="label">Nature Study</span>
+                                </div>
+                                <div class="activity-type-card" data-type="cooking" onclick="toggleActivityType('cooking')">
+                                    <span class="icon">🍳</span>
+                                    <span class="label">Kitchen Science</span>
+                                </div>
+                                <div class="activity-type-card" data-type="reading" onclick="toggleActivityType('reading')">
+                                    <span class="icon">📖</span>
+                                    <span class="label">Reading</span>
+                                </div>
+                                <div class="activity-type-card" data-type="art" onclick="toggleActivityType('art')">
+                                    <span class="icon">🎨</span>
+                                    <span class="label">Creative Arts</span>
+                                </div>
+                                <div class="activity-type-card" data-type="physical" onclick="toggleActivityType('physical')">
+                                    <span class="icon">⚽</span>
+                                    <span class="label">Physical</span>
+                                </div>
+                                <div class="activity-type-card" data-type="social" onclick="toggleActivityType('social')">
+                                    <span class="icon">🤝</span>
+                                    <span class="label">Social</span>
+                                </div>
+                                <div class="activity-type-card" data-type="structured" onclick="toggleActivityType('structured')">
+                                    <span class="icon">📝</span>
+                                    <span class="label">Lesson</span>
+                                </div>
+                                <div class="activity-type-card" data-type="freeplay" onclick="toggleActivityType('freeplay')">
+                                    <span class="icon">✨</span>
+                                    <span class="label">Free Play</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Per-Child Engagement -->
+                    <div class="section" id="section-engagement">
+                        <div class="section-header">
+                            <div class="section-number" id="num-engagement"><span>3</span></div>
+                            <span class="section-label">How engaged were they?</span>
+                            <span class="section-optional">Rate each child</span>
+                        </div>
+                        <div id="per-child-engagement">
+                            <p class="empty-state">Select learners above to rate their engagement</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: When & Where -->
+                    <div class="section" id="section-when">
+                        <div class="section-header">
+                            <div class="section-number" id="num-when"><span>4</span></div>
+                            <span class="section-label">When & Where</span>
+                        </div>
+                        <div class="when-where-row">
+                            <div class="when-group">
+                                <div class="mini-label">When</div>
+                                <div class="select-chips">
+                                    <div class="select-chip selected" data-when="today" onclick="selectWhen('today')">Today</div>
+                                    <div class="select-chip" data-when="yesterday" onclick="selectWhen('yesterday')">Yesterday</div>
+                                    <div class="select-chip" data-when="earlier" onclick="selectWhen('earlier')">Earlier</div>
+                                </div>
+                            </div>
+                            <div class="duration-group">
+                                <div class="mini-label">Duration</div>
+                                <div class="select-chips">
+                                    <div class="select-chip" data-dur="5" onclick="selectDuration('5')">~5 min</div>
+                                    <div class="select-chip" data-dur="15" onclick="selectDuration('15')">~15 min</div>
+                                    <div class="select-chip" data-dur="30" onclick="selectDuration('30')">~30 min</div>
+                                    <div class="select-chip" data-dur="60" onclick="selectDuration('60')">1 hr+</div>
+                                </div>
+                            </div>
+                            <div class="where-group">
+                                <div class="mini-label">Where</div>
+                                <div class="select-chips">
+                                    <div class="select-chip" data-where="home" onclick="selectWhere('home')">🏠 Home</div>
+                                    <div class="select-chip" data-where="outdoors" onclick="selectWhere('outdoors')">🌳 Outdoors</div>
+                                    <div class="select-chip" data-where="community" onclick="selectWhere('community')">🏛 Community</div>
+                                    <div class="select-chip" data-where="online" onclick="selectWhere('online')">💻 Online</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Observations -->
+                    <div class="section" id="section-obs">
+                        <div class="section-header">
+                            <div class="section-number" id="num-obs"><span>5</span></div>
+                            <span class="section-label">What did you observe?</span>
+                            <span class="section-optional">Tap all that apply</span>
+                        </div>
+
+                        <div class="observation-group">
+                            <div class="obs-category">
+                                <span class="dot" style="background: var(--sage);"></span>
+                                Engagement
+                            </div>
+                            <div class="obs-chips">
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Deeply focused</div>
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Curious</div>
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Enthusiastic</div>
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Reluctant at first</div>
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Easily distracted</div>
+                                <div class="obs-chip engagement" onclick="toggleObs(this)">Self-directed</div>
+                            </div>
+                        </div>
+
+                        <div class="observation-group">
+                            <div class="obs-category">
+                                <span class="dot" style="background: var(--blue);"></span>
+                                Social
+                            </div>
+                            <div class="obs-chips">
+                                <div class="obs-chip social" onclick="toggleObs(this)">Worked alone</div>
+                                <div class="obs-chip social" onclick="toggleObs(this)">Collaborated</div>
+                                <div class="obs-chip social" onclick="toggleObs(this)">Led others</div>
+                                <div class="obs-chip social" onclick="toggleObs(this)">Asked for help</div>
+                                <div class="obs-chip social" onclick="toggleObs(this)">Taught someone</div>
+                                <div class="obs-chip social" onclick="toggleObs(this)">Negotiated / compromised</div>
+                            </div>
+                        </div>
+
+                        <div class="observation-group">
+                            <div class="obs-category">
+                                <span class="dot" style="background: var(--violet);"></span>
+                                Thinking
+                            </div>
+                            <div class="obs-chips">
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Asked questions</div>
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Tried alternatives</div>
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Persisted through difficulty</div>
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Made connections</div>
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Self-corrected</div>
+                                <div class="obs-chip thinking" onclick="toggleObs(this)">Explained reasoning</div>
+                            </div>
+                        </div>
+
+                        <div class="observation-group">
+                            <div class="obs-category">
+                                <span class="dot" style="background: var(--rose);"></span>
+                                Emotional
+                            </div>
+                            <div class="obs-chips">
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Proud of work</div>
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Joyful</div>
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Calm & settled</div>
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Frustrated → resolved</div>
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Surprised / delighted</div>
+                                <div class="obs-chip emotional" onclick="toggleObs(this)">Confident</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 6: Evidence -->
+                    <div class="section" id="section-evidence">
+                        <div class="section-header">
+                            <div class="section-number" id="num-evidence"><span>6</span></div>
+                            <span class="section-label">Evidence</span>
+                            <span class="section-optional">Optional but strengthens the record</span>
+                        </div>
+                        <div class="evidence-tools">
+                            <div class="evidence-tool" onclick="openPhotoModal()">
+                                <div class="tool-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="tool-text">Add Photo</div>
+                                    <div class="tool-hint">Work sample, activity</div>
+                                </div>
+                            </div>
+                            <div class="evidence-tool" onclick="openQuoteModal()">
+                                <div class="tool-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="tool-text">Child's Words</div>
+                                    <div class="tool-hint">Something they said</div>
+                                </div>
+                            </div>
+                            <div class="evidence-tool" onclick="openNoteModal()">
+                                <div class="tool-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="tool-text">Add Note</div>
+                                    <div class="tool-hint">Extra detail or context</div>
+                                </div>
+                            </div>
+                            <div class="evidence-tool" onclick="openResourceModal()">
+                                <div class="tool-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="tool-text">Link Resource</div>
+                                    <div class="tool-hint">Book, video, website</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="evidence-items" id="evidence-items">
+                            <!-- Evidence items appear here -->
+                        </div>
+                    </div>
+
+                    <div style="height: 60px;"></div>
+                </div>
+            </div>
+
+            <!-- Insights Panel (Right / Bottom Drawer on Mobile) -->
+            <div class="insights-panel" id="insights-panel">
+                <div class="insights-drawer-handle" onclick="toggleInsightsDrawer()"></div>
+                
+                <div class="insight-panel-header">
+                    <div class="insight-panel-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2C8.5 2 6 4.5 6 7c0 1.5.5 2.8 1.3 3.8C5.3 11.5 4 13.5 4 16c0 3.3 2.7 6 6 6h4c3.3 0 6-2.7 6-6 0-2.5-1.3-4.5-3.3-5.2.8-1 1.3-2.3 1.3-3.8 0-2.5-2.5-5-6-5z"/>
+                        </svg>
+                    </div>
+                    <span class="insight-panel-title">Hearth Insights</span>
+                    <span class="demo-badge" style="margin-left: auto;">Demo</span>
+                </div>
+
+                <div id="insights-content">
+                    <div class="insight-empty" id="insight-empty">
+                        <svg viewBox="0 0 24 24" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/>
+                            <line x1="15" y1="9" x2="15.01" y2="9"/>
+                        </svg>
+                        <p>Start describing the activity and I'll begin finding the learning within it.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Modal -->
+    <div class="modal-overlay" id="quote-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">💬 Child's Words</span>
+                <button class="modal-close" onclick="closeModal('quote-modal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <textarea class="modal-input" id="quote-input" rows="3" placeholder="What did they say? E.g. 'Look, it rolls into a ball when I touch it!'"></textarea>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal('quote-modal')">Cancel</button>
+                <button class="modal-btn primary" onclick="addQuote()">Add Quote</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal-overlay" id="note-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">📝 Extra Note</span>
+                <button class="modal-close" onclick="closeModal('note-modal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <textarea class="modal-input" id="note-input" rows="3" placeholder="Any additional context, background, or detail worth recording..."></textarea>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal('note-modal')">Cancel</button>
+                <button class="modal-btn primary" onclick="addNote()">Add Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Modal -->
+    <div class="modal-overlay" id="photo-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">📷 Add Photo</span>
+                <button class="modal-close" onclick="closeModal('photo-modal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-dropzone" id="modal-dropzone" onclick="document.getElementById('photo-file').click()">
+                <svg viewBox="0 0 24 24" stroke-width="1.5" id="photo-upload-icon">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span id="photo-upload-text">Tap to upload a photo</span>
+                <img id="modal-photo-preview" class="hidden" alt="Preview">
+            </div>
+            <input type="file" class="file-input-hidden" id="photo-file" accept="image/*" onchange="handlePhotoUpload(event)">
+            <input class="modal-input" id="photo-caption" placeholder="Optional caption..." style="margin-top: var(--space-sm);">
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal('photo-modal')">Cancel</button>
+                <button class="modal-btn primary" id="photo-add-btn" onclick="addPhoto()" disabled>Add Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Modal -->
+    <div class="modal-overlay" id="resource-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🔗 Link Resource</span>
+                <button class="modal-close" onclick="closeModal('resource-modal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <input class="modal-input" id="resource-name" placeholder="Resource name (e.g. 'Diary of a Wombat')">
+            <input class="modal-input" id="resource-url" placeholder="URL (optional)" style="margin-top: var(--space-sm);">
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal('resource-modal')">Cancel</button>
+                <button class="modal-btn primary" onclick="addResource()">Add Resource</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Success -->
+    <div class="save-success" id="save-success">
+        <div class="check-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Moment Saved ✨</h2>
+        <p>Added to the portfolio and learning record. HEU evidence has been catalogued automatically.</p>
+        <div class="success-actions">
+            <button class="modal-btn secondary" onclick="goBack()" style="padding: 10px 24px;">Back to Dashboard</button>
+            <button class="modal-btn primary" onclick="logAnother()" style="padding: 10px 24px;">Log Another</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // STATE
+        // ============================================================================
+
+        const state = {
+            children: [],
+            together: false,
+            description: '',
+            activityType: null,
+            when: 'today',
+            duration: null,
+            where: null,
+            observations: [],
+            evidence: [],
+            insightsGenerated: false,
+            badgeReady: null,
+            per_child_data: {}
+        };
+
+        const family = {
+            children: [
+                { id: 'emma', name: 'Emma', age: 7, color: '#F9A8D4', colorMuted: 'rgba(249, 168, 212, 0.15)', colorName: 'rose', symbol: 'spiral' },
+                { id: 'liam', name: 'Liam', age: 5, color: '#60A5FA', colorMuted: 'rgba(96, 165, 250, 0.15)', colorName: 'blue', symbol: 'hexagon' }
+            ]
+        };
+
+        function initPerChildData(childId) {
+            if (!state.per_child_data[childId]) {
+                state.per_child_data[childId] = {
+                    engagement: null,
+                    discoveries: ''
+                };
+            }
+        }
+
+        // ============================================================================
+        // DEMO INSIGHTS — Replace with Claude API in production
+        // ============================================================================
+
+        const demoInsights = {
+            nature: {
+                subjects: [
+                    { name: 'Science', primary: true },
+                    { name: 'English', primary: false }
+                ],
+                philosophy: {
+                    title: "What Charlotte Mason Would Notice",
+                    text: "This is classic nature study! Sustained attention on a living thing, self-initiated questioning, and patient observation. These are the hallmarks of a living education — the child is forming a relationship with the natural world."
+                },
+                nextSteps: [
+                    { icon: '📓', title: 'Start a Nature Journal', desc: 'Simple drawings with date and location', time: '10 min' },
+                    { icon: '🔁', title: 'Return to the Same Spot', desc: 'Observe what changed', time: '20 min' },
+                    { icon: '📚', title: "Read 'Diary of a Wombat'", desc: "A living book showing an animal's world", time: '15 min' }
+                ],
+                badge: { name: 'Curious Observer', progress: 55, contribution: '+15%' }
+            },
+            cooking: {
+                subjects: [
+                    { name: 'Mathematics', primary: true },
+                    { name: 'Science', primary: false },
+                    { name: 'HASS', primary: false }
+                ],
+                philosophy: {
+                    title: "What Charlotte Mason Would Notice",
+                    text: "Real-world mathematics in purposeful activity — this is how number sense develops naturally. The negotiation over toppings is equally valuable: they practiced listening and finding middle ground."
+                },
+                nextSteps: [
+                    { icon: '✖️', title: 'Double the Recipe', desc: 'Figure out doubled measurements', time: '30 min' },
+                    { icon: '🎈', title: 'Explore Yeast Science', desc: 'Balloon experiment to see yeast in action', time: '15 min' },
+                    { icon: '📖', title: 'Family Recipe Book', desc: 'Document recipes with illustrations', time: '20 min' }
+                ],
+                badge: { name: 'Kitchen Explorer', progress: 40, contribution: '+20%' }
+            },
+            reading: {
+                subjects: [
+                    { name: 'English', primary: true },
+                    { name: 'Language', primary: false }
+                ],
+                philosophy: {
+                    title: "What Charlotte Mason Would Notice",
+                    text: "The spontaneous narration — stopping to share what was happening — is exactly what we hope for. She isn't just decoding words; she's truly comprehending and making the story her own."
+                },
+                nextSteps: [
+                    { icon: '📝', title: 'Start a Reading Log', desc: 'Record what she reads plus one thought', time: '5 min' },
+                    { icon: '👫', title: 'Read Aloud to Liam', desc: 'Peer teaching deepens understanding', time: '15 min' },
+                    { icon: '🏛', title: 'Visit the Library', desc: 'Let her choose the next book', time: '1 hour' }
+                ],
+                badge: { name: 'Chapter Champion', progress: 85, contribution: '+25%' }
+            },
+            art: {
+                subjects: [
+                    { name: 'Technologies', primary: true },
+                    { name: 'Mathematics', primary: false },
+                    { name: 'HPE', primary: false }
+                ],
+                philosophy: {
+                    title: "What Charlotte Mason Would Notice",
+                    text: "An hour of concentrated effort on a self-chosen project — the habit of attention in action. The frustration followed by problem-solving is exactly the resilience we want to nurture. He figured it out himself."
+                },
+                nextSteps: [
+                    { icon: '🪟', title: 'Add Details', desc: 'Windows, astronauts, control panel', time: '20 min' },
+                    { icon: '🚀', title: 'Watch Rocket Launch', desc: 'Compare a real launch to his design', time: '10 min' },
+                    { icon: '🏗', title: 'Engineering Challenge', desc: 'Build something that holds a toy', time: '30 min' }
+                ],
+                badge: { name: 'Creative Builder', progress: 70, contribution: '+30%' }
+            }
+        };
+
+        // ============================================================================
+        // CHILD SELECTION
+        // ============================================================================
+
+        function toggleChild(id) {
+            const chip = document.querySelector(`.chip[data-child="${id}"]`);
+            const idx = state.children.indexOf(id);
+            
+            if (idx > -1) {
+                state.children.splice(idx, 1);
+                chip.classList.remove('selected');
+                delete state.per_child_data[id];
+            } else {
+                state.children.push(id);
+                chip.classList.add('selected');
+                initPerChildData(id);
+            }
+
+            const toggle = document.getElementById('together-toggle');
+            toggle.classList.toggle('visible', state.children.length > 1);
+            if (state.children.length <= 1) {
+                state.together = false;
+                document.getElementById('together-switch').classList.remove('on');
+            }
+
+            renderPerChildSections();
+            updateCompleteness();
+            maybeGenerateInsights();
+        }
+
+        function renderPerChildSections() {
+            const engagementContainer = document.getElementById('per-child-engagement');
+            const discoveryContainer = document.getElementById('per-child-discoveries');
+            
+            if (state.children.length === 0) {
+                engagementContainer.innerHTML = '<p class="empty-state">Select learners above to rate their engagement</p>';
+                discoveryContainer.innerHTML = '';
+                return;
+            }
+
+            engagementContainer.innerHTML = state.children.map(childId => {
+                const child = family.children.find(c => c.id === childId);
+                const data = state.per_child_data[childId] || {};
+                return `
+                    <div class="per-child-row" style="--child-color: ${child.color}; --child-color-muted: ${child.colorMuted};">
+                        <div class="per-child-label">
+                            <span class="child-indicator" style="background: ${child.color};"></span>
+                            <span>${child.name}</span>
+                        </div>
+                        <div class="engagement-emojis">
+                            <button class="emoji-btn ${data.engagement === 'loved' ? 'selected' : ''}" 
+                                    onclick="setEngagement('${childId}', 'loved')" title="Loved it">😊</button>
+                            <button class="emoji-btn ${data.engagement === 'engaged' ? 'selected' : ''}" 
+                                    onclick="setEngagement('${childId}', 'engaged')" title="Engaged">🙂</button>
+                            <button class="emoji-btn ${data.engagement === 'okay' ? 'selected' : ''}" 
+                                    onclick="setEngagement('${childId}', 'okay')" title="Okay">😐</button>
+                            <button class="emoji-btn ${data.engagement === 'struggled' ? 'selected' : ''}" 
+                                    onclick="setEngagement('${childId}', 'struggled')" title="Struggled">😕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            discoveryContainer.innerHTML = state.children.map(childId => {
+                const child = family.children.find(c => c.id === childId);
+                const data = state.per_child_data[childId] || {};
+                return `
+                    <div class="per-child-discovery" style="--child-color: ${child.color}; --child-color-muted: ${child.colorMuted};">
+                        <label class="discovery-label">
+                            <span class="child-indicator" style="background: ${child.color};"></span>
+                            What did ${child.name} notice or discover?
+                        </label>
+                        <textarea 
+                            class="discovery-textarea"
+                            placeholder="Something they said, wondered about, or figured out..."
+                            oninput="setDiscovery('${childId}', this.value)"
+                        >${data.discoveries || ''}</textarea>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setEngagement(childId, level) {
+            initPerChildData(childId);
+            state.per_child_data[childId].engagement = level;
+            renderPerChildSections();
+            updateCompleteness();
+            maybeGenerateInsights();
+        }
+
+        function setDiscovery(childId, value) {
+            initPerChildData(childId);
+            state.per_child_data[childId].discoveries = value;
+            updateCompleteness();
+            maybeGenerateInsights();
+        }
+
+        function toggleTogether() {
+            state.together = !state.together;
+            document.getElementById('together-switch').classList.toggle('on', state.together);
+        }
+
+        // ============================================================================
+        // DESCRIPTION & ACTIVITY TYPE
+        // ============================================================================
+
+        let descriptionDebounce = null;
+
+        function onDescriptionChange() {
+            const el = document.getElementById('description');
+            state.description = el.value;
+            
+            const count = el.value.length;
+            document.getElementById('char-count').textContent = count > 0 ? `${count} characters` : '';
+
+            updateCompleteness();
+
+            clearTimeout(descriptionDebounce);
+            if (count > 20) {
+                descriptionDebounce = setTimeout(() => maybeGenerateInsights(), 800);
+            }
+        }
+
+        function toggleActivityType(type) {
+            const card = document.querySelector(`.activity-type-card[data-type="${type}"]`);
+            
+            if (state.activityType === type) {
+                state.activityType = null;
+                card.classList.remove('selected');
+            } else {
+                document.querySelectorAll('.activity-type-card').forEach(c => c.classList.remove('selected'));
+                state.activityType = type;
+                card.classList.add('selected');
+            }
+
+            updateCompleteness();
+            maybeGenerateInsights();
+        }
+
+        // ============================================================================
+        // VOICE
+        // ============================================================================
+
+        let recognition = null;
+        let isRecording = false;
+
+        function toggleVoice() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Voice not supported. Try Chrome or Edge.');
+                return;
+            }
+            if (isRecording) { stopVoice(); } else { startVoice(); }
+        }
+
+        function startVoice() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-AU';
+
+            const desc = document.getElementById('description');
+            const existingText = desc.value;
+
+            recognition.onresult = (e) => {
+                let transcript = '';
+                for (let i = 0; i < e.results.length; i++) {
+                    transcript += e.results[i][0].transcript;
+                }
+                desc.value = existingText + (existingText ? ' ' : '') + transcript;
+                onDescriptionChange();
+            };
+
+            recognition.onerror = () => stopVoice();
+            recognition.onend = () => { if (isRecording) recognition.start(); };
+            recognition.start();
+
+            isRecording = true;
+            document.getElementById('voice-btn').classList.add('recording');
+            document.getElementById('voice-label').textContent = 'Stop';
+        }
+
+        function stopVoice() {
+            isRecording = false;
+            if (recognition) recognition.stop();
+            document.getElementById('voice-btn').classList.remove('recording');
+            document.getElementById('voice-label').textContent = 'Voice';
+        }
+
+        // ============================================================================
+        // WHEN / DURATION / WHERE
+        // ============================================================================
+
+        function selectWhen(val) {
+            state.when = val;
+            document.querySelectorAll('[data-when]').forEach(c => 
+                c.classList.toggle('selected', c.dataset.when === val)
+            );
+            updateCompleteness();
+        }
+
+        function selectDuration(val) {
+            if (state.duration === val) {
+                state.duration = null;
+                document.querySelectorAll('[data-dur]').forEach(c => c.classList.remove('selected'));
+            } else {
+                state.duration = val;
+                document.querySelectorAll('[data-dur]').forEach(c => 
+                    c.classList.toggle('selected', c.dataset.dur === val)
+                );
+            }
+            updateCompleteness();
+        }
+
+        function selectWhere(val) {
+            if (state.where === val) {
+                state.where = null;
+                document.querySelectorAll('[data-where]').forEach(c => c.classList.remove('selected'));
+            } else {
+                state.where = val;
+                document.querySelectorAll('[data-where]').forEach(c => 
+                    c.classList.toggle('selected', c.dataset.where === val)
+                );
+            }
+            updateCompleteness();
+        }
+
+        // ============================================================================
+        // OBSERVATIONS
+        // ============================================================================
+
+        function toggleObs(el) {
+            el.classList.toggle('selected');
+            state.observations = [...document.querySelectorAll('.obs-chip.selected')].map(c => c.textContent);
+            updateCompleteness();
+            maybeGenerateInsights();
+        }
+
+        // ============================================================================
+        // EVIDENCE
+        // ============================================================================
+
+        function openQuoteModal()    { document.getElementById('quote-modal').classList.add('active'); }
+        function openNoteModal()     { document.getElementById('note-modal').classList.add('active'); }
+        function openResourceModal() { document.getElementById('resource-modal').classList.add('active'); }
+        function openPhotoModal()    { document.getElementById('photo-modal').classList.add('active'); }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function addQuote() {
+            const val = document.getElementById('quote-input').value.trim();
+            if (!val) return;
+            state.evidence.push({ type: 'quote', content: val });
+            document.getElementById('quote-input').value = '';
+            closeModal('quote-modal');
+            renderEvidence();
+            updateCompleteness();
+        }
+
+        function addNote() {
+            const val = document.getElementById('note-input').value.trim();
+            if (!val) return;
+            state.evidence.push({ type: 'note', content: val });
+            document.getElementById('note-input').value = '';
+            closeModal('note-modal');
+            renderEvidence();
+            updateCompleteness();
+        }
+
+        function addResource() {
+            const name = document.getElementById('resource-name').value.trim();
+            if (!name) return;
+            const url = document.getElementById('resource-url').value.trim();
+            state.evidence.push({ type: 'resource', content: name, url });
+            document.getElementById('resource-name').value = '';
+            document.getElementById('resource-url').value = '';
+            closeModal('resource-modal');
+            renderEvidence();
+            updateCompleteness();
+        }
+
+        let pendingPhoto = null;
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingPhoto = e.target.result;
+                document.getElementById('modal-photo-preview').src = pendingPhoto;
+                document.getElementById('modal-photo-preview').classList.remove('hidden');
+                document.getElementById('photo-upload-icon').classList.add('hidden');
+                document.getElementById('photo-upload-text').classList.add('hidden');
+                document.getElementById('photo-add-btn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addPhoto() {
+            if (!pendingPhoto) return;
+            const caption = document.getElementById('photo-caption').value.trim();
+            state.evidence.push({ type: 'photo', content: caption || 'Photo', src: pendingPhoto });
+            
+            pendingPhoto = null;
+            document.getElementById('modal-photo-preview').classList.add('hidden');
+            document.getElementById('photo-upload-icon').classList.remove('hidden');
+            document.getElementById('photo-upload-text').classList.remove('hidden');
+            document.getElementById('photo-add-btn').disabled = true;
+            document.getElementById('photo-caption').value = '';
+            document.getElementById('photo-file').value = '';
+            
+            closeModal('photo-modal');
+            renderEvidence();
+            updateCompleteness();
+        }
+
+        function removeEvidence(index) {
+            state.evidence.splice(index, 1);
+            renderEvidence();
+            updateCompleteness();
+        }
+
+        function renderEvidence() {
+            const container = document.getElementById('evidence-items');
+            
+            if (state.evidence.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = state.evidence.map((ev, i) => {
+                const typeLabels = { quote: '💬 Quote', note: '📝 Note', photo: '📷 Photo', resource: '🔗 Resource' };
+                const photoThumb = ev.type === 'photo' ? `<img class="photo-preview-thumb" src="${ev.src}" alt="Photo">` : '';
+                
+                return `
+                    <div class="evidence-item">
+                        ${photoThumb}
+                        <span class="ev-type">${typeLabels[ev.type]}</span>
+                        <span class="ev-content">${ev.type === 'quote' ? '"' + ev.content + '"' : ev.content}</span>
+                        <button class="ev-remove" onclick="removeEvidence(${i})">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // COMPLETENESS
+        // ============================================================================
+
+        function getCompleteness() {
+            let score = 0;
+            let level = 'Getting Started';
+            let hint = 'Select who was learning';
+
+            if (state.children.length > 0) { score += 20; }
+
+            if (state.description.length > 20) { score += 15; }
+            else if (state.description.length > 0) { score += 5; }
+
+            if (state.activityType) { score += 5; }
+
+            if (state.children.length > 0) {
+                const allHaveEngagement = state.children.every(id => 
+                    state.per_child_data[id] && state.per_child_data[id].engagement
+                );
+                if (allHaveEngagement) { score += 15; }
+                else {
+                    const withEngagement = state.children.filter(id => 
+                        state.per_child_data[id] && state.per_child_data[id].engagement
+                    ).length;
+                    score += Math.floor((withEngagement / state.children.length) * 10);
+                }
+            }
+
+            if (state.children.length > 0) {
+                const withDiscoveries = state.children.filter(id => 
+                    state.per_child_data[id] && state.per_child_data[id].discoveries && 
+                    state.per_child_data[id].discoveries.length > 10
+                ).length;
+                score += Math.floor((withDiscoveries / state.children.length) * 10);
+            }
+
+            if (state.when) score += 3;
+            if (state.duration) score += 3;
+            if (state.where) score += 4;
+
+            if (state.observations.length >= 3) { score += 15; }
+            else if (state.observations.length > 0) { score += 5 * state.observations.length; }
+
+            if (state.evidence.length >= 2) { score += 10; }
+            else if (state.evidence.length === 1) { score += 5; }
+
+            score = Math.min(100, score);
+
+            if (score < 20)       { level = 'Getting Started'; hint = 'Select who was learning'; }
+            else if (score < 40)  { level = 'Basic'; hint = 'Describe what happened'; }
+            else if (score < 55)  { level = 'Good'; hint = 'Rate engagement for each child'; }
+            else if (score < 70)  { level = 'Strong'; hint = 'Add observations'; }
+            else if (score < 90)  { level = 'Great'; hint = 'Add evidence for richer record'; }
+            else                  { level = 'Excellent'; hint = 'Ready to save'; }
+
+            return { score, level, hint, canSave: score >= 50 };
+        }
+
+        function updateCompleteness() {
+            const { score, level, hint, canSave } = getCompleteness();
+
+            const circumference = 2 * Math.PI * 16;
+            const offset = circumference - (score / 100) * circumference;
+            const fill = document.getElementById('completeness-fill');
+            fill.style.strokeDashoffset = offset;
+            fill.classList.toggle('complete', score >= 90);
+
+            document.getElementById('completeness-pct').textContent = score + '%';
+            document.getElementById('completeness-level').textContent = level;
+            document.getElementById('completeness-hint').textContent = hint;
+
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.classList.toggle('ready', canSave);
+            saveBtn.disabled = !canSave;
+            saveBtn.style.cursor = canSave ? 'pointer' : 'not-allowed';
+            saveBtn.style.opacity = canSave ? '1' : '0.5';
+
+            updateSectionNumbers();
+        }
+
+        function updateSectionNumbers() {
+            const allHaveEngagement = state.children.length > 0 && state.children.every(id => 
+                state.per_child_data[id] && state.per_child_data[id].engagement
+            );
+
+            const nums = {
+                'num-who':        state.children.length > 0,
+                'num-what':       state.description.length > 20 && state.activityType,
+                'num-engagement': allHaveEngagement,
+                'num-when':       state.duration || state.where,
+                'num-obs':        state.observations.length > 0,
+                'num-evidence':   state.evidence.length > 0
+            };
+
+            Object.entries(nums).forEach(([id, done]) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('done', done);
+            });
+        }
+
+        // ============================================================================
+        // INSIGHT GENERATION (Demo)
+        // ============================================================================
+
+        function maybeGenerateInsights() {
+            if (state.children.length === 0) return;
+            if (state.description.length < 10 && !state.activityType) return;
+
+            let scenario = state.activityType;
+            if (!scenario && state.description) {
+                const desc = state.description.toLowerCase();
+                if (/bug|nature|outside|garden|rock|tree|bird|leaf|ant/.test(desc)) scenario = 'nature';
+                else if (/cook|bake|kitchen|recipe|measure|pizza|cake|bread|food/.test(desc)) scenario = 'cooking';
+                else if (/read|book|story|chapter|library|page/.test(desc)) scenario = 'reading';
+                else if (/draw|paint|art|craft|build|make|glue|cut|rocket/.test(desc)) scenario = 'art';
+            }
+
+            if (!scenario || !demoInsights[scenario]) return;
+            if (state.insightsGenerated === scenario) return;
+            
+            state.insightsGenerated = scenario;
+            renderInsights(demoInsights[scenario]);
+        }
+
+        function renderInsights(data) {
+            const container = document.getElementById('insights-content');
+            document.getElementById('insight-empty')?.remove();
+
+            const subjectsHtml = data.subjects.map(s => 
+                `<span class="insight-subject ${s.primary ? 'primary' : ''}">${s.name}</span>`
+            ).join('');
+
+            const stepsHtml = data.nextSteps.map(s => `
+                <div class="next-step-mini">
+                    <div class="step-icon">${s.icon}</div>
+                    <div>
+                        <div class="step-text">${s.title}</div>
+                        <div class="step-desc">${s.desc}</div>
+                        <div class="step-meta">~${s.time}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const showBadgePrompt = data.badge && data.badge.progress >= 70;
+
+            container.innerHTML = `
+                <div class="insight-card">
+                    <div class="insight-card-label">
+                        <span class="label-dot" style="background: var(--ember);"></span>
+                        Subjects Detected
+                    </div>
+                    <div class="insight-subjects">${subjectsHtml}</div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-card-label">
+                        <span class="label-dot" style="background: var(--violet);"></span>
+                        Philosophy Lens
+                    </div>
+                    <h4>${data.philosophy.title}</h4>
+                    <p>${data.philosophy.text}</p>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-card-label">
+                        <span class="label-dot" style="background: var(--sage);"></span>
+                        Suggested Next Steps
+                    </div>
+                    ${stepsHtml}
+                </div>
+
+                ${data.badge ? `
+                <div class="insight-card">
+                    <div class="insight-card-label">
+                        <span class="label-dot" style="background: var(--ember);"></span>
+                        Badge Progress
+                    </div>
+                    <div class="badge-card">
+                        <div class="badge-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
+                        <div class="badge-info">
+                            <div class="badge-name">${data.badge.name}</div>
+                            <div class="badge-meta">${data.badge.contribution} from this activity</div>
+                            <div class="badge-bar">
+                                <div class="badge-bar-fill" style="width: ${data.badge.progress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    ${showBadgePrompt ? `
+                        <button class="modal-btn primary" style="width: 100%; margin-top: 12px; padding: 10px;" onclick="alert('Badge awarded! (Demo)')">
+                            🎉 Award Badge Now
+                        </button>
+                    ` : ''}
+                </div>
+                ` : ''}
+            `;
+
+            const panel = document.getElementById('insights-panel');
+            if (window.innerWidth < 1024 && !panel.classList.contains('expanded')) {
+                panel.style.transition = 'transform 0.3s ease';
+                panel.style.transform = 'translateY(calc(100% - 80px))';
+                setTimeout(() => {
+                    panel.style.transform = 'translateY(calc(100% - 56px))';
+                }, 300);
+            }
+        }
+
+        // ============================================================================
+        // MOBILE DRAWER
+        // ============================================================================
+
+        function toggleInsightsDrawer() {
+            document.getElementById('insights-panel').classList.toggle('expanded');
+        }
+
+        // ============================================================================
+        // SAVE & NAV
+        // ============================================================================
+
+        function saveEntry() {
+            const { canSave } = getCompleteness();
+            if (!canSave) return;
+
+            const badgeReady = checkBadgeThreshold();
+            
+            if (badgeReady) {
+                state.badgeReady = badgeReady;
+                showBadgeTransition(badgeReady);
+            } else {
+                document.getElementById('save-success').classList.add('active');
+            }
+        }
+
+        function checkBadgeThreshold() {
+            const scenario = state.activityType || state.insightsGenerated;
+            if (!scenario || !demoInsights[scenario]) return null;
+            
+            const badge = demoInsights[scenario].badge;
+            if (badge && badge.progress >= 70) {
+                return { id: scenario + '_badge', name: badge.name, progress: badge.progress };
+            }
+            return null;
+        }
+
+        function showBadgeTransition(badge) {
+            const successEl = document.getElementById('save-success');
+            successEl.innerHTML = `
+                <div class="check-circle" style="background: var(--ember);">
+                    <svg viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: var(--surface-body);">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <h2>Badge Ready! 🎉</h2>
+                <p><strong>${badge.name}</strong> has reached ${badge.progress}% and is ready to be awarded.</p>
+                <p style="font-family: var(--font-sans); font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;">
+                    Complete a quick assessment to confirm understanding before awarding.
+                </p>
+                <div class="success-actions">
+                    <button class="modal-btn secondary" onclick="skipBadgeAssessment()" style="padding: 10px 24px;">Save Without Badge</button>
+                    <button class="modal-btn primary" onclick="goToBadgeAssessment()" style="padding: 10px 24px;">Begin Assessment →</button>
+                </div>
+            `;
+            successEl.classList.add('active');
+        }
+
+        function skipBadgeAssessment() {
+            resetSuccessModal();
+            document.getElementById('save-success').innerHTML = `
+                <div class="check-circle">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h2>Moment Saved ✨</h2>
+                <p>Added to the portfolio and learning record. HEU evidence has been catalogued automatically.</p>
+                <p style="font-family: var(--font-sans); font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;">Badge progress saved — you can award it later from the Portfolio.</p>
+                <div class="success-actions">
+                    <button class="modal-btn secondary" onclick="goBack()" style="padding: 10px 24px;">Back to Dashboard</button>
+                    <button class="modal-btn primary" onclick="logAnother()" style="padding: 10px 24px;">Log Another</button>
+                </div>
+            `;
+        }
+
+        function goToBadgeAssessment() {
+            alert('Navigating to Badge Assessment screen (hearth-badge-assessment.html)\n\nBadge: ' + state.badgeReady.name + '\nProgress: ' + state.badgeReady.progress + '%\n\nThis transition is implemented. Connect to actual badge assessment UI.');
+            document.getElementById('save-success').classList.remove('active');
+        }
+
+        function resetSuccessModal() {
+            document.getElementById('save-success').innerHTML = `
+                <div class="check-circle">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h2>Moment Saved ✨</h2>
+                <p>Added to the portfolio and learning record. HEU evidence has been catalogued automatically.</p>
+                <div class="success-actions">
+                    <button class="modal-btn secondary" onclick="goBack()" style="padding: 10px 24px;">Back to Dashboard</button>
+                    <button class="modal-btn primary" onclick="logAnother()" style="padding: 10px 24px;">Log Another</button>
+                </div>
+            `;
+        }
+
+        function logAnother() {
+            document.getElementById('save-success').classList.remove('active');
+            resetSuccessModal();
+            
+            state.children = [];
+            state.together = false;
+            state.description = '';
+            state.activityType = null;
+            state.when = 'today';
+            state.duration = null;
+            state.where = null;
+            state.observations = [];
+            state.evidence = [];
+            state.insightsGenerated = false;
+            state.badgeReady = null;
+            state.per_child_data = {};
+
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            document.getElementById('together-toggle').classList.remove('visible');
+            document.getElementById('description').value = '';
+            document.getElementById('char-count').textContent = '';
+            document.querySelectorAll('.activity-type-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.select-chip').forEach(c => {
+                c.classList.toggle('selected', c.dataset.when === 'today');
+            });
+            document.querySelectorAll('.obs-chip').forEach(c => c.classList.remove('selected'));
+            document.getElementById('evidence-items').innerHTML = '';
+            
+            renderPerChildSections();
+            
+            document.getElementById('insights-content').innerHTML = `
+                <div class="insight-empty" id="insight-empty">
+                    <svg viewBox="0 0 24 24" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </svg>
+                    <p>Start describing the activity and I'll begin finding the learning within it.</p>
+                </div>
+            `;
+
+            updateCompleteness();
+        }
+
+        function goBack() {
+            document.getElementById('save-success').classList.remove('active');
+            alert('Back to dashboard (Demo)');
+        }
+
+        // ============================================================================
+        // INIT
+        // ============================================================================
+
+        updateCompleteness();
+    </script>
+</body>
+</html>

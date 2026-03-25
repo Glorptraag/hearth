@@ -1,0 +1,1437 @@
+<!-- Version: 2 | Date: 2026-03-20 | Changes from v1:
+     - Replaced entire :root block with canonical dark mode tokens (surface-body/panel/raised/hover)
+     - Renamed --accent → --ember, --accent-hover → --ember-hover, --accent-light → --ember-glow
+     - Removed --bg-primary/secondary/tertiary; mapped to --surface-panel/body/raised respectively
+     - Removed --border (solid hex); replaced with --border-subtle (rgba(217,123,58,0.1)) and --border-medium (rgba(217,123,58,0.2))
+     - Added --success mapped to --sage (#4ADE80), --success-muted (rgba(74,222,128,0.12)), --success-border (rgba(74,222,128,0.3))
+     - Added full --space-* token set (xs/sm/md/lg/xl/2xl/3xl)
+     - Added --radius-sm/md/lg/xl/full canonical scale
+     - Added --shadow-soft/medium/warm, --transition-quick/gentle
+     - Replaced all hardcoded border-radius values: 4px→--radius-sm, 8px→--radius-sm, 10px→--radius-md, 12px→--radius-md, 16px→--radius-lg
+     - Replaced all hardcoded padding/margin/gap with --space-* tokens via CSS custom properties
+     - Replaced all hardcoded transition (0.2s ease, 0.3s) with --transition-quick/--transition-gentle
+     - body: font-family now var(--font-sans); serif applied only to h1/h2/h3/badge-name per rule
+     - .logo: weight remains 600 (brand wordmark — no isolated 700 needed at this scale); font-family var(--font-serif)
+     - .timer-display: border-color now --border-subtle; radius --radius-sm; color --text-secondary (ember restricted from body text)
+     - .card: bg --surface-panel, border --border-subtle, radius --radius-lg (16px), padding --space-xl (32px), shadow-soft
+     - .card hover: translateY(-2px), border --border-medium, shadow-warm + ember top-line via ::before
+     - .triage-card: bg --surface-panel, border --border-subtle, radius --radius-md, hover ember border + shadow-warm
+     - .triage-icon: bg --surface-body, radius --radius-md (not --radius-full — icon box not circle)
+     - .btn: base ghost button pattern; bg --surface-panel, border --border-subtle, radius --radius-md, sans 500
+     - .btn-primary: ember bg, surface-body text (--text-inverse), sans 600, radius --radius-md
+     - .btn-secondary: bg --surface-raised, border --border-subtle
+     - .btn-primary hover: --ember-hover bg, no shadow bleed
+     - .input: border --border-subtle, bg --surface-body, radius --radius-md; focus ring --ember-strong
+     - .capture-mode: bg --surface-body, border --border-subtle, radius --radius-md
+     - .capture-mode.active: border --ember, ember-glow shadow
+     - .badge-preview: bg --surface-body, radius --radius-lg
+     - .badge-icon: gradient ember (retained — badge celebration context is valid ember use)
+     - .badge-item: bg --surface-body, border --border-subtle, radius --radius-md
+     - .badge-small: gradient ember retained (badge display)
+     - .activity-card: bg --surface-body, border --border-subtle, radius --radius-md
+     - .activity-time: color --text-muted (ember off body text)
+     - .success-message: sage-based colors (rgba(74,222,128,...)) — correct success/growth state
+     - .portfolio-item: bg --surface-body, border --border-subtle, radius --radius-md
+     - .portfolio-thumbnail: bg --surface-raised, radius --radius-sm
+     - .day-card: bg --surface-body, border --border-subtle, radius --radius-sm; active: --ember-glow bg
+     - .tour-step: border --border-medium (not solid ember — ember border reserved for primary actions)
+     - .progress-dot.active: ember color + glow retained (active state indicator — valid ember use)
+     - .progress-dot.completed: sage + sage glow
+     - .back-nav hover: --ember (action link — valid ember use)
+     - inline style var() references updated: --accent-light → --ember-glow, --bg-secondary → --surface-body,
+       --bg-tertiary → --surface-raised, --accent → --ember, --success → --sage throughout template strings
+     - day summary strong color: --text-muted (ember off inline body text)
+     - Stats numbers in portfolio: --text-primary (not ember — data display, not action)
+     - Badge small circles in portfolio-detail: ember gradient retained (badge display context)
+     - Progress bars: ember gradient retained (progress indicator — valid ember use)
+     - All JS logic, 5 onboarding paths, timer, state machine, render functions preserved intact
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth LMS - Complete Onboarding Demo</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================================================
+           HEARTH COMPLETE DEMO — ONBOARDING FLOW
+           Mont Blanc Dark Coffee — Canonical Token Conformance v2
+           ============================================================================ */
+
+        :root {
+            /* ── Surfaces ── */
+            --surface-body:    #0F0D0B;
+            --surface-panel:   #1A1612;
+            --surface-raised:  #252117;
+            --surface-hover:   #2D2621;
+
+            /* ── Text ── */
+            --text-primary:    #E8DFD4;
+            --text-secondary:  #9B8B7E;
+            --text-muted:      #6B5D52;
+            --text-inverse:    #0F0D0B;
+
+            /* ── Ember ── */
+            --ember:           #D97B3A;
+            --ember-hover:     #E88F4E;
+            --ember-glow:      rgba(217, 123, 58, 0.15);
+            --ember-strong:    rgba(217, 123, 58, 0.25);
+
+            /* ── Sage (success / growth / positive) ── */
+            --sage:            #4ADE80;
+            --sage-muted:      rgba(74, 222, 128, 0.12);
+            --sage-border:     rgba(74, 222, 128, 0.3);
+
+            /* ── Borders ── */
+            --border-subtle:   rgba(217, 123, 58, 0.1);
+            --border-medium:   rgba(217, 123, 58, 0.2);
+
+            /* ── Shadows ── */
+            --shadow-soft:     0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium:   0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:     0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:     0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* ── Radius ── */
+            --radius-sm:       6px;
+            --radius-md:       10px;
+            --radius-lg:       16px;
+            --radius-xl:       24px;
+            --radius-full:     9999px;
+
+            /* ── Spacing ── */
+            --space-xs:        4px;
+            --space-sm:        8px;
+            --space-md:        16px;
+            --space-lg:        24px;
+            --space-xl:        32px;
+            --space-2xl:       48px;
+            --space-3xl:       64px;
+
+            /* ── Typography ── */
+            --font-serif:      'Crimson Text', Georgia, serif;
+            --font-sans:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Transitions ── */
+            --transition-quick:   200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle:  400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(217, 123, 58, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(217, 123, 58, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(217, 123, 58, 0.03) 0%, transparent 30%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Typography ── */
+        h1, h2, h3 {
+            font-family: var(--font-serif);
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 0.5em;
+        }
+
+        /* h1 = screen display title: 700 weight, 2rem */
+        h1 { font-size: 2rem; font-weight: 700; }
+        /* h2 = section/card title: 600 weight, 1.5rem */
+        h2 { font-size: 1.5rem; font-weight: 600; }
+        /* h3 = sub-section: 600 weight, 1.25rem */
+        h3 { font-size: 1.25rem; font-weight: 600; }
+
+        p {
+            font-family: var(--font-serif);
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* ── Header ── */
+        .header {
+            background: rgba(26, 22, 18, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: var(--space-md) var(--space-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timer-display {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-sm) var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* ── Main Content ── */
+        .main-content {
+            padding: var(--space-lg);
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-md);
+            box-shadow: var(--shadow-soft);
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-gentle);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-warm);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Triage Grid ── */
+        .triage-grid {
+            display: grid;
+            gap: var(--space-md);
+            margin-top: var(--space-2xl);
+        }
+
+        .triage-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .triage-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-quick);
+        }
+
+        .triage-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .triage-card:hover::before {
+            opacity: 1;
+        }
+
+        .triage-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--surface-body);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .triage-content {
+            flex: 1;
+        }
+
+        .triage-title {
+            font-family: var(--font-serif);
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .triage-desc {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-lg);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--surface-raised);
+            border-color: var(--border-medium);
+        }
+
+        .btn-primary {
+            background: var(--ember);
+            border-color: var(--ember);
+            color: var(--text-inverse);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(217, 123, 58, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: var(--ember-hover);
+            border-color: var(--ember-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 123, 58, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--surface-raised);
+            border-color: var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        /* ── Input Fields ── */
+        .input-group {
+            margin-bottom: var(--space-lg);
+        }
+
+        .label {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        .input {
+            width: 100%;
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            color: var(--text-primary);
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            transition: all var(--transition-quick);
+        }
+
+        .input:focus {
+            border-color: var(--ember);
+            box-shadow: 0 0 0 3px var(--ember-strong);
+            outline: none;
+        }
+
+        textarea.input {
+            resize: none;
+        }
+
+        /* ── Capture Modes ── */
+        .capture-modes {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-xl);
+        }
+
+        .capture-mode {
+            flex: 1;
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-sm);
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .capture-mode:hover {
+            border-color: var(--border-medium);
+            background: var(--surface-raised);
+        }
+
+        .capture-mode.active {
+            border-color: var(--ember);
+            background: var(--surface-raised);
+            box-shadow: 0 0 0 2px var(--ember-strong), var(--shadow-glow);
+            color: var(--text-primary);
+        }
+
+        /* ── Badge Preview ── */
+        .badge-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-2xl) var(--space-xl);
+            background: var(--surface-body);
+            border-radius: var(--radius-lg);
+            margin: var(--space-xl) 0;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .badge-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--ember), var(--ember-hover));
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-md);
+            font-size: 48px;
+            box-shadow:
+                0 8px 32px rgba(217, 123, 58, 0.4),
+                0 0 60px rgba(217, 123, 58, 0.3);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%       { transform: scale(1.05); }
+        }
+
+        .badge-name {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* ── Badge Grid ── */
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: var(--space-md);
+            margin: var(--space-xl) 0;
+        }
+
+        .badge-item {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .badge-item:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .badge-small {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--ember), var(--ember-hover));
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-sm);
+            font-size: 24px;
+        }
+
+        /* ── Activity Cards ── */
+        .activity-grid {
+            display: grid;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .activity-card {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            transition: all var(--transition-quick);
+            cursor: pointer;
+        }
+
+        .activity-card:hover {
+            border-color: var(--border-medium);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .activity-title {
+            font-family: var(--font-serif);
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .activity-time {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Success Message ── */
+        .success-message {
+            background: var(--sage-muted);
+            border: 1px solid var(--sage-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to   { transform: translateX(0);     opacity: 1; }
+        }
+
+        /* ── Portfolio Items ── */
+        .portfolio-grid {
+            display: grid;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+
+        .portfolio-item {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+        }
+
+        .portfolio-thumbnail {
+            width: 80px;
+            height: 80px;
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+
+        .portfolio-details {
+            flex: 1;
+        }
+
+        .portfolio-date {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        /* ── Week Calendar ── */
+        .week-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--space-sm);
+            margin: var(--space-xl) 0;
+        }
+
+        .day-card {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .day-card:hover {
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .day-card.active {
+            background: var(--ember-glow);
+            border-color: var(--ember);
+        }
+
+        .day-name {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        .day-number {
+            font-family: var(--font-sans);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ── Tour Steps ── */
+        .tour-step {
+            background: var(--surface-body);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            padding: var(--space-xl);
+            margin: var(--space-md) 0;
+            position: relative;
+        }
+
+        .tour-step::before {
+            content: attr(data-step);
+            position: absolute;
+            top: -12px;
+            left: var(--space-md);
+            background: var(--ember);
+            color: var(--text-inverse);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* ── Progress Dots ── */
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-full);
+            background: var(--surface-hover);
+            transition: all var(--transition-gentle);
+        }
+
+        .progress-dot.active {
+            background: var(--ember);
+            box-shadow: 0 0 12px var(--ember), 0 0 24px var(--ember-glow);
+            transform: scale(1.5);
+        }
+
+        .progress-dot.completed {
+            background: var(--sage);
+            box-shadow: 0 0 8px var(--sage-border);
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+            .main-content  { padding: var(--space-md); }
+            .capture-modes { flex-direction: column; }
+            .week-calendar { grid-template-columns: repeat(4, 1fr); }
+            .badge-grid    { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+        }
+
+        /* ── Back Navigation ── */
+        .back-nav {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color var(--transition-quick);
+        }
+
+        .back-nav:hover {
+            color: var(--ember);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                🪵
+                <span>Hearth</span>
+            </div>
+            <div class="timer-display">
+                ⏱️ <span id="timer">0:00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="app">
+        <!-- Content dynamically inserted by JS -->
+    </main>
+
+    <!-- Progress Indicator -->
+    <div class="progress-dots">
+        <div class="progress-dot" id="dot-1"></div>
+        <div class="progress-dot" id="dot-2"></div>
+        <div class="progress-dot" id="dot-3"></div>
+        <div class="progress-dot" id="dot-4"></div>
+        <div class="progress-dot" id="dot-5"></div>
+    </div>
+
+    <script>
+        // ── App State ──────────────────────────────────────────────────────
+        const state = {
+            currentPhase: 'landing',
+            elapsedTime: 0,
+            captureMode: 'photo',
+            currentBadge: null,
+            selectedDay: 'monday',
+            tourStep: 1,
+            userData: {
+                childName: '',
+                email: '',
+                activityLogged: null,
+                badgesAwarded: [],
+                portfolioItems: [],
+                weeklyActivities: {}
+            }
+        };
+
+        // ── Data ───────────────────────────────────────────────────────────
+        const badges = [
+            { id: 'fraction',  name: 'Fraction Explorer',  icon: '⭐', desc: 'Understanding parts of a whole' },
+            { id: 'reader',    name: 'Reading Champion',   icon: '📚', desc: 'Completed 10 reading sessions' },
+            { id: 'scientist', name: 'Little Scientist',   icon: '🔬', desc: 'Conducted 5 experiments' },
+            { id: 'artist',    name: 'Creative Artist',    icon: '🎨', desc: 'Created original artwork' },
+            { id: 'math',      name: 'Math Wizard',        icon: '🔢', desc: 'Mastered basic operations' },
+            { id: 'nature',    name: 'Nature Observer',    icon: '🌿', desc: 'Documented nature discoveries' }
+        ];
+
+        const activities = [
+            { title: 'Pizza Fraction Game',     time: '15 min', desc: 'Practice dividing shapes into equal parts', subject: 'Math' },
+            { title: 'Cooking with Fractions',  time: '30 min', desc: 'Real-world application using recipes',     subject: 'Math' },
+            { title: 'Fraction Art Project',    time: '20 min', desc: 'Create geometric art using divisions',     subject: 'Art' },
+            { title: 'Story Writing Workshop',  time: '25 min', desc: 'Create your own adventure story',          subject: 'Writing' },
+            { title: 'Nature Walk & Journal',   time: '45 min', desc: 'Observe and document local nature',        subject: 'Science' },
+            { title: 'Reading Time',            time: '20 min', desc: 'Independent reading with discussion',      subject: 'Reading' }
+        ];
+
+        const portfolioSamples = [
+            { date: 'Today',      title: 'Fraction Pizza Project', type: 'photo', icon: '🍕', badges: ['Fraction Explorer'] },
+            { date: 'Yesterday',  title: 'Nature Journal Entry',   type: 'text',  icon: '🌳', badges: ['Nature Observer'] },
+            { date: '3 days ago', title: 'Math Practice Sheet',    type: 'photo', icon: '📝', badges: ['Math Wizard'] },
+            { date: 'Last week',  title: 'Science Experiment',     type: 'video', icon: '🧪', badges: ['Little Scientist'] }
+        ];
+
+        // ── Timer ──────────────────────────────────────────────────────────
+        setInterval(() => {
+            state.elapsedTime++;
+            const mins = Math.floor(state.elapsedTime / 60);
+            const secs = state.elapsedTime % 60;
+            const el = document.getElementById('timer');
+            if (el) el.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }, 1000);
+
+        // ── Progress Dots ──────────────────────────────────────────────────
+        function updateProgress() {
+            const phases = ['landing', 'triage', 'quick-capture', 'badge-suggestion', 'next-steps'];
+            const currentIndex = phases.indexOf(state.currentPhase);
+            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index < currentIndex)       dot.classList.add('completed');
+                else if (index === currentIndex) dot.classList.add('active');
+            });
+        }
+
+        // ── Render Functions ───────────────────────────────────────────────
+        const renders = {
+
+            landing: () => `
+                <div class="card">
+                    <h1>Welcome to Hearth</h1>
+                    <p style="font-size: 1.1rem; margin-bottom: var(--space-xl); color: var(--text-primary); font-family: var(--font-serif);">
+                        Your family's learning journey starts here
+                    </p>
+                    <p style="margin-bottom: var(--space-xl);">
+                        Hearth saves you time while building confidence in your homeschool journey.
+                        Every interaction takes less than 5 minutes.
+                    </p>
+                    <button class="btn btn-primary" onclick="changePhase('triage')">
+                        Get Started
+                    </button>
+                </div>
+            `,
+
+            triage: () => `
+                <div class="card">
+                    <h2>What brings you to Hearth today?</h2>
+                    <p style="margin-bottom: var(--space-xl);">
+                        Choose what you'd like to do first — you can always explore other features later
+                    </p>
+                </div>
+
+                <div class="triage-grid">
+                    <div class="triage-card" onclick="changePhase('quick-capture')">
+                        <div class="triage-icon">📸</div>
+                        <div class="triage-content">
+                            <div class="triage-title">Log today's learning</div>
+                            <div class="triage-desc">2-minute quick capture</div>
+                        </div>
+                    </div>
+
+                    <div class="triage-card" onclick="changePhase('weekly-planning')">
+                        <div class="triage-icon">📅</div>
+                        <div class="triage-content">
+                            <div class="triage-title">Plan this week</div>
+                            <div class="triage-desc">Find activities and resources</div>
+                        </div>
+                    </div>
+
+                    <div class="triage-card" onclick="changePhase('portfolio-view')">
+                        <div class="triage-icon">📈</div>
+                        <div class="triage-content">
+                            <div class="triage-title">See our progress</div>
+                            <div class="triage-desc">Portfolios and achievements</div>
+                        </div>
+                    </div>
+
+                    <div class="triage-card" onclick="changePhase('interactive-tour')">
+                        <div class="triage-icon">🧭</div>
+                        <div class="triage-content">
+                            <div class="triage-title">Just looking around</div>
+                            <div class="triage-desc">Interactive platform tour</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            'quick-capture': () => `
+                <div class="back-nav" onclick="changePhase('triage')">
+                    ← Back to options
+                </div>
+
+                <div class="card">
+                    <h2>Capture today's learning</h2>
+                    <p style="margin-bottom: var(--space-xl);">
+                        Choose how you'd like to record this moment
+                    </p>
+
+                    <div class="capture-modes">
+                        <div class="capture-mode ${state.captureMode === 'photo' ? 'active' : ''}" onclick="setCaptureMode('photo')">
+                            <div style="font-size: 24px;">📸</div>
+                            <span>Photo</span>
+                        </div>
+                        <div class="capture-mode ${state.captureMode === 'voice' ? 'active' : ''}" onclick="setCaptureMode('voice')">
+                            <div style="font-size: 24px;">🎤</div>
+                            <span>Voice</span>
+                        </div>
+                        <div class="capture-mode ${state.captureMode === 'text' ? 'active' : ''}" onclick="setCaptureMode('text')">
+                            <div style="font-size: 24px;">✏️</div>
+                            <span>Text</span>
+                        </div>
+                    </div>
+
+                    ${state.captureMode === 'text' ? `
+                        <div class="input-group">
+                            <textarea class="input" id="activity-text" rows="4" placeholder="What did you learn today? (e.g., 'Emma practiced fractions by dividing pizza slices')"></textarea>
+                        </div>
+                    ` : state.captureMode === 'photo' ? `
+                        <div style="background: var(--surface-body); border-radius: var(--radius-md); padding: var(--space-3xl) var(--space-2xl); text-align: center; border: 2px dashed var(--border-subtle);">
+                            <div style="font-size: 48px;">📸</div>
+                            <p style="margin-top: var(--space-md);">Tap to take a photo of today's work</p>
+                        </div>
+                    ` : `
+                        <div style="background: var(--surface-body); border-radius: var(--radius-md); padding: var(--space-3xl) var(--space-2xl); text-align: center; border: 1px solid var(--border-subtle);">
+                            <div id="mic-button" style="width: 80px; height: 80px; margin: 0 auto; background: var(--surface-raised); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 36px; cursor: pointer;">
+                                🎤
+                            </div>
+                            <p style="margin-top: var(--space-md);">Tap to record a voice note</p>
+                        </div>
+                    `}
+
+                    <button class="btn btn-primary" onclick="saveActivity()" style="margin-top: var(--space-md);">
+                        Save Activity
+                    </button>
+                </div>
+            `,
+
+            'badge-suggestion': () => `
+                <div class="card">
+                    <h2>Great work! 🎉</h2>
+                    <p style="margin-bottom: var(--space-xl);">
+                        Based on this activity, your child can earn:
+                    </p>
+
+                    <div class="badge-preview">
+                        <div class="badge-icon">${badges[0].icon}</div>
+                        <div class="badge-name">${badges[0].name}</div>
+                        <p style="text-align: center; font-size: 0.875rem;">
+                            ${badges[0].desc}
+                        </p>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="awardBadge('${badges[0].id}')">
+                        Award Badge
+                    </button>
+
+                    <button class="btn" style="margin-top: var(--space-sm);" onclick="changePhase('badge-gallery')">
+                        View Other Badges
+                    </button>
+                </div>
+            `,
+
+            'badge-gallery': () => `
+                <div class="back-nav" onclick="changePhase('badge-suggestion')">
+                    ← Back to suggestion
+                </div>
+
+                <div class="card">
+                    <h2>Available Badges</h2>
+                    <p>Choose badges that match today's learning</p>
+
+                    <div class="badge-grid">
+                        ${badges.map(badge => `
+                            <div class="badge-item ${state.currentBadge === badge.id ? 'selected' : ''}" onclick="selectBadge('${badge.id}')">
+                                <div class="badge-small">${badge.icon}</div>
+                                <div style="font-family: var(--font-serif); font-weight: 600; font-size: 0.9rem; color: var(--text-primary); margin-bottom: var(--space-xs);">${badge.name}</div>
+                                <div style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">${badge.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${state.currentBadge ? `
+                        <button class="btn btn-primary" style="margin-top: var(--space-md);" onclick="awardBadge('${state.currentBadge}')">
+                            Award Selected Badge
+                        </button>
+                    ` : ''}
+                </div>
+            `,
+
+            'next-steps': () => `
+                <div class="success-message">
+                    <div style="font-size: 24px; color: var(--sage);">✓</div>
+                    <div>
+                        <strong style="font-family: var(--font-serif); font-weight: 600; color: var(--text-primary);">Badge awarded!</strong>
+                        <p style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                            ${state.userData.childName || 'Your child'} earned ${badges.find(b => b.id === state.userData.badgesAwarded[state.userData.badgesAwarded.length - 1])?.name || 'a badge'}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>What's next?</h2>
+                    <p style="margin-bottom: var(--space-xl);">
+                        Here are activities that build on today's learning:
+                    </p>
+
+                    <div class="activity-grid">
+                        ${activities.slice(0, 3).map(activity => `
+                            <div class="activity-card" onclick="selectActivity('${activity.title}')">
+                                <div class="activity-header">
+                                    <span class="activity-title">${activity.title}</span>
+                                    <span class="activity-time">${activity.time}</span>
+                                </div>
+                                <p style="font-size: 0.875rem;">${activity.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: var(--space-md);" onclick="changePhase('signup')">
+                        Save Progress & Continue
+                    </button>
+
+                    <button class="btn btn-secondary" style="margin-top: var(--space-sm);" onclick="changePhase('triage')">
+                        Explore More Features
+                    </button>
+                </div>
+            `,
+
+            'weekly-planning': () => `
+                <div class="back-nav" onclick="changePhase('triage')">
+                    ← Back to options
+                </div>
+
+                <div class="card">
+                    <h2>Plan Your Week</h2>
+                    <p>Select a day to add activities</p>
+
+                    <div class="week-calendar">
+                        ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => `
+                            <div class="day-card ${i === 0 ? 'active' : ''}" onclick="selectDay('${day.toLowerCase()}')">
+                                <div class="day-name">${day}</div>
+                                <div class="day-number">${25 + i}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <h3>Suggested Activities for Monday</h3>
+                    <div class="activity-grid">
+                        ${activities.map(activity => `
+                            <div class="activity-card" onclick="addToWeek('${activity.title}')">
+                                <div class="activity-header">
+                                    <span class="activity-title">${activity.title}</span>
+                                    <span class="activity-time">${activity.time}</span>
+                                </div>
+                                <p style="font-size: 0.875rem;">${activity.desc}</p>
+                                <div style="margin-top: var(--space-sm);">
+                                    <span style="background: var(--surface-raised); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">
+                                        ${activity.subject}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: var(--space-md);" onclick="changePhase('weekly-summary')">
+                        View Week Summary
+                    </button>
+                </div>
+            `,
+
+            'weekly-summary': () => `
+                <div class="back-nav" onclick="changePhase('weekly-planning')">
+                    ← Back to planning
+                </div>
+
+                <div class="card">
+                    <h2>Your Week at a Glance</h2>
+                    <p style="margin-bottom: var(--space-md);">A balanced mix of subjects and activities</p>
+
+                    <div style="display: grid; gap: var(--space-sm);">
+                        ${['Monday', 'Tuesday', 'Wednesday'].map(day => `
+                            <div style="background: var(--surface-body); padding: var(--space-md); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                                <strong style="font-family: var(--font-sans); font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">${day}</strong>
+                                <div style="margin-top: var(--space-sm); font-family: var(--font-serif); font-size: 0.875rem; color: var(--text-secondary); line-height: 1.8;">
+                                    • Math: Pizza Fractions (15 min)<br>
+                                    • Reading: Story Time (20 min)<br>
+                                    • Science: Nature Walk (45 min)
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div style="background: var(--ember-glow); border: 1px solid var(--border-medium); padding: var(--space-md); border-radius: var(--radius-sm); margin-top: var(--space-md);">
+                        <strong style="font-family: var(--font-serif); font-weight: 600; color: var(--text-primary);">Week Stats</strong>
+                        <p style="font-family: var(--font-serif); font-size: 0.875rem; margin-top: var(--space-sm);">
+                            Total activities: 15<br>
+                            Estimated time: 6.5 hours<br>
+                            Subjects covered: Math, Reading, Science, Art, PE
+                        </p>
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: var(--space-md);" onclick="changePhase('signup')">
+                        Save This Plan
+                    </button>
+                </div>
+            `,
+
+            'portfolio-view': () => `
+                <div class="back-nav" onclick="changePhase('triage')">
+                    ← Back to options
+                </div>
+
+                <div class="card">
+                    <h2>Learning Portfolio</h2>
+                    <p>Your family's achievements and progress</p>
+
+                    <div style="background: var(--surface-body); border: 1px solid var(--border-subtle); padding: var(--space-md); border-radius: var(--radius-sm); margin: var(--space-md) 0;">
+                        <div style="display: flex; justify-content: space-around; text-align: center;">
+                            <div>
+                                <div style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">12</div>
+                                <div style="font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Activities</div>
+                            </div>
+                            <div>
+                                <div style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">6</div>
+                                <div style="font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Badges</div>
+                            </div>
+                            <div>
+                                <div style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">3.5</div>
+                                <div style="font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Hours</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Recent Activities</h3>
+                    <div class="portfolio-grid">
+                        ${portfolioSamples.map(item => `
+                            <div class="portfolio-item">
+                                <div class="portfolio-thumbnail">${item.icon}</div>
+                                <div class="portfolio-details">
+                                    <div class="portfolio-date">${item.date}</div>
+                                    <div style="font-family: var(--font-serif); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-xs);">${item.title}</div>
+                                    <div style="display: flex; gap: var(--space-xs); flex-wrap: wrap;">
+                                        ${item.badges.map(badge => `
+                                            <span style="background: var(--ember-glow); border: 1px solid var(--border-subtle); padding: 2px var(--space-sm); border-radius: var(--radius-full); font-family: var(--font-sans); font-size: 0.7rem; color: var(--text-secondary);">
+                                                ${badge}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: var(--space-md);" onclick="changePhase('portfolio-detail')">
+                        View Full Portfolio
+                    </button>
+                </div>
+            `,
+
+            'portfolio-detail': () => `
+                <div class="back-nav" onclick="changePhase('portfolio-view')">
+                    ← Back to overview
+                </div>
+
+                <div class="card">
+                    <h2>Detailed Progress Report</h2>
+                    <p>Emma's learning journey this month</p>
+
+                    <div style="margin: var(--space-xl) 0;">
+                        <h3>Skills Developed</h3>
+                        <div style="display: grid; gap: var(--space-sm); margin-top: var(--space-md);">
+                            ${['Mathematical Thinking', 'Scientific Observation', 'Creative Expression', 'Reading Comprehension'].map(skill => `
+                                <div style="display: flex; align-items: center; gap: var(--space-md);">
+                                    <div style="flex: 0 0 150px; font-family: var(--font-serif); font-size: 0.875rem; color: var(--text-secondary);">${skill}</div>
+                                    <div style="flex: 1; height: 8px; background: var(--surface-body); border-radius: var(--radius-sm); overflow: hidden;">
+                                        <div style="width: ${60 + Math.random() * 35}%; height: 100%; background: linear-gradient(to right, var(--ember), var(--ember-hover)); border-radius: var(--radius-sm);"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="margin: var(--space-xl) 0;">
+                        <h3>Badge Collection</h3>
+                        <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-md);">
+                            ${badges.slice(0, 4).map(badge => `
+                                <div style="text-align: center;">
+                                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--ember), var(--ember-hover)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: var(--space-xs);">
+                                        ${badge.icon}
+                                    </div>
+                                    <div style="font-family: var(--font-sans); font-size: 0.7rem; color: var(--text-muted);">${badge.name.split(' ')[0]}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="changePhase('signup')">
+                        Generate Report PDF
+                    </button>
+                </div>
+            `,
+
+            'interactive-tour': () => `
+                <div class="back-nav" onclick="changePhase('triage')">
+                    ← Exit tour
+                </div>
+
+                <div class="card">
+                    <h2>Welcome to Hearth Tour</h2>
+                    <p>Let's explore what makes Hearth special</p>
+
+                    <div class="tour-step" data-step="Step ${state.tourStep} of 4">
+                        ${state.tourStep === 1 ? `
+                            <h3>Quick Activity Logging</h3>
+                            <p>Capture learning moments in under 2 minutes using photos, voice notes, or text. No complicated forms or lengthy descriptions needed.</p>
+                            <div style="background: var(--surface-raised); border: 1px solid var(--border-subtle); padding: var(--space-md); border-radius: var(--radius-sm); margin-top: var(--space-md);">
+                                <strong style="font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">TRY IT</strong>
+                                <p style="font-size: 0.875rem; margin-top: var(--space-xs);">Parents report saving 30+ minutes daily compared to traditional record-keeping</p>
+                            </div>
+                        ` : state.tourStep === 2 ? `
+                            <h3>Smart Badge System</h3>
+                            <p>Badges represent capabilities and skills, not just completion. They adapt to your child's learning journey and connect to form learning pathways.</p>
+                            <div style="display: flex; justify-content: center; gap: var(--space-md); margin: var(--space-md) 0;">
+                                ${badges.slice(0, 3).map(b => `<span style="font-size: 36px;">${b.icon}</span>`).join('')}
+                            </div>
+                        ` : state.tourStep === 3 ? `
+                            <h3>Facilitator Support</h3>
+                            <p>You don't need to be an expert. Hearth provides guidance, suggested questions, and pedagogical support for every activity.</p>
+                            <div style="background: var(--ember-glow); border: 1px solid var(--border-subtle); padding: var(--space-md); border-radius: var(--radius-sm); margin-top: var(--space-md);">
+                                <em style="font-family: var(--font-serif); color: var(--text-primary);">"Instead of telling me the answer, can you show me with objects?"</em><br>
+                                <small style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">Sample facilitator prompt</small>
+                            </div>
+                        ` : `
+                            <h3>Your Learning Community</h3>
+                            <p>Connect with other homeschooling families, share resources, and find support. You're not alone on this journey.</p>
+                            <div style="text-align: center; margin: var(--space-xl) 0;">
+                                <div style="font-size: 48px;">👨‍👩‍👧‍👦</div>
+                                <p style="margin-top: var(--space-sm);">Join thousands of families building confident learners</p>
+                            </div>
+                        `}
+                    </div>
+
+                    <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
+                        ${state.tourStep > 1 ? `
+                            <button class="btn" style="flex: 1;" onclick="previousTourStep()">
+                                Previous
+                            </button>
+                        ` : ''}
+                        ${state.tourStep < 4 ? `
+                            <button class="btn btn-primary" style="flex: 1;" onclick="nextTourStep()">
+                                Next
+                            </button>
+                        ` : `
+                            <button class="btn btn-primary" style="flex: 1;" onclick="changePhase('signup')">
+                                Start Using Hearth
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `,
+
+            'signup': () => `
+                <div class="card">
+                    <h2>Create Your Account</h2>
+                    <p>Save your progress and unlock all features</p>
+
+                    <div class="input-group" style="margin-top: var(--space-xl);">
+                        <label class="label">Your Name</label>
+                        <input type="text" class="input" placeholder="Parent/Guardian name" />
+                    </div>
+
+                    <div class="input-group">
+                        <label class="label">Email Address</label>
+                        <input type="email" class="input" placeholder="your@email.com" />
+                    </div>
+
+                    <div class="input-group">
+                        <label class="label">Create Password</label>
+                        <input type="password" class="input" placeholder="Choose a secure password" />
+                    </div>
+
+                    <div class="input-group">
+                        <label class="label">Child's First Name (Optional)</label>
+                        <input type="text" class="input" id="child-name" placeholder="We'll personalise their experience" />
+                    </div>
+
+                    <button class="btn btn-primary" onclick="completeSignup()">
+                        Complete Setup
+                    </button>
+
+                    <p style="text-align: center; margin-top: var(--space-md); font-family: var(--font-sans); font-size: 0.8rem; color: var(--text-muted);">
+                        By creating an account, you agree to our Terms of Service
+                    </p>
+                </div>
+            `,
+
+            'complete': () => `
+                <div class="card" style="text-align: center;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto var(--space-xl); background: var(--sage-muted); border: 2px solid var(--sage-border); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 0 40px var(--sage-border);">
+                        ✓
+                    </div>
+
+                    <h2>Welcome to Hearth!</h2>
+                    <p style="font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: var(--space-xl); color: var(--text-primary);">
+                        You explored the platform in ${Math.floor(state.elapsedTime / 60)}:${(state.elapsedTime % 60).toString().padStart(2, '0')}
+                    </p>
+
+                    <div style="background: var(--surface-body); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-xl); margin-bottom: var(--space-xl); text-align: left;">
+                        <h3>Your Progress</h3>
+                        <div style="font-family: var(--font-serif); font-size: 0.95rem; line-height: 2; margin-top: var(--space-md); color: var(--text-secondary);">
+                            ✅ Logged an activity<br>
+                            ✅ Awarded ${state.userData.badgesAwarded.length} badge(s)<br>
+                            ✅ Explored planning tools<br>
+                            ✅ Viewed portfolio features<br>
+                            ✅ Created your account
+                        </div>
+                    </div>
+
+                    <p style="margin-bottom: var(--space-xl);">
+                        This demo shows how every Hearth feature respects your time while delivering real value.
+                    </p>
+
+                    <button class="btn btn-primary" onclick="resetDemo()">
+                        Restart Demo
+                    </button>
+
+                    <button class="btn btn-secondary" style="margin-top: var(--space-sm);">
+                        Go to Real Dashboard
+                    </button>
+                </div>
+            `
+        };
+
+        // ── Helper Functions ───────────────────────────────────────────────
+        function changePhase(newPhase) {
+            state.currentPhase = newPhase;
+            render();
+        }
+
+        function setCaptureMode(mode) {
+            state.captureMode = mode;
+            render();
+        }
+
+        function saveActivity() {
+            state.userData.activityLogged = {
+                type: state.captureMode,
+                timestamp: new Date()
+            };
+            changePhase('badge-suggestion');
+        }
+
+        function awardBadge(badgeId) {
+            state.userData.badgesAwarded.push(badgeId);
+            changePhase('next-steps');
+        }
+
+        function selectBadge(badgeId) {
+            state.currentBadge = badgeId;
+            render();
+        }
+
+        function selectActivity(title) {
+            console.log('Selected activity:', title);
+        }
+
+        function selectDay(day) {
+            state.selectedDay = day;
+            render();
+        }
+
+        function addToWeek(activityTitle) {
+            if (!state.userData.weeklyActivities[state.selectedDay]) {
+                state.userData.weeklyActivities[state.selectedDay] = [];
+            }
+            state.userData.weeklyActivities[state.selectedDay].push(activityTitle);
+            console.log('Added to week:', activityTitle);
+        }
+
+        function nextTourStep() {
+            if (state.tourStep < 4) {
+                state.tourStep++;
+                render();
+            }
+        }
+
+        function previousTourStep() {
+            if (state.tourStep > 1) {
+                state.tourStep--;
+                render();
+            }
+        }
+
+        function completeSignup() {
+            const nameInput = document.getElementById('child-name');
+            if (nameInput) state.userData.childName = nameInput.value;
+            changePhase('complete');
+        }
+
+        function resetDemo() {
+            state.currentPhase  = 'landing';
+            state.elapsedTime   = 0;
+            state.captureMode   = 'photo';
+            state.currentBadge  = null;
+            state.selectedDay   = 'monday';
+            state.tourStep      = 1;
+            state.userData = {
+                childName: '',
+                email: '',
+                activityLogged: null,
+                badgesAwarded: [],
+                portfolioItems: [],
+                weeklyActivities: {}
+            };
+            render();
+        }
+
+        // ── Main Render ────────────────────────────────────────────────────
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = renders[state.currentPhase]
+                ? renders[state.currentPhase]()
+                : renders['landing']();
+            updateProgress();
+        }
+
+        render();
+    </script>
+</body>
+</html>

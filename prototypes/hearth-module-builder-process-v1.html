@@ -1,0 +1,1898 @@
+<!-- Version: 1 | Date: 2026-03-21 | Changes: First build of Process/Steps pathway. Entry screen: activity name, description, product toggle. Direct transition to shared editor (no loading screen). Deferred AI inference triggers when parent scrolls to The Learning section or first save after ≥2 steps. Inline loading indicator in Learning section. Design brief: hearth-module-builder-pathways-design-brief-v1.md. Spec: hearth-module-builder-pathways-architecture-v2.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Process Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ================================================================
+       DESIGN TOKENS — Mont Blanc Dark Coffee
+       ================================================================ */
+    :root {
+      --deep-coffee: #0F0D0B;
+      --coffee-mid: #1A1612;
+      --coffee-light: #252117;
+      --surface-elevated: #2D2621;
+      --surface-hover: #352E28;
+      --text-primary: #E8DFD4;
+      --text-secondary: #9B8B7E;
+      --text-muted: #6B5D52;
+      --ember: #D97B3A;
+      --ember-hover: #E88F4E;
+      --ember-glow: rgba(217, 123, 58, 0.15);
+      --ember-glow-strong: rgba(217, 123, 58, 0.25);
+      --sage: #4ADE80;
+      --sage-glow: rgba(74, 222, 128, 0.12);
+      --rose: #E8A0BF;
+      --blue: #7BA7CC;
+      --purple: #C084FC;
+      --font-serif: 'Crimson Text', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --border-subtle: rgba(45, 38, 33, 0.6);
+      --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--deep-coffee);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 90%, rgba(217,123,58,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 10%, rgba(217,123,58,0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 100px;
+    }
+
+    /* ================================================================
+       HEADER
+       ================================================================ */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px 8px;
+      position: sticky;
+      top: 0;
+      background: var(--deep-coffee);
+      z-index: 10;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color var(--transition);
+    }
+    .back-btn:hover { color: var(--text-primary); }
+
+    .header-title {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .header-save {
+      background: none;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .header-save:hover:not(:disabled) {
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+    .header-save:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .header-save.ready {
+      background: var(--ember);
+      border-color: var(--ember);
+      color: #fff;
+    }
+    .header-save.ready:hover {
+      background: var(--ember-hover);
+    }
+
+    /* ================================================================
+       VIEW MANAGEMENT
+       ================================================================ */
+    .view {
+      display: none;
+      animation: fadeSlideIn 250ms ease-out;
+    }
+    .view.active { display: block; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ================================================================
+       ENTRY SCREEN
+       ================================================================ */
+    .entry-intro {
+      padding: 8px 16px 20px;
+    }
+
+    .entry-intro h1 {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .entry-intro .pathway-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .entry-intro p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ================================================================
+       FORM ELEMENTS (shared)
+       ================================================================ */
+    .field {
+      margin-bottom: 20px;
+      padding: 0 16px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 10px 12px;
+      line-height: 1.5;
+      transition: border-color var(--transition);
+      resize: vertical;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+
+    textarea::placeholder,
+    input[type="text"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    select {
+      width: 100%;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 10px 12px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B8B7E' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:focus { outline: none; border-color: var(--ember); }
+
+    .settings-row {
+      display: flex;
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 20px;
+    }
+    .settings-row .field {
+      flex: 1;
+      padding: 0;
+      margin-bottom: 0;
+    }
+
+    /* Pills (single-select) */
+    .pill-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: rgba(217, 123, 58, 0.3); color: var(--text-primary); }
+    .pill.selected {
+      background: var(--ember-glow);
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+
+    /* Continue button */
+    .continue-btn {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 24px 16px 0;
+      background: var(--ember);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .continue-btn:hover { background: var(--ember-hover); }
+    .continue-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* Product toggle conditional field */
+    .conditional-field {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 300ms ease, opacity 300ms ease, margin 300ms ease;
+      margin-top: 0;
+    }
+    .conditional-field.visible {
+      max-height: 80px;
+      opacity: 1;
+      margin-top: 12px;
+    }
+
+    /* ================================================================
+       COMPLETENESS BAR
+       ================================================================ */
+    .completeness-bar {
+      margin: 0 16px 16px;
+      padding: 10px 14px;
+      background: var(--coffee-mid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .completeness-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .completeness-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .completeness-pct {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ember);
+    }
+
+    .completeness-track {
+      height: 4px;
+      background: var(--coffee-light);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .completeness-fill {
+      height: 100%;
+      background: var(--ember);
+      border-radius: 2px;
+      transition: width 400ms ease;
+    }
+
+    .completeness-fill.ready {
+      background: var(--sage);
+    }
+
+    .completeness-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ================================================================
+       SHARED EDITOR — SECTIONS
+       ================================================================ */
+    .editor-section {
+      margin-bottom: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .section-header:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .section-emoji {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .section-status {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .section-status.complete {
+      background: var(--sage-glow);
+      color: var(--sage);
+    }
+
+    .section-status.partial {
+      background: var(--ember-glow);
+      color: var(--ember);
+    }
+
+    .section-status.empty {
+      background: rgba(107, 93, 82, 0.2);
+      color: var(--text-muted);
+    }
+
+    .section-chevron {
+      color: var(--text-muted);
+      font-size: 14px;
+      transition: transform var(--transition);
+    }
+
+    .section-chevron.open {
+      transform: rotate(90deg);
+    }
+
+    .section-body {
+      display: none;
+      padding: 0 0 12px;
+    }
+
+    .section-body.open {
+      display: block;
+      animation: fadeSlideIn 200ms ease-out;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 0 16px;
+    }
+
+    /* ================================================================
+       AI SUGGESTION INDICATORS
+       ================================================================ */
+    .ai-suggested-field {
+      position: relative;
+    }
+
+    .ai-suggested-field textarea,
+    .ai-suggested-field input[type="text"] {
+      border-left: 3px solid var(--ember-glow-strong);
+    }
+
+    .ai-suggested-field textarea:focus,
+    .ai-suggested-field input[type="text"]:focus {
+      border-left-color: var(--ember);
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--ember);
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    .ai-badge::before {
+      content: '✨';
+      font-size: 10px;
+    }
+
+    /* ================================================================
+       STEP CARDS
+       ================================================================ */
+    .step-list {
+      padding: 0 16px;
+    }
+
+    .step-card {
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color var(--transition);
+    }
+
+    .step-card:focus-within {
+      border-color: rgba(217, 123, 58, 0.3);
+    }
+
+    .step-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--coffee-mid);
+      cursor: grab;
+    }
+
+    .step-number {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ember);
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ember-glow);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .step-title-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 0;
+    }
+    .step-title-input:focus { outline: none; }
+    .step-title-input::placeholder { color: var(--text-muted); }
+
+    .step-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .step-action-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 4px;
+      transition: color var(--transition);
+      line-height: 1;
+    }
+    .step-action-btn:hover { color: var(--text-primary); }
+    .step-action-btn.delete:hover { color: #ef4444; }
+
+    .step-card-body {
+      padding: 10px 12px;
+    }
+
+    .step-card-body textarea {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 0;
+      line-height: 1.5;
+      resize: none;
+      min-height: 40px;
+    }
+    .step-card-body textarea:focus { outline: none; }
+    .step-card-body textarea::placeholder { color: var(--text-muted); }
+
+    .step-say-this {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .step-say-this label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .step-say-this textarea {
+      font-style: italic;
+      font-size: 12px;
+      min-height: 30px;
+    }
+
+    /* Observation hint (AI-generated per step) */
+    .step-observation-hint {
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: var(--ember-glow);
+      border-radius: var(--radius-sm);
+      border-left: 2px solid rgba(217, 123, 58, 0.4);
+    }
+
+    .step-observation-hint p {
+      font-size: 12px;
+      font-style: italic;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .step-observation-hint .hint-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .hint-action {
+      background: none;
+      border: none;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      transition: color var(--transition);
+    }
+    .hint-action:hover { color: var(--text-primary); }
+
+    .add-step-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 2px;
+    }
+    .add-step-btn:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+      background: var(--ember-glow);
+    }
+
+    /* ================================================================
+       CAPABILITY TAGS
+       ================================================================ */
+    .capability-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px;
+    }
+
+    .cap-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .cap-tag.explicit {
+      background: var(--ember-glow);
+      border: 1px solid var(--ember);
+      color: var(--ember);
+    }
+
+    .cap-tag.suggested {
+      background: transparent;
+      border: 1px dashed rgba(217, 123, 58, 0.4);
+      color: var(--text-secondary);
+    }
+
+    .cap-tag.suggested:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+
+    .cap-tag .tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .cap-tag .dismiss {
+      font-size: 14px;
+      margin-left: 2px;
+      opacity: 0.5;
+      transition: opacity var(--transition);
+    }
+    .cap-tag:hover .dismiss { opacity: 1; }
+
+    .cap-hint {
+      padding: 8px 16px 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ================================================================
+       COHERENCE CHECK BANNER
+       ================================================================ */
+    .coherence-banner {
+      margin: 12px 16px;
+      padding: 12px 14px;
+      background: rgba(217, 123, 58, 0.08);
+      border: 1px solid rgba(217, 123, 58, 0.2);
+      border-radius: var(--radius-md);
+      display: none;
+    }
+
+    .coherence-banner.visible {
+      display: block;
+      animation: fadeSlideIn 300ms ease-out;
+    }
+
+    .coherence-banner .banner-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .coherence-banner .banner-emoji {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .coherence-banner .banner-text {
+      flex: 1;
+    }
+
+    .coherence-banner .banner-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .coherence-banner .banner-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .coherence-banner .banner-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .banner-action-btn {
+      background: none;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .banner-action-btn:hover {
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+    .banner-action-btn.dismiss-banner {
+      border: none;
+      padding-left: 0;
+    }
+
+    /* ================================================================
+       DEFERRED AI — INLINE LOADING (Process-specific)
+       ================================================================ */
+    .inline-ai-loading {
+      padding: 16px;
+      text-align: center;
+      animation: fadeSlideIn 300ms ease-out;
+    }
+
+    .inline-ai-loading .inline-loading-emoji {
+      font-size: 24px;
+      margin-bottom: 8px;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .inline-ai-loading .inline-loading-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .inline-ai-loading .inline-loading-track {
+      height: 3px;
+      background: var(--coffee-light);
+      border-radius: 2px;
+      overflow: hidden;
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    .inline-ai-loading .inline-loading-fill {
+      height: 100%;
+      background: var(--ember);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 600ms ease;
+    }
+
+    .inline-ai-loading .inline-loading-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Nudge banner for deferred AI */
+    .ai-nudge-banner {
+      margin: 0 16px 12px;
+      padding: 10px 14px;
+      background: var(--ember-glow);
+      border: 1px solid rgba(217, 123, 58, 0.2);
+      border-radius: var(--radius-md);
+      display: none;
+      animation: fadeSlideIn 300ms ease-out;
+    }
+
+    .ai-nudge-banner.visible {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-nudge-banner .nudge-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .ai-nudge-banner .nudge-text strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .ai-nudge-btn {
+      background: var(--ember);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--transition);
+    }
+    .ai-nudge-btn:hover { background: var(--ember-hover); }
+
+    /* ================================================================
+       SAVE CONFIRMATION TOAST
+       ================================================================ */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface-elevated);
+      border: 1px solid var(--sage);
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      z-index: 100;
+      opacity: 0;
+      transition: all 400ms ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ================================================================
+       RESPONSIVE
+       ================================================================ */
+    @media (max-width: 400px) {
+      .entry-intro h1 { font-size: 22px; }
+      .settings-row { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ================================================================
+         HEADER
+         ================================================================ -->
+    <div class="header" id="main-header">
+      <button class="back-btn" id="header-back" onclick="handleBack()">← Back</button>
+      <div class="header-title" id="header-title"></div>
+      <button class="header-save" id="save-btn" disabled onclick="handleSave()">Save Draft</button>
+    </div>
+
+    <!-- ================================================================
+         VIEW 1: ENTRY SCREEN
+         ================================================================ -->
+    <div class="view active" id="view-entry">
+
+      <div class="entry-intro">
+        <div class="pathway-tag">🔧 Process</div>
+        <h1>Capture what you already do</h1>
+        <p>You know how this activity goes. Write the steps — we'll reveal the learning inside them.</p>
+      </div>
+
+      <!-- Section A: What Are You Making / Doing? -->
+      <div class="field">
+        <label class="field-label">What's the activity?</label>
+        <input type="text" id="entry-activity" placeholder="e.g., Building a birdhouse" oninput="checkEntryReady()">
+        <div class="field-hint">This becomes the module title</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">In a sentence, what happens?</label>
+        <textarea id="entry-description" placeholder="e.g., We build a simple wooden birdhouse from a kit, paint it, and hang it in the garden" style="min-height: 56px;" oninput="checkEntryReady()"></textarea>
+      </div>
+
+      <!-- Section B: Quick Settings + Product Toggle -->
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select id="entry-duration">
+            <option value="15">15 minutes</option>
+            <option value="30" selected>30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="120">1–2 hours</option>
+            <option value="360">Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="entry-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'entry-setting-pills')" data-value="either">Either</button>
+            <button class="pill" onclick="selectPill(this, 'entry-setting-pills')" data-value="indoor">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'entry-setting-pills')" data-value="outdoor">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product toggle -->
+      <div class="field">
+        <label class="field-label">Is there a finished product?</label>
+        <div class="pill-group" id="entry-product-pills">
+          <button class="pill" onclick="toggleProduct(this, true)" data-value="yes">Yes</button>
+          <button class="pill selected" onclick="toggleProduct(this, false)" data-value="no">No</button>
+        </div>
+        <div class="conditional-field" id="product-field">
+          <input type="text" id="entry-product" placeholder="e.g., A painted birdhouse">
+          <div class="field-hint">Optional — helps us frame observation prompts</div>
+        </div>
+      </div>
+
+      <button class="continue-btn" id="entry-continue" disabled onclick="goToEditor()">
+        Capture the steps →
+      </button>
+    </div>
+
+    <!-- ================================================================
+         VIEW 2: SHARED EDITOR
+         ================================================================ -->
+    <div class="view" id="view-editor">
+
+      <!-- Completeness -->
+      <div class="completeness-bar" id="completeness">
+        <div class="completeness-top">
+          <span class="completeness-label">Module completeness</span>
+          <span class="completeness-pct" id="completeness-pct">0%</span>
+        </div>
+        <div class="completeness-track">
+          <div class="completeness-fill" id="completeness-fill" style="width: 0%"></div>
+        </div>
+        <div class="completeness-hint" id="completeness-hint">Add a title and steps to get started</div>
+      </div>
+
+      <!-- AI Nudge Banner (Process-specific: appears after ≥2 steps written) -->
+      <div class="ai-nudge-banner" id="ai-nudge-banner">
+        <div class="nudge-text"><strong>✨ Ready to reveal the learning?</strong> We can analyse your steps to find the understanding, capabilities, and observation hints hiding inside.</div>
+        <button class="ai-nudge-btn" onclick="triggerDeferredAI()">Analyse steps</button>
+      </div>
+
+      <!-- Coherence Check Banner -->
+      <div class="coherence-banner" id="coherence-banner">
+        <div class="banner-content">
+          <div class="banner-emoji">🤔</div>
+          <div class="banner-text">
+            <div class="banner-title">Steps and goal might not align</div>
+            <div class="banner-desc" id="coherence-desc">Your steps seem focused on a different topic than your understanding goal. Would you like to adjust either one?</div>
+            <div class="banner-actions">
+              <button class="banner-action-btn" onclick="scrollToSection('section-learning')">Review learning goal</button>
+              <button class="banner-action-btn" onclick="scrollToSection('section-steps')">Review steps</button>
+              <button class="banner-action-btn dismiss-banner" onclick="dismissCoherence()">Looks fine to me</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 1: THE BASICS ===== -->
+      <div class="editor-section" id="section-basics">
+        <div class="section-header" onclick="toggleSection('section-basics')">
+          <span class="section-emoji">📝</span>
+          <span class="section-title">The Basics</span>
+          <span class="section-status empty" id="status-basics">Empty</span>
+          <span class="section-chevron open" id="chevron-basics">›</span>
+        </div>
+        <div class="section-body open" id="body-basics">
+          <div class="field">
+            <label class="field-label">Module title</label>
+            <input type="text" id="ed-title" placeholder="e.g., Building a Birdhouse" oninput="updateCompleteness()">
+          </div>
+          <div class="field">
+            <label class="field-label">Description</label>
+            <textarea id="ed-description" placeholder="A sentence or two about what this module is" style="min-height: 48px;" oninput="updateCompleteness()"></textarea>
+          </div>
+          <div class="settings-row">
+            <div class="field">
+              <label class="field-label">Duration</label>
+              <select id="ed-duration">
+                <option value="15">15 min</option>
+                <option value="30" selected>30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">1 hour</option>
+                <option value="120">1–2 hrs</option>
+                <option value="360">Half day</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Setting</label>
+              <div class="pill-group" id="ed-setting-pills">
+                <button class="pill selected" onclick="selectPill(this, 'ed-setting-pills')">Either</button>
+                <button class="pill" onclick="selectPill(this, 'ed-setting-pills')">Indoor</button>
+                <button class="pill" onclick="selectPill(this, 'ed-setting-pills')">Outdoor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ===== SECTION 2: THE STEPS ===== -->
+      <div class="editor-section" id="section-steps">
+        <div class="section-header" onclick="toggleSection('section-steps')">
+          <span class="section-emoji">📋</span>
+          <span class="section-title">The Steps</span>
+          <span class="section-status empty" id="status-steps">Empty</span>
+          <span class="section-chevron open" id="chevron-steps">›</span>
+        </div>
+        <div class="section-body open" id="body-steps">
+          <div class="step-list" id="step-list">
+            <!-- Steps inserted dynamically -->
+          </div>
+          <div style="padding: 0 16px;">
+            <button class="add-step-btn" onclick="addStep()">+ Add a step</button>
+            <button class="add-step-btn" id="regen-hints-btn" onclick="regenerateHints()" style="margin-top: 6px; border-style: solid; border-color: rgba(217,123,58,0.2); display: none;">
+              ✨ Regenerate observation hints
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ===== SECTION 3: MATERIALS ===== -->
+      <div class="editor-section" id="section-materials">
+        <div class="section-header" onclick="toggleSection('section-materials')">
+          <span class="section-emoji">🧰</span>
+          <span class="section-title">Materials Needed</span>
+          <span class="section-status empty" id="status-materials">Optional</span>
+          <span class="section-chevron" id="chevron-materials">›</span>
+        </div>
+        <div class="section-body" id="body-materials">
+          <div class="field">
+            <label class="field-label">What do you need?</label>
+            <div id="material-list"></div>
+            <button class="add-step-btn" onclick="addMaterial()" style="margin-top: 4px;">+ Add material</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ===== SECTION 4: THE LEARNING ===== -->
+      <div class="editor-section" id="section-learning">
+        <div class="section-header" onclick="toggleSection('section-learning'); checkDeferredAIOnOpen();">
+          <span class="section-emoji">💡</span>
+          <span class="section-title">The Learning</span>
+          <span class="section-status empty" id="status-learning">Empty</span>
+          <span class="section-chevron" id="chevron-learning">›</span>
+        </div>
+        <div class="section-body" id="body-learning">
+          <!-- Inline AI loading placeholder (Process-specific) -->
+          <div class="inline-ai-loading" id="inline-ai-loading" style="display: none;">
+            <div class="inline-loading-emoji">🔧</div>
+            <div class="inline-loading-title">Analysing your steps…</div>
+            <div class="inline-loading-track">
+              <div class="inline-loading-fill" id="inline-loading-fill"></div>
+            </div>
+            <div class="inline-loading-desc">Finding the learning hidden in your process</div>
+          </div>
+          <!-- Fields (hidden during loading, shown after) -->
+          <div id="learning-fields">
+            <div class="field">
+              <label class="field-label">What are they learning?</label>
+              <div class="ai-suggested-field" id="field-understanding">
+                <textarea id="ed-understanding" placeholder="The understanding goal for this module" style="min-height: 70px;" oninput="handleFieldEdit('field-understanding'); updateCompleteness();"></textarea>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">What to watch for</label>
+              <div class="ai-suggested-field" id="field-watchfor">
+                <textarea id="ed-watchfor" placeholder="Signs that they're getting it" oninput="handleFieldEdit('field-watchfor'); updateCompleteness();"></textarea>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">If they're not getting it</label>
+              <div class="ai-suggested-field" id="field-pivot">
+                <textarea id="ed-pivot" placeholder="What to try instead" style="min-height: 48px;" oninput="handleFieldEdit('field-pivot'); updateCompleteness();"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ===== SECTION 5: CAPABILITIES ===== -->
+      <div class="editor-section" id="section-capabilities">
+        <div class="section-header" onclick="toggleSection('section-capabilities')">
+          <span class="section-emoji">🧭</span>
+          <span class="section-title">Capabilities</span>
+          <span class="section-status empty" id="status-capabilities">Empty</span>
+          <span class="section-chevron" id="chevron-capabilities">›</span>
+        </div>
+        <div class="section-body" id="body-capabilities">
+          <div class="capability-tags" id="cap-tags">
+            <!-- Populated by deferred AI -->
+          </div>
+          <div class="cap-hint" id="cap-hint">Capabilities will be suggested after step analysis</div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ===== SECTION 6: CONNECT ===== -->
+      <div class="editor-section" id="section-connect">
+        <div class="section-header" onclick="toggleSection('section-connect')">
+          <span class="section-emoji">🔗</span>
+          <span class="section-title">Connect</span>
+          <span class="section-status empty" id="status-connect">Optional</span>
+          <span class="section-chevron" id="chevron-connect">›</span>
+        </div>
+        <div class="section-body" id="body-connect">
+          <div class="field">
+            <label class="field-label">Prerequisites</label>
+            <div class="field-hint" style="margin-top: 0; margin-bottom: 8px;">Link modules that should come before this one</div>
+            <select>
+              <option value="">None — this module stands alone</option>
+              <option value="nature-walks">Nature Observation Walks</option>
+              <option value="sorting">Sorting and Classifying</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✅ Draft saved</div>
+
+  </div>
+
+  <script>
+    // ============================================================================
+    // STATE
+    // ============================================================================
+    let currentView = 'entry';
+    let deferredAIRun = false;
+    let deferredAIRunning = false;
+    let moduleData = {
+      id: 'mod_' + Date.now(),
+      createdVia: 'process',
+      title: '',
+      description: '',
+      duration: 30,
+      setting: 'either',
+      steps: [],
+      materials: [],
+      targetUnderstanding: '',
+      watchFor: '',
+      pivot: '',
+      capabilities: [],
+      hasProduct: false,
+      productDescription: '',
+      status: 'draft',
+    };
+
+    let aiSuggestions = new Set();
+
+    // Simulated deferred AI results (revealed after step analysis)
+    const SIMULATED_AI = {
+      understanding: "Planning, measuring, and building teaches us that creating something useful requires patience, precise measurement, and step-by-step thinking",
+      watchFor: "Watch for how they approach the measuring — are they estimating or trying to be precise? Do they check their work before cutting?",
+      pivot: "If they lose interest at the assembly stage, try simplifying — use pre-cut pieces and focus on the painting and design choices instead",
+      capabilities: [
+        { id: 'M5', name: 'Measurement Sense', domain: 'Mathematical', color: '#7BA7CC', confidence: 'suggested' },
+        { id: 'P2', name: 'Fine Motor', domain: 'Physical', color: '#F59E0B', confidence: 'suggested' },
+        { id: 'EF4', name: 'Planning', domain: 'Executive Function', color: '#C084FC', confidence: 'suggested' },
+        { id: 'C3', name: 'Creative Problem-Solving', domain: 'Creative', color: '#EC4899', confidence: 'suggested' },
+      ],
+      observationHints: [
+        "Notice whether they can follow the order of steps or want to jump ahead — sequencing is a thinking skill",
+        "Watch for how they handle measurement — are they estimating or being precise?",
+        "Notice their fine motor control and patience. Are they rushing or being careful?",
+        "Watch for design choices in painting — are they planning or improvising? Both are valid.",
+        "Listen for self-reflection — what are they proud of? What would they do differently?",
+      ],
+    };
+
+    // ============================================================================
+    // ENTRY SCREEN
+    // ============================================================================
+    function checkEntryReady() {
+      const activity = document.getElementById('entry-activity').value.trim();
+      const desc = document.getElementById('entry-description').value.trim();
+      const btn = document.getElementById('entry-continue');
+      btn.disabled = !(activity.length >= 3 && desc.length >= 10);
+    }
+
+    function toggleProduct(pill, hasProduct) {
+      const group = document.getElementById('entry-product-pills');
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      moduleData.hasProduct = hasProduct;
+
+      const field = document.getElementById('product-field');
+      field.classList.toggle('visible', hasProduct);
+    }
+
+    // ============================================================================
+    // PILL / CHIP INTERACTIONS
+    // ============================================================================
+    function selectPill(pill, groupId) {
+      const group = document.getElementById(groupId);
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+    }
+
+    // ============================================================================
+    // TRANSITION: ENTRY → EDITOR (no loading screen)
+    // ============================================================================
+    function goToEditor() {
+      // Capture entry data
+      moduleData.title = document.getElementById('entry-activity').value.trim();
+      moduleData.description = document.getElementById('entry-description').value.trim();
+      moduleData.duration = parseInt(document.getElementById('entry-duration').value);
+      moduleData.productDescription = document.getElementById('entry-product').value.trim();
+
+      const settingPill = document.querySelector('#entry-setting-pills .pill.selected');
+      if (settingPill) moduleData.setting = settingPill.dataset.value || settingPill.textContent.trim().toLowerCase();
+
+      // Pre-populate editor basics from entry (direct, not AI-suggested)
+      document.getElementById('ed-title').value = moduleData.title;
+      document.getElementById('ed-description').value = moduleData.description;
+      document.getElementById('ed-duration').value = moduleData.duration;
+
+      const settingText = moduleData.setting.charAt(0).toUpperCase() + moduleData.setting.slice(1);
+      document.querySelectorAll('#ed-setting-pills .pill').forEach(p => {
+        p.classList.toggle('selected', p.textContent.trim() === settingText);
+      });
+
+      // Switch to editor — Steps section open and focused, Learning section collapsed
+      switchView('editor');
+      updateCompleteness();
+
+      // Focus the add-step button after a moment
+      setTimeout(() => {
+        document.querySelector('.add-step-btn').focus();
+      }, 300);
+    }
+
+    // ============================================================================
+    // DEFERRED AI INFERENCE (Process-specific)
+    // ============================================================================
+    function getStepCountForAI() {
+      const steps = document.querySelectorAll('#step-list .step-card');
+      let validSteps = 0;
+      steps.forEach(card => {
+        const title = card.querySelector('.step-title-input')?.value.trim();
+        const instr = card.querySelector('.step-card-body > textarea')?.value.trim();
+        if (title && instr) validSteps++;
+      });
+      return validSteps;
+    }
+
+    function checkNudgeBanner() {
+      if (deferredAIRun || deferredAIRunning) return;
+      const validSteps = getStepCountForAI();
+      const banner = document.getElementById('ai-nudge-banner');
+      if (validSteps >= 2) {
+        banner.classList.add('visible');
+      } else {
+        banner.classList.remove('visible');
+      }
+    }
+
+    function checkDeferredAIOnOpen() {
+      // When Learning section is opened and AI hasn't run yet, auto-trigger if ≥2 steps
+      if (deferredAIRun || deferredAIRunning) return;
+      const validSteps = getStepCountForAI();
+      if (validSteps >= 2) {
+        setTimeout(() => {
+          const body = document.getElementById('body-learning');
+          if (body && body.classList.contains('open')) {
+            triggerDeferredAI();
+          }
+        }, 200);
+      }
+    }
+
+    function triggerDeferredAI() {
+      if (deferredAIRun || deferredAIRunning) return;
+      deferredAIRunning = true;
+
+      // Hide nudge banner
+      document.getElementById('ai-nudge-banner').classList.remove('visible');
+
+      // Ensure Learning section is open
+      const body = document.getElementById('body-learning');
+      const chevron = document.getElementById('chevron-learning');
+      if (!body.classList.contains('open')) {
+        body.classList.add('open');
+        if (chevron) chevron.classList.add('open');
+      }
+
+      // Show inline loading, hide fields
+      document.getElementById('inline-ai-loading').style.display = 'block';
+      document.getElementById('learning-fields').style.display = 'none';
+
+      // Animate progress bar
+      const fill = document.getElementById('inline-loading-fill');
+      setTimeout(() => { fill.style.width = '40%'; }, 200);
+      setTimeout(() => { fill.style.width = '70%'; }, 800);
+      setTimeout(() => { fill.style.width = '100%'; }, 1400);
+
+      // Complete after animation
+      setTimeout(() => {
+        deferredAIRun = true;
+        deferredAIRunning = false;
+
+        // Hide loading, show fields
+        document.getElementById('inline-ai-loading').style.display = 'none';
+        document.getElementById('learning-fields').style.display = 'block';
+
+        // Populate AI-suggested fields
+        document.getElementById('ed-understanding').value = SIMULATED_AI.understanding;
+        markAsSuggested('field-understanding');
+
+        document.getElementById('ed-watchfor').value = SIMULATED_AI.watchFor;
+        markAsSuggested('field-watchfor');
+
+        document.getElementById('ed-pivot').value = SIMULATED_AI.pivot;
+        markAsSuggested('field-pivot');
+
+        // Populate capabilities
+        renderCapabilities();
+
+        // Add observation hints to existing steps
+        addHintsToSteps();
+
+        // Show regenerate hints button
+        document.getElementById('regen-hints-btn').style.display = 'flex';
+
+        // Update cap hint
+        document.getElementById('cap-hint').textContent = 'Tap a suggested tag to confirm it, or ✕ to dismiss';
+
+        updateCompleteness();
+      }, 1800);
+    }
+
+    function addHintsToSteps() {
+      const steps = document.querySelectorAll('#step-list .step-card');
+      steps.forEach((card, i) => {
+        // Don't add if hint already exists
+        if (card.querySelector('.step-observation-hint')) return;
+
+        const hintText = SIMULATED_AI.observationHints[i % SIMULATED_AI.observationHints.length];
+        const hintId = card.id.replace('step-', '');
+        const hintEl = document.createElement('div');
+        hintEl.className = 'step-observation-hint';
+        hintEl.id = `hint-${hintId}`;
+        hintEl.innerHTML = `
+          <p>${hintText}</p>
+          <div class="hint-actions">
+            <button class="hint-action" onclick="editHint(${hintId})">Edit</button>
+            <button class="hint-action" onclick="removeHint(${hintId})">Remove</button>
+          </div>
+        `;
+        card.querySelector('.step-card-body').appendChild(hintEl);
+      });
+    }
+
+    // ============================================================================
+    // AI SUGGESTION DISPLAY
+    // ============================================================================
+    function markAsSuggested(fieldId) {
+      aiSuggestions.add(fieldId);
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.classList.add('ai-suggested-field');
+        let badge = field.querySelector('.ai-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'ai-badge';
+          badge.textContent = 'Suggested';
+          field.appendChild(badge);
+        }
+      }
+    }
+
+    function removeSuggestion(fieldId) {
+      aiSuggestions.delete(fieldId);
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.classList.remove('ai-suggested-field');
+        const badge = field.querySelector('.ai-badge');
+        if (badge) badge.remove();
+      }
+    }
+
+    function handleFieldEdit(fieldId) {
+      removeSuggestion(fieldId);
+      updateCompleteness();
+    }
+
+    // ============================================================================
+    // CAPABILITIES
+    // ============================================================================
+    function renderCapabilities() {
+      const container = document.getElementById('cap-tags');
+      container.innerHTML = '';
+
+      SIMULATED_AI.capabilities.forEach((cap, idx) => {
+        const tag = document.createElement('button');
+        tag.className = `cap-tag ${cap.confidence}`;
+        tag.innerHTML = `
+          <span class="tag-dot" style="background: ${cap.color}"></span>
+          <span>${cap.id}: ${cap.name}</span>
+          <span class="dismiss" onclick="event.stopPropagation(); removeCapability(${idx})">✕</span>
+        `;
+        tag.onclick = () => promoteCapability(idx);
+        container.appendChild(tag);
+      });
+
+      updateCompleteness();
+    }
+
+    function promoteCapability(idx) {
+      if (SIMULATED_AI.capabilities[idx].confidence === 'suggested') {
+        SIMULATED_AI.capabilities[idx].confidence = 'explicit';
+        renderCapabilities();
+      }
+    }
+
+    function removeCapability(idx) {
+      SIMULATED_AI.capabilities.splice(idx, 1);
+      renderCapabilities();
+    }
+
+    // ============================================================================
+    // STEP MANAGEMENT
+    // ============================================================================
+    let stepCounter = 0;
+
+    function addStep(title, instructions, hint) {
+      stepCounter++;
+      const id = stepCounter;
+      const list = document.getElementById('step-list');
+
+      const card = document.createElement('div');
+      card.className = 'step-card';
+      card.id = `step-${id}`;
+
+      const hintHTML = hint ? `
+        <div class="step-observation-hint" id="hint-${id}">
+          <p>${hint}</p>
+          <div class="hint-actions">
+            <button class="hint-action" onclick="editHint(${id})">Edit</button>
+            <button class="hint-action" onclick="removeHint(${id})">Remove</button>
+          </div>
+        </div>
+      ` : '';
+
+      card.innerHTML = `
+        <div class="step-card-header">
+          <div class="step-number" id="step-num-${id}">${getStepCount()}</div>
+          <input type="text" class="step-title-input" placeholder="Step title" value="${title || ''}" oninput="updateCompleteness(); checkNudgeBanner();">
+          <div class="step-actions">
+            <button class="step-action-btn" onclick="moveStep(${id}, -1)" title="Move up">↑</button>
+            <button class="step-action-btn" onclick="moveStep(${id}, 1)" title="Move down">↓</button>
+            <button class="step-action-btn delete" onclick="removeStep(${id})" title="Delete">✕</button>
+          </div>
+        </div>
+        <div class="step-card-body">
+          <textarea placeholder="What happens in this step?" oninput="updateCompleteness(); checkNudgeBanner();">${instructions || ''}</textarea>
+          <div class="step-say-this">
+            <label>💬 What to say (optional)</label>
+            <textarea placeholder="e.g., 'What do you notice about…'"></textarea>
+          </div>
+          ${hintHTML}
+        </div>
+      `;
+
+      list.appendChild(card);
+      renumberSteps();
+      updateCompleteness();
+      checkNudgeBanner();
+
+      // Focus the title
+      if (!title) {
+        card.querySelector('.step-title-input').focus();
+      }
+    }
+
+    function removeStep(id) {
+      const card = document.getElementById(`step-${id}`);
+      if (card) {
+        card.remove();
+        renumberSteps();
+        updateCompleteness();
+        checkNudgeBanner();
+      }
+    }
+
+    function moveStep(id, direction) {
+      const card = document.getElementById(`step-${id}`);
+      const list = document.getElementById('step-list');
+      if (!card) return;
+
+      if (direction === -1 && card.previousElementSibling) {
+        list.insertBefore(card, card.previousElementSibling);
+      } else if (direction === 1 && card.nextElementSibling) {
+        list.insertBefore(card.nextElementSibling, card);
+      }
+      renumberSteps();
+    }
+
+    function getStepCount() {
+      return document.querySelectorAll('#step-list .step-card').length + 1;
+    }
+
+    function renumberSteps() {
+      document.querySelectorAll('#step-list .step-card').forEach((card, i) => {
+        const num = card.querySelector('.step-number');
+        if (num) num.textContent = i + 1;
+      });
+    }
+
+    function removeHint(id) {
+      const hint = document.getElementById(`hint-${id}`);
+      if (hint) hint.remove();
+    }
+
+    function editHint(id) {
+      const hint = document.getElementById(`hint-${id}`);
+      if (!hint) return;
+      const p = hint.querySelector('p');
+      const text = p.textContent;
+      const input = document.createElement('textarea');
+      input.style.cssText = 'width:100%;background:none;border:none;color:var(--text-secondary);font-size:12px;font-style:italic;line-height:1.4;resize:none;padding:0;min-height:30px;';
+      input.value = text;
+      input.onblur = () => {
+        p.textContent = input.value;
+        input.replaceWith(p);
+      };
+      p.replaceWith(input);
+      input.focus();
+    }
+
+    function regenerateHints() {
+      const steps = document.querySelectorAll('#step-list .step-card');
+      if (steps.length === 0) return;
+
+      const btn = document.getElementById('regen-hints-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '✨ Generating…';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        steps.forEach((card, i) => {
+          const existingHint = card.querySelector('.step-observation-hint');
+          if (existingHint) existingHint.remove();
+
+          const hintText = SIMULATED_AI.observationHints[i % SIMULATED_AI.observationHints.length];
+          const hintId = card.id.replace('step-', '');
+          const hintEl = document.createElement('div');
+          hintEl.className = 'step-observation-hint';
+          hintEl.id = `hint-${hintId}`;
+          hintEl.innerHTML = `
+            <p>${hintText}</p>
+            <div class="hint-actions">
+              <button class="hint-action" onclick="editHint(${hintId})">Edit</button>
+              <button class="hint-action" onclick="removeHint(${hintId})">Remove</button>
+            </div>
+          `;
+          card.querySelector('.step-card-body').appendChild(hintEl);
+        });
+
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 1200);
+    }
+
+    // ============================================================================
+    // MATERIALS
+    // ============================================================================
+    let materialCounter = 0;
+
+    function addMaterial() {
+      materialCounter++;
+      const id = materialCounter;
+      const list = document.getElementById('material-list');
+
+      const row = document.createElement('div');
+      row.id = `material-${id}`;
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+      row.innerHTML = `
+        <input type="text" placeholder="e.g., Hammer and nails" style="flex:1;" oninput="updateCompleteness()">
+        <input type="text" placeholder="Alternative" style="flex:0.6;font-size:12px;">
+        <button onclick="document.getElementById('material-${id}').remove(); updateCompleteness();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;">✕</button>
+      `;
+      list.appendChild(row);
+      row.querySelector('input').focus();
+    }
+
+    // ============================================================================
+    // SECTION EXPAND/COLLAPSE
+    // ============================================================================
+    function toggleSection(sectionId) {
+      const body = document.getElementById(`body-${sectionId.replace('section-', '')}`);
+      const chevron = document.getElementById(`chevron-${sectionId.replace('section-', '')}`);
+      if (!body) return;
+
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      if (chevron) chevron.classList.toggle('open', !isOpen);
+    }
+
+    function scrollToSection(sectionId) {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const sectionKey = sectionId.replace('section-', '');
+        const body = document.getElementById(`body-${sectionKey}`);
+        const chevron = document.getElementById(`chevron-${sectionKey}`);
+        if (body && !body.classList.contains('open')) {
+          body.classList.add('open');
+          if (chevron) chevron.classList.add('open');
+        }
+      }
+    }
+
+    // ============================================================================
+    // COMPLETENESS TRACKING
+    // ============================================================================
+    function updateCompleteness() {
+      let score = 0;
+
+      const title = document.getElementById('ed-title')?.value.trim();
+      if (title && title.length > 0) score += 20;
+
+      const desc = document.getElementById('ed-description')?.value.trim();
+      if (desc && desc.length > 0) score += 10;
+
+      const steps = document.querySelectorAll('#step-list .step-card');
+      let hasValidStep = false;
+      steps.forEach(card => {
+        const stepTitle = card.querySelector('.step-title-input')?.value.trim();
+        const stepInstr = card.querySelector('.step-card-body > textarea')?.value.trim();
+        if (stepTitle && stepInstr) hasValidStep = true;
+      });
+      if (hasValidStep) score += 20;
+
+      const understanding = document.getElementById('ed-understanding')?.value.trim();
+      if (understanding && understanding.length > 0) score += 20;
+
+      const watchFor = document.getElementById('ed-watchfor')?.value.trim();
+      if (watchFor && watchFor.length > 0) score += 15;
+
+      const hasCap = SIMULATED_AI.capabilities.length > 0 && deferredAIRun;
+      if (hasCap) score += 15;
+
+      // Update UI
+      const pct = document.getElementById('completeness-pct');
+      const fill = document.getElementById('completeness-fill');
+      const hint = document.getElementById('completeness-hint');
+      const saveBtn = document.getElementById('save-btn');
+
+      pct.textContent = score + '%';
+      fill.style.width = score + '%';
+
+      if (score >= 60) {
+        fill.classList.add('ready');
+        saveBtn.disabled = false;
+        saveBtn.classList.add('ready');
+        saveBtn.textContent = 'Save';
+        hint.textContent = 'Ready to save';
+      } else {
+        fill.classList.remove('ready');
+        saveBtn.disabled = true;
+        saveBtn.classList.remove('ready');
+        saveBtn.textContent = 'Save Draft';
+
+        if (!title) hint.textContent = 'Add a title to get started';
+        else if (!hasValidStep) hint.textContent = 'Add at least one step with instructions';
+        else if (!understanding) hint.textContent = 'Analyse your steps to reveal the learning';
+        else hint.textContent = 'Keep going — almost there';
+      }
+
+      // Update section statuses
+      updateSectionStatus('basics', (title ? 1 : 0) + (desc ? 1 : 0), 2);
+      updateSectionStatus('steps', hasValidStep ? 1 : 0, 1);
+      updateSectionStatus('learning', (understanding ? 1 : 0) + (watchFor ? 1 : 0), 2);
+      updateSectionStatus('capabilities', hasCap ? 1 : 0, 1);
+
+      checkCoherence();
+    }
+
+    function updateSectionStatus(key, filled, total) {
+      const el = document.getElementById(`status-${key}`);
+      if (!el) return;
+
+      if (filled >= total) {
+        el.className = 'section-status complete';
+        el.textContent = 'Done';
+      } else if (filled > 0) {
+        el.className = 'section-status partial';
+        el.textContent = `${filled}/${total}`;
+      } else {
+        el.className = 'section-status empty';
+        el.textContent = key === 'materials' || key === 'connect' ? 'Optional' : 'Empty';
+      }
+    }
+
+    // ============================================================================
+    // COHERENCE CHECK (simulated)
+    // ============================================================================
+    let coherenceDismissed = false;
+
+    function checkCoherence() {
+      if (coherenceDismissed) return;
+
+      const understanding = (document.getElementById('ed-understanding')?.value || '').toLowerCase();
+      const steps = document.querySelectorAll('#step-list .step-card');
+
+      if (steps.length < 2 || understanding.length < 10) {
+        document.getElementById('coherence-banner').classList.remove('visible');
+        return;
+      }
+
+      let stepText = '';
+      steps.forEach(card => {
+        stepText += ' ' + (card.querySelector('.step-title-input')?.value || '');
+        stepText += ' ' + (card.querySelector('.step-card-body > textarea')?.value || '');
+      });
+      stepText = stepText.toLowerCase();
+
+      const understandingWords = understanding.split(/\s+/).filter(w => w.length > 4);
+      const matchCount = understandingWords.filter(w => stepText.includes(w)).length;
+      const matchRatio = understandingWords.length > 0 ? matchCount / understandingWords.length : 1;
+
+      if (matchRatio < 0.15 && stepText.length > 30) {
+        document.getElementById('coherence-banner').classList.add('visible');
+      } else {
+        document.getElementById('coherence-banner').classList.remove('visible');
+      }
+    }
+
+    function dismissCoherence() {
+      coherenceDismissed = true;
+      document.getElementById('coherence-banner').classList.remove('visible');
+    }
+
+    // ============================================================================
+    // NAVIGATION
+    // ============================================================================
+    function switchView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(`view-${view}`).classList.add('active');
+      currentView = view;
+      window.scrollTo(0, 0);
+
+      const saveBtn = document.getElementById('save-btn');
+      const headerTitle = document.getElementById('header-title');
+
+      if (view === 'entry') {
+        saveBtn.style.display = 'none';
+        headerTitle.textContent = '';
+      } else if (view === 'editor') {
+        saveBtn.style.display = 'inline-block';
+        headerTitle.textContent = 'Process';
+      }
+    }
+
+    function handleBack() {
+      if (currentView === 'editor') {
+        if (confirm('Go back to the entry screen? Your editor progress will be preserved.')) {
+          switchView('entry');
+        }
+      } else {
+        history.back();
+      }
+    }
+
+    // ============================================================================
+    // SAVE
+    // ============================================================================
+    function handleSave() {
+      moduleData.title = document.getElementById('ed-title').value.trim();
+      moduleData.description = document.getElementById('ed-description').value.trim();
+      moduleData.targetUnderstanding = document.getElementById('ed-understanding').value.trim();
+      moduleData.watchFor = document.getElementById('ed-watchfor').value.trim();
+      moduleData.pivot = document.getElementById('ed-pivot').value.trim();
+      moduleData.capabilities = SIMULATED_AI.capabilities.map(c => ({
+        threadId: c.id,
+        name: c.name,
+        confidence: c.confidence,
+      }));
+
+      moduleData.steps = [];
+      document.querySelectorAll('#step-list .step-card').forEach(card => {
+        moduleData.steps.push({
+          title: card.querySelector('.step-title-input')?.value.trim() || '',
+          instructions: card.querySelector('.step-card-body > textarea')?.value.trim() || '',
+          sayThis: card.querySelectorAll('.step-card-body textarea')[1]?.value.trim() || '',
+          observationHint: card.querySelector('.step-observation-hint p')?.textContent.trim() || '',
+        });
+      });
+
+      moduleData.status = 'draft';
+      moduleData.updatedAt = new Date().toISOString();
+
+      console.log('Module saved:', moduleData);
+
+      // If AI hasn't run yet, trigger on save (if ≥2 steps)
+      if (!deferredAIRun && getStepCountForAI() >= 2) {
+        triggerDeferredAI();
+      }
+
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ============================================================================
+    // INIT — pre-populate demo data
+    // ============================================================================
+    document.getElementById('save-btn').style.display = 'none';
+
+    function loadDemoData() {
+      document.getElementById('entry-activity').value = 'Building a birdhouse';
+      document.getElementById('entry-description').value = 'We build a simple wooden birdhouse from a kit, paint it, and hang it in the garden';
+      checkEntryReady();
+    }
+
+    loadDemoData();
+  </script>
+</body>
+</html>

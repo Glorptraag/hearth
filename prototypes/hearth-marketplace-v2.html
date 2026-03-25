@@ -1,0 +1,2182 @@
+<!-- Version: 2 | Date: 2026-03-19 | Changes: Canonical token conformance pass.
+     - Renamed surface variables to --surface-body/panel/raised/hover
+     - --border changed from #2D2621 (solid hex) to rgba(217,123,58,0.15) (ember-tinted)
+     - --border-subtle changed from rgba(255,255,255,0.06) (white-tinted) to rgba(217,123,58,0.1) (ember-tinted)
+     - Added --border-medium: rgba(217,123,58,0.2)
+     - Added full shadow/transition/spacing/radius token set
+     - .featured-action and .pack-action: canonical ghost button (transparent bg, ember border, --radius-sm, sans 0.8rem 600, padding 8px 14px)
+     - .filter-btn: canonical secondary button pattern (--surface-raised bg, --border-subtle border, --radius-md)
+     - .browse-tab: updated to use canonical surface tokens
+     - .pack-card and .featured-card: canonical card anatomy (--surface-panel bg, --border-subtle border, shadow-soft, hover translateY(-2px) + border-medium + shadow-warm + ember top-line)
+     - .modal-content: canonical modal (--surface-panel bg, --radius-xl on desktop, backdrop rgba(0,0,0,0.6))
+     - .modal-cta.add-cta: ghost button pattern
+     - .modal-close: 44x44px tap target per 5-minute rule
+     - .toast: canonical toast (--surface-raised, --border-subtle, --shadow-medium, success sage left-border)
+     - Replaced hardcoded px font sizes (9px–56px) with canonical type scale (0.7rem–1.5rem)
+     - Replaced hardcoded border-radius values (3px, 4px, 20px) with canonical tokens
+     - Replaced hardcoded transition (0.2s ease, 0.3s) with --transition-quick/--transition-gentle
+     - .page-title: weight 700 correct (display/brand); .featured-title: corrected to weight 600 (card title)
+     - .section-label: now sans (overline/label role); .pack-title: confirmed serif 1.1rem 600
+     - All JS logic, filter, sort, purchase flow, toast notifications preserved intact
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth — Content Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================================
+           HEARTH MARKETPLACE — CONTENT DISCOVERY & LIBRARY CURATION
+           Mont Blanc Dark Coffee Aesthetic — Design System v2 (Canonical Tokens)
+           ============================================================================ */
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            /* ── Canonical Surface Tokens ── */
+            --surface-body:    #0F0D0B;
+            --surface-panel:   #1A1612;
+            --surface-raised:  #252117;
+            --surface-hover:   #2D2621;
+
+            /* ── Text Hierarchy ── */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* ── Ember ── */
+            --ember:        #D97B3A;
+            --ember-hover:  #E88F4E;
+            --ember-glow:   rgba(217, 123, 58, 0.15);
+            --ember-strong: rgba(217, 123, 58, 0.25);
+
+            /* ── Sage ── */
+            --sage:         #4ADE80;
+            --sage-muted:   #22C55E;
+
+            /* ── Borders (ember-tinted — canonical) ── */
+            --border-subtle: rgba(217, 123, 58, 0.1);
+            --border-medium: rgba(217, 123, 58, 0.2);
+
+            /* ── Shadows ── */
+            --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:   0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* ── Subject Colors ── */
+            --english:       #60A5FA;
+            --english-muted: rgba(96, 165, 250, 0.12);
+            --english-border: rgba(96, 165, 250, 0.3);
+
+            --maths:         #D97B3A;
+            --maths-muted:   rgba(217, 123, 58, 0.12);
+            --maths-border:  rgba(217, 123, 58, 0.3);
+
+            --science:       #4ADE80;
+            --science-muted: rgba(74, 222, 128, 0.12);
+            --science-border: rgba(74, 222, 128, 0.3);
+
+            --hass:          #A78BFA;
+            --hass-muted:    rgba(167, 139, 250, 0.12);
+            --hass-border:   rgba(167, 139, 250, 0.3);
+
+            --hpe:           #FB7185;
+            --hpe-muted:     rgba(251, 113, 133, 0.12);
+            --hpe-border:    rgba(251, 113, 133, 0.3);
+
+            /* ── Typography ── */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Spacing ── */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+            --space-4xl: 96px;
+
+            /* ── Border Radius ── */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* ── Transitions ── */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Atmospheric background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 20%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 80%, rgba(217, 123, 58, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Layout Shell ── */
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: var(--space-lg);
+        }
+
+        /* ── Top Nav Bar ── */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) 0;
+            margin-bottom: var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            transition: color var(--transition-quick);
+            cursor: pointer;
+        }
+        .nav-back:hover { color: var(--ember); }
+        .nav-back svg { width: 16px; height: 16px; }
+
+        .nav-library-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+        }
+        .nav-library-link:hover { color: var(--ember); border-color: var(--border-medium); }
+        .nav-library-link svg { width: 14px; height: 14px; }
+        .library-count {
+            background: var(--ember);
+            color: var(--text-inverse);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: var(--radius-full);
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            margin-bottom: var(--space-xl);
+        }
+
+        .page-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.75rem, 4vw, 2.25rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-family: var(--font-serif);
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        /* ── Family Fit Suggestion ── */
+        .family-fit {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            margin-bottom: var(--space-xl);
+            flex-wrap: wrap;
+        }
+
+        .family-fit-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .family-fit-text {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            flex: 1;
+            min-width: 200px;
+        }
+        .family-fit-text strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .family-fit-pips {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .fit-pip {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-full);
+            border: 1px solid;
+        }
+        .fit-pip .pip-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .fit-pip.science  { color: var(--science); background: var(--science-muted); border-color: var(--science-border); }
+        .fit-pip.science .pip-dot { background: var(--science); }
+        .fit-pip.hpe      { color: var(--hpe); background: var(--hpe-muted); border-color: var(--hpe-border); }
+        .fit-pip.hpe .pip-dot { background: var(--hpe); }
+        .fit-pip.hass     { color: var(--hass); background: var(--hass-muted); border-color: var(--hass-border); }
+        .fit-pip.hass .pip-dot { background: var(--hass); }
+
+        /* ── Featured Section ── */
+        .section-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        .featured-scroll {
+            display: flex;
+            gap: var(--space-lg);
+            overflow-x: auto;
+            padding-bottom: var(--space-md);
+            margin-bottom: var(--space-2xl);
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .featured-scroll::-webkit-scrollbar { height: 4px; }
+        .featured-scroll::-webkit-scrollbar-track { background: transparent; }
+        .featured-scroll::-webkit-scrollbar-thumb { background: var(--surface-hover); border-radius: 2px; }
+
+        /* ── Featured Pack Card — canonical card anatomy ── */
+        .featured-card {
+            flex: 0 0 400px;
+            min-width: 320px;
+            scroll-snap-align: start;
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition-gentle);
+            position: relative;
+        }
+        /* Ember top-line — Hearth signature */
+        .featured-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+            z-index: 1;
+        }
+        .featured-card:hover::before { opacity: 1; }
+        .featured-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .featured-hero {
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .featured-hero.nature  { background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.03) 100%); }
+        .featured-hero.kitchen { background: linear-gradient(135deg, rgba(217, 123, 58, 0.15) 0%, rgba(217, 123, 58, 0.03) 100%); }
+        .featured-hero.rockets { background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(167, 139, 250, 0.08) 100%); }
+
+        .featured-badge {
+            position: absolute;
+            top: var(--space-md);
+            left: var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            background: rgba(15, 13, 11, 0.7);
+            backdrop-filter: blur(8px);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+        }
+        .featured-badge.staff-pick { color: var(--ember); border-color: rgba(217,123,58,0.3); }
+        .featured-badge.new        { color: var(--science); border-color: rgba(74,222,128,0.3); }
+        .featured-badge.specialist { color: var(--hass); border-color: rgba(167,139,250,0.3); }
+
+        .featured-body {
+            padding: var(--space-lg);
+        }
+
+        .featured-subjects {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        /* ── Subject Chip — canonical pill ── */
+        .subject-chip {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            border: 1px solid;
+        }
+        .subject-chip.english { color: var(--english); background: var(--english-muted); border-color: var(--english-border); }
+        .subject-chip.maths   { color: var(--maths); background: var(--maths-muted); border-color: var(--maths-border); }
+        .subject-chip.science { color: var(--science); background: var(--science-muted); border-color: var(--science-border); }
+        .subject-chip.hass    { color: var(--hass); background: var(--hass-muted); border-color: var(--hass-border); }
+        .subject-chip.hpe     { color: var(--hpe); background: var(--hpe-muted); border-color: var(--hpe-border); }
+
+        .featured-title {
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
+            font-weight: 600;
+            line-height: 1.25;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .featured-desc {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: var(--space-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .featured-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+        }
+
+        .featured-meta-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .meta-sep { color: var(--border-subtle); }
+
+        /* ── Ghost Button — canonical pattern ── */
+        .featured-action {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--ember);
+            color: var(--ember);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .featured-action:hover {
+            background: var(--ember-glow);
+        }
+        .featured-action.in-library {
+            border-color: var(--border-subtle);
+            color: var(--text-muted);
+            cursor: default;
+        }
+        .featured-action.in-library:hover {
+            background: transparent;
+            color: var(--text-muted);
+        }
+        /* Purchase = primary button (solid ember) */
+        .featured-action.has-price,
+        .featured-action.purchase {
+            background: var(--ember);
+            color: var(--text-inverse);
+            border-color: var(--ember);
+        }
+        .featured-action.has-price:hover,
+        .featured-action.purchase:hover {
+            background: var(--ember-hover);
+            border-color: var(--ember-hover);
+        }
+
+        .creator-line {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+        .creator-avatar {
+            width: 18px;
+            height: 18px;
+            border-radius: var(--radius-full);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+        }
+        .creator-verified {
+            color: var(--science);
+            font-size: 0.7rem;
+        }
+
+        /* ── Filter + Sort Bar ── */
+        .browse-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+            flex-wrap: wrap;
+        }
+
+        /* Browse type tabs */
+        .browse-tab {
+            padding: var(--space-sm) var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            min-height: 44px;
+        }
+        .browse-tab:hover {
+            background: var(--surface-raised);
+            color: var(--text-primary);
+        }
+        .browse-tab.active {
+            background: var(--surface-raised);
+            border-color: var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .filter-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .filter-dropdown {
+            position: relative;
+        }
+
+        /* ── Secondary Button (filter-btn) — canonical pattern ── */
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            background: var(--surface-raised);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            min-height: 44px;
+        }
+        .filter-btn:hover {
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+            background: var(--surface-hover);
+        }
+        .filter-btn.active-filter { border-color: var(--ember); color: var(--ember); }
+        .filter-btn svg { width: 12px; height: 12px; }
+
+        .filter-dropdown-menu {
+            position: absolute;
+            top: calc(100% + var(--space-xs));
+            left: 0;
+            min-width: 180px;
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm);
+            z-index: 50;
+            box-shadow: var(--shadow-medium);
+            display: none;
+        }
+        .filter-dropdown-menu.open { display: block; }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .filter-option:hover { background: var(--surface-raised); color: var(--text-primary); }
+        .filter-option.selected { color: var(--text-primary); }
+        .filter-option .opt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .filter-option .opt-check {
+            width: 14px; height: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem;
+            color: transparent;
+            transition: all var(--transition-quick);
+        }
+        .filter-option.selected .opt-check {
+            background: var(--ember);
+            border-color: var(--ember);
+            color: var(--text-inverse);
+        }
+
+        .sort-control {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .sort-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .sort-select {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-sm) var(--space-md);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .sort-select:hover { border-color: var(--border-medium); color: var(--text-primary); }
+        .sort-select option { background: var(--surface-panel); color: var(--text-primary); }
+
+        .results-count {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-lg);
+        }
+        .results-count strong { color: var(--text-primary); font-weight: 600; }
+
+        /* ── Content Grid ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-lg);
+        }
+        @media (max-width: 1100px) { .content-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px)  { .content-grid { grid-template-columns: 1fr; } }
+
+        /* ── Pack Card — canonical card anatomy ── */
+        .pack-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition-gentle);
+            position: relative;
+        }
+        /* Ember top-line */
+        .pack-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+            z-index: 1;
+        }
+        .pack-card:hover::before { opacity: 1; }
+        .pack-card:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .pack-card-hero {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+        }
+        .pack-card-hero.science-tint { background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%); }
+        .pack-card-hero.english-tint { background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, transparent 100%); }
+        .pack-card-hero.maths-tint   { background: linear-gradient(135deg, rgba(217, 123, 58, 0.1) 0%, transparent 100%); }
+        .pack-card-hero.hass-tint    { background: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, transparent 100%); }
+        .pack-card-hero.hpe-tint     { background: linear-gradient(135deg, rgba(251, 113, 133, 0.1) 0%, transparent 100%); }
+        .pack-card-hero.multi-tint   { background: linear-gradient(135deg, rgba(217, 123, 58, 0.08) 0%, rgba(167, 139, 250, 0.06) 50%, rgba(74, 222, 128, 0.06) 100%); }
+
+        .pack-type-badge {
+            position: absolute;
+            top: var(--space-sm);
+            left: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            background: rgba(15, 13, 11, 0.6);
+            backdrop-filter: blur(4px);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .pack-card-body {
+            padding: var(--space-md) var(--space-lg) var(--space-lg);
+        }
+
+        .pack-subjects-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .pack-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .pack-desc {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: var(--space-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .pack-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+            flex-wrap: wrap;
+        }
+
+        .pack-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+        }
+
+        .pack-age {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Pack Action — canonical ghost button ── */
+        .pack-action {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--ember);
+            color: var(--ember);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .pack-action:hover { background: var(--ember-glow); }
+
+        /* In Library state */
+        .pack-card.in-library .pack-action {
+            border-color: var(--border-subtle);
+            color: var(--text-muted);
+            cursor: default;
+            font-weight: 500;
+        }
+        .pack-card.in-library .pack-action:hover { background: transparent; color: var(--text-muted); }
+        .pack-card.in-library { opacity: 0.65; }
+        .pack-card.in-library:hover { opacity: 0.8; }
+
+        /* Purchase = primary button */
+        .pack-action.purchase {
+            background: var(--ember);
+            color: var(--text-inverse);
+            border-color: var(--ember);
+        }
+        .pack-action.purchase:hover { background: var(--ember-hover); border-color: var(--ember-hover); }
+
+        .pack-card .creator-line { margin-bottom: 0; }
+
+        /* ── Standalone Module Card ── */
+        .module-standalone {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: var(--space-lg);
+            cursor: pointer;
+            transition: all var(--transition-gentle);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Subject top-line (always visible, not on hover) */
+        .module-standalone::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            opacity: 0.7;
+        }
+        .module-standalone[data-subject="english"]::before { background: var(--english); }
+        .module-standalone[data-subject="maths"]::before   { background: var(--maths); }
+        .module-standalone[data-subject="science"]::before { background: var(--science); }
+        .module-standalone[data-subject="hass"]::before    { background: var(--hass); }
+        .module-standalone[data-subject="hpe"]::before     { background: var(--hpe); }
+
+        .module-standalone:hover {
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .module-standalone .standalone-label {
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* ── Pack Detail Modal — canonical modal overlay ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+        .modal-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+        @media (min-width: 768px) {
+            .modal-overlay { align-items: center; }
+        }
+
+        .modal-content {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            width: 100%;
+            max-width: 680px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform var(--transition-gentle);
+            box-shadow: var(--shadow-warm);
+        }
+        .modal-overlay.visible .modal-content { transform: translateY(0); }
+
+        @media (min-width: 768px) {
+            .modal-content {
+                border-radius: var(--radius-xl);
+                max-height: 85vh;
+            }
+        }
+
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--surface-hover); border-radius: var(--radius-sm); }
+
+        .modal-hero {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            position: relative;
+        }
+
+        /* ── Modal close — 44px tap target ── */
+        .modal-close {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 44px; height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
+            background: rgba(15, 13, 11, 0.6);
+            backdrop-filter: blur(4px);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            z-index: 2;
+        }
+        .modal-close:hover { border-color: var(--ember); color: var(--ember); }
+        .modal-close svg { width: 14px; height: 14px; }
+
+        .modal-body {
+            padding: var(--space-lg);
+        }
+
+        .modal-subjects {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .modal-desc {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--space-lg);
+        }
+
+        .modal-meta-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+        .modal-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        .modal-meta-item strong { color: var(--text-secondary); font-weight: 600; }
+
+        .modal-creator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: var(--space-lg);
+        }
+        .modal-creator-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .modal-creator-info { flex: 1; }
+        .modal-creator-name {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .modal-creator-title {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Module list in modal */
+        .modal-section-title {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        .module-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .module-list-item {
+            display: flex;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            transition: border-color var(--transition-quick);
+        }
+        .module-list-item:hover { border-color: var(--border-medium); }
+
+        .module-list-num {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .module-list-content { flex: 1; }
+
+        .module-list-title {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .module-list-desc {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .module-list-meta {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .module-list-meta span {
+            padding: 2px var(--space-sm);
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+        }
+
+        .module-list-item.locked .module-list-num { opacity: 0.5; }
+        .module-list-item.locked .module-list-title::after { content: ' 🔗'; font-size: 0.7rem; }
+
+        /* Prereq suggestion */
+        .prereq-notice {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            background: rgba(251, 191, 36, 0.06);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+            font-family: var(--font-serif);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .prereq-notice-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+        .prereq-link {
+            color: var(--ember);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .prereq-link:hover { text-decoration: underline; }
+
+        /* Modal footer */
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            padding: var(--space-lg);
+            border-top: 1px solid var(--border-subtle);
+            background: var(--surface-body);
+            position: sticky;
+            bottom: 0;
+        }
+
+        .modal-footer-info {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .modal-footer-price {
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .modal-footer-included {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Modal CTAs */
+        .modal-cta {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            white-space: nowrap;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+        }
+        /* add-cta = ghost button */
+        .modal-cta.add-cta {
+            border: 1px solid var(--ember);
+            color: var(--ember);
+            background: transparent;
+        }
+        .modal-cta.add-cta:hover { background: var(--ember-glow); }
+        /* purchase-cta = primary button */
+        .modal-cta.purchase-cta {
+            border: 1px solid var(--ember);
+            background: var(--ember);
+            color: var(--text-inverse);
+        }
+        .modal-cta.purchase-cta:hover { background: var(--ember-hover); border-color: var(--ember-hover); }
+        /* in-library = disabled ghost */
+        .modal-cta.in-library-cta {
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            background: transparent;
+            cursor: default;
+        }
+
+        /* ── Mobile filter toggle ── */
+        .filter-toggle-mobile {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: var(--space-md);
+        }
+        .filter-toggle-mobile svg { width: 14px; height: 14px; color: var(--text-secondary); }
+
+        @media (max-width: 768px) {
+            .filter-toggle-mobile { display: flex; }
+            .browse-controls.collapsed { display: none; }
+            .browse-controls { flex-direction: column; align-items: stretch; }
+            .filter-sep { display: none; }
+            .sort-control { margin-left: 0; }
+            .featured-card { flex: 0 0 85vw; min-width: 280px; }
+        }
+
+        /* ── Stagger animations ── */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeSlideIn 0.4s ease forwards;
+        }
+        @keyframes fadeSlideIn { to { opacity: 1; transform: translateY(0); } }
+        .d1  { animation-delay: 0.05s; }
+        .d2  { animation-delay: 0.1s; }
+        .d3  { animation-delay: 0.15s; }
+        .d4  { animation-delay: 0.2s; }
+        .d5  { animation-delay: 0.25s; }
+        .d6  { animation-delay: 0.3s; }
+        .d7  { animation-delay: 0.35s; }
+        .d8  { animation-delay: 0.4s; }
+        .d9  { animation-delay: 0.45s; }
+        .d10 { animation-delay: 0.5s; }
+        .d11 { animation-delay: 0.55s; }
+        .d12 { animation-delay: 0.6s; }
+
+        /* ── Toast — canonical pattern ── */
+        .toast {
+            position: fixed;
+            bottom: var(--space-xl);
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--sage);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            z-index: 200;
+            box-shadow: var(--shadow-medium);
+            transition: transform var(--transition-gentle);
+            pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+
+        <!-- ── Top Nav ── -->
+        <nav class="top-nav animate-in d1">
+            <a class="nav-back" onclick="history.back()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                Dashboard
+            </a>
+            <button class="nav-library-link" title="View your content library">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                My Library
+                <span class="library-count">7</span>
+            </button>
+        </nav>
+
+        <!-- ── Header ── -->
+        <header class="page-header animate-in d2">
+            <h1 class="page-title">📚 Browse Content</h1>
+            <p class="page-subtitle">Curate your family's learning library</p>
+        </header>
+
+        <!-- ── Family Fit Suggestion ── -->
+        <div class="family-fit animate-in d3">
+            <span class="family-fit-icon">🧭</span>
+            <div class="family-fit-text">
+                <strong>Suggested for your family</strong> — Your learners (ages 5–8) could use more coverage in these areas:
+            </div>
+            <div class="family-fit-pips">
+                <span class="fit-pip science"><span class="pip-dot"></span>Science</span>
+                <span class="fit-pip hpe"><span class="pip-dot"></span>HPE</span>
+            </div>
+        </div>
+
+        <!-- ── Featured / Editor's Picks ── -->
+        <div class="animate-in d4">
+            <div class="section-label">✦ Editor's Picks</div>
+            <div class="featured-scroll">
+
+                <!-- Featured Pack 1 -->
+                <div class="featured-card" onclick="openModal('nature')">
+                    <div class="featured-hero nature">
+                        <span class="featured-badge staff-pick">✦ Staff Pick</span>
+                        🌿
+                    </div>
+                    <div class="featured-body">
+                        <div class="featured-subjects">
+                            <span class="subject-chip science">Science</span>
+                            <span class="subject-chip english">English</span>
+                        </div>
+                        <div class="creator-line">
+                            <span class="creator-avatar">🧑‍🔬</span>
+                            Dr. Sarah Chen · Wildlife Educator
+                            <span class="creator-verified">✓</span>
+                        </div>
+                        <div class="featured-title">Little Nature Scientists</div>
+                        <div class="featured-desc">Five modules of outdoor observation, pattern recognition, and scientific thinking. Designed for backyards, parks, and bush walks.</div>
+                        <div class="featured-meta">
+                            <div class="featured-meta-left">
+                                5 modules <span class="meta-sep">·</span> Ages 5–7 <span class="meta-sep">·</span> 2+ weeks
+                            </div>
+                            <button class="featured-action" onclick="event.stopPropagation(); addToLibrary(this, 'Little Nature Scientists')">Add to Library</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Pack 2 -->
+                <div class="featured-card" onclick="openModal('rockets')">
+                    <div class="featured-hero rockets">
+                        <span class="featured-badge specialist">Specialist</span>
+                        🚀
+                    </div>
+                    <div class="featured-body">
+                        <div class="featured-subjects">
+                            <span class="subject-chip science">Science</span>
+                            <span class="subject-chip maths">Maths</span>
+                        </div>
+                        <div class="creator-line">
+                            <span class="creator-avatar">👨‍🚀</span>
+                            James Whitmore · Aerospace Engineer
+                            <span class="creator-verified">✓</span>
+                        </div>
+                        <div class="featured-title">Backyard Rocketry</div>
+                        <div class="featured-desc">Build real rockets with household materials. Covers thrust, drag, trajectory maths, and the engineering design cycle.</div>
+                        <div class="featured-meta">
+                            <div class="featured-meta-left">
+                                4 modules <span class="meta-sep">·</span> Ages 7–10 <span class="meta-sep">·</span> 3+ weeks
+                            </div>
+                            <button class="featured-action purchase" onclick="event.stopPropagation(); showToast('Opening purchase flow…')">$14.99</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Pack 3 -->
+                <div class="featured-card" onclick="openModal('kitchen')">
+                    <div class="featured-hero kitchen">
+                        <span class="featured-badge new">New</span>
+                        🍞
+                    </div>
+                    <div class="featured-body">
+                        <div class="featured-subjects">
+                            <span class="subject-chip science">Science</span>
+                            <span class="subject-chip maths">Maths</span>
+                        </div>
+                        <div class="creator-line">
+                            <span class="creator-avatar">👩‍🍳</span>
+                            Hearth Team
+                        </div>
+                        <div class="featured-title">Kitchen Explorers</div>
+                        <div class="featured-desc">Chemistry through cooking, fractions through measuring, and biology through fermentation. Learning happens at the bench.</div>
+                        <div class="featured-meta">
+                            <div class="featured-meta-left">
+                                4 modules <span class="meta-sep">·</span> Ages 5–10 <span class="meta-sep">·</span> 2+ weeks
+                            </div>
+                            <button class="featured-action" onclick="event.stopPropagation(); addToLibrary(this, 'Kitchen Explorers')">Add to Library</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── Browse Controls ── -->
+        <button class="filter-toggle-mobile animate-in d5" onclick="toggleFilters()">
+            Filters &amp; Sort
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+
+        <div class="browse-controls animate-in d5" id="browseControls">
+            <!-- Type tabs -->
+            <button class="browse-tab active" onclick="setTab(this, 'all')">All</button>
+            <button class="browse-tab" onclick="setTab(this, 'packs')">Packs</button>
+            <button class="browse-tab" onclick="setTab(this, 'modules')">Modules</button>
+
+            <span class="filter-sep"></span>
+
+            <!-- Subject filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('subjectMenu')">
+                    Subject
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-dropdown-menu" id="subjectMenu">
+                    <div class="filter-option selected" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        All Subjects
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-dot" style="background: var(--science)"></span>
+                        Science
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-dot" style="background: var(--english)"></span>
+                        English
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-dot" style="background: var(--maths)"></span>
+                        Mathematics
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-dot" style="background: var(--hass)"></span>
+                        HASS
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-dot" style="background: var(--hpe)"></span>
+                        HPE
+                    </div>
+                </div>
+            </div>
+
+            <!-- Age filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('ageMenu')">
+                    Age
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-dropdown-menu" id="ageMenu">
+                    <div class="filter-option selected" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        All Ages
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        5–6 years
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        7–8 years
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        9–10 years
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        11–12 years
+                    </div>
+                </div>
+            </div>
+
+            <!-- Availability filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('availMenu')">
+                    Availability
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-dropdown-menu" id="availMenu">
+                    <div class="filter-option selected" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        All Content
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        Included with membership
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        Premium packs
+                    </div>
+                    <div class="filter-option" onclick="toggleFilterOption(this)">
+                        <span class="opt-check">✓</span>
+                        Not yet in library
+                    </div>
+                </div>
+            </div>
+
+            <div class="sort-control">
+                <span class="sort-label">Sort:</span>
+                <select class="sort-select">
+                    <option>Best Fit</option>
+                    <option>Newest</option>
+                    <option>Most Modules</option>
+                    <option>Age (youngest first)</option>
+                    <option>Age (oldest first)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ── Results count ── -->
+        <div class="results-count animate-in d6">
+            Showing <strong>12</strong> items — 8 packs, 4 standalone modules
+        </div>
+
+        <!-- ── Content Grid ── -->
+        <div class="content-grid">
+
+            <!-- Pack: Poetry Playground (included) -->
+            <div class="pack-card animate-in d6" onclick="openModal('poetry')">
+                <div class="pack-card-hero english-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    ✍️
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip english">English</span>
+                    </div>
+                    <div class="pack-title">Poetry Playground</div>
+                    <div class="pack-desc">Rhythm, rhyme, and self-expression. Five modules from listening to creating, building confidence with language and voice.</div>
+                    <div class="pack-meta">
+                        5 modules <span class="meta-sep">·</span> Ages 5–7 <span class="meta-sep">·</span> 2+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">📝</span>
+                            Hearth Team
+                        </div>
+                        <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Poetry Playground')">Add to Library</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pack: Making Friends (included, already in library) -->
+            <div class="pack-card in-library animate-in d7" onclick="openModal('friends')">
+                <div class="pack-card-hero multi-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🎨
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip english">English</span>
+                        <span class="subject-chip hpe">HPE</span>
+                    </div>
+                    <div class="pack-title">Making Friends</div>
+                    <div class="pack-desc">Character creation through drawing, building, storytelling, and presentation. Highly personal, portfolio-rich outcomes.</div>
+                    <div class="pack-meta">
+                        5 modules <span class="meta-sep">·</span> Ages 5–6 <span class="meta-sep">·</span> 2+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">📝</span>
+                            Hearth Team
+                        </div>
+                        <button class="pack-action">✓ In Library</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pack: 3D Printing Adventures (premium) -->
+            <div class="pack-card animate-in d8" onclick="openModal('3dprint')">
+                <div class="pack-card-hero hass-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🖨️
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip science">Science</span>
+                        <span class="subject-chip maths">Maths</span>
+                        <span class="subject-chip hass">HASS</span>
+                    </div>
+                    <div class="pack-title">3D Printing Adventures</div>
+                    <div class="pack-desc">From digital design to physical objects. Spatial reasoning, measurement, and iterative problem-solving with real 3D prints.</div>
+                    <div class="pack-meta">
+                        6 modules <span class="meta-sep">·</span> Ages 8–12 <span class="meta-sep">·</span> 4+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">🔧</span>
+                            MakerSpace Ed · STEM Educator
+                            <span class="creator-verified">✓</span>
+                        </div>
+                        <button class="pack-action purchase" onclick="event.stopPropagation(); showToast('Opening purchase flow…')">$19.99</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Module: Fraction Explorers -->
+            <div class="module-standalone animate-in d9" data-subject="maths" onclick="openModulePreview(this)">
+                <div class="standalone-label">Module</div>
+                <div class="pack-subjects-row">
+                    <span class="subject-chip maths">Maths</span>
+                </div>
+                <div class="pack-title">Fraction Explorers</div>
+                <div class="pack-desc">Hands-on fraction concepts through pizza, chocolate bars, and paper folding. Four approaches covering visual, kinesthetic, and verbal learners.</div>
+                <div class="pack-meta">
+                    4 approaches <span class="meta-sep">·</span> Ages 6–9 <span class="meta-sep">·</span> 15–30 min sessions
+                </div>
+                <div class="pack-footer">
+                    <span class="pack-age"></span>
+                    <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Fraction Explorers')">Add to Library</button>
+                </div>
+            </div>
+
+            <!-- Pack: Move & Groove (included) -->
+            <div class="pack-card animate-in d9" onclick="openModal('move')">
+                <div class="pack-card-hero hpe-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🤸
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip hpe">HPE</span>
+                    </div>
+                    <div class="pack-title">Move &amp; Groove</div>
+                    <div class="pack-desc">Fundamental movement skills, body awareness, and cooperative games. Perfect for active learners who need to move to think.</div>
+                    <div class="pack-meta">
+                        4 modules <span class="meta-sep">·</span> Ages 5–8 <span class="meta-sep">·</span> 2+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">📝</span>
+                            Hearth Team
+                        </div>
+                        <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Move & Groove')">Add to Library</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pack: Ancient Worlds (included) -->
+            <div class="pack-card animate-in d10" onclick="openModal('ancient')">
+                <div class="pack-card-hero hass-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🏛️
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip hass">HASS</span>
+                        <span class="subject-chip english">English</span>
+                    </div>
+                    <div class="pack-title">Ancient Worlds</div>
+                    <div class="pack-desc">Explore ancient civilisations through stories, artefact-making, and mapping. History as living narrative, not dates and facts.</div>
+                    <div class="pack-meta">
+                        5 modules <span class="meta-sep">·</span> Ages 6–10 <span class="meta-sep">·</span> 3+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">📝</span>
+                            Hearth Team
+                        </div>
+                        <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Ancient Worlds')">Add to Library</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Module: Story Weavers -->
+            <div class="module-standalone animate-in d10" data-subject="english" onclick="openModulePreview(this)">
+                <div class="standalone-label">Module</div>
+                <div class="pack-subjects-row">
+                    <span class="subject-chip english">English</span>
+                </div>
+                <div class="pack-title">Story Weavers</div>
+                <div class="pack-desc">Narrative structure through oral storytelling, picture sequences, and collaborative tale-building. Builds confidence in language.</div>
+                <div class="pack-meta">
+                    5 approaches <span class="meta-sep">·</span> Ages 5–8 <span class="meta-sep">·</span> 15–30 min sessions
+                </div>
+                <div class="pack-footer">
+                    <span class="pack-age"></span>
+                    <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Story Weavers')">Add to Library</button>
+                </div>
+            </div>
+
+            <!-- Pack: Bush Tucker & Biodiversity (premium) -->
+            <div class="pack-card animate-in d11" onclick="openModal('bushtuck')">
+                <div class="pack-card-hero science-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🌾
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip science">Science</span>
+                        <span class="subject-chip hass">HASS</span>
+                    </div>
+                    <div class="pack-title">Bush Tucker &amp; Biodiversity</div>
+                    <div class="pack-desc">Australian native plants, Indigenous knowledge systems, and ecological thinking. Created with First Nations education consultants.</div>
+                    <div class="pack-meta">
+                        5 modules <span class="meta-sep">·</span> Ages 6–10 <span class="meta-sep">·</span> 3+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">🌿</span>
+                            Yolngu Educators Collective
+                            <span class="creator-verified">✓</span>
+                        </div>
+                        <button class="pack-action purchase" onclick="event.stopPropagation(); showToast('Opening purchase flow…')">$16.99</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Module: Our Place on the Map -->
+            <div class="module-standalone animate-in d11" data-subject="hass" onclick="openModulePreview(this)">
+                <div class="standalone-label">Module</div>
+                <div class="pack-subjects-row">
+                    <span class="subject-chip hass">HASS</span>
+                </div>
+                <div class="pack-title">Our Place on the Map</div>
+                <div class="pack-desc">Spatial thinking from bedroom to neighbourhood to country. Drawing maps, using compass directions, and understanding scale.</div>
+                <div class="pack-meta">
+                    4 approaches <span class="meta-sep">·</span> Ages 5–8 <span class="meta-sep">·</span> 20–40 min sessions
+                </div>
+                <div class="pack-footer">
+                    <span class="pack-age"></span>
+                    <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Our Place on the Map')">Add to Library</button>
+                </div>
+            </div>
+
+            <!-- Pack: Tiny Coders (premium) -->
+            <div class="pack-card animate-in d12" onclick="openModal('code')">
+                <div class="pack-card-hero english-tint" style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(74, 222, 128, 0.06) 100%);">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    💻
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip maths">Maths</span>
+                        <span class="subject-chip science">Science</span>
+                    </div>
+                    <div class="pack-title">Tiny Coders</div>
+                    <div class="pack-desc">Computational thinking without screens first, then simple visual programming. Sequences, loops, and debugging as life skills.</div>
+                    <div class="pack-meta">
+                        5 modules <span class="meta-sep">·</span> Ages 6–9 <span class="meta-sep">·</span> 3+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">👩‍💻</span>
+                            Code Club AU
+                            <span class="creator-verified">✓</span>
+                        </div>
+                        <button class="pack-action purchase" onclick="event.stopPropagation(); showToast('Opening purchase flow…')">$12.99</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Module: Movement Explorers -->
+            <div class="module-standalone animate-in d12" data-subject="hpe" onclick="openModulePreview(this)">
+                <div class="standalone-label">Module</div>
+                <div class="pack-subjects-row">
+                    <span class="subject-chip hpe">HPE</span>
+                </div>
+                <div class="pack-title">Movement Explorers</div>
+                <div class="pack-desc">Balance, coordination, and spatial awareness through obstacle courses, dance, and partner activities. Body as learning tool.</div>
+                <div class="pack-meta">
+                    4 approaches <span class="meta-sep">·</span> Ages 5–8 <span class="meta-sep">·</span> 15–30 min sessions
+                </div>
+                <div class="pack-footer">
+                    <span class="pack-age"></span>
+                    <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Movement Explorers')">Add to Library</button>
+                </div>
+            </div>
+
+            <!-- Pack: Weather Watchers (included) -->
+            <div class="pack-card animate-in d12" onclick="openModal('weather')">
+                <div class="pack-card-hero science-tint">
+                    <span class="pack-type-badge pack-badge">Pack</span>
+                    🌦️
+                </div>
+                <div class="pack-card-body">
+                    <div class="pack-subjects-row">
+                        <span class="subject-chip science">Science</span>
+                        <span class="subject-chip maths">Maths</span>
+                    </div>
+                    <div class="pack-title">Weather Watchers</div>
+                    <div class="pack-desc">Daily observation, data recording, pattern prediction. Build a weather station and learn to read the sky like scientists do.</div>
+                    <div class="pack-meta">
+                        4 modules <span class="meta-sep">·</span> Ages 5–8 <span class="meta-sep">·</span> 2+ weeks
+                    </div>
+                    <div class="pack-footer">
+                        <div class="creator-line">
+                            <span class="creator-avatar">📝</span>
+                            Hearth Team
+                        </div>
+                        <button class="pack-action" onclick="event.stopPropagation(); addToLibrary(this, 'Weather Watchers')">Add to Library</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         PACK DETAIL MODAL
+         ══════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="packModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hero nature" id="modalHero">
+                <button class="modal-close" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span id="modalEmoji" style="font-size: 3.5rem;">🌿</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-subjects" id="modalSubjects">
+                    <span class="subject-chip science">Science</span>
+                    <span class="subject-chip english">English</span>
+                </div>
+
+                <h2 class="modal-title" id="modalTitle">Little Nature Scientists</h2>
+                <p class="modal-desc" id="modalDesc">Five interconnected modules that take children from close observation to pattern recognition to scientific classification. Designed for Australian backyards, local parks, and bush walks. Children develop real scientific habits of mind through hands-on exploration of their natural environment.</p>
+
+                <div class="modal-meta-row" id="modalMeta">
+                    <div class="modal-meta-item">📦 <strong>5 modules</strong></div>
+                    <div class="modal-meta-item">👤 Ages <strong>5–7</strong></div>
+                    <div class="modal-meta-item">📅 <strong>2+ weeks</strong> of content</div>
+                </div>
+
+                <!-- Creator block -->
+                <div class="modal-creator" id="modalCreator">
+                    <div class="modal-creator-avatar">🧑‍🔬</div>
+                    <div class="modal-creator-info">
+                        <div class="modal-creator-name">Dr. Sarah Chen <span class="creator-verified">✓</span></div>
+                        <div class="modal-creator-title">Wildlife Educator · 15 years field experience · Former CSIRO outreach</div>
+                    </div>
+                </div>
+
+                <!-- Prereq notice (conditionally shown) -->
+                <div class="prereq-notice" id="prereqNotice" style="display: none;">
+                    <span class="prereq-notice-icon">💡</span>
+                    <div>
+                        <strong>Suggestion:</strong> The module "Patterns in Nature" builds on observation skills. You might enjoy
+                        <a class="prereq-link" onclick="showToast('Scrolling to Observing Closely…')">"Observing Closely"</a>
+                        first — but it's not required.
+                    </div>
+                </div>
+
+                <!-- Module list -->
+                <div class="modal-section-title" id="moduleListLabel">Modules in this pack</div>
+                <div class="module-list" id="moduleList">
+                    <div class="module-list-item">
+                        <div class="module-list-num">1</div>
+                        <div class="module-list-content">
+                            <div class="module-list-title">Observing Closely</div>
+                            <div class="module-list-desc">Foundation module. Slow observation, magnifying glass exploration, and nature drawings. Always unlocked.</div>
+                            <div class="module-list-meta">
+                                <span>🔍 5 approaches</span>
+                                <span>⏱️ 15–30 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="module-list-item">
+                        <div class="module-list-num">2</div>
+                        <div class="module-list-content">
+                            <div class="module-list-title">Patterns in Nature</div>
+                            <div class="module-list-desc">Spotting repeating shapes, symmetry in leaves, and spiral patterns. Builds on observation skills from Module 1.</div>
+                            <div class="module-list-meta">
+                                <span>🔍 4 approaches</span>
+                                <span>⏱️ 20–30 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="module-list-item">
+                        <div class="module-list-num">3</div>
+                        <div class="module-list-content">
+                            <div class="module-list-title">Living vs Non-Living</div>
+                            <div class="module-list-desc">Classification fundamentals. Sorting, grouping, and explaining reasoning. Develops scientific language.</div>
+                            <div class="module-list-meta">
+                                <span>🔍 4 approaches</span>
+                                <span>⏱️ 15–25 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="module-list-item">
+                        <div class="module-list-num">4</div>
+                        <div class="module-list-content">
+                            <div class="module-list-title">Minibeasts</div>
+                            <div class="module-list-desc">Insect observation, habitat investigation, and lifecycle understanding through direct experience with invertebrates.</div>
+                            <div class="module-list-meta">
+                                <span>🔍 5 approaches</span>
+                                <span>⏱️ 20–40 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="module-list-item">
+                        <div class="module-list-num">5</div>
+                        <div class="module-list-content">
+                            <div class="module-list-title">Nature Scientist Project</div>
+                            <div class="module-list-desc">Capstone. Children design and conduct their own nature investigation, applying all skills learned. Badge earned here.</div>
+                            <div class="module-list-meta">
+                                <span>🎓 Capstone</span>
+                                <span>⏱️ 30–45 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky footer with action -->
+            <div class="modal-footer" id="modalFooter">
+                <div class="modal-footer-info">
+                    <div class="modal-footer-included" id="modalPriceLabel">Included with your membership</div>
+                </div>
+                <button class="modal-cta add-cta" id="modalCta" onclick="addToLibraryFromModal()">Add to Library</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toast ── -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ── Modal data ──
+        const packData = {
+            nature: {
+                emoji: '🌿',
+                heroClass: 'nature',
+                subjects: ['science', 'english'],
+                title: 'Little Nature Scientists',
+                desc: 'Five interconnected modules that take children from close observation to pattern recognition to scientific classification. Designed for Australian backyards, local parks, and bush walks. Children develop real scientific habits of mind through hands-on exploration of their natural environment.',
+                meta: '5 modules · Ages 5–7 · 2+ weeks of content',
+                creator: { avatar: '🧑‍🔬', name: 'Dr. Sarah Chen', verified: true, title: 'Wildlife Educator · 15 years field experience · Former CSIRO outreach' },
+                modules: [
+                    { num: 1, title: 'Observing Closely', desc: 'Foundation module. Slow observation, magnifying glass exploration, and nature drawings. Always unlocked.', meta: ['🔍 5 approaches', '⏱️ 15–30 min'] },
+                    { num: 2, title: 'Patterns in Nature', desc: 'Spotting repeating shapes, symmetry in leaves, and spiral patterns. Builds on observation skills from Module 1.', meta: ['🔍 4 approaches', '⏱️ 20–30 min'] },
+                    { num: 3, title: 'Living vs Non-Living', desc: 'Classification fundamentals. Sorting, grouping, and explaining reasoning. Develops scientific language.', meta: ['🔍 4 approaches', '⏱️ 15–25 min'] },
+                    { num: 4, title: 'Minibeasts', desc: 'Insect observation, habitat investigation, and lifecycle understanding through direct experience with invertebrates.', meta: ['🔍 5 approaches', '⏱️ 20–40 min'] },
+                    { num: 5, title: 'Nature Scientist Project', desc: 'Capstone. Children design and conduct their own nature investigation, applying all skills learned. Badge earned here.', meta: ['🎓 Capstone', '⏱️ 30–45 min'] },
+                ],
+                price: null,
+                inLibrary: false,
+                prereq: null
+            },
+            rockets: {
+                emoji: '🚀',
+                heroClass: 'rockets',
+                subjects: ['science', 'maths'],
+                title: 'Backyard Rocketry',
+                desc: 'Build real rockets using everyday household materials. This pack covers thrust, drag, trajectory mathematics, and the full engineering design cycle. Children learn to experiment, fail, iterate, and succeed.',
+                meta: '4 modules · Ages 7–10 · 3+ weeks of content',
+                creator: { avatar: '👨‍🚀', name: 'James Whitmore', verified: true, title: 'Aerospace Engineer · Former RAAF · STEM educator 8 years' },
+                modules: [
+                    { num: 1, title: 'Forces and Flight', desc: 'Introduction to thrust, drag, lift, and gravity. Simple paper plane experiments lead to understanding of aerodynamics.', meta: ['🔍 4 approaches', '⏱️ 20–30 min'] },
+                    { num: 2, title: 'Designing Your Rocket', desc: 'Engineering design process: sketch, prototype, test, improve. First builds use drinking straws and balloons.', meta: ['🔍 5 approaches', '⏱️ 30–45 min'] },
+                    { num: 3, title: 'Trajectory Maths', desc: 'Real maths with angles, distance, and prediction. Children estimate flight paths and record actual results.', meta: ['🔍 4 approaches', '⏱️ 25–40 min'] },
+                    { num: 4, title: 'Launch Day Project', desc: 'Build, launch, and document a final rocket. Photography, data collection, and presentation of findings.', meta: ['🎓 Capstone', '⏱️ 45–60 min'] },
+                ],
+                price: '$14.99',
+                inLibrary: false,
+                prereq: null
+            },
+            kitchen: {
+                emoji: '🍞',
+                heroClass: 'kitchen',
+                subjects: ['science', 'maths'],
+                title: 'Kitchen Explorers',
+                desc: 'The kitchen is the ultimate learning laboratory. Chemistry through cooking, fractions through measuring, and biology through fermentation. Every module produces something delicious and educational.',
+                meta: '4 modules · Ages 5–10 · 2+ weeks of content',
+                creator: { avatar: '👩‍🍳', name: 'Hearth Team', verified: false, title: 'Curriculum specialists' },
+                modules: [
+                    { num: 1, title: 'Kitchen Chemistry', desc: 'Acids, bases, and reactions using vinegar, bicarb, and food colouring. Science you can eat.', meta: ['🔍 4 approaches', '⏱️ 20–30 min'] },
+                    { num: 2, title: 'Measuring Matters', desc: 'Fractions, ratios, and proportions through recipe scaling. Double the recipe? Halve it?', meta: ['🔍 4 approaches', '⏱️ 25–35 min'] },
+                    { num: 3, title: 'Bread & Biology', desc: 'Yeast, fermentation, and living organisms. Watch bread dough rise and understand why.', meta: ['🔍 3 approaches', '⏱️ 30–45 min'] },
+                    { num: 4, title: 'My Recipe Book Project', desc: 'Document three family recipes with drawings, measurements, and science notes. Portfolio gold.', meta: ['🎓 Capstone', '⏱️ 30–45 min'] },
+                ],
+                price: null,
+                inLibrary: false,
+                prereq: null
+            },
+            poetry: {
+                emoji: '✍️',
+                heroClass: 'english-tint',
+                subjects: ['english'],
+                title: 'Poetry Playground',
+                desc: 'Rhythm, rhyme, and self-expression through five modules that take children from listener to author. Builds confidence with language and voice in a low-stakes, playful environment.',
+                meta: '5 modules · Ages 5–7 · 2+ weeks of content',
+                creator: { avatar: '📝', name: 'Hearth Team', verified: false, title: 'Curriculum specialists' },
+                modules: [
+                    { num: 1, title: 'Listening to Rhythm', desc: 'Clapping patterns, nursery rhymes, and movement. Developing the inner musical ear.', meta: ['🔍 4 approaches', '⏱️ 15–25 min'] },
+                    { num: 2, title: 'Rhyme Time', desc: 'Word families, rhyming pairs, and silly sound play. Building phonological awareness joyfully.', meta: ['🔍 4 approaches', '⏱️ 15–20 min'] },
+                    { num: 3, title: 'Describing with Words', desc: 'Sensory language, adjectives, and imagery. What does winter smell like? What colour is joy?', meta: ['🔍 3 approaches', '⏱️ 20–30 min'] },
+                    { num: 4, title: 'My First Poems', desc: 'Acrostic, haiku, and shape poems. Simple structures that let any child succeed.', meta: ['🔍 4 approaches', '⏱️ 20–30 min'] },
+                    { num: 5, title: 'Poetry Recital Project', desc: 'Choose, practise, and perform a favourite poem. Badge earned here.', meta: ['🎓 Capstone', '⏱️ 20–30 min'] },
+                ],
+                price: null,
+                inLibrary: false,
+                prereq: null
+            },
+            friends: {
+                emoji: '🎨',
+                heroClass: 'multi-tint',
+                subjects: ['english', 'hpe'],
+                title: 'Making Friends',
+                desc: 'Character creation through drawing, building, storytelling, and presentation. Deeply personal, portfolio-rich outcomes that reveal the child\'s inner world.',
+                meta: '5 modules · Ages 5–6 · 2+ weeks of content',
+                creator: { avatar: '📝', name: 'Hearth Team', verified: false, title: 'Curriculum specialists' },
+                modules: [
+                    { num: 1, title: 'My Character\'s World', desc: 'Draw and describe a made-up friend. Where do they live? What do they love?', meta: ['🔍 3 approaches', '⏱️ 20–30 min'] },
+                    { num: 2, title: 'Building Together', desc: 'Construct a home or habitat for your character using blocks, boxes, or craft materials.', meta: ['🔍 3 approaches', '⏱️ 25–40 min'] },
+                    { num: 3, title: 'The Big Story', desc: 'Oral and written narrative: something happens to your character. What do they do?', meta: ['🔍 4 approaches', '⏱️ 20–30 min'] },
+                    { num: 4, title: 'Sharing Our Friends', desc: 'Introduce your character to others. Presentation, listening, and responding to questions.', meta: ['🔍 3 approaches', '⏱️ 20–25 min'] },
+                    { num: 5, title: 'My Character Portfolio', desc: 'Collect all drawings, writing, and photos into a mini-portfolio. Celebrate the journey.', meta: ['🎓 Capstone', '⏱️ 20–30 min'] },
+                ],
+                price: null,
+                inLibrary: true,
+                prereq: null
+            }
+        };
+
+        function openModal(packId) {
+            const data = packData[packId];
+            if (!data) { showToast('Pack details coming soon'); return; }
+
+            const modal = document.getElementById('packModal');
+
+            // Hero
+            const hero = document.getElementById('modalHero');
+            hero.className = `modal-hero ${data.heroClass}`;
+            document.getElementById('modalEmoji').textContent = data.emoji;
+
+            // Subjects
+            const subjectsEl = document.getElementById('modalSubjects');
+            subjectsEl.innerHTML = data.subjects.map(s => `<span class="subject-chip ${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`).join('');
+
+            // Title + desc
+            document.getElementById('modalTitle').textContent = data.title;
+            document.getElementById('modalDesc').textContent = data.desc;
+
+            // Meta
+            const metaEl = document.getElementById('modalMeta');
+            const metaParts = data.meta.split(' · ');
+            metaEl.innerHTML = metaParts.map((p, i) => {
+                const icons = ['📦', '👤', '📅'];
+                return `<div class="modal-meta-item">${icons[i] || ''} <strong>${p}</strong></div>`;
+            }).join('');
+
+            // Creator
+            const creatorEl = document.getElementById('modalCreator');
+            creatorEl.innerHTML = `
+                <div class="modal-creator-avatar">${data.creator.avatar}</div>
+                <div class="modal-creator-info">
+                    <div class="modal-creator-name">${data.creator.name} ${data.creator.verified ? '<span class="creator-verified">✓</span>' : ''}</div>
+                    <div class="modal-creator-title">${data.creator.title}</div>
+                </div>
+            `;
+
+            // Prereq
+            const prereqEl = document.getElementById('prereqNotice');
+            prereqEl.style.display = data.prereq ? 'flex' : 'none';
+
+            // Module list
+            document.getElementById('moduleListLabel').textContent = `Modules in this pack (${data.modules.length})`;
+            const listEl = document.getElementById('moduleList');
+            listEl.innerHTML = data.modules.map(m => `
+                <div class="module-list-item">
+                    <div class="module-list-num">${m.num}</div>
+                    <div class="module-list-content">
+                        <div class="module-list-title">${m.title}</div>
+                        <div class="module-list-desc">${m.desc}</div>
+                        <div class="module-list-meta">
+                            ${m.meta.map(t => `<span>${t}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Footer
+            const priceLabel = document.getElementById('modalPriceLabel');
+            const cta = document.getElementById('modalCta');
+
+            if (data.inLibrary) {
+                priceLabel.textContent = 'Already in your library';
+                cta.className = 'modal-cta in-library-cta';
+                cta.textContent = '✓ In Library';
+                cta.onclick = null;
+            } else if (data.price) {
+                priceLabel.innerHTML = `<span class="modal-footer-price">${data.price}</span>`;
+                cta.className = 'modal-cta purchase-cta';
+                cta.textContent = `Purchase ${data.price}`;
+                cta.onclick = () => showToast('Opening purchase flow…');
+            } else {
+                priceLabel.textContent = 'Included with your membership';
+                cta.className = 'modal-cta add-cta';
+                cta.textContent = 'Add to Library';
+                cta.onclick = () => addToLibraryFromModal();
+            }
+
+            // Show
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => modal.classList.add('visible'));
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget && !event.target.closest('.modal-close')) return;
+            const modal = document.getElementById('packModal');
+            modal.classList.remove('visible');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 400);
+        }
+
+        function openModulePreview(card) {
+            const title = card.querySelector('.pack-title').textContent;
+            showToast(`Opening preview: ${title}`);
+        }
+
+        // ── Add to library ──
+        function addToLibrary(btn, name) {
+            btn.textContent = '✓ In Library';
+            btn.classList.remove('purchase');
+            btn.style.borderColor = 'var(--border-subtle)';
+            btn.style.color = 'var(--text-muted)';
+            btn.style.background = 'transparent';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+
+            // Update library count
+            const countEl = document.querySelector('.library-count');
+            countEl.textContent = parseInt(countEl.textContent) + 1;
+
+            showToast(`✓ "${name}" added to your library`);
+        }
+
+        function addToLibraryFromModal() {
+            const title = document.getElementById('modalTitle').textContent;
+            const cta = document.getElementById('modalCta');
+            const priceLabel = document.getElementById('modalPriceLabel');
+
+            cta.className = 'modal-cta in-library-cta';
+            cta.textContent = '✓ In Library';
+            cta.onclick = null;
+            priceLabel.textContent = 'Already in your library';
+
+            const countEl = document.querySelector('.library-count');
+            countEl.textContent = parseInt(countEl.textContent) + 1;
+
+            showToast(`✓ "${title}" added to your library`);
+        }
+
+        // ── Filter controls ──
+        function setTab(btn, type) {
+            document.querySelectorAll('.browse-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // In production: filter grid items by type
+        }
+
+        function toggleDropdown(id) {
+            // Close all others
+            document.querySelectorAll('.filter-dropdown-menu').forEach(m => {
+                if (m.id !== id) m.classList.remove('open');
+            });
+            document.getElementById(id).classList.toggle('open');
+        }
+
+        function toggleFilterOption(el) {
+            el.classList.toggle('selected');
+        }
+
+        function toggleFilters() {
+            const controls = document.getElementById('browseControls');
+            controls.classList.toggle('collapsed');
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.filter-dropdown')) {
+                document.querySelectorAll('.filter-dropdown-menu').forEach(m => m.classList.remove('open'));
+            }
+        });
+
+        // ── Toast ──
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ── Keyboard ──
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal(e);
+        });
+    </script>
+</body>
+</html>

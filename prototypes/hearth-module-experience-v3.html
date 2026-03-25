@@ -1,0 +1,1903 @@
+<!-- Version: 3 | Date: 2026-03-19 | Changes: Token rename audit pass — --ember-orange→--ember, --sage-green→--sage, --deep-coffee→--surface-body, --coffee-mid→--surface-panel, --coffee-light→--surface-raised, --surface-elevated→--surface-hover; btn-primary padding harmonized to --space-lg all sides; btn-primary font-size 0.9375rem→0.95rem; card hover now includes ember top-line; nav active border-left updated to --ember; all inline references updated throughout HTML -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth – Module Experience</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Surfaces — canonical names */
+      --surface-body:   #0F0D0B;
+      --surface-panel:  #1A1612;
+      --surface-raised: #252117;
+      --surface-hover:  #2D2621;
+
+      /* Text */
+      --text-primary:   #E8DFD4;
+      --text-secondary: #9B8B7E;
+      --text-muted:     #6B5D52;
+      --text-inverse:   #0F0D0B;
+
+      /* Ember */
+      --ember:          #D97B3A;
+      --ember-hover:    #E88F4E;
+      --ember-glow:     rgba(217, 123, 58, 0.15);
+      --ember-strong:   rgba(217, 123, 58, 0.25);
+
+      /* Sage */
+      --sage:           #4ADE80;
+      --sage-muted:     #22C55E;
+      --sage-glow:      rgba(74, 222, 128, 0.12);
+
+      /* Typography */
+      --font-serif: 'Crimson Text', Georgia, serif;
+      --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+      /* Spacing */
+      --space-xs:  4px;
+      --space-sm:  8px;
+      --space-md:  16px;
+      --space-lg:  24px;
+      --space-xl:  32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+
+      /* Shadows */
+      --shadow-soft:   0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-warm:   0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+
+      /* Borders */
+      --border-subtle: rgba(217, 123, 58, 0.1);
+      --border-medium: rgba(217, 123, 58, 0.2);
+
+      /* Transitions */
+      --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Layout */
+      --sidebar-width:  260px;
+      --guidance-width: 340px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--surface-body);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Ambient glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(217, 123, 58, 0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== LAYOUT ===== */
+    .app-container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    .mobile-view  { display: block; }
+    .desktop-view { display: none; }
+
+    @media (min-width: 1024px) {
+      .mobile-view { display: none; }
+      .desktop-view {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) 1fr var(--guidance-width);
+        min-height: 100vh;
+      }
+      .desktop-view.two-col {
+        grid-template-columns: var(--sidebar-width) 1fr;
+      }
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      background: var(--surface-panel);
+      border-right: 1px solid var(--border-subtle);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: var(--space-xl);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--ember);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      box-shadow: 0 2px 12px rgba(217, 123, 58, 0.3);
+    }
+
+    .brand-text {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .sidebar-module { margin-bottom: var(--space-sm); }
+
+    .sidebar-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-xs);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .sidebar-subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .sidebar-meta {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Session-flow nav — screen-specific sidebar variant */
+    .sidebar-nav {
+      flex: 1;
+      padding: var(--space-md) 0;
+    }
+
+    .nav-section-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: var(--space-sm) var(--space-xl);
+      margin-top: var(--space-md);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-xl);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      border-left: 2px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--ember-glow);
+    }
+
+    .nav-item.active {
+      background: var(--ember-glow);
+      border-left-color: var(--ember);
+    }
+
+    .nav-item.completed { opacity: 0.6; }
+
+    .nav-number {
+      width: 24px;
+      height: 24px;
+      background: var(--surface-raised);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-number {
+      background: var(--ember);
+      color: var(--surface-body);
+    }
+
+    .nav-item.completed .nav-number {
+      background: var(--sage);
+      color: var(--surface-body);
+    }
+
+    .nav-info { flex: 1; }
+
+    .nav-title {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .nav-meta {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    .nav-break {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-xs) var(--space-xl);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    .nav-break::before,
+    .nav-break::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: var(--space-lg) var(--space-xl);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-btn {
+      display: block;
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      text-align: center;
+      margin-bottom: var(--space-sm);
+    }
+
+    .sidebar-btn:hover {
+      border-color: var(--ember);
+      color: var(--text-primary);
+    }
+
+    .sidebar-btn:last-child { margin-bottom: 0; }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      padding: var(--space-2xl);
+      max-width: 720px;
+    }
+
+    .main-content.wide { max-width: 100%; }
+
+    .page-header { margin-bottom: var(--space-2xl); }
+
+    .page-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-lg);
+    }
+
+    .page-label {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+
+    .page-title {
+      font-family: var(--font-serif);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .page-subtitle {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      margin-top: var(--space-xs);
+    }
+
+    .mode-controls {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .mode-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-sm) var(--space-md);
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .mode-btn:hover {
+      border-color: var(--border-medium);
+      color: var(--text-primary);
+    }
+
+    .mode-btn.active {
+      background: var(--ember-glow);
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+
+    /* Progress Indicator */
+    .progress-bar {
+      display: flex;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-sm);
+    }
+
+    .progress-segment {
+      flex: 1;
+      height: 3px;
+      background: var(--surface-raised);
+      border-radius: 2px;
+    }
+
+    .progress-segment.completed { background: var(--sage); }
+    .progress-segment.current   { background: var(--ember); }
+
+    .progress-label {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Step Indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    .step-dots {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--surface-raised);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .step-dot:hover  { background: var(--text-muted); }
+    .step-dot.active {
+      background: var(--ember);
+      width: 24px;
+      border-radius: 4px;
+    }
+    .step-dot.completed { background: var(--sage); }
+
+    .step-label {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      position: relative;
+      background: var(--surface-panel);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: var(--space-lg);
+      transition: all var(--transition-gentle);
+      overflow: hidden;
+    }
+
+    /* Ember top-line on hover — canonical card hover pattern */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--ember), transparent);
+      opacity: 0;
+      transition: opacity var(--transition-gentle);
+    }
+
+    .card:hover {
+      border-color: var(--border-medium);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-warm);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-md);
+    }
+
+    .card-meta {
+      display: flex;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+
+    .meta-item {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    /* ===== CONTENT TYPOGRAPHY ===== */
+    .prose {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .prose strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .prose + .prose { margin-top: var(--space-md); }
+
+    /* Say Block */
+    .say-block {
+      border-left: 3px solid var(--ember);
+      padding-left: var(--space-lg);
+      margin: var(--space-lg) 0;
+    }
+
+    .say-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ember);
+      margin-bottom: var(--space-sm);
+    }
+
+    .say-text {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+
+    /* Pause Note */
+    .pause-note {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .pause-note-icon {
+      color: var(--ember);
+      flex-shrink: 0;
+    }
+
+    .pause-note-text {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Watch Section */
+    .watch-section {
+      border-left: 3px solid var(--sage);
+      padding-left: var(--space-lg);
+      margin: var(--space-lg) 0;
+    }
+
+    .watch-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sage);
+      margin-bottom: var(--space-sm);
+    }
+
+    .watch-list { list-style: none; }
+
+    .watch-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-sm) 0;
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .watch-bullet {
+      color: var(--sage);
+      flex-shrink: 0;
+    }
+
+    /* Think Section */
+    .think-section {
+      margin: var(--space-lg) 0;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: var(--space-md);
+    }
+
+    .think-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: var(--space-sm) 0;
+    }
+
+    .think-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .think-chevron {
+      color: var(--text-muted);
+      transition: transform var(--transition-quick);
+    }
+
+    .think-section.expanded .think-chevron { transform: rotate(180deg); }
+
+    .think-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-gentle);
+    }
+
+    .think-section.expanded .think-content { max-height: 500px; }
+
+    .think-inner { padding-top: var(--space-md); }
+
+    .think-text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-md);
+    }
+
+    /* Philosophy Lens */
+    .philosophy-lens {
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-md);
+    }
+
+    .philosophy-name {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+
+    .philosophy-text {
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Materials List */
+    .materials-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .material-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .material-item:hover { background: var(--surface-hover); }
+
+    .material-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--text-muted);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-quick);
+      flex-shrink: 0;
+    }
+
+    .material-item.checked .material-checkbox {
+      background: var(--sage);
+      border-color: var(--sage);
+    }
+
+    .material-item.checked .material-checkbox::after {
+      content: '✓';
+      color: var(--surface-body);
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+
+    .material-text {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    .material-alt {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: var(--space-xs);
+    }
+
+    /* Tags */
+    .tags {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      margin-top: var(--space-md);
+    }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface-raised);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Chunk List */
+    .chunk-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .chunk-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .chunk-item:hover { background: var(--surface-hover); }
+
+    .chunk-item.active {
+      background: var(--ember-glow);
+      border-left: 2px solid var(--ember);
+    }
+
+    .chunk-number {
+      width: 28px;
+      height: 28px;
+      background: var(--surface-hover);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .chunk-item.completed .chunk-number {
+      background: var(--sage);
+      color: var(--surface-body);
+    }
+
+    .chunk-item.active .chunk-number {
+      background: var(--ember);
+      color: var(--surface-body);
+    }
+
+    .chunk-info { flex: 1; }
+
+    .chunk-title {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .chunk-meta {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== GUIDANCE PANEL ===== */
+    .guidance-panel {
+      background: var(--surface-panel);
+      border-left: 1px solid var(--border-subtle);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      padding: var(--space-xl);
+    }
+
+    .guidance-section { margin-bottom: var(--space-2xl); }
+
+    .guidance-title {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .guidance-title.accent { color: var(--ember); }
+    .guidance-title.sage   { color: var(--sage); }
+
+    /* Quick Capture */
+    .capture-btns {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .capture-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .capture-btn:hover {
+      border-color: var(--ember);
+      color: var(--text-primary);
+    }
+
+    .capture-btn.recording {
+      background: var(--ember-glow);
+      border-color: var(--ember);
+      color: var(--ember);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.7; }
+    }
+
+    /* Age Tabs */
+    .age-tabs {
+      display: flex;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+
+    .age-tab {
+      flex: 1;
+      padding: var(--space-sm);
+      background: var(--surface-raised);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .age-tab:hover { color: var(--text-secondary); }
+
+    .age-tab.active {
+      background: var(--ember);
+      color: var(--surface-body);
+    }
+
+    .age-content {
+      display: none;
+      font-family: var(--font-serif);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .age-content.active { display: block; }
+
+    /* Pivot Options */
+    .pivot-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .pivot-item {
+      padding: var(--space-md);
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      border: 1px solid transparent;
+    }
+
+    .pivot-item:hover { border-color: var(--border-medium); }
+
+    .pivot-trigger {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .pivot-suggestion {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== BUTTONS ===== */
+    /* Primary — canonical lg: padding --space-lg all sides, font-size 0.95rem */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-lg);
+      background: var(--ember);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--surface-body);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      box-shadow: 0 2px 12px rgba(217, 123, 58, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--ember-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Secondary — ghost style: transparent bg, ember border + text */
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-lg);
+      background: transparent;
+      border: 1px solid var(--ember);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ember);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+    }
+
+    .btn-secondary:hover { background: var(--ember-glow); }
+
+    /* Icon button */
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      font-size: 1.125rem;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--ember);
+      color: var(--text-primary);
+    }
+
+    /* Navigation Controls */
+    .nav-controls {
+      display: flex;
+      gap: var(--space-md);
+      align-items: center;
+      margin-top: var(--space-xl);
+      padding-top: var(--space-xl);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .nav-controls .btn-primary { flex: 1; }
+
+    /* ===== MOBILE COMPONENTS ===== */
+    .mobile-header {
+      padding: var(--space-lg);
+      background: linear-gradient(to bottom, var(--surface-panel), transparent);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .mobile-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-sm);
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: var(--space-xs);
+      transition: color var(--transition-quick);
+    }
+
+    .back-btn:hover { color: var(--text-primary); }
+
+    .mobile-breadcrumb {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .mobile-title {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mobile-content { padding: 0 var(--space-lg) 120px; }
+
+    .mobile-bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: var(--space-lg);
+      background: linear-gradient(to top, var(--surface-body) 60%, transparent);
+      z-index: 100;
+    }
+
+    .mobile-bottom-inner {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .mobile-bottom-inner .btn-primary { flex: 1; }
+
+    /* ===== PREP MODE GRID ===== */
+    .prep-grid { display: grid; gap: var(--space-lg); }
+
+    @media (min-width: 1200px) {
+      .prep-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Say Blocks Collection */
+    .say-collection {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .say-preview {
+      border-left: 3px solid var(--ember);
+      padding-left: var(--space-md);
+    }
+
+    .say-preview-label {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ember);
+      margin-bottom: var(--space-xs);
+    }
+
+    .say-preview-text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Watch Collection */
+    .watch-collection {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .watch-preview {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-sm);
+      background: var(--surface-raised);
+      border-radius: var(--radius-sm);
+    }
+
+    .watch-preview-chunk {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      color: var(--sage);
+      background: var(--surface-body);
+      padding: 2px var(--space-xs);
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .watch-preview-text {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* ===== UTILITIES ===== */
+    .hidden { display: none !important; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    @media (min-width: 1024px) {
+      .screen.active .desktop-view { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ==================== SCREEN: PREP MODE ==================== -->
+    <div class="screen active" id="screen-prep">
+
+      <!-- Mobile View -->
+      <div class="mobile-view">
+        <header class="mobile-header">
+          <div class="mobile-header-row">
+            <button class="back-btn">← Module</button>
+          </div>
+          <div class="mobile-breadcrumb">Observing Closely · Nature Detective</div>
+          <h1 class="mobile-title">Backyard Safari</h1>
+        </header>
+
+        <div class="mobile-content">
+          <div class="progress-bar" style="margin-bottom: var(--space-lg);">
+            <div class="progress-segment completed"></div>
+            <div class="progress-segment current"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-meta">
+              <span class="meta-item">⏱ 25 min</span>
+              <span class="meta-item">🌿 Outdoor</span>
+              <span class="meta-item">⚡ Moderate</span>
+            </div>
+
+            <div class="card-title">Materials Needed</div>
+            <div class="materials-list">
+              <div class="material-item checked" onclick="toggleMaterial(this)">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Magnifying glass<span class="material-alt">or phone camera</span></span>
+              </div>
+              <div class="material-item" onclick="toggleMaterial(this)">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Paper to draw on</span>
+              </div>
+              <div class="material-item" onclick="toggleMaterial(this)">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Pencil or crayons</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Why This Matters</div>
+            <p class="prose">
+              Close observation is the foundation of all scientific thinking. When children learn to really <strong>look</strong>, they develop patience, attention to detail, and curiosity that transfers everywhere.
+            </p>
+            <div class="tags">
+              <span class="tag">🔬 Scientific observation</span>
+              <span class="tag">🌱 Understanding living things</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" style="width: 100%;" onclick="showScreen('screen-chunk')">
+            Continue Session →
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop View -->
+      <div class="desktop-view">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="brand">
+              <div class="brand-icon">🔥</div>
+              <span class="brand-text">Hearth</span>
+            </div>
+            <div class="sidebar-module">
+              <div class="sidebar-label">Module</div>
+              <div class="sidebar-title">Observing Closely</div>
+              <div class="sidebar-subtitle">Backyard Safari</div>
+              <div class="sidebar-meta">
+                <span>⏱ 25 min</span>
+                <span>🌿 Outdoor</span>
+              </div>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <div class="nav-section-label">Session Flow</div>
+
+            <div class="nav-item completed">
+              <span class="nav-number">✓</span>
+              <div class="nav-info">
+                <div class="nav-title">Getting Ready Eyes</div>
+                <div class="nav-meta">Completed</div>
+              </div>
+            </div>
+
+            <div class="nav-item active" onclick="showScreen('screen-chunk')">
+              <span class="nav-number">2</span>
+              <div class="nav-info">
+                <div class="nav-title">The Hunt</div>
+                <div class="nav-meta">5-8 min</div>
+              </div>
+            </div>
+
+            <div class="nav-item">
+              <span class="nav-number">3</span>
+              <div class="nav-info">
+                <div class="nav-title">Scientist Share</div>
+                <div class="nav-meta">5 min</div>
+              </div>
+            </div>
+
+            <div class="nav-break">Good stopping point</div>
+
+            <div class="nav-item">
+              <span class="nav-number">4</span>
+              <div class="nav-info">
+                <div class="nav-title">Going Deeper</div>
+                <div class="nav-meta">Optional · 7 min</div>
+              </div>
+            </div>
+          </nav>
+
+          <div class="sidebar-footer">
+            <button class="sidebar-btn" onclick="showScreen('screen-log')">End & Log Session</button>
+          </div>
+        </aside>
+
+        <main class="main-content wide">
+          <div class="page-header">
+            <div class="page-header-row">
+              <div>
+                <div class="page-label">Session Preparation</div>
+                <h1 class="page-title">Backyard Safari</h1>
+                <p class="page-subtitle">"Find the small worlds in your garden"</p>
+              </div>
+              <div class="mode-controls">
+                <button class="mode-btn active">📋 Prep</button>
+                <button class="mode-btn" onclick="showScreen('screen-chunk')">▶️ Facilitate</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="prep-grid">
+            <!-- Materials & Why -->
+            <div class="card">
+              <div class="card-title">📦 Materials</div>
+              <div class="materials-list">
+                <div class="material-item checked" onclick="toggleMaterial(this)">
+                  <span class="material-checkbox"></span>
+                  <span class="material-text">Magnifying glass<span class="material-alt">or phone camera</span></span>
+                </div>
+                <div class="material-item" onclick="toggleMaterial(this)">
+                  <span class="material-checkbox"></span>
+                  <span class="material-text">Paper to draw on</span>
+                </div>
+                <div class="material-item" onclick="toggleMaterial(this)">
+                  <span class="material-checkbox"></span>
+                  <span class="material-text">Pencil or crayons</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">💡 Why This Matters</div>
+              <p class="prose">
+                Close observation is the foundation of all scientific thinking. When children learn to really <strong>look</strong>, they develop patience, attention to detail, and curiosity.
+              </p>
+              <div class="tags">
+                <span class="tag">🔬 Scientific observation</span>
+                <span class="tag">🌱 Understanding living things</span>
+              </div>
+            </div>
+
+            <!-- Session Flow -->
+            <div class="card">
+              <div class="card-title">📝 Session Flow</div>
+              <div class="chunk-list">
+                <div class="chunk-item completed">
+                  <span class="chunk-number">✓</span>
+                  <div class="chunk-info">
+                    <div class="chunk-title">Getting Ready Eyes</div>
+                    <div class="chunk-meta">5 min · Completed</div>
+                  </div>
+                </div>
+                <div class="chunk-item active">
+                  <span class="chunk-number">2</span>
+                  <div class="chunk-info">
+                    <div class="chunk-title">The Hunt</div>
+                    <div class="chunk-meta">5-8 min · Find and observe creatures</div>
+                  </div>
+                </div>
+                <div class="chunk-item">
+                  <span class="chunk-number">3</span>
+                  <div class="chunk-info">
+                    <div class="chunk-title">Scientist Share</div>
+                    <div class="chunk-meta">5 min · Share discoveries</div>
+                  </div>
+                </div>
+                <div class="chunk-item" style="opacity: 0.6;">
+                  <span class="chunk-number">4</span>
+                  <div class="chunk-info">
+                    <div class="chunk-title">Going Deeper</div>
+                    <div class="chunk-meta">7 min · Optional extension</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Phrases -->
+            <div class="card">
+              <div class="card-title">🗣 Key Phrases</div>
+              <p class="prose" style="font-size: 0.875rem; margin-bottom: var(--space-md);">Read through these now so they feel natural.</p>
+
+              <div class="say-collection">
+                <div class="say-preview">
+                  <div class="say-preview-label">Opening</div>
+                  <p class="say-preview-text">"We're going on a creature hunt. Walk as slowly as you can — the slower we go, the more we'll find."</p>
+                </div>
+                <div class="say-preview">
+                  <div class="say-preview-label">Discovery</div>
+                  <p class="say-preview-text">"Oh! You found one! Let's look really carefully. What do you notice about it?"</p>
+                </div>
+                <div class="say-preview">
+                  <div class="say-preview-label">Prompts</div>
+                  <p class="say-preview-text">"What colour is it?... How many legs?... Is it moving or still?"</p>
+                </div>
+                <div class="say-preview">
+                  <div class="say-preview-label">Magnifier</div>
+                  <p class="say-preview-text">"Now let's use our special tool. What do you see now that you couldn't see before?"</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Watch For -->
+            <div class="card">
+              <div class="card-title" style="color: var(--sage);">👁 What to Watch For</div>
+              <div class="watch-collection">
+                <div class="watch-preview">
+                  <span class="watch-preview-chunk">Hunt</span>
+                  <span class="watch-preview-text">Are they slowing down, or rushing to "find" quickly?</span>
+                </div>
+                <div class="watch-preview">
+                  <span class="watch-preview-chunk">Hunt</span>
+                  <span class="watch-preview-text">Do they look under and around things?</span>
+                </div>
+                <div class="watch-preview">
+                  <span class="watch-preview-chunk">Observe</span>
+                  <span class="watch-preview-text">What features do they notice first?</span>
+                </div>
+                <div class="watch-preview">
+                  <span class="watch-preview-chunk">Observe</span>
+                  <span class="watch-preview-text">Are they forming questions? ("Why does it...")</span>
+                </div>
+                <div class="watch-preview">
+                  <span class="watch-preview-chunk">Magnify</span>
+                  <span class="watch-preview-text">Do they express surprise at the detail?</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Philosophy -->
+            <div class="card">
+              <div class="card-title" style="color: var(--ember);">🎯 Pedagogical Lens</div>
+
+              <div class="philosophy-lens" style="margin-top: 0;">
+                <div class="philosophy-name">Charlotte Mason</div>
+                <p class="philosophy-text">This is "masterly inactivity" — be present, interested, and quiet. Let nature teach.</p>
+              </div>
+
+              <div class="philosophy-lens">
+                <div class="philosophy-name" style="color: var(--sage);">Montessori</div>
+                <p class="philosophy-text">Follow the child's interest. If they're fascinated by one feature, stay there. Trust their curiosity.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-controls" style="justify-content: center; max-width: 400px; margin: var(--space-xl) auto 0;">
+            <button class="btn-primary" onclick="showScreen('screen-chunk')">Ready to Facilitate →</button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: CHUNK FACILITATION ==================== -->
+    <div class="screen" id="screen-chunk">
+
+      <!-- Mobile View -->
+      <div class="mobile-view">
+        <header class="mobile-header">
+          <div class="mobile-header-row">
+            <button class="back-btn" onclick="showScreen('screen-prep')">← Session</button>
+          </div>
+          <div class="mobile-breadcrumb">Backyard Safari</div>
+          <h1 class="mobile-title">The Hunt</h1>
+        </header>
+
+        <div class="mobile-content">
+          <div class="progress-bar">
+            <div class="progress-segment completed"></div>
+            <div class="progress-segment current"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+          </div>
+          <div class="progress-label" style="margin-bottom: var(--space-lg);">Chunk 2 of 4 · 5-8 min</div>
+
+          <div class="card">
+            <p class="prose">
+              Now it's time to explore. Walk slowly through your outdoor space, looking for <strong>any small creature</strong> — insects, spiders, worms, snails.
+            </p>
+
+            <div class="say-block">
+              <div class="say-label">🗣 What to Say</div>
+              <p class="say-text">"We're going on a creature hunt. Walk as slowly as you can — the slower we go, the more we'll find. Look under leaves, near rocks, in corners. Tell me the moment you spot something!"</p>
+            </div>
+
+            <div class="pause-note">
+              <span class="pause-note-icon">⏸</span>
+              <span class="pause-note-text">Let them lead. Follow their pace. Resist pointing things out — let them discover.</span>
+            </div>
+
+            <div class="watch-section">
+              <div class="watch-label">👁 Watch For</div>
+              <ul class="watch-list">
+                <li class="watch-item">
+                  <span class="watch-bullet">•</span>
+                  <span>Are they actually slowing down, or rushing?</span>
+                </li>
+                <li class="watch-item">
+                  <span class="watch-bullet">•</span>
+                  <span>Do they look under and around things?</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="think-section" onclick="toggleThink(this)">
+              <div class="think-toggle">
+                <span class="think-label"><span>💡</span> Why This Works</span>
+                <span class="think-chevron">▼</span>
+              </div>
+              <div class="think-content">
+                <div class="think-inner">
+                  <p class="think-text">The instruction to go "as slowly as you can" is deliberate. Speed is the enemy of observation.</p>
+                  <div class="philosophy-lens">
+                    <div class="philosophy-name">Charlotte Mason</div>
+                    <p class="philosophy-text">This is "masterly inactivity" — be present, interested, and quiet. Let nature teach.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-bottom-bar">
+          <div class="mobile-bottom-inner">
+            <button class="btn-icon" onclick="showScreen('screen-prep')">←</button>
+            <button class="btn-primary" onclick="nextStep()">Continue →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop View -->
+      <div class="desktop-view">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="brand">
+              <div class="brand-icon">🔥</div>
+              <span class="brand-text">Hearth</span>
+            </div>
+            <div class="sidebar-module">
+              <div class="sidebar-label">Module</div>
+              <div class="sidebar-title">Observing Closely</div>
+              <div class="sidebar-subtitle">Backyard Safari</div>
+              <div class="sidebar-meta">
+                <span>⏱ 25 min</span>
+                <span>🌿 Outdoor</span>
+              </div>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <div class="nav-section-label">Session Flow</div>
+
+            <div class="nav-item completed">
+              <span class="nav-number">✓</span>
+              <div class="nav-info">
+                <div class="nav-title">Getting Ready Eyes</div>
+                <div class="nav-meta">Completed</div>
+              </div>
+            </div>
+
+            <div class="nav-item active">
+              <span class="nav-number">2</span>
+              <div class="nav-info">
+                <div class="nav-title">The Hunt</div>
+                <div class="nav-meta">In progress</div>
+              </div>
+            </div>
+
+            <div class="nav-item">
+              <span class="nav-number">3</span>
+              <div class="nav-info">
+                <div class="nav-title">Scientist Share</div>
+                <div class="nav-meta">5 min</div>
+              </div>
+            </div>
+
+            <div class="nav-break">Good stopping point</div>
+
+            <div class="nav-item">
+              <span class="nav-number">4</span>
+              <div class="nav-info">
+                <div class="nav-title">Going Deeper</div>
+                <div class="nav-meta">Optional</div>
+              </div>
+            </div>
+          </nav>
+
+          <div class="sidebar-footer">
+            <button class="sidebar-btn" onclick="showScreen('screen-prep')">← Back to Prep</button>
+            <button class="sidebar-btn" onclick="showScreen('screen-log')">End & Log</button>
+          </div>
+        </aside>
+
+        <main class="main-content">
+          <div class="page-header">
+            <div class="page-header-row">
+              <div>
+                <div class="page-label">Chunk 2 of 4</div>
+                <h1 class="page-title">The Hunt</h1>
+                <p class="page-subtitle">5-8 minutes · Find and observe creatures</p>
+              </div>
+              <div class="mode-controls">
+                <button class="mode-btn" onclick="showScreen('screen-prep')">📋 Prep</button>
+                <button class="mode-btn active">▶️ Facilitate</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-indicator">
+            <div class="step-dots">
+              <span class="step-dot active" onclick="showStep(1)"></span>
+              <span class="step-dot" onclick="showStep(2)"></span>
+              <span class="step-dot" onclick="showStep(3)"></span>
+            </div>
+            <span class="step-label">Step 1 of 3 · Explore &amp; Search</span>
+          </div>
+
+          <div class="card" id="step-1">
+            <p class="prose">
+              Now it's time to explore. Walk slowly through your outdoor space, looking for <strong>any small creature</strong> — insects, spiders, worms, snails, anything that moves or hides.
+            </p>
+
+            <div class="say-block">
+              <div class="say-label">🗣 What to Say</div>
+              <p class="say-text">"We're going on a creature hunt. Walk as slowly as you can — the slower we go, the more we'll find. Look under leaves, near rocks, in corners. Tell me the moment you spot something!"</p>
+            </div>
+
+            <div class="pause-note">
+              <span class="pause-note-icon">⏸</span>
+              <span class="pause-note-text">Let them lead. Follow their pace and direction. Resist pointing things out — let them discover.</span>
+            </div>
+
+            <p class="prose">
+              Give them space. Count to 5 in your head before offering any guidance. Their natural exploration is the learning.
+            </p>
+          </div>
+
+          <div class="card hidden" id="step-2">
+            <p class="prose">
+              When they find something, this is the key moment. <strong>Don't rush to identify it.</strong> Let them observe first.
+            </p>
+
+            <div class="say-block">
+              <div class="say-label">🗣 What to Say</div>
+              <p class="say-text">"Oh! You found one! Let's look really carefully before we do anything else. What do you notice about it?"</p>
+            </div>
+
+            <p class="prose">Wait. Count to five in your head. Let them look and think.</p>
+
+            <div class="say-block">
+              <div class="say-label">🗣 Follow-up prompts (only if needed)</div>
+              <p class="say-text">"What colour is it?... How many legs can you count?... Is it moving or staying still?... What do you think it's doing?"</p>
+            </div>
+          </div>
+
+          <div class="card hidden" id="step-3">
+            <p class="prose">
+              Now use the magnifying glass (or phone camera) to look even closer. This often creates a "wow" moment.
+            </p>
+
+            <div class="say-block">
+              <div class="say-label">🗣 What to Say</div>
+              <p class="say-text">"Now let's use our special tool to see things we can't see with just our eyes. Look through here — what do you see now that you couldn't see before?"</p>
+            </div>
+
+            <p class="prose">
+              Let them hold the magnifying glass themselves if possible. The act of controlling the view builds engagement.
+            </p>
+          </div>
+
+          <div class="nav-controls">
+            <button class="btn-icon" onclick="prevStep()">←</button>
+            <button class="btn-primary" onclick="nextStep()">Continue →</button>
+          </div>
+        </main>
+
+        <aside class="guidance-panel">
+          <div class="guidance-section">
+            <div class="guidance-title sage">👁 Watch For</div>
+            <ul class="watch-list">
+              <li class="watch-item">
+                <span class="watch-bullet">•</span>
+                <span>Are they actually slowing down, or rushing?</span>
+              </li>
+              <li class="watch-item">
+                <span class="watch-bullet">•</span>
+                <span>Do they look <em>under</em> and <em>around</em> things?</span>
+              </li>
+              <li class="watch-item">
+                <span class="watch-bullet">•</span>
+                <span>What catches their attention first?</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="guidance-section">
+            <div class="guidance-title">🎤 Quick Capture</div>
+            <div class="capture-btns">
+              <button class="capture-btn" onclick="toggleRecording(this)">🎤 Voice note</button>
+              <button class="capture-btn">📷 Photo</button>
+              <button class="capture-btn">✏️ Quick note</button>
+            </div>
+          </div>
+
+          <div class="guidance-section">
+            <div class="guidance-title accent">🎯 Philosophy Lens</div>
+            <div class="philosophy-lens" style="margin-top: 0;">
+              <div class="philosophy-name">Charlotte Mason</div>
+              <p class="philosophy-text">This is "masterly inactivity" — be present, interested, and quiet. Let nature teach.</p>
+            </div>
+          </div>
+
+          <div class="guidance-section">
+            <div class="guidance-title">👶 Age Adjustments</div>
+            <div class="age-tabs">
+              <button class="age-tab active" onclick="showAge(this, 'age-4-6')">4-6</button>
+              <button class="age-tab" onclick="showAge(this, 'age-7-9')">7-9</button>
+              <button class="age-tab" onclick="showAge(this, 'age-10-12')">10-12</button>
+            </div>
+            <div class="age-content active" id="age-4-6">Stay close. Celebrate every tiny discovery. One creature = complete success.</div>
+            <div class="age-content" id="age-7-9">Give more independence. Challenge: "Find three different kinds."</div>
+            <div class="age-content" id="age-10-12">Add specificity: "Find creatures in three different micro-habitats."</div>
+          </div>
+
+          <div class="guidance-section">
+            <div class="guidance-title">🔄 If Not Landing</div>
+            <div class="pivot-list">
+              <div class="pivot-item">
+                <div class="pivot-trigger">Too wiggly</div>
+                <div class="pivot-suggestion">"10 jumps first, then scientist eyes."</div>
+              </div>
+              <div class="pivot-item">
+                <div class="pivot-trigger">Not engaging</div>
+                <div class="pivot-suggestion">"Find just ONE creature."</div>
+              </div>
+              <div class="pivot-item">
+                <div class="pivot-trigger">Rushing</div>
+                <div class="pivot-suggestion">"Find something before I count to 20."</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN: LOG ==================== -->
+    <div class="screen" id="screen-log">
+      <div class="mobile-view">
+        <header class="mobile-header">
+          <div class="mobile-header-row">
+            <button class="back-btn" onclick="showScreen('screen-chunk')">← Back</button>
+          </div>
+          <h1 class="mobile-title">Session Log</h1>
+          <div class="mobile-breadcrumb">Backyard Safari · 2 of 4 chunks</div>
+        </header>
+
+        <div class="mobile-content">
+          <div class="card">
+            <div class="card-title">Who participated?</div>
+            <div class="materials-list">
+              <div class="material-item checked" onclick="toggleMaterial(this)">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Emma (Age 8)</span>
+              </div>
+              <div class="material-item" onclick="toggleMaterial(this)">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Jack (Age 6)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Engagement</div>
+            <div style="display: flex; gap: var(--space-sm);">
+              <button class="mode-btn active" style="flex: 1;">😊 Loved it</button>
+              <button class="mode-btn" style="flex: 1;">😐 Okay</button>
+              <button class="mode-btn" style="flex: 1;">😕 Struggled</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">What stood out?</div>
+            <textarea style="width: 100%; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-md); font-family: var(--font-serif); font-size: 1rem; color: var(--text-primary); min-height: 100px; resize: vertical;" placeholder="What did they find? What surprised them?">Found a slater under a rock, counted all its legs (14!), wanted to know why it curled into a ball.</textarea>
+          </div>
+
+          <button class="btn-primary" style="width: 100%;">Save to Portfolio</button>
+        </div>
+      </div>
+
+      <div class="desktop-view two-col">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="brand">
+              <div class="brand-icon">🔥</div>
+              <span class="brand-text">Hearth</span>
+            </div>
+          </div>
+          <div class="sidebar-footer" style="margin-top: auto;">
+            <button class="sidebar-btn" onclick="showScreen('screen-chunk')">← Back to Session</button>
+          </div>
+        </aside>
+
+        <main class="main-content" style="max-width: 640px;">
+          <div class="page-header">
+            <h1 class="page-title">Session Log</h1>
+            <p class="page-subtitle">Backyard Safari · 2 of 4 chunks completed</p>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Who participated?</div>
+            <div class="materials-list" style="flex-direction: row; gap: var(--space-md);">
+              <div class="material-item checked" onclick="toggleMaterial(this)" style="flex: 1;">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Emma (Age 8)</span>
+              </div>
+              <div class="material-item" onclick="toggleMaterial(this)" style="flex: 1;">
+                <span class="material-checkbox"></span>
+                <span class="material-text">Jack (Age 6)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Engagement Level</div>
+            <div style="display: flex; gap: var(--space-sm);">
+              <button class="mode-btn active" style="flex: 1; justify-content: center;">😊 Loved it</button>
+              <button class="mode-btn" style="flex: 1; justify-content: center;">😐 Okay</button>
+              <button class="mode-btn" style="flex: 1; justify-content: center;">😕 Struggled</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">What stood out?</div>
+            <textarea style="width: 100%; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-md); font-family: var(--font-serif); font-size: 1rem; color: var(--text-primary); min-height: 120px; resize: vertical;" placeholder="What did they find? What surprised them?">Found a slater under a rock, counted all its legs (14!), wanted to know why it curled into a ball when touched.</textarea>
+            <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-sm);">
+              <button class="mode-btn">📷 Add photo</button>
+              <button class="mode-btn">🎤 Voice note</button>
+            </div>
+          </div>
+
+          <div class="nav-controls">
+            <button class="btn-primary" style="flex: 1;">Save to Portfolio</button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function showStep(num) {
+      document.querySelectorAll('[id^="step-"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`step-${num}`).classList.remove('hidden');
+
+      document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+        dot.classList.remove('active', 'completed');
+        if (idx + 1 < num)  dot.classList.add('completed');
+        if (idx + 1 === num) dot.classList.add('active');
+      });
+
+      const labels = ['Explore & Search', 'Observe Closely', 'Magnify & Wonder'];
+      document.querySelector('.step-label').textContent = `Step ${num} of ${totalSteps} · ${labels[num-1]}`;
+      currentStep = num;
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+      } else {
+        alert('Chunk complete!');
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) showStep(currentStep - 1);
+    }
+
+    function toggleMaterial(el)   { el.classList.toggle('checked'); }
+    function toggleThink(el)      { el.classList.toggle('expanded'); }
+
+    function toggleRecording(btn) {
+      btn.classList.toggle('recording');
+      btn.textContent = btn.classList.contains('recording') ? '⏹ Recording...' : '🎤 Voice note';
+    }
+
+    function showAge(btn, id) {
+      btn.parentElement.querySelectorAll('.age-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.age-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
+</body>
+</html>

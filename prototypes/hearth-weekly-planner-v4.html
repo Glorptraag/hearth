@@ -1,0 +1,1717 @@
+<!-- Version: 4 | Date: 2026-03-19 | Changes: Full canonical token conformance — renamed surface/border/accent vars to canonical names; replaced all px font-sizes with rem type scale; replaced hardcoded spacing with --space-* tokens; replaced all rogue radius values (3px/4px/6px/8px/10px/20px) with --radius-* tokens; removed font-weight 300; .module-card padding → --space-xs/--space-sm dense card variant; .insight-card → canonical Hearth Voice gradient pattern; .bottom-panel-overlay + .bottom-panel → canonical bottom-sheet anatomy; .card-title font-size → canonical 0.95rem (dense context); subject tag pills → canonical subject-tag-pill pattern; all transition values → canonical --transition-quick/gentle; --border-subtle corrected to ember-tinted rgba -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearth — Weekly Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* ── Canonical surface hierarchy ── */
+            --surface-body:    #0F0D0B;
+            --surface-panel:   #1A1612;
+            --surface-raised:  #252117;
+            --surface-hover:   #2D2621;
+
+            /* ── Text hierarchy ── */
+            --text-primary:    #E8DFD4;
+            --text-secondary:  #9B8B7E;
+            --text-muted:      #6B5D52;
+            --text-inverse:    #0F0D0B;
+
+            /* ── Ember — primary action ── */
+            --ember:           #D97B3A;
+            --ember-hover:     #E88F4E;
+            --ember-glow:      rgba(217, 123, 58, 0.15);
+            --ember-strong:    rgba(217, 123, 58, 0.25);
+
+            /* ── Sage — growth/success ── */
+            --sage:            #4ADE80;
+            --sage-muted:      #22C55E;
+
+            /* ── Child identity colors ── */
+            --child-rose:      #F9A8D4;
+            --child-blue:      #60A5FA;
+            --child-sage:      #4ADE80;
+            --child-violet:    #A78BFA;
+
+            /* ── Supporting ── */
+            --amber:           #FBBF24;
+
+            /* ── Borders — ember-tinted ── */
+            --border-subtle:   rgba(217, 123, 58, 0.1);
+            --border-medium:   rgba(217, 123, 58, 0.2);
+
+            /* ── Shadows ── */
+            --shadow-soft:     0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium:   0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:     0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:     0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* ── Typography ── */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Spacing — 8px base unit ── */
+            --space-xs:   4px;
+            --space-sm:   8px;
+            --space-md:   16px;
+            --space-lg:   24px;
+            --space-xl:   32px;
+            --space-2xl:  48px;
+            --space-3xl:  64px;
+            --space-4xl:  96px;
+
+            /* ── Border radius ── */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* ── Transitions ── */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            background-image:
+                radial-gradient(circle at 15% 85%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 85% 15%, rgba(217, 123, 58, 0.06) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ══════════════════════════════════════
+           HEADER
+           ══════════════════════════════════════ */
+        .header {
+            background: rgba(26, 22, 18, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: var(--space-sm) var(--space-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: var(--space-md); }
+        .logo {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ember);
+            letter-spacing: -0.02em;
+        }
+        .logo span {
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: 0.875rem;
+            margin-left: var(--space-sm);
+        }
+        .week-nav { display: flex; align-items: center; gap: var(--space-sm); }
+        .week-nav-btn {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            width: 32px; height: 32px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-quick);
+            font-size: 0.875rem;
+        }
+        .week-nav-btn:hover { border-color: var(--ember); color: var(--text-primary); }
+        .week-label {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+        .week-label small {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+        .header-right { display: flex; align-items: center; gap: var(--space-sm); }
+        .header-stat {
+            display: flex; align-items: center; gap: var(--space-xs);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+        }
+        .header-stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .header-stat .dot.green { background: var(--sage); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+        .header-stat .dot.amber { background: var(--amber); box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+        .curriculum-progress { display: flex; gap: var(--space-xs); align-items: center; }
+        .progress-pip {
+            width: 28px; height: 6px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-hover);
+            position: relative; overflow: hidden;
+            cursor: default;
+        }
+        .progress-pip .fill { position: absolute; top: 0; left: 0; bottom: 0; border-radius: var(--radius-sm); }
+        .progress-pip[data-area="eng"] .fill   { background: var(--child-blue); }
+        .progress-pip[data-area="math"] .fill  { background: var(--child-violet); }
+        .progress-pip[data-area="sci"] .fill   { background: var(--sage); }
+        .progress-pip[data-area="hass"] .fill  { background: var(--amber); }
+        .progress-pip[data-area="arts"] .fill  { background: var(--child-rose); }
+        .progress-pip[data-area="hpe"] .fill   { background: var(--ember); }
+        .progress-pip[data-area="tech"] .fill  { background: #22D3EE; }
+
+        /* Pip tooltip */
+        .progress-pip[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            white-space: nowrap;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        /* ══════════════════════════════════════
+           SMART INSIGHTS BAR — Hearth Voice pattern
+           ══════════════════════════════════════ */
+        .insights-bar {
+            display: flex;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--surface-body);
+            border-bottom: 1px solid var(--border-subtle);
+            overflow-x: auto;
+        }
+
+        /* Canonical Hearth Voice card pattern */
+        .insight-card {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            background: linear-gradient(135deg, var(--surface-raised), var(--surface-panel));
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-lg);
+            min-width: 260px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all var(--transition-gentle);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Ember gradient top-line — Hearth signature */
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ember), transparent);
+            opacity: 0.6;
+        }
+        .insight-card:hover {
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-warm);
+            transform: translateY(-2px);
+        }
+        .insight-icon {
+            width: 32px; height: 32px;
+            border-radius: var(--radius-md);
+            background: var(--ember-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .insight-text { display: flex; flex-direction: column; gap: 2px; }
+        .insight-text strong {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .insight-text span {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ══════════════════════════════════════
+           PLANNER TABLE
+           ══════════════════════════════════════ */
+        .planner-container {
+            padding: var(--space-md) var(--space-lg);
+            padding-bottom: 120px;
+        }
+
+        .planner-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 80px rgba(217, 123, 58, 0.05),
+                inset 0 1px 0 rgba(217, 123, 58, 0.06);
+        }
+
+        /* ── Table Head ── */
+        .planner-table thead th {
+            padding: var(--space-md) var(--space-sm) var(--space-sm);
+            text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--surface-body);
+            position: relative;
+        }
+        .planner-table thead th:not(:last-child) {
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        .planner-table .row-label-col {
+            width: 72px;
+            min-width: 72px;
+        }
+
+        .th-day-name {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+        }
+        .th-day-date {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Today column */
+        .planner-table th.is-today {
+            background: linear-gradient(180deg, rgba(217, 123, 58, 0.08) 0%, var(--surface-body) 100%);
+        }
+        .planner-table th.is-today .th-day-name { color: var(--ember); }
+        .planner-table th.is-today::after {
+            content: 'TODAY';
+            font-family: var(--font-sans);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--text-inverse);
+            background: var(--ember);
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-top: var(--space-xs);
+        }
+        .planner-table td.is-today-cell {
+            background: rgba(217, 123, 58, 0.03);
+            box-shadow: inset 1px 0 0 rgba(217, 123, 58, 0.08), inset -1px 0 0 rgba(217, 123, 58, 0.08);
+        }
+
+        /* ── Table Body ── */
+        .planner-table tbody td {
+            padding: var(--space-sm);
+            vertical-align: top;
+            border-bottom: 1px solid var(--border-subtle);
+            min-height: 120px;
+            height: 140px;
+            position: relative;
+            transition: background var(--transition-quick);
+        }
+        .planner-table tbody td:not(:last-child) {
+            border-right: 1px solid var(--border-subtle);
+        }
+        .planner-table tbody tr:last-child td { border-bottom: none; }
+
+        /* Session row labels */
+        .planner-table .session-row-label {
+            background: var(--surface-body);
+            text-align: center;
+            vertical-align: middle;
+            padding: var(--space-sm);
+        }
+        .session-row-label .label-text {
+            font-family: var(--font-sans);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            writing-mode: vertical-lr;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            white-space: nowrap;
+        }
+        .session-row-label .energy-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .energy-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+        }
+        .energy-dot.high { background: var(--amber); box-shadow: 0 0 6px rgba(251, 191, 36, 0.5); }
+        .energy-dot.low  { background: var(--child-blue); box-shadow: 0 0 6px rgba(96, 165, 250, 0.4); }
+
+        /* ── Drop Zones ── */
+        .session-drop {
+            min-height: 100%;
+            border: 1.5px dashed transparent;
+            border-radius: var(--radius-sm);
+            padding: var(--space-xs);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            transition: all var(--transition-quick);
+        }
+        .session-drop.empty-hint {
+            border-color: rgba(45, 38, 33, 0.4);
+        }
+        .session-drop.empty-hint::after {
+            content: '+';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 50px;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            opacity: 0.3;
+            font-weight: 400;
+        }
+        .session-drop.drag-active {
+            border-color: var(--ember);
+            background: var(--ember-glow);
+            box-shadow: inset 0 0 20px rgba(217, 123, 58, 0.08);
+        }
+        td.drag-over-cell {
+            background: rgba(217, 123, 58, 0.04) !important;
+        }
+
+        /* ── Module Cards — dense variant ── */
+        .module-card {
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: grab;
+            transition: all var(--transition-quick);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Ember top-line on hover */
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+        .module-card:hover {
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft), 0 0 8px rgba(217, 123, 58, 0.1);
+            transform: translateY(-1px);
+        }
+        .module-card:hover::before { opacity: 1; }
+        .module-card:active {
+            cursor: grabbing;
+            box-shadow: var(--shadow-medium), 0 0 16px rgba(217, 123, 58, 0.15);
+            transform: scale(1.03);
+            z-index: 10;
+        }
+        .module-card .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        /* ── Subject Tag Pills — canonical pattern ── */
+        .card-subject {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            display: inline-block;
+        }
+        .subject-english { color: var(--child-blue);   background: rgba(96, 165, 250, 0.12); }
+        .subject-maths   { color: var(--child-violet); background: rgba(167, 139, 250, 0.12); }
+        .subject-science { color: var(--sage);         background: rgba(74, 222, 128, 0.12); }
+        .subject-hass    { color: var(--amber);        background: rgba(251, 191, 36, 0.12); }
+        .subject-arts    { color: var(--child-rose);   background: rgba(249, 168, 212, 0.12); }
+        .subject-hpe     { color: #F97316;             background: rgba(249, 115, 22, 0.12); }
+        .subject-tech    { color: #22D3EE;             background: rgba(34, 211, 238, 0.12); }
+
+        .card-duration {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        .card-chunk {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+        .card-remove {
+            position: absolute; top: var(--space-xs); right: var(--space-xs);
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 0.6rem;
+            display: none; align-items: center; justify-content: center;
+            transition: all var(--transition-quick);
+        }
+        .module-card:hover .card-remove { display: flex; }
+        .card-remove:hover { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+
+        /* ── Completed State ── */
+        .module-card.completed {
+            opacity: 0.55;
+            border-color: rgba(74, 222, 128, 0.3);
+            background: linear-gradient(135deg, var(--surface-raised) 0%, rgba(74, 222, 128, 0.04) 100%);
+            cursor: pointer;
+        }
+        .module-card.completed:hover {
+            opacity: 0.7;
+            border-color: rgba(74, 222, 128, 0.3);
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.15);
+            transform: none;
+        }
+        .module-card.completed .card-title {
+            text-decoration: line-through;
+            text-decoration-color: var(--text-muted);
+            text-decoration-thickness: 1px;
+        }
+        .module-card.completed .done-badge { display: flex; }
+        .module-card.completed .card-remove { display: none !important; }
+
+        .done-badge {
+            display: none;
+            align-items: center;
+            gap: var(--space-xs);
+            font-family: var(--font-sans);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--sage);
+            background: rgba(74, 222, 128, 0.12);
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            margin-top: var(--space-xs);
+            width: fit-content;
+        }
+
+        .complete-toggle {
+            position: absolute;
+            top: var(--space-xs);
+            right: var(--space-xs);
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 1.5px solid var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem;
+            color: transparent;
+            transition: all var(--transition-quick);
+            padding: 0;
+        }
+        .complete-toggle:hover {
+            border-color: var(--sage);
+            background: rgba(74, 222, 128, 0.12);
+            color: var(--sage);
+        }
+        .module-card.completed .complete-toggle {
+            border-color: var(--sage);
+            background: var(--sage);
+            color: var(--text-inverse);
+        }
+
+        /* ── Multi-subject tag ── */
+        .multi-tag {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 2px;
+            display: block;
+        }
+
+        /* ── Session divider row ── */
+        .planner-table .session-divider td {
+            height: 1px;
+            padding: 0;
+            border-bottom: 1px dashed var(--border-subtle);
+            background: var(--surface-body);
+        }
+
+        /* ══════════════════════════════════════
+           WEEKLY REFLECTION
+           ══════════════════════════════════════ */
+        .reflection-row {
+            margin-top: var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .reflection-header {
+            padding: var(--space-sm) var(--space-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .reflection-header:hover { background: var(--surface-raised); }
+        .reflection-header-left { display: flex; align-items: center; gap: var(--space-sm); }
+        .reflection-header-left h3 {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .reflection-header-left .subtitle {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .reflection-toggle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            transition: transform var(--transition-gentle);
+        }
+        .reflection-row.open .reflection-toggle { transform: rotate(180deg); }
+        .reflection-body { max-height: 0; overflow: hidden; transition: max-height var(--transition-gentle); }
+        .reflection-row.open .reflection-body { max-height: 400px; }
+        .reflection-content {
+            padding: 0 var(--space-md) var(--space-md);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--space-sm);
+        }
+        .reflection-prompt {
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm);
+        }
+        .reflection-prompt label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: var(--space-sm);
+        }
+        .reflection-prompt textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            min-height: 60px;
+        }
+        .reflection-prompt textarea::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ══════════════════════════════════════
+           BOTTOM PANEL — canonical bottom-sheet
+           ══════════════════════════════════════ */
+
+        /* Backdrop */
+        .bottom-panel-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 199;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-gentle);
+        }
+        .bottom-panel-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Bottom sheet container */
+        .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            transition: transform var(--transition-gentle);
+        }
+        .bottom-panel.collapsed { transform: translateY(calc(100% - 64px)); }
+        .bottom-panel.expanded  { transform: translateY(0); }
+
+        /* Sheet surface — canonical xl radius top corners */
+        .panel-inner {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            box-shadow:
+                0 -12px 48px rgba(0, 0, 0, 0.5),
+                0 -2px 16px rgba(217, 123, 58, 0.08);
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-handle-bar {
+            padding: var(--space-md) var(--space-lg) var(--space-sm);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        /* Canonical drag handle — 40×4px, surface-hover, radius-full */
+        .panel-grip {
+            width: 40px;
+            height: 4px;
+            background: var(--surface-hover);
+            border-radius: var(--radius-full);
+            transition: background var(--transition-quick);
+        }
+        .panel-handle-bar:hover .panel-grip { background: var(--ember); }
+
+        .panel-collapsed-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .panel-collapsed-left { display: flex; align-items: center; gap: var(--space-sm); }
+        .panel-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .panel-badge {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--ember);
+            background: var(--ember-glow);
+            padding: 3px var(--space-sm);
+            border-radius: var(--radius-sm);
+        }
+        .panel-collapsed-preview { display: flex; gap: var(--space-sm); }
+        .preview-chip {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            white-space: nowrap;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 var(--space-lg) var(--space-md);
+        }
+        .panel-content::-webkit-scrollbar { width: 6px; }
+        .panel-content::-webkit-scrollbar-track { background: transparent; }
+        .panel-content::-webkit-scrollbar-thumb {
+            background: var(--surface-hover);
+            border-radius: var(--radius-sm);
+        }
+
+        /* ── Recommendations ── */
+        .recs-section { margin-bottom: var(--space-md); }
+        .recs-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-sm);
+        }
+        .recs-section-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ember);
+        }
+        .recs-see-all {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: color var(--transition-quick);
+        }
+        .recs-see-all:hover { color: var(--ember); }
+
+        .recs-scroll {
+            display: flex;
+            gap: var(--space-sm);
+            overflow-x: auto;
+            padding-bottom: var(--space-sm);
+            scroll-snap-type: x mandatory;
+        }
+        .recs-scroll::-webkit-scrollbar { height: 4px; }
+        .recs-scroll::-webkit-scrollbar-thumb {
+            background: var(--surface-hover);
+            border-radius: var(--radius-sm);
+        }
+
+        /* Rec card uses standard card anatomy */
+        .rec-card {
+            min-width: 220px; max-width: 240px;
+            padding: var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: grab;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            transition: all var(--transition-gentle);
+            position: relative;
+            overflow: hidden;
+        }
+        .rec-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0;
+            transition: opacity var(--transition-gentle);
+        }
+        .rec-card:hover {
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-warm);
+            transform: translateY(-2px);
+        }
+        .rec-card:hover::before { opacity: 1; }
+        .rec-card:active { cursor: grabbing; transform: scale(1.03); }
+
+        /* Rec reason pill — canonical pill pattern */
+        .rec-reason {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-sm);
+            border: 1px solid var(--border-subtle);
+        }
+        .reason-gap    { color: var(--child-rose);   background: rgba(249, 168, 212, 0.12); }
+        .reason-energy { color: var(--amber);        background: rgba(251, 191, 36, 0.12); }
+        .reason-goal   { color: var(--sage);         background: rgba(74, 222, 128, 0.12); }
+        .reason-streak { color: var(--child-violet); background: rgba(167, 139, 250, 0.12); }
+
+        .rec-card .card-title {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: var(--space-xs);
+        }
+        .rec-card .card-meta {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-xs);
+        }
+        .rec-card .card-why {
+            font-family: var(--font-serif);
+            font-size: 0.875rem;
+            font-style: italic;
+            color: var(--text-muted);
+            line-height: 1.5;
+            padding-top: var(--space-xs);
+            border-top: 1px solid var(--border-subtle);
+        }
+        .rec-suggested-slot {
+            margin-top: var(--space-sm);
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .rec-suggested-slot strong {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ── Catalog ── */
+        .catalog-section {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: var(--space-md);
+        }
+        .catalog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-sm);
+        }
+        .catalog-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .catalog-filters { display: flex; gap: var(--space-xs); }
+        .catalog-filter {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+        .catalog-filter:hover {
+            border-color: var(--ember);
+            color: var(--text-primary);
+        }
+        .catalog-filter.active {
+            background: var(--ember);
+            border-color: var(--ember);
+            color: var(--text-inverse);
+            font-weight: 600;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--space-sm);
+        }
+        .catalog-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--surface-body);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: grab;
+            transition: all var(--transition-quick);
+        }
+        .catalog-item:hover {
+            border-color: var(--border-medium);
+            background: var(--surface-raised);
+            transform: translateX(2px);
+        }
+        .catalog-item:active { cursor: grabbing; }
+        .catalog-item-icon {
+            width: 32px; height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        .catalog-item-info { flex: 1; min-width: 0; }
+        .catalog-item-title {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .catalog-item-meta {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: var(--space-xs);
+        }
+
+        /* ── Animations ── */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: var(--shadow-soft); }
+            50%       { box-shadow: var(--shadow-warm); }
+        }
+        .module-card.just-placed { animation: pulseGlow 0.6s ease; }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════ HEADER ════════════ -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">Hearth <span>Planner</span></div>
+        <div class="week-nav">
+            <button class="week-nav-btn" onclick="changeWeek(-1)">‹</button>
+            <div class="week-label" id="weekLabel">
+                Week of Feb 10
+                <small>Term 1 · Week 6</small>
+            </div>
+            <button class="week-nav-btn" onclick="changeWeek(1)">›</button>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="curriculum-progress" title="Subject balance this week (from planned modules)">
+            <div class="progress-pip" data-area="eng"  id="pip-english"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="math" id="pip-maths"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="sci"  id="pip-science"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="hass" id="pip-hass"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="arts" id="pip-arts"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="hpe"  id="pip-hpe"><div class="fill" style="width:0%"></div></div>
+            <div class="progress-pip" data-area="tech" id="pip-tech"><div class="fill" style="width:0%"></div></div>
+        </div>
+        <div class="header-stat" id="hoursPlanned"><span class="dot green"></span><span id="hoursLabel">0 hrs planned</span></div>
+        <div class="header-stat"><span class="dot amber"></span><span id="gapsStat">3 gaps this week</span></div>
+    </div>
+</header>
+
+<!-- ════════════ SMART INSIGHTS BAR ════════════ -->
+<div class="insights-bar">
+    <div class="insight-card" onclick="applyInsight(this)">
+        <div class="insight-icon">🔴</div>
+        <div class="insight-text">
+            <strong>Science gap — 12 days</strong>
+            <span>No science activities logged since Jan 29. Try "Kitchen Chemistry" this week?</span>
+        </div>
+    </div>
+    <div class="insight-card" onclick="applyInsight(this)">
+        <div class="insight-icon">⚡</div>
+        <div class="insight-text">
+            <strong>Energy match tip</strong>
+            <span>Maths focus works best Monday AM when energy is high. Move "Fractions" from Thursday?</span>
+        </div>
+    </div>
+    <div class="insight-card" onclick="applyInsight(this)">
+        <div class="insight-icon">🎯</div>
+        <div class="insight-text">
+            <strong>3 more to hit monthly goal</strong>
+            <span>Add 3 English activities to complete your February reading target.</span>
+        </div>
+    </div>
+    <div class="insight-card" onclick="applyInsight(this)">
+        <div class="insight-icon">🔥</div>
+        <div class="insight-text">
+            <strong>4-week HASS streak!</strong>
+            <span>Lily has engaged with history every week this month. Keep it rolling!</span>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ PLANNER TABLE ════════════ -->
+<div class="planner-container">
+    <table class="planner-table">
+        <thead>
+            <tr>
+                <th class="row-label-col"></th>
+                <th class="is-today">
+                    <span class="th-day-name">Monday</span>
+                    <span class="th-day-date">Feb 10</span>
+                </th>
+                <th>
+                    <span class="th-day-name">Tuesday</span>
+                    <span class="th-day-date">Feb 11</span>
+                </th>
+                <th>
+                    <span class="th-day-name">Wednesday</span>
+                    <span class="th-day-date">Feb 12</span>
+                </th>
+                <th>
+                    <span class="th-day-name">Thursday</span>
+                    <span class="th-day-date">Feb 13</span>
+                </th>
+                <th>
+                    <span class="th-day-name">Friday</span>
+                    <span class="th-day-date">Feb 14</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ── MORNING ROW ── -->
+            <tr>
+                <td class="session-row-label">
+                    <div class="energy-indicator">
+                        <span class="energy-dot high"></span>
+                        <span class="label-text">Morning</span>
+                    </div>
+                </td>
+
+                <!-- Mon Morning -->
+                <td class="is-today-cell" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card completed" draggable="true" ondragstart="onDragStart(event)" data-subjects="maths" data-duration="45">
+                            <div class="card-top">
+                                <span class="card-subject subject-maths">Maths</span>
+                                <span class="card-duration">45m</span>
+                            </div>
+                            <div class="card-title">Fractions & Fair Shares</div>
+                            <div class="card-chunk">Comparing fractions with food</div>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                        <div class="module-card completed" draggable="true" ondragstart="onDragStart(event)" data-subjects="english" data-duration="30">
+                            <div class="card-top">
+                                <span class="card-subject subject-english">English</span>
+                                <span class="card-duration">30m</span>
+                            </div>
+                            <div class="card-title">Story Explorers</div>
+                            <div class="card-chunk">Character mapping</div>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Tue Morning -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="science,maths" data-duration="60">
+                            <div class="card-top">
+                                <span class="card-subject subject-science">Science</span>
+                                <span class="card-duration">60m</span>
+                            </div>
+                            <div class="card-title">Kitchen Chemistry</div>
+                            <div class="card-chunk">Acids & bases with lemon</div>
+                            <span class="multi-tag">+Maths</span>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Wed Morning -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop empty-hint"></div>
+                </td>
+
+                <!-- Thu Morning -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="english" data-duration="35">
+                            <div class="card-top">
+                                <span class="card-subject subject-english">English</span>
+                                <span class="card-duration">35m</span>
+                            </div>
+                            <div class="card-title">Story Explorers</div>
+                            <div class="card-chunk">Writing dialogue</div>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Fri Morning -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="maths" data-duration="40">
+                            <div class="card-top">
+                                <span class="card-subject subject-maths">Maths</span>
+                                <span class="card-duration">40m</span>
+                            </div>
+                            <div class="card-title">Fractions & Fair Shares</div>
+                            <div class="card-chunk">Fraction number line</div>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <!-- ── AFTERNOON ROW ── -->
+            <tr>
+                <td class="session-row-label">
+                    <div class="energy-indicator">
+                        <span class="energy-dot low"></span>
+                        <span class="label-text">Afternoon</span>
+                    </div>
+                </td>
+
+                <!-- Mon Afternoon -->
+                <td class="is-today-cell" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop empty-hint"></div>
+                </td>
+
+                <!-- Tue Afternoon -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="arts,science,english" data-duration="40">
+                            <div class="card-top">
+                                <span class="card-subject subject-arts">Arts</span>
+                                <span class="card-duration">40m</span>
+                            </div>
+                            <div class="card-title">Nature Journaling</div>
+                            <div class="card-chunk">Observational sketching</div>
+                            <span class="multi-tag">+Science +English</span>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Wed Afternoon -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop empty-hint"></div>
+                </td>
+
+                <!-- Thu Afternoon -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="hass,english" data-duration="45">
+                            <div class="card-top">
+                                <span class="card-subject subject-hass">HASS</span>
+                                <span class="card-duration">45m</span>
+                            </div>
+                            <div class="card-title">Our Neighbourhood</div>
+                            <div class="card-chunk">Mapping the community</div>
+                            <span class="multi-tag">+English</span>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Fri Afternoon -->
+                <td ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                    <div class="session-drop">
+                        <div class="module-card" draggable="true" ondragstart="onDragStart(event)" data-subjects="hpe" data-duration="50">
+                            <div class="card-top">
+                                <span class="card-subject subject-hpe">HPE</span>
+                                <span class="card-duration">50m</span>
+                            </div>
+                            <div class="card-title">Move & Play</div>
+                            <div class="card-chunk">Outdoor games & movement</div>
+                            <div class="done-badge">✓ Logged</div>
+                            <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                            <button class="card-remove" onclick="removeCard(this)">✕</button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ════════════ WEEKLY REFLECTION ════════════ -->
+    <div class="reflection-row" id="reflectionRow">
+        <div class="reflection-header" onclick="toggleReflection()">
+            <div class="reflection-header-left">
+                <span style="font-size:1.1rem">📝</span>
+                <div>
+                    <h3>Weekly Reflection</h3>
+                    <span class="subtitle">Optional — capture what stood out this week</span>
+                </div>
+            </div>
+            <span class="reflection-toggle">▾</span>
+        </div>
+        <div class="reflection-body">
+            <div class="reflection-content">
+                <div class="reflection-prompt">
+                    <label>✨ What sparkled?</label>
+                    <textarea placeholder="A moment of curiosity or joy this week..."></textarea>
+                </div>
+                <div class="reflection-prompt">
+                    <label>🌱 What's growing?</label>
+                    <textarea placeholder="Skills or understanding developing..."></textarea>
+                </div>
+                <div class="reflection-prompt">
+                    <label>🔄 What to adjust?</label>
+                    <textarea placeholder="Anything to tweak for next week..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ BOTTOM PANEL — canonical bottom sheet ════════════ -->
+<div class="bottom-panel-overlay" id="panelOverlay" onclick="togglePanel()"></div>
+
+<div class="bottom-panel collapsed" id="bottomPanel">
+    <div class="panel-inner">
+        <div class="panel-handle-bar" onclick="togglePanel()">
+            <div class="panel-grip"></div>
+            <div class="panel-collapsed-row">
+                <div class="panel-collapsed-left">
+                    <span class="panel-title">Module Library</span>
+                    <span class="panel-badge">3 recommended</span>
+                </div>
+                <div class="panel-collapsed-preview">
+                    <span class="preview-chip">🧪 Kitchen Chemistry</span>
+                    <span class="preview-chip">📖 Poetry Picnic</span>
+                    <span class="preview-chip">🗺️ Map Makers</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <!-- SMART RECOMMENDATIONS -->
+            <div class="recs-section">
+                <div class="recs-section-header">
+                    <span class="recs-section-label">✦ Recommended for this week</span>
+                    <button class="recs-see-all">See all suggestions →</button>
+                </div>
+                <div class="recs-scroll">
+                    <div class="rec-card" draggable="true" ondragstart="onDragStart(event)">
+                        <span class="rec-reason reason-gap">🔴 Coverage Gap</span>
+                        <div class="card-title">Kitchen Chemistry</div>
+                        <div class="card-meta">
+                            <span class="card-subject subject-science">Science</span>
+                            <span>60 min · 3 chunks</span>
+                        </div>
+                        <div class="card-why">"No science in 12 days — hands-on module uses kitchen items you already have."</div>
+                        <div class="rec-suggested-slot">💡 Best fit: <strong>Tue morning</strong></div>
+                    </div>
+                    <div class="rec-card" draggable="true" ondragstart="onDragStart(event)">
+                        <span class="rec-reason reason-goal">🎯 Monthly Goal</span>
+                        <div class="card-title">Poetry Picnic</div>
+                        <div class="card-meta">
+                            <span class="card-subject subject-english">English</span>
+                            <span>30 min · 2 chunks</span>
+                        </div>
+                        <div class="card-why">"2 more English activities to hit your February reading goal."</div>
+                        <div class="rec-suggested-slot">💡 Best fit: <strong>Wed afternoon</strong></div>
+                    </div>
+                    <div class="rec-card" draggable="true" ondragstart="onDragStart(event)">
+                        <span class="rec-reason reason-energy">⚡ Energy Match</span>
+                        <div class="card-title">Map Makers</div>
+                        <div class="card-meta">
+                            <span class="card-subject subject-hass">HASS</span>
+                            <span>45 min · 2 chunks</span>
+                        </div>
+                        <div class="card-why">"Creative mapping works perfectly as a wind-down afternoon activity."</div>
+                        <div class="rec-suggested-slot">💡 Best fit: <strong>Wed afternoon</strong></div>
+                    </div>
+                    <div class="rec-card" draggable="true" ondragstart="onDragStart(event)">
+                        <span class="rec-reason reason-streak">🔥 Keep Streak</span>
+                        <div class="card-title">Time Detectives</div>
+                        <div class="card-meta">
+                            <span class="card-subject subject-hass">HASS</span>
+                            <span>40 min · 3 chunks</span>
+                        </div>
+                        <div class="card-why">"Lily's on a 4-week HASS streak — keep momentum going!"</div>
+                        <div class="rec-suggested-slot">💡 Best fit: <strong>Thu afternoon</strong></div>
+                    </div>
+                    <div class="rec-card" draggable="true" ondragstart="onDragStart(event)">
+                        <span class="rec-reason reason-gap">🔴 Coverage Gap</span>
+                        <div class="card-title">Digital Creators</div>
+                        <div class="card-meta">
+                            <span class="card-subject subject-tech">Tech</span>
+                            <span>45 min · 2 chunks</span>
+                        </div>
+                        <div class="card-why">"Technologies hasn't been touched in 3 weeks."</div>
+                        <div class="rec-suggested-slot">💡 Best fit: <strong>Mon morning</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FULL CATALOG -->
+            <div class="catalog-section">
+                <div class="catalog-header">
+                    <span class="catalog-label">All Modules</span>
+                    <div class="catalog-filters">
+                        <button class="catalog-filter active" onclick="filterCatalog(this,'all')">All</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'english')">English</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'maths')">Maths</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'science')">Science</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'hass')">HASS</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'arts')">Arts</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'hpe')">HPE</button>
+                        <button class="catalog-filter" onclick="filterCatalog(this,'tech')">Tech</button>
+                    </div>
+                </div>
+                <div class="catalog-grid">
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="english">
+                        <div class="catalog-item-icon" style="background:rgba(96,165,250,0.12)">📖</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Story Explorers</div>
+                            <div class="catalog-item-meta"><span>English</span><span>·</span><span>4 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="maths">
+                        <div class="catalog-item-icon" style="background:rgba(167,139,250,0.12)">🔢</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Fractions & Fair Shares</div>
+                            <div class="catalog-item-meta"><span>Maths</span><span>·</span><span>5 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="science" data-subjects="science,maths">
+                        <div class="catalog-item-icon" style="background:rgba(74,222,128,0.12)">🧪</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Kitchen Chemistry</div>
+                            <div class="catalog-item-meta"><span>Science</span><span>·</span><span>3 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="hass" data-subjects="hass,english">
+                        <div class="catalog-item-icon" style="background:rgba(251,191,36,0.12)">🗺️</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Our Neighbourhood</div>
+                            <div class="catalog-item-meta"><span>HASS</span><span>·</span><span>4 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="arts" data-subjects="arts,science,english">
+                        <div class="catalog-item-icon" style="background:rgba(249,168,212,0.12)">🎨</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Nature Journaling</div>
+                            <div class="catalog-item-meta"><span>Arts</span><span>·</span><span>3 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="english">
+                        <div class="catalog-item-icon" style="background:rgba(96,165,250,0.12)">🌸</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Poetry Picnic</div>
+                            <div class="catalog-item-meta"><span>English</span><span>·</span><span>2 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="hpe">
+                        <div class="catalog-item-icon" style="background:rgba(249,115,22,0.12)">🏃</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Move & Play</div>
+                            <div class="catalog-item-meta"><span>HPE</span><span>·</span><span>4 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="hass">
+                        <div class="catalog-item-icon" style="background:rgba(251,191,36,0.12)">🕵️</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Time Detectives</div>
+                            <div class="catalog-item-meta"><span>HASS</span><span>·</span><span>3 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="tech">
+                        <div class="catalog-item-icon" style="background:rgba(34,211,238,0.12)">💻</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Digital Creators</div>
+                            <div class="catalog-item-meta"><span>Tech</span><span>·</span><span>2 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="maths">
+                        <div class="catalog-item-icon" style="background:rgba(167,139,250,0.12)">📐</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Shape Hunters</div>
+                            <div class="catalog-item-meta"><span>Maths</span><span>·</span><span>3 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="science">
+                        <div class="catalog-item-icon" style="background:rgba(74,222,128,0.12)">🌿</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Backyard Biologist</div>
+                            <div class="catalog-item-meta"><span>Science</span><span>·</span><span>4 chunks</span></div>
+                        </div>
+                    </div>
+                    <div class="catalog-item" draggable="true" ondragstart="onDragStart(event)" data-subject="arts">
+                        <div class="catalog-item-icon" style="background:rgba(249,168,212,0.12)">🎵</div>
+                        <div class="catalog-item-info">
+                            <div class="catalog-item-title">Sound & Rhythm</div>
+                            <div class="catalog-item-meta"><span>Arts</span><span>·</span><span>3 chunks</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Panel toggle ──
+    function togglePanel() {
+        const panel = document.getElementById('bottomPanel');
+        const overlay = document.getElementById('panelOverlay');
+        if (panel.classList.contains('collapsed')) {
+            panel.classList.replace('collapsed', 'expanded');
+            overlay.classList.add('visible');
+        } else {
+            panel.classList.replace('expanded', 'collapsed');
+            overlay.classList.remove('visible');
+        }
+    }
+
+    // ── Reflection toggle ──
+    function toggleReflection() {
+        document.getElementById('reflectionRow').classList.toggle('open');
+    }
+
+    // ══════════════════════════════════════
+    // COMPLETED STATE TOGGLE
+    // ══════════════════════════════════════
+    function toggleComplete(btn) {
+        const card = btn.closest('.module-card');
+        card.classList.toggle('completed');
+        recalcSubjectBalance();
+    }
+
+    // ══════════════════════════════════════
+    // DYNAMIC SUBJECT BALANCE
+    // ══════════════════════════════════════
+    function recalcSubjectBalance() {
+        const cards = document.querySelectorAll('.planner-table .module-card');
+        const subjectCounts = {};
+        const subjectCompleted = {};
+        let totalMinutes = 0;
+        let completedMinutes = 0;
+        const allSubjects = ['english', 'maths', 'science', 'hass', 'arts', 'hpe', 'tech'];
+
+        allSubjects.forEach(s => { subjectCounts[s] = 0; subjectCompleted[s] = 0; });
+
+        cards.forEach(card => {
+            const subjects = (card.dataset.subjects || '').split(',').map(s => s.trim()).filter(Boolean);
+            const duration = parseInt(card.dataset.duration) || 0;
+            const isCompleted = card.classList.contains('completed');
+
+            totalMinutes += duration;
+            if (isCompleted) completedMinutes += duration;
+
+            subjects.forEach(subj => {
+                if (subjectCounts[subj] !== undefined) {
+                    subjectCounts[subj]++;
+                    if (isCompleted) subjectCompleted[subj]++;
+                }
+            });
+        });
+
+        const maxCount = Math.max(1, ...Object.values(subjectCounts));
+
+        allSubjects.forEach(subj => {
+            const pip = document.getElementById('pip-' + subj);
+            if (!pip) return;
+
+            const count = subjectCounts[subj];
+            const completed = subjectCompleted[subj];
+            const fillPct = Math.round((count / maxCount) * 100);
+
+            const fill = pip.querySelector('.fill');
+            fill.style.width = fillPct + '%';
+
+            if (completed > 0 && count > 0) {
+                fill.style.opacity = completed === count ? '1' : '0.7';
+            } else {
+                fill.style.opacity = count > 0 ? '0.5' : '0.2';
+            }
+
+            const label = subj.charAt(0).toUpperCase() + subj.slice(1);
+            pip.title = `${label}: ${count} planned, ${completed} logged`;
+            pip.style.display = 'block';
+        });
+
+        const hrs = (totalMinutes / 60).toFixed(1);
+        const completedHrs = (completedMinutes / 60).toFixed(1);
+        const hoursLabel = document.getElementById('hoursLabel');
+        if (hoursLabel) hoursLabel.textContent = `${completedHrs} / ${hrs} hrs`;
+
+        const gapCount = allSubjects.filter(s => subjectCounts[s] === 0).length;
+        const gapStat = document.getElementById('gapsStat');
+        if (gapStat) gapStat.textContent = gapCount > 0 ? `${gapCount} subject gap${gapCount > 1 ? 's' : ''}` : 'All subjects covered';
+    }
+
+    // ── Drag & Drop ──
+    let draggedElement = null;
+
+    function onDragStart(e) {
+        draggedElement = e.target.closest('.module-card, .rec-card, .catalog-item');
+        if (draggedElement) {
+            e.dataTransfer.effectAllowed = 'move';
+            draggedElement.style.opacity = '0.4';
+        }
+    }
+
+    function onDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const td = e.target.closest('td');
+        const drop = td ? td.querySelector('.session-drop') : null;
+        if (drop) { drop.classList.add('drag-active'); drop.classList.remove('empty-hint'); }
+        if (td) td.classList.add('drag-over-cell');
+    }
+
+    function onDragLeave(e) {
+        const td = e.target.closest('td');
+        if (td && !td.contains(e.relatedTarget)) {
+            const drop = td.querySelector('.session-drop');
+            if (drop) drop.classList.remove('drag-active');
+            td.classList.remove('drag-over-cell');
+        }
+    }
+
+    function onDrop(e) {
+        e.preventDefault();
+        const td = e.target.closest('td');
+        const dropZone = td ? td.querySelector('.session-drop') : null;
+        if (!dropZone || !draggedElement) return;
+
+        dropZone.classList.remove('drag-active', 'empty-hint');
+        td.classList.remove('drag-over-cell');
+
+        if (draggedElement.classList.contains('rec-card') || draggedElement.classList.contains('catalog-item')) {
+            const title = draggedElement.querySelector('.card-title, .catalog-item-title').textContent;
+            const subjectEl = draggedElement.querySelector('.card-subject, .catalog-item-meta span');
+            const subjectText = subjectEl ? subjectEl.textContent.trim() : 'Module';
+            const subjectKey = subjectText.toLowerCase();
+            const subjectClass = getSubjectClass(subjectKey);
+            const dataSubjects = draggedElement.dataset.subjects || subjectKey;
+
+            const newCard = document.createElement('div');
+            newCard.className = 'module-card just-placed';
+            newCard.draggable = true;
+            newCard.setAttribute('ondragstart', 'onDragStart(event)');
+            newCard.dataset.subjects = dataSubjects;
+            newCard.dataset.duration = '45';
+            newCard.innerHTML = `
+                <div class="card-top">
+                    <span class="card-subject ${subjectClass}">${subjectText}</span>
+                    <span class="card-duration">45m</span>
+                </div>
+                <div class="card-title">${title}</div>
+                <div class="card-chunk">Chunk 1</div>
+                <div class="done-badge">✓ Logged</div>
+                <button class="complete-toggle" onclick="toggleComplete(this)" title="Toggle completed">✓</button>
+                <button class="card-remove" onclick="removeCard(this)">✕</button>
+            `;
+            dropZone.appendChild(newCard);
+            setTimeout(() => newCard.classList.remove('just-placed'), 600);
+        } else if (draggedElement.classList.contains('module-card')) {
+            dropZone.appendChild(draggedElement);
+            draggedElement.classList.add('just-placed');
+            setTimeout(() => draggedElement.classList.remove('just-placed'), 600);
+        }
+
+        draggedElement.style.opacity = '1';
+        draggedElement = null;
+        refreshEmptyHints();
+        recalcSubjectBalance();
+    }
+
+    document.addEventListener('dragend', () => {
+        if (draggedElement) draggedElement.style.opacity = '1';
+        document.querySelectorAll('.drag-active').forEach(el => el.classList.remove('drag-active'));
+        document.querySelectorAll('.drag-over-cell').forEach(el => el.classList.remove('drag-over-cell'));
+    });
+
+    function refreshEmptyHints() {
+        document.querySelectorAll('.session-drop').forEach(sd => {
+            if (sd.children.length === 0) sd.classList.add('empty-hint');
+            else sd.classList.remove('empty-hint');
+        });
+    }
+
+    function getSubjectClass(subject) {
+        const map = {
+            english: 'subject-english', maths: 'subject-maths', science: 'subject-science',
+            hass: 'subject-hass', arts: 'subject-arts', hpe: 'subject-hpe', tech: 'subject-tech'
+        };
+        return map[subject] || 'subject-english';
+    }
+
+    function removeCard(btn) {
+        btn.closest('.module-card').remove();
+        refreshEmptyHints();
+        recalcSubjectBalance();
+    }
+
+    function filterCatalog(btn, subject) {
+        document.querySelectorAll('.catalog-filter').forEach(f => f.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.catalog-item').forEach(item => {
+            item.style.display = (subject === 'all' || item.dataset.subject === subject) ? 'flex' : 'none';
+        });
+    }
+
+    function applyInsight(card) {
+        card.style.borderColor = 'var(--border-medium)';
+        card.style.boxShadow = 'var(--shadow-warm)';
+        setTimeout(() => { card.style.borderColor = ''; card.style.boxShadow = ''; }, 1500);
+        const panel = document.getElementById('bottomPanel');
+        if (panel.classList.contains('collapsed')) togglePanel();
+    }
+
+    function changeWeek(dir) {
+        const label = document.getElementById('weekLabel');
+        label.style.opacity = '0.5';
+        setTimeout(() => { label.style.opacity = '1'; }, 300);
+    }
+
+    document.addEventListener('DOMContentLoaded', recalcSubjectBalance);
+</script>
+
+</body>
+</html>

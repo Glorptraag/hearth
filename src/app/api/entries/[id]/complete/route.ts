@@ -1,0 +1,40 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { db } from '@/lib/db';
+import { learningEntries } from '@/lib/db/schema';
+import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { eq, and } from 'drizzle-orm';
+
+type Params = { params: Promise<{ id: string }> };
+
+export async function POST(request: NextRequest, { params }: Params) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const family = await getFamilyByClerkId(userId);
+  if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  const { id } = await params;
+
+  const existing = await db.query.learningEntries.findFirst({
+    where: and(
+      eq(learningEntries.id, id),
+      eq(learningEntries.familyId, family.id)
+    ),
+  });
+
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const [updated] = await db
+    .update(learningEntries)
+    .set({ status: 'complete', updatedAt: new Date() })
+    .where(
+      and(
+        eq(learningEntries.id, id),
+        eq(learningEntries.familyId, family.id)
+      )
+    )
+    .returning();
+
+  return NextResponse.json(updated);
+}

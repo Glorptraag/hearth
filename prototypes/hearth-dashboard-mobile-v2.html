@@ -1,0 +1,789 @@
+<!-- Version: 2 | Date: 2026-03-18 | Changes: Full canonical :root token block; surface/ember/sage/border/shadow/transition tokens added; bottom nav follows nav-item pattern (sans 0.9rem 500 radius-md ember active); menu-drawer uses surface-panel bg + border-subtle borders + radius-xl corners; menu-btn expanded to 44px tap target; menu-close expanded to 44px tap target; radius-sm/radius-md corrected to canonical 6px/10px; transition-quick/transition-gentle tokens replace inline 0.2s/0.3s ease; learner/action-tile transitions use token vars; --shadow-soft/shadow-medium replace bare --shadow/--shadow-lg; deep-coffee renamed to surface-body; coffee-mid/coffee-light renamed to surface-panel/surface-raised -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hearth – Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* ── Surfaces ── */
+            --surface-body:   #0F0D0B;
+            --surface-panel:  #1A1612;
+            --surface-raised: #252117;
+            --surface-hover:  #2D2621;
+
+            /* ── Text ── */
+            --text-primary:   #E8DFD4;
+            --text-secondary: #9B8B7E;
+            --text-muted:     #6B5D52;
+            --text-inverse:   #0F0D0B;
+
+            /* ── Ember ── */
+            --ember:          #D97B3A;
+            --ember-hover:    #E88F4E;
+            --ember-glow:     rgba(217, 123, 58, 0.15);
+            --ember-strong:   rgba(217, 123, 58, 0.25);
+
+            /* ── Sage ── */
+            --sage:           #4ADE80;
+            --sage-muted:     #22C55E;
+
+            /* ── Child identity ── */
+            --child-rose:     #F9A8D4;
+            --child-blue:     #60A5FA;
+            --child-sage:     #4ADE80;
+            --child-violet:   #A78BFA;
+
+            /* child bg convenience aliases */
+            --emma-bg:        rgba(249, 168, 212, 0.12);
+            --emma-color:     #F9A8D4;
+            --liam-bg:        rgba(96, 165, 250, 0.12);
+            --liam-color:     #60A5FA;
+            --oliver-bg:      rgba(74, 222, 128, 0.12);
+            --oliver-color:   #4ADE80;
+
+            /* ── Supporting ── */
+            --deep-blue:      #60A5FA;
+
+            /* ── Borders ── */
+            --border-subtle:  rgba(217, 123, 58, 0.1);
+            --border-medium:  rgba(217, 123, 58, 0.2);
+
+            /* ── Shadows ── */
+            --shadow-soft:    0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-medium:  0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-warm:    0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+            --shadow-glow:    0 0 20px rgba(217, 123, 58, 0.15);
+
+            /* ── Transitions ── */
+            --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* ── Typography ── */
+            --font-serif: 'Crimson Text', Georgia, serif;
+            --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* ── Spacing (8px base) ── */
+            --space-xs:  4px;
+            --space-sm:  8px;
+            --space-md:  16px;
+            --space-lg:  24px;
+            --space-xl:  32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+            --space-4xl: 96px;
+
+            /* ── Border Radius ── */
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   24px;
+            --radius-full: 9999px;
+
+            /* ── Safe areas ── */
+            --safe-top:    env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--surface-body);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* ── App Shell ── */
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--surface-panel);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--ember);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .brand-text {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 44px tap target per 5-minute rule */
+        .menu-btn {
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background var(--transition-quick);
+        }
+
+        .menu-btn:active {
+            background: var(--ember-glow);
+        }
+
+        /* ── Main Scrollable Area ── */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+            padding-bottom: 100px; /* space for bottom nav + FAB */
+        }
+
+        /* ── Greeting ── */
+        .greeting {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-lg);
+        }
+
+        .greeting span {
+            color: var(--ember);
+        }
+
+        /* ── Summary Card ── */
+        .summary-card {
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ember), transparent);
+            opacity: 0.5;
+        }
+
+        .summary-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        .summary-text {
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .summary-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-top: var(--space-md);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--ember-glow);
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--ember);
+        }
+
+        /* ── Section ── */
+        .section {
+            margin-bottom: var(--space-xl);
+        }
+
+        /* Overline label — sans, uppercase, muted */
+        .section-title {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        /* ── Learners Row ── */
+        .learners {
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .learner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* min 44px height, padding gives ~80px total — fine */
+            padding: var(--space-md);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: all var(--transition-gentle);
+        }
+
+        .learner:active {
+            transform: scale(0.97);
+            background: var(--surface-raised);
+        }
+
+        .learner-symbol {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .learner.emma .learner-symbol  { background: var(--emma-bg);   color: var(--emma-color);   }
+        .learner.liam .learner-symbol  { background: var(--liam-bg);   color: var(--liam-color);   }
+        .learner.oliver .learner-symbol{ background: var(--oliver-bg); color: var(--oliver-color); }
+
+        .learner-name {
+            font-family: var(--font-serif);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ── Quick Actions Grid ── */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+        }
+
+        .action-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            /* min 44px satisfied — actual height ~110px */
+            padding: var(--space-lg);
+            background: var(--surface-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: all var(--transition-quick);
+        }
+
+        .action-tile:active {
+            transform: scale(0.97);
+            background: var(--surface-raised);
+        }
+
+        .action-tile.hidden {
+            display: none;
+        }
+
+        .action-icon {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .action-label {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .action-sub {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Continue tile uses border-medium (ember 0.2) */
+        .action-tile.continue {
+            border-color: var(--border-medium);
+        }
+
+        .action-tile.continue .action-icon {
+            color: var(--ember);
+        }
+
+        /* ── Bottom Navigation ── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface-panel);
+            border-top: 1px solid var(--border-subtle);
+            padding-bottom: var(--safe-bottom);
+            z-index: 100;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: var(--space-sm) var(--space-sm);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Nav-item: canonical pattern — sans 0.9rem 500, radius-md, ember when active */
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 44px minimum tap target */
+            min-height: 44px;
+            min-width: 64px;
+            padding: var(--space-sm) var(--space-md);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+        }
+
+        .nav-item:active {
+            background: var(--ember-glow);
+        }
+
+        .nav-item.active {
+            color: var(--ember);
+            background: var(--surface-raised);
+            border-color: var(--border-medium);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item .icon {
+            font-size: 1.25rem;
+            margin-bottom: 2px;
+            opacity: 0.6;
+            transition: opacity var(--transition-quick);
+        }
+
+        .nav-item.active .icon,
+        .nav-item:active .icon {
+            opacity: 1;
+        }
+
+        /* ── FAB – Log Button ── */
+        .fab {
+            position: fixed;
+            bottom: calc(70px + var(--safe-bottom));
+            right: var(--space-lg);
+            width: 56px;
+            height: 56px;
+            background: var(--ember);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-inverse);
+            box-shadow: 0 4px 16px rgba(217, 123, 58, 0.4), var(--shadow-glow);
+            cursor: pointer;
+            z-index: 101;
+            transition: all var(--transition-quick);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(217, 123, 58, 0.3);
+        }
+
+        /* ── Menu Overlay ── */
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-gentle);
+            z-index: 200;
+        }
+
+        .menu-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Drawer: surface-panel bg, border-subtle left border, radius-xl on left corners */
+        .menu-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 280px;
+            background: var(--surface-panel);
+            border-left: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+            transform: translateX(100%);
+            transition: transform var(--transition-gentle);
+            z-index: 201;
+            padding: var(--space-xl);
+            padding-top: calc(var(--safe-top) + var(--space-xl));
+            box-shadow: var(--shadow-warm);
+        }
+
+        .menu-overlay.open .menu-drawer {
+            transform: translateX(0);
+        }
+
+        .menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-xl);
+        }
+
+        .menu-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* 44×44px tap target */
+        .menu-close {
+            width: 44px;
+            height: 44px;
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background var(--transition-quick);
+        }
+
+        .menu-close:active {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .menu-section {
+            margin-bottom: var(--space-xl);
+        }
+
+        .menu-label {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Menu items follow canonical nav-item pattern */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            /* 44px min tap target */
+            min-height: 44px;
+            padding: var(--space-md);
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition-quick);
+        }
+
+        .menu-item:active {
+            background: var(--ember-glow);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .menu-item .icon {
+            font-size: 1.1rem;
+            opacity: 0.7;
+        }
+
+        /* User badge anchored at drawer bottom */
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            position: absolute;
+            bottom: calc(var(--safe-bottom) + var(--space-xl));
+            left: var(--space-xl);
+            right: var(--space-xl);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--ember);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-serif);
+            font-weight: 600;
+            color: var(--text-inverse);
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="brand-icon">🔥</div>
+                <span class="brand-text">Hearth</span>
+            </div>
+            <button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">☰</button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Greeting -->
+            <h1 class="greeting">Good evening, <span>Sarah</span></h1>
+
+            <!-- Summary Card -->
+            <div class="summary-card">
+                <div class="summary-label">Your Hearth Today</div>
+                <p class="summary-text">
+                    A busy afternoon of discovery — Emma and Liam explored magnets together while Oliver counted birds.
+                </p>
+                <span class="summary-stat">✨ 3 moments logged</span>
+            </div>
+
+            <!-- Learners -->
+            <section class="section">
+                <h2 class="section-title">Your Learners</h2>
+                <div class="learners">
+                    <a href="#" class="learner emma">
+                        <div class="learner-symbol">⭐</div>
+                        <span class="learner-name">Emma</span>
+                    </a>
+                    <a href="#" class="learner liam">
+                        <div class="learner-symbol">🔺</div>
+                        <span class="learner-name">Liam</span>
+                    </a>
+                    <a href="#" class="learner oliver">
+                        <div class="learner-symbol">🌿</div>
+                        <span class="learner-name">Oliver</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="section">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="actions-grid">
+                    <!-- Continue shows only when there's an incomplete session -->
+                    <a href="#" class="action-tile continue">
+                        <span class="action-icon">📖</span>
+                        <span class="action-label">Continue</span>
+                        <span class="action-sub">Liam's Reading Ch.4</span>
+                    </a>
+
+                    <a href="#" class="action-tile">
+                        <span class="action-icon">🧭</span>
+                        <span class="action-label">Explore</span>
+                        <span class="action-sub">Find activities</span>
+                    </a>
+
+                    <a href="#" class="action-tile">
+                        <span class="action-icon">📅</span>
+                        <span class="action-label">This Week</span>
+                        <span class="action-sub">Plan &amp; review</span>
+                    </a>
+
+                    <a href="#" class="action-tile">
+                        <span class="action-icon">📋</span>
+                        <span class="action-label">HEU Status</span>
+                        <span class="action-sub">3 of 6 samples</span>
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <!-- FAB – Log Button -->
+        <button class="fab" aria-label="Log a moment">✏️</button>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-inner">
+                <a href="#" class="nav-item active">
+                    <span class="icon">📖</span>
+                    Story
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">🧭</span>
+                    Find
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">🧱</span>
+                    Build
+                </a>
+            </div>
+        </nav>
+
+        <!-- Menu Overlay -->
+        <div class="menu-overlay" id="menuOverlay" onclick="closeMenu(event)">
+            <div class="menu-drawer" onclick="event.stopPropagation()">
+                <div class="menu-header">
+                    <span class="menu-title">Menu</span>
+                    <button class="menu-close" onclick="toggleMenu()" aria-label="Close menu">✕</button>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-label">Navigate</div>
+                    <a href="#" class="menu-item">
+                        <span class="icon">🏠</span>
+                        Dashboard
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span class="icon">📅</span>
+                        Weekly Planner
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span class="icon">🔔</span>
+                        Notifications
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-label">Create</div>
+                    <a href="#" class="menu-item">
+                        <span class="icon">🧱</span>
+                        Module Builder
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span class="icon">🏅</span>
+                        Badge Creator
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-label">Settings</div>
+                    <a href="#" class="menu-item">
+                        <span class="icon">👨‍👩‍👧‍👦</span>
+                        Family Settings
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span class="icon">❓</span>
+                        Help &amp; Support
+                    </a>
+                </div>
+
+                <div class="user-badge">
+                    <div class="user-avatar">SM</div>
+                    <div class="user-info">
+                        <div class="user-name">Sarah Morrison</div>
+                        <div class="user-role">Facilitator</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('menuOverlay').classList.toggle('open');
+        }
+
+        function closeMenu(event) {
+            if (event.target === event.currentTarget) {
+                document.getElementById('menuOverlay').classList.remove('open');
+            }
+        }
+    </script>
+</body>
+</html>

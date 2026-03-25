@@ -1,0 +1,1301 @@
+<!-- Version: 2 | Date: 2026-03-20 | Changes: Full design system conformance pass — replaced entire :root with canonical dark mode tokens; renamed --accent/--accent-hover → --ember/--ember-hover; renamed --bg-primary/secondary/tertiary → --surface-panel/body/raised; renamed --coffee-dark → --surface-body; fixed --sage from #059669 → #4ADE80; fixed --border from hardcoded hex → --border-subtle as rgba(217,123,58,0.1); added --border-medium, --ember-glow, --ember-strong, --shadow-* tokens; replaced all hardcoded border-radius with --radius-* tokens; replaced all hardcoded spacing with --space-* tokens; replaced inline font-family with var(--font-serif)/var(--font-sans); applied correct font-family per role (serif for content/headings, sans for buttons/labels/nav); applied canonical font-weight scale (700 display only, 600 section/card titles, 500 nav/secondary, 400 body); fixed header-back hover from --accent → --text-primary; fixed transitions to var(--transition-quick)/var(--transition-gentle); updated btn-award/share-btn border-radius from 12px → var(--radius-md); updated defer-what-next/physical-badge-card border-radius from 12px → var(--radius-md); updated note-input border-radius from 8px → var(--radius-md); all JS logic preserved intact -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearth — Badge Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== CANONICAL DARK MODE TOKENS ===== */
+  :root {
+    /* Surfaces */
+    --surface-body:     #0F0D0B;
+    --surface-panel:    #1A1612;
+    --surface-raised:   #252117;
+    --surface-hover:    #2D2621;
+
+    /* Text */
+    --text-primary:     #E8DFD4;
+    --text-secondary:   #9B8B7E;
+    --text-muted:       #6B5D52;
+    --text-inverse:     #0F0D0B;
+
+    /* Ember */
+    --ember:            #D97B3A;
+    --ember-hover:      #E88F4E;
+    --ember-glow:       rgba(217, 123, 58, 0.15);
+    --ember-strong:     rgba(217, 123, 58, 0.25);
+
+    /* Sage */
+    --sage:             #4ADE80;
+    --sage-muted:       #22C55E;
+
+    /* Child identity */
+    --child-rose:       #F9A8D4;
+    --child-blue:       #60A5FA;
+    --child-sage:       #4ADE80;
+    --child-violet:     #A78BFA;
+
+    /* Supporting accents */
+    --deep-blue:        #60A5FA;
+    --defer-blue:       #60A5FA;
+    --defer-blue-muted: rgba(96, 165, 250, 0.12);
+
+    /* Borders */
+    --border-subtle:    rgba(217, 123, 58, 0.1);
+    --border-medium:    rgba(217, 123, 58, 0.2);
+
+    /* Shadows */
+    --shadow-soft:      0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-medium:    0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-warm:      0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+    --shadow-glow:      0 0 20px rgba(217, 123, 58, 0.15);
+
+    /* Typography */
+    --font-serif:       'Crimson Text', Georgia, serif;
+    --font-sans:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* Spacing */
+    --space-xs:   4px;
+    --space-sm:   8px;
+    --space-md:   16px;
+    --space-lg:   24px;
+    --space-xl:   32px;
+    --space-2xl:  48px;
+    --space-3xl:  64px;
+    --space-4xl:  96px;
+
+    /* Radius */
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --radius-full: 9999px;
+
+    /* Transitions */
+    --transition-quick:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--surface-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== AMBIENT BACKGROUND ===== */
+  .ambient-bg {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(217, 123, 58, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(217, 123, 58, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(217, 123, 58, 0.04) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== LAYOUT ===== */
+  .screen {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 var(--space-md) var(--space-xl);
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-lg);
+  }
+
+  .header-back {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: color var(--transition-quick);
+    background: none;
+    border: none;
+  }
+  .header-back:hover { color: var(--text-primary); }
+
+  .header-step {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* ===== INTRO / TRIGGER ===== */
+  .intro-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-lg);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      0 0 80px rgba(217, 123, 58, 0.08),
+      inset 0 1px 0 rgba(217, 123, 58, 0.1);
+  }
+
+  .intro-badge-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .badge-emoji {
+    font-size: 40px;
+    width: var(--space-3xl);
+    height: var(--space-3xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-body);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--ember);
+    box-shadow: 0 0 24px rgba(217, 123, 58, 0.2);
+    flex-shrink: 0;
+  }
+
+  .intro-badge-info h2 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+  }
+
+  .intro-badge-thread {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ember);
+  }
+
+  .intro-message {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .intro-message strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ===== PROGRESS DOTS ===== */
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: var(--surface-hover);
+    transition: all var(--transition-gentle);
+  }
+  .progress-dot.active {
+    background: var(--ember);
+    box-shadow: 0 0 12px var(--ember), 0 0 24px rgba(217, 123, 58, 0.4);
+  }
+  .progress-dot.complete {
+    background: var(--sage);
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+  }
+
+  /* ===== QUESTION CARD ===== */
+  .question-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-md);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(217, 123, 58, 0.08);
+    transition: all var(--transition-gentle);
+  }
+
+  .question-number {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .question-text {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+  }
+
+  .question-hint {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    padding: var(--space-md);
+    background: var(--surface-body);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--ember);
+    margin-bottom: var(--space-lg);
+  }
+  .question-hint-label {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin-bottom: var(--space-xs);
+  }
+
+  /* ===== RESPONSE OPTIONS ===== */
+  .response-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .response-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    min-height: 44px;
+    background: var(--surface-body);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    text-align: left;
+    width: 100%;
+  }
+  .response-btn:hover {
+    border-color: var(--border-medium);
+    box-shadow: 0 0 16px rgba(217, 123, 58, 0.12);
+  }
+  .response-btn.selected {
+    border-color: var(--ember);
+    background: var(--ember-glow);
+    box-shadow: 0 0 16px rgba(217, 123, 58, 0.15);
+  }
+
+  .response-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--surface-hover);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-quick);
+  }
+  .response-btn.selected .response-radio {
+    border-color: var(--ember);
+  }
+  .response-btn.selected .response-radio::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: var(--ember);
+    box-shadow: 0 0 8px rgba(217, 123, 58, 0.5);
+  }
+
+  .response-label { font-weight: 400; }
+
+  /* ===== NOTE FIELD ===== */
+  .note-field {
+    margin-top: var(--space-md);
+  }
+  .note-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+    margin-bottom: var(--space-xs);
+  }
+  .note-input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--surface-body);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 400;
+    resize: vertical;
+    min-height: 48px;
+    transition: all var(--transition-quick);
+  }
+  .note-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+  .note-input:focus {
+    outline: none;
+    border-color: var(--ember);
+    box-shadow: 0 0 0 3px var(--ember-strong);
+  }
+
+  /* ===== NAVIGATION BUTTONS ===== */
+  .nav-row {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+  }
+
+  .btn {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    text-align: center;
+    border: none;
+  }
+
+  .btn-secondary {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .btn-secondary:hover {
+    background: var(--surface-raised);
+    border-color: var(--border-medium);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: var(--ember);
+    color: var(--surface-body);
+    font-weight: 600;
+    box-shadow:
+      0 4px 12px rgba(217, 123, 58, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  .btn-primary:hover {
+    background: var(--ember-hover);
+    transform: translateY(-2px);
+    box-shadow:
+      0 6px 20px rgba(217, 123, 58, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ===== DECISION SCREEN ===== */
+  .decision-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl) var(--space-md);
+    text-align: center;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      0 0 60px rgba(217, 123, 58, 0.1),
+      inset 0 1px 0 rgba(217, 123, 58, 0.1);
+  }
+
+  .decision-summary {
+    margin-bottom: var(--space-lg);
+  }
+
+  .decision-summary h3 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .decision-dlo-list {
+    text-align: left;
+    margin: var(--space-md) 0;
+    padding: 0;
+  }
+  .decision-dlo {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+  .decision-dlo:last-child { border-bottom: none; }
+  .dlo-status {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+  .dlo-text { color: var(--text-secondary); }
+  .dlo-text.confirmed { color: var(--text-primary); }
+
+  .decision-score {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: var(--space-md);
+  }
+  .decision-score strong {
+    color: var(--ember);
+    font-weight: 600;
+  }
+
+  /* ===== AWARD / DEFER BUTTONS ===== */
+  .decision-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+  }
+
+  .btn-award {
+    padding: var(--space-md) var(--space-lg);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    border: none;
+    background: var(--ember);
+    color: var(--surface-body);
+    box-shadow:
+      0 4px 16px rgba(217, 123, 58, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  .btn-award:hover {
+    background: var(--ember-hover);
+    box-shadow:
+      0 6px 24px rgba(217, 123, 58, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .btn-defer {
+    padding: var(--space-sm) var(--space-lg);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    background: var(--defer-blue-muted);
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    color: var(--defer-blue);
+  }
+  .btn-defer:hover {
+    background: rgba(96, 165, 250, 0.18);
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+
+  .defer-explanation {
+    font-family: var(--font-serif);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: var(--space-xs);
+  }
+
+  /* ===== AWARD MOMENT ===== */
+  .award-screen {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
+  }
+
+  .award-badge-glow {
+    font-size: 72px;
+    margin-bottom: var(--space-lg);
+    display: inline-block;
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(217, 123, 58, 0.4)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 40px rgba(217, 123, 58, 0.7)); transform: scale(1.05); }
+  }
+
+  .award-title {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .award-child-name {
+    color: var(--ember);
+  }
+
+  .award-subtitle {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .award-badge-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--ember);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-lg);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      0 0 60px rgba(217, 123, 58, 0.15),
+      inset 0 1px 0 rgba(217, 123, 58, 0.15);
+  }
+
+  .award-badge-name {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    letter-spacing: -0.01em;
+  }
+
+  .award-badge-thread-label {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ember);
+    margin-bottom: var(--space-md);
+  }
+
+  .award-badge-summary {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .award-date {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* ===== SHOW CHILD + PHYSICAL BADGE ===== */
+  .share-section {
+    margin-bottom: var(--space-lg);
+  }
+
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    border: none;
+    background: var(--ember);
+    color: var(--surface-body);
+    box-shadow:
+      0 4px 16px rgba(217, 123, 58, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    margin-bottom: var(--space-md);
+  }
+  .share-btn:hover {
+    background: var(--ember-hover);
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 24px rgba(217, 123, 58, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .share-hint {
+    font-family: var(--font-serif);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .physical-badge-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+    cursor: pointer;
+    transition: all var(--transition-quick);
+  }
+  .physical-badge-card:hover {
+    border-color: var(--border-medium);
+    box-shadow: 0 0 16px rgba(217, 123, 58, 0.12);
+    transform: translateY(-1px);
+  }
+  .physical-badge-emoji { font-size: 28px; flex-shrink: 0; }
+  .physical-badge-info h4 {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .physical-badge-info p {
+    font-family: var(--font-serif);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .physical-badge-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+  }
+
+  .done-btn {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-quick);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    margin-top: var(--space-md);
+  }
+  .done-btn:hover {
+    border-color: var(--border-medium);
+    background: var(--surface-raised);
+  }
+
+  /* ===== DEFER SCREEN ===== */
+  .defer-screen {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
+  }
+
+  .defer-emoji {
+    font-size: 56px;
+    margin-bottom: var(--space-lg);
+    display: inline-block;
+  }
+
+  .defer-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+  }
+
+  .defer-message {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .defer-what-next {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    text-align: left;
+    margin-bottom: var(--space-lg);
+  }
+  .defer-what-next h4 {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+  .defer-what-next p {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ===== MULTI-BADGE QUEUE ===== */
+  .queue-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+  .queue-indicator strong {
+    color: var(--ember);
+    font-weight: 600;
+  }
+
+  /* ===== SCREEN TRANSITIONS ===== */
+  .screen-state {
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-gentle);
+  }
+  .screen-state.active {
+    display: block;
+    opacity: 1;
+  }
+
+  /* ===== DESKTOP ENHANCEMENT ===== */
+  @media (min-width: 768px) {
+    .screen {
+      max-width: 520px;
+      padding: 0 var(--space-lg) var(--space-2xl);
+    }
+
+    .question-card {
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    .intro-card {
+      padding: var(--space-xl) var(--space-lg);
+    }
+  }
+
+  /* ===== REDUCED MOTION ===== */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-bg"></div>
+
+<div class="screen">
+
+  <!-- ===== STATE: INTRO (Badge Triggered) ===== -->
+  <div class="screen-state active" id="state-intro">
+    <header class="header">
+      <button class="header-back" onclick="dismissAssessment()">← Back to log</button>
+      <span class="header-step">Badge check</span>
+    </header>
+
+    <!-- Multi-badge queue indicator (hidden for single badge) -->
+    <div class="queue-indicator" id="queue-indicator" style="display: none;">
+      📋 <strong>2 badges</strong> ready for review — starting with the first
+    </div>
+
+    <div class="intro-card">
+      <div class="intro-badge-row">
+        <div class="badge-emoji">🧭</div>
+        <div class="intro-badge-info">
+          <h2>Number Navigator</h2>
+          <div class="intro-badge-thread">Number Sense &amp; Place Value</div>
+        </div>
+      </div>
+      <p class="intro-message">
+        Based on what you've been logging, it looks like <strong>Emma</strong> might be ready for this badge. Let's find out together — just a few quick questions.
+      </p>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="dismissAssessment()">Not now</button>
+      <button class="btn btn-primary" onclick="goToQuestion(0)">Let's check →</button>
+    </div>
+  </div>
+
+  <!-- ===== STATE: QUESTIONS ===== -->
+  <div class="screen-state" id="state-questions">
+    <header class="header">
+      <button class="header-back" onclick="goToIntro()">← Back</button>
+      <span class="header-step" id="question-step-label">Question 1 of 4</span>
+    </header>
+
+    <!-- Progress dots -->
+    <div class="progress-bar" id="progress-dots">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Question container -->
+    <div id="question-container">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Nav buttons -->
+    <div class="nav-row">
+      <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()" style="display:none;">← Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- ===== STATE: DECISION ===== -->
+  <div class="screen-state" id="state-decision">
+    <header class="header">
+      <button class="header-back" onclick="goToQuestion(currentQuestion)">← Review answers</button>
+      <span class="header-step">Award decision</span>
+    </header>
+
+    <div class="decision-card">
+      <div class="intro-badge-row" style="justify-content: center; margin-bottom: var(--space-lg);">
+        <div class="badge-emoji">🧭</div>
+      </div>
+
+      <div class="decision-summary">
+        <h3>Number Navigator — Assessment Summary</h3>
+        <p style="font-family: var(--font-serif); font-size: 0.9rem; font-weight: 400; color: var(--text-secondary); margin-bottom: var(--space-md);">
+          Here's how Emma did on the check questions:
+        </p>
+
+        <div class="decision-dlo-list" id="decision-dlo-list">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div class="decision-score" id="decision-score">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <div class="decision-actions">
+        <button class="btn-award" onclick="awardBadge()">
+          🏅 Award Number Navigator to Emma
+        </button>
+        <button class="btn-defer" onclick="deferBadge()">
+          Not quite yet
+        </button>
+        <p class="defer-explanation">
+          No pressure — we'll check again as more evidence comes in.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STATE: AWARD MOMENT ===== -->
+  <div class="screen-state" id="state-award">
+    <header class="header">
+      <span></span>
+      <span class="header-step">🏅 Badge awarded</span>
+    </header>
+
+    <div class="award-screen">
+      <div class="award-badge-glow">🧭</div>
+
+      <h2 class="award-title">
+        <span class="award-child-name">Emma</span> earned<br>Number Navigator!
+      </h2>
+      <p class="award-subtitle">
+        She can confidently work with numbers to 100, understands tens and ones, and uses number knowledge to solve everyday problems.
+      </p>
+
+      <div class="award-badge-card">
+        <div class="award-badge-name">Number Navigator</div>
+        <div class="award-badge-thread-label">Number Sense &amp; Place Value — Level 2</div>
+        <p class="award-badge-summary">
+          This badge means Emma has the tools to navigate the world of numbers with confidence. She can break numbers apart, put them back together, and use them to make sense of everyday situations.
+        </p>
+        <div class="award-date">Awarded 2 March 2026 · by Mum</div>
+      </div>
+
+      <div class="share-section">
+        <button class="share-btn" onclick="showChild()">
+          📱 Show Emma what she's earned
+        </button>
+        <p class="share-hint">
+          Turn the screen toward Emma — this moment is for her.
+        </p>
+
+        <div class="physical-badge-card" onclick="orderPhysicalBadge()">
+          <div class="physical-badge-emoji">📦</div>
+          <div class="physical-badge-info">
+            <h4>Want a physical badge?</h4>
+            <p>Order a real badge Emma can pin, stick, or display. Available with purchased modules.</p>
+          </div>
+          <div class="physical-badge-arrow">→</div>
+        </div>
+      </div>
+
+      <button class="done-btn" id="done-btn" onclick="finishAssessment()">
+        Done — back to dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== STATE: DEFER ===== -->
+  <div class="screen-state" id="state-defer">
+    <header class="header">
+      <span></span>
+      <span class="header-step">Saved for later</span>
+    </header>
+
+    <div class="defer-screen">
+      <div class="defer-emoji">🌱</div>
+
+      <h2 class="defer-title">No rush at all</h2>
+      <p class="defer-message">
+        Skills grow at their own pace. We'll keep an eye on Emma's progress and check again when more evidence comes in.
+      </p>
+
+      <div class="defer-what-next">
+        <h4>What happens next?</h4>
+        <p>
+          Your log entry has been saved as usual. The badge check will come back naturally when Emma's logged learning suggests she's ready — no action needed from you.
+        </p>
+      </div>
+
+      <button class="done-btn" onclick="finishAssessment()">
+        Done — back to dashboard
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== ASSESSMENT DATA =====
+  // In production: fetched from badge definition in Sanity CMS
+  const badge = {
+    id: 'number-navigator',
+    name: 'Number Navigator',
+    emoji: '🧭',
+    thread: 'Number Sense & Place Value',
+    threadId: 'M1',
+    level: 2,
+    childName: 'Emma',
+    summary: 'Confidently works with numbers to 100, understands tens and ones, and uses number knowledge to solve everyday problems.'
+  };
+
+  const questions = [
+    {
+      id: 'q1',
+      dloId: 'M1-DLO-08',
+      text: 'If you give Emma a two-digit number like 47, can she tell you it\'s 4 tens and 7 ones?',
+      hint: 'We\'re looking for whether she understands the structure of numbers — not just reading digits, but knowing what each position means.',
+      options: [
+        { value: 'yes', label: 'Yes — she gets this consistently' },
+        { value: 'sometimes', label: 'Sometimes, but not always' },
+        { value: 'no', label: 'Not yet' }
+      ],
+      dloText: 'Partitions two-digit numbers into tens and ones'
+    },
+    {
+      id: 'q2',
+      dloId: 'M1-DLO-07',
+      text: 'Can Emma count backwards from 50 without getting stuck?',
+      hint: 'Flexible counting means she knows the number sequence well enough to go both directions — it\'s about confidence, not speed.',
+      options: [
+        { value: 'yes', label: 'Yes — smoothly and confidently' },
+        { value: 'sometimes', label: 'Gets most of the way but stumbles' },
+        { value: 'no', label: 'Finds backward counting tricky' }
+      ],
+      dloText: 'Counts forwards and backwards from any starting point'
+    },
+    {
+      id: 'q3',
+      dloId: 'M1-DLO-09',
+      text: 'If you ask "which is more, 38 or 83?", can Emma explain why?',
+      hint: 'The key here is reasoning — can she use place value to explain, not just guess or compare by feel?',
+      options: [
+        { value: 'yes', label: 'Yes — she can explain using tens and ones' },
+        { value: 'sometimes', label: 'Gets the right answer but can\'t always explain' },
+        { value: 'no', label: 'Still working on comparing bigger numbers' }
+      ],
+      dloText: 'Compares two-digit numbers using place value'
+    },
+    {
+      id: 'q4',
+      dloId: 'M1-DLO-10',
+      text: 'Can Emma make 35 using different combinations? Like 30+5, or 20+15, or 10+25?',
+      hint: 'Flexible composition means she sees numbers as things she can take apart and rebuild — not fixed symbols.',
+      options: [
+        { value: 'yes', label: 'Yes — she enjoys finding different ways' },
+        { value: 'sometimes', label: 'Can do one or two but not many' },
+        { value: 'no', label: 'Sticks to the standard way (30+5)' }
+      ],
+      dloText: 'Composes and decomposes numbers flexibly'
+    }
+  ];
+
+  // ===== STATE =====
+  let currentQuestion = 0;
+  let answers = {};
+  let notes = {};
+
+  // ===== NAVIGATION =====
+  function showState(stateId) {
+    document.querySelectorAll('.screen-state').forEach(s => s.classList.remove('active'));
+    document.getElementById(stateId).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goToIntro() {
+    showState('state-intro');
+  }
+
+  function dismissAssessment() {
+    // In production: save dismissal, queue badge for next session
+    alert('Badge check saved — it\'ll come back next time you log for this area.');
+  }
+
+  function goToQuestion(index) {
+    currentQuestion = index;
+    showState('state-questions');
+    renderQuestion();
+    renderProgressDots();
+    updateNavButtons();
+  }
+
+  function renderProgressDots() {
+    const container = document.getElementById('progress-dots');
+    container.innerHTML = questions.map((q, i) => {
+      let cls = 'progress-dot';
+      if (i === currentQuestion) cls += ' active';
+      else if (answers[q.id]) cls += ' complete';
+      return `<div class="${cls}"></div>`;
+    }).join('');
+  }
+
+  function renderQuestion() {
+    const q = questions[currentQuestion];
+    const savedAnswer = answers[q.id] || null;
+    const savedNote = notes[q.id] || '';
+
+    document.getElementById('question-step-label').textContent =
+      `Question ${currentQuestion + 1} of ${questions.length}`;
+
+    document.getElementById('question-container').innerHTML = `
+      <div class="question-card">
+        <div class="question-number">Question ${currentQuestion + 1} of ${questions.length}</div>
+        <div class="question-text">${q.text}</div>
+        <div class="question-hint">
+          <div class="question-hint-label">What we're looking for</div>
+          ${q.hint}
+        </div>
+        <div class="response-group">
+          ${q.options.map(opt => `
+            <button class="response-btn ${savedAnswer === opt.value ? 'selected' : ''}"
+                    onclick="selectAnswer('${q.id}', '${opt.value}', this)">
+              <div class="response-radio"></div>
+              <span class="response-label">${opt.label}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="note-field">
+          <div class="note-label">Add a note (optional)</div>
+          <textarea class="note-input"
+                    placeholder="Anything you want to remember about this..."
+                    oninput="saveNote('${q.id}', this.value)">${savedNote}</textarea>
+        </div>
+      </div>
+    `;
+
+    updateNavButtons();
+  }
+
+  function selectAnswer(questionId, value, btn) {
+    answers[questionId] = value;
+    // Update selected state
+    btn.closest('.response-group').querySelectorAll('.response-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    updateNavButtons();
+    renderProgressDots();
+  }
+
+  function saveNote(questionId, value) {
+    notes[questionId] = value;
+  }
+
+  function updateNavButtons() {
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    const q = questions[currentQuestion];
+
+    prevBtn.style.display = currentQuestion > 0 ? 'block' : 'none';
+
+    if (currentQuestion === questions.length - 1) {
+      nextBtn.textContent = 'Review →';
+    } else {
+      nextBtn.textContent = 'Next →';
+    }
+
+    nextBtn.disabled = !answers[q.id];
+  }
+
+  function nextQuestion() {
+    if (currentQuestion < questions.length - 1) {
+      goToQuestion(currentQuestion + 1);
+    } else {
+      showDecision();
+    }
+  }
+
+  function prevQuestion() {
+    if (currentQuestion > 0) {
+      goToQuestion(currentQuestion - 1);
+    }
+  }
+
+  // ===== DECISION SCREEN =====
+  function showDecision() {
+    showState('state-decision');
+
+    const listEl = document.getElementById('decision-dlo-list');
+    let confirmedCount = 0;
+
+    listEl.innerHTML = questions.map(q => {
+      const answer = answers[q.id];
+      const isConfirmed = answer === 'yes';
+      const isSometimes = answer === 'sometimes';
+      if (isConfirmed) confirmedCount++;
+
+      const icon = isConfirmed ? '✅' : (isSometimes ? '🟡' : '⬜');
+      const textClass = isConfirmed ? 'confirmed' : '';
+
+      return `
+        <div class="decision-dlo">
+          <span class="dlo-status">${icon}</span>
+          <span class="dlo-text ${textClass}">${q.dloText}</span>
+        </div>
+      `;
+    }).join('');
+
+    const total = questions.length;
+    const scoreEl = document.getElementById('decision-score');
+    scoreEl.innerHTML = `<strong>${confirmedCount} of ${total}</strong> check questions confirmed`;
+  }
+
+  // ===== AWARD & DEFER =====
+  function awardBadge() {
+    showState('state-award');
+    // In production: POST to /api/badges/award with assessment_responses
+  }
+
+  function deferBadge() {
+    showState('state-defer');
+    // In production: POST to /api/badges/defer — threshold stays flagged
+  }
+
+  function showChild() {
+    // In production: transition to child-facing view (simplified, large text)
+    alert('In production: this opens a simplified, child-friendly view of the badge achievement — designed for the parent to turn the device toward the child.');
+  }
+
+  function orderPhysicalBadge() {
+    alert('In production: navigates to physical badge ordering flow.');
+  }
+
+  function finishAssessment() {
+    // Check if there's another badge in the queue
+    const queueEl = document.getElementById('queue-indicator');
+    if (queueEl.style.display !== 'none') {
+      alert('In production: would transition to next badge assessment in queue.');
+    } else {
+      alert('In production: returns to dashboard or the screen that initiated the log.');
+    }
+  }
+
+  // ===== DEMO: Multi-badge queue toggle =====
+  // Uncomment to show multi-badge queue state:
+  // document.getElementById('queue-indicator').style.display = 'flex';
+  // document.getElementById('done-btn').textContent = 'Next badge →';
+</script>
+
+</body>
+</html>

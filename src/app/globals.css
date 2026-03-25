@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ==========================================================================
+   Hearth LMS — Mont Blanc Dark Coffee Design Tokens (Tailwind v4)
+   Source of truth: docs/hearth-canonical-design-tokens-v1.md
+   ========================================================================== */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Surfaces */
+  --color-surface-body: #0F0D0B;
+  --color-surface-panel: #1A1612;
+  --color-surface-raised: #252117;
+  --color-surface-hover: #2D2621;
+
+  /* Text */
+  --color-text-primary: #E8DFD4;
+  --color-text-secondary: #9B8B7E;
+  --color-text-muted: #6B5D52;
+  --color-text-inverse: #0F0D0B;
+
+  /* Ember — actions only */
+  --color-ember: #D97B3A;
+  --color-ember-hover: #E88F4E;
+  --color-ember-glow: rgba(217, 123, 58, 0.15);
+  --color-ember-strong: rgba(217, 123, 58, 0.25);
+
+  /* Sage — growth/success only */
+  --color-sage: #4ADE80;
+  --color-sage-muted: #22C55E;
+
+  /* Borders — ember-tinted, never white-tinted */
+  --color-border-subtle: rgba(217, 123, 58, 0.1);
+  --color-border-medium: rgba(217, 123, 58, 0.2);
+
+  /* Child identity */
+  --color-child-rose: #F9A8D4;
+  --color-child-blue: #60A5FA;
+  --color-child-sage: #4ADE80;
+  --color-child-violet: #A78BFA;
+
+  /* Learning domain colors */
+  --color-domain-english: #6B8E9B;
+  --color-domain-mathematics: #9B7B6B;
+  --color-domain-science: #7B9B6B;
+  --color-domain-hass: #9B8B6B;
+  --color-domain-arts: #8B6B9B;
+  --color-domain-technologies: #6B7B9B;
+  --color-domain-hpe: #9B6B7B;
+  --color-domain-languages: #6B9B8B;
+
+  /* Typography */
+  --font-serif: 'Crimson Text', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* CSS custom properties for shadows and transitions (not Tailwind theme tokens) */
+:root {
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-warm: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+  --shadow-glow: 0 0 20px rgba(217, 123, 58, 0.15);
+
+  --transition-quick: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Base styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-surface-body);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
 }

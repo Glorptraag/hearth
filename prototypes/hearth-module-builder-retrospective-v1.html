@@ -1,0 +1,406 @@
+<!-- Version: 1 | Date: 2026-03-21 | Changes: First build of Retrospective Lift pathway. 3-stage entry wizard: Stage 1 pattern selection, Stage 2 evidence review with deselect, Stage 3 synthesis preview. Loading screen between Stage 2→3. Shared editor fully pre-populated from synthesis. Design brief: hearth-module-builder-pathways-design-brief-v1.md. Spec: hearth-module-builder-pathways-architecture-v2.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Retrospective Lift Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--deep-coffee:#0F0D0B;--coffee-mid:#1A1612;--coffee-light:#252117;--surface-elevated:#2D2621;--surface-hover:#352E28;--text-primary:#E8DFD4;--text-secondary:#9B8B7E;--text-muted:#6B5D52;--ember:#D97B3A;--ember-hover:#E88F4E;--ember-glow:rgba(217,123,58,0.15);--ember-glow-strong:rgba(217,123,58,0.25);--sage:#4ADE80;--sage-glow:rgba(74,222,128,0.12);--rose:#E8A0BF;--blue:#7BA7CC;--purple:#C084FC;--font-serif:'Crimson Text',Georgia,serif;--font-sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--border-subtle:rgba(45,38,33,0.6);--transition:300ms cubic-bezier(0.4,0,0.2,1);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--font-sans);background:var(--deep-coffee);color:var(--text-primary);min-height:100vh;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 90%,rgba(217,123,58,0.04) 0%,transparent 50%),radial-gradient(ellipse at 70% 10%,rgba(217,123,58,0.03) 0%,transparent 50%);pointer-events:none;z-index:0;}
+    .app{position:relative;z-index:1;max-width:600px;margin:0 auto;padding-bottom:100px;}
+
+    .header{display:flex;align-items:center;gap:12px;padding:16px 16px 8px;position:sticky;top:0;background:var(--deep-coffee);z-index:10;}
+    .back-btn{background:none;border:none;color:var(--text-secondary);font-size:14px;font-family:var(--font-sans);cursor:pointer;padding:6px 0;transition:color var(--transition);}
+    .back-btn:hover{color:var(--text-primary);}
+    .header-title{font-family:var(--font-serif);font-size:17px;font-weight:600;color:var(--text-primary);flex:1;}
+    .header-save{background:none;border:1px solid var(--border-subtle);color:var(--text-secondary);font-family:var(--font-sans);font-size:13px;font-weight:500;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--transition);}
+    .header-save:hover:not(:disabled){border-color:var(--ember);color:var(--ember);}
+    .header-save:disabled{opacity:0.35;cursor:default;}
+    .header-save.ready{background:var(--ember);border-color:var(--ember);color:#fff;}
+    .header-save.ready:hover{background:var(--ember-hover);}
+
+    .view{display:none;animation:fadeSlideIn 250ms ease-out;}
+    .view.active{display:block;}
+    @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+    .entry-intro{padding:8px 16px 20px;}
+    .entry-intro h1{font-family:var(--font-serif);font-size:26px;font-weight:600;line-height:1.25;margin-bottom:4px;}
+    .entry-intro .pathway-tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);margin-bottom:8px;}
+    .entry-intro p{font-size:14px;color:var(--text-secondary);line-height:1.5;}
+
+    /* Stage indicator */
+    .stage-indicator{display:flex;align-items:center;justify-content:center;gap:0;padding:0 16px 20px;margin:0 16px;}
+    .stage-step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text-muted);transition:color var(--transition);}
+    .stage-step.active{color:var(--ember);}
+    .stage-step.done{color:var(--sage);}
+    .stage-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;transition:all var(--transition);}
+    .stage-step.active .stage-dot{border-color:var(--ember);color:var(--ember);background:var(--ember-glow);}
+    .stage-step.done .stage-dot{border-color:var(--sage);color:var(--sage);background:var(--sage-glow);}
+    .stage-connector{width:24px;height:2px;background:var(--border-subtle);margin:0 4px;flex-shrink:0;}
+    .stage-connector.done{background:var(--sage);}
+
+    /* Stages */
+    .stage{display:none;animation:fadeSlideIn 250ms ease-out;}
+    .stage.active{display:block;}
+
+    /* Pattern cards */
+    .pattern-card{background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px 16px;margin:0 16px 10px;cursor:pointer;transition:all var(--transition);}
+    .pattern-card:hover{border-color:rgba(217,123,58,0.3);}
+    .pattern-card.selected{border-color:var(--ember);background:var(--ember-glow);}
+    .pattern-card .pattern-label{font-family:var(--font-serif);font-size:16px;font-weight:600;margin-bottom:4px;}
+    .pattern-card .pattern-meta{font-size:12px;color:var(--text-muted);margin-bottom:6px;}
+    .pattern-card .pattern-subjects{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+    .pattern-card .subject-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(107,93,82,0.2);color:var(--text-muted);}
+    .pattern-card .pattern-snippet{font-size:12px;color:var(--text-secondary);font-style:italic;line-height:1.4;}
+
+    /* Evidence cards */
+    .evidence-card{background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:12px 14px;margin:0 16px 8px;transition:all var(--transition);}
+    .evidence-card.deselected{opacity:0.4;border-style:dashed;}
+    .evidence-card-top{display:flex;align-items:flex-start;gap:10px;}
+    .evidence-check{width:20px;height:20px;border-radius:4px;border:1.5px solid var(--ember);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all var(--transition);color:var(--ember);font-size:12px;background:var(--ember-glow);}
+    .evidence-card.deselected .evidence-check{border-color:var(--text-muted);color:transparent;background:transparent;}
+    .evidence-content{flex:1;}
+    .evidence-title{font-size:14px;font-weight:500;margin-bottom:2px;}
+    .evidence-meta{font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+    .evidence-excerpt{font-size:12px;color:var(--text-secondary);line-height:1.4;margin-bottom:6px;}
+    .evidence-children{display:flex;gap:12px;flex-wrap:wrap;}
+    .evidence-child{font-size:11px;color:var(--text-muted);}
+    .evidence-child .child-engagement{margin-left:2px;}
+    .evidence-discovery{font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:4px;padding-left:12px;border-left:2px solid var(--border-subtle);}
+
+    /* Synthesis preview */
+    .synthesis-section{margin:0 16px 16px;padding:14px;background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-md);}
+    .synthesis-label{font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+    .synthesis-label .ai-indicator{font-size:10px;color:var(--ember);}
+    .synthesis-value{font-size:14px;color:var(--text-primary);line-height:1.5;margin-bottom:12px;}
+    .synthesis-value:last-child{margin-bottom:0;}
+    .synthesis-steps-list{list-style:none;padding:0;}
+    .synthesis-steps-list li{font-size:13px;color:var(--text-secondary);padding:4px 0;display:flex;gap:8px;}
+    .synthesis-steps-list .step-num{color:var(--ember);font-weight:600;font-size:12px;min-width:16px;}
+    .synthesis-caps{display:flex;gap:6px;flex-wrap:wrap;}
+    .synthesis-cap{font-size:11px;padding:3px 10px;border-radius:12px;border:1px dashed rgba(217,123,58,0.4);color:var(--text-secondary);}
+
+    .field{margin-bottom:20px;padding:0 16px;}
+    .field-label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+    .field-hint{font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic;}
+    textarea,input[type="text"]{width:100%;background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-sans);font-size:14px;padding:10px 12px;line-height:1.5;transition:border-color var(--transition);resize:vertical;}
+    textarea:focus,input[type="text"]:focus{outline:none;border-color:var(--ember);}
+    textarea::placeholder,input[type="text"]::placeholder{color:var(--text-muted);}
+    select{width:100%;background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-sans);font-size:14px;padding:10px 12px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B8B7E' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+    select:focus{outline:none;border-color:var(--ember);}
+    .settings-row{display:flex;gap:12px;padding:0 16px;margin-bottom:20px;}
+    .settings-row .field{flex:1;padding:0;margin-bottom:0;}
+    .pill-group{display:flex;gap:6px;flex-wrap:wrap;}
+    .pill{background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:20px;color:var(--text-secondary);font-family:var(--font-sans);font-size:13px;padding:6px 14px;cursor:pointer;transition:all var(--transition);white-space:nowrap;}
+    .pill:hover{border-color:rgba(217,123,58,0.3);color:var(--text-primary);}
+    .pill.selected{background:var(--ember-glow);border-color:var(--ember);color:var(--ember);}
+
+    .continue-btn{display:block;width:calc(100% - 32px);margin:24px 16px 0;background:var(--ember);color:#fff;border:none;border-radius:var(--radius-md);font-family:var(--font-sans);font-size:15px;font-weight:500;padding:14px 24px;cursor:pointer;transition:all var(--transition);}
+    .continue-btn:hover{background:var(--ember-hover);}
+    .continue-btn:disabled{opacity:0.4;cursor:default;}
+
+    .loading-screen{padding:60px 16px;text-align:center;}
+    .loading-emoji{font-size:40px;margin-bottom:16px;animation:pulse 1.8s ease-in-out infinite;}
+    .loading-title{font-family:var(--font-serif);font-size:20px;font-weight:600;margin-bottom:8px;}
+    .loading-desc{font-size:14px;color:var(--text-secondary);margin-bottom:24px;line-height:1.5;}
+    .loading-steps{text-align:left;max-width:300px;margin:0 auto;}
+    .loading-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text-muted);transition:color var(--transition);}
+    .loading-step.active{color:var(--text-secondary);}
+    .loading-step.done{color:var(--sage);}
+    .loading-step .step-indicator{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all var(--transition);}
+    .loading-step.active .step-indicator{border-color:var(--ember);color:var(--ember);animation:pulse 1.2s ease-in-out infinite;}
+    .loading-step.done .step-indicator{border-color:var(--sage);background:var(--sage-glow);color:var(--sage);}
+
+    /* Editor (shared) */
+    .completeness-bar{margin:0 16px 16px;padding:10px 14px;background:var(--coffee-mid);border:1px solid var(--border-subtle);border-radius:var(--radius-md);}
+    .completeness-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+    .completeness-label{font-size:12px;font-weight:500;color:var(--text-secondary);}
+    .completeness-pct{font-size:12px;font-weight:600;color:var(--ember);}
+    .completeness-track{height:4px;background:var(--coffee-light);border-radius:2px;overflow:hidden;}
+    .completeness-fill{height:100%;background:var(--ember);border-radius:2px;transition:width 400ms ease;}
+    .completeness-fill.ready{background:var(--sage);}
+    .completeness-hint{font-size:11px;color:var(--text-muted);margin-top:4px;}
+    .editor-section{margin-bottom:8px;}
+    .section-header{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .section-header:hover{background:rgba(255,255,255,0.02);}
+    .section-emoji{font-size:16px;flex-shrink:0;}
+    .section-title{font-family:var(--font-serif);font-size:17px;font-weight:600;flex:1;}
+    .section-status{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;}
+    .section-status.complete{background:var(--sage-glow);color:var(--sage);}
+    .section-status.partial{background:var(--ember-glow);color:var(--ember);}
+    .section-status.empty{background:rgba(107,93,82,0.2);color:var(--text-muted);}
+    .section-chevron{color:var(--text-muted);font-size:14px;transition:transform var(--transition);}
+    .section-chevron.open{transform:rotate(90deg);}
+    .section-body{display:none;padding:0 0 12px;}
+    .section-body.open{display:block;animation:fadeSlideIn 200ms ease-out;}
+    .section-divider{height:1px;background:var(--border-subtle);margin:0 16px;}
+    .ai-suggested-field{position:relative;}
+    .ai-suggested-field textarea,.ai-suggested-field input[type="text"]{border-left:3px solid var(--ember-glow-strong);}
+    .ai-suggested-field textarea:focus,.ai-suggested-field input[type="text"]:focus{border-left-color:var(--ember);}
+    .ai-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ember);margin-top:4px;opacity:0.8;}
+    .ai-badge::before{content:'✨';font-size:10px;}
+    .step-list{padding:0 16px;}
+    .step-card{background:var(--coffee-light);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-bottom:10px;overflow:hidden;transition:border-color var(--transition);}
+    .step-card:focus-within{border-color:rgba(217,123,58,0.3);}
+    .step-card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--coffee-mid);cursor:grab;}
+    .step-number{font-size:12px;font-weight:600;color:var(--ember);width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--ember-glow);border-radius:50%;flex-shrink:0;}
+    .step-title-input{flex:1;background:none;border:none;color:var(--text-primary);font-family:var(--font-sans);font-size:14px;font-weight:500;padding:0;}
+    .step-title-input:focus{outline:none;}
+    .step-title-input::placeholder{color:var(--text-muted);}
+    .step-actions{display:flex;gap:4px;}
+    .step-action-btn{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:2px 4px;transition:color var(--transition);line-height:1;}
+    .step-action-btn:hover{color:var(--text-primary);}
+    .step-action-btn.delete:hover{color:#ef4444;}
+    .step-card-body{padding:10px 12px;}
+    .step-card-body textarea{width:100%;background:none;border:none;color:var(--text-primary);font-family:var(--font-sans);font-size:13px;padding:0;line-height:1.5;resize:none;min-height:40px;}
+    .step-card-body textarea:focus{outline:none;}
+    .step-card-body textarea::placeholder{color:var(--text-muted);}
+    .step-say-this{margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle);}
+    .step-say-this label{font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:4px;}
+    .step-say-this textarea{font-style:italic;font-size:12px;min-height:30px;}
+    .step-observation-hint{margin-top:8px;padding:6px 8px;background:var(--ember-glow);border-radius:var(--radius-sm);border-left:2px solid rgba(217,123,58,0.4);}
+    .step-observation-hint p{font-size:12px;font-style:italic;color:var(--text-secondary);line-height:1.4;}
+    .step-observation-hint .hint-actions{display:flex;gap:8px;margin-top:4px;}
+    .hint-action{background:none;border:none;font-size:11px;color:var(--text-muted);cursor:pointer;padding:0;transition:color var(--transition);}
+    .hint-action:hover{color:var(--text-primary);}
+    .add-step-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:none;border:1px dashed var(--border-subtle);border-radius:var(--radius-md);color:var(--text-muted);font-family:var(--font-sans);font-size:13px;cursor:pointer;transition:all var(--transition);margin-top:2px;}
+    .add-step-btn:hover{border-color:var(--ember);color:var(--ember);background:var(--ember-glow);}
+    .capability-tags{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px;}
+    .cap-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;transition:all var(--transition);}
+    .cap-tag.explicit{background:var(--ember-glow);border:1px solid var(--ember);color:var(--ember);}
+    .cap-tag.suggested{background:transparent;border:1px dashed rgba(217,123,58,0.4);color:var(--text-secondary);}
+    .cap-tag.suggested:hover{border-color:var(--ember);color:var(--ember);}
+    .cap-tag .tag-dot{width:6px;height:6px;border-radius:50%;}
+    .cap-tag .dismiss{font-size:14px;margin-left:2px;opacity:0.5;transition:opacity var(--transition);}
+    .cap-tag:hover .dismiss{opacity:1;}
+    .cap-hint{padding:8px 16px 0;font-size:12px;color:var(--text-muted);font-style:italic;}
+    .coherence-banner{margin:12px 16px;padding:12px 14px;background:rgba(217,123,58,0.08);border:1px solid rgba(217,123,58,0.2);border-radius:var(--radius-md);display:none;}
+    .coherence-banner.visible{display:block;animation:fadeSlideIn 300ms ease-out;}
+    .coherence-banner .banner-content{display:flex;align-items:flex-start;gap:10px;}
+    .coherence-banner .banner-emoji{font-size:18px;flex-shrink:0;}
+    .coherence-banner .banner-text{flex:1;}
+    .coherence-banner .banner-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:2px;}
+    .coherence-banner .banner-desc{font-size:12px;color:var(--text-secondary);line-height:1.4;}
+    .coherence-banner .banner-actions{display:flex;gap:8px;margin-top:8px;}
+    .banner-action-btn{background:none;border:1px solid var(--border-subtle);color:var(--text-secondary);font-family:var(--font-sans);font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--transition);}
+    .banner-action-btn:hover{border-color:var(--ember);color:var(--ember);}
+    .banner-action-btn.dismiss-banner{border:none;padding-left:0;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface-elevated);border:1px solid var(--sage);color:var(--text-primary);font-size:14px;padding:12px 20px;border-radius:var(--radius-md);z-index:100;opacity:0;transition:all 400ms ease;display:flex;align-items:center;gap:8px;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    @media(max-width:400px){.entry-intro h1{font-size:22px;}.settings-row{flex-direction:column;gap:16px;}.stage-step span{display:none;}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header"><button class="back-btn" onclick="handleBack()">← Back</button><div class="header-title" id="header-title"></div><button class="header-save" id="save-btn" disabled onclick="handleSave()">Save Draft</button></div>
+
+    <!-- ENTRY (3-stage wizard) -->
+    <div class="view active" id="view-entry">
+      <div class="entry-intro">
+        <div class="pathway-tag">🔁 Retrospective Lift</div>
+        <h1>Formalise what you've been doing</h1>
+        <p>We've spotted patterns in your logs. Review them and we'll shape them into a module.</p>
+      </div>
+
+      <!-- Stage indicator -->
+      <div class="stage-indicator">
+        <div class="stage-step active" id="stage-1"><div class="stage-dot">1</div><span>Select</span></div>
+        <div class="stage-connector" id="conn-1-2"></div>
+        <div class="stage-step" id="stage-2"><div class="stage-dot">2</div><span>Review</span></div>
+        <div class="stage-connector" id="conn-2-3"></div>
+        <div class="stage-step" id="stage-3"><div class="stage-dot">3</div><span>Preview</span></div>
+      </div>
+
+      <!-- Stage 1: Select Pattern -->
+      <div class="stage active" id="stage-content-1">
+        <div class="field"><label class="field-label">Patterns we've spotted</label></div>
+        <div id="pattern-list"></div>
+        <button class="continue-btn" id="btn-stage-1" disabled onclick="goToStage(2)">Review the evidence →</button>
+      </div>
+
+      <!-- Stage 2: Review Evidence -->
+      <div class="stage" id="stage-content-2">
+        <div class="field"><label class="field-label" id="evidence-label">Matching log entries</label><div class="field-hint">Uncheck any entries that don't belong</div></div>
+        <div id="evidence-list"></div>
+        <div class="field-hint" id="evidence-warning" style="padding:0 16px;color:var(--ember);display:none;">We need at least 2 entries to build a module</div>
+        <button class="continue-btn" id="btn-stage-2" onclick="startSynthesis()">Synthesise these →</button>
+      </div>
+
+      <!-- Stage 3: Preview Synthesis -->
+      <div class="stage" id="stage-content-3">
+        <div class="field"><label class="field-label">Suggested module</label></div>
+        <div id="synthesis-preview"></div>
+        <button class="continue-btn" onclick="goToEditor()">Refine this module →</button>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="view" id="view-loading">
+      <div class="loading-screen">
+        <div class="loading-emoji">🔁</div>
+        <div class="loading-title">Synthesising your logs</div>
+        <div class="loading-desc">Shaping your patterns into a module…</div>
+        <div class="loading-steps">
+          <div class="loading-step" id="load-step-1"><div class="step-indicator">1</div><span>Synthesising across entries</span></div>
+          <div class="loading-step" id="load-step-2"><div class="step-indicator">2</div><span>Mapping capabilities</span></div>
+          <div class="loading-step" id="load-step-3"><div class="step-indicator">3</div><span>Preparing the editor</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="view" id="view-editor">
+      <div class="completeness-bar"><div class="completeness-top"><span class="completeness-label">Module completeness</span><span class="completeness-pct" id="completeness-pct">0%</span></div><div class="completeness-track"><div class="completeness-fill" id="completeness-fill" style="width:0%"></div></div><div class="completeness-hint" id="completeness-hint"></div></div>
+      <div class="coherence-banner" id="coherence-banner"><div class="banner-content"><div class="banner-emoji">🤔</div><div class="banner-text"><div class="banner-title">Steps and goal might not align</div><div class="banner-desc">Your steps seem focused on a different topic than your understanding goal.</div><div class="banner-actions"><button class="banner-action-btn" onclick="scrollToSection('section-learning')">Review learning goal</button><button class="banner-action-btn" onclick="scrollToSection('section-steps')">Review steps</button><button class="banner-action-btn dismiss-banner" onclick="dismissCoherence()">Looks fine to me</button></div></div></div></div>
+
+      <div class="editor-section" id="section-basics"><div class="section-header" onclick="toggleSection('section-basics')"><span class="section-emoji">📝</span><span class="section-title">The Basics</span><span class="section-status empty" id="status-basics">Empty</span><span class="section-chevron open" id="chevron-basics">›</span></div><div class="section-body open" id="body-basics"><div class="field"><label class="field-label">Module title</label><div class="ai-suggested-field" id="field-title"><input type="text" id="ed-title" oninput="handleFieldEdit('field-title');updateCompleteness();"></div></div><div class="field"><label class="field-label">Description</label><div class="ai-suggested-field" id="field-desc"><textarea id="ed-description" style="min-height:48px;" oninput="handleFieldEdit('field-desc');updateCompleteness();"></textarea></div></div><div class="settings-row"><div class="field"><label class="field-label">Duration</label><select id="ed-duration"><option value="15">15 min</option><option value="30">30 min</option><option value="45" selected>45 min</option><option value="60">1 hour</option><option value="120">1–2 hrs</option><option value="360">Half day</option></select></div><div class="field"><label class="field-label">Setting</label><div class="pill-group" id="ed-setting-pills"><button class="pill" onclick="selectPill(this,'ed-setting-pills')">Either</button><button class="pill" onclick="selectPill(this,'ed-setting-pills')">Indoor</button><button class="pill selected" onclick="selectPill(this,'ed-setting-pills')">Outdoor</button></div></div></div></div></div>
+      <div class="section-divider"></div>
+      <div class="editor-section" id="section-steps"><div class="section-header" onclick="toggleSection('section-steps')"><span class="section-emoji">📋</span><span class="section-title">The Steps</span><span class="section-status empty" id="status-steps">Empty</span><span class="section-chevron open" id="chevron-steps">›</span></div><div class="section-body open" id="body-steps"><div class="step-list" id="step-list"></div><div style="padding:0 16px;"><button class="add-step-btn" onclick="addStep()">+ Add a step</button><button class="add-step-btn" onclick="regenerateHints()" style="margin-top:6px;border-style:solid;border-color:rgba(217,123,58,0.2);">✨ Regenerate observation hints</button></div></div></div>
+      <div class="section-divider"></div>
+      <div class="editor-section" id="section-materials"><div class="section-header" onclick="toggleSection('section-materials')"><span class="section-emoji">🧰</span><span class="section-title">Materials Needed</span><span class="section-status empty" id="status-materials">Optional</span><span class="section-chevron" id="chevron-materials">›</span></div><div class="section-body" id="body-materials"><div class="field"><label class="field-label">What do you need?</label><div id="material-list"></div><button class="add-step-btn" onclick="addMaterial()" style="margin-top:4px;">+ Add material</button></div></div></div>
+      <div class="section-divider"></div>
+      <div class="editor-section" id="section-learning"><div class="section-header" onclick="toggleSection('section-learning')"><span class="section-emoji">💡</span><span class="section-title">The Learning</span><span class="section-status empty" id="status-learning">Empty</span><span class="section-chevron open" id="chevron-learning">›</span></div><div class="section-body open" id="body-learning"><div class="field"><label class="field-label">What are they learning?</label><div class="ai-suggested-field" id="field-understanding"><textarea id="ed-understanding" style="min-height:70px;" oninput="handleFieldEdit('field-understanding');updateCompleteness();"></textarea></div></div><div class="field"><label class="field-label">What to watch for</label><div class="ai-suggested-field" id="field-watchfor"><textarea id="ed-watchfor" oninput="handleFieldEdit('field-watchfor');updateCompleteness();"></textarea></div></div><div class="field"><label class="field-label">If they're not getting it</label><div class="ai-suggested-field" id="field-pivot"><textarea id="ed-pivot" style="min-height:48px;" oninput="handleFieldEdit('field-pivot');updateCompleteness();"></textarea></div></div></div></div>
+      <div class="section-divider"></div>
+      <div class="editor-section" id="section-capabilities"><div class="section-header" onclick="toggleSection('section-capabilities')"><span class="section-emoji">🧭</span><span class="section-title">Capabilities</span><span class="section-status empty" id="status-capabilities">Empty</span><span class="section-chevron open" id="chevron-capabilities">›</span></div><div class="section-body open" id="body-capabilities"><div class="capability-tags" id="cap-tags"></div><div class="cap-hint">Tap a suggested tag to confirm it, or ✕ to dismiss</div></div></div>
+      <div class="section-divider"></div>
+      <div class="editor-section" id="section-connect"><div class="section-header" onclick="toggleSection('section-connect')"><span class="section-emoji">🔗</span><span class="section-title">Connect</span><span class="section-status empty" id="status-connect">Optional</span><span class="section-chevron" id="chevron-connect">›</span></div><div class="section-body" id="body-connect"><div class="field"><label class="field-label">Prerequisites</label><select><option value="">None — this module stands alone</option></select></div></div></div>
+    </div>
+    <div class="toast" id="toast">✅ Draft saved</div>
+  </div>
+
+  <script>
+    let currentView='entry', currentStage=1, selectedPatternId=null;
+    let moduleData={id:'mod_'+Date.now(),createdVia:'retrospective',title:'',description:'',duration:45,setting:'outdoor',steps:[],materials:[],targetUnderstanding:'',watchFor:'',pivot:'',capabilities:[],sourceLogs:[],status:'draft'};
+    let aiSuggestions=new Set();
+
+    const PATTERNS=[
+      {id:'nature',label:'Nature Observation Walks',count:5,dateRange:'Feb 12 – Mar 8',subjects:['Science','Maths','Physical'],snippet:'We walked to the creek and looked for tadpoles…',
+        entries:[
+          {id:'log-001',title:'Creek Walk — Tadpole Hunting',date:'Mar 8',subjects:['Science','Maths'],excerpt:'Found three frogs and counted tadpoles in the shallow water. Emma tried to catch one.',engagement:{emma:'😊',liam:'🤩'},discoveries:{emma:'Noticed the tadpoles have tiny legs growing',liam:'Counted 23 tadpoles!'},selected:true},
+          {id:'log-002',title:'Garden Bird Watch',date:'Mar 3',subjects:['Science'],excerpt:'Set up the bird feeder and watched for 20 minutes. Identified four different species.',engagement:{emma:'🤩',liam:'😊'},discoveries:{emma:'Drew a detailed sketch of the magpie',liam:'Noticed the smaller birds wait for the bigger ones'},selected:true},
+          {id:'log-003',title:'Leaf Collection Walk',date:'Feb 26',subjects:['Science','Maths'],excerpt:'Collected leaves from 8 different trees. Sorted by shape and size.',engagement:{emma:'😊',liam:'😊'},discoveries:{emma:'Noticed similar trees grow near each other',liam:null},selected:true},
+          {id:'log-004',title:'Rock Pool Exploration',date:'Feb 19',subjects:['Science','Physical'],excerpt:'Explored rock pools at low tide. Found sea anemones, crabs, and shells.',engagement:{emma:'🤩',liam:'🤩'},discoveries:{emma:'Asked why the crab hides under the rock',liam:'Carefully returned every creature to its pool'},selected:true},
+          {id:'log-005',title:'Park Nature Journal',date:'Feb 12',subjects:['Science','Language'],excerpt:'Sat in the park for 15 minutes in silence, then wrote and drew.',engagement:{emma:'😊',liam:'😐'},discoveries:{emma:'Wrote a full paragraph about the ants',liam:null},selected:true},
+        ]},
+      {id:'cooking',label:'Cooking & Baking Sessions',count:4,dateRange:'Feb 15 – Mar 5',subjects:['Maths','Science','Language'],snippet:'Made banana bread together. Doubled the recipe…',entries:[]},
+    ];
+
+    const SYNTHESIS={title:"Nature Observation Walks",description:"Regular outdoor walks with focused observation and recording of local wildlife and plant life",understanding:"Careful observation of our local environment reveals patterns, changes, and connections between living things that we can learn to notice and understand",watchFor:"They start noticing things without being prompted — pointing out a bird behaviour, asking about a plant, or wanting to go back to check on something",pivot:"If the walk feels routine, try a new location or give them a specific challenge — count all the different types of leaves, or listen for bird calls",
+      capabilities:[{id:'S5',name:'Scientific Observation',domain:'Scientific',color:'#4ADE80',confidence:'explicit'},{id:'S2',name:'Living Systems',domain:'Scientific',color:'#4ADE80',confidence:'explicit'},{id:'EF1',name:'Sustained Attention',domain:'Executive Function',color:'#C084FC',confidence:'suggested'},{id:'L1',name:'Oral Communication',domain:'Language',color:'#E8A0BF',confidence:'suggested'},{id:'P1',name:'Gross Motor',domain:'Physical',color:'#F59E0B',confidence:'suggested'}],
+      steps:[{title:"Choose your focus",instructions:"Before heading out, pick one thing to pay special attention to today — birds, insects, plants, or tracks.",hint:"Notice whether they can choose a focus independently or need suggestions"},{title:"Walk and observe",instructions:"Walk your usual route slowly. Stop when something catches your attention. Look, listen, touch, smell.",hint:"Watch for the quality of their observation — are they noticing details?"},{title:"Record",instructions:"Draw, photograph, or write about what you found. Even a quick sketch counts.",hint:"Notice the detail in their recording"},{title:"Reflect",instructions:"On the way home or at the table: What was the most interesting thing? Any new questions?",hint:"Listen for connections to previous walks"}]};
+
+    // Render patterns
+    function renderPatterns(){const c=document.getElementById('pattern-list');c.innerHTML='';PATTERNS.forEach(p=>{const card=document.createElement('div');card.className='pattern-card';card.dataset.id=p.id;card.innerHTML=`<div class="pattern-label">${p.label}</div><div class="pattern-meta">Based on ${p.count} recent logs · ${p.dateRange}</div><div class="pattern-subjects">${p.subjects.map(s=>`<span class="subject-pill">${s}</span>`).join('')}</div><div class="pattern-snippet">"${p.snippet}"</div>`;card.onclick=()=>selectPattern(p.id);c.appendChild(card);});}
+
+    function selectPattern(id){selectedPatternId=id;document.querySelectorAll('.pattern-card').forEach(c=>{c.classList.toggle('selected',c.dataset.id===id);});document.getElementById('btn-stage-1').disabled=false;}
+
+    // Stage navigation
+    function goToStage(n){
+      document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));
+      document.getElementById(`stage-content-${n}`).classList.add('active');
+      for(let i=1;i<=3;i++){const s=document.getElementById(`stage-${i}`);s.classList.remove('active','done');if(i<n)s.classList.add('done');else if(i===n)s.classList.add('active');}
+      for(let i=1;i<=2;i++){const c=document.getElementById(`conn-${i}-${i+1}`);c.classList.toggle('done',i<n);}
+      currentStage=n;
+      if(n===2)renderEvidence();
+      window.scrollTo(0,0);
+    }
+
+    function renderEvidence(){
+      const pattern=PATTERNS.find(p=>p.id===selectedPatternId);if(!pattern)return;
+      document.getElementById('evidence-label').textContent=`${pattern.label} — ${pattern.entries.length} matching entries`;
+      const c=document.getElementById('evidence-list');c.innerHTML='';
+      pattern.entries.forEach((e,i)=>{
+        const card=document.createElement('div');card.className='evidence-card';card.id=`evidence-${i}`;card.dataset.idx=i;
+        const discoveriesHTML=Object.entries(e.discoveries).filter(([,v])=>v).map(([k,v])=>`<div class="evidence-discovery"><span style="color:${k==='emma'?'var(--rose)':'var(--blue)'}">${k.charAt(0).toUpperCase()+k.slice(1)}:</span> ${v}</div>`).join('');
+        card.innerHTML=`<div class="evidence-card-top"><div class="evidence-check" onclick="toggleEvidence(${i})">✓</div><div class="evidence-content"><div class="evidence-title">${e.title}</div><div class="evidence-meta">${e.date} · ${e.subjects.join(', ')}</div><div class="evidence-excerpt">${e.excerpt}</div><div class="evidence-children">${Object.entries(e.engagement).map(([k,v])=>`<span class="evidence-child">${k.charAt(0).toUpperCase()+k.slice(1)} <span class="child-engagement">${v}</span></span>`).join('')}</div>${discoveriesHTML}</div></div>`;
+        c.appendChild(card);
+      });
+      checkEvidenceReady();
+    }
+
+    function toggleEvidence(idx){
+      const pattern=PATTERNS.find(p=>p.id===selectedPatternId);
+      pattern.entries[idx].selected=!pattern.entries[idx].selected;
+      const card=document.getElementById(`evidence-${idx}`);
+      card.classList.toggle('deselected',!pattern.entries[idx].selected);
+      card.querySelector('.evidence-check').textContent=pattern.entries[idx].selected?'✓':'';
+      checkEvidenceReady();
+    }
+
+    function checkEvidenceReady(){
+      const pattern=PATTERNS.find(p=>p.id===selectedPatternId);
+      const count=pattern.entries.filter(e=>e.selected).length;
+      document.getElementById('btn-stage-2').disabled=count<2;
+      document.getElementById('evidence-warning').style.display=count<2?'block':'none';
+    }
+
+    // Synthesis
+    function startSynthesis(){
+      const pattern=PATTERNS.find(p=>p.id===selectedPatternId);
+      moduleData.sourceLogs=pattern.entries.filter(e=>e.selected).map(e=>e.id);
+      switchView('loading');
+      const steps=['load-step-1','load-step-2','load-step-3'];let i=0;
+      function advance(){if(i>0){document.getElementById(steps[i-1]).classList.remove('active');document.getElementById(steps[i-1]).classList.add('done');}if(i<steps.length){document.getElementById(steps[i]).classList.add('active');i++;setTimeout(advance,600+Math.random()*400);}else{setTimeout(showSynthesis,400);}}
+      setTimeout(advance,300);
+    }
+
+    function showSynthesis(){
+      switchView('entry');goToStage(3);
+      const c=document.getElementById('synthesis-preview');
+      c.innerHTML=`
+        <div class="synthesis-section"><div class="synthesis-label">📝 Title <span class="ai-indicator">✨</span></div><div class="synthesis-value">${SYNTHESIS.title}</div><div class="synthesis-label">💡 What they're learning <span class="ai-indicator">✨</span></div><div class="synthesis-value">${SYNTHESIS.understanding}</div><div class="synthesis-label">📋 Suggested steps (${SYNTHESIS.steps.length})</div><ul class="synthesis-steps-list">${SYNTHESIS.steps.map((s,i)=>`<li><span class="step-num">${i+1}</span>${s.title}</li>`).join('')}</ul><div style="margin-top:12px;"><div class="synthesis-label">👀 Signs it's working</div><div class="synthesis-value">${SYNTHESIS.watchFor}</div></div><div class="synthesis-label">🧭 Capabilities</div><div class="synthesis-caps">${SYNTHESIS.capabilities.map(c=>`<span class="synthesis-cap">${c.id}: ${c.name}</span>`).join('')}</div></div>`;
+    }
+
+    function goToEditor(){
+      document.getElementById('ed-title').value=SYNTHESIS.title;markAsSuggested('field-title');
+      document.getElementById('ed-description').value=SYNTHESIS.description;markAsSuggested('field-desc');
+      SYNTHESIS.steps.forEach(s=>addStep(s.title,s.instructions,s.hint));
+      document.getElementById('ed-understanding').value=SYNTHESIS.understanding;markAsSuggested('field-understanding');
+      document.getElementById('ed-watchfor').value=SYNTHESIS.watchFor;markAsSuggested('field-watchfor');
+      document.getElementById('ed-pivot').value=SYNTHESIS.pivot;markAsSuggested('field-pivot');
+      SIMULATED_CAPS=SYNTHESIS.capabilities.slice();renderCapabilities();
+      switchView('editor');updateCompleteness();
+    }
+
+    let SIMULATED_CAPS=[];
+    function selectPill(pill,gid){document.getElementById(gid).querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));pill.classList.add('selected');}
+    function markAsSuggested(fid){aiSuggestions.add(fid);const f=document.getElementById(fid);if(f){f.classList.add('ai-suggested-field');let b=f.querySelector('.ai-badge');if(!b){b=document.createElement('div');b.className='ai-badge';b.textContent='Suggested';f.appendChild(b);}}}
+    function removeSuggestion(fid){aiSuggestions.delete(fid);const f=document.getElementById(fid);if(f){f.classList.remove('ai-suggested-field');const b=f.querySelector('.ai-badge');if(b)b.remove();}}
+    function handleFieldEdit(fid){removeSuggestion(fid);updateCompleteness();}
+    function renderCapabilities(){const c=document.getElementById('cap-tags');c.innerHTML='';SIMULATED_CAPS.forEach((cap,i)=>{const t=document.createElement('button');t.className=`cap-tag ${cap.confidence}`;t.innerHTML=`<span class="tag-dot" style="background:${cap.color}"></span><span>${cap.id}: ${cap.name}</span><span class="dismiss" onclick="event.stopPropagation();removeCapability(${i})">✕</span>`;t.onclick=()=>promoteCapability(i);c.appendChild(t);});updateCompleteness();}
+    function promoteCapability(i){if(SIMULATED_CAPS[i].confidence==='suggested'){SIMULATED_CAPS[i].confidence='explicit';renderCapabilities();}}
+    function removeCapability(i){SIMULATED_CAPS.splice(i,1);renderCapabilities();}
+
+    let stepCounter=0;
+    function addStep(title,instructions,hint){stepCounter++;const id=stepCounter;const list=document.getElementById('step-list');const card=document.createElement('div');card.className='step-card';card.id=`step-${id}`;const hH=hint?`<div class="step-observation-hint" id="hint-${id}"><p>${hint}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${id})">Edit</button><button class="hint-action" onclick="removeHint(${id})">Remove</button></div></div>`:'';card.innerHTML=`<div class="step-card-header"><div class="step-number">${document.querySelectorAll('#step-list .step-card').length+1}</div><input type="text" class="step-title-input" placeholder="Step title" value="${title||''}" oninput="updateCompleteness()"><div class="step-actions"><button class="step-action-btn" onclick="moveStep(${id},-1)">↑</button><button class="step-action-btn" onclick="moveStep(${id},1)">↓</button><button class="step-action-btn delete" onclick="removeStep(${id})">✕</button></div></div><div class="step-card-body"><textarea placeholder="What happens in this step?" oninput="updateCompleteness()">${instructions||''}</textarea><div class="step-say-this"><label>💬 What to say (optional)</label><textarea placeholder="e.g., 'What do you notice…'"></textarea></div>${hH}</div>`;list.appendChild(card);renumberSteps();updateCompleteness();if(!title)card.querySelector('.step-title-input').focus();}
+    function removeStep(id){const c=document.getElementById(`step-${id}`);if(c){c.remove();renumberSteps();updateCompleteness();}}
+    function moveStep(id,dir){const c=document.getElementById(`step-${id}`);const l=document.getElementById('step-list');if(!c)return;if(dir===-1&&c.previousElementSibling)l.insertBefore(c,c.previousElementSibling);else if(dir===1&&c.nextElementSibling)l.insertBefore(c.nextElementSibling,c);renumberSteps();}
+    function renumberSteps(){document.querySelectorAll('#step-list .step-card').forEach((c,i)=>{const n=c.querySelector('.step-number');if(n)n.textContent=i+1;});}
+    function removeHint(id){const h=document.getElementById(`hint-${id}`);if(h)h.remove();}
+    function editHint(id){const h=document.getElementById(`hint-${id}`);if(!h)return;const p=h.querySelector('p');const t=p.textContent;const inp=document.createElement('textarea');inp.style.cssText='width:100%;background:none;border:none;color:var(--text-secondary);font-size:12px;font-style:italic;line-height:1.4;resize:none;padding:0;min-height:30px;';inp.value=t;inp.onblur=()=>{p.textContent=inp.value;inp.replaceWith(p);};p.replaceWith(inp);inp.focus();}
+    function regenerateHints(){const steps=document.querySelectorAll('#step-list .step-card');if(!steps.length)return;const btn=event.target;const o=btn.textContent;btn.textContent='✨ Generating…';btn.disabled=true;setTimeout(()=>{steps.forEach((card,i)=>{const ex=card.querySelector('.step-observation-hint');if(ex)ex.remove();const hid=card.id.replace('step-','');const hEl=document.createElement('div');hEl.className='step-observation-hint';hEl.id=`hint-${hid}`;hEl.innerHTML=`<p>${SYNTHESIS.steps[i%SYNTHESIS.steps.length].hint}</p><div class="hint-actions"><button class="hint-action" onclick="editHint(${hid})">Edit</button><button class="hint-action" onclick="removeHint(${hid})">Remove</button></div>`;card.querySelector('.step-card-body').appendChild(hEl);});btn.textContent=o;btn.disabled=false;},1200);}
+    let materialCounter=0;
+    function addMaterial(name,alt){materialCounter++;const id=materialCounter;const list=document.getElementById('material-list');const row=document.createElement('div');row.id=`material-${id}`;row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px;';row.innerHTML=`<input type="text" placeholder="e.g., Notebook" style="flex:1;" value="${name||''}" oninput="updateCompleteness()"><input type="text" placeholder="Alternative" style="flex:0.6;font-size:12px;" value="${alt||''}"><button onclick="document.getElementById('material-${id}').remove();updateCompleteness();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;">✕</button>`;list.appendChild(row);if(!name)row.querySelector('input').focus();}
+    function toggleSection(sid){const b=document.getElementById(`body-${sid.replace('section-','')}`);const c=document.getElementById(`chevron-${sid.replace('section-','')}`);if(!b)return;const o=b.classList.contains('open');b.classList.toggle('open',!o);if(c)c.classList.toggle('open',!o);}
+    function scrollToSection(sid){const el=document.getElementById(sid);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});const k=sid.replace('section-','');const b=document.getElementById(`body-${k}`);const c=document.getElementById(`chevron-${k}`);if(b&&!b.classList.contains('open')){b.classList.add('open');if(c)c.classList.add('open');}}}
+    function updateCompleteness(){let s=0;const t=document.getElementById('ed-title')?.value.trim();if(t)s+=20;const d=document.getElementById('ed-description')?.value.trim();if(d)s+=10;let hasStep=false;document.querySelectorAll('#step-list .step-card').forEach(c=>{if(c.querySelector('.step-title-input')?.value.trim()&&c.querySelector('.step-card-body > textarea')?.value.trim())hasStep=true;});if(hasStep)s+=20;const u=document.getElementById('ed-understanding')?.value.trim();if(u)s+=20;const w=document.getElementById('ed-watchfor')?.value.trim();if(w)s+=15;if(SIMULATED_CAPS.length>0)s+=15;document.getElementById('completeness-pct').textContent=s+'%';document.getElementById('completeness-fill').style.width=s+'%';const fill=document.getElementById('completeness-fill');const hint=document.getElementById('completeness-hint');const sb=document.getElementById('save-btn');if(s>=60){fill.classList.add('ready');sb.disabled=false;sb.classList.add('ready');sb.textContent='Save';hint.textContent='Ready to save';}else{fill.classList.remove('ready');sb.disabled=true;sb.classList.remove('ready');sb.textContent='Save Draft';if(!t)hint.textContent='Add a title';else if(!hasStep)hint.textContent='Add at least one step';else if(!u)hint.textContent='Add a learning goal';else hint.textContent='Keep going';}updateSectionStatus('basics',(t?1:0)+(d?1:0),2);updateSectionStatus('steps',hasStep?1:0,1);updateSectionStatus('learning',(u?1:0)+(w?1:0),2);updateSectionStatus('capabilities',SIMULATED_CAPS.length>0?1:0,1);checkCoherence();}
+    function updateSectionStatus(k,f,t){const el=document.getElementById(`status-${k}`);if(!el)return;if(f>=t){el.className='section-status complete';el.textContent='Done';}else if(f>0){el.className='section-status partial';el.textContent=`${f}/${t}`;}else{el.className='section-status empty';el.textContent=k==='materials'||k==='connect'?'Optional':'Empty';}}
+    let coherenceDismissed=false;
+    function checkCoherence(){if(coherenceDismissed)return;const u=(document.getElementById('ed-understanding')?.value||'').toLowerCase();const steps=document.querySelectorAll('#step-list .step-card');if(steps.length<2||u.length<10){document.getElementById('coherence-banner').classList.remove('visible');return;}let st='';steps.forEach(c=>{st+=' '+(c.querySelector('.step-title-input')?.value||'');st+=' '+(c.querySelector('.step-card-body > textarea')?.value||'');});st=st.toLowerCase();const words=u.split(/\s+/).filter(w=>w.length>4);const mc=words.filter(w=>st.includes(w)).length;const r=words.length>0?mc/words.length:1;if(r<0.15&&st.length>30)document.getElementById('coherence-banner').classList.add('visible');else document.getElementById('coherence-banner').classList.remove('visible');}
+    function dismissCoherence(){coherenceDismissed=true;document.getElementById('coherence-banner').classList.remove('visible');}
+
+    function switchView(v){document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));document.getElementById(`view-${v}`).classList.add('active');currentView=v;window.scrollTo(0,0);const s=document.getElementById('save-btn');const h=document.getElementById('header-title');if(v==='entry'){s.style.display='none';h.textContent='';}else if(v==='loading'){s.style.display='none';h.textContent='';}else if(v==='editor'){s.style.display='inline-block';h.textContent='Retrospective Lift';}}
+    function handleBack(){if(currentView==='editor'){if(confirm('Go back? Your progress will be preserved.'))switchView('entry');}else if(currentView==='loading'){switchView('entry');}else if(currentStage>1){goToStage(currentStage-1);}else{history.back();}}
+    function handleSave(){moduleData.title=document.getElementById('ed-title').value.trim();moduleData.description=document.getElementById('ed-description').value.trim();moduleData.targetUnderstanding=document.getElementById('ed-understanding').value.trim();moduleData.watchFor=document.getElementById('ed-watchfor').value.trim();moduleData.pivot=document.getElementById('ed-pivot').value.trim();moduleData.capabilities=SIMULATED_CAPS.map(c=>({threadId:c.id,name:c.name,confidence:c.confidence}));moduleData.steps=[];document.querySelectorAll('#step-list .step-card').forEach(c=>{moduleData.steps.push({title:c.querySelector('.step-title-input')?.value.trim()||'',instructions:c.querySelector('.step-card-body > textarea')?.value.trim()||'',sayThis:c.querySelectorAll('.step-card-body textarea')[1]?.value.trim()||'',observationHint:c.querySelector('.step-observation-hint p')?.textContent.trim()||''});});moduleData.status='draft';moduleData.updatedAt=new Date().toISOString();console.log('Module saved:',moduleData);const toast=document.getElementById('toast');toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2500);}
+
+    // Init
+    document.getElementById('save-btn').style.display='none';
+    renderPatterns();
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+// Pack list for marketplace/activity discovery
+export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
+  _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
+  availability, version, "badgeCount": count(badges)
+}`;
+
+// Single pack with full module tree
+export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]{
+  ...,
+  modules[]->{
+    _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+    approaches[]->{
+      _id, title, slug, modality,
+      activities[]->{
+        _id, title, slug, duration, setting, energyLevel
+      }
+    }
+  },
+  badges[]->{ _id, title, emoji, description }
+}`;
+
+// Single module with approaches and activities
+export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
+  ...,
+  approaches[]->{
+    ...,
+    activities[]->{
+      ...,
+      capabilityThreads[]->{ _id, title, domain },
+      enabledBadges[]->{ _id, title, emoji }
+    }
+  },
+  capabilityThreads[]->{ _id, title, domain, description },
+  badges[]->{ _id, title, emoji, criteriaSummary }
+}`;
+
+// Single activity with full content
+export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id][0]{
+  ...,
+  capabilityThreads[]->{ _id, title, domain },
+  enabledBadges[]->{ _id, title, emoji }
+}`;
+
+// Pedagogy overlay for an activity + framework
+export const OVERLAY_QUERY = `*[_type == "pedagogyOverlay" && activity._ref == $activityId && framework == $framework][0]`;
+
+// All capability threads (reference data)
+export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(domain, title){
+  _id, title, slug, domain, description, dlos,
+  "prerequisiteIds": prerequisites[]._ref,
+  "enablesIds": enables[]._ref
+}`;
+
+// Modules in family library (by pack IDs)
+export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
+  modules[]->{
+    _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+    approaches[]->{
+      _id, title, modality,
+      "activityCount": count(activities)
+    }
+  }
+}`;

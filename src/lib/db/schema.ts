@@ -141,8 +141,9 @@ export const badgeDefinitions = pgTable('badge_definitions', {
   description: text('description'),
   emoji: text('emoji'),
   criteriaSummary: text('criteria_summary'),
+  indicatorStatements: text('indicator_statements').array(),
   capabilityThreadIds: text('capability_thread_ids').array(),
-  observationThreshold: integer('observation_threshold').default(3),
+  observationThreshold: integer('observation_threshold').default(5),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -236,6 +237,24 @@ export const familyLibrary = pgTable(
   (table) => [
     unique('fl_family_pack_unique').on(table.familyId, table.sanityPackId),
   ]
+);
+
+// ─── Module Drafts ───
+
+export const moduleDrafts = pgTable(
+  'module_drafts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    pathway: text('pathway').notNull(), // 'material' | 'process' | 'inquiry' | 'retrospective' | 'goal'
+    draftData: jsonb('draft_data').notNull().default({}),
+    status: text('status').notNull().default('draft'), // 'draft' | 'complete'
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [index('md_family_status_idx').on(table.familyId, table.status)]
 );
 
 // ─── Facilitator Notes ───

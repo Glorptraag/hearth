@@ -1,12 +1,40 @@
-export default function NotificationsPage() {
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+import { notifications } from '@/lib/db/schema';
+import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { and, eq, ne } from 'drizzle-orm';
+import NotificationCentreClient from './NotificationCentreClient';
+
+export default async function NotificationsPage() {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+
+  const family = await getFamilyByClerkId(userId);
+  if (!family) redirect('/onboarding');
+
+  const allNotifications = await db
+    .select()
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.familyId, family.id),
+        ne(notifications.state, 'expired')
+      )
+    )
+    .orderBy(notifications.createdAt);
+
   return (
-    <div className="px-md py-xl">
-      <h1 className="font-serif text-2xl font-semibold text-text-primary">
-        🔔 Notifications
-      </h1>
-      <p className="mt-sm font-serif text-text-secondary">
-        Gentle nudges, reminders, and updates from Hearth.
-      </p>
-    </div>
+    <NotificationCentreClient
+      initialNotifications={allNotifications.map((n) => ({
+        id: n.id,
+        title: n.title,
+        body: n.body ?? null,
+        tier: n.tier,
+        state: n.state,
+        destinationRoute: n.destinationRoute ?? null,
+        createdAt: n.createdAt,
+      }))}
+    />
   );
 }

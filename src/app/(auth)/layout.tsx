@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import NotificationBadge from "@/components/notifications/NotificationBadge";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", emoji: "🏠" },
@@ -31,6 +33,27 @@ export default function AuthLayout({
   const pathname = usePathname();
   const { user } = useUser();
   const familyName = user?.lastName ? `${user.lastName} Family` : "My Family";
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  async function fetchUnreadCount() {
+    try {
+      const res = await fetch("/api/notifications");
+      if (res.ok) {
+        const data: Array<{ state: string }> = await res.json();
+        setUnreadCount(data.filter((n) => n.state === "visible").length);
+      }
+    } catch {
+      // silent fail
+    }
+  }
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const onFocus = () => fetchUnreadCount();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface-body">
@@ -45,9 +68,14 @@ export default function AuthLayout({
           </span>
           <Link
             href="/notifications"
-            className="flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
+            className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
           >
             <span className="text-lg">🔔</span>
+            {unreadCount > 0 && (
+              <span className="absolute right-[2px] top-[2px]">
+                <NotificationBadge count={unreadCount} />
+              </span>
+            )}
           </Link>
         </div>
       </header>

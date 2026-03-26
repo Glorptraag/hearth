@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", emoji: "🏠" },
   { href: "/our-story/portfolio", label: "Story", emoji: "📖" },
   { href: "/log", label: "Log", emoji: "✏️", primary: true },
+  { href: "/planner", label: "Plan", emoji: "📅" },
   { href: "/explore/activities", label: "Explore", emoji: "🔍" },
   { href: "/settings", label: "Settings", emoji: "⚙️" },
 ];
@@ -16,6 +17,7 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/our-story/portfolio") return pathname.startsWith("/our-story");
   if (href === "/log") return pathname === "/log";
+  if (href === "/planner") return pathname.startsWith("/planner");
   if (href === "/explore/activities") return pathname.startsWith("/explore");
   if (href === "/settings") return pathname === "/settings";
   return false;

@@ -1,0 +1,1242 @@
+<!-- Version: 4 | Date: 2026-03-10 | Changes: Multi-pathway entry selector. Six creation pathways leading to universal module schema. v3 preserved as process-only builder. Spec: hearth-module-builder-pathways-architecture-v1.md -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hearth — Create a Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-coffee: #0F0D0B;
+      --coffee-mid: #1A1612;
+      --coffee-light: #252117;
+      --surface-elevated: #2D2621;
+      --surface-hover: #352E28;
+      --text-primary: #E8DFD4;
+      --text-secondary: #9B8B7E;
+      --text-muted: #6B5D52;
+      --ember: #D97B3A;
+      --ember-hover: #E88F4E;
+      --ember-glow: rgba(217, 123, 58, 0.15);
+      --ember-glow-strong: rgba(217, 123, 58, 0.25);
+      --sage: #4ADE80;
+      --sage-glow: rgba(74, 222, 128, 0.12);
+      --font-serif: 'Crimson Text', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --border-subtle: rgba(45, 38, 33, 0.6);
+      --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--deep-coffee);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 90%, rgba(217,123,58,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 10%, rgba(217,123,58,0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px 12px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color var(--transition);
+    }
+    .back-btn:hover { color: var(--text-primary); }
+
+    /* ===== TITLE AREA ===== */
+    .title-area {
+      padding: 0 16px 24px;
+    }
+
+    .title-area h1 {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .title-area p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== PATHWAY GRID ===== */
+    .pathway-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 16px 32px;
+    }
+
+    .pathway-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--coffee-mid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: left;
+      width: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pathway-card:hover {
+      background: var(--surface-elevated);
+      border-color: rgba(217, 123, 58, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .pathway-card:active {
+      transform: translateY(0);
+      background: var(--surface-hover);
+    }
+
+    .pathway-card.has-patterns {
+      border-color: rgba(217, 123, 58, 0.3);
+    }
+
+    .pathway-emoji {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--coffee-light);
+      border-radius: var(--radius-sm);
+    }
+
+    .pathway-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pathway-label {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+
+    .pathway-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .pathway-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--ember-glow);
+      color: var(--ember);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+
+    .pathway-chevron {
+      color: var(--text-muted);
+      font-size: 16px;
+      flex-shrink: 0;
+      align-self: center;
+      transition: color var(--transition);
+    }
+
+    .pathway-card:hover .pathway-chevron {
+      color: var(--ember);
+    }
+
+    /* ===== DIVIDER ===== */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px 4px;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .section-divider span {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== PATHWAY DETAIL (entry screens) ===== */
+    .pathway-detail {
+      display: none;
+      padding: 0 16px 32px;
+      animation: fadeSlideIn 250ms ease-out;
+    }
+
+    .pathway-detail.active {
+      display: block;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .detail-emoji {
+      font-size: 28px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--coffee-light);
+      border-radius: var(--radius-md);
+    }
+
+    .detail-title {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .detail-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 10px 12px;
+      line-height: 1.5;
+      transition: border-color var(--transition);
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+
+    textarea { min-height: 64px; }
+
+    /* Pill selector */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: all var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pill:hover {
+      border-color: rgba(217, 123, 58, 0.3);
+      color: var(--text-primary);
+    }
+
+    .pill.selected {
+      background: var(--ember-glow);
+      border-color: var(--ember);
+      color: var(--ember);
+    }
+
+    /* Multi-select chips */
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .chip:hover {
+      border-color: rgba(217, 123, 58, 0.3);
+      color: var(--text-primary);
+    }
+
+    .chip.selected {
+      background: var(--ember-glow);
+      border-color: rgba(217, 123, 58, 0.4);
+      color: var(--ember);
+    }
+
+    /* Duration / setting row */
+    .settings-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .settings-row .field { flex: 1; margin-bottom: 0; }
+
+    select {
+      width: 100%;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 10px 12px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B5D52' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+
+    /* Continue button */
+    .continue-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--ember);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 20px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all var(--transition);
+    }
+
+    .continue-btn:hover {
+      background: var(--ember-hover);
+    }
+
+    .continue-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Placeholder state for pathway detail screens */
+    .placeholder-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .placeholder-state .placeholder-emoji {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .placeholder-state strong {
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    /* Toggle switch for finished product */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .toggle-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+
+    .toggle.on {
+      background: var(--ember-glow-strong);
+      border-color: var(--ember);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: all var(--transition);
+    }
+
+    .toggle.on::after {
+      left: 22px;
+      background: var(--ember);
+    }
+
+    /* Child selector for inquiry path */
+    .child-chips {
+      display: flex;
+      gap: 8px;
+    }
+
+    .child-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .child-chip .shape {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .child-chip.selected {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text-primary);
+    }
+
+    .child-chip.selected .shape {
+      box-shadow: 0 0 6px 1px currentColor;
+    }
+
+    /* Capability thread selector */
+    .thread-group-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 12px 0 6px;
+    }
+
+    .thread-group-label:first-child { margin-top: 0; }
+
+    .thread-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--coffee-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .thread-option:hover {
+      border-color: rgba(217, 123, 58, 0.3);
+    }
+
+    .thread-option.selected {
+      border-color: var(--ember);
+      background: var(--ember-glow);
+    }
+
+    .thread-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .thread-name {
+      font-size: 14px;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .thread-summary {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Freeform search input for capability path */
+    .search-input-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-input-wrap input {
+      padding-left: 32px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== SELECTOR VIEW ===== -->
+    <div id="view-selector">
+
+      <div class="header">
+        <button class="back-btn" onclick="history.back()">← Back</button>
+      </div>
+
+      <div class="title-area">
+        <h1>Create a Module</h1>
+        <p>How would you like to start?</p>
+      </div>
+
+      <div class="pathway-grid">
+
+        <!-- Most common first -->
+        <button class="pathway-card" onclick="selectPathway('material')">
+          <div class="pathway-emoji">📖</div>
+          <div class="pathway-content">
+            <div class="pathway-label">I have a great resource</div>
+            <div class="pathway-hint">Build learning around a book, kit, video, or place</div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+        <button class="pathway-card" onclick="selectPathway('process')">
+          <div class="pathway-emoji">🔧</div>
+          <div class="pathway-content">
+            <div class="pathway-label">I have steps to follow</div>
+            <div class="pathway-hint">Turn a process or project into a learning activity</div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+        <button class="pathway-card" onclick="selectPathway('inquiry')">
+          <div class="pathway-emoji">❓</div>
+          <div class="pathway-content">
+            <div class="pathway-label">A question came up</div>
+            <div class="pathway-hint">Build an exploration from a wonder or curiosity</div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+        <button class="pathway-card has-patterns" id="retro-card" onclick="selectPathway('retrospective')">
+          <div class="pathway-emoji">🔁</div>
+          <div class="pathway-content">
+            <div class="pathway-label">We've been doing this already</div>
+            <div class="pathway-hint">Formalise something from your recent learning logs</div>
+            <!-- Pattern badge shown dynamically -->
+            <div class="pathway-badge" id="retro-badge" style="display:none;">
+              <span id="retro-count">3</span> patterns found
+            </div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+        <div class="section-divider"><span>More structured</span></div>
+
+        <button class="pathway-card" onclick="selectPathway('capability')">
+          <div class="pathway-emoji">🎯</div>
+          <div class="pathway-content">
+            <div class="pathway-label">I want to develop a skill area</div>
+            <div class="pathway-hint">Target a specific capability or learning gap</div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+        <button class="pathway-card" onclick="selectPathway('understanding')">
+          <div class="pathway-emoji">📐</div>
+          <div class="pathway-content">
+            <div class="pathway-label">I know exactly what I want to teach</div>
+            <div class="pathway-hint">Design backward from a learning goal</div>
+          </div>
+          <div class="pathway-chevron">›</div>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ===== MATERIAL PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-material">
+      <div class="detail-header">
+        <div class="detail-emoji">📖</div>
+        <div>
+          <div class="detail-title">Build around a resource</div>
+          <div class="detail-subtitle">Tell us about what you've found</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What kind of resource?</label>
+        <div class="pill-group" id="material-type-pills">
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="book">📚 Book</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="documentary">🎬 Video</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="kit">🧰 Kit</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="app">📱 App</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="place">📍 Place</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="audio">🎵 Audio</button>
+          <button class="pill" onclick="selectPill(this, 'material-type-pills')" data-value="other">📦 Other</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What's it called?</label>
+        <input type="text" placeholder="e.g., 'The Very Hungry Caterpillar' by Eric Carle">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Tell us about it</label>
+        <textarea placeholder="e.g., A picture book about a caterpillar eating through different foods before becoming a butterfly"></textarea>
+        <div class="field-hint">A sentence or two is plenty</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What drew you to this?</label>
+        <textarea placeholder="e.g., Emma loves caterpillars and I thought we could explore lifecycles"></textarea>
+        <div class="field-hint">This helps us understand what the learning should focus on</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">How do you imagine using it?</label>
+        <div class="chip-group" id="material-usage-chips">
+          <button class="chip" onclick="toggleChip(this)">📖 Read / watch together</button>
+          <button class="chip" onclick="toggleChip(this)">🎨 Inspire a project</button>
+          <button class="chip" onclick="toggleChip(this)">🔍 Explore a topic</button>
+          <button class="chip" onclick="toggleChip(this)">🗣️ Discuss and reflect</button>
+          <button class="chip" onclick="toggleChip(this)">🧪 Do the activity it describes</button>
+          <button class="chip" onclick="toggleChip(this)">✍️ Starting point for writing / drawing</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select>
+            <option>15 minutes</option>
+            <option selected>30 minutes</option>
+            <option>45 minutes</option>
+            <option>1 hour</option>
+            <option>1–2 hours</option>
+            <option>Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="material-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'material-setting-pills')" data-value="either">Either</button>
+            <button class="pill" onclick="selectPill(this, 'material-setting-pills')" data-value="indoor">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'material-setting-pills')" data-value="outdoor">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('material')">
+        Build the learning around this →
+      </button>
+    </div>
+
+    <!-- ===== PROCESS PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-process">
+      <div class="detail-header">
+        <div class="detail-emoji">🔧</div>
+        <div>
+          <div class="detail-title">Capture a process</div>
+          <div class="detail-subtitle">We'll help you see the learning in it</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What's the activity?</label>
+        <input type="text" placeholder="e.g., Building a birdhouse">
+      </div>
+
+      <div class="field">
+        <label class="field-label">In a sentence, what happens?</label>
+        <textarea placeholder="e.g., We build a simple wooden birdhouse from a kit, paint it, and hang it in the garden" style="min-height: 56px;"></textarea>
+      </div>
+
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select>
+            <option>15 minutes</option>
+            <option selected>30 minutes</option>
+            <option>45 minutes</option>
+            <option>1 hour</option>
+            <option>1–2 hours</option>
+            <option>Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="process-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'process-setting-pills')">Either</button>
+            <button class="pill" onclick="selectPill(this, 'process-setting-pills')">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'process-setting-pills')">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <span class="toggle-label">Is there a finished product?</span>
+          <div class="toggle" id="process-product-toggle" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div id="process-product-field" style="display:none; margin-top: 8px;">
+          <input type="text" placeholder="e.g., A painted birdhouse">
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('process')">
+        Capture the steps →
+      </button>
+    </div>
+
+    <!-- ===== INQUIRY PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-inquiry">
+      <div class="detail-header">
+        <div class="detail-emoji">❓</div>
+        <div>
+          <div class="detail-title">Explore a question</div>
+          <div class="detail-subtitle">Turn curiosity into an investigation</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What came up?</label>
+        <input type="text" placeholder="e.g., Why do leaves change colour in autumn?">
+        <div class="field-hint">Use their exact words if you remember them</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Who's wondering?</label>
+        <div class="child-chips">
+          <button class="child-chip selected" onclick="toggleChildChip(this)">
+            <span class="shape" style="background: #E8A0BF;"></span>
+            Emma
+          </button>
+          <button class="child-chip selected" onclick="toggleChildChip(this)">
+            <span class="shape" style="background: #7BA7CC;"></span>
+            Liam
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What do you already know or think about this?</label>
+        <textarea placeholder="e.g., We know leaves fall off trees. Emma thinks it's because they get old. Liam thinks the wind blows them off."></textarea>
+        <div class="field-hint">Starting from what you know helps shape the exploration</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">How might you explore this?</label>
+        <div class="field-hint" style="margin-bottom: 8px; margin-top: 0;">Pick 1 or 2 that feel right</div>
+        <div class="chip-group" id="inquiry-approach-chips">
+          <button class="chip" onclick="toggleChip(this)">🔍 Observe closely</button>
+          <button class="chip" onclick="toggleChip(this)">🧪 Test it out</button>
+          <button class="chip" onclick="toggleChip(this)">📚 Look it up</button>
+          <button class="chip" onclick="toggleChip(this)">🗣️ Ask someone</button>
+          <button class="chip" onclick="toggleChip(this)">📍 Go somewhere</button>
+          <button class="chip" onclick="toggleChip(this)">🔧 Build or make</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select>
+            <option>15 minutes</option>
+            <option selected>30 minutes</option>
+            <option>45 minutes</option>
+            <option>1 hour</option>
+            <option>1–2 hours</option>
+            <option>Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="inquiry-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'inquiry-setting-pills')">Either</button>
+            <button class="pill" onclick="selectPill(this, 'inquiry-setting-pills')">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'inquiry-setting-pills')">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('inquiry')">
+        Plan the exploration →
+      </button>
+    </div>
+
+    <!-- ===== RETROSPECTIVE PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-retrospective">
+      <div class="detail-header">
+        <div class="detail-emoji">🔁</div>
+        <div>
+          <div class="detail-title">Formalise what you've been doing</div>
+          <div class="detail-subtitle">We spotted some patterns in your logs</div>
+        </div>
+      </div>
+
+      <!-- Simulated detected patterns -->
+      <div class="field">
+        <label class="field-label">We noticed these patterns</label>
+
+        <div class="thread-option" onclick="selectPattern(this, 0)" style="margin-bottom: 8px;">
+          <div class="thread-dot" style="background: var(--sage);"></div>
+          <div style="flex:1;">
+            <div class="thread-name">Nature observation walks</div>
+            <div class="thread-summary">5 logs · Feb 12 – Mar 8 · Science, Maths, Physical</div>
+          </div>
+        </div>
+
+        <div class="thread-option" onclick="selectPattern(this, 1)" style="margin-bottom: 8px;">
+          <div class="thread-dot" style="background: #7BA7CC;"></div>
+          <div style="flex:1;">
+            <div class="thread-name">Cooking and baking sessions</div>
+            <div class="thread-summary">4 logs · Feb 20 – Mar 7 · Maths, Science, Literacy</div>
+          </div>
+        </div>
+
+        <div class="thread-option" onclick="selectPattern(this, 2)">
+          <div class="thread-dot" style="background: #E8A0BF;"></div>
+          <div style="flex:1;">
+            <div class="thread-name">Read-aloud and discussion</div>
+            <div class="thread-summary">3 logs · Mar 1 – Mar 9 · Literacy, Social, Creative</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('retrospective')" disabled id="retro-continue">
+        Review the evidence →
+      </button>
+    </div>
+
+    <!-- ===== CAPABILITY PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-capability">
+      <div class="detail-header">
+        <div class="detail-emoji">🎯</div>
+        <div>
+          <div class="detail-title">Target a skill area</div>
+          <div class="detail-subtitle">We'll suggest modules that build it</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What do you want to work on?</label>
+        <div class="search-input-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" placeholder="Search or type freely, e.g. 'more maths'" style="padding-left: 32px;" oninput="filterThreads(this.value)">
+        </div>
+
+        <div id="thread-list">
+          <div class="thread-group-label">Mathematical</div>
+          <div class="thread-option" onclick="selectThread(this, 'M1')">
+            <div class="thread-dot" style="background: #6BA5E7;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Number Sense & Place Value</div>
+              <div class="thread-summary">Understanding numbers, counting, comparing</div>
+            </div>
+          </div>
+          <div class="thread-option" onclick="selectThread(this, 'M5')">
+            <div class="thread-dot" style="background: #6BA5E7;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Measurement Sense</div>
+              <div class="thread-summary">Length, mass, volume, time, temperature</div>
+            </div>
+          </div>
+
+          <div class="thread-group-label">Scientific</div>
+          <div class="thread-option" onclick="selectThread(this, 'S1')">
+            <div class="thread-dot" style="background: #4ADE80;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Scientific Inquiry</div>
+              <div class="thread-summary">Questioning, investigating, recording, concluding</div>
+            </div>
+          </div>
+          <div class="thread-option" onclick="selectThread(this, 'S5')">
+            <div class="thread-dot" style="background: #4ADE80;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Scientific Observation</div>
+              <div class="thread-summary">Noticing, describing, classifying, comparing</div>
+            </div>
+          </div>
+
+          <div class="thread-group-label">Language & Literacy</div>
+          <div class="thread-option" onclick="selectThread(this, 'L1')">
+            <div class="thread-dot" style="background: #E8A0BF;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Oral Communication</div>
+              <div class="thread-summary">Speaking, listening, expressing ideas</div>
+            </div>
+          </div>
+          <div class="thread-option" onclick="selectThread(this, 'L3')">
+            <div class="thread-dot" style="background: #E8A0BF;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Reading Comprehension</div>
+              <div class="thread-summary">Understanding, interpreting, responding to text</div>
+            </div>
+          </div>
+
+          <div class="thread-group-label">Executive Function</div>
+          <div class="thread-option" onclick="selectThread(this, 'EF4')">
+            <div class="thread-dot" style="background: #C084FC;"></div>
+            <div style="flex:1;">
+              <div class="thread-name">Planning & Organisation</div>
+              <div class="thread-summary">Setting goals, breaking tasks down, managing steps</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shown after thread selection -->
+      <div id="cap-context" style="display: none;">
+        <div class="field">
+          <label class="field-label">Where are they now?</label>
+          <div class="pill-group" id="tier-pills">
+            <button class="pill" onclick="selectPill(this, 'tier-pills')">Just starting</button>
+            <button class="pill" onclick="selectPill(this, 'tier-pills')">Getting there</button>
+            <button class="pill" onclick="selectPill(this, 'tier-pills')">Solid</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">What does your family enjoy?</label>
+          <div class="chip-group" id="preference-chips">
+            <button class="chip" onclick="toggleChip(this)">🌿 Outdoors</button>
+            <button class="chip" onclick="toggleChip(this)">🎨 Art / craft</button>
+            <button class="chip" onclick="toggleChip(this)">📚 Books</button>
+            <button class="chip" onclick="toggleChip(this)">🎲 Games</button>
+            <button class="chip" onclick="toggleChip(this)">🧑‍🍳 Cooking</button>
+            <button class="chip" onclick="toggleChip(this)">🔬 Experiments</button>
+            <button class="chip" onclick="toggleChip(this)">🏃 Active / physical</button>
+            <button class="chip" onclick="toggleChip(this)">🗣️ Discussion</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('capability')" disabled id="cap-continue">
+        See suggested modules →
+      </button>
+    </div>
+
+    <!-- ===== UNDERSTANDING PATH ENTRY ===== -->
+    <div class="pathway-detail" id="view-understanding">
+      <div class="detail-header">
+        <div class="detail-emoji">📐</div>
+        <div>
+          <div class="detail-title">Design from a learning goal</div>
+          <div class="detail-subtitle">Start with what you want them to understand</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What do you want them to understand?</label>
+        <textarea placeholder="e.g., Living things depend on their environment for survival" style="min-height: 80px;"></textarea>
+        <div class="field-hint">Write it like you'd explain it to another parent</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Why does this matter?</label>
+        <textarea placeholder="e.g., This builds observation skills they'll use in all science learning" style="min-height: 56px;"></textarea>
+        <div class="field-hint">Optional but helps us suggest better activities</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What would you see if they're getting it?</label>
+        <textarea placeholder="e.g., They start noticing how animals and plants are adapted to where they live"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What would you try if they're not?</label>
+        <textarea placeholder="e.g., Simplify to just one animal and its habitat" style="min-height: 48px;"></textarea>
+        <div class="field-hint">Optional — we can suggest this later too</div>
+      </div>
+
+      <div class="settings-row">
+        <div class="field">
+          <label class="field-label">How long?</label>
+          <select>
+            <option>15 minutes</option>
+            <option selected>30 minutes</option>
+            <option>45 minutes</option>
+            <option>1 hour</option>
+            <option>1–2 hours</option>
+            <option>Half day</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Setting</label>
+          <div class="pill-group" id="understanding-setting-pills">
+            <button class="pill selected" onclick="selectPill(this, 'understanding-setting-pills')">Either</button>
+            <button class="pill" onclick="selectPill(this, 'understanding-setting-pills')">Indoor</button>
+            <button class="pill" onclick="selectPill(this, 'understanding-setting-pills')">Outdoor</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="continue-btn" onclick="continueToEditor('understanding')">
+        Now plan the activities →
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // ============================================================================
+    // STATE
+    // ============================================================================
+    let currentView = 'selector';
+    let selectedPathway = null;
+    let selectedThread = null;
+    let selectedPattern = null;
+
+    // Simulated pattern detection count
+    const detectedPatterns = 3;
+    if (detectedPatterns > 0) {
+      document.getElementById('retro-badge').style.display = 'inline-flex';
+      document.getElementById('retro-count').textContent = detectedPatterns;
+    }
+
+    // ============================================================================
+    // NAVIGATION
+    // ============================================================================
+    function selectPathway(pathway) {
+      selectedPathway = pathway;
+      document.getElementById('view-selector').style.display = 'none';
+      document.getElementById('view-' + pathway).classList.add('active');
+      currentView = pathway;
+      window.scrollTo(0, 0);
+    }
+
+    function backToSelector() {
+      document.querySelectorAll('.pathway-detail').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-selector').style.display = 'block';
+      currentView = 'selector';
+      selectedPathway = null;
+      window.scrollTo(0, 0);
+    }
+
+    // Update all back buttons in detail views
+    document.querySelectorAll('.detail-header').forEach(header => {
+      const backBtn = document.createElement('button');
+      backBtn.className = 'back-btn';
+      backBtn.textContent = '←';
+      backBtn.style.cssText = 'position: absolute; left: 16px; top: 16px; font-size: 18px; background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px;';
+      backBtn.onclick = backToSelector;
+      header.parentElement.style.position = 'relative';
+      header.parentElement.insertBefore(backBtn, header);
+      header.style.paddingTop = '12px';
+    });
+
+    // ============================================================================
+    // INTERACTIONS
+    // ============================================================================
+
+    // Single-select pills
+    function selectPill(pill, groupId) {
+      const group = document.getElementById(groupId);
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.toggle('selected');
+    }
+
+    // Multi-select chips
+    function toggleChip(chip) {
+      chip.classList.toggle('selected');
+    }
+
+    // Child chips
+    function toggleChildChip(chip) {
+      chip.classList.toggle('selected');
+    }
+
+    // Toggle switch
+    function toggleSwitch(toggle) {
+      toggle.classList.toggle('on');
+      const field = document.getElementById('process-product-field');
+      field.style.display = toggle.classList.contains('on') ? 'block' : 'none';
+    }
+
+    // Pattern selection (retrospective)
+    function selectPattern(el, index) {
+      document.querySelectorAll('#view-retrospective .thread-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPattern = index;
+      document.getElementById('retro-continue').disabled = false;
+    }
+
+    // Thread selection (capability)
+    function selectThread(el, threadId) {
+      document.querySelectorAll('#thread-list .thread-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedThread = threadId;
+      document.getElementById('cap-context').style.display = 'block';
+      document.getElementById('cap-continue').disabled = false;
+    }
+
+    // Thread filter
+    function filterThreads(query) {
+      const q = query.toLowerCase();
+      document.querySelectorAll('#thread-list .thread-option').forEach(opt => {
+        const name = opt.querySelector('.thread-name').textContent.toLowerCase();
+        const summary = opt.querySelector('.thread-summary').textContent.toLowerCase();
+        opt.style.display = (name.includes(q) || summary.includes(q) || q === '') ? 'flex' : 'none';
+      });
+      // Show/hide group labels based on visible children
+      document.querySelectorAll('#thread-list .thread-group-label').forEach(label => {
+        let next = label.nextElementSibling;
+        let anyVisible = false;
+        while (next && !next.classList.contains('thread-group-label')) {
+          if (next.style.display !== 'none') anyVisible = true;
+          next = next.nextElementSibling;
+        }
+        label.style.display = anyVisible ? 'block' : 'none';
+      });
+    }
+
+    // Continue to shared editor (placeholder)
+    function continueToEditor(pathway) {
+      // In production: transitions to the shared editor view with AI inference loading state
+      // For prototype: show confirmation
+      const messages = {
+        material: 'Material path → Shared editor with AI-inferred understanding, session template, and capability suggestions',
+        process: 'Process path → Shared editor with step entry, then AI-inferred understanding and observation hints',
+        inquiry: 'Inquiry path → Shared editor with AI-reversed understanding, investigation plan, and observation prompts',
+        retrospective: 'Retrospective path → Entry review screen, then shared editor with synthesised module from logs',
+        capability: 'Capability path → Skeleton selection screen (2-3 options), then shared editor with pre-populated fields',
+        understanding: 'Understanding path → Shared editor with AI-suggested capabilities and per-step observation hints',
+      };
+
+      alert('✨ Next step (to be built):\n\n' + messages[pathway]);
+    }
+  </script>
+</body>
+</html>

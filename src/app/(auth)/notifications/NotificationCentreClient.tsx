@@ -5,8 +5,10 @@ import NotificationRow from '@/components/notifications/NotificationRow';
 
 interface Notification {
   id: string;
+  type: string;
   title: string;
   body: string | null;
+  bodyData: Record<string, string>;
   tier: string;
   state: string;
   destinationRoute: string | null;
@@ -17,26 +19,40 @@ interface NotificationCentreClientProps {
   initialNotifications: Notification[];
 }
 
-// Tier display order and labels
-const TIER_ORDER = ['whisper', 'nudge', 'chime', 'flare'];
+// Tier priority order (lowest index = highest priority)
+const TIER_ORDER = ['whisper', 'nudge', 'chime'] as const;
+
 const TIER_LABELS: Record<string, string> = {
   whisper: 'Resume',
   nudge: 'Respond',
   chime: 'Reconnect',
-  flare: 'Priority',
 };
+
+type FilterTab = 'all' | 'whisper' | 'nudge' | 'chime';
 
 export default function NotificationCentreClient({
   initialNotifications,
 }: NotificationCentreClientProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(
-    initialNotifications
-  );
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const visible = notifications.filter(
     (n) => n.state !== 'dismissed' && n.state !== 'expired'
   );
   const unreadCount = visible.filter((n) => n.state === 'visible').length;
+
+  // Count per tier for tab badges
+  const countByTier = TIER_ORDER.reduce<Record<string, number>>((acc, tier) => {
+    acc[tier] = visible.filter((n) => n.tier === tier).length;
+    return acc;
+  }, {});
+
+  const filtered = activeTab === 'all' ? visible : visible.filter((n) => n.tier === activeTab);
+
+  // Group filtered by tier (in priority order)
+  const tiersInView = TIER_ORDER.filter((tier) =>
+    filtered.some((n) => n.tier === tier)
+  );
 
   async function handleDismiss(id: string) {
     setNotifications((prev) =>
@@ -67,81 +83,119 @@ export default function NotificationCentreClient({
     await fetch('/api/notifications/mark-all-read', { method: 'PATCH' });
   }
 
-  // Group by tier, ordered
-  const tiers = TIER_ORDER.filter((tier) =>
-    visible.some((n) => n.tier === tier)
-  );
+  const tabs: { key: FilterTab; label: string; count?: number }[] = [
+    { key: 'all', label: 'All', count: visible.length },
+    { key: 'whisper', label: 'Resume', count: countByTier.whisper },
+    { key: 'nudge', label: 'Respond', count: countByTier.nudge },
+    { key: 'chime', label: 'Reconnect', count: countByTier.chime },
+  ];
 
   return (
-    <div className="mx-auto max-w-2xl px-md py-xl">
-      {/* Header */}
-      <div className="mb-xl flex items-center justify-between">
-        <div className="flex items-center gap-sm">
-          <h1 className="font-serif text-2xl font-semibold text-text-primary">
-            Notifications
-          </h1>
+    <div className="mx-auto max-w-2xl">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 border-b border-border-subtle bg-surface-body/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-md py-md">
+          <div className="flex items-center gap-sm">
+            <h1 className="font-serif text-xl font-semibold text-text-primary">
+              Notifications
+            </h1>
+            {unreadCount > 0 && (
+              <span className="rounded-full bg-ember px-sm py-[2px] font-sans text-[11px] font-semibold text-text-inverse">
+                {unreadCount}
+              </span>
+            )}
+          </div>
           {unreadCount > 0 && (
-            <span className="rounded-full bg-ember px-sm py-[2px] font-sans text-xs font-semibold text-text-inverse">
-              {unreadCount}
-            </span>
+            <button
+              onClick={handleMarkAllRead}
+              className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+            >
+              Mark all read
+            </button>
           )}
         </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="font-sans text-xs font-semibold text-ember transition-colors hover:text-ember-hover"
-          >
-            Mark all read
-          </button>
-        )}
+
+        {/* Filter tabs */}
+        <div className="flex gap-xs overflow-x-auto px-md pb-sm scrollbar-none">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  isActive
+                    ? 'border-ember bg-ember text-text-inverse'
+                    : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span
+                    className={`rounded-full px-[5px] py-[1px] font-sans text-[11px] ${
+                      isActive ? 'bg-black/20' : 'bg-surface-raised text-text-muted'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Empty state */}
-      {visible.length === 0 && (
-        <div className="flex flex-col items-center gap-md py-2xl text-center">
-          <span className="text-4xl">🌿</span>
-          <p className="font-serif text-xl font-semibold text-text-primary">
-            All caught up
-          </p>
-          <p className="font-sans text-sm text-text-secondary">
-            No notifications right now. Hearth will nudge you gently when something needs attention.
-          </p>
-        </div>
-      )}
+      {/* Content */}
+      <div className="px-md py-md">
+        {/* Empty state */}
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center gap-md py-2xl text-center">
+            <span className="text-[40px]">🌿</span>
+            <p className="font-serif text-lg font-semibold text-text-primary">
+              Nothing here right now.
+            </p>
+            <p className="font-serif text-sm text-text-secondary">
+              That&apos;s a good thing.
+            </p>
+          </div>
+        )}
 
-      {/* Tier sections */}
-      {tiers.map((tier) => {
-        const tierNotifs = visible
-          .filter((n) => n.tier === tier)
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt ?? 0).getTime() -
-              new Date(a.createdAt ?? 0).getTime()
+        {/* Grouped notification list */}
+        {tiersInView.map((tier, tierIdx) => {
+          const tierNotifs = filtered
+            .filter((n) => n.tier === tier)
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt ?? 0).getTime() -
+                new Date(a.createdAt ?? 0).getTime()
+            );
+
+          return (
+            <section key={tier} className={tierIdx > 0 ? 'mt-xl' : ''}>
+              {/* Tier divider — only shown in "All" tab */}
+              {activeTab === 'all' && (
+                <div className="mb-sm flex items-center gap-md">
+                  <div className="h-px flex-1 bg-border-subtle" />
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                    {TIER_LABELS[tier] ?? tier}
+                  </span>
+                  <div className="h-px flex-1 bg-border-subtle" />
+                </div>
+              )}
+              <div className="flex flex-col gap-xs">
+                {tierNotifs.map((n) => (
+                  <NotificationRow
+                    key={n.id}
+                    notification={n}
+                    onDismiss={handleDismiss}
+                    onMarkRead={handleMarkRead}
+                  />
+                ))}
+              </div>
+            </section>
           );
-
-        return (
-          <section key={tier} className="mb-xl">
-            <div className="mb-sm flex items-center gap-sm">
-              <h2 className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
-                {TIER_LABELS[tier] ?? tier}
-              </h2>
-              <span className="font-sans text-[11px] text-text-muted">
-                {tierNotifs.length}
-              </span>
-            </div>
-            <div className="flex flex-col gap-xs">
-              {tierNotifs.map((n) => (
-                <NotificationRow
-                  key={n.id}
-                  notification={n}
-                  onDismiss={handleDismiss}
-                  onMarkRead={handleMarkRead}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }

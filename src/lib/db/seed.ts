@@ -353,28 +353,79 @@ async function seed() {
 
   // ─── Notifications ───
   await db.insert(schema.notifications).values([
+    // Tier 1 — Resume (draft / paused sessions)
     {
       familyId: family.id,
-      type: 'insight',
+      type: 'draft_resume',
       tier: 'whisper',
-      title: 'Emma is building momentum in science inquiry',
-      body: 'She has 2 observations in the science-inquiry thread this fortnight. One more and she may be ready for the Nature Explorer badge assessment.',
+      title: "You were partway through logging that creek walk — pick up where you left off?",
+      body: 'Started 2 hours ago. Just a few more details and it\'s done.',
+      bodyData: { actionLabel: 'Continue' },
       state: 'visible',
-      destinationRoute: '/our-story',
+      destinationRoute: '/log',
+      createdAt: subDays(today, 0),
     },
     {
       familyId: family.id,
-      type: 'reminder',
+      type: 'pause_ack',
+      tier: 'whisper',
+      title: "Looks like life called — we've saved your spot in Bread Mathematics.",
+      body: 'No rush. The module is exactly where you left it.',
+      bodyData: { actionLabel: 'Pick Up' },
+      state: 'visible',
+      destinationRoute: '/module',
+      createdAt: subDays(today, 0),
+    },
+    // Tier 2 — Respond (badges, compliance)
+    {
+      familyId: family.id,
+      type: 'badge_ready',
       tier: 'nudge',
-      title: 'HEU report due in 3 months',
-      body: 'Your next Home Education Unit report is due soon. Keep logging to build your portfolio evidence.',
+      title: "Emma might be ready for her Number Navigator badge — want to check?",
+      body: 'She\'s been showing strong pattern thinking across 4 recent entries.',
+      bodyData: { actionLabel: 'Check Now' },
+      state: 'visible',
+      destinationRoute: '/our-story',
+      createdAt: subDays(today, 1),
+    },
+    {
+      familyId: family.id,
+      type: 'compliance_nudge',
+      tier: 'nudge',
+      title: "Your HEU check-in is 3 weeks away. Science and HASS could use attention.",
+      body: 'A couple of focused sessions now will make your portfolio story complete.',
+      bodyData: { actionLabel: 'View Report' },
       state: 'visible',
       destinationRoute: '/settings',
-      expiresAt: addMonths(today, 3),
+      expiresAt: addMonths(today, 1),
+      createdAt: subDays(today, 2),
+    },
+    // Tier 3 — Reconnect (log invitations, streak prompts)
+    {
+      familyId: family.id,
+      type: 'log_invitation',
+      tier: 'chime',
+      title: "You ran Bread Mathematics today — want to capture what happened?",
+      body: 'A quick note keeps the learning visible.',
+      bodyData: { actionLabel: 'Log It' },
+      state: 'visible',
+      destinationRoute: '/log',
+      createdAt: subDays(today, 0),
+    },
+    {
+      familyId: family.id,
+      type: 'streak_prompt',
+      tier: 'chime',
+      title: "It's been a little while — even a quick note keeps the story going.",
+      body: 'Your family\'s learning didn\'t stop, even if logging did.',
+      bodyData: { actionLabel: 'Quick Log' },
+      state: 'visible',
+      destinationRoute: '/log',
+      createdAt: subDays(today, 3),
     },
   ]);
 
-  console.log('✅ 2 notifications');
+  console.log('✅ 6 notifications');
 
   console.log('\n🎉 Seed complete!');
   console.log(`\nFamily ID: ${family.id}`);

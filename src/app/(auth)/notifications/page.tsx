@@ -28,8 +28,10 @@ export default async function NotificationsPage() {
     <NotificationCentreClient
       initialNotifications={allNotifications.map((n) => ({
         id: n.id,
+        type: n.type,
         title: n.title,
         body: n.body ?? null,
+        bodyData: (n.bodyData ?? {}) as Record<string, string>,
         tier: n.tier,
         state: n.state,
         destinationRoute: n.destinationRoute ?? null,

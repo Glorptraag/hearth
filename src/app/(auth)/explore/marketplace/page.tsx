@@ -1,12 +1,287 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { MarketplaceCard, type Pack, type Subject } from '@/components/screens/MarketplaceCard';
+
+// ─── Mock data ────────────────────────────────────────────────────────────────
+
+const MOCK_PACKS: Pack[] = [
+  // Membership-included
+  {
+    id: 'jumpstart-classical',
+    title: 'Jumpstart Classical',
+    creator: 'Hearth Editorial',
+    subjects: ['english', 'hass'],
+    ageRange: '5–8 yrs',
+    moduleCount: 6,
+    emoji: '📜',
+    membership: true,
+    description:
+      'An accessible introduction to classical education — mythology, great literature, and the ancient world told through story and discussion.',
+  },
+  {
+    id: 'nature-explorers',
+    title: 'Nature Explorers',
+    creator: 'Sarah Pemberton',
+    subjects: ['science', 'hpe'],
+    ageRange: '6–10 yrs',
+    moduleCount: 5,
+    emoji: '🌿',
+    membership: true,
+    description:
+      'Hands-on field guides, nature journals, and outdoor learning sequences for young naturalists ready to explore the backyard and beyond.',
+  },
+  {
+    id: 'kitchen-mathematics',
+    title: 'Kitchen Mathematics',
+    creator: 'Hearth Editorial',
+    subjects: ['mathematics'],
+    ageRange: '7–11 yrs',
+    moduleCount: 4,
+    emoji: '🍳',
+    membership: true,
+    description:
+      'Real-world measurement, fractions, and number sense taught through cooking, baking, and food science in the family kitchen.',
+  },
+  // Premium
+  {
+    id: 'ancient-worlds',
+    title: 'Ancient Worlds',
+    creator: 'Dr. Fiona Lachlan',
+    subjects: ['hass'],
+    ageRange: '9–12 yrs',
+    moduleCount: 7,
+    emoji: '🏛️',
+    membership: false,
+    price: '$14.00 AUD',
+    description:
+      'A rigorous journey through ancient civilisations — Egypt, Greece, Rome, and China — with primary source analysis and critical thinking prompts.',
+  },
+  {
+    id: 'sound-and-story',
+    title: 'Sound & Story',
+    creator: 'Miriam Wolfe',
+    subjects: ['english', 'arts'],
+    ageRange: '5–8 yrs',
+    moduleCount: 4,
+    emoji: '🎵',
+    membership: false,
+    price: '$9.50 AUD',
+    description:
+      'Oral storytelling, poetry, and musical exploration woven together to build listening comprehension and imaginative expression.',
+  },
+  {
+    id: 'code-explorers',
+    title: 'Code Explorers',
+    creator: 'James Nguyen',
+    subjects: ['technologies', 'mathematics'],
+    ageRange: '8–12 yrs',
+    moduleCount: 5,
+    emoji: '💻',
+    membership: false,
+    price: '$12.00 AUD',
+    description:
+      'Computational thinking and early programming through visual coding, logic puzzles, and project-based challenges.',
+  },
+  {
+    id: 'bodies-in-motion',
+    title: 'Bodies in Motion',
+    creator: 'Active Learning Co.',
+    subjects: ['hpe', 'science'],
+    ageRange: '6–10 yrs',
+    moduleCount: 3,
+    emoji: '🏃',
+    membership: false,
+    price: '$8.00 AUD',
+    description:
+      'Movement science meets PE — understanding the body through activity, basic anatomy, and sport skill progressions.',
+  },
+  {
+    id: 'eco-rangers',
+    title: 'Eco Rangers',
+    creator: 'Dr. Fiona Lachlan',
+    subjects: ['science', 'hass'],
+    ageRange: '8–12 yrs',
+    moduleCount: 6,
+    emoji: '🌍',
+    membership: false,
+    price: '$11.00 AUD',
+    description:
+      'Environmental science and sustainability explored through citizen science projects, data collection, and local community action.',
+  },
+];
+
+// ─── Subject filter config ────────────────────────────────────────────────────
+
+const SUBJECT_FILTERS: { label: string; value: Subject; hex: string }[] = [
+  { label: 'English',      value: 'english',      hex: '#6B8E9B' },
+  { label: 'Mathematics',  value: 'mathematics',  hex: '#9B7B6B' },
+  { label: 'Science',      value: 'science',      hex: '#7B9B6B' },
+  { label: 'HASS',         value: 'hass',         hex: '#9B8B6B' },
+  { label: 'Arts',         value: 'arts',         hex: '#8B6B9B' },
+  { label: 'Technologies', value: 'technologies', hex: '#6B7B9B' },
+  { label: 'HPE',          value: 'hpe',          hex: '#9B6B7B' },
+  { label: 'Languages',    value: 'languages',    hex: '#6B9B8B' },
+];
+
+function hexToRgb(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r},${g},${b}`;
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function MarketplacePage() {
+  const [search, setSearch] = useState('');
+  const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
+  const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return MOCK_PACKS.filter((pack) => {
+      const matchesSearch =
+        !q ||
+        pack.title.toLowerCase().includes(q) ||
+        pack.creator.toLowerCase().includes(q) ||
+        pack.description.toLowerCase().includes(q);
+      const matchesSubject = !activeSubject || pack.subjects.includes(activeSubject);
+      return matchesSearch && matchesSubject;
+    });
+  }, [search, activeSubject]);
+
+  function handleAddToLibrary(id: string) {
+    setLibraryIds((prev) => new Set(prev).add(id));
+  }
+
+  const libraryCount = libraryIds.size;
+
   return (
-    <div className="px-md py-xl">
-      <h1 className="font-serif text-2xl font-semibold text-text-primary">
-        🛒 Marketplace
-      </h1>
-      <p className="mt-sm font-serif text-text-secondary">
-        Discover learning packs and modules from the Hearth community.
-      </p>
+    <div className="min-h-screen bg-surface-body">
+      {/* Atmospheric glow */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          background:
+            'radial-gradient(ellipse at 15% 20%, rgba(217,123,58,0.06) 0%, transparent 50%), radial-gradient(ellipse at 85% 80%, rgba(217,123,58,0.04) 0%, transparent 50%)',
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* ── Top nav ── */}
+        <div className="flex items-center justify-between pb-5 mb-6 border-b border-border-subtle">
+          <a
+            href="/dashboard"
+            className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-200"
+          >
+            ← Dashboard
+          </a>
+          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200 cursor-pointer">
+            <span>📚</span>
+            <span>My Library</span>
+            {libraryCount > 0 && (
+              <span className="bg-ember text-text-inverse font-sans text-[0.65rem] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center">
+                {libraryCount}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Page header ── */}
+        <div className="mb-6">
+          <h1 className="font-serif text-[clamp(1.75rem,4vw,2.25rem)] font-bold text-text-primary leading-tight mb-1">
+            Marketplace
+          </h1>
+          <p className="font-serif text-[clamp(0.95rem,2vw,1.05rem)] text-text-secondary italic">
+            Curate your family's learning library
+          </p>
+        </div>
+
+        {/* ── Search bar ── */}
+        <div className="relative mb-6">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
+            🔍
+          </span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search packs, modules, or creators…"
+            className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-9 pr-4 py-3 font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
+          />
+        </div>
+
+        {/* ── Subject filter pills ── */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <button
+            onClick={() => setActiveSubject(null)}
+            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 ${
+              activeSubject === null
+                ? 'bg-ember text-text-inverse border-ember'
+                : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
+            }`}
+          >
+            All
+          </button>
+          {SUBJECT_FILTERS.map((s) => {
+            const rgb = hexToRgb(s.hex);
+            const isActive = activeSubject === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => setActiveSubject(isActive ? null : s.value)}
+                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-200"
+                style={{
+                  color: s.hex,
+                  background: isActive ? `rgba(${rgb},0.22)` : `rgba(${rgb},0.08)`,
+                  borderColor: isActive ? `rgba(${rgb},0.5)` : `rgba(${rgb},0.2)`,
+                }}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── Results count ── */}
+        <p className="font-sans text-[0.75rem] text-text-muted mb-5">
+          {filtered.length === MOCK_PACKS.length
+            ? `Showing all ${filtered.length} packs`
+            : `Showing ${filtered.length} of ${MOCK_PACKS.length} packs`}
+        </p>
+
+        {/* ── Content grid ── */}
+        {filtered.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((pack) => (
+              <MarketplaceCard
+                key={pack.id}
+                pack={pack}
+                inLibrary={libraryIds.has(pack.id)}
+                onAddToLibrary={handleAddToLibrary}
+              />
+            ))}
+          </div>
+        ) : (
+          /* ── Empty state ── */
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <span className="text-5xl mb-4">🔭</span>
+            <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
+              No content matches your filters
+            </h3>
+            <p className="font-sans text-sm text-text-secondary mb-6 max-w-xs">
+              Try adjusting your search or selecting a different subject area.
+            </p>
+            <button
+              onClick={() => { setSearch(''); setActiveSubject(null); }}
+              className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200"
+            >
+              Reset filters
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

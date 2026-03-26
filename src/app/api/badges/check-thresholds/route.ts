@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import {
   badgeDefinitions,
   badgeAwards,
-  capabilityObservations,
+  familyIntelligenceSnapshots,
   learners,
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
@@ -14,6 +14,17 @@ import { eq, and, or, isNull } from 'drizzle-orm';
 const checkSchema = z.object({
   learnerId: z.string().uuid(),
 });
+
+type ActiveThread = {
+  thread_id: string;
+  observation_count: number;
+  suggested_tier: string;
+  last_evidence_date: string;
+};
+
+type SnapshotData = {
+  children?: Record<string, { active_threads?: ActiveThread[] }>;
+};
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
@@ -52,13 +63,18 @@ export async function POST(request: NextRequest) {
 
   const awardedBadgeIds = new Set(awards.map((a) => a.badgeDefinitionId));
 
-  const observations = await db.query.capabilityObservations.findMany({
-    where: eq(capabilityObservations.learnerId, learnerId),
+  // Read thread observation counts from the snapshot instead of the deprecated capabilityObservations table
+  const snapshot = await db.query.familyIntelligenceSnapshots.findFirst({
+    where: eq(familyIntelligenceSnapshots.familyId, family.id),
   });
 
   const threadCounts: Record<string, number> = {};
-  for (const obs of observations) {
-    threadCounts[obs.threadId] = (threadCounts[obs.threadId] ?? 0) + 1;
+  if (snapshot) {
+    const data = snapshot.snapshotData as SnapshotData;
+    const activeThreads = data?.children?.[learnerId]?.active_threads ?? [];
+    for (const thread of activeThreads) {
+      threadCounts[thread.thread_id] = thread.observation_count;
+    }
   }
 
   const crossedThreshold: string[] = [];

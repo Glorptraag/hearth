@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { capabilityObservations, learners } from '@/lib/db/schema';
+import { learners, familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
 type Params = { params: Promise<{ learnerId: string }> };
+
+type ActiveThread = {
+  thread_id: string;
+  observation_count: number;
+  suggested_tier: string;
+  last_evidence_date: string;
+};
+
+type SnapshotData = {
+  children?: Record<string, { active_threads?: ActiveThread[] }>;
+};
 
 export async function GET(request: NextRequest, { params }: Params) {
   const { userId } = await auth();
@@ -25,16 +36,14 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   if (!learner) return NextResponse.json({ error: 'Learner not found' }, { status: 404 });
 
-  const observations = await db.query.capabilityObservations.findMany({
-    where: eq(capabilityObservations.learnerId, learnerId),
-    orderBy: capabilityObservations.observedAt,
+  const snapshot = await db.query.familyIntelligenceSnapshots.findFirst({
+    where: eq(familyIntelligenceSnapshots.familyId, family.id),
   });
 
-  const grouped: Record<string, typeof observations> = {};
-  for (const obs of observations) {
-    if (!grouped[obs.threadId]) grouped[obs.threadId] = [];
-    grouped[obs.threadId].push(obs);
-  }
+  if (!snapshot) return NextResponse.json([]);
 
-  return NextResponse.json(grouped);
+  const data = snapshot.snapshotData as SnapshotData;
+  const activeThreads: ActiveThread[] = data?.children?.[learnerId]?.active_threads ?? [];
+
+  return NextResponse.json(activeThreads);
 }

@@ -151,8 +151,22 @@ export default function MarketplacePage() {
     });
   }, [search, activeSubject]);
 
-  function handleAddToLibrary(id: string) {
+  async function handleAddToLibrary(id: string) {
     setLibraryIds((prev) => new Set(prev).add(id));
+    try {
+      await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sanityPackId: id }),
+      });
+    } catch {
+      // Revert on failure
+      setLibraryIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   }
 
   const libraryCount = libraryIds.size;

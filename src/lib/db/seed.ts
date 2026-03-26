@@ -385,7 +385,7 @@ async function seed() {
       body: 'She\'s been showing strong pattern thinking across 4 recent entries.',
       bodyData: { actionLabel: 'Check Now' },
       state: 'visible',
-      destinationRoute: '/our-story',
+      destinationRoute: '/badges/assess/badge-number-navigator?learner=emma&name=Emma',
       createdAt: subDays(today, 1),
     },
     {
@@ -396,7 +396,7 @@ async function seed() {
       body: 'A couple of focused sessions now will make your portfolio story complete.',
       bodyData: { actionLabel: 'View Report' },
       state: 'visible',
-      destinationRoute: '/settings',
+      destinationRoute: '/our-story/report',
       expiresAt: addMonths(today, 1),
       createdAt: subDays(today, 2),
     },

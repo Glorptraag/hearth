@@ -4,7 +4,6 @@ import {
   learningEntries,
   learners,
   familySettings,
-  capabilityObservations,
 } from '@/lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { aiPipelineLogs } from '@/lib/db/schema';
@@ -124,15 +123,18 @@ async function assembleContext(entryId: string, familyId: string) {
     ? await db.select().from(learners).where(inArray(learners.id, entryLearnerIds))
     : [];
 
+  // Derive active threads from previous entries' aiEnrichment (not the deprecated capabilityObservations table)
   const activeThreads: Record<string, string[]> = {};
   for (const child of childRecords) {
-    const obs = await db
-      .select()
-      .from(capabilityObservations)
-      .where(eq(capabilityObservations.learnerId, child.id))
-      .orderBy(desc(capabilityObservations.observedAt))
-      .limit(20);
-    activeThreads[child.name] = [...new Set(obs.map((o) => o.threadId))];
+    const childEntries = recentEntries.filter((e) => e.learnerIds?.includes(child.id));
+    const threadIds = new Set<string>();
+    for (const e of childEntries) {
+      const enrichment = e.aiEnrichment as EnrichmentResult | null;
+      for (const t of enrichment?.capability_threads ?? []) {
+        threadIds.add(t.thread_id);
+      }
+    }
+    activeThreads[child.name] = [...threadIds];
   }
 
   const recent = recentEntries

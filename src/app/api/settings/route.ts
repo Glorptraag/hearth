@@ -6,6 +6,7 @@ import { familySettings } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { PEDAGOGIES } from '@/types';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
 export async function GET() {
   const { userId } = await auth();
@@ -62,11 +63,21 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(created);
   }
 
+  const pedagogyChanged =
+    parsed.data.pedagogyPreference &&
+    parsed.data.pedagogyPreference !== existing.pedagogyPreference;
+
   const [updated] = await db
     .update(familySettings)
     .set({ ...parsed.data, updatedAt: new Date() })
     .where(eq(familySettings.familyId, family.id))
     .returning();
+
+  if (pedagogyChanged) {
+    rebuildSnapshot(family.id, 'settings_change').catch(() => {
+      // Non-blocking — settings are already saved
+    });
+  }
 
   return NextResponse.json(updated);
 }

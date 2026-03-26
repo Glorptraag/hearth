@@ -4,7 +4,6 @@ import {
   learners,
   familySettings,
   familyIntelligenceSnapshots,
-  capabilityObservations,
   badgeDefinitions,
   badgeAwards,
   notifications,
@@ -143,6 +142,7 @@ export async function rebuildSnapshot(
               badge_id: badge.id,
               badge_title: badge.title,
               badge_emoji: badge.emoji,
+              learner_id: child.id,
               learner_name: child.name,
             },
           });
@@ -320,7 +320,7 @@ export async function rebuildSnapshot(
         title: `${n.payload.badge_emoji} Badge ready: ${n.payload.badge_title}`,
         body: `${n.payload.learner_name} has enough observations for the ${n.payload.badge_title} badge!`,
         bodyData: n.payload,
-        destinationRoute: '/our-story/badges',
+        destinationRoute: `/badges/assess/${n.payload.badge_id}?learner=${n.payload.learner_id}&name=${encodeURIComponent(String(n.payload.learner_name))}`,
       });
     }
 

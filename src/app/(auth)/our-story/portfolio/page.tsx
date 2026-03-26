@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
+import { getThreadName } from '@/lib/capability-threads';
 
 type Learner = {
   id: string;
@@ -11,6 +12,18 @@ type Learner = {
   shapeIcon: string | null;
   colourToken: string | null;
 };
+
+type CapabilityThread = {
+  thread_id: string;
+  confidence: number;
+};
+
+type AiEnrichment = {
+  capability_threads?: CapabilityThread[];
+  curriculum_descriptors?: { code: string; confidence: number }[];
+  subjects_detected?: string[];
+  confidence?: number;
+} | null;
 
 type Entry = {
   id: string;
@@ -22,6 +35,7 @@ type Entry = {
   engagementPerLearner: Record<string, number> | null;
   discoveriesPerLearner: Record<string, string> | null;
   evidenceUrls: string[] | null;
+  aiEnrichment: AiEnrichment;
   status: string;
   createdAt: string;
 };
@@ -34,7 +48,12 @@ type BadgeAward = {
   awardedAt: string;
 };
 
-type ThreadGroup = Record<string, Array<{ id: string; threadId: string; status: string; observedAt: string }>>;
+type ActiveThread = {
+  thread_id: string;
+  observation_count: number;
+  suggested_tier: string;
+  last_evidence_date: string;
+};
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string; color: string }> = {
   english: { label: 'English', emoji: '📚', color: 'bg-domain-english/20 text-domain-english' },
@@ -60,7 +79,7 @@ export default function PortfolioPage() {
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
   const [badges, setBadges] = useState<BadgeAward[]>([]);
-  const [threads, setThreads] = useState<ThreadGroup>({});
+  const [threads, setThreads] = useState<ActiveThread[]>([]);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all'>('all');
@@ -87,7 +106,7 @@ export default function PortfolioPage() {
     ]).then(([e, b, t]) => {
       setEntries(Array.isArray(e) ? e : []);
       setBadges(Array.isArray(b) ? b : []);
-      setThreads(typeof t === 'object' && !Array.isArray(t) ? t : {});
+      setThreads(Array.isArray(t) ? t : []);
     });
   }, [selectedLearnerId]);
 
@@ -111,26 +130,17 @@ export default function PortfolioPage() {
     const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
     const monthEntries = entries.filter((e) => e.dateOccurred >= monthStart);
     const subjects = new Set(monthEntries.flatMap((e) => e.subjects ?? []));
-    const threadIds = new Set(
-      Object.keys(threads).filter((tid) =>
-        threads[tid].some((obs) => obs.observedAt && obs.observedAt >= monthStart)
-      )
-    );
-    return { count: monthEntries.length, subjects: subjects.size, threads: threadIds.size };
-  }, [entries, threads]);
+    const monthThreadIds = new Set<string>();
+    monthEntries.forEach((e) => {
+      e.aiEnrichment?.capability_threads
+        ?.filter((ct) => ct.confidence >= 0.5)
+        .forEach((ct) => monthThreadIds.add(ct.thread_id));
+    });
+    return { count: monthEntries.length, subjects: subjects.size, threads: monthThreadIds.size };
+  }, [entries]);
 
   const sortedThreads = useMemo(() => {
-    return Object.entries(threads)
-      .map(([threadId, obs]) => ({
-        threadId,
-        count: obs.length,
-        highestStatus: obs.some((o) => o.status === 'demonstrating')
-          ? 'demonstrating'
-          : obs.some((o) => o.status === 'developing')
-            ? 'developing'
-            : 'emerging',
-      }))
-      .sort((a, b) => b.count - a.count);
+    return [...threads].sort((a, b) => b.observation_count - a.observation_count);
   }, [threads]);
 
   const currentMonthName = format(new Date(), 'MMMM');
@@ -220,10 +230,10 @@ export default function PortfolioPage() {
             <div className="lg:hidden flex gap-sm overflow-x-auto pb-sm mb-md scrollbar-none">
               {sortedThreads.map((t) => (
                 <div
-                  key={t.threadId}
+                  key={t.thread_id}
                   className="shrink-0 rounded-full border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary"
                 >
-                  {t.threadId} <span className="text-text-muted">({t.count})</span>
+                  {getThreadName(t.thread_id)} <span className="text-text-muted">({t.observation_count})</span>
                 </div>
               ))}
             </div>
@@ -240,6 +250,8 @@ export default function PortfolioPage() {
                 const expanded = expandedEntry === entry.id;
                 const engValue = entry.engagementPerLearner?.[selectedLearnerId];
                 const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
+                const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
+                  .filter((ct) => ct.confidence >= 0.5);
                 return (
                   <button
                     key={entry.id}
@@ -277,6 +289,20 @@ export default function PortfolioPage() {
                             </span>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Capability thread tags from AI enrichment */}
+                    {entryThreads.length > 0 && (
+                      <div className="flex flex-wrap gap-xs mt-sm">
+                        {entryThreads.map((ct) => (
+                          <span
+                            key={ct.thread_id}
+                            className="rounded-full bg-surface-hover px-sm py-[2px] font-sans text-[10px] text-text-muted"
+                          >
+                            {getThreadName(ct.thread_id)}
+                          </span>
+                        ))}
                       </div>
                     )}
 
@@ -342,7 +368,7 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Desktop sidebar — Capability threads */}
+        {/* Desktop sidebar — Capability threads from snapshot */}
         <aside className="hidden lg:block lg:w-[280px] lg:shrink-0">
           <div className="sticky top-0">
             <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-md">
@@ -354,25 +380,25 @@ export default function PortfolioPage() {
               <div className="space-y-sm">
                 {sortedThreads.map((t) => (
                   <div
-                    key={t.threadId}
+                    key={t.thread_id}
                     className="rounded-md border border-border-subtle bg-surface-panel p-sm"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-serif text-sm font-semibold text-text-primary">
-                        {t.threadId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {getThreadName(t.thread_id)}
                       </span>
-                      <span className="font-sans text-xs text-text-muted">{t.count}</span>
+                      <span className="font-sans text-xs text-text-muted">{t.observation_count}</span>
                     </div>
                     <span
                       className={`inline-block mt-xs rounded-full px-sm py-[2px] font-sans text-[10px] font-medium ${
-                        t.highestStatus === 'demonstrating'
+                        t.suggested_tier === 'demonstrating'
                           ? 'bg-sage/15 text-sage'
-                          : t.highestStatus === 'developing'
+                          : t.suggested_tier === 'developing'
                             ? 'bg-ember-glow text-ember'
                             : 'bg-surface-hover text-text-muted'
                       }`}
                     >
-                      {t.highestStatus}
+                      {t.suggested_tier}
                     </span>
                   </div>
                 ))}

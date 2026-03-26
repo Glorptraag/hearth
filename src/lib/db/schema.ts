@@ -132,6 +132,8 @@ export const aiPipelineLogs = pgTable(
 );
 
 // ─── Capability Tracking ───
+// DEPRECATED: data now comes from ai_enrichment on learning_entries
+// and family_intelligence_snapshots. This table is no longer populated.
 
 export const capabilityObservations = pgTable(
   'capability_observations',
@@ -195,6 +197,7 @@ export const badgeAssessmentLogs = pgTable('badge_assessment_logs', {
     .notNull(),
   responses: jsonb('responses').notNull(),
   outcome: text('outcome').notNull(),
+  coolingUntil: timestamp('cooling_until'),
   assessedAt: timestamp('assessed_at').defaultNow(),
 });
 

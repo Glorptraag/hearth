@@ -12,6 +12,13 @@ type Learner = {
   colourToken: string | null;
 };
 
+type AiEnrichment = {
+  capability_threads?: { thread_id: string; confidence: number }[];
+  curriculum_descriptors?: { code: string; confidence: number }[];
+  subjects_detected?: string[];
+  confidence?: number;
+} | null;
+
 type Entry = {
   id: string;
   title: string;
@@ -19,6 +26,7 @@ type Entry = {
   subjects: string[] | null;
   learnerIds: string[] | null;
   evidenceUrls: string[] | null;
+  aiEnrichment: AiEnrichment;
   status: string;
 };
 
@@ -40,6 +48,34 @@ const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
+
+// Map AC9 curriculum descriptor code prefixes to subject keys
+const AC9_SUBJECT_MAP: Record<string, string> = {
+  AC9E: 'english',
+  AC9M: 'mathematics',
+  AC9S: 'science',
+  AC9HAS: 'hass',
+  AC9HI: 'hass',
+  AC9GE: 'hass',
+  AC9CI: 'hass',
+  AC9EB: 'hass',
+  AC9AR: 'arts',
+  AC9MU: 'arts',
+  AC9DR: 'arts',
+  AC9DA: 'arts',
+  AC9MA: 'arts',
+  AC9TD: 'technologies',
+  AC9TDI: 'technologies',
+  AC9HP: 'hpe',
+  AC9LA: 'languages',
+};
+
+function descriptorToSubject(code: string): string | null {
+  for (const [prefix, subject] of Object.entries(AC9_SUBJECT_MAP)) {
+    if (code.startsWith(prefix)) return subject;
+  }
+  return null;
+}
 
 export default function ReportPage() {
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -83,21 +119,41 @@ export default function ReportPage() {
     return Math.min(Math.max((elapsed / totalDays) * 100, 0), 100);
   }, [reportDueDate, registrationDate]);
 
-  // Subject coverage
+  // Subject coverage — now includes curriculum descriptor counts from enrichment
   const subjectCoverage = useMemo(() => {
-    const counts: Record<string, number> = {};
-    ALL_SUBJECTS.forEach((s) => (counts[s] = 0));
+    const entryCounts: Record<string, number> = {};
+    const descriptorSets: Record<string, Set<string>> = {};
+    ALL_SUBJECTS.forEach((s) => {
+      entryCounts[s] = 0;
+      descriptorSets[s] = new Set();
+    });
+
     entries.forEach((e) => {
-      e.subjects?.forEach((s) => {
-        if (s in counts) counts[s]++;
+      // Count entries per subject (from manual subjects + AI-detected)
+      const subjects = new Set([
+        ...(e.subjects ?? []),
+        ...(e.aiEnrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
+      ]);
+      subjects.forEach((s) => {
+        if (s in entryCounts) entryCounts[s]++;
+      });
+
+      // Count unique curriculum descriptors per subject
+      e.aiEnrichment?.curriculum_descriptors?.forEach((d) => {
+        const subj = descriptorToSubject(d.code);
+        if (subj && descriptorSets[subj]) {
+          descriptorSets[subj].add(d.code);
+        }
       });
     });
+
     const total = entries.length || 1;
     return ALL_SUBJECTS.map((key) => ({
       key,
       ...SUBJECT_CONFIG[key],
-      count: counts[key],
-      pct: Math.round((counts[key] / total) * 100),
+      count: entryCounts[key],
+      descriptors: descriptorSets[key].size,
+      pct: Math.round((entryCounts[key] / total) * 100),
     }));
   }, [entries]);
 
@@ -209,6 +265,9 @@ export default function ReportPage() {
                 </div>
                 <p className="font-sans text-xs text-text-muted mb-sm">
                   {s.count} {s.count === 1 ? 'entry' : 'entries'}
+                  {s.descriptors > 0 && (
+                    <span className="text-text-secondary"> · {s.descriptors} curriculum descriptors</span>
+                  )}
                 </p>
                 <div className="h-[4px] rounded-full bg-surface-hover overflow-hidden">
                   <div

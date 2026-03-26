@@ -33,6 +33,9 @@ const TYPE_EMOJI: Record<string, string> = {
   log_invitation:    '💡',
   prep_reminder:     '📅',
   streak_prompt:     '💭',
+  streak_celebration:'🎉',
+  weekly_digest:     '📊',
+  capability_growth: '🌱',
 };
 
 // Default action labels per type (overridden by bodyData.actionLabel)
@@ -44,6 +47,9 @@ const TYPE_ACTION_LABEL: Record<string, string> = {
   log_invitation:    'Log It',
   prep_reminder:     'Get Ready',
   streak_prompt:     'Quick Log',
+  streak_celebration:'View',
+  weekly_digest:     'View',
+  capability_growth: 'See Growth',
 };
 
 export default function NotificationRow({
@@ -93,7 +99,10 @@ export default function NotificationRow({
             {notification.destinationRoute ? (
               <Link
                 href={notification.destinationRoute}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isUnread) onMarkRead(notification.id);
+                }}
                 className="inline-flex items-center rounded-[10px] bg-ember px-[14px] py-[6px] font-sans text-[13px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover"
               >
                 {actionLabel}

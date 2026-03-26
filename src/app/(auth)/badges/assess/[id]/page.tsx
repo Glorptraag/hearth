@@ -1,0 +1,403 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+
+type AssessmentQuestion = { id: string; question: string };
+type BadgeData = {
+  id: string;
+  title: string;
+  emoji: string;
+  threadName: string;
+  assessmentQuestions: AssessmentQuestion[];
+};
+type Response = { questionId: string; response: 'yes' | 'sometimes' | 'not_yet'; note?: string };
+
+type Step = 'intro' | 'questions' | 'decision' | 'celebration' | 'deferred';
+
+export default function BadgeAssessPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const badgeId = params.id as string;
+  const learnerId = searchParams.get('learner') ?? '';
+  const learnerName = searchParams.get('name') ?? 'your child';
+
+  const [step, setStep] = useState<Step>('intro');
+  const [badge, setBadge] = useState<BadgeData | null>(null);
+  const [currentQ, setCurrentQ] = useState(0);
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/badges/${badgeId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setBadge(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Could not load badge');
+        setLoading(false);
+      });
+  }, [badgeId]);
+
+  const personalize = useCallback(
+    (text: string) => text.replace(/\[child\]/gi, learnerName),
+    [learnerName]
+  );
+
+  const yesCount = responses.filter((r) => r.response === 'yes').length;
+  const totalQ = badge?.assessmentQuestions.length ?? 0;
+  const mostlyYes = yesCount >= Math.ceil(totalQ / 2);
+
+  const handleResponse = (response: 'yes' | 'sometimes' | 'not_yet') => {
+    const q = badge!.assessmentQuestions[currentQ];
+    setResponses((prev) => {
+      const next = prev.filter((r) => r.questionId !== q.id);
+      return [...next, { questionId: q.id, response }];
+    });
+
+    if (currentQ < totalQ - 1) {
+      setCurrentQ((c) => c + 1);
+    } else {
+      setStep('decision');
+    }
+  };
+
+  const handleAward = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/badges/award', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ badgeId, learnerId, responses }),
+      });
+      if (!res.ok) throw new Error();
+      setStep('celebration');
+    } catch {
+      setError('Failed to award badge');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDefer = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/badges/defer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ badgeId, learnerId, responses }),
+      });
+      if (!res.ok) throw new Error();
+      setStep('deferred');
+    } catch {
+      setError('Failed to defer badge');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface-body flex items-center justify-center">
+        <p className="font-sans text-text-secondary animate-pulse">Loading assessment...</p>
+      </div>
+    );
+  }
+
+  if (error || !badge) {
+    return (
+      <div className="min-h-screen bg-surface-body flex items-center justify-center px-md">
+        <div className="text-center">
+          <p className="font-serif text-text-primary text-xl mb-md">{error ?? 'Badge not found'}</p>
+          <button
+            onClick={() => router.back()}
+            className="font-sans text-sm text-ember hover:text-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-surface-body">
+      {/* Ambient background */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 20% 80%, rgba(217,123,58,0.12) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(217,123,58,0.08) 0%, transparent 50%)',
+        }}
+      />
+
+      <div className="relative z-10 max-w-lg mx-auto px-md py-lg">
+        {/* Header */}
+        {step !== 'celebration' && step !== 'deferred' && (
+          <header className="flex items-center justify-between mb-xl">
+            <button
+              onClick={() => {
+                if (step === 'questions' && currentQ > 0) {
+                  setCurrentQ((c) => c - 1);
+                } else if (step === 'questions') {
+                  setStep('intro');
+                } else if (step === 'decision') {
+                  setCurrentQ(totalQ - 1);
+                  setStep('questions');
+                } else {
+                  router.back();
+                }
+              }}
+              className="font-sans text-sm text-text-secondary hover:text-text-primary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            >
+              ← Back
+            </button>
+
+            {/* Progress dots */}
+            {step === 'questions' && (
+              <div className="flex gap-sm">
+                {badge.assessmentQuestions.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      i < currentQ
+                        ? 'bg-ember'
+                        : i === currentQ
+                          ? 'bg-ember shadow-[0_0_8px_rgba(217,123,58,0.4)]'
+                          : 'bg-surface-raised'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="w-12" />
+          </header>
+        )}
+
+        {/* ── INTRO ── */}
+        {step === 'intro' && (
+          <div className="text-center pt-2xl">
+            <div className="w-24 h-24 mx-auto mb-lg rounded-full bg-surface-panel border border-border-subtle flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(217,123,58,0.15)]">
+              {badge.emoji}
+            </div>
+            <p className="font-sans text-xs uppercase tracking-widest text-text-muted mb-sm">
+              {badge.threadName}
+            </p>
+            <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">
+              {badge.title}
+            </h1>
+            <p className="font-serif text-text-secondary leading-relaxed mb-2xl max-w-sm mx-auto">
+              Based on what you&apos;ve been logging, {learnerName} might be ready for the{' '}
+              <span className="text-ember">{badge.title}</span> badge. Let&apos;s check together.
+            </p>
+
+            <div className="space-y-sm">
+              <button
+                onClick={() => setStep('questions')}
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                Let&apos;s check
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── QUESTIONS ── */}
+        {step === 'questions' && (
+          <div className="pt-lg">
+            <p className="font-sans text-xs text-text-muted mb-sm">
+              Question {currentQ + 1} of {totalQ}
+            </p>
+            <h2 className="font-serif text-xl font-semibold text-text-primary mb-xl leading-relaxed">
+              {personalize(badge.assessmentQuestions[currentQ].question)}
+            </h2>
+
+            <div className="space-y-sm">
+              <ResponseOption
+                label="Yes, consistently"
+                sublabel="This is a regular thing"
+                selected={responses.find((r) => r.questionId === badge.assessmentQuestions[currentQ].id)?.response === 'yes'}
+                onClick={() => handleResponse('yes')}
+                variant="yes"
+              />
+              <ResponseOption
+                label="Sometimes"
+                sublabel="It happens, but not always"
+                selected={responses.find((r) => r.questionId === badge.assessmentQuestions[currentQ].id)?.response === 'sometimes'}
+                onClick={() => handleResponse('sometimes')}
+                variant="sometimes"
+              />
+              <ResponseOption
+                label="Not yet"
+                sublabel="We haven't seen this"
+                selected={responses.find((r) => r.questionId === badge.assessmentQuestions[currentQ].id)?.response === 'not_yet'}
+                onClick={() => handleResponse('not_yet')}
+                variant="not_yet"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── DECISION ── */}
+        {step === 'decision' && (
+          <div className="pt-lg text-center">
+            <div className="text-5xl mb-lg">{badge.emoji}</div>
+
+            {/* Response summary */}
+            <div className="bg-surface-panel rounded-lg border border-border-subtle p-lg mb-xl text-left">
+              <h3 className="font-sans text-xs uppercase tracking-widest text-text-muted mb-md">
+                Your responses
+              </h3>
+              <div className="space-y-sm">
+                {badge.assessmentQuestions.map((q, i) => {
+                  const r = responses.find((r) => r.questionId === q.id);
+                  const icon = r?.response === 'yes' ? '✅' : r?.response === 'sometimes' ? '🟡' : '⬜';
+                  return (
+                    <div key={q.id} className="flex items-start gap-sm">
+                      <span className="text-sm mt-0.5">{icon}</span>
+                      <p className="font-serif text-sm text-text-secondary">
+                        {personalize(q.question)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {mostlyYes ? (
+              <>
+                <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
+                  It looks like {learnerName} has earned {badge.title}!
+                </h2>
+                <p className="font-serif text-text-secondary mb-xl">
+                  Ready to make it official?
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
+                  Your call
+                </h2>
+                <p className="font-serif text-text-secondary mb-xl">
+                  Would you like to award <span className="text-ember">{badge.title}</span> now, or
+                  give it more time?
+                </p>
+              </>
+            )}
+
+            <div className="space-y-sm">
+              <button
+                onClick={handleAward}
+                disabled={submitting}
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover disabled:opacity-50 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                {submitting ? 'Awarding...' : `Award ${badge.title}`}
+              </button>
+              <button
+                onClick={handleDefer}
+                disabled={submitting}
+                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium disabled:opacity-50 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                Not yet — we&apos;ll check again later
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── CELEBRATION ── */}
+        {step === 'celebration' && (
+          <div className="pt-2xl text-center">
+            <div className="w-32 h-32 mx-auto mb-lg rounded-full bg-surface-panel border-2 border-ember flex items-center justify-center text-7xl shadow-[0_0_40px_rgba(217,123,58,0.25)]">
+              {badge.emoji}
+            </div>
+            <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
+              {learnerName} earned {badge.title}!
+            </h1>
+            <p className="font-serif text-text-secondary mb-2xl">
+              This badge is now part of {learnerName}&apos;s learning story.
+            </p>
+
+            <div className="space-y-sm">
+              <button
+                onClick={() => router.push('/our-story/portfolio')}
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                View in Portfolio
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── DEFERRED ── */}
+        {step === 'deferred' && (
+          <div className="pt-2xl text-center">
+            <div className="text-6xl mb-lg">🌱</div>
+            <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
+              Still growing
+            </h1>
+            <p className="font-serif text-text-secondary leading-relaxed mb-2xl max-w-sm mx-auto">
+              No rush — {learnerName} is making progress. We&apos;ll check in again when the time
+              feels right.
+            </p>
+
+            <button
+              onClick={() => router.push('/')}
+              className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResponseOption({
+  label,
+  sublabel,
+  selected,
+  onClick,
+  variant,
+}: {
+  label: string;
+  sublabel: string;
+  selected: boolean;
+  onClick: () => void;
+  variant: 'yes' | 'sometimes' | 'not_yet';
+}) {
+  const borderClass = selected
+    ? variant === 'yes'
+      ? 'border-ember bg-[rgba(217,123,58,0.08)]'
+      : 'border-border-medium bg-surface-hover'
+    : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-hover';
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left rounded-lg border p-lg transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${borderClass}`}
+    >
+      <p className="font-serif font-semibold text-text-primary">{label}</p>
+      <p className="font-sans text-sm text-text-muted mt-xs">{sublabel}</p>
+    </button>
+  );
+}

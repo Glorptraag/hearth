@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
+import { enrichEntry } from '@/lib/ai/enrich';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -35,6 +37,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       )
     )
     .returning();
+
+  // Async AI enrichment — does not block the response
+  enrichEntry({ entryId: id, familyId: family.id })
+    .then(() => rebuildSnapshot(family.id, 'entry_saved'))
+    .catch((err) => console.error('[entries/complete] AI pipeline error:', err));
 
   return NextResponse.json(updated);
 }

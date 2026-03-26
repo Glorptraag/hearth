@@ -6,6 +6,8 @@ import { learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
+import { enrichEntry } from '@/lib/ai/enrich';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -87,6 +89,13 @@ export async function POST(request: NextRequest) {
       ...parsed.data,
     })
     .returning();
+
+  // Async AI enrichment — does not block the response
+  if (parsed.data.status === 'complete') {
+    enrichEntry({ entryId: entry.id, familyId: family.id })
+      .then(() => rebuildSnapshot(family.id, 'entry_saved'))
+      .catch((err) => console.error('[entries/POST] AI pipeline error:', err));
+  }
 
   return NextResponse.json(entry, { status: 201 });
 }

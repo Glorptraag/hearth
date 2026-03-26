@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { format, subDays, differenceInYears } from 'date-fns';
+import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 
 type Learner = {
   id: string;
@@ -176,6 +177,25 @@ export default function LogPage() {
   const [location, setLocation] = useState<string | null>(null);
   const [observations, setObservations] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
+  // ─── AI Insights (keyword matcher) ───
+  const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (description.length < 10) {
+      setKeywordMatch(null);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      const childNames = learners
+        .filter((l) => selectedLearners.includes(l.id))
+        .map((l) => l.name);
+      setKeywordMatch(matchKeywords(description, childNames));
+    }, 1500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [description, selectedLearners, learners]);
 
   // ─── UI state ───
   const [isRecording, setIsRecording] = useState(false);
@@ -784,12 +804,7 @@ export default function LogPage() {
                 <span className="text-ember text-lg">✨</span>
                 <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
               </div>
-              <div className="flex flex-col items-center justify-center py-3xl text-center">
-                <span className="text-4xl mb-md opacity-30">🙂</span>
-                <p className="font-serif text-sm text-text-muted italic leading-relaxed">
-                  Start describing the activity and I&apos;ll begin finding the learning within it.
-                </p>
-              </div>
+              <InsightsContent match={keywordMatch} />
             </div>
           </div>
         </aside>
@@ -812,12 +827,7 @@ export default function LogPage() {
               <span className="text-ember text-lg">✨</span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
-            <div className="flex flex-col items-center justify-center py-xl text-center">
-              <span className="text-4xl mb-md opacity-30">🙂</span>
-              <p className="font-serif text-sm text-text-muted italic leading-relaxed">
-                Start describing the activity and I&apos;ll begin finding the learning within it.
-              </p>
-            </div>
+            <InsightsContent match={keywordMatch} />
           </div>
         )}
       </div>
@@ -844,6 +854,122 @@ export default function LogPage() {
           }`}
         >
           {toast.message}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Insights Content Component ───
+
+const THREAD_LABELS: Record<string, string> = {
+  L1: 'Oral Communication', L2: 'Phonological Awareness', L3: 'Reading Comprehension',
+  L4: 'Vocabulary', L5: 'Written Expression', L6: 'Spelling & Grammar',
+  L7: 'Narrative', L8: 'Persuasion', L9: 'Literary Appreciation',
+  M1: 'Number Sense', M2: 'Operations', M3: 'Fractional Thinking',
+  M4: 'Algebraic Thinking', M5: 'Measurement', M6: 'Spatial Reasoning',
+  M7: 'Data & Statistics', M8: 'Probability', M9: 'Mathematical Modelling',
+  S1: 'Scientific Inquiry', S2: 'Biological Sciences', S3: 'Chemical Sciences',
+  S4: 'Physical Sciences', S5: 'Scientific Observation', S6: 'Earth & Space',
+  H1: 'Historical Understanding', H2: 'Source Analysis', H3: 'Geographical Understanding',
+  H4: 'Civics & Citizenship', H5: 'Economics & Business', H6: 'Cultural Understanding',
+  P1: 'Gross Motor', P2: 'Fine Motor', P3: 'Body Awareness', P4: 'Team & Sport', P5: 'Aquatics',
+  PS1: 'Empathy', PS2: 'Social Skills', PS3: 'Self-Regulation', PS4: 'Identity',
+  PS5: 'Responsibility', PS6: 'Resilience', PS7: 'Safety',
+  C1: 'Visual Art', C2: 'Music', C3: 'Drama', C4: 'Dance', C5: 'Media Arts',
+  C6: 'Design & Construction', C7: 'Arts Appreciation',
+  EF1: 'Sustained Attention', EF2: 'Working Memory', EF3: 'Cognitive Flexibility',
+  EF4: 'Planning', EF5: 'Critical Thinking', EF6: 'Collaboration',
+  EF7: 'Metacognition', EF8: 'Transfer',
+};
+
+function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
+  if (!match) {
+    return (
+      <div className="flex flex-col items-center justify-center py-xl text-center">
+        <span className="text-4xl mb-md opacity-30">🙂</span>
+        <p className="font-serif text-sm text-text-muted italic leading-relaxed">
+          Start describing the activity and I&apos;ll begin finding the learning within it.
+        </p>
+      </div>
+    );
+  }
+
+  const hasResults = match.subjects.length > 0 || match.threads.length > 0 || match.engagement || match.mentionedChildren.length > 0;
+
+  if (!hasResults) {
+    return (
+      <div className="flex flex-col items-center justify-center py-xl text-center">
+        <span className="text-4xl mb-md opacity-30">🔍</span>
+        <p className="font-serif text-sm text-text-muted italic leading-relaxed">
+          Keep writing — I&apos;m looking for learning signals...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-md">
+      <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted">
+        Preliminary — confirmed after save
+      </p>
+
+      {match.subjects.length > 0 && (
+        <div>
+          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Subjects detected</p>
+          <div className="flex flex-wrap gap-xs">
+            {match.subjects.map((s) => (
+              <span key={s} className="rounded-full bg-ember-glow border border-ember/20 px-sm py-xs font-sans text-xs text-text-primary">
+                📐 Looks like {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {match.threads.length > 0 && (
+        <div>
+          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Capability threads</p>
+          <div className="flex flex-wrap gap-xs">
+            {match.threads.slice(0, 6).map((t) => (
+              <span key={t} className="rounded-full bg-sage/10 border border-sage/20 px-sm py-xs font-sans text-xs text-text-primary">
+                🌱 Possible: {THREAD_LABELS[t] ?? t}
+              </span>
+            ))}
+            {match.threads.length > 6 && (
+              <span className="font-sans text-xs text-text-muted">+{match.threads.length - 6} more</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {match.engagement && (
+        <div>
+          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Engagement</p>
+          <span className={`rounded-full px-sm py-xs font-sans text-xs ${
+            match.engagement === 'positive'
+              ? 'bg-sage/10 border border-sage/20 text-sage'
+              : match.engagement === 'challenging'
+                ? 'bg-red-900/10 border border-red-900/20 text-red-400'
+                : 'bg-surface-raised border border-border-subtle text-text-secondary'
+          }`}>
+            {match.engagement === 'positive' ? '✨ Sounds like deep engagement' :
+             match.engagement === 'challenging' ? '💪 Sounds like a growth moment' :
+             '📝 Neutral engagement noted'}
+          </span>
+        </div>
+      )}
+
+      {match.mentionedChildren.length > 0 && (
+        <div>
+          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Children mentioned</p>
+          <div className="flex flex-wrap gap-xs">
+            {match.mentionedChildren.map((name) => (
+              <span key={name} className="rounded-full bg-surface-raised border border-border-subtle px-sm py-xs font-sans text-xs text-text-primary">
+                👦 {name} mentioned
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

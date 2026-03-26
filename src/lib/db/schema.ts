@@ -7,6 +7,7 @@ import {
   integer,
   boolean,
   jsonb,
+  decimal,
   index,
   unique,
 } from 'drizzle-orm/pg-core';
@@ -106,6 +107,28 @@ export const familyIntelligenceSnapshots = pgTable(
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   }
+);
+
+export const aiPipelineLogs = pgTable(
+  'ai_pipeline_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    entryId: uuid('entry_id').references(() => learningEntries.id),
+    modelUsed: text('model_used').notNull(),
+    inputTokens: integer('input_tokens').notNull(),
+    outputTokens: integer('output_tokens').notNull(),
+    latencyMs: integer('latency_ms').notNull(),
+    confidence: decimal('confidence', { precision: 3, scale: 2 }),
+    retryTriggered: boolean('retry_triggered').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('apl_family_idx').on(table.familyId),
+    index('apl_created_idx').on(table.createdAt),
+  ]
 );
 
 // ─── Capability Tracking ───

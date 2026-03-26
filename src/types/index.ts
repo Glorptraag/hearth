@@ -13,6 +13,7 @@ import type {
   familyIntelligenceSnapshots,
   badgeAssessmentLogs,
   familyLibrary,
+  aiPipelineLogs,
 } from '@/lib/db/schema';
 
 // ─── Entity types inferred from schema ───
@@ -30,6 +31,7 @@ export type Notification = InferSelectModel<typeof notifications>;
 export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
 export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
 export type FamilyLibraryEntry = InferSelectModel<typeof familyLibrary>;
+export type AiPipelineLog = InferSelectModel<typeof aiPipelineLogs>;
 
 // ─── Enum / Union types ───
 

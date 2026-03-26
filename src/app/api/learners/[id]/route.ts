@@ -36,6 +36,15 @@ const updateLearnerSchema = z.object({
   shapeIcon: z.string().optional(),
   colourToken: z.enum(LEARNER_COLOURS).optional(),
   displayOrder: z.number().optional(),
+  profileData: z
+    .object({
+      about: z.string().optional(),
+      workingStyle: z.array(z.string()).optional(),
+      interests: z.array(z.string()).optional(),
+      strengths: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {

@@ -31,6 +31,13 @@ export const learners = pgTable('learners', {
   shapeIcon: text('shape_icon'),
   colourToken: text('colour_token'),
   displayOrder: integer('display_order').default(0),
+  profileData: jsonb('profile_data').$type<{
+    about?: string;
+    workingStyle?: string[];
+    interests?: string[];
+    strengths?: string[];
+    notes?: string;
+  }>().default({}),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

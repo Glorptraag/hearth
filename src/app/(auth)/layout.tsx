@@ -8,7 +8,7 @@ import NotificationBadge from "@/components/notifications/NotificationBadge";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Home", emoji: "🏠" },
-  { href: "/our-story/portfolio", label: "Story", emoji: "📖" },
+  { href: "/our-story", label: "Story", emoji: "📖" },
   { href: "/log", label: "Log", emoji: "✏️", primary: true },
   { href: "/planner", label: "Plan", emoji: "📅" },
   { href: "/explore/activities", label: "Explore", emoji: "🔍" },
@@ -17,7 +17,7 @@ const NAV_ITEMS = [
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/dashboard") return pathname === "/dashboard";
-  if (href === "/our-story/portfolio") return pathname.startsWith("/our-story");
+  if (href === "/our-story") return pathname.startsWith("/our-story");
   if (href === "/log") return pathname === "/log";
   if (href === "/planner") return pathname.startsWith("/planner");
   if (href === "/explore/activities") return pathname.startsWith("/explore");

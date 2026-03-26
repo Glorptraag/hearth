@@ -15,10 +15,12 @@ export default function OurStoryLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isHub = pathname === '/our-story';
 
   return (
     <div>
-      {/* Sub-navigation tabs */}
+      {/* Sub-navigation tabs — hidden on hub root */}
+      {!isHub && (
       <nav className="flex gap-xs border-b border-border-subtle bg-surface-panel px-md">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
@@ -38,6 +40,7 @@ export default function OurStoryLayout({
           );
         })}
       </nav>
+      )}
       {children}
     </div>
   );

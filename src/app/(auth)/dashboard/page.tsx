@@ -48,6 +48,14 @@ export default async function DashboardPage() {
     lastLogDate?: string;
     weeklyThreadCoverage?: number;
     activeModulesCount?: number;
+    hearthVoice?: string;
+    weekStats?: {
+      momentsLogged?: number;
+      collaborativeActivities?: number;
+      newCapabilities?: number;
+      evidenceCollected?: number;
+    };
+    recommendations?: Array<{ title: string; subject?: string }>;
   };
 
   return (
@@ -72,6 +80,8 @@ export default async function DashboardPage() {
         id: l.id,
         name: l.name,
         colourToken: l.colourToken ?? null,
+        shapeIcon: l.shapeIcon ?? null,
+        dateOfBirth: l.dateOfBirth ?? null,
       }))}
       todayEntryCount={todayEntryCount}
     />

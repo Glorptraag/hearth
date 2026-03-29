@@ -19,6 +19,9 @@ export default function DevPreviewDashboard() {
         lastLogDate: mockSnapshot.lastLogDate,
         weeklyThreadCoverage: mockSnapshot.weeklyThreadCoverage,
         activeModulesCount: mockSnapshot.activeModulesCount,
+        hearthVoice: mockSnapshot.hearthVoice,
+        weekStats: mockSnapshot.weekStats,
+        recommendations: mockSnapshot.recommendations,
       }}
       recentEntries={mockEntries.slice(0, 5).map((e) => ({
         id: e.id,
@@ -40,6 +43,8 @@ export default function DevPreviewDashboard() {
         id: l.id,
         name: l.name,
         colourToken: l.colourToken,
+        shapeIcon: l.shapeIcon,
+        dateOfBirth: l.dateOfBirth,
       }))}
       todayEntryCount={todayEntryCount}
     />

@@ -71,6 +71,7 @@ export const PEDAGOGIES = [
   'montessori',
   'waldorf_steiner',
   'unschooling',
+  'reggio',
   'eclectic',
 ] as const;
 export type Pedagogy = (typeof PEDAGOGIES)[number];

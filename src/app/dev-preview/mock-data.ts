@@ -223,7 +223,7 @@ export const mockNotifications = [
 
 export const mockSettings = {
   familyName: 'Douglas',
-  pedagogyPreference: 'charlotte-mason',
+  pedagogyPreference: 'charlotte_mason',
   heuRegistrationNumber: 'HEU-2025-04821',
   heuNextReportDate: '2026-05-30',
   state: 'QLD',

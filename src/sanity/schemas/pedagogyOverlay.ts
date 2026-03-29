@@ -20,11 +20,12 @@ export const pedagogyOverlay = defineType({
       validation: (r) => r.required(),
       options: {
         list: [
-          { title: 'Charlotte Mason', value: 'charlotte-mason' },
+          { title: 'Charlotte Mason', value: 'charlotte_mason' },
           { title: 'Classical', value: 'classical' },
           { title: 'Montessori', value: 'montessori' },
-          { title: 'Waldorf/Steiner', value: 'waldorf-steiner' },
+          { title: 'Waldorf / Steiner', value: 'waldorf_steiner' },
           { title: 'Unschooling', value: 'unschooling' },
+          { title: 'Reggio Emilia', value: 'reggio' },
           { title: 'Eclectic', value: 'eclectic' },
         ],
       },

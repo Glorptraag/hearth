@@ -44,6 +44,13 @@ export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id][0]{
 // Pedagogy overlay for an activity + framework
 export const OVERLAY_QUERY = `*[_type == "pedagogyOverlay" && activity._ref == $activityId && framework == $framework][0]`;
 
+// Pedagogy overlays for all activities in an approach (batch)
+export const OVERLAYS_BATCH_QUERY = `*[_type == "pedagogyOverlay" && activity._ref in $activityIds && framework == $framework]{
+  _id,
+  activity { _ref },
+  lens { perspective, facilitatorTips, languageFrame, watchFor }
+}`;
+
 // All capability threads (reference data)
 export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(domain, title){
   _id, title, slug, domain, description, dlos,

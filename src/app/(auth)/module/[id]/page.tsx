@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PortableText } from '@portabletext/react';
 import { sanityClient } from '@/lib/sanity/client';
-import { MODULE_DETAIL_QUERY } from '@/lib/sanity/queries';
+import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY } from '@/lib/sanity/queries';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +37,15 @@ interface Module {
 }
 interface Learner { id: string; name: string; colourToken?: string }
 
-type Mode = 'prep' | 'facilitate' | 'log';
+interface PedagogyLens {
+  perspective?: string;
+  facilitatorTips?: string;
+  languageFrame?: string;
+  watchFor?: string;
+}
+interface ActivityOverlay { activityId: string; lens: PedagogyLens }
+
+type Mode = 'approach-pick' | 'prep' | 'facilitate' | 'log';
 
 const MODALITY_EMOJI: Record<string, string> = {
   kinesthetic: '🤲',
@@ -62,6 +70,16 @@ const SETTING_EMOJI: Record<string, string> = {
 
 const ENGAGEMENT_EMOJI = ['😴', '🙂', '😊', '🌟'];
 
+const PEDAGOGY_LABELS: Record<string, string> = {
+  charlotte_mason: 'Charlotte Mason Lens',
+  classical: 'Classical Lens',
+  montessori: 'Montessori Lens',
+  waldorf_steiner: 'Waldorf Lens',
+  unschooling: 'Unschooling Lens',
+  reggio: 'Reggio Emilia Lens',
+  eclectic: 'Your Lens',
+};
+
 // ─── Portable text renderer ───────────────────────────────────────────────────
 
 const ptComponents = {
@@ -76,12 +94,14 @@ const ptComponents = {
 
 function PrepMode({
   module,
+  approachIdx,
   onStart,
 }: {
   module: Module;
+  approachIdx: number;
   onStart: () => void;
 }) {
-  const approach = module.approaches?.[0];
+  const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
   const firstActivityMaterials = activities[0]?.materials ?? [];
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -205,15 +225,23 @@ function PrepMode({
 
 function FacilitateMode({
   module,
+  approachIdx,
+  overlays,
+  pedagogy,
   onFinish,
 }: {
   module: Module;
+  approachIdx: number;
+  overlays: ActivityOverlay[];
+  pedagogy: string | null;
   onFinish: () => void;
 }) {
-  const activities = module.approaches?.[0]?.activities ?? [];
+  const activities = module.approaches?.[approachIdx]?.activities ?? [];
   const [currentIdx, setCurrentIdx] = useState(0);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const current = activities[currentIdx];
+  const currentOverlay = overlays.find((o) => o.activityId === current?._id) ?? null;
   const isLast = currentIdx === activities.length - 1;
 
   if (!current) return null;
@@ -242,7 +270,7 @@ function FacilitateMode({
       {/* Activity header */}
       <div className="mb-lg">
         <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-xs">
-          {module.approaches?.[0]?.title}
+          {module.approaches?.[approachIdx]?.title}
         </p>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
           {current.title}
@@ -309,6 +337,64 @@ function FacilitateMode({
         </div>
       )}
 
+      {/* Pedagogy lens (collapsible, shown only when overlay exists) */}
+      {currentOverlay && (
+        <div className="mb-lg">
+          <button
+            onClick={() => setOverlayOpen((v) => !v)}
+            className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
+          >
+            <span>{overlayOpen ? '▾' : '▸'}</span>
+            <span className="text-ember">✦</span>
+            <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
+          </button>
+          {overlayOpen && (
+            <div className="rounded-lg border border-ember/20 bg-ember-glow/30 p-lg space-y-md">
+              {currentOverlay.lens.perspective && (
+                <div>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                    Perspective
+                  </p>
+                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                    {currentOverlay.lens.perspective}
+                  </p>
+                </div>
+              )}
+              {currentOverlay.lens.facilitatorTips && (
+                <div>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                    Tips for You
+                  </p>
+                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                    {currentOverlay.lens.facilitatorTips}
+                  </p>
+                </div>
+              )}
+              {currentOverlay.lens.languageFrame && (
+                <div>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                    Language
+                  </p>
+                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                    {currentOverlay.lens.languageFrame}
+                  </p>
+                </div>
+              )}
+              {currentOverlay.lens.watchFor && (
+                <div>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                    Watch For
+                  </p>
+                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                    {currentOverlay.lens.watchFor}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Facilitator guidance (collapsible) */}
       {current.facilitatorGuidance && (
         <div className="mb-lg">
@@ -367,7 +453,7 @@ function FacilitateMode({
           </button>
         ) : (
           <button
-            onClick={() => { setCurrentIdx((i) => i + 1); setGuidanceOpen(false); }}
+            onClick={() => { setCurrentIdx((i) => i + 1); setGuidanceOpen(false); setOverlayOpen(false); }}
             className="w-full bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
           >
             Next Activity →
@@ -593,6 +679,66 @@ function LogMode({ module }: { module: Module }) {
   );
 }
 
+// ─── Mode: Approach pick ─────────────────────────────────────────────────────
+
+function ApproachPickMode({
+  module,
+  onSelect,
+}: {
+  module: Module;
+  onSelect: (idx: number) => void;
+}) {
+  const approaches = module.approaches ?? [];
+
+  return (
+    <div className="px-md py-xl max-w-2xl mx-auto">
+      <div className="mb-xl">
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
+          Choose an approach
+        </p>
+        <h1 className="font-serif text-2xl font-semibold text-text-primary leading-snug mb-sm">
+          {module.title}
+        </h1>
+        <p className="font-serif text-base italic text-text-secondary leading-relaxed">
+          {module.targetUnderstanding}
+        </p>
+      </div>
+
+      {approaches.length === 0 ? (
+        <p className="font-serif text-sm text-text-muted">No approaches available for this module.</p>
+      ) : (
+        <div className="space-y-sm">
+          {approaches.map((approach, idx) => {
+            const actCount = approach.activities?.length ?? 0;
+            return (
+              <button
+                key={approach._id}
+                onClick={() => onSelect(idx)}
+                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
+              >
+                <span className="mt-[2px] text-lg">
+                  {MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}
+                </span>
+                <div className="flex-1">
+                  <p className="font-serif text-base font-semibold text-text-primary">
+                    {approach.title}
+                  </p>
+                  {approach.modality && (
+                    <p className="mt-xs font-sans text-xs capitalize text-text-muted">
+                      {approach.modality} · {actCount} {actCount === 1 ? 'activity' : 'activities'}
+                    </p>
+                  )}
+                </div>
+                <span className="mt-[3px] font-sans text-xs text-ember">→</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ModuleDetailPage() {
@@ -603,13 +749,17 @@ export default function ModuleDetailPage() {
   const [module, setModule] = useState<Module | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-  const [mode, setMode] = useState<Mode>('prep');
+  const [mode, setMode] = useState<Mode>('approach-pick');
+  const [selectedApproachIdx, setSelectedApproachIdx] = useState(0);
+  const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
+  const [pedagogy, setPedagogy] = useState<string | null>(null);
 
   const fetchModule = useCallback(async () => {
     try {
-      const [mod, libraryRes] = await Promise.all([
+      const [mod, libraryRes, settingsRes] = await Promise.all([
         sanityClient.fetch(MODULE_DETAIL_QUERY, { id }),
         fetch('/api/library'),
+        fetch('/api/settings'),
       ]);
       setModule(mod);
 
@@ -619,10 +769,43 @@ export default function ModuleDetailPage() {
         // Simple: if family has any library record, assume access (seed links them to the starter pack)
         setHasAccess(library.length > 0);
       }
+
+      let resolvedPedagogy = 'eclectic';
+      if (settingsRes.ok) {
+        const settings = await settingsRes.json();
+        resolvedPedagogy = settings.pedagogyPreference ?? 'eclectic';
+        setPedagogy(resolvedPedagogy);
+      }
+
+      // Batch-fetch overlays for approach 0 upfront
+      const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
+      if (activityIds.length > 0) {
+        const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+          await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: resolvedPedagogy });
+        setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
+      }
+
+      // Skip picker if only one approach
+      if ((mod?.approaches?.length ?? 0) <= 1) {
+        setMode('prep');
+      }
     } finally {
       setLoading(false);
     }
   }, [id]);
+
+  const handleApproachSelect = useCallback(async (idx: number) => {
+    setSelectedApproachIdx(idx);
+    const activityIds: string[] = module?.approaches?.[idx]?.activities?.map((a) => a._id) ?? [];
+    if (activityIds.length > 0 && pedagogy) {
+      const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+        await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: pedagogy });
+      setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
+    } else {
+      setOverlays([]);
+    }
+    setMode('prep');
+  }, [module, pedagogy]);
 
   useEffect(() => { fetchModule(); }, [fetchModule]);
 
@@ -668,26 +851,37 @@ export default function ModuleDetailPage() {
 
   return (
     <>
-      {/* Mode tabs */}
-      <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg">
-        {(['prep', 'facilitate', 'log'] as Mode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
-              mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
-            }`}
-          >
-            {m === 'prep' ? '📋 Prep' : m === 'facilitate' ? '▶ Go' : '✏️ Log'}
-          </button>
-        ))}
-      </div>
+      {/* Mode tabs — hidden during approach selection */}
+      {mode !== 'approach-pick' && (
+        <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg">
+          {(['prep', 'facilitate', 'log'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
+                mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {m === 'prep' ? '📋 Prep' : m === 'facilitate' ? '▶ Go' : '✏️ Log'}
+            </button>
+          ))}
+        </div>
+      )}
 
+      {mode === 'approach-pick' && (
+        <ApproachPickMode module={module} onSelect={handleApproachSelect} />
+      )}
       {mode === 'prep' && (
-        <PrepMode module={module} onStart={() => setMode('facilitate')} />
+        <PrepMode module={module} approachIdx={selectedApproachIdx} onStart={() => setMode('facilitate')} />
       )}
       {mode === 'facilitate' && (
-        <FacilitateMode module={module} onFinish={() => setMode('log')} />
+        <FacilitateMode
+          module={module}
+          approachIdx={selectedApproachIdx}
+          overlays={overlays}
+          pedagogy={pedagogy}
+          onFinish={() => setMode('log')}
+        />
       )}
       {mode === 'log' && <LogMode module={module} />}
     </>

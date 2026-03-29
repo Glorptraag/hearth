@@ -474,7 +474,7 @@ async function seedPedagogyOverlays() {
     _type: 'pedagogyOverlay',
     title: 'Bird Spotting — Charlotte Mason',
     activity: ref(IDS.act_bird1),
-    framework: 'charlotte-mason',
+    framework: 'charlotte_mason',
     lens: {
       perspective: 'This is a nature study in the purest Charlotte Mason tradition — direct observation of God\'s creation with careful attention to detail.',
       facilitatorTips: 'Encourage narration after the observation period. Ask your learner to describe what they saw in their own words before drawing. A nature journal entry should follow every outdoor session.',

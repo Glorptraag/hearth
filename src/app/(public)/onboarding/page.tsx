@@ -20,6 +20,7 @@ const PEDAGOGY_OPTIONS = [
   { value: 'montessori', label: 'Montessori' },
   { value: 'waldorf_steiner', label: 'Waldorf / Steiner' },
   { value: 'unschooling', label: 'Unschooling' },
+  { value: 'reggio', label: 'Reggio Emilia' },
   { value: 'eclectic', label: 'Eclectic' },
 ];
 

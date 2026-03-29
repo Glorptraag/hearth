@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   if (!userId) redirect('/sign-in');
 
   const family = await getFamilyByClerkId(userId);
-  if (!family) redirect('/onboarding');
+  if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const [familyLearners, settings] = await Promise.all([
     db

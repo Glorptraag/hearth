@@ -14,7 +14,7 @@ export default async function LearnerProfilePage({ params }: Params) {
   if (!userId) redirect('/sign-in');
 
   const family = await getFamilyByClerkId(userId);
-  if (!family) redirect('/onboarding');
+  if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const { id } = await params;
 

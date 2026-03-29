@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   if (!userId) redirect('/sign-in');
 
   const family = await getFamilyByClerkId(userId);
-  if (!family) redirect('/onboarding');
+  if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const today = new Date().toISOString().split('T')[0];
 

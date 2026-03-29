@@ -18,6 +18,7 @@ export const families = pgTable('families', {
   id: uuid('id').primaryKey().defaultRandom(),
   clerkUserId: text('clerk_user_id').unique().notNull(),
   familyName: text('family_name').notNull(),
+  onboardingComplete: boolean('onboarding_complete').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

@@ -242,7 +242,14 @@ export default function PortfolioPage() {
           {/* Entry cards */}
           {filteredEntries.length === 0 ? (
             <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-              <p className="font-serif text-sm text-text-muted italic">No entries found</p>
+              <span className="text-2xl block mb-sm">📖</span>
+              <p className="font-serif text-sm text-text-secondary">
+                No entries yet. Head to the{' '}
+                <a href="/log" className="font-semibold text-ember hover:text-ember-hover transition-colors">
+                  Logger
+                </a>{' '}
+                to capture your first moment.
+              </p>
             </div>
           ) : (
             <div className="space-y-sm">

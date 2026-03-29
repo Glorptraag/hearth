@@ -417,7 +417,7 @@ async function seedPatternsActivities() {
 }
 
 async function seedApproaches() {
-  console.log('\n── Approaches');
+  console.log('\n── Approaches (shell — no activity refs yet)');
   await upsert({
     _id: IDS.app_kitchenLab,
     _type: 'approach',
@@ -426,7 +426,6 @@ async function seedApproaches() {
     module: ref(IDS.mod_bread),
     modality: 'kinesthetic',
     description: 'Sequential kitchen activities that build on each other to produce real bread.',
-    activities: [ref(IDS.act_measureMix), ref(IDS.act_kneadWait), ref(IDS.act_shapeBake)],
     status: 'published',
   });
   await upsert({
@@ -437,7 +436,6 @@ async function seedApproaches() {
     module: ref(IDS.mod_stars),
     modality: 'exploratory',
     description: 'Direct observation and creative activities connecting stars to storytelling.',
-    activities: [ref(IDS.act_starsA1), ref(IDS.act_starsA2), ref(IDS.act_starsA3)],
     status: 'published',
   });
   await upsert({
@@ -448,13 +446,25 @@ async function seedApproaches() {
     module: ref(IDS.mod_patterns),
     modality: 'kinesthetic',
     description: 'Outdoor exploration discovering mathematical patterns in living things.',
-    activities: [ref(IDS.act_patternsA1), ref(IDS.act_patternsA2), ref(IDS.act_patternsA3)],
     status: 'published',
   });
 }
 
+async function patchApproachActivities() {
+  console.log('\n── Patching approach → activity references');
+  const patches = [
+    { id: IDS.app_kitchenLab, activities: [ref(IDS.act_measureMix), ref(IDS.act_kneadWait), ref(IDS.act_shapeBake)] },
+    { id: IDS.app_stargazing, activities: [ref(IDS.act_starsA1), ref(IDS.act_starsA2), ref(IDS.act_starsA3)] },
+    { id: IDS.app_natureWalk, activities: [ref(IDS.act_patternsA1), ref(IDS.act_patternsA2), ref(IDS.act_patternsA3)] },
+  ];
+  for (const p of patches) {
+    await sanity.patch(p.id).set({ activities: p.activities }).commit();
+    console.log(`  ✓  patched: ${p.id}`);
+  }
+}
+
 async function seedModules() {
-  console.log('\n── Modules');
+  console.log('\n── Modules (shell — no approach refs yet)');
   await upsert({
     _id: IDS.mod_bread,
     _type: 'module',
@@ -468,7 +478,6 @@ async function seedModules() {
       demonstrating:
         'Independently adjusts recipes and predicts outcomes based on ingredient ratios',
     },
-    approaches: [ref(IDS.app_kitchenLab)],
     subjects: ['mathematics', 'science'],
     ageRange: { min: 5, max: 8 },
     duration: { min: 55, max: 120 },
@@ -483,7 +492,6 @@ async function seedModules() {
     slug: { _type: 'slug', current: 'stories-in-the-stars' },
     targetUnderstanding:
       'Constellation stories connect cultures across time, showing how humans use narrative to make sense of the natural world',
-    approaches: [ref(IDS.app_stargazing)],
     subjects: ['english', 'science', 'hass'],
     ageRange: { min: 5, max: 8 },
     duration: { min: 55, max: 75 },
@@ -498,7 +506,6 @@ async function seedModules() {
     slug: { _type: 'slug', current: 'natures-patterns' },
     targetUnderstanding:
       'Patterns in nature reveal mathematical relationships that can be observed, recorded, and described',
-    approaches: [ref(IDS.app_natureWalk)],
     subjects: ['mathematics', 'science', 'arts'],
     ageRange: { min: 5, max: 8 },
     duration: { min: 60, max: 85 },
@@ -506,6 +513,19 @@ async function seedModules() {
     capabilityThreads: [ref(IDS.ct_numberSense), ref(IDS.ct_visualArts)],
     status: 'published',
   });
+}
+
+async function patchModuleApproaches() {
+  console.log('\n── Patching module → approach references');
+  const patches = [
+    { id: IDS.mod_bread, approaches: [ref(IDS.app_kitchenLab)] },
+    { id: IDS.mod_stars, approaches: [ref(IDS.app_stargazing)] },
+    { id: IDS.mod_patterns, approaches: [ref(IDS.app_natureWalk)] },
+  ];
+  for (const p of patches) {
+    await sanity.patch(p.id).set({ approaches: p.approaches }).commit();
+    console.log(`  ✓  patched: ${p.id}`);
+  }
 }
 
 async function seedPack() {
@@ -572,13 +592,24 @@ async function main() {
   console.log(`   Project: ${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}`);
   console.log(`   Dataset: ${process.env.NEXT_PUBLIC_SANITY_DATASET}`);
 
+  // Pass 1: leaf nodes (no outbound references to other seed docs)
   await seedCapabilityThreads();
   await seedBadges();
+
+  // Pass 2: modules & approaches (shells without cross-refs)
+  await seedModules();
+  await seedApproaches();
+
+  // Pass 3: activities (reference approaches, which now exist)
   await seedBreadActivities();
   await seedStarsActivities();
   await seedPatternsActivities();
-  await seedApproaches();
-  await seedModules();
+
+  // Pass 4: patch circular references now that all docs exist
+  await patchApproachActivities();
+  await patchModuleApproaches();
+
+  // Pass 5: top-level pack + Postgres
   await seedPack();
   await seedFamilyLibrary();
 

@@ -11,7 +11,7 @@ export default async function NotificationsPage() {
   if (!userId) redirect('/sign-in');
 
   const family = await getFamilyByClerkId(userId);
-  if (!family) redirect('/onboarding');
+  if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const allNotifications = await db
     .select()

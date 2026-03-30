@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { MarketplaceCard, type Pack, type Subject } from '@/components/screens/MarketplaceCard';
+import { MarketplaceCard, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
 
 const SUBJECT_FILTERS: { label: string; value: Subject; hex: string }[] = [
   { label: 'English',      value: 'english',      hex: '#6B8E9B' },
@@ -22,7 +22,7 @@ function hexToRgb(hex: string): string {
 }
 
 interface DevMarketplaceClientProps {
-  packs: Pack[];
+  packs: SanityPack[];
 }
 
 export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
@@ -37,9 +37,9 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
       const matchesSearch =
         !q ||
         pack.title.toLowerCase().includes(q) ||
-        pack.creator.toLowerCase().includes(q) ||
-        pack.description.toLowerCase().includes(q);
-      const matchesSubject = !activeSubject || pack.subjects.includes(activeSubject);
+        (pack.creator ?? '').toLowerCase().includes(q) ||
+        (pack.description ?? '').toLowerCase().includes(q);
+      const matchesSubject = !activeSubject || (pack.subjects ?? []).includes(activeSubject);
       return matchesSearch && matchesSubject;
     });
   }, [search, activeSubject, packs]);
@@ -145,9 +145,9 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((pack) => (
               <MarketplaceCard
-                key={pack.id}
+                key={pack._id}
                 pack={pack}
-                inLibrary={libraryIds.has(pack.id)}
+                inLibrary={libraryIds.has(pack._id)}
                 onAddToLibrary={handleAddToLibrary}
               />
             ))}

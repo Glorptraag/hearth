@@ -10,28 +10,28 @@ export type Subject =
   | 'hpe'
   | 'languages';
 
-export interface Pack {
-  id: string;
+export interface SanityPack {
+  _id: string;
   title: string;
-  creator: string;
-  subjects: Subject[];
-  ageRange: string;
-  moduleCount: number;
-  emoji: string;
-  membership: boolean;
-  price?: string;
-  description: string;
+  creator?: string;
+  subjects?: Subject[];
+  ageRange?: { min: number; max: number };
+  moduleCount?: number;
+  totalActivities?: number;
+  availability?: 'included' | 'premium';
+  stripePriceId?: string;
+  description?: string;
 }
 
-const SUBJECT_META: Record<Subject, { label: string; hex: string }> = {
-  english:      { label: 'English',      hex: '#6B8E9B' },
-  mathematics:  { label: 'Mathematics',  hex: '#9B7B6B' },
-  science:      { label: 'Science',      hex: '#7B9B6B' },
-  hass:         { label: 'HASS',         hex: '#9B8B6B' },
-  arts:         { label: 'Arts',         hex: '#8B6B9B' },
-  technologies: { label: 'Technologies', hex: '#6B7B9B' },
-  hpe:          { label: 'HPE',          hex: '#9B6B7B' },
-  languages:    { label: 'Languages',   hex: '#6B9B8B' },
+const SUBJECT_META: Record<Subject, { label: string; hex: string; emoji: string }> = {
+  english:      { label: 'English',      hex: '#6B8E9B', emoji: '📖' },
+  mathematics:  { label: 'Mathematics',  hex: '#9B7B6B', emoji: '🔢' },
+  science:      { label: 'Science',      hex: '#7B9B6B', emoji: '🔬' },
+  hass:         { label: 'HASS',         hex: '#9B8B6B', emoji: '🌍' },
+  arts:         { label: 'Arts',         hex: '#8B6B9B', emoji: '🎨' },
+  technologies: { label: 'Technologies', hex: '#6B7B9B', emoji: '💻' },
+  hpe:          { label: 'HPE',          hex: '#9B6B7B', emoji: '🏃' },
+  languages:    { label: 'Languages',    hex: '#6B9B8B', emoji: '🗣️' },
 };
 
 function hexToRgb(hex: string): string {
@@ -41,22 +41,33 @@ function hexToRgb(hex: string): string {
   return `${r},${g},${b}`;
 }
 
+function formatAgeRange(ageRange?: { min: number; max: number }): string {
+  if (!ageRange) return '';
+  return `${ageRange.min}–${ageRange.max} yrs`;
+}
+
 interface MarketplaceCardProps {
-  pack: Pack;
+  pack: SanityPack;
   inLibrary: boolean;
   onAddToLibrary: (id: string) => void;
 }
 
 export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: MarketplaceCardProps) {
-  const primary = pack.subjects[0];
-  const primaryHex = SUBJECT_META[primary]?.hex ?? '#D97B3A';
+  const subjects = pack.subjects ?? [];
+  const primary = subjects[0];
+  const primaryMeta = primary ? SUBJECT_META[primary] : null;
+  const primaryHex = primaryMeta?.hex ?? '#D97B3A';
+  const emoji = primaryMeta?.emoji ?? '📚';
   const rgb = hexToRgb(primaryHex);
   const heroGradient = `linear-gradient(135deg, rgba(${rgb},0.14) 0%, transparent 100%)`;
+  const isMembership = pack.availability !== 'premium';
+  const ageStr = formatAgeRange(pack.ageRange);
+  const moduleCount = pack.moduleCount ?? 0;
 
   return (
     <article
       role="article"
-      aria-label={`${pack.title} — ${pack.moduleCount} modules, ${pack.ageRange}`}
+      aria-label={`${pack.title} — ${moduleCount} modules${ageStr ? `, ${ageStr}` : ''}`}
       className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
     >
       {/* Ember top-line */}
@@ -70,14 +81,14 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
         <span className="absolute top-2 left-3 font-sans text-[0.65rem] font-semibold uppercase tracking-wider text-text-muted select-none">
           Pack
         </span>
-        <span role="img" aria-hidden="true">{pack.emoji}</span>
+        <span role="img" aria-hidden="true">{emoji}</span>
       </div>
 
       {/* Body */}
       <div className="flex flex-col gap-3 p-4 flex-1">
         {/* Subject chips */}
         <div className="flex flex-wrap gap-1.5">
-          {pack.subjects.map((s) => {
+          {subjects.map((s) => {
             const { label, hex } = SUBJECT_META[s];
             const r = hexToRgb(hex);
             return (
@@ -97,7 +108,9 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
         </div>
 
         {/* Creator */}
-        <p className="font-sans text-xs text-text-muted">by {pack.creator}</p>
+        {pack.creator && (
+          <p className="font-sans text-xs text-text-muted">by {pack.creator}</p>
+        )}
 
         {/* Title */}
         <h3 className="font-serif text-[1.05rem] font-semibold text-text-primary leading-snug">
@@ -105,38 +118,38 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
         </h3>
 
         {/* Description */}
-        <p className="font-sans text-[0.8rem] text-text-secondary leading-relaxed line-clamp-2">
-          {pack.description}
-        </p>
+        {pack.description && (
+          <p className="font-sans text-[0.8rem] text-text-secondary leading-relaxed line-clamp-2">
+            {pack.description}
+          </p>
+        )}
 
         {/* Meta */}
         <p className="font-sans text-[0.72rem] text-text-muted">
-          {pack.moduleCount} modules · {pack.ageRange} · ~{pack.moduleCount * 3} weeks
+          {moduleCount} modules{ageStr ? ` · ${ageStr}` : ''}{moduleCount > 0 ? ` · ~${moduleCount * 3} weeks` : ''}
         </p>
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-border-subtle">
-          {/* Price indicator */}
-          {pack.membership ? (
+          {isMembership ? (
             <span className="font-sans text-[0.68rem] font-medium text-sage bg-sage/10 border border-sage/20 px-2.5 py-1 rounded-full whitespace-nowrap">
               Included with membership
             </span>
           ) : (
             <span className="font-sans text-[0.82rem] font-semibold text-text-primary">
-              {pack.price}
+              Premium
             </span>
           )}
 
-          {/* Action button */}
           {inLibrary ? (
             <span className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-border-subtle text-text-muted cursor-default select-none whitespace-nowrap">
               ✓ In Library
             </span>
-          ) : pack.membership ? (
+          ) : isMembership ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onAddToLibrary(pack.id);
+                onAddToLibrary(pack._id);
               }}
               aria-label={`Add ${pack.title} to your library`}
               className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer whitespace-nowrap"

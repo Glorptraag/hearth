@@ -1,7 +1,7 @@
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
-  availability, version, "badgeCount": count(badges)
+  availability, version, creator, stripePriceId, "badgeCount": count(badges)
 }`;
 
 // Single pack with full module tree
@@ -49,6 +49,17 @@ export const OVERLAYS_BATCH_QUERY = `*[_type == "pedagogyOverlay" && activity._r
   _id,
   activity { _ref },
   lens { perspective, facilitatorTips, languageFrame, watchFor }
+}`;
+
+// Single project with all stages
+export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id][0]{
+  ...,
+  stages[]->{
+    _id, title, slug, stageNumber, instructions, materials,
+    estimatedDuration, artifactDescription, dependsOn, status
+  } | order(stageNumber asc),
+  capabilityThreads[]->{ _id, title, domain },
+  badges[]->{ _id, title, emoji, criteriaSummary }
 }`;
 
 // All capability threads (reference data)

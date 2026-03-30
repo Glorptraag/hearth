@@ -138,7 +138,6 @@ export default function PlannerClient({
     if (!res.ok) {
       await loadWeek(weekStart);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart]);
 
   const isCurrentWeek = isSameWeek(weekStart, todayDate, { weekStartsOn: 1 });
@@ -186,6 +185,20 @@ export default function PlannerClient({
           <span className="font-sans text-xs text-text-muted">Loading...</span>
         )}
       </div>
+
+      {/* Empty week nudge */}
+      {!loading && entries.length === 0 && isCurrentWeek && (
+        <div className="mb-lg rounded-lg border border-border-subtle bg-surface-panel p-lg text-center">
+          <span className="text-3xl mb-sm block">📝</span>
+          <p className="font-serif text-sm text-text-secondary mb-xs">
+            Nothing planned this week yet
+          </p>
+          <p className="font-sans text-xs text-text-muted">
+            Tap + on any day to add an activity, or browse the{' '}
+            <a href="/explore/activities" className="text-ember hover:underline">activity library</a>.
+          </p>
+        </div>
+      )}
 
       {/* Grid */}
       <PlannerGrid

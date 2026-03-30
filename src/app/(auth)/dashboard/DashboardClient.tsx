@@ -178,17 +178,17 @@ export default function DashboardClient({
   const weekStats = snapshot.weekStats;
 
   return (
-    <div className="mx-auto max-w-6xl px-md py-xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-xl">
+    <div className="mx-auto max-w-6xl px-md py-xl lg:px-4xl lg:py-3xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-xl">
       {/* ── Main column ── */}
       <div>
         {/* Time context */}
-        <div className="mb-sm flex items-center gap-sm font-sans text-[0.8rem] text-text-muted">
-          <span className="h-[6px] w-[6px] rounded-full bg-ember shadow-[0_0_8px_var(--ember)] animate-[pulse_3s_ease-in-out_infinite]" />
+        <div className="animate-in delay-1 mb-sm flex items-center gap-sm font-sans text-[0.8rem] text-text-muted">
+          <span className="h-[6px] w-[6px] rounded-full bg-ember shadow-[0_0_8px_var(--color-ember)] animate-[pulse_3s_ease-in-out_infinite]" />
           <span>{timeLabel}</span>
         </div>
 
         {/* Greeting */}
-        <div className="mb-3xl">
+        <div className="animate-in delay-2 mb-3xl">
           <h1
             className="font-serif text-[2.25rem] font-normal leading-[1.3] text-text-primary mb-lg [&_strong]:font-bold [&_strong]:text-ember"
             dangerouslySetInnerHTML={{ __html: heading }}
@@ -221,7 +221,7 @@ export default function DashboardClient({
 
         {/* Your Learners */}
         {learners.length > 0 && (
-          <section className="mb-3xl">
+          <section className="animate-in delay-3 mb-3xl">
             <div className="flex items-center justify-between mb-lg">
               <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
                 Your Learners
@@ -282,7 +282,7 @@ export default function DashboardClient({
 
         {/* Today's Moments */}
         {hasEntries && (
-          <section className="mb-3xl">
+          <section className="animate-in delay-4 mb-3xl">
             <div className="flex items-center justify-between mb-lg">
               <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
                 {todayEntries.length > 0 ? "Today\u2019s Moments" : 'Recent Moments'}
@@ -325,7 +325,7 @@ export default function DashboardClient({
       </div>
 
       {/* ── Right panel (desktop only) ── */}
-      <aside className="hidden lg:flex lg:flex-col">
+      <aside className="hidden lg:flex lg:flex-col bg-surface-panel border-l border-border-subtle p-xl">
         {/* Quick Log */}
         <Link
           href="/log"
@@ -337,8 +337,8 @@ export default function DashboardClient({
 
         {/* Hearth Voice */}
         {snapshot.hearthVoice && (
-          <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--surface-raised),var(--surface-panel))] p-xl mb-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-            <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--ember),transparent)] opacity-60" />
+          <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember-glow mb-md shadow-[0_0_12px_rgba(217,123,58,0.2)]">
               <span className="text-sm text-ember">🔥</span>
             </div>
@@ -346,7 +346,7 @@ export default function DashboardClient({
               &ldquo;{snapshot.hearthVoice}&rdquo;
             </p>
             <p className="mt-md font-sans text-[0.7rem] uppercase tracking-[0.05em] text-text-muted">
-              Pedagogical Insight
+              &mdash; Pedagogical Insight
             </p>
           </div>
         )}
@@ -376,7 +376,7 @@ export default function DashboardClient({
 
         {/* Gentle Prompt */}
         {snapshot.recommendations && snapshot.recommendations.length > 0 && (
-          <div className="mt-auto rounded-[10px] border-l-[3px] border-l-sage bg-[rgba(74,222,128,0.08)] p-lg">
+          <div className="mt-auto rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(74,222,128,0.08)] p-lg">
             <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
               {snapshot.recommendations[0].title}
             </p>
@@ -410,7 +410,7 @@ function MomentCard({
   return (
     <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
       {/* Ember top-line on hover */}
-      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
 
       {/* Meta: child avatar + time */}
       <div className="flex items-center gap-sm mb-md">

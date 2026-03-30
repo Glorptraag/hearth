@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 
@@ -156,6 +157,13 @@ function CompletenessRing({ score }: { score: number }) {
 }
 
 export default function LogPage() {
+  const searchParams = useSearchParams();
+  const projectContext = {
+    source: searchParams.get('source') ?? 'logger',
+    projectId: searchParams.get('projectId') ?? undefined,
+    stageNumber: searchParams.get('stageNumber') ?? undefined,
+  };
+
   // ─── Data ───
   const [learners, setLearners] = useState<Learner[]>([]);
   useEffect(() => {
@@ -177,6 +185,48 @@ export default function LogPage() {
   const [location, setLocation] = useState<string | null>(null);
   const [observations, setObservations] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
+  // ─── Draft auto-save (30s to localStorage) ───
+  const DRAFT_KEY = 'hearth:logger:draft';
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.description) setDescription(d.description);
+      if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
+      if (d.discoveries) setDiscoveries(d.discoveries);
+      if (d.activityType) setActivityType(d.activityType);
+      if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
+      if (d.engagement) setEngagement(d.engagement);
+      if (d.whenDate) setWhenDate(d.whenDate);
+      if (d.duration) setDuration(d.duration);
+      if (d.location) setLocation(d.location);
+      if (d.observations?.length) setObservations(d.observations);
+      if (d.evidence?.length) setEvidence(d.evidence);
+    } catch { /* ignore corrupt draft */ }
+  }, []);
+
+  // Save draft every 30s
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!description && selectedLearners.length === 0) return;
+      const draft = {
+        description, selectedLearners, discoveries, activityType,
+        lessonSubjects, engagement, whenDate, duration, location,
+        observations, evidence, savedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
+
+  // Clear draft on successful save
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+  }, []);
 
   // ─── AI Insights (keyword matcher) ───
   const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
@@ -203,7 +253,7 @@ export default function LogPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
   // ─── Completeness ───
   const completeness = useMemo(() => {
@@ -283,19 +333,22 @@ export default function LogPage() {
   }, [whenDate]);
 
   const startVoiceInput = () => {
+    // SpeechRecognition API has inconsistent browser typings — vendor-prefix access is intentional
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
       alert('Voice input is not supported in your browser. Try Chrome or Edge.');
       return;
     }
-    const recognition = new SR();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition: any = new SR();
     recognition.lang = 'en-AU';
     recognition.continuous = true;
     recognition.interimResults = false;
     recognitionRef.current = recognition;
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: { resultIndex: number; results: { [k: number]: { [k: number]: { transcript: string } } } }) => {
       let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < (event.results as unknown as unknown[]).length; i++) {
         transcript += event.results[i][0].transcript;
       }
       setDescription((prev) => prev + (prev ? ' ' : '') + transcript);
@@ -339,13 +392,16 @@ export default function LogPage() {
           engagementPerLearner: engagement,
           discoveriesPerLearner: discoveries,
           evidenceUrls,
-          source: 'logger',
+          source: projectContext.source,
+          projectId: projectContext.projectId,
+          stageNumber: projectContext.stageNumber,
           status: 'complete',
         }),
       });
 
       if (!res.ok) throw new Error('Save failed');
 
+      clearDraft();
       setToast({ type: 'success', message: 'Learning entry saved!' });
       setSelectedLearners([]);
       setTogetherMode(false);

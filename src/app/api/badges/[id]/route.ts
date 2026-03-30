@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { badgeDefinitions, badgeAssessmentLogs } from '@/lib/db/schema';
+import { badgeDefinitions } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { SEED_BADGES } from '@/lib/seed-badges';

@@ -2,7 +2,6 @@ import { sanityWriteClient, sanityClient } from './client';
 import { autoSlug, ref, refs, key, blockText } from './helpers';
 
 type SanityDoc = Record<string, unknown> & { _id?: string; _type: string };
-type Ref = { _type: 'reference'; _ref: string };
 
 // ─── Generic CRUD ────────────────────────────────────────────────────────────
 

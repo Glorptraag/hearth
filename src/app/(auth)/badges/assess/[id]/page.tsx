@@ -262,7 +262,7 @@ export default function BadgeAssessPage() {
                 Your responses
               </h3>
               <div className="space-y-sm">
-                {badge.assessmentQuestions.map((q, i) => {
+                {badge.assessmentQuestions.map((q) => {
                   const r = responses.find((r) => r.questionId === q.id);
                   const icon = r?.response === 'yes' ? '✅' : r?.response === 'sometimes' ? '🟡' : '⬜';
                   return (

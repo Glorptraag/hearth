@@ -1,5 +1,5 @@
 import { pack } from './pack';
-import { module } from './module';
+import { moduleSchema } from './module';
 import { approach } from './approach';
 import { activity } from './activity';
 import { project } from './project';
@@ -13,7 +13,7 @@ export const schemaTypes = [
   badge,
   activity,
   approach,
-  module,
+  moduleSchema,
   pack,
   projectStage,
   project,

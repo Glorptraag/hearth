@@ -9,7 +9,7 @@ import {
   notifications,
   familyLibrary,
 } from '@/lib/db/schema';
-import { eq, and, gte, desc, sql, count } from 'drizzle-orm';
+import { eq, and, desc, count } from 'drizzle-orm';
 import { subDays, differenceInCalendarDays, format } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 

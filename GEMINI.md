@@ -81,4 +81,4 @@ npx drizzle-kit studio # Open Drizzle Studio to view data
 - `docs/Hearth_System_Interaction_Map.md`: Detailed navigation flows and data relationships.
 - `docs/hearth-canonical-design-tokens-v1.md`: Source of truth for all UI values.
 - `docs/Hearth_AI_Intelligence_Layer_Architecture.md`: How AI transforms logs into insights.
-- `docs/hearth-claude-code-transition-plan-v1.md`: 7-phase plan for the Next.js build.
+- `docs/hearth-claude-code-transition-plan-v1.md`: 7-phase plan for the Next.js build (all phases complete).

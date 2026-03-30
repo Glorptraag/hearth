@@ -224,7 +224,7 @@ export default function ExploreActivitiesPage() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
   const [previewModule, setPreviewModule] = useState<Module | null>(null);
-  const [plannerSaving, setPlannerSaving] = useState(false);
+  const [, setPlannerSaving] = useState(false);
   const [plannerSuccess, setPlannerSuccess] = useState<string | null>(null);
 
   const loadModules = useCallback(async () => {
@@ -396,7 +396,7 @@ export default function ExploreActivitiesPage() {
       {/* Planner success toast */}
       {plannerSuccess && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-sage/20 border border-sage/30 text-sage font-sans text-sm rounded-full px-lg py-sm shadow-lg">
-          ✓ Added to today's planner
+          ✓ Added to today&apos;s planner
         </div>
       )}
 

@@ -39,8 +39,6 @@ const PEDAGOGIES = [
   },
 ] as const;
 
-type PedagogyValue = (typeof PEDAGOGIES)[number]['value'];
-
 interface PedagogySelectorProps {
   selected: string;
   onChange: (value: string) => void;

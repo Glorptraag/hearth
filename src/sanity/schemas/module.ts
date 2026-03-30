@@ -11,7 +11,7 @@ const subjectList = [
   { title: 'Languages', value: 'languages' },
 ];
 
-export const module = defineType({
+export const moduleSchema = defineType({
   name: 'module',
   title: 'Module',
   type: 'document',

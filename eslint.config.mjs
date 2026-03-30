@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Archival reference files — not part of the running app
+    "prototypes/**",
+    "docs/**",
   ]),
 ]);
 

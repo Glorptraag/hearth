@@ -45,7 +45,6 @@ async function seed() {
   // We'll handle this by inserting fresh
 
   const today = new Date();
-  const todayStr = format(today, 'yyyy-MM-dd');
 
   // ─── Family ───
   const [family] = await db
@@ -291,7 +290,7 @@ async function seed() {
     })
     .returning();
 
-  const [wordWeaver] = await db
+  await db
     .insert(schema.badgeDefinitions)
     .values({
       familyId: family.id,

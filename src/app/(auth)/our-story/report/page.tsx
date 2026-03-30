@@ -109,6 +109,7 @@ export default function ReportPage() {
   const dueDateStr = settings?.heuNextReportDate ?? null;
   const registeredStr = settings?.createdAt ?? null;
   const today = new Date();
+  const registrationDate = registeredStr ? new Date(registeredStr) : today;
   const reportDueDate = dueDateStr ? new Date(dueDateStr) : null;
   const daysUntilDue = reportDueDate ? differenceInDays(reportDueDate, today) : null;
   const isOverdue = daysUntilDue !== null && daysUntilDue < 0;

@@ -86,7 +86,7 @@ type EnergyLevel = 'calm' | 'moderate' | 'active';
 type Modality = 'kinesthetic' | 'visual' | 'auditory' | 'narrative' | 'social' | 'exploratory';
 type Domain = Subject;
 type Tier = 'emerging' | 'developing' | 'demonstrating';
-type Framework = 'charlotte_mason' | 'classical' | 'montessori' | 'waldorf_steiner' | 'unschooling' | 'reggio' | 'eclectic';
+type Framework = 'charlotte_mason' | 'classical' | 'montessori' | 'waldorf_steiner' | 'unschooling' | 'eclectic';
 type Status = 'draft' | 'published';
 type StatusExt = Status | 'archived';
 

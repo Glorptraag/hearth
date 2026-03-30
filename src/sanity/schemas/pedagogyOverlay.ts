@@ -25,7 +25,6 @@ export const pedagogyOverlay = defineType({
           { title: 'Montessori', value: 'montessori' },
           { title: 'Waldorf / Steiner', value: 'waldorf_steiner' },
           { title: 'Unschooling', value: 'unschooling' },
-          { title: 'Reggio Emilia', value: 'reggio' },
           { title: 'Eclectic', value: 'eclectic' },
         ],
       },

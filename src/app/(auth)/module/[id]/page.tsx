@@ -76,7 +76,6 @@ const PEDAGOGY_LABELS: Record<string, string> = {
   montessori: 'Montessori Lens',
   waldorf_steiner: 'Waldorf Lens',
   unschooling: 'Unschooling Lens',
-  reggio: 'Reggio Emilia Lens',
   eclectic: 'Your Lens',
 };
 
@@ -349,10 +348,10 @@ function FacilitateMode({
             <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
           </button>
           {overlayOpen && (
-            <div className="rounded-lg border border-ember/20 bg-ember-glow/30 p-lg space-y-md">
+            <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
               {currentOverlay.lens.perspective && (
                 <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
                     Perspective
                   </p>
                   <p className="font-serif text-sm leading-relaxed text-text-secondary">
@@ -362,7 +361,7 @@ function FacilitateMode({
               )}
               {currentOverlay.lens.facilitatorTips && (
                 <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
                     Tips for You
                   </p>
                   <p className="font-serif text-sm leading-relaxed text-text-secondary">
@@ -372,7 +371,7 @@ function FacilitateMode({
               )}
               {currentOverlay.lens.languageFrame && (
                 <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
                     Language
                   </p>
                   <p className="font-serif text-sm leading-relaxed text-text-secondary">
@@ -382,7 +381,7 @@ function FacilitateMode({
               )}
               {currentOverlay.lens.watchFor && (
                 <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember/70 mb-xs">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
                     Watch For
                   </p>
                   <p className="font-serif text-sm leading-relaxed text-text-secondary">
@@ -777,16 +776,14 @@ export default function ModuleDetailPage() {
         setPedagogy(resolvedPedagogy);
       }
 
-      // Batch-fetch overlays for approach 0 upfront
-      const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
-      if (activityIds.length > 0) {
-        const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
-          await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: resolvedPedagogy });
-        setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
-      }
-
-      // Skip picker if only one approach
+      // Skip picker if only one approach — fetch overlays immediately
       if ((mod?.approaches?.length ?? 0) <= 1) {
+        const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
+        if (activityIds.length > 0) {
+          const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+            await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: resolvedPedagogy });
+          setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
+        }
         setMode('prep');
       }
     } finally {

@@ -32,12 +32,6 @@ const PEDAGOGIES = [
     tagline: 'Interest-led, life as the curriculum.',
   },
   {
-    value: 'reggio',
-    label: 'Reggio Emilia',
-    emoji: '🏡',
-    tagline: 'Environment as third teacher, project-based inquiry.',
-  },
-  {
     value: 'eclectic',
     label: 'Eclectic',
     emoji: '🔀',

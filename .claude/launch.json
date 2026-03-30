@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "hearth",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["next", "dev", "--port", "3000"],
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-l", "-c", "npx next dev --port 3000 --no-turbopack"],
       "port": 3000
     }
-  ]
+  ],
+  "autoVerify": false
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Crimson_Text, Inter } from "next/font/google";
+import { headers } from "next/headers";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
@@ -21,22 +22,24 @@ export const metadata: Metadata = {
   description: "Homeschool learning management for Australian families",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+  const isDevPreview = pathname.startsWith("/dev-preview");
+
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        data-theme="dark"
-        className={`${crimsonText.variable} ${inter.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html
+      lang="en"
+      data-theme="dark"
+      className={`${crimsonText.variable} ${inter.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
+        {isDevPreview ? children : <ClerkProvider>{children}</ClerkProvider>}
+      </body>
+    </html>
   );
 }

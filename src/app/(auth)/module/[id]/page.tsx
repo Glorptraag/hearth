@@ -834,7 +834,7 @@ export default function ModuleDetailPage() {
           Not in your library yet
         </h1>
         <p className="font-serif text-text-secondary mb-lg">
-          This module isn't in your library. Browse the Marketplace to add packs to your collection.
+          This module isn&apos;t in your library. Browse the Marketplace to add packs to your collection.
         </p>
         <button
           onClick={() => router.push('/explore/marketplace')}

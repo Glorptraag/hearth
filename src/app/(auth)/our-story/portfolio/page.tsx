@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName } from '@/lib/capability-threads';
@@ -245,9 +246,9 @@ export default function PortfolioPage() {
               <span className="text-2xl block mb-sm">📖</span>
               <p className="font-serif text-sm text-text-secondary">
                 No entries yet. Head to the{' '}
-                <a href="/log" className="font-semibold text-ember hover:text-ember-hover transition-colors">
+                <Link href="/log" className="font-semibold text-ember hover:text-ember-hover transition-colors">
                   Logger
-                </a>{' '}
+                </Link>{' '}
                 to capture your first moment.
               </p>
             </div>

@@ -1,64 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { differenceInYears } from 'date-fns';
+import { differenceInYears, format, startOfMonth } from 'date-fns';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Learner = {
   id: string;
   name: string;
-  dateOfBirth: string;
-  shapeIcon: string;
-  colourToken: string;
-  learningSince: string;
-  termSummary: string | null;
-  portfolioTotal: number;
-  portfolioThisTerm: number;
-  heuSamplesReady: number;
-  heuWeeksUntilDeadline: number;
-  capabilityThreadsActive: number;
-  capabilityNearMilestone: number;
-  evidenceThumbs: string[];
+  dateOfBirth: string | null;
+  shapeIcon: string | null;
+  colourToken: string | null;
+  createdAt: string | null;
 };
 
-const MOCK_LEARNERS: Learner[] = [
-  {
-    id: 'emma',
-    name: 'Emma',
-    dateOfBirth: '2016-06-15',
-    shapeIcon: '⭐',
-    colourToken: 'rose',
-    learningSince: 'March 2025',
-    termSummary:
-      'Emma has demonstrated strong growth in Scientific Thinking and Mathematical Reasoning this term, with emerging confidence in Creative Expression. Her collaborative work with Liam shows developing leadership in peer teaching.',
-    portfolioTotal: 47,
-    portfolioThisTerm: 12,
-    heuSamplesReady: 3,
-    heuWeeksUntilDeadline: 8,
-    capabilityThreadsActive: 14,
-    capabilityNearMilestone: 2,
-    evidenceThumbs: ['📷', '📷', '📄', '📷', '🎨', '📷'],
-  },
-  {
-    id: 'liam',
-    name: 'Liam',
-    dateOfBirth: '2019-02-20',
-    shapeIcon: '🔵',
-    colourToken: 'blue',
-    learningSince: 'January 2026',
-    termSummary:
-      'Liam is building a strong foundation in Number Sense and Physical Exploration this term. His curiosity and energy continue to drive meaningful learning moments.',
-    portfolioTotal: 18,
-    portfolioThisTerm: 4,
-    heuSamplesReady: 1,
-    heuWeeksUntilDeadline: 8,
-    capabilityThreadsActive: 8,
-    capabilityNearMilestone: 0,
-    evidenceThumbs: ['📷', '📄', '🎨'],
-  },
-];
+type Entry = {
+  id: string;
+  dateOccurred: string;
+  evidenceUrls: string[] | null;
+};
 
-const HEU_ENABLED = true;
+type Thread = {
+  thread_id: string;
+  observation_count: number;
+  suggested_tier: string;
+};
+
+type LearnerStats = {
+  portfolioTotal: number;
+  portfolioThisTerm: number;
+  capabilityThreadsActive: number;
+  capabilityNearMilestone: number;
+  recentEvidence: string[];
+};
+
+// ─── Colour config ────────────────────────────────────────────────────────────
 
 type ChildColorConfig = {
   text: string;
@@ -94,23 +71,114 @@ const CHILD_COLORS: Record<string, ChildColorConfig> = {
   },
 };
 
-export default function OurStoryHubClient() {
-  const [selectedId, setSelectedId] = useState(MOCK_LEARNERS[0].id);
+const DEFAULT_COLORS = CHILD_COLORS.rose;
 
-  const learner = MOCK_LEARNERS.find((l) => l.id === selectedId)!;
-  const colors = CHILD_COLORS[learner.colourToken] ?? CHILD_COLORS.rose;
-  const age = differenceInYears(new Date(), new Date(learner.dateOfBirth));
-  const showSelector = MOCK_LEARNERS.length > 1;
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function OurStoryHubClient() {
+  const [learners, setLearners] = useState<Learner[]>([]);
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [stats, setStats] = useState<LearnerStats | null>(null);
+  const [statsLearnerId, setStatsLearnerId] = useState<string>('');
+  const [loadingLearners, setLoadingLearners] = useState(true);
+
+  // Fetch learner list once
+  useEffect(() => {
+    fetch('/api/learners')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLearners(data);
+          setSelectedId(data[0].id);
+        }
+        setLoadingLearners(false);
+      })
+      .catch(() => setLoadingLearners(false));
+  }, []);
+
+  // Fetch per-learner stats when selection changes
+  useEffect(() => {
+    if (!selectedId) return;
+    const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+
+    Promise.all([
+      fetch(`/api/entries?learnerId=${selectedId}`).then((r) => r.json()),
+      fetch(`/api/capabilities/${selectedId}`).then((r) => r.json()),
+    ])
+      .then(([entries, threads]) => {
+        const entryList: Entry[] = Array.isArray(entries) ? entries : [];
+        const threadList: Thread[] = Array.isArray(threads) ? threads : [];
+
+        const portfolioTotal = entryList.length;
+        const portfolioThisTerm = entryList.filter(
+          (e) => e.dateOccurred >= monthStart
+        ).length;
+        const capabilityThreadsActive = threadList.length;
+        const capabilityNearMilestone = threadList.filter(
+          (t) => t.suggested_tier === 'developing'
+        ).length;
+        const recentEvidence = entryList
+          .flatMap((e) => e.evidenceUrls ?? [])
+          .slice(0, 6);
+
+        setStats({
+          portfolioTotal,
+          portfolioThisTerm,
+          capabilityThreadsActive,
+          capabilityNearMilestone,
+          recentEvidence,
+        });
+        setStatsLearnerId(selectedId);
+      })
+      .catch(() => {
+        setStats(null);
+        setStatsLearnerId(selectedId);
+      });
+  }, [selectedId]);
+
+  if (loadingLearners) {
+    return (
+      <div className="flex items-center justify-center py-4xl">
+        <p className="font-sans text-sm text-text-muted">Loading...</p>
+      </div>
+    );
+  }
+
+  if (learners.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl px-md py-xl text-center">
+        <span className="text-4xl block mb-md">📖</span>
+        <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
+          Your story starts here
+        </h2>
+        <p className="font-sans text-sm text-text-secondary">
+          Add learners in Settings to begin building your family&apos;s learning story.
+        </p>
+      </div>
+    );
+  }
+
+  const learner = learners.find((l) => l.id === selectedId) ?? learners[0];
+  const colors = CHILD_COLORS[learner.colourToken ?? ''] ?? DEFAULT_COLORS;
+  const age = learner.dateOfBirth
+    ? differenceInYears(new Date(), new Date(learner.dateOfBirth))
+    : null;
+  const learningSince = learner.createdAt
+    ? format(new Date(learner.createdAt), 'MMMM yyyy')
+    : null;
+  const showSelector = learners.length > 1;
 
   return (
     <div className="mx-auto max-w-2xl px-md py-xl">
       {/* Child selector — grid, only shown when 2+ children */}
       {showSelector && (
         <div className="mb-xl grid grid-cols-2 gap-sm">
-          {MOCK_LEARNERS.map((l) => {
-            const c = CHILD_COLORS[l.colourToken] ?? CHILD_COLORS.rose;
+          {learners.map((l) => {
+            const c = CHILD_COLORS[l.colourToken ?? ''] ?? DEFAULT_COLORS;
             const active = l.id === selectedId;
-            const lAge = differenceInYears(new Date(), new Date(l.dateOfBirth));
+            const lAge = l.dateOfBirth
+              ? differenceInYears(new Date(), new Date(l.dateOfBirth))
+              : null;
             return (
               <button
                 key={l.id}
@@ -125,13 +193,15 @@ export default function OurStoryHubClient() {
                   className={`flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full text-lg ${c.text}`}
                   style={{ background: c.avatarBg, border: `2px solid ${c.avatarBorder}` }}
                 >
-                  {l.shapeIcon}
+                  {l.shapeIcon ?? '🌟'}
                 </span>
                 <div>
                   <p className={`font-serif text-base font-semibold ${active ? c.text : 'text-text-primary'}`}>
                     {l.name}
                   </p>
-                  <p className="font-sans text-xs text-text-muted">{lAge} yrs old</p>
+                  {lAge !== null && (
+                    <p className="font-sans text-xs text-text-muted">{lAge} yrs old</p>
+                  )}
                 </div>
               </button>
             );
@@ -148,30 +218,38 @@ export default function OurStoryHubClient() {
             border: `2px solid ${colors.avatarBorder}`,
           }}
         >
-          {learner.shapeIcon}
+          {learner.shapeIcon ?? '🌟'}
         </div>
         <h1 className="mb-xs font-serif text-2xl font-semibold text-text-primary">
           {learner.name}&rsquo;s Story
         </h1>
         <p className="font-sans text-sm text-text-secondary">
-          Age {age} · Learning since {learner.learningSince}
+          {age !== null ? `Age ${age}` : null}
+          {age !== null && learningSince ? ' · ' : null}
+          {learningSince ? `Learning since ${learningSince}` : null}
         </p>
       </header>
 
-      {/* Term summary */}
+      {/* Term summary — empty state for new learners */}
       <section className="relative mb-xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--ember),transparent)] opacity-60" />
+        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <p className="mb-md font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
           Term Summary
         </p>
-        {learner.termSummary ? (
+        {stats && stats.portfolioTotal > 0 ? (
           <p className="font-serif text-sm italic leading-relaxed text-text-secondary">
-            &ldquo;{learner.termSummary}&rdquo;
+            {stats.portfolioTotal} learning moment{stats.portfolioTotal !== 1 ? 's' : ''} recorded
+            {stats.portfolioThisTerm > 0
+              ? `, with ${stats.portfolioThisTerm} this month`
+              : ''}
+            {stats.capabilityThreadsActive > 0
+              ? `. ${stats.capabilityThreadsActive} capability thread${stats.capabilityThreadsActive !== 1 ? 's' : ''} active.`
+              : '.'}
           </p>
         ) : (
           <p className="font-serif text-sm italic leading-relaxed text-text-muted">
-            {learner.name}&rsquo;s learning story is just beginning. As more moments are logged,
-            patterns and growth will become visible here.
+            {learner.name}&rsquo;s learning story is just beginning. As more moments are
+            logged, patterns and growth will become visible here.
           </p>
         )}
       </section>
@@ -182,32 +260,34 @@ export default function OurStoryHubClient() {
           href="/our-story/portfolio"
           icon="📁"
           title="Portfolio"
-          stat1={`${learner.portfolioTotal} entries`}
-          stat2={`${learner.portfolioThisTerm} this term`}
+          stat1={statsLearnerId !== selectedId ? '—' : `${stats?.portfolioTotal ?? 0} entries`}
+          stat2={
+            statsLearnerId === selectedId && stats && stats.portfolioThisTerm > 0
+              ? `${stats.portfolioThisTerm} this month`
+              : undefined
+          }
         />
 
-        {HEU_ENABLED && (
-          <NavCard
-            href="/our-story/report"
-            icon="📋"
-            title="HEU Report"
-            stat1={`${learner.heuSamplesReady} of 6 samples ready`}
-            stat1Highlight
-            stat2={`${learner.heuWeeksUntilDeadline} weeks until deadline`}
-          />
-        )}
+        <NavCard
+          href="/our-story/report"
+          icon="📋"
+          title="HEU Report"
+          stat1="Compliance view"
+        />
 
         <NavCard
           href="/our-story/capabilities"
           icon="✦"
           title="Capabilities"
-          stat1={`${learner.capabilityThreadsActive} threads active`}
+          stat1={statsLearnerId !== selectedId ? '—' : `${stats?.capabilityThreadsActive ?? 0} threads active`}
           stat2={
-            learner.capabilityNearMilestone > 0
-              ? `${learner.capabilityNearMilestone} near milestone`
+            statsLearnerId === selectedId && stats && stats.capabilityNearMilestone > 0
+              ? `${stats.capabilityNearMilestone} near milestone`
               : undefined
           }
-          stat2Highlight={learner.capabilityNearMilestone > 0}
+          stat2Highlight={
+            statsLearnerId === selectedId && (stats?.capabilityNearMilestone ?? 0) > 0
+          }
         />
 
         <NavCard
@@ -229,18 +309,19 @@ export default function OurStoryHubClient() {
             See all →
           </Link>
         </div>
-        {learner.evidenceThumbs.length === 0 ? (
+        {statsLearnerId === selectedId && (!stats || stats.recentEvidence.length === 0) ? (
           <p className="font-serif text-sm italic text-text-muted">
             No evidence captured yet. Photos and artifacts appear here as you log.
           </p>
-        ) : (
+        ) : statsLearnerId !== selectedId ? null : (
           <div className="flex gap-md overflow-x-auto pb-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {learner.evidenceThumbs.map((emoji, i) => (
+            {stats!.recentEvidence.map((url, i) => (
               <div
                 key={i}
-                className="flex h-[90px] w-[120px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-border-subtle bg-surface-raised text-2xl text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] hover:border-border-medium"
+                className="flex h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] hover:border-border-medium"
               >
-                {emoji}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" className="h-full w-full object-cover" />
               </div>
             ))}
           </div>
@@ -249,6 +330,8 @@ export default function OurStoryHubClient() {
     </div>
   );
 }
+
+// ─── NavCard ─────────────────────────────────────────────────────────────────
 
 function NavCard({
   href,
@@ -272,7 +355,7 @@ function NavCard({
       href={href}
       className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]"
     >
-      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--ember),transparent)] opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100" />
       <div className="mb-md text-[2rem] opacity-90">{icon}</div>
       <h2 className="mb-sm font-serif text-[1.05rem] font-semibold text-text-primary">{title}</h2>
       <p className={`font-sans text-sm ${stat1Highlight ? 'text-sage' : 'text-text-secondary'}`}>

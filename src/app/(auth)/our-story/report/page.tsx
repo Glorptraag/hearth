@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { format, differenceInDays, differenceInYears } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 
 type Learner = {
@@ -105,19 +105,23 @@ export default function ReportPage() {
       .then((data) => setEntries(Array.isArray(data) ? data : []));
   }, [selectedLearnerId]);
 
-  // Timeline
-  const reportDueDate = settings?.heuNextReportDate ? new Date(settings.heuNextReportDate) : null;
-  const registrationDate = settings?.createdAt ? new Date(settings.createdAt) : new Date();
+  // Timeline — computed from settings once loaded
+  const dueDateStr = settings?.heuNextReportDate ?? null;
+  const registeredStr = settings?.createdAt ?? null;
   const today = new Date();
+  const reportDueDate = dueDateStr ? new Date(dueDateStr) : null;
   const daysUntilDue = reportDueDate ? differenceInDays(reportDueDate, today) : null;
   const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
   const timelineProgress = useMemo(() => {
-    if (!reportDueDate) return 0;
-    const totalDays = differenceInDays(reportDueDate, registrationDate);
-    const elapsed = differenceInDays(today, registrationDate);
+    if (!dueDateStr) return 0;
+    const due = new Date(dueDateStr);
+    const registered = registeredStr ? new Date(registeredStr) : new Date();
+    const now = new Date();
+    const totalDays = differenceInDays(due, registered);
+    const elapsed = differenceInDays(now, registered);
     if (totalDays <= 0) return 100;
     return Math.min(Math.max((elapsed / totalDays) * 100, 0), 100);
-  }, [reportDueDate, registrationDate]);
+  }, [dueDateStr, registeredStr]);
 
   // Subject coverage — now includes curriculum descriptor counts from enrichment
   const subjectCoverage = useMemo(() => {

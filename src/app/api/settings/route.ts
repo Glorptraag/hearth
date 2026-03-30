@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  let existing = await db.query.familySettings.findFirst({
+  const existing = await db.query.familySettings.findFirst({
     where: eq(familySettings.familyId, family.id),
   });
 

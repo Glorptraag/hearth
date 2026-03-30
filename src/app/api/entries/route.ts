@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     conditions.push(lte(learningEntries.dateOccurred, endDate));
   }
 
-  let query = db
+  const query = db
     .select()
     .from(learningEntries)
     .where(and(...conditions))

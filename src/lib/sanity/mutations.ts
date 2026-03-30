@@ -428,7 +428,7 @@ export async function createProjectStage(input: CreateProjectStage) {
 // Handles circular refs automatically: module shell → approach shells →
 // activities → patch approach.activities → patch module.approaches
 
-interface FullActivityInput extends Omit<CreateActivity, 'approachId'> {}
+type FullActivityInput = Omit<CreateActivity, 'approachId'>;
 interface FullApproachInput extends Omit<CreateApproach, 'moduleId' | 'activityIds'> {
   activities: FullActivityInput[];
 }

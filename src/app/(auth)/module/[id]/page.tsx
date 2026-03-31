@@ -96,10 +96,14 @@ function PrepMode({
   module,
   approachIdx,
   onStart,
+  savedChunkIdx,
+  onResume,
 }: {
   module: Module;
   approachIdx: number;
   onStart: () => void;
+  savedChunkIdx?: number;
+  onResume?: () => void;
 }) {
   const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
@@ -210,12 +214,30 @@ function PrepMode({
         </div>
       )}
 
+      {/* Resume banner */}
+      {savedChunkIdx !== undefined && savedChunkIdx > 0 && onResume && (
+        <div className="mb-md rounded-lg border border-ember/30 bg-ember-glow p-md flex items-center justify-between">
+          <div>
+            <p className="font-sans text-xs font-semibold text-ember mb-[2px]">Session in progress</p>
+            <p className="font-serif text-sm text-text-secondary">
+              Activity {savedChunkIdx + 1} of {module.approaches?.[approachIdx]?.activities?.length ?? 1}
+            </p>
+          </div>
+          <button
+            onClick={onResume}
+            className="font-sans text-sm font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
+          >
+            Resume →
+          </button>
+        </div>
+      )}
+
       {/* Start button */}
       <button
         onClick={onStart}
         className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
       >
-        Start Session →
+        {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session →'}
       </button>
     </div>
   );
@@ -229,15 +251,21 @@ function FacilitateMode({
   overlays,
   pedagogy,
   onFinish,
+  onPause,
+  initialChunkIdx = 0,
+  onChunkChange,
 }: {
   module: Module;
   approachIdx: number;
   overlays: ActivityOverlay[];
   pedagogy: string | null;
   onFinish: () => void;
+  onPause?: () => void;
+  initialChunkIdx?: number;
+  onChunkChange?: (idx: number) => void;
 }) {
   const activities = module.approaches?.[approachIdx]?.activities ?? [];
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(initialChunkIdx);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const current = activities[currentIdx];
@@ -446,21 +474,37 @@ function FacilitateMode({
 
         {/* Navigation */}
         <div className="fixed bottom-20 left-0 right-0 lg:left-[220px] px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
-          {isLast ? (
-            <button
-              onClick={onFinish}
-              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
-            >
-              Finish & Log →
-            </button>
-          ) : (
-            <button
-              onClick={() => { setCurrentIdx((i) => i + 1); setGuidanceOpen(false); setOverlayOpen(false); }}
-              className="w-full bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
-            >
-              Next Activity →
-            </button>
-          )}
+          <div className="flex gap-sm">
+            {onPause && (
+              <button
+                onClick={onPause}
+                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+              >
+                ⏸ Pause
+              </button>
+            )}
+            {isLast ? (
+              <button
+                onClick={onFinish}
+                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
+              >
+                Finish & Log →
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const next = currentIdx + 1;
+                  setCurrentIdx(next);
+                  setGuidanceOpen(false);
+                  setOverlayOpen(false);
+                  onChunkChange?.(next);
+                }}
+                className="flex-1 bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
+              >
+                Next Activity →
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -877,6 +921,19 @@ export default function ModuleDetailPage() {
   const [selectedApproachIdx, setSelectedApproachIdx] = useState(0);
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
   const [pedagogy, setPedagogy] = useState<string | null>(null);
+  const [savedChunkIdx, setSavedChunkIdx] = useState<number>(0);
+
+  const STORAGE_KEY = `hearth_module_${id}_session`;
+
+  function persistChunk(chunkIdx: number) {
+    setSavedChunkIdx(chunkIdx);
+    try { localStorage.setItem(STORAGE_KEY, String(chunkIdx)); } catch { /* ignore */ }
+  }
+
+  function clearSession() {
+    setSavedChunkIdx(0);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  }
 
   const fetchModule = useCallback(async () => {
     try {
@@ -929,7 +986,13 @@ export default function ModuleDetailPage() {
     setMode('prep');
   }, [module, pedagogy]);
 
-  useEffect(() => { fetchModule(); }, [fetchModule]);
+  useEffect(() => {
+    fetchModule();
+    try {
+      const saved = localStorage.getItem(`hearth_module_${id}_session`);
+      if (saved) setSavedChunkIdx(parseInt(saved, 10) || 0);
+    } catch { /* ignore */ }
+  }, [fetchModule, id]);
 
   if (loading) {
     return (
@@ -1069,7 +1132,13 @@ export default function ModuleDetailPage() {
           <ApproachPickMode module={module} onSelect={handleApproachSelect} />
         )}
         {mode === 'prep' && (
-          <PrepMode module={module} approachIdx={selectedApproachIdx} onStart={() => setMode('facilitate')} />
+          <PrepMode
+            module={module}
+            approachIdx={selectedApproachIdx}
+            onStart={() => { clearSession(); setMode('facilitate'); }}
+            savedChunkIdx={savedChunkIdx}
+            onResume={() => setMode('facilitate')}
+          />
         )}
         {mode === 'facilitate' && (
           <FacilitateMode
@@ -1077,7 +1146,10 @@ export default function ModuleDetailPage() {
             approachIdx={selectedApproachIdx}
             overlays={overlays}
             pedagogy={pedagogy}
-            onFinish={() => setMode('log')}
+            onFinish={() => { clearSession(); setMode('log'); }}
+            onPause={() => setMode('prep')}
+            initialChunkIdx={savedChunkIdx}
+            onChunkChange={persistChunk}
           />
         )}
         {mode === 'log' && <LogMode module={module} />}

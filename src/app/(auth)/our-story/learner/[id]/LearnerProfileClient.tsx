@@ -16,6 +16,10 @@ interface ProfileData {
   tagline?: string | null;
   sparks?: Array<{ name: string; count?: number }>;
   facilitatorNotes?: string | null;
+  attentionWindowStart?: number | null;
+  attentionWindowEnd?: number | null;
+  preferredTimes?: string[] | null;
+  stylePreferences?: Record<string, string> | null;
 }
 
 interface LearnerProfileClientProps {
@@ -158,6 +162,18 @@ export default function LearnerProfileClient({
     learner.profileData.facilitatorNotes ?? ''
   );
   const [facilitatorNotesEditing, setFacilitatorNotesEditing] = useState(false);
+  const [attentionWindowStart, setAttentionWindowStart] = useState(
+    learner.profileData.attentionWindowStart ?? 9
+  );
+  const [attentionWindowEnd, setAttentionWindowEnd] = useState(
+    learner.profileData.attentionWindowEnd ?? 12
+  );
+  const [preferredTimes, setPreferredTimes] = useState<string[]>(
+    learner.profileData.preferredTimes ?? []
+  );
+  const [stylePreferences, setStylePreferences] = useState<Record<string, string>>(
+    learner.profileData.stylePreferences ?? {}
+  );
 
   // Snapshot for cancel
   const snapshot = useRef({
@@ -168,6 +184,10 @@ export default function LearnerProfileClient({
     notes,
     tagline,
     facilitatorNotes,
+    attentionWindowStart,
+    attentionWindowEnd,
+    preferredTimes,
+    stylePreferences,
   });
 
   function startEdit() {
@@ -179,6 +199,10 @@ export default function LearnerProfileClient({
       notes,
       tagline,
       facilitatorNotes,
+      attentionWindowStart,
+      attentionWindowEnd,
+      preferredTimes,
+      stylePreferences,
     };
     setEditing(true);
   }
@@ -192,6 +216,10 @@ export default function LearnerProfileClient({
     setNotes(s.notes);
     setTagline(s.tagline);
     setFacilitatorNotes(s.facilitatorNotes);
+    setAttentionWindowStart(s.attentionWindowStart);
+    setAttentionWindowEnd(s.attentionWindowEnd);
+    setPreferredTimes(s.preferredTimes);
+    setStylePreferences(s.stylePreferences);
     setEditing(false);
   }
 
@@ -215,6 +243,10 @@ export default function LearnerProfileClient({
             notes,
             tagline,
             facilitatorNotes,
+            attentionWindowStart,
+            attentionWindowEnd,
+            preferredTimes,
+            stylePreferences,
           },
         }),
       });
@@ -350,6 +382,102 @@ export default function LearnerProfileClient({
             </div>
           </section>
         )}
+
+        {/* ── Learning Rhythms ── */}
+        <section>
+          <p className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
+            Learning Rhythms
+          </p>
+
+          {/* Attention Window Dot Bar */}
+          <div className="mb-xl">
+            <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Attention Window
+            </p>
+            <div className="flex items-center gap-xs">
+              {Array.from({ length: 12 }, (_, i) => i + 7).map((h) => (
+                <div
+                  key={h}
+                  className={`h-2 w-2 rounded-full transition-all duration-200 ${
+                    h >= attentionWindowStart && h < attentionWindowEnd
+                      ? 'bg-ember shadow-[0_0_4px_rgba(217,123,58,0.4)]'
+                      : 'bg-surface-hover'
+                  }`}
+                  title={`${h}:00`}
+                />
+              ))}
+              <span className="ml-xs font-sans text-[11px] text-text-muted">
+                {attentionWindowStart}am–{attentionWindowEnd > 12 ? `${attentionWindowEnd - 12}pm` : `${attentionWindowEnd}am`}
+              </span>
+            </div>
+          </div>
+
+          {/* Time-of-Day Preference Badges */}
+          <div className="mb-xl">
+            <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Best Learning Times
+            </p>
+            <div className="flex flex-wrap gap-xs">
+              {['Morning', 'Afternoon', 'Evening'].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    if (!editing) return;
+                    setPreferredTimes((prev) =>
+                      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+                    );
+                  }}
+                  disabled={!editing}
+                  className={`rounded-full border px-md py-[4px] font-sans text-xs font-semibold transition-all duration-200 ${
+                    preferredTimes.includes(t)
+                      ? 'border-ember bg-ember/15 text-ember'
+                      : editing
+                        ? 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
+                        : 'border-border-subtle bg-transparent text-text-muted'
+                  } ${!editing && !preferredTimes.includes(t) ? 'opacity-50' : ''}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Environment & Social Style Toggles */}
+          {[
+            { key: 'environment', options: ['Indoor', 'Outdoor', 'Both'] },
+            { key: 'social', options: ['Solo', 'Paired', 'Group'] },
+          ].map(({ key, options }) => (
+            <div key={key} className="mb-md">
+              <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted capitalize">
+                {key}
+              </p>
+              <div className="flex gap-xs">
+                {options.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => {
+                      if (!editing) return;
+                      setStylePreferences((prev) => ({
+                        ...prev,
+                        [key]: opt,
+                      }));
+                    }}
+                    disabled={!editing}
+                    className={`rounded-md border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+                      stylePreferences[key] === opt
+                        ? 'border-ember bg-ember/15 text-ember'
+                        : editing
+                          ? 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
+                          : 'border-border-subtle bg-transparent text-text-muted'
+                    } ${!editing && stylePreferences[key] !== opt ? 'opacity-50' : ''}`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
 
         {/* ── About ── */}
         <section>

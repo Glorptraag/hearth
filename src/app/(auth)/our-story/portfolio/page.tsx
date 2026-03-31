@@ -645,7 +645,7 @@ export default function PortfolioPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-sm">
                 {badges.map((badge) => (
                   <div
                     key={badge.id}

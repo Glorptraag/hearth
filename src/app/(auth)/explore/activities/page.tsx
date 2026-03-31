@@ -37,6 +37,17 @@ const SUBJECTS = [
 
 const SUBJECT_COLOR_MAP = Object.fromEntries(SUBJECTS.map((s) => [s.value, s.color]));
 
+const SUBJECT_GRADIENT: Record<string, string> = {
+  english:      'from-[rgba(107,142,155,0.12)] to-transparent',
+  mathematics:  'from-[rgba(155,123,107,0.12)] to-transparent',
+  science:      'from-[rgba(107,142,107,0.12)] to-transparent',
+  hass:         'from-[rgba(155,138,107,0.12)] to-transparent',
+  arts:         'from-[rgba(155,107,138,0.12)] to-transparent',
+  technologies: 'from-[rgba(107,130,155,0.12)] to-transparent',
+  hpe:          'from-[rgba(107,155,130,0.12)] to-transparent',
+  languages:    'from-[rgba(138,107,155,0.12)] to-transparent',
+};
+
 const DURATION_FILTERS = [
   { label: 'Quick (<15 min)', value: 'quick', test: (m: Module) => (m.duration?.max ?? 99) < 15 },
   { label: 'Medium (15–30)', value: 'medium', test: (m: Module) => { const max = m.duration?.max ?? 0; return max >= 15 && max <= 30; } },
@@ -55,67 +66,84 @@ const MODALITY_EMOJI: Record<string, string> = {
 // ─── Module Card ──────────────────────────────────────────────────────────────
 
 function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module: Module; onPreview: (m: Module) => void; isInLibrary: boolean; onAddToLibrary: (moduleId: string) => void }) {
+  const primarySubject = module.subjects?.[0] ?? '';
+
   return (
     <div
-      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full"
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full relative"
     >
+      <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
+
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
 
-      <button
-        onClick={() => onPreview(module)}
-        className="text-left flex-1"
-      >
-        <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
-          {module.title}
-        </h3>
+      <div className="relative z-10">
+        <button
+          onClick={() => onPreview(module)}
+          className="text-left flex-1 w-full"
+        >
+          <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
+            {module.title}
+          </h3>
 
-        {/* Subjects */}
-        {module.subjects && module.subjects.length > 0 && (
-          <div className="flex flex-wrap gap-xs mb-sm">
-            {module.subjects.map((s) => {
-              const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
-              return (
-                <span
-                  key={s}
-                  className={`font-sans text-xs rounded-full px-sm py-xs border ${colorClass}`}
-                >
-                  {s}
-                </span>
-              );
-            })}
+          {/* Subjects */}
+          {module.subjects && module.subjects.length > 0 && (
+            <div className="flex flex-wrap gap-xs mb-sm">
+              {module.subjects.map((s) => {
+                const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
+                return (
+                  <span
+                    key={s}
+                    className={`font-sans text-xs rounded-full px-sm py-xs border ${colorClass}`}
+                  >
+                    {s}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Meta row */}
+          <div className="flex items-center gap-md flex-wrap mt-auto mb-md">
+            {module.ageRange && (
+              <span className="font-sans text-xs text-text-muted">
+                👶 {module.ageRange.min}–{module.ageRange.max} yrs
+              </span>
+            )}
+            {module.duration && (
+              <span className="font-sans text-xs text-text-muted">
+                ⏱ {module.duration.min}–{module.duration.max} min
+              </span>
+            )}
+            {module.approaches && (
+              <span className="font-sans text-xs text-text-muted">
+                {module.approaches.length} approach{module.approaches.length !== 1 ? 'es' : ''}
+              </span>
+            )}
           </div>
-        )}
+        </button>
 
-        {/* Meta row */}
-        <div className="flex items-center gap-md flex-wrap mt-auto mb-md">
-          {module.ageRange && (
-            <span className="font-sans text-xs text-text-muted">
-              👶 {module.ageRange.min}–{module.ageRange.max} yrs
-            </span>
-          )}
-          {module.duration && (
-            <span className="font-sans text-xs text-text-muted">
-              ⏱ {module.duration.min}–{module.duration.max} min
-            </span>
-          )}
-          {module.approaches && (
-            <span className="font-sans text-xs text-text-muted">
-              {module.approaches.length} approach{module.approaches.length !== 1 ? 'es' : ''}
-            </span>
-          )}
+        {/* Creator row */}
+        <div className="mt-sm flex items-center gap-xs">
+          <div className="h-5 w-5 rounded-full bg-surface-hover border border-border-subtle flex items-center justify-center shrink-0">
+            <span className="font-sans text-[9px] text-text-muted">H</span>
+          </div>
+          <span className="font-sans text-[11px] text-text-muted truncate">Hearth</span>
+          <span className="ml-auto rounded-full bg-sage/15 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✓ Verified</span>
         </div>
-      </button>
+      </div>
 
       {/* Action button */}
-      {isInLibrary ? (
-        <button disabled className="rounded-md border border-sage/30 bg-sage/15 px-sm py-[4px] font-sans text-[11px] font-semibold text-sage cursor-not-allowed">
-          In Library
-        </button>
-      ) : (
-        <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover">
-          Add to Library
-        </button>
-      )}
+      <div className="relative z-10 mt-md">
+        {isInLibrary ? (
+          <button disabled className="rounded-md border border-sage/30 bg-sage/15 px-sm py-[4px] font-sans text-[11px] font-semibold text-sage cursor-not-allowed w-full">
+            In Library
+          </button>
+        ) : (
+          <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover w-full">
+            Add to Library
+          </button>
+        )}
+      </div>
     </div>
   );
 }

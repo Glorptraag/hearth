@@ -39,6 +39,13 @@ export const learners = pgTable('learners', {
     interests?: string[];
     strengths?: string[];
     notes?: string;
+    tagline?: string | null;
+    facilitatorNotes?: string | null;
+    sparks?: Array<{ name: string; count?: number }>;
+    attentionWindowStart?: number | null;
+    attentionWindowEnd?: number | null;
+    preferredTimes?: string[] | null;
+    stylePreferences?: Record<string, string> | null;
   }>().default({}),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

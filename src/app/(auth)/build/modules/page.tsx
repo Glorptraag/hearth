@@ -193,7 +193,7 @@ function QuickSettings({
       </div>
       <div className="flex-1">
         <OLabel>Setting</OLabel>
-        <div className="flex gap-sm">
+        <div className="flex flex-wrap gap-sm">
           {SETTINGS.map((s) => (
             <PillButton key={s.id} active={setting === s.id} onClick={() => onSetting(s.id)}>
               {s.label}
@@ -1476,7 +1476,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
               <>
                 <div>
                   <OLabel>Where are they now?</OLabel>
-                  <div className="flex gap-sm">
+                  <div className="flex flex-wrap gap-sm">
                     {TIERS.map((tier) => (
                       <PillButton key={tier} active={form.tier === tier} onClick={() => setForm((f) => ({ ...f, tier }))}>
                         {tier}

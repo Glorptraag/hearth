@@ -29,7 +29,7 @@ export default async function RootLayout({
 }>) {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
-  const isDevPreview = pathname.startsWith("/dev-preview");
+  const isDevPreview = pathname.startsWith("/dev-preview") || pathname.startsWith("/demo");
 
   return (
     <html

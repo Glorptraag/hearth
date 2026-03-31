@@ -32,6 +32,7 @@ interface PlannerClientProps {
   learners: Learner[];
   recommendations: Recommendation[];
   today: string;
+  basePath?: string;
 }
 
 function getWeekStart(date: Date): Date {
@@ -52,6 +53,7 @@ export default function PlannerClient({
   learners,
   recommendations,
   today,
+  basePath = '',
 }: PlannerClientProps) {
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [entries, setEntries] = useState<PlannerEntry[]>(initialEntries);
@@ -204,7 +206,7 @@ export default function PlannerClient({
           </p>
           <p className="font-sans text-xs text-text-muted">
             Tap + in any session to add an activity, or browse the{' '}
-            <a href="/explore/activities" className="text-ember hover:underline">activity library</a>.
+            <a href={`${basePath}/explore/activities`} className="text-ember hover:underline">activity library</a>.
           </p>
         </div>
       )}

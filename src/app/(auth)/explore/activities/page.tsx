@@ -223,8 +223,8 @@ export default function ExploreActivitiesPage() {
   const router = useRouter();
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('name');
   const [previewModule, setPreviewModule] = useState<Module | null>(null);
   const [, setPlannerSaving] = useState(false);
   const [plannerSuccess, setPlannerSuccess] = useState<string | null>(null);
@@ -255,24 +255,21 @@ export default function ExploreActivitiesPage() {
 
   useEffect(() => { loadModules(); }, [loadModules]);
 
-  const toggleSubject = (s: string) =>
-    setSelectedSubjects((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-
   const filtered = useMemo(() => {
     let result = modules;
-    if (selectedSubjects.length > 0) {
-      result = result.filter((m) =>
-        selectedSubjects.some((s) => m.subjects?.includes(s))
-      );
+
+    if (subjectFilter !== 'all') {
+      result = result.filter((m) => m.subjects?.includes(subjectFilter));
     }
-    if (selectedDuration) {
-      const durationFilter = DURATION_FILTERS.find((d) => d.value === selectedDuration);
-      if (durationFilter) result = result.filter(durationFilter.test);
+
+    if (sortBy === 'name') {
+      result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'newest') {
+      result = [...result].reverse();
     }
+
     return result;
-  }, [modules, selectedSubjects, selectedDuration]);
+  }, [modules, subjectFilter, sortBy]);
 
   const handleAddToPlanner = async (module: Module) => {
     setPlannerSaving(true);
@@ -304,44 +301,47 @@ export default function ExploreActivitiesPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md lg:px-lg pb-md pt-sm space-y-sm max-w-[1280px] mx-auto">
-        {/* Subject chips */}
-        <div className="flex gap-xs overflow-x-auto pb-xs">
-          {SUBJECTS.map(({ label, value }) => (
+      <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md lg:px-lg py-md max-w-[1280px] mx-auto">
+        <div className="flex flex-col gap-md">
+          {/* Subject filter pills */}
+          <div className="flex gap-xs overflow-x-auto pb-xs">
             <button
-              key={value}
-              onClick={() => toggleSubject(value)}
-              className={`font-sans text-xs shrink-0 rounded-full px-sm py-xs border transition-all duration-200 ${
-                selectedSubjects.includes(value)
-                  ? `${SUBJECT_COLOR_MAP[value]} border-opacity-50`
-                  : 'text-text-muted border-border-subtle hover:border-border-medium bg-transparent'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Duration + results count */}
-        <div className="flex items-center gap-sm flex-wrap">
-          {DURATION_FILTERS.map((d) => (
-            <button
-              key={d.value}
-              onClick={() =>
-                setSelectedDuration((prev) => (prev === d.value ? null : d.value))
-              }
-              className={`font-sans text-xs rounded-full px-sm py-xs border transition-all duration-200 ${
-                selectedDuration === d.value
+              onClick={() => setSubjectFilter('all')}
+              className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-200 ${
+                subjectFilter === 'all'
                   ? 'bg-ember text-text-inverse border-ember'
-                  : 'text-text-muted border-border-subtle hover:border-border-medium bg-transparent'
+                  : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
               }`}
             >
-              {d.label}
+              All
             </button>
-          ))}
-          <span className="font-sans text-xs text-text-muted ml-auto">
-            {filtered.length} module{filtered.length !== 1 ? 's' : ''}
-          </span>
+            {SUBJECTS.map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setSubjectFilter(value)}
+                className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-200 ${
+                  subjectFilter === value
+                    ? 'bg-ember text-text-inverse border-ember'
+                    : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort select (right-aligned) */}
+          <div className="flex justify-end">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-surface-raised border border-border-subtle rounded-md px-md py-[8px] font-sans text-sm text-text-primary outline-none focus:border-ember transition-colors duration-200"
+            >
+              <option value="name">Name (A–Z)</option>
+              <option value="newest">Newest first</option>
+              <option value="relevant">Most relevant</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -372,18 +372,17 @@ export default function ExploreActivitiesPage() {
                 </button>
               </>
             ) : (
-              <>
-                <p className="text-4xl mb-md">🔍</p>
-                <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">
-                  No modules match
-                </h2>
+              <div className="flex flex-col items-center gap-md py-2xl text-center">
+                <span className="text-4xl">🔍</span>
+                <p className="font-serif text-lg font-semibold text-text-primary">No activities found</p>
+                <p className="font-serif text-sm text-text-secondary">Try a different subject or clear the filter.</p>
                 <button
-                  onClick={() => { setSelectedSubjects([]); setSelectedDuration(null); }}
-                  className="font-sans text-sm text-ember underline"
+                  onClick={() => setSubjectFilter('all')}
+                  className="font-sans text-sm text-ember hover:underline"
                 >
-                  Clear filters
+                  Clear filter
                 </button>
-              </>
+              </div>
             )}
           </div>
         ) : (

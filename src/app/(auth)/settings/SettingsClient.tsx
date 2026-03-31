@@ -52,6 +52,7 @@ export default function SettingsClient({
   const [addingChild, setAddingChild] = useState(false);
   const [newChildName, setNewChildName] = useState('');
   const [newChildColour, setNewChildColour] = useState('rose');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function saveSettings(patch: Partial<SettingsData>) {
     setSaving(true);
@@ -156,13 +157,24 @@ export default function SettingsClient({
         ))}
       </div>
 
+      {/* Mobile sidebar toggle button */}
+      <button
+        onClick={() => setSidebarOpen((v) => !v)}
+        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary"
+      >
+        {sidebarOpen ? '← Hide menu' : '☰ Settings menu'}
+      </button>
+
       <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-xl lg:items-start">
-        {/* Sidebar nav — desktop only */}
-        <nav className="hidden lg:flex flex-col gap-xs sticky top-[80px]">
+        {/* Sidebar nav — hidden on mobile unless open, always visible on md+ */}
+        <nav className={`md:block ${sidebarOpen ? 'block' : 'hidden'} flex flex-col gap-xs sticky top-[80px]`}>
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSidebarOpen(false);
+              }}
               className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
                 activeTab === tab.id
                   ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'

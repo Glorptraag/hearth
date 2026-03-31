@@ -17,6 +17,7 @@ interface Notification {
 
 interface NotificationCentreClientProps {
   initialNotifications: Notification[];
+  basePath?: string;
 }
 
 // Tier priority order (lowest index = highest priority)
@@ -32,6 +33,7 @@ type FilterTab = 'all' | 'whisper' | 'nudge' | 'chime';
 
 export default function NotificationCentreClient({
   initialNotifications,
+  basePath = '',
 }: NotificationCentreClientProps) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -202,6 +204,7 @@ export default function NotificationCentreClient({
                     notification={n}
                     onDismiss={handleDismiss}
                     onMarkRead={handleMarkRead}
+                    basePath={basePath}
                   />
                 ))}
               </div>

@@ -52,6 +52,7 @@ interface DashboardClientProps {
   todayPlanner: PlannerItem[];
   learners: Learner[];
   todayEntryCount: number;
+  basePath?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -163,6 +164,7 @@ export default function DashboardClient({
   todayPlanner,
   learners,
   todayEntryCount,
+  basePath = '',
 }: DashboardClientProps) {
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
@@ -211,7 +213,7 @@ export default function DashboardClient({
               </p>
             </div>
             <Link
-              href="/log"
+              href={`${basePath}/log`}
               className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
             >
               Log your first session
@@ -227,7 +229,7 @@ export default function DashboardClient({
                 Your Learners
               </h2>
               <Link
-                href="/our-story"
+                href={`${basePath}/our-story`}
                 className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
               >
                 View all journeys →
@@ -245,7 +247,7 @@ export default function DashboardClient({
                 return (
                   <Link
                     key={l.id}
-                    href={`/our-story/learner/${l.id}`}
+                    href={`${basePath}/our-story/learner/${l.id}`}
                     className="flex flex-col items-center transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[4px]"
                   >
                     <div
@@ -288,7 +290,7 @@ export default function DashboardClient({
                 {todayEntries.length > 0 ? "Today\u2019s Moments" : 'Recent Moments'}
               </h2>
               <Link
-                href="/our-story/portfolio"
+                href={`${basePath}/our-story/portfolio`}
                 className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
               >
                 See full timeline →
@@ -306,7 +308,7 @@ export default function DashboardClient({
               )}
               {/* Add card */}
               <Link
-                href="/log"
+                href={`${basePath}/log`}
                 className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-ember hover:bg-ember-glow"
               >
                 <span className="font-sans text-[0.75rem] text-text-muted mb-md">
@@ -328,7 +330,7 @@ export default function DashboardClient({
       <aside className="hidden lg:flex lg:flex-col bg-surface-panel border-l border-border-subtle p-xl">
         {/* Quick Log */}
         <Link
-          href="/log"
+          href={`${basePath}/log`}
           className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(217,123,58,0.4),0_0_32px_rgba(217,123,58,0.2)] mb-2xl"
         >
           <span className="text-lg">✏️</span>
@@ -381,7 +383,7 @@ export default function DashboardClient({
               {snapshot.recommendations[0].title}
             </p>
             <Link
-              href="/explore/activities"
+              href={`${basePath}/explore/activities`}
               className="font-sans text-[0.8rem] font-medium text-sage hover:underline inline-flex items-center gap-xs"
             >
               See suggestions →

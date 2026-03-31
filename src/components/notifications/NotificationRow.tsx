@@ -15,6 +15,7 @@ interface NotificationRowProps {
   };
   onDismiss: (id: string) => void;
   onMarkRead: (id: string) => void;
+  basePath?: string;
 }
 
 // Tier 1 = ember left border, Tier 2 = violet, Tier 3 = muted
@@ -56,6 +57,7 @@ export default function NotificationRow({
   notification,
   onDismiss,
   onMarkRead,
+  basePath = '',
 }: NotificationRowProps) {
   const isUnread = notification.state === 'visible';
   const accent = TIER_LEFT_ACCENT[notification.tier] ?? TIER_LEFT_ACCENT.chime;
@@ -98,7 +100,7 @@ export default function NotificationRow({
           <div className="mt-sm flex items-center justify-between border-t border-border-subtle pt-sm">
             {notification.destinationRoute ? (
               <Link
-                href={notification.destinationRoute}
+                href={`${basePath}${notification.destinationRoute}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (isUnread) onMarkRead(notification.id);

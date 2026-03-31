@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { differenceInYears, format, startOfMonth } from 'date-fns';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -76,11 +77,18 @@ const DEFAULT_COLORS = CHILD_COLORS.rose;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OurStoryHubClient() {
+  const pathname = usePathname();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [stats, setStats] = useState<LearnerStats | null>(null);
   const [statsLearnerId, setStatsLearnerId] = useState<string>('');
   const [loadingLearners, setLoadingLearners] = useState(true);
+
+  const tabs = [
+    { href: '/our-story/portfolio', label: 'Portfolio' },
+    { href: '/our-story/capabilities', label: 'Capabilities' },
+    { href: '/our-story/report', label: 'Report' },
+  ];
 
   // Fetch learner list once
   useEffect(() => {
@@ -229,6 +237,26 @@ export default function OurStoryHubClient() {
           {learningSince ? `Learning since ${learningSince}` : null}
         </p>
       </header>
+
+      {/* Navigation tabs */}
+      <div className="mb-2xl flex border-b border-border-subtle">
+        {tabs.map((tab) => {
+          const isActive = pathname === tab.href;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`px-md py-sm font-sans text-sm font-semibold transition-colors duration-200 ${
+                isActive
+                  ? 'border-b-2 border-ember text-ember -mb-px'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
 
       {/* Term summary — empty state for new learners */}
       <section className="relative mb-2xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">

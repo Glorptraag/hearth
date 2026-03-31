@@ -170,6 +170,38 @@ export default function MarketplacePage() {
           </div>
         ) : (
           <>
+            {/* ── Editor's Picks ── */}
+            {packs.length > 0 && (
+              <div className="mb-xl">
+                <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  Editor's Picks
+                </p>
+                <div className="flex gap-md overflow-x-auto pb-sm scrollbar-none">
+                  {packs.slice(0, 4).map((pack, i) => {
+                    const BADGES = ['Staff Pick', 'Specialist', 'New', 'Popular'];
+                    const BADGE_STYLES = [
+                      'bg-ember/15 text-ember',
+                      'bg-sage/15 text-sage',
+                      'bg-domain-science/15 text-domain-science',
+                      'bg-domain-hass/15 text-domain-hass',
+                    ];
+                    return (
+                      <div
+                        key={pack._id}
+                        className="relative shrink-0 w-[200px] rounded-[10px] border border-border-subtle bg-surface-panel p-md overflow-hidden"
+                      >
+                        <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-60" />
+                        <span className={`mb-sm inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${BADGE_STYLES[i % BADGE_STYLES.length]}`}>
+                          {BADGES[i % BADGES.length]}
+                        </span>
+                        <p className="font-serif text-sm font-semibold text-text-primary line-clamp-2">{pack.title}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* ── Results count ── */}
             <p className="font-sans text-[0.75rem] text-text-muted mb-lg">
               {filtered.length === packs.length

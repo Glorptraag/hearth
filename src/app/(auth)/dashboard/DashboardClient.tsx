@@ -28,6 +28,7 @@ interface PlannerItem {
   title: string | null;
   status: string | null;
   moduleId: string | null;
+  subjects?: string[] | null;
 }
 
 interface SnapshotData {
@@ -119,6 +120,23 @@ function getGreetingMessage(
     message: `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged today. Keep it up!`,
   };
 }
+
+const SECTION_LABELS: Record<string, { title: string; subtitle: string }> = {
+  morning:   { title: "TODAY'S SHAPE",    subtitle: 'Plan your day' },
+  afternoon: { title: 'HAPPENING NOW',    subtitle: 'Sessions in progress' },
+  evening:   { title: "TODAY'S MOMENTS",  subtitle: 'How did it go?' },
+};
+
+const SUBJECT_PIP: Record<string, string> = {
+  english:      'bg-domain-english',
+  mathematics:  'bg-domain-mathematics',
+  science:      'bg-domain-science',
+  hass:         'bg-domain-hass',
+  arts:         'bg-domain-arts',
+  technologies: 'bg-domain-technologies',
+  hpe:          'bg-domain-hpe',
+  languages:    'bg-domain-languages',
+};
 
 const COLOUR_MAP: Record<string, { bg: string; border: string; text: string }> = {
   rose: {
@@ -282,48 +300,103 @@ export default function DashboardClient({
           </section>
         )}
 
-        {/* Today's Moments */}
-        {hasEntries && (
+        {/* Today's Planner & Moments */}
+        {(todayPlanner.length > 0 || hasEntries) && (
           <section className="animate-in delay-4 mb-3xl">
-            <div className="flex items-center justify-between mb-lg">
-              <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
-                {todayEntries.length > 0 ? "Today\u2019s Moments" : 'Recent Moments'}
-              </h2>
-              <Link
-                href={`${basePath}/our-story/portfolio`}
-                className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
-              >
-                See full timeline →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
-              {(todayEntries.length > 0 ? todayEntries : recentEntries.slice(0, 3)).map(
-                (entry) => (
-                  <MomentCard
-                    key={entry.id}
-                    entry={entry}
-                    learners={learners}
-                  />
-                )
+            {todayPlanner.length > 0 && (
+              <div className="mb-3xl">
+                <div className="flex items-center justify-between mb-lg">
+                  <div>
+                    <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
+                      {SECTION_LABELS[timeOfDay].title}
+                    </h2>
+                    <p className="font-sans text-[0.85rem] text-text-muted mt-xs">
+                      {SECTION_LABELS[timeOfDay].subtitle}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
+                  {todayPlanner.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    >
+                      <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
+                        {item.title}
+                      </h3>
+                      {item.status && (
+                        <p className="font-sans text-[0.85rem] text-text-secondary mt-sm">
+                          Status: {item.status}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {todayPlanner.length > 0 && (() => {
+                  const uniqueSubjects = Array.from(
+                    new Set(todayPlanner.flatMap((e) => e.subjects ?? []))
+                  ).sort();
+                  return uniqueSubjects.length > 0 ? (
+                    <div className="mt-lg">
+                      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
+                        Today's subjects
+                      </p>
+                      <div className="flex gap-[4px] flex-wrap">
+                        {uniqueSubjects.map((sub) => (
+                          <span
+                            key={sub}
+                            className={`w-2 h-2 rounded-full ${SUBJECT_PIP[sub]}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
+            {hasEntries && (
+              <div>
+                <div className="flex items-center justify-between mb-lg">
+                  <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
+                    {todayEntries.length > 0 ? "Today\u2019s Moments" : 'Recent Moments'}
+                  </h2>
+                  <Link
+                    href={`${basePath}/our-story/portfolio`}
+                    className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
+                  >
+                    See full timeline →
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
+                    {(todayEntries.length > 0 ? todayEntries : recentEntries.slice(0, 3)).map(
+                      (entry) => (
+                        <MomentCard
+                          key={entry.id}
+                          entry={entry}
+                          learners={learners}
+                        />
+                      )
+                    )}
+                    {/* Add card */}
+                    <Link
+                      href={`${basePath}/log`}
+                      className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-ember hover:bg-ember-glow"
+                    >
+                      <span className="font-sans text-[0.75rem] text-text-muted mb-md">
+                        Something we haven&rsquo;t captured?
+                      </span>
+                      <span className="font-serif text-[1.1rem] font-semibold text-text-muted mb-sm group-hover:text-text-primary transition-colors duration-200">
+                        Add another moment
+                      </span>
+                      <span className="font-serif text-[0.95rem] text-text-muted leading-[1.6]">
+                        Learning happens in small ways. What else did you notice today?
+                      </span>
+                    </Link>
+                  </div>
+                </div>
               )}
-              {/* Add card */}
-              <Link
-                href={`${basePath}/log`}
-                className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-ember hover:bg-ember-glow"
-              >
-                <span className="font-sans text-[0.75rem] text-text-muted mb-md">
-                  Something we haven&rsquo;t captured?
-                </span>
-                <span className="font-serif text-[1.1rem] font-semibold text-text-muted mb-sm group-hover:text-text-primary transition-colors duration-200">
-                  Add another moment
-                </span>
-                <span className="font-serif text-[0.95rem] text-text-muted leading-[1.6]">
-                  Learning happens in small ways. What else did you notice today?
-                </span>
-              </Link>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
       </div>
 
       {/* ── Right panel (desktop only) ── */}

@@ -6,6 +6,26 @@ import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName } from '@/lib/capability-threads';
 
+type CardType = 'evidence' | 'journey' | 'milestone';
+
+const CARD_TYPE_BADGE: Record<CardType, string> = {
+  evidence: 'bg-[#C4A882]/15 text-[#C4A882]',
+  journey: 'bg-ember/15 text-ember',
+  milestone: 'bg-sage/15 text-sage',
+};
+
+const CARD_TYPE_LABEL: Record<CardType, string> = {
+  evidence: 'Evidence',
+  journey: 'Journey',
+  milestone: 'Milestone',
+};
+
+const CARD_TYPE_TOP: Record<CardType, string> = {
+  evidence: 'bg-[#C4A882]',
+  journey: 'bg-ember',
+  milestone: 'bg-sage',
+};
+
 type Learner = {
   id: string;
   name: string;
@@ -24,6 +44,8 @@ type AiEnrichment = {
   curriculum_descriptors?: { code: string; confidence: number }[];
   subjects_detected?: string[];
   confidence?: number;
+  milestone_flag?: boolean;
+  suggested_thread?: string;
 } | null;
 
 type Entry = {
@@ -85,6 +107,7 @@ export default function PortfolioPage() {
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all'>('all');
   const [loading, setLoading] = useState(true);
+  const [openThreads, setOpenThreads] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/learners')
@@ -143,6 +166,35 @@ export default function PortfolioPage() {
   const sortedThreads = useMemo(() => {
     return [...threads].sort((a, b) => b.observation_count - a.observation_count);
   }, [threads]);
+
+  const getCardType = (entry: Entry): CardType => {
+    if (entry.evidenceUrls && entry.evidenceUrls.length > 0) return 'evidence';
+    if (entry.aiEnrichment?.milestone_flag === true) return 'milestone';
+    return 'journey';
+  };
+
+  const groupedAndSortedEntries = useMemo(() => {
+    const grouped = new Map<string, Entry[]>();
+
+    filteredEntries.forEach((entry) => {
+      const threadName = entry.aiEnrichment?.suggested_thread || 'Uncategorized';
+      if (!grouped.has(threadName)) {
+        grouped.set(threadName, []);
+      }
+      grouped.get(threadName)!.push(entry);
+    });
+
+    const sorted = Array.from(grouped.entries()).sort((a, b) => b[1].length - a[1].length);
+    return sorted;
+  }, [filteredEntries]);
+
+  const toggleThread = (thread: string) => {
+    setOpenThreads((prev) => {
+      const next = new Set(prev);
+      next.has(thread) ? next.delete(thread) : next.add(thread);
+      return next;
+    });
+  };
 
   const currentMonthName = format(new Date(), 'MMMM');
 
@@ -241,7 +293,7 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Entry cards */}
+          {/* Entry cards — grouped by thread in accordions */}
           {filteredEntries.length === 0 ? (
             <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
               <span className="text-2xl block mb-sm">📖</span>
@@ -254,97 +306,124 @@ export default function PortfolioPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-sm">
-              {filteredEntries.map((entry) => {
-                const expanded = expandedEntry === entry.id;
-                const engValue = entry.engagementPerLearner?.[selectedLearnerId];
-                const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
-                const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
-                  .filter((ct) => ct.confidence >= 0.5);
-                return (
+            <div className="space-y-md">
+              {groupedAndSortedEntries.map(([threadName, threadEntries]) => (
+                <div key={threadName} className="border border-border-subtle rounded-[10px] overflow-hidden bg-surface-panel">
+                  {/* Accordion header */}
                   <button
-                    key={entry.id}
-                    onClick={() => setExpandedEntry(expanded ? null : entry.id)}
-                    className="group relative w-full text-left overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    onClick={() => toggleThread(threadName)}
+                    className="flex w-full items-center justify-between px-md py-sm font-serif text-base font-semibold text-text-primary hover:bg-surface-hover transition-colors duration-200"
                   >
-                    <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
-                    <div className="flex items-start justify-between gap-sm">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-serif text-base font-semibold text-text-primary truncate">
-                          {entry.title}
-                        </h3>
-                        <p className="font-sans text-xs text-text-muted mt-xs">
-                          {format(new Date(entry.dateOccurred), 'd MMM yyyy')}
-                        </p>
-                      </div>
-                      {engValue && (
-                        <span className="text-lg shrink-0" title={`Engagement: ${engValue}`}>
-                          {ENGAGEMENT_EMOJI[engValue]}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Subject pills */}
-                    {entry.subjects && entry.subjects.length > 0 && (
-                      <div className="flex flex-wrap gap-xs mt-sm">
-                        {entry.subjects.map((s) => {
-                          const cfg = SUBJECT_CONFIG[s];
-                          if (!cfg) return null;
-                          return (
-                            <span
-                              key={s}
-                              className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-medium ${cfg.color}`}
-                            >
-                              {cfg.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Capability thread tags from AI enrichment */}
-                    {entryThreads.length > 0 && (
-                      <div className="flex flex-wrap gap-xs mt-sm">
-                        {entryThreads.map((ct) => (
-                          <span
-                            key={ct.thread_id}
-                            className="rounded-full bg-surface-hover px-sm py-[2px] font-sans text-[10px] text-text-muted"
-                          >
-                            {getThreadName(ct.thread_id)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Discovery */}
-                    {discovery && (
-                      <p className="font-serif text-sm italic text-text-secondary mt-sm leading-relaxed">
-                        &ldquo;{discovery}&rdquo;
-                      </p>
-                    )}
-
-                    {/* Evidence thumbnails */}
-                    {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
-                      <div className="flex gap-xs mt-sm">
-                        {entry.evidenceUrls.slice(0, 3).map((url, i) => (
-                          <div key={i} className="h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                            <img src={url} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Expanded view */}
-                    {expanded && entry.description && (
-                      <div className="mt-md pt-md border-t border-border-subtle">
-                        <p className="font-serif text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-                          {entry.description}
-                        </p>
-                      </div>
-                    )}
+                    <span>{threadName}</span>
+                    <span className={`font-sans text-[12px] text-text-muted transition-transform duration-200 ${openThreads.has(threadName) ? 'rotate-180' : ''}`}>▾</span>
                   </button>
-                );
-              })}
+
+                  {/* Accordion content */}
+                  {openThreads.has(threadName) && (
+                    <div className="border-t border-border-subtle px-md py-sm space-y-sm">
+                      {threadEntries.map((entry) => {
+                        const expanded = expandedEntry === entry.id;
+                        const engValue = entry.engagementPerLearner?.[selectedLearnerId];
+                        const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
+                        const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
+                          .filter((ct) => ct.confidence >= 0.5);
+                        const cardType = getCardType(entry);
+
+                        return (
+                          <button
+                            key={entry.id}
+                            onClick={() => setExpandedEntry(expanded ? null : entry.id)}
+                            className="group relative w-full text-left overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                          >
+                            {/* Type-specific top line */}
+                            <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
+
+                            {/* Type badge */}
+                            <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${CARD_TYPE_BADGE[cardType]}`}>
+                              {CARD_TYPE_LABEL[cardType]}
+                            </span>
+
+                            <div className="flex items-start justify-between gap-sm mt-sm">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-serif text-base font-semibold text-text-primary truncate">
+                                  {entry.title}
+                                </h3>
+                                <p className="font-sans text-xs text-text-muted mt-xs">
+                                  {format(new Date(entry.dateOccurred), 'd MMM yyyy')}
+                                </p>
+                              </div>
+                              {engValue && (
+                                <span className="text-lg shrink-0" title={`Engagement: ${engValue}`}>
+                                  {ENGAGEMENT_EMOJI[engValue]}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Subject pills */}
+                            {entry.subjects && entry.subjects.length > 0 && (
+                              <div className="flex flex-wrap gap-xs mt-sm">
+                                {entry.subjects.map((s) => {
+                                  const cfg = SUBJECT_CONFIG[s];
+                                  if (!cfg) return null;
+                                  return (
+                                    <span
+                                      key={s}
+                                      className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-medium ${cfg.color}`}
+                                    >
+                                      {cfg.label}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Capability thread tags from AI enrichment */}
+                            {entryThreads.length > 0 && (
+                              <div className="flex flex-wrap gap-xs mt-sm">
+                                {entryThreads.map((ct) => (
+                                  <span
+                                    key={ct.thread_id}
+                                    className="rounded-full bg-surface-hover px-sm py-[2px] font-sans text-[10px] text-text-muted"
+                                  >
+                                    {getThreadName(ct.thread_id)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Discovery */}
+                            {discovery && (
+                              <p className="font-serif text-sm italic text-text-secondary mt-sm leading-relaxed">
+                                &ldquo;{discovery}&rdquo;
+                              </p>
+                            )}
+
+                            {/* Evidence thumbnails */}
+                            {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
+                              <div className="flex gap-xs mt-sm">
+                                {entry.evidenceUrls.slice(0, 3).map((url, i) => (
+                                  <div key={i} className="h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
+                                    <img src={url} alt="" className="h-full w-full object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Expanded view */}
+                            {expanded && entry.description && (
+                              <div className="mt-md pt-md border-t border-border-subtle">
+                                <p className="font-serif text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
+                                  {entry.description}
+                                </p>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 

@@ -142,9 +142,13 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
           )}
 
           {inLibrary ? (
-            <span className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-border-subtle text-text-muted cursor-default select-none whitespace-nowrap">
-              ✓ In Library
-            </span>
+            <button
+              disabled
+              aria-label={`${pack.title} is in your library`}
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-sage/30 bg-sage/15 text-sage cursor-default select-none whitespace-nowrap"
+            >
+              In Library
+            </button>
           ) : isMembership ? (
             <button
               onClick={(e) => {

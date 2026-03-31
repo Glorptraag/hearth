@@ -11,6 +11,7 @@ interface ModuleCardProps {
     status: string | null;
     moduleId: string | null;
     learnerIds: string[] | null;
+    subjects: string[] | null;
   };
   learners: Learner[];
   isReadOnly?: boolean;
@@ -26,6 +27,28 @@ const COLOUR_DOT: Record<string, string> = {
   amber: 'bg-amber-400',
 };
 
+const SUBJECT_CHIP: Record<string, string> = {
+  english:      'bg-domain-english/15 text-domain-english',
+  mathematics:  'bg-domain-mathematics/15 text-domain-mathematics',
+  science:      'bg-domain-science/15 text-domain-science',
+  hass:         'bg-domain-hass/15 text-domain-hass',
+  arts:         'bg-domain-arts/15 text-domain-arts',
+  technologies: 'bg-domain-technologies/15 text-domain-technologies',
+  hpe:          'bg-domain-hpe/15 text-domain-hpe',
+  languages:    'bg-domain-languages/15 text-domain-languages',
+};
+
+const SUBJECT_LABELS: Record<string, string> = {
+  english: 'English',
+  mathematics: 'Maths',
+  science: 'Science',
+  hass: 'HASS',
+  arts: 'Arts',
+  technologies: 'Tech',
+  hpe: 'HPE',
+  languages: 'Lang',
+};
+
 export default function ModuleCard({
   entry,
   learners,
@@ -35,6 +58,7 @@ export default function ModuleCard({
 }: ModuleCardProps) {
   const entryLearners = learners.filter((l) => entry.learnerIds?.includes(l.id));
   const isComplete = entry.status === 'completed';
+  const primarySubject = entry.subjects?.[0] ?? null;
 
   return (
     <div
@@ -50,6 +74,13 @@ export default function ModuleCard({
       )}
 
       <div className="p-sm pt-[6px]">
+        {/* Subject chip */}
+        {primarySubject && (
+          <span className={`inline-block rounded-full px-[5px] py-[1px] font-sans text-[9px] font-semibold mb-[3px] ${SUBJECT_CHIP[primarySubject] ?? 'bg-surface-hover text-text-muted'}`}>
+            {SUBJECT_LABELS[primarySubject] ?? primarySubject}
+          </span>
+        )}
+
         {/* Delete button */}
         {!isReadOnly && (
           <button

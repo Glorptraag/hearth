@@ -1,0 +1,8 @@
+{
+  "name": "hearth",
+  "description": "Hearth LMS project skills — Sanity content operations, module building, and content pipeline tools.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Hearth"
+  }
+}

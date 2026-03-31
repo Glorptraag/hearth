@@ -36,6 +36,8 @@ const createPlannerEntrySchema = z.object({
   activityId: z.string().optional(),
   learnerIds: z.array(z.string().uuid()).optional(),
   status: z.string().optional(),
+  session: z.enum(['morning', 'afternoon']).optional(),
+  subjects: z.array(z.string()).optional(),
   notes: z.string().optional(),
 });
 

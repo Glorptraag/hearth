@@ -11,6 +11,8 @@ type Params = { params: Promise<{ id: string }> };
 const patchSchema = z.object({
   status: z.enum(['planned', 'in_progress', 'completed']).optional(),
   title: z.string().min(1).optional(),
+  session: z.enum(['morning', 'afternoon']).optional(),
+  subjects: z.array(z.string()).optional(),
   notes: z.string().optional(),
 });
 

@@ -84,7 +84,6 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [focusField, setFocusField] = useState<string | null>(null);
 
   const toggleSubject = (subject: string) => {
     setForm((f) => ({
@@ -127,8 +126,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
         </p>
         <button
           onClick={onBack}
-          className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
-          style={{ minHeight: 44 }}
+          className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
           Back to pathways
         </button>
@@ -137,6 +135,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
   }
 
   return (
+    <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
     <div className="flex flex-col gap-lg">
       {/* Header */}
       <div className="flex items-center gap-sm">
@@ -162,7 +161,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
       {/* Resource type pills */}
       <div>
         <p
-          className="font-sans text-xs font-medium text-text-muted uppercase tracking-wide mb-sm"
+          className="font-sans text-[0.7rem] font-semibold text-text-muted uppercase tracking-[0.1em] mb-sm"
         >
           What type of resource?
         </p>
@@ -175,12 +174,11 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, resourceType: rt.id }))}
                 className={[
-                  'font-sans text-sm font-medium px-md py-xs rounded-md border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                  'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]',
                   active
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium',
                 ].join(' ')}
-                style={{ minHeight: 36 }}
               >
                 {rt.label}
               </button>
@@ -199,14 +197,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
           value={form.resourceName}
           onChange={(e) => setForm((f) => ({ ...f, resourceName: e.target.value }))}
           placeholder="e.g. The Secret Garden, Planet Earth II, LEGO Mindstorms..."
-          onFocus={() => setFocusField('name')}
-          onBlur={() => setFocusField(null)}
-          className="w-full bg-surface-raised border border-border-subtle rounded-md px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200"
-          style={{
-            padding: '10px 16px',
-            borderColor: focusField === 'name' ? '#D97B3A' : undefined,
-            boxShadow: focusField === 'name' ? '0 0 0 3px rgba(217,123,58,0.25)' : undefined,
-          }}
+          className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
         />
       </div>
 
@@ -220,21 +211,13 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
           onChange={(e) => setForm((f) => ({ ...f, excitement: e.target.value }))}
           placeholder="What drew you to this resource? What do you hope your learner will get from it?"
           rows={3}
-          onFocus={() => setFocusField('excitement')}
-          onBlur={() => setFocusField(null)}
-          className="w-full bg-surface-raised border border-border-subtle rounded-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y transition-all duration-200"
-          style={{
-            padding: '10px 16px',
-            lineHeight: 1.6,
-            borderColor: focusField === 'excitement' ? '#D97B3A' : undefined,
-            boxShadow: focusField === 'excitement' ? '0 0 0 3px rgba(217,123,58,0.25)' : undefined,
-          }}
+          className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
         />
       </div>
 
       {/* Age range */}
       <div>
-        <p className="font-sans text-xs font-medium text-text-muted uppercase tracking-wide mb-sm">
+        <p className="font-sans text-[0.7rem] font-semibold text-text-muted uppercase tracking-[0.1em] mb-sm">
           Age range
         </p>
         <div className="flex flex-wrap gap-sm">
@@ -246,12 +229,11 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, ageRange: age }))}
                 className={[
-                  'font-sans text-sm font-medium px-md py-xs rounded-md border transition-all duration-200',
+                  'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-200',
                   active
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium',
                 ].join(' ')}
-                style={{ minHeight: 36 }}
               >
                 {age}
               </button>
@@ -262,7 +244,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
 
       {/* Subject tags */}
       <div>
-        <p className="font-sans text-xs font-medium text-text-muted uppercase tracking-wide mb-sm">
+        <p className="font-sans text-[0.7rem] font-semibold text-text-muted uppercase tracking-[0.1em] mb-sm">
           Subject areas
         </p>
         <div className="flex flex-wrap gap-sm">
@@ -274,12 +256,11 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
                 type="button"
                 onClick={() => toggleSubject(subject)}
                 className={[
-                  'font-sans text-sm font-medium px-md py-xs rounded-md border transition-all duration-200',
+                  'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-200',
                   active
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium',
                 ].join(' ')}
-                style={{ minHeight: 36 }}
               >
                 {subject}
               </button>
@@ -298,8 +279,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
           type="button"
           onClick={() => handleSave('draft')}
           disabled={saving}
-          className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md transition-all duration-200 disabled:opacity-50"
-          style={{ minHeight: 44, padding: '0 24px' }}
+          className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save as draft'}
         </button>
@@ -307,16 +287,36 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
           type="button"
           onClick={() => handleSave('complete')}
           disabled={saving}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md transition-all duration-200 disabled:opacity-50"
-          style={{
-            minHeight: 44,
-            padding: '0 24px',
-            boxShadow: '0 4px 16px rgba(217,123,58,0.3)',
-          }}
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Continue →'}
         </button>
       </div>
+    </div>
+
+    {/* AI Companion Panel */}
+    <aside className="hidden lg:block sticky top-[120px]">
+      <div className="bg-surface-raised rounded-lg border border-border-subtle p-lg">
+        <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-md">
+          Thinking with you
+        </p>
+        <div className="bg-surface-panel rounded-md border border-border-subtle p-md mb-sm">
+          <p className="font-serif text-sm text-text-secondary">
+            Start with what excites you. The curriculum will follow.
+          </p>
+        </div>
+        <div className="bg-surface-panel rounded-md border border-border-subtle p-md mb-sm">
+          <p className="font-serif text-sm text-text-secondary">
+            Add subject areas to help Hearth surface related activities.
+          </p>
+        </div>
+        <div className="bg-surface-panel rounded-md border border-border-subtle p-md">
+          <p className="font-serif text-sm text-text-secondary">
+            You can save a draft and come back — nothing is lost.
+          </p>
+        </div>
+      </div>
+    </aside>
     </div>
   );
 }
@@ -333,8 +333,7 @@ function ComingSoonView({ pathway, onBack }: { pathway: typeof PATHWAYS[0] | typ
         </button>
       </div>
       <div
-        className="bg-surface-panel border border-border-subtle rounded-lg p-xl"
-        style={{ boxShadow: 'var(--shadow-soft)' }}
+        className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
       >
         <div className="text-3xl mb-md">{pathway.emoji}</div>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
@@ -362,7 +361,7 @@ export default function BuildModulesPage() {
 
   if (selected === 'material') {
     return (
-      <div className="px-md py-lg max-w-2xl mx-auto">
+      <div className="px-md py-lg max-w-4xl mx-auto">
         <MaterialPathwayForm onBack={() => setSelected(null)} />
       </div>
     );
@@ -380,6 +379,7 @@ export default function BuildModulesPage() {
     <div className="px-md py-lg max-w-2xl mx-auto">
       {/* Page header */}
       <div className="mb-xl">
+        <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Build</p>
         <h1 className="font-serif text-2xl font-semibold text-text-primary mb-xs">
           Create a module
         </h1>
@@ -394,11 +394,10 @@ export default function BuildModulesPage() {
           <button
             key={pathway.id}
             onClick={() => setSelected(pathway.id)}
-            className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
-            style={{
-              boxShadow: 'var(--shadow-soft)',
-              borderColor: pathway.id === 'retrospective' ? 'rgba(217,123,58,0.25)' : undefined,
-            }}
+            className={[
+              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
+              pathway.id === 'retrospective' ? 'border-ember/25' : 'border-border-subtle',
+            ].join(' ')}
           >
             <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
               {pathway.emoji}
@@ -412,12 +411,7 @@ export default function BuildModulesPage() {
               </p>
               {pathway.badge && (
                 <span
-                  className="inline-flex items-center gap-xs mt-xs font-sans text-xs font-medium text-ember rounded-full px-sm"
-                  style={{
-                    background: 'rgba(217,123,58,0.12)',
-                    padding: '2px 8px',
-                    marginTop: 6,
-                  }}
+                  className="inline-flex items-center gap-xs font-sans text-xs font-medium text-ember bg-ember-glow px-sm py-[2px] rounded-full mt-[6px]"
                 >
                   ✨ {pathway.badge}
                 </span>
@@ -438,8 +432,7 @@ export default function BuildModulesPage() {
       {/* Goal-Forward card */}
       <button
         onClick={() => setSelected(GOAL_PATHWAY.id)}
-        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
-        style={{ boxShadow: 'var(--shadow-soft)' }}
+        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
       >
         <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
           {GOAL_PATHWAY.emoji}

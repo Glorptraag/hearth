@@ -18,6 +18,8 @@ interface PlannerEntry {
   moduleId: string | null;
   learnerIds: string[] | null;
   date: string;
+  session: string | null;
+  subjects: string[] | null;
 }
 
 interface Recommendation {
@@ -55,6 +57,7 @@ export default function PlannerClient({
   const [entries, setEntries] = useState<PlannerEntry[]>(initialEntries);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetDate, setSheetDate] = useState<string | null>(null);
+  const [sheetSession, setSheetSession] = useState<string>('morning');
   const [loading, setLoading] = useState(false);
 
   const weekDates = getWeekDates(weekStart);
@@ -91,12 +94,13 @@ export default function PlannerClient({
     loadWeek(current);
   }
 
-  function handleOpenSheet(date: string) {
+  function handleOpenSheet(date: string, session: string) {
     setSheetDate(date);
+    setSheetSession(session);
     setSheetOpen(true);
   }
 
-  async function handleAddEntry(payload: { date: string; title: string; learnerIds: string[] }) {
+  async function handleAddEntry(payload: { date: string; title: string; learnerIds: string[]; session: string }) {
     const res = await fetch('/api/planner', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -199,7 +203,7 @@ export default function PlannerClient({
             Nothing planned this week yet
           </p>
           <p className="font-sans text-xs text-text-muted">
-            Tap + on any day to add an activity, or browse the{' '}
+            Tap + in any session to add an activity, or browse the{' '}
             <a href="/explore/activities" className="text-ember hover:underline">activity library</a>.
           </p>
         </div>
@@ -221,6 +225,7 @@ export default function PlannerClient({
       <BottomSheet
         isOpen={sheetOpen}
         targetDate={sheetDate}
+        targetSession={sheetSession}
         learners={learners}
         recommendations={recommendations}
         onClose={() => setSheetOpen(false)}

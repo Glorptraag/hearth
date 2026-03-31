@@ -60,6 +60,8 @@ export default async function PlannerPage() {
         moduleId: e.moduleId ?? null,
         learnerIds: e.learnerIds?.map(String) ?? null,
         date: e.date,
+        session: e.session ?? 'morning',
+        subjects: e.subjects ?? null,
       }))}
       learners={familyLearners.map((l) => ({
         id: l.id,

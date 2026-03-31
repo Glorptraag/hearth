@@ -217,6 +217,8 @@ export const plannerEntries = pgTable(
     activityId: text('activity_id'),
     learnerIds: uuid('learner_ids').array(),
     status: text('status').default('planned'),
+    session: text('session').default('morning'),
+    subjects: text('subjects').array(),
     notes: text('notes'),
     displayOrder: integer('display_order').default(0),
     createdAt: timestamp('created_at').defaultNow(),

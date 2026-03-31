@@ -13,6 +13,8 @@ export default function DevPreviewPlanner() {
         moduleId: e.moduleId,
         learnerIds: e.learnerIds,
         date: e.date,
+        session: 'morning' as const,
+        subjects: null,
       }))}
       learners={mockLearners.map((l) => ({
         id: l.id,

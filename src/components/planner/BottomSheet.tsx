@@ -17,10 +17,11 @@ interface Recommendation {
 interface BottomSheetProps {
   isOpen: boolean;
   targetDate: string | null;
+  targetSession?: string;
   learners: Learner[];
   recommendations: Recommendation[];
   onClose: () => void;
-  onAdd: (entry: { date: string; title: string; learnerIds: string[] }) => Promise<void>;
+  onAdd: (entry: { date: string; title: string; learnerIds: string[]; session: string }) => Promise<void>;
 }
 
 const COLOUR_CHIP: Record<string, string> = {
@@ -36,6 +37,7 @@ type SheetTab = 'recommendations' | 'custom';
 export default function BottomSheet({
   isOpen,
   targetDate,
+  targetSession,
   learners,
   recommendations,
   onClose,
@@ -44,6 +46,7 @@ export default function BottomSheet({
   const [tab, setTab] = useState<SheetTab>('recommendations');
   const [title, setTitle] = useState('');
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
+  const [session, setSession] = useState<string>('morning');
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -51,10 +54,11 @@ export default function BottomSheet({
     if (isOpen) {
       setTitle('');
       setSelectedLearners([]);
+      setSession(targetSession ?? 'morning');
       setTab(recommendations.length > 0 ? 'recommendations' : 'custom');
       setTimeout(() => inputRef.current?.focus(), 300);
     }
-  }, [isOpen, recommendations.length]);
+  }, [isOpen, recommendations.length, targetSession]);
 
   function toggleLearner(id: string) {
     setSelectedLearners((prev) =>
@@ -66,7 +70,7 @@ export default function BottomSheet({
     if (!targetDate || !submittedTitle.trim()) return;
     setSaving(true);
     try {
-      await onAdd({ date: targetDate, title: submittedTitle.trim(), learnerIds: selectedLearners });
+      await onAdd({ date: targetDate, title: submittedTitle.trim(), learnerIds: selectedLearners, session });
       onClose();
     } finally {
       setSaving(false);
@@ -115,6 +119,30 @@ export default function BottomSheet({
             className="font-sans text-sm text-text-muted transition-colors hover:text-text-secondary"
           >
             Cancel
+          </button>
+        </div>
+
+        {/* Session toggle */}
+        <div className="flex gap-xs px-md pb-sm">
+          <button
+            onClick={() => setSession('morning')}
+            className={`rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+              session === 'morning'
+                ? 'border-ember/40 bg-ember-glow text-ember'
+                : 'border-border-subtle bg-transparent text-text-muted'
+            }`}
+          >
+            ☀️ Morning
+          </button>
+          <button
+            onClick={() => setSession('afternoon')}
+            className={`rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+              session === 'afternoon'
+                ? 'border-ember/40 bg-ember-glow text-ember'
+                : 'border-border-subtle bg-transparent text-text-muted'
+            }`}
+          >
+            🌆 Afternoon
           </button>
         </div>
 

@@ -7,6 +7,7 @@ import { PortableText } from '@portabletext/react';
 import type { PortableTextBlock } from '@portabletext/types';
 import { sanityClient } from '@/lib/sanity/client';
 import { PROJECT_DETAIL_QUERY } from '@/lib/sanity/queries';
+import { DOMAIN_CLASSES as SUBJECT_CLASSES, DOMAIN_LABELS as SUBJECT_LABELS } from '@/components/ui/DomainChip';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,23 +43,6 @@ interface Project {
 }
 
 type View = 'overview' | 'stage';
-
-const SUBJECT_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  english:      { bg: 'rgba(107,142,155,0.12)', text: '#6B8E9B', border: 'rgba(107,142,155,0.2)' },
-  mathematics:  { bg: 'rgba(155,123,107,0.12)', text: '#9B7B6B', border: 'rgba(155,123,107,0.2)' },
-  science:      { bg: 'rgba(123,155,107,0.12)', text: '#7B9B6B', border: 'rgba(123,155,107,0.2)' },
-  hass:         { bg: 'rgba(155,139,107,0.12)', text: '#9B8B6B', border: 'rgba(155,139,107,0.2)' },
-  arts:         { bg: 'rgba(139,107,155,0.12)', text: '#8B6B9B', border: 'rgba(139,107,155,0.2)' },
-  technologies: { bg: 'rgba(107,123,155,0.12)', text: '#6B7B9B', border: 'rgba(107,123,155,0.2)' },
-  hpe:          { bg: 'rgba(155,107,123,0.12)', text: '#9B6B7B', border: 'rgba(155,107,123,0.2)' },
-  languages:    { bg: 'rgba(107,155,139,0.12)', text: '#6B9B8B', border: 'rgba(107,155,139,0.2)' },
-};
-
-const SUBJECT_LABELS: Record<string, string> = {
-  english: 'English', mathematics: 'Mathematics', science: 'Science',
-  hass: 'HASS', arts: 'Arts', technologies: 'Technologies',
-  hpe: 'HPE', languages: 'Languages',
-};
 
 const ptComponents = {
   block: {
@@ -144,12 +128,11 @@ function ProjectOverview({
         {(project.subjects ?? []).length > 0 && (
           <div className="flex flex-wrap gap-sm">
             {(project.subjects ?? []).map((s) => {
-              const style = SUBJECT_STYLES[s];
+              const cls = SUBJECT_CLASSES[s] ?? 'bg-surface-raised text-text-secondary border-border-subtle';
               return (
                 <span
                   key={s}
-                  className="px-sm py-xs rounded-[6px] font-sans text-[0.6875rem] font-medium tracking-wider border"
-                  style={style ? { background: style.bg, color: style.text, borderColor: style.border } : {}}
+                  className={`px-sm py-xs rounded-[6px] font-sans text-[0.6875rem] font-medium tracking-wider border ${cls}`}
                 >
                   {SUBJECT_LABELS[s] ?? s}
                 </span>
@@ -232,12 +215,7 @@ function ProjectOverview({
                 {idx < stages.length - 1 && (
                   <div className="flex pl-[42px] h-8">
                     <div
-                      className="w-[2px] h-full"
-                      style={{
-                        background: isCompleted
-                          ? 'linear-gradient(to bottom, #4ADE80, #D97B3A)'
-                          : '#252117',
-                      }}
+                      className={`w-[2px] h-full ${isCompleted ? 'bg-gradient-to-b from-sage to-ember' : 'bg-surface-hover'}`}
                     />
                   </div>
                 )}

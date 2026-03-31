@@ -155,15 +155,16 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-md py-lg">
+    <div className="max-w-[1200px] mx-auto px-md py-xl lg:px-lg lg:py-2xl">
       <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">Learning Journey</h1>
 
       {/* Child selector */}
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
       {/* Monthly summary */}
-      <div className="mt-lg rounded-lg border border-border-subtle bg-surface-raised p-xl shadow-[var(--shadow-soft)]">
-        <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">{currentMonthName} Summary</h2>
+      <div className="relative mt-lg overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm">{currentMonthName} Summary</p>
         {monthlySummary.count === 0 ? (
           <p className="font-serif text-sm text-text-muted italic">No entries yet this month</p>
         ) : (
@@ -264,8 +265,9 @@ export default function PortfolioPage() {
                   <button
                     key={entry.id}
                     onClick={() => setExpandedEntry(expanded ? null : entry.id)}
-                    className="w-full text-left rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[var(--shadow-soft)] hover:border-border-medium hover:translate-y-[-1px] hover:shadow-[var(--shadow-warm)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="group relative w-full text-left overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   >
+                    <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
                     <div className="flex items-start justify-between gap-sm">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-serif text-base font-semibold text-text-primary truncate">
@@ -360,7 +362,7 @@ export default function PortfolioPage() {
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className="rounded-lg border border-border-subtle bg-surface-panel p-md shadow-[var(--shadow-soft)]"
+                    className="rounded-[16px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   >
                     <span className="text-2xl">{badge.badgeEmoji}</span>
                     <h3 className="font-serif text-sm font-semibold text-text-primary mt-xs">
@@ -377,9 +379,9 @@ export default function PortfolioPage() {
         </div>
 
         {/* Desktop sidebar — Capability threads from snapshot */}
-        <aside className="hidden lg:block lg:w-[280px] lg:shrink-0">
-          <div className="sticky top-0">
-            <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-md">
+        <aside className="hidden lg:block lg:w-[300px] lg:shrink-0">
+          <div className="sticky top-xl">
+            <h3 className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md">
               Capability Threads
             </h3>
             {sortedThreads.length === 0 ? (
@@ -389,7 +391,7 @@ export default function PortfolioPage() {
                 {sortedThreads.map((t) => (
                   <div
                     key={t.thread_id}
-                    className="rounded-md border border-border-subtle bg-surface-panel p-sm"
+                    className="rounded-[10px] border border-border-subtle bg-surface-panel p-md hover:border-border-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-serif text-sm font-semibold text-text-primary">

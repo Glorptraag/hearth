@@ -238,7 +238,10 @@ export default function ReportPage() {
       {/* Overall Posture */}
       <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-md mb-md">
-          <h2 className="font-serif text-lg font-semibold text-text-primary">Overall Posture</h2>
+          <div>
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Compliance Status</p>
+            <h2 className="font-serif text-lg font-semibold text-text-primary">Overall Posture</h2>
+          </div>
           <span className={`rounded-full border px-md py-xs font-sans text-xs font-semibold ${posture.color}`}>
             {posture.label}
           </span>
@@ -254,6 +257,7 @@ export default function ReportPage() {
 
       {/* Curriculum Coverage Grid */}
       <div className="mt-lg">
+        <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Subject Areas</p>
         <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Curriculum Coverage</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm">
           {subjectCoverage.map((s) => {
@@ -288,6 +292,7 @@ export default function ReportPage() {
 
       {/* Work Sample Status */}
       <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+        <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Evidence</p>
         <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">Work Samples</h2>
         <p className="font-sans text-sm text-text-secondary mb-md">
           <span className={evidenceEntries.length >= 6 ? 'text-sage font-semibold' : 'text-ember font-semibold'}>
@@ -324,6 +329,7 @@ export default function ReportPage() {
       {/* Gap Analysis */}
       {gaps.length > 0 && (
         <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Gap Analysis</p>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
           <div className="space-y-sm">
             {gaps.map((g) => (

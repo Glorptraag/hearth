@@ -43,9 +43,9 @@ export default function PlannerGrid({
   onDelete,
 }: PlannerGridProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-panel shadow-[var(--shadow-soft)]">
       <div
-        className="grid min-w-[560px] gap-xs"
+        className="grid min-w-[560px]"
         style={{ gridTemplateColumns: `repeat(${weekDates.length}, minmax(100px, 1fr))` }}
       >
         {/* Day headers */}
@@ -56,24 +56,29 @@ export default function PlannerGrid({
           return (
             <div
               key={dateStr}
-              className={`rounded-t-[6px] px-sm py-xs text-center ${
-                isToday ? 'bg-ember-glow' : ''
+              className={`border-b border-border-subtle px-sm py-sm text-center ${
+                isToday ? 'bg-[linear-gradient(180deg,rgba(217,123,58,0.08)_0%,transparent_100%)]' : ''
               }`}
             >
               <p
-                className={`font-sans text-[11px] font-semibold uppercase tracking-[0.08em] ${
-                  isToday ? 'text-ember' : 'text-text-muted'
+                className={`font-serif text-[0.95rem] font-semibold ${
+                  isToday ? 'text-text-primary' : 'text-text-secondary'
                 }`}
               >
                 {DAY_LABELS[dayIndex]}
               </p>
               <p
-                className={`font-sans text-xs ${
-                  isToday ? 'text-ember' : 'text-text-secondary'
+                className={`font-sans text-[0.7rem] ${
+                  isToday ? 'text-ember' : 'text-text-muted'
                 }`}
               >
                 {d.getDate()}
               </p>
+              {isToday && (
+                <span className="mt-xs inline-block rounded-full bg-ember px-sm py-[1px] font-sans text-[0.5625rem] font-semibold uppercase tracking-[0.06em] text-text-inverse">
+                  Today
+                </span>
+              )}
             </div>
           );
         })}
@@ -89,11 +94,11 @@ export default function PlannerGrid({
           return (
             <div
               key={dateStr}
-              className={`flex min-h-[120px] flex-col gap-xs rounded-[6px] border p-xs ${
+              className={`flex min-h-[140px] flex-col gap-xs p-xs ${
                 isToday
-                  ? 'border-ember/20 bg-ember-glow/50'
-                  : 'border-border-subtle bg-surface-panel'
-              }`}
+                  ? 'bg-ember-glow/30'
+                  : ''
+              } ${dateStr < today ? 'opacity-70' : ''}`}
             >
               {dayEntries.map((entry) => (
                 <ModuleCard
@@ -110,7 +115,7 @@ export default function PlannerGrid({
               {!isReadOnly && !isPast && (
                 <button
                   onClick={() => onAdd(dateStr)}
-                  className="mt-auto flex items-center justify-center rounded-[6px] py-xs font-sans text-[11px] text-text-muted transition-colors duration-200 hover:bg-surface-raised hover:text-text-secondary"
+                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/30 py-sm font-sans text-sm text-text-muted transition-all duration-200 hover:border-ember hover:bg-ember-glow hover:text-ember"
                 >
                   +
                 </button>

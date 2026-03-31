@@ -95,18 +95,18 @@ export default function CapabilitiesPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-md py-lg">
+    <div className="max-w-[900px] mx-auto px-md py-xl lg:px-lg lg:py-2xl">
       <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">Capabilities</h1>
 
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
       {/* Stats row */}
-      <div className="mt-lg flex gap-lg">
-        <div className="rounded-lg border border-border-subtle bg-surface-panel px-lg py-md shadow-[var(--shadow-soft)]">
+      <div className="mt-lg flex gap-md">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
           <p className="font-sans text-2xl font-semibold text-ember">{totalObservations}</p>
           <p className="font-sans text-xs text-text-muted">Observations</p>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-panel px-lg py-md shadow-[var(--shadow-soft)]">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
           <p className="font-sans text-2xl font-semibold text-text-primary">{totalThreads}</p>
           <p className="font-sans text-xs text-text-muted">Threads</p>
         </div>
@@ -127,13 +127,14 @@ export default function CapabilitiesPage() {
       </div>
 
       {/* Domain Overview Grid */}
-      <div className="mt-lg grid grid-cols-2 lg:grid-cols-4 gap-sm">
+      <div className="mt-lg grid grid-cols-2 lg:grid-cols-4 gap-md">
         {domainSummaries.map((domain) => (
           <a
             key={domain.key}
             href={`#domain-${domain.key}`}
-            className="rounded-lg border border-border-subtle bg-surface-panel p-md shadow-[var(--shadow-soft)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[var(--shadow-warm)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
           >
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
             <span className="text-2xl">{domain.emoji}</span>
             <h3 className="font-serif text-sm font-semibold text-text-primary mt-sm">{domain.label}</h3>
             <div className="flex gap-md mt-sm">
@@ -177,7 +178,7 @@ export default function CapabilitiesPage() {
                     return (
                       <div
                         key={thread.thread_id}
-                        className="rounded-lg border border-border-subtle bg-surface-panel p-md shadow-[var(--shadow-soft)] hover:border-border-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-sm">
@@ -201,7 +202,7 @@ export default function CapabilitiesPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-lg border border-dashed border-border-medium bg-surface-panel p-md text-center">
+                  <div className="rounded-[10px] border border-dashed border-border-medium bg-surface-panel p-md text-center">
                     <p className="font-serif text-sm text-text-muted italic">No observations yet</p>
                   </div>
                 )}

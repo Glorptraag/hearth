@@ -57,8 +57,10 @@ function ModuleCard({ module, onPreview }: { module: Module; onPreview: (m: Modu
   return (
     <button
       onClick={() => onPreview(module)}
-      className="text-left bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full"
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full"
     >
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+
       <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
         {module.title}
       </h3>
@@ -121,7 +123,7 @@ function PreviewModal({
       onClick={onClose}
     >
       <div
-        className="bg-surface-panel w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-xl max-h-[85vh] overflow-y-auto"
+        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] p-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
@@ -292,8 +294,8 @@ export default function ExploreActivitiesPage() {
   return (
     <div className="min-h-screen bg-surface-body">
       {/* Header */}
-      <div className="px-md pt-xl pb-lg">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-xs">
+      <div className="max-w-[1280px] mx-auto px-md lg:px-lg pt-xl pb-lg">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">
           Your Library
         </p>
         <h1 className="font-serif text-2xl font-semibold text-text-primary">
@@ -302,7 +304,7 @@ export default function ExploreActivitiesPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md pb-md pt-sm space-y-sm">
+      <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md lg:px-lg pb-md pt-sm space-y-sm max-w-[1280px] mx-auto">
         {/* Subject chips */}
         <div className="flex gap-xs overflow-x-auto pb-xs">
           {SUBJECTS.map(({ label, value }) => (
@@ -344,11 +346,11 @@ export default function ExploreActivitiesPage() {
       </div>
 
       {/* Content */}
-      <div className="px-md py-lg pb-32">
+      <div className="max-w-[1280px] mx-auto px-md lg:px-lg py-lg pb-32">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse bg-surface-panel rounded-lg p-xl border border-border-subtle h-40" />
+              <div key={i} className="animate-pulse bg-surface-panel rounded-[16px] p-lg border border-border-subtle h-40" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -385,7 +387,7 @@ export default function ExploreActivitiesPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
             {filtered.map((m) => (
               <ModuleCard key={m._id} module={m} onPreview={setPreviewModule} />
             ))}

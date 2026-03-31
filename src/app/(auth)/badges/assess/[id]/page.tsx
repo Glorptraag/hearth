@@ -279,6 +279,9 @@ export default function BadgeAssessPage() {
 
             {mostlyYes ? (
               <>
+                <div className="inline-flex items-center gap-xs rounded-full border border-sage/30 bg-sage/10 px-md py-xs font-sans text-xs font-semibold text-sage mb-md">
+                  ✓ Looking good
+                </div>
                 <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
                   It looks like {learnerName} has earned {badge.title}!
                 </h2>
@@ -288,8 +291,11 @@ export default function BadgeAssessPage() {
               </>
             ) : (
               <>
-                <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
+                <div className="inline-flex items-center gap-xs rounded-full border border-ember/30 bg-ember-glow px-md py-xs font-sans text-xs font-semibold text-ember mb-md">
                   Your call
+                </div>
+                <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
+                  Not quite yet
                 </h2>
                 <p className="font-serif text-text-secondary mb-xl">
                   Would you like to award <span className="text-ember">{badge.title}</span> now, or
@@ -320,7 +326,7 @@ export default function BadgeAssessPage() {
         {/* ── CELEBRATION ── */}
         {step === 'celebration' && (
           <div className="pt-2xl text-center">
-            <div className="w-32 h-32 mx-auto mb-lg rounded-full bg-surface-panel border-2 border-ember flex items-center justify-center text-7xl shadow-[0_0_40px_rgba(217,123,58,0.25)]">
+            <div className="w-32 h-32 mx-auto mb-lg rounded-full bg-surface-panel border-2 border-ember flex items-center justify-center text-7xl shadow-[0_0_60px_rgba(217,123,58,0.35),0_0_120px_rgba(217,123,58,0.15)]">
               {badge.emoji}
             </div>
             <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">

@@ -169,7 +169,7 @@ export default function OurStoryHubClient() {
   const showSelector = learners.length > 1;
 
   return (
-    <div className="mx-auto max-w-2xl px-md py-xl">
+    <div className="mx-auto max-w-[900px] px-md py-xl lg:px-2xl lg:py-2xl">
       {/* Child selector — grid, only shown when 2+ children */}
       {showSelector && (
         <div className="mb-xl grid grid-cols-2 gap-sm">
@@ -210,7 +210,7 @@ export default function OurStoryHubClient() {
       )}
 
       {/* Child header */}
-      <header className="mb-xl text-center">
+      <header className="mb-2xl text-center">
         <div
           className="mx-auto mb-lg flex h-[96px] w-[96px] items-center justify-center rounded-full text-[2.5rem]"
           style={{
@@ -231,7 +231,7 @@ export default function OurStoryHubClient() {
       </header>
 
       {/* Term summary — empty state for new learners */}
-      <section className="relative mb-xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <section className="relative mb-2xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <p className="mb-md font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
           Term Summary
@@ -255,7 +255,7 @@ export default function OurStoryHubClient() {
       </section>
 
       {/* Nav cards */}
-      <div className="mb-xl grid grid-cols-2 gap-md">
+      <div className="mb-2xl grid grid-cols-2 gap-lg">
         <NavCard
           href="/our-story/portfolio"
           icon="📁"

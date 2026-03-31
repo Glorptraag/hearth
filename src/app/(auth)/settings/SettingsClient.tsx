@@ -27,15 +27,17 @@ interface SettingsClientProps {
   initialChildren: Child[];
 }
 
-type Tab = 'profile' | 'children' | 'pedagogy' | 'heu' | 'notifications' | 'billing';
+type Tab = 'profile' | 'children' | 'pedagogy' | 'heu' | 'notifications' | 'access' | 'account' | 'billing';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'profile', label: 'Family Profile' },
-  { id: 'children', label: 'Children' },
-  { id: 'pedagogy', label: 'Pedagogy' },
-  { id: 'heu', label: 'HEU Compliance' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'billing', label: 'Billing' },
+const TABS: { id: Tab; label: string; emoji: string }[] = [
+  { id: 'profile', label: 'Family Profile', emoji: '🏡' },
+  { id: 'children', label: 'Our Learners', emoji: '👧' },
+  { id: 'pedagogy', label: 'Learning Approach', emoji: '🌿' },
+  { id: 'heu', label: 'Compliance', emoji: '📋' },
+  { id: 'notifications', label: 'Notifications', emoji: '🔔' },
+  { id: 'access', label: 'Family Access', emoji: '🔑' },
+  { id: 'account', label: 'Account & Security', emoji: '🛡️' },
+  { id: 'billing', label: 'Subscription', emoji: '💎' },
 ];
 
 export default function SettingsClient({
@@ -134,11 +136,11 @@ export default function SettingsClient({
   ];
 
   return (
-    <div className="mx-auto max-w-2xl px-md py-xl">
+    <div className="mx-auto max-w-[1100px] px-md py-xl">
       <h1 className="mb-xl font-serif text-2xl font-semibold text-text-primary">Settings</h1>
 
-      {/* Tab bar */}
-      <div className="mb-xl flex overflow-x-auto border-b border-border-subtle pb-[1px]">
+      {/* Tab bar — mobile only */}
+      <div className="mb-xl flex overflow-x-auto border-b border-border-subtle pb-[1px] lg:hidden">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -154,9 +156,35 @@ export default function SettingsClient({
         ))}
       </div>
 
+      <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-xl lg:items-start">
+        {/* Sidebar nav — desktop only */}
+        <nav className="hidden lg:flex flex-col gap-xs sticky top-[80px]">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+                activeTab === tab.id
+                  ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'
+                  : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
+              }`}
+            >
+              <span>{tab.emoji}</span>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content panel */}
+        <div>
+
       {/* ─── Family Profile ─── */}
       {activeTab === 'profile' && (
         <div className="flex flex-col gap-md">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Identity</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Family Profile</h2>
+          </div>
           <div>
             <label className="mb-xs block font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
               Family Name
@@ -182,6 +210,10 @@ export default function SettingsClient({
       {/* ─── Children ─── */}
       {activeTab === 'children' && (
         <div className="flex flex-col gap-sm">
+          <div className="mb-sm">
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Learners</p>
+            <h2 className="font-serif text-xl font-semibold text-text-primary">Our Learners</h2>
+          </div>
           {children.length === 0 && !addingChild && (
             <div className="rounded-[10px] border border-border-subtle bg-surface-panel px-md py-xl text-center">
               <p className="font-serif text-base text-text-secondary">No children added yet.</p>
@@ -257,6 +289,10 @@ export default function SettingsClient({
       {/* ─── Pedagogy ─── */}
       {activeTab === 'pedagogy' && (
         <div className="flex flex-col gap-lg">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Philosophy</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Learning Approach</h2>
+          </div>
           <p className="font-sans text-sm text-text-secondary">
             Your pedagogy preference shapes how Hearth frames your family&rsquo;s learning insights.
             Content is always philosophy-neutral — this is for your lens only.
@@ -277,6 +313,10 @@ export default function SettingsClient({
       {/* ─── HEU Compliance ─── */}
       {activeTab === 'heu' && (
         <div className="flex flex-col gap-lg">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Queensland HEU</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Compliance & Reporting</h2>
+          </div>
           <HEUFields
             registrationNumber={settings.heuRegistrationNumber}
             nextReportDate={settings.heuNextReportDate}
@@ -296,6 +336,10 @@ export default function SettingsClient({
       {/* ─── Notifications ─── */}
       {activeTab === 'notifications' && (
         <div className="flex flex-col gap-lg">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Preferences</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Notifications</h2>
+          </div>
           <NotificationPreferences
             prefs={settings.notificationPrefs as { dailyReminder?: boolean; weeklyDigest?: boolean; complianceAlerts?: boolean }}
             onChange={(prefs) => {
@@ -309,9 +353,44 @@ export default function SettingsClient({
         </div>
       )}
 
+      {/* ─── Family Access ─── */}
+      {activeTab === 'access' && (
+        <div className="flex flex-col gap-md">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Sharing</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Family Access</h2>
+          </div>
+          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
+            <span className="text-3xl">🔑</span>
+            <p className="mt-md font-serif text-base text-text-secondary">
+              Invite co-facilitators and manage family access. Coming soon.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Account & Security ─── */}
+      {activeTab === 'account' && (
+        <div className="flex flex-col gap-md">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Security</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Account & Security</h2>
+          </div>
+          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg">
+            <p className="font-sans text-sm text-text-secondary">
+              Account and security settings are managed through your Clerk account. Password, two-factor authentication, and connected accounts are all available there.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ─── Billing ─── */}
       {activeTab === 'billing' && (
         <div className="flex flex-col gap-md">
+          <div>
+            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Membership</p>
+            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Subscription</h2>
+          </div>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
             <span className="text-3xl">🌿</span>
             <h2 className="mt-md font-serif text-xl font-semibold text-text-primary">
@@ -326,6 +405,8 @@ export default function SettingsClient({
           </p>
         </div>
       )}
+        </div>{/* end content panel */}
+      </div>{/* end grid */}
     </div>
   );
 }

@@ -109,11 +109,25 @@ const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selec
 function SectionIndicator({ number, done }: { number: number; done: boolean }) {
   return (
     <div
-      className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full border-2 font-sans text-xs font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        done ? 'bg-ember border-ember text-text-inverse' : 'border-border-medium text-text-muted'
+      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
       }`}
     >
       {done ? '✓' : number}
+    </div>
+  );
+}
+
+function SectionHeader({ number, done, label, optional }: { number: number; done: boolean; label: string; optional?: string }) {
+  return (
+    <div className="flex items-center gap-sm mb-md">
+      <SectionIndicator number={number} done={done} />
+      <span className={`font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 ${done ? 'text-text-secondary' : 'text-text-muted'}`}>
+        {label}
+      </span>
+      {optional && (
+        <span className="ml-auto font-sans text-[0.625rem] text-text-muted opacity-60">{optional}</span>
+      )}
     </div>
   );
 }
@@ -435,37 +449,38 @@ export default function LogPage() {
   return (
     <div className="relative">
       {/* Header bar with completeness */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm">
-        <h1 className="font-serif text-xl font-semibold text-text-primary">Log Learning</h1>
-        <div className="flex items-center gap-sm">
-          <div className="text-right">
-            <p className="font-sans text-xs font-semibold text-text-secondary">{completenessLabel}</p>
-            <p className="font-sans text-[10px] text-text-muted">{completenessHint}</p>
-          </div>
-          <CompletenessRing score={completeness} />
-          <button
-            onClick={handleSave}
-            disabled={!canSave || isSaving}
-            className={`rounded-md px-md py-sm font-sans text-sm font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              canSave
-                ? 'bg-ember text-text-inverse cursor-pointer hover:bg-ember-hover'
-                : 'bg-surface-raised text-text-muted opacity-50 cursor-not-allowed'
-            }`}
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </button>
+      <div className="sticky top-0 z-10 flex items-center gap-md border-b border-border-subtle bg-surface-panel px-md py-sm lg:px-lg">
+        <div className="flex-1 min-w-0">
+          <h1 className="font-serif text-[1.1rem] font-semibold text-text-primary">Log a Learning Moment</h1>
+          <p className="font-sans text-[0.75rem] text-text-muted hidden sm:block">Capture what happened, we&apos;ll find the learning</p>
         </div>
+        <div className="flex items-center gap-sm">
+          <CompletenessRing score={completeness} />
+          <div className="hidden sm:block text-left">
+            <p className="font-sans text-[0.6875rem] font-semibold text-text-secondary leading-tight">{completenessLabel}</p>
+            <p className="font-sans text-[0.6875rem] text-text-muted leading-tight">{completenessHint}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={!canSave || isSaving}
+          className={`flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            canSave
+              ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-[var(--shadow-glow)]'
+              : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+          }`}
+        >
+          {isSaving ? 'Saving...' : canSave ? '✓ Save' : 'Save'}
+        </button>
       </div>
 
-      <div className="lg:flex lg:gap-xl">
+      <div className="flex-1 lg:flex">
         {/* ─── Left: Capture Form ─── */}
-        <div className="flex-1 space-y-lg px-md py-lg max-w-3xl">
+        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
+          <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
           {/* Section 1: Who Was Learning? */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-lg">
-              <SectionIndicator number={1} done={sectionDone[1]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">Who Was Learning?</h2>
-            </div>
+          <section>
+            <SectionHeader number={1} done={sectionDone[1]} label="Who was learning?" />
             <div className="flex flex-wrap gap-sm">
               {learners.map((learner) => {
                 const selected = selectedLearners.includes(learner.id);
@@ -475,15 +490,14 @@ export default function LogPage() {
                   <button
                     key={learner.id}
                     onClick={() => toggleLearner(learner.id)}
-                    className={`flex items-center gap-sm rounded-lg border-2 px-md py-sm font-sans text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[44px] ${
+                    className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] select-none ${
                       selected
-                        ? `${colors.border} bg-ember-glow`
-                        : 'border-border-subtle hover:border-border-medium'
+                        ? `${colors.border} bg-ember-glow text-text-primary`
+                        : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
                     }`}
                   >
-                    <span className="text-lg">{learner.shapeIcon}</span>
-                    <span className="text-text-primary">{learner.name}</span>
-                    {age !== null && <span className="text-text-muted text-xs">({age})</span>}
+                    <span className="text-base">{learner.shapeIcon}</span>
+                    <span>{learner.name}{age !== null ? `, ${age}` : ''}</span>
                   </button>
                 );
               })}
@@ -502,11 +516,8 @@ export default function LogPage() {
           </section>
 
           {/* Section 2: What Happened? */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-lg">
-              <SectionIndicator number={2} done={sectionDone[2]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">What Happened?</h2>
-            </div>
+          <section>
+            <SectionHeader number={2} done={sectionDone[2]} label="What happened?" />
 
             {/* 2a: Description */}
             <div className="mb-lg">
@@ -515,42 +526,48 @@ export default function LogPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the activity or moment... What were they doing? Where did it happen?"
                 rows={4}
-                className="w-full rounded-md border border-border-subtle bg-surface-raised p-md font-serif text-base text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:ring-1 focus:ring-ember/30 transition-all duration-200 resize-y"
+                className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.3)] transition-all duration-200 resize-y"
               />
-              <div className="mt-xs flex items-center justify-between">
+              <div className="mt-sm flex items-center gap-xs">
                 <button
                   onClick={isRecording ? stopVoiceInput : startVoiceInput}
-                  className={`flex items-center gap-xs rounded-md px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[36px] ${
+                  className={`flex items-center gap-xs rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium transition-all duration-200 ${
                     isRecording
-                      ? 'bg-ember text-text-inverse animate-pulse'
-                      : 'text-text-secondary hover:text-text-primary'
+                      ? 'bg-ember-glow border border-ember text-ember animate-pulse'
+                      : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                   }`}
                 >
-                  🎤 {isRecording ? 'Recording...' : 'Voice input'}
+                  🎤 {isRecording ? 'Recording...' : 'Voice'}
                 </button>
-                {description.length > 0 && (
-                  <span className="font-sans text-xs text-text-muted">{description.length} chars</span>
-                )}
+                <span className="ml-auto font-sans text-[0.6875rem] text-text-muted">
+                  {description.length > 0 ? `${description.length}` : ''}
+                </span>
               </div>
             </div>
 
             {/* 2b: Per-child discoveries */}
-            <div className="mb-lg space-y-sm">
+            <div className="mb-lg space-y-md">
               {selectedLearners.length === 0 ? (
                 <p className="font-serif text-sm italic text-text-muted">
-                  Select children above to add discoveries
+                  Select learners above...
                 </p>
               ) : (
-                selectedLearners.map((id) => {
+                <><div className="flex items-center gap-md my-xl">
+                  <div className="flex-1 h-px bg-border-subtle" />
+                  <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Individual Discoveries</span>
+                  <div className="flex-1 h-px bg-border-subtle" />
+                </div>
+                {selectedLearners.map((id) => {
                   const learner = learners.find((l) => l.id === id);
                   if (!learner) return null;
                   const colors = getLearnerColors(id);
                   return (
                     <div
                       key={id}
-                      className={`rounded-md border ${colors.border} p-sm ${colors.ring} ring-1 ring-transparent transition-all duration-200`}
+                      className={`rounded-md border ${colors.border} p-md ${colors.ring} ring-1 ring-transparent transition-all duration-200`}
                     >
-                      <label className={`font-sans text-xs font-medium ${colors.text} mb-xs block`}>
+                      <label className={`flex items-center gap-sm font-sans text-[0.75rem] font-semibold ${colors.text} mb-sm`}>
+                        <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')}`} />
                         What did {learner.name} notice or discover?
                       </label>
                       <textarea
@@ -560,34 +577,35 @@ export default function LogPage() {
                         }
                         placeholder="Something they said, wondered about, or figured out..."
                         rows={2}
-                        className="w-full rounded-sm border-none bg-transparent font-serif text-sm text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+                        className="w-full min-h-[70px] rounded-md border border-border-subtle bg-surface-body p-sm font-serif text-[0.9375rem] text-text-primary leading-[1.6] placeholder:text-text-muted focus:outline-none focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] resize-y"
                       />
                     </div>
                   );
-                })
+                })}
+                </>
               )}
             </div>
 
             {/* 2c: Activity type grid */}
-            <div>
-              <p className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-sm">
-                Activity Type
+            <div className="mt-lg">
+              <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
+                Activity type
               </p>
-              <div className="grid grid-cols-4 gap-sm">
+              <div className="grid grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-sm">
                 {ACTIVITY_TYPES.map((type) => {
                   const selected = activityType === type.key;
                   return (
                     <button
                       key={type.key}
                       onClick={() => setActivityType(selected ? null : type.key)}
-                      className={`flex flex-col items-center gap-xs rounded-md border p-sm font-sans text-xs transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[44px] ${
+                      className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                         selected
                           ? 'border-ember bg-ember-glow text-text-primary'
-                          : 'border-border-subtle text-text-secondary hover:border-border-medium'
+                          : 'border-border-subtle bg-surface-body text-text-secondary hover:border-border-medium hover:bg-surface-raised'
                       }`}
                     >
-                      <span className="text-lg">{type.emoji}</span>
-                      <span>{type.label}</span>
+                      <span className="text-[1.375rem] leading-none">{type.emoji}</span>
+                      <span className="text-center leading-tight">{type.label}</span>
                     </button>
                   );
                 })}
@@ -627,28 +645,25 @@ export default function LogPage() {
           </section>
 
           {/* Section 3: How Engaged Were They? */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-lg">
-              <SectionIndicator number={3} done={sectionDone[3]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">How Engaged Were They?</h2>
-            </div>
+          <section>
+            <SectionHeader number={3} done={sectionDone[3]} label="How engaged were they?" optional="Rate each child" />
             {selectedLearners.length === 0 ? (
               <p className="font-serif text-sm italic text-text-muted">
                 Select children first
               </p>
             ) : (
-              <div className="space-y-md">
+              <div className="space-y-sm">
                 {selectedLearners.map((id) => {
                   const learner = learners.find((l) => l.id === id);
                   if (!learner) return null;
                   const colors = getLearnerColors(id);
                   return (
-                    <div key={id} className="flex items-center gap-md">
-                      <div className="flex items-center gap-sm min-w-[80px]">
-                        <div className={`h-[8px] w-[8px] rounded-full ${colors.border.replace('border', 'bg')}`} />
-                        <span className="font-sans text-sm text-text-primary">{learner.name}</span>
+                    <div key={id} className={`flex items-center justify-between gap-md rounded-md border ${colors.border} ${colors.bg} px-md py-sm`}>
+                      <div className="flex items-center gap-sm">
+                        <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')} shrink-0`} />
+                        <span className="font-sans text-[0.875rem] font-semibold text-text-primary">{learner.name}</span>
                       </div>
-                      <div className="flex gap-sm">
+                      <div className="flex gap-xs">
                         {ENGAGEMENT_LEVELS.map((level) => {
                           const selected = engagement[id] === level.value;
                           return (
@@ -658,10 +673,10 @@ export default function LogPage() {
                                 setEngagement((prev) => ({ ...prev, [id]: level.value }))
                               }
                               title={level.label}
-                              className={`flex h-[44px] w-[44px] items-center justify-center rounded-md border text-xl transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                              className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                                 selected
-                                  ? `${colors.bg} ${colors.border} scale-110`
-                                  : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                                  ? `${colors.bg} ${colors.border} scale-110 opacity-100`
+                                  : 'bg-surface-body border-border-subtle opacity-60 hover:opacity-100 hover:border-border-medium hover:scale-105'
                               }`}
                             >
                               {level.emoji}
@@ -677,24 +692,21 @@ export default function LogPage() {
           </section>
 
           {/* Section 4: When & Where */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-lg">
-              <SectionIndicator number={4} done={sectionDone[4]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">When & Where</h2>
-            </div>
-            <div className="flex flex-wrap gap-lg">
+          <section>
+            <SectionHeader number={4} done={sectionDone[4]} label="When & Where" />
+            <div className="flex flex-wrap gap-md">
               {/* When */}
-              <div>
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-sm">When</p>
-                <div className="flex gap-sm">
+              <div className="flex-1 min-w-[140px]">
+                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">When</p>
+                <div className="flex flex-wrap gap-xs">
                   {(['today', 'yesterday', 'earlier'] as const).map((w) => (
                     <button
                       key={w}
                       onClick={() => setWhenDate(w)}
-                      className={`rounded-full px-md py-xs font-sans text-xs font-medium transition-all duration-200 min-h-[32px] ${
+                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
                         whenDate === w
-                          ? 'bg-ember text-text-inverse'
-                          : 'border border-border-subtle text-text-secondary hover:border-border-medium'
+                          ? 'bg-ember-glow border border-ember text-text-primary'
+                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                       }`}
                     >
                       {w.charAt(0).toUpperCase() + w.slice(1)}
@@ -704,17 +716,17 @@ export default function LogPage() {
               </div>
 
               {/* Duration */}
-              <div>
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-sm">Duration</p>
-                <div className="flex gap-sm">
+              <div className="flex-1 min-w-[140px]">
+                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Duration</p>
+                <div className="flex flex-wrap gap-xs">
                   {DURATION_OPTIONS.map((d) => (
                     <button
                       key={d}
                       onClick={() => setDuration(duration === d ? null : d)}
-                      className={`rounded-full px-md py-xs font-sans text-xs font-medium transition-all duration-200 min-h-[32px] ${
+                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
                         duration === d
-                          ? 'bg-ember text-text-inverse'
-                          : 'border border-border-subtle text-text-secondary hover:border-border-medium'
+                          ? 'bg-ember-glow border border-ember text-text-primary'
+                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                       }`}
                     >
                       {d}
@@ -724,17 +736,17 @@ export default function LogPage() {
               </div>
 
               {/* Where */}
-              <div>
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-sm">Where</p>
-                <div className="flex gap-sm">
+              <div className="flex-1 min-w-[140px]">
+                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Where</p>
+                <div className="flex flex-wrap gap-xs">
                   {WHERE_OPTIONS.map((w) => (
                     <button
                       key={w.key}
                       onClick={() => setLocation(location === w.key ? null : w.key)}
-                      className={`flex items-center gap-xs rounded-full px-md py-xs font-sans text-xs font-medium transition-all duration-200 min-h-[32px] ${
+                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
                         location === w.key
-                          ? 'bg-ember text-text-inverse'
-                          : 'border border-border-subtle text-text-secondary hover:border-border-medium'
+                          ? 'bg-ember-glow border border-ember text-text-primary'
+                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                       }`}
                     >
                       {w.emoji} {w.label}
@@ -746,11 +758,8 @@ export default function LogPage() {
           </section>
 
           {/* Section 5: What Did You Observe? */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-lg">
-              <SectionIndicator number={5} done={sectionDone[5]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">What Did You Observe?</h2>
-            </div>
+          <section>
+            <SectionHeader number={5} done={sectionDone[5]} label="What did you observe?" />
             <div className="space-y-md">
               {OBSERVATION_CATEGORIES.map((cat) => {
                 const colorClasses = OBS_COLOR_CLASSES[cat.color] ?? OBS_COLOR_CLASSES['child-sage'];
@@ -787,14 +796,8 @@ export default function LogPage() {
           </section>
 
           {/* Section 6: Evidence */}
-          <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-sm mb-xs">
-              <SectionIndicator number={6} done={sectionDone[6]} />
-              <h2 className="font-serif text-lg font-semibold text-text-primary">Evidence</h2>
-            </div>
-            <p className="font-sans text-xs text-text-muted mb-md ml-[36px]">
-              Optional but strengthens the record.
-            </p>
+          <section>
+            <SectionHeader number={6} done={sectionDone[6]} label="Evidence" optional="Optional" />
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
               {[
@@ -850,19 +853,18 @@ export default function LogPage() {
               </div>
             )}
           </section>
+          </div>
         </div>
 
         {/* ─── Right: AI Insights Panel (desktop) ─── */}
-        <aside className="hidden lg:block lg:w-[400px] lg:shrink-0">
-          <div className="sticky top-[57px] p-lg">
-            <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-              <div className="flex items-center gap-sm mb-lg">
-                <span className="text-ember text-lg">✨</span>
-                <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
-              </div>
-              <InsightsContent match={keywordMatch} />
+        <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
+          <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
+            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-[var(--shadow-glow)]">
+              <span className="text-sm">💡</span>
             </div>
+            <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
+          <InsightsContent match={keywordMatch} />
         </aside>
       </div>
 

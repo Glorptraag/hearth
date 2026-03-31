@@ -35,6 +35,7 @@ export default function NotificationCentreClient({
 }: NotificationCentreClientProps) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [quietDay, setQuietDay] = useState(false);
 
   const visible = notifications.filter(
     (n) => n.state !== 'dismissed' && n.state !== 'expired'
@@ -105,14 +106,26 @@ export default function NotificationCentreClient({
               </span>
             )}
           </div>
-          {unreadCount > 0 && (
+          <div className="flex items-center gap-sm">
             <button
-              onClick={handleMarkAllRead}
-              className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+              onClick={() => setQuietDay((v) => !v)}
+              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                quietDay
+                  ? 'border-sage/60 bg-sage/10 text-sage'
+                  : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
+              }`}
             >
-              Mark all read
+              🌙 Quiet Day {quietDay ? 'On' : 'Off'}
             </button>
-          )}
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filter tabs */}

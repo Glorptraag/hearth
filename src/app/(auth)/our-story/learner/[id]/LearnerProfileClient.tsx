@@ -3,6 +3,7 @@
 import { useState, useRef, KeyboardEvent } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -41,14 +42,7 @@ const WORKING_STYLE_OPTIONS = [
   'Verbal processor',
 ];
 
-const COLOUR_MAP: Record<string, { dot: string; ring: string; pill: string }> = {
-  rose:   { dot: 'bg-child-rose',   ring: 'ring-child-rose/40',   pill: 'bg-child-rose/15 text-child-rose border-child-rose/20' },
-  blue:   { dot: 'bg-child-blue',   ring: 'ring-child-blue/40',   pill: 'bg-child-blue/15 text-child-blue border-child-blue/20' },
-  sage:   { dot: 'bg-child-sage',   ring: 'ring-child-sage/40',   pill: 'bg-child-sage/15 text-child-sage border-child-sage/20' },
-  violet: { dot: 'bg-child-violet', ring: 'ring-child-violet/40', pill: 'bg-child-violet/15 text-child-violet border-child-violet/20' },
-  amber:  { dot: 'bg-amber-400',    ring: 'ring-amber-400/40',    pill: 'bg-amber-400/15 text-amber-400 border-amber-400/20' },
-};
-
+const COLOUR_MAP = LEARNER_COLOUR_MAP;
 const DEFAULT_COLOUR = COLOUR_MAP.rose;
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -362,6 +356,32 @@ export default function LearnerProfileClient({
             editing={editing}
             placeholder="What does she do well?"
           />
+        </section>
+
+        {/* ── Bright Moments ── */}
+        <section>
+          <p className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
+            Bright Moments
+          </p>
+          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
+            <span className="text-2xl">🏅</span>
+            <p className="mt-sm font-serif text-sm text-text-muted">
+              Badges earned will appear here as {learner.name}&rsquo;s portfolio grows.
+            </p>
+          </div>
+        </section>
+
+        {/* ── Family Thread ── */}
+        <section>
+          <p className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
+            Family Thread
+          </p>
+          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
+            <span className="text-2xl">🌿</span>
+            <p className="mt-sm font-serif text-sm text-text-muted">
+              Shared learning moments with siblings will appear here.
+            </p>
+          </div>
         </section>
 
         {/* ── Notes ── */}

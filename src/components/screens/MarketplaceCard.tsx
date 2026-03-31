@@ -119,7 +119,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
 
         {/* Description */}
         {pack.description && (
-          <p className="font-sans text-[0.8rem] text-text-secondary leading-relaxed line-clamp-2">
+          <p className="font-serif text-[0.8rem] text-text-secondary leading-relaxed line-clamp-2">
             {pack.description}
           </p>
         )}

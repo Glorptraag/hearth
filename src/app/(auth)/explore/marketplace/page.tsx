@@ -87,18 +87,9 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-surface-body">
-      {/* Atmospheric glow */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{
-          background:
-            'radial-gradient(ellipse at 15% 20%, rgba(217,123,58,0.06) 0%, transparent 50%), radial-gradient(ellipse at 85% 80%, rgba(217,123,58,0.04) 0%, transparent 50%)',
-        }}
-      />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="relative z-10 max-w-[1280px] mx-auto px-md py-xl lg:px-lg">
         {/* ── Top nav ── */}
-        <div className="flex items-center justify-between pb-5 mb-6 border-b border-border-subtle">
+        <div className="flex items-center justify-between pb-lg mb-lg border-b border-border-subtle">
           <Link
             href="/dashboard"
             className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-200"
@@ -117,18 +108,18 @@ export default function MarketplacePage() {
         </div>
 
         {/* ── Page header ── */}
-        <div className="mb-6">
-          <h1 className="font-serif text-[clamp(1.75rem,4vw,2.25rem)] font-semibold text-text-primary leading-tight mb-1">
+        <div className="mb-lg">
+          <h1 className="font-serif text-2xl font-semibold text-text-primary leading-tight mb-xs">
             Marketplace
           </h1>
-          <p className="font-serif text-[clamp(0.95rem,2vw,1.05rem)] text-text-secondary italic">
+          <p className="font-serif text-sm text-text-secondary italic">
             Curate your family&apos;s learning library
           </p>
         </div>
 
         {/* ── Search bar ── */}
-        <div className="relative mb-6">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
+        <div className="relative mb-lg">
+          <span className="absolute left-sm top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
             🔍
           </span>
           <input
@@ -136,12 +127,12 @@ export default function MarketplacePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search packs, modules, or creators…"
-            className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-9 pr-4 py-3 font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
+            className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-[36px] pr-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
           />
         </div>
 
         {/* ── Subject filter pills ── */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="flex flex-wrap gap-xs mb-xl">
           <button
             onClick={() => setActiveSubject(null)}
             className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 ${
@@ -180,7 +171,7 @@ export default function MarketplacePage() {
         ) : (
           <>
             {/* ── Results count ── */}
-            <p className="font-sans text-[0.75rem] text-text-muted mb-5">
+            <p className="font-sans text-[0.75rem] text-text-muted mb-lg">
               {filtered.length === packs.length
                 ? `Showing all ${filtered.length} packs`
                 : `Showing ${filtered.length} of ${packs.length} packs`}
@@ -188,7 +179,7 @@ export default function MarketplacePage() {
 
             {/* ── Content grid ── */}
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
                 {filtered.map((pack) => (
                   <MarketplaceCard
                     key={pack._id}

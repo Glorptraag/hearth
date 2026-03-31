@@ -143,12 +143,12 @@ export default function PlannerClient({
   const isCurrentWeek = isSameWeek(weekStart, todayDate, { weekStartsOn: 1 });
 
   return (
-    <div className="mx-auto max-w-3xl px-md py-xl">
+    <div className="mx-auto max-w-5xl px-md py-xl lg:px-xl">
       {/* Week navigation */}
-      <div className="mb-xl flex items-center gap-md">
+      <div className="mb-lg flex items-center gap-md">
         <button
           onClick={() => navWeek(-1)}
-          className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border-subtle bg-surface-panel font-sans text-sm text-text-secondary transition-colors hover:border-border-medium hover:text-text-primary"
+          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
           aria-label="Previous week"
         >
           ‹
@@ -156,15 +156,17 @@ export default function PlannerClient({
 
         <button
           onClick={goToCurrentWeek}
-          className="flex-1 text-center font-serif text-base font-semibold text-text-primary transition-colors hover:text-ember"
+          className="flex-1 text-center transition-colors hover:text-ember"
           title="Return to current week"
         >
-          {formatWeekLabel(weekStart)}
+          <span className="font-serif text-[1.1rem] font-semibold text-text-primary">
+            Week of {format(weekStart, 'd MMM')}
+          </span>
         </button>
 
         <button
           onClick={() => navWeek(1)}
-          className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border-subtle bg-surface-panel font-sans text-sm text-text-secondary transition-colors hover:border-border-medium hover:text-text-primary"
+          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
           aria-label="Next week"
         >
           ›
@@ -172,7 +174,10 @@ export default function PlannerClient({
       </div>
 
       {/* Week label */}
-      <div className="mb-md flex items-center gap-sm">
+      <div className="mb-lg flex items-center gap-sm">
+        <span className="font-sans text-[0.75rem] text-text-muted">
+          {formatWeekLabel(weekStart)}
+        </span>
         {isCurrentWeek && (
           <span className="rounded-full bg-ember-glow px-sm py-[2px] font-sans text-[11px] font-semibold text-ember">
             This week
@@ -182,7 +187,7 @@ export default function PlannerClient({
           <span className="font-sans text-xs text-text-muted">Read-only — past week</span>
         )}
         {loading && (
-          <span className="font-sans text-xs text-text-muted">Loading...</span>
+          <span className="font-sans text-xs text-text-muted animate-pulse">Loading...</span>
         )}
       </div>
 

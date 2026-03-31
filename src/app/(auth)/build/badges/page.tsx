@@ -29,7 +29,6 @@ export default function BuildBadgesPage() {
     capabilityThread: '',
     observationThreshold: 5,
   });
-  const [focusField, setFocusField] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,19 +105,12 @@ export default function BuildBadgesPage() {
     setError(null);
   };
 
-  const inputStyle = (field: string): React.CSSProperties => ({
-    padding: '10px 16px',
-    borderColor: focusField === field ? '#D97B3A' : undefined,
-    boxShadow: focusField === field ? '0 0 0 3px rgba(217,123,58,0.25)' : undefined,
-  });
+  const inputCls = 'w-full bg-surface-raised border border-border-subtle rounded-[6px] px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]';
 
   if (saved) {
     return (
       <div className="px-md py-lg max-w-xl mx-auto">
-        <div
-          className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col items-center gap-lg text-center"
-          style={{ boxShadow: 'var(--shadow-soft)' }}
-        >
+        <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col items-center gap-lg text-center shadow-[var(--shadow-soft)]">
           <span className="text-4xl">{form.emoji || '🏅'}</span>
           <div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
@@ -128,15 +120,12 @@ export default function BuildBadgesPage() {
               <strong className="text-text-primary font-semibold">{form.title}</strong> is ready to award.
             </p>
           </div>
-          <div className="flex gap-md w-full">
-            <button
-              onClick={handleReset}
-              className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md transition-all duration-200"
-              style={{ minHeight: 44 }}
-            >
-              Create another
-            </button>
-          </div>
+          <button
+            onClick={handleReset}
+            className="w-full rounded-md border border-ember px-lg py-sm font-sans text-sm font-semibold text-ember transition-all duration-200 hover:bg-ember-glow"
+          >
+            Create another
+          </button>
         </div>
       </div>
     );
@@ -146,8 +135,9 @@ export default function BuildBadgesPage() {
     <div className="px-md py-lg max-w-xl mx-auto">
       {/* Page header */}
       <div className="mb-xl">
+        <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Build</p>
         <h1 className="font-serif text-2xl font-semibold text-text-primary mb-xs">
-          🏅 Create a badge
+          Create a Badge
         </h1>
         <p className="font-serif text-text-secondary">
           Define a capability milestone your learner can earn through demonstrated evidence.
@@ -156,88 +146,68 @@ export default function BuildBadgesPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col gap-lg"
-        style={{ boxShadow: 'var(--shadow-soft)' }}
+        className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col gap-xl shadow-[var(--shadow-soft)]"
       >
-        {/* Badge name + emoji row */}
-        <div className="flex gap-sm">
-          {/* Emoji */}
-          <div className="flex-shrink-0">
-            <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
-              Emoji
+        {/* ─── Identity ─── */}
+        <section className="flex flex-col gap-md">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Identity</p>
+          <div className="flex gap-sm">
+            {/* Emoji */}
+            <div className="flex-shrink-0">
+              <label className="mb-xs block font-sans text-xs font-medium text-text-secondary">
+                Icon
+              </label>
+              <input
+                type="text"
+                value={form.emoji}
+                onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
+                placeholder="🏅"
+                maxLength={2}
+                className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+              />
+            </div>
+            {/* Name */}
+            <div className="flex-1">
+              <label className="mb-xs block font-sans text-xs font-medium text-text-secondary">
+                Badge name <span className="text-text-muted">(required)</span>
+              </label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="e.g. Confident Reader"
+                required
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-xs block font-sans text-xs font-medium text-text-secondary">
+              A learner with this badge can&hellip;
             </label>
-            <input
-              type="text"
-              value={form.emoji}
-              onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
-              placeholder="🏅"
-              maxLength={2}
-              onFocus={() => setFocusField('emoji')}
-              onBlur={() => setFocusField(null)}
-              className="w-16 bg-surface-raised border border-border-subtle rounded-md font-sans text-xl text-center text-text-primary outline-none transition-all duration-200"
-              style={{ ...inputStyle('emoji'), padding: '10px 8px' }}
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Read independently for 20+ minutes and discuss what they've understood..."
+              rows={3}
+              className="w-full resize-y rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm leading-relaxed text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
             />
           </div>
-          {/* Name */}
-          <div className="flex-1">
-            <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
-              Badge name <span className="text-text-muted">(required)</span>
-            </label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Confident Reader"
-              required
-              onFocus={() => setFocusField('title')}
-              onBlur={() => setFocusField(null)}
-              className="w-full bg-surface-raised border border-border-subtle rounded-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200"
-              style={inputStyle('title')}
-            />
-          </div>
-        </div>
+        </section>
 
-        {/* Capability description */}
-        <div>
-          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
-            A learner with this badge can&hellip;
-          </label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Read independently for 20+ minutes and discuss what they've understood..."
-            rows={3}
-            onFocus={() => setFocusField('description')}
-            onBlur={() => setFocusField(null)}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y transition-all duration-200"
-            style={{
-              ...inputStyle('description'),
-              lineHeight: 1.6,
-            }}
-          />
-        </div>
-
-        {/* Observable indicators */}
-        <div>
-          <div className="flex items-center justify-between mb-xs">
-            <label className="font-sans text-xs font-medium text-text-secondary">
-              What would you see? <span className="text-text-muted">(observable indicators)</span>
-            </label>
-            {form.indicators.length < 5 && (
-              <button
-                type="button"
-                onClick={addIndicator}
-                className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
-              >
-                + Add
-              </button>
-            )}
-          </div>
+        {/* ─── Observable indicators ─── */}
+        <section className="flex flex-col gap-sm">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Observable Indicators</p>
+          <p className="font-sans text-xs text-text-muted -mt-xs">What would you see? Up to 5 statements.</p>
           <div className="flex flex-col gap-sm">
             {form.indicators.map((indicator, i) => (
-              <div key={i} className="flex gap-sm items-center">
-                <span className="font-sans text-xs text-text-muted w-4 flex-shrink-0 text-right">
-                  {i + 1}.
+              <div
+                key={i}
+                className="flex items-center gap-sm rounded-md border border-border-subtle bg-surface-raised px-sm py-xs"
+              >
+                <span className="w-5 shrink-0 font-sans text-xs text-text-muted text-center">
+                  {i + 1}
                 </span>
                 <input
                   ref={(el) => { indicatorRefs.current[i] = el; }}
@@ -245,18 +215,14 @@ export default function BuildBadgesPage() {
                   value={indicator}
                   onChange={(e) => setIndicator(i, e.target.value)}
                   placeholder="e.g. Chooses to read without prompting"
-                  onFocus={() => setFocusField(`ind-${i}`)}
-                  onBlur={() => setFocusField(null)}
-                  className="flex-1 bg-surface-raised border border-border-subtle rounded-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200"
-                  style={inputStyle(`ind-${i}`)}
+                  className="flex-1 bg-transparent font-sans text-sm text-text-primary placeholder:text-text-muted outline-none"
                 />
                 {form.indicators.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeIndicator(i)}
-                    className="font-sans text-sm text-text-muted hover:text-red-400 transition-colors duration-200 flex-shrink-0"
-                    title="Remove"
-                    style={{ minWidth: 20, minHeight: 20 }}
+                    className="shrink-0 font-sans text-sm text-text-muted transition-colors duration-200 hover:text-red-400"
+                    aria-label="Remove indicator"
                   >
                     ✕
                   </button>
@@ -264,91 +230,84 @@ export default function BuildBadgesPage() {
               </div>
             ))}
           </div>
-          <p className="font-sans text-xs text-text-muted mt-xs">
-            {form.indicators.length} of 5 indicators
-          </p>
-        </div>
+          {form.indicators.length < 5 && (
+            <button
+              type="button"
+              onClick={addIndicator}
+              className="mt-xs flex items-center gap-xs rounded-md border border-dashed border-border-medium px-md py-sm font-sans text-sm text-text-muted transition-all duration-200 hover:border-ember hover:text-ember"
+            >
+              <span>+</span> Add indicator statement
+            </button>
+          )}
+        </section>
 
-        {/* Capability thread */}
-        <div>
-          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
-            Linked capability thread
-          </label>
-          <select
-            value={form.capabilityThread}
-            onChange={(e) => setForm((f) => ({ ...f, capabilityThread: e.target.value }))}
-            onFocus={() => setFocusField('thread')}
-            onBlur={() => setFocusField(null)}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md font-sans text-sm text-text-primary outline-none transition-all duration-200 cursor-pointer"
-            style={{
-              ...inputStyle('thread'),
-              color: form.capabilityThread ? undefined : '#6B5D52',
-            }}
-          >
-            <option value="" disabled style={{ color: '#6B5D52' }}>
-              Select a capability thread…
-            </option>
-            {CAPABILITY_THREADS.map((thread) => (
-              <option key={thread} value={thread} style={{ background: '#252117', color: '#E8DFD4' }}>
-                {thread}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Required observations */}
-        <div>
-          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
-            Required observations before badge is ready
-          </label>
-          <div className="flex items-center gap-md">
-            <input
-              type="number"
-              value={form.observationThreshold}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  observationThreshold: Math.max(1, parseInt(e.target.value) || 1),
-                }))
-              }
-              min={1}
-              max={20}
-              onFocus={() => setFocusField('threshold')}
-              onBlur={() => setFocusField(null)}
-              className="w-20 bg-surface-raised border border-border-subtle rounded-md font-sans text-sm text-text-primary text-center outline-none transition-all duration-200"
-              style={inputStyle('threshold')}
-            />
-            <p className="font-sans text-sm text-text-muted">
-              logged observations
-            </p>
+        {/* ─── Capability thread ─── */}
+        <section className="flex flex-col gap-sm">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Capability Thread</p>
+          <div className="flex flex-wrap gap-sm">
+            {CAPABILITY_THREADS.map((thread) => {
+              const active = form.capabilityThread === thread;
+              return (
+                <button
+                  key={thread}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, capabilityThread: active ? '' : thread }))}
+                  className={`rounded-full border px-md py-xs font-sans text-xs font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    active
+                      ? 'border-ember bg-ember-glow text-ember'
+                      : 'border-border-subtle bg-surface-raised text-text-secondary hover:border-border-medium hover:text-text-primary'
+                  }`}
+                >
+                  {thread}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
+
+        {/* ─── Observation threshold ─── */}
+        <section className="flex flex-col gap-sm">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Evidence Threshold</p>
+          <p className="font-sans text-xs text-text-muted">Required observations before this badge is ready to assess.</p>
+          <div className="flex items-center gap-sm">
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, observationThreshold: Math.max(1, f.observationThreshold - 1) }))}
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+            >
+              –
+            </button>
+            <span className="min-w-[48px] text-center font-serif text-xl font-semibold text-text-primary">
+              {form.observationThreshold}
+            </span>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, observationThreshold: Math.min(20, f.observationThreshold + 1) }))}
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+            >
+              +
+            </button>
+            <span className="font-sans text-sm text-text-muted">logged observations</span>
+          </div>
+        </section>
 
         {error && (
           <p className="font-sans text-sm text-red-400">{error}</p>
         )}
 
         {/* Actions */}
-        <div
-          className="flex justify-end gap-md pt-sm border-t border-border-subtle"
-        >
+        <div className="flex justify-end gap-md border-t border-border-subtle pt-md">
           <button
             type="button"
             onClick={handleReset}
-            className="font-sans text-sm font-semibold text-ember border border-border-subtle rounded-md transition-all duration-200"
-            style={{ minHeight: 44, padding: '0 24px' }}
+            className="rounded-md border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md transition-all duration-200 disabled:opacity-50"
-            style={{
-              minHeight: 44,
-              padding: '0 24px',
-              boxShadow: '0 4px 16px rgba(217,123,58,0.3)',
-            }}
+            className="rounded-md bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 hover:bg-ember-hover disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Create badge'}
           </button>

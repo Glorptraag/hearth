@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { differenceInYears, format, startOfMonth } from 'date-fns';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -78,6 +78,7 @@ const DEFAULT_COLORS = CHILD_COLORS.rose;
 
 export default function OurStoryHubClient() {
   const pathname = usePathname();
+  const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [stats, setStats] = useState<LearnerStats | null>(null);
@@ -85,10 +86,15 @@ export default function OurStoryHubClient() {
   const [loadingLearners, setLoadingLearners] = useState(true);
 
   const tabs = [
-    { href: '/our-story/portfolio', label: 'Portfolio' },
-    { href: '/our-story/capabilities', label: 'Capabilities' },
-    { href: '/our-story/report', label: 'Report' },
+    { href: `/our-story/portfolio?child=${selectedId}`, label: 'Portfolio' },
+    { href: `/our-story/capabilities?child=${selectedId}`, label: 'Capabilities' },
+    { href: `/our-story/report?child=${selectedId}`, label: 'Report' },
   ];
+
+  const handleChildSelect = (id: string) => {
+    setSelectedId(id);
+    router.replace(`${pathname}?child=${id}`, { scroll: false });
+  };
 
   // Fetch learner list once
   useEffect(() => {
@@ -190,7 +196,7 @@ export default function OurStoryHubClient() {
             return (
               <button
                 key={l.id}
-                onClick={() => setSelectedId(l.id)}
+                onClick={() => handleChildSelect(l.id)}
                 className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                   active
                     ? `bg-surface-raised shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${c.activeBorder}`
@@ -241,7 +247,7 @@ export default function OurStoryHubClient() {
       {/* Navigation tabs */}
       <div className="mb-2xl flex border-b border-border-subtle">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
+          const isActive = pathname === tab.href.split('?')[0];
           return (
             <Link
               key={tab.href}
@@ -261,12 +267,15 @@ export default function OurStoryHubClient() {
       {/* Term summary — empty state for new learners */}
       <section className="relative mb-2xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
-        <p className="mb-md font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-          Term Summary
+        <h2 className="mb-md font-serif text-base font-semibold text-text-primary">
+          {learner.name}&rsquo;s Learning Story
+        </h2>
+        <p className="mb-md font-serif text-xs italic text-text-muted">
+          A record of what {learner.name} has been learning and how they&rsquo;ve grown.
         </p>
         {stats && stats.portfolioTotal > 0 ? (
           <p className="font-serif text-sm italic leading-relaxed text-text-secondary">
-            {stats.portfolioTotal} learning moment{stats.portfolioTotal !== 1 ? 's' : ''} recorded
+            Evidence of learning: {stats.portfolioTotal} learning moment{stats.portfolioTotal !== 1 ? 's' : ''} recorded
             {stats.portfolioThisTerm > 0
               ? `, with ${stats.portfolioThisTerm} this month`
               : ''}

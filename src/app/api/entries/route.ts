@@ -8,6 +8,7 @@ import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { triggerDraftResume } from '@/lib/notifications/triggers';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -95,6 +96,10 @@ export async function POST(request: NextRequest) {
     enrichEntry({ entryId: entry.id, familyId: family.id })
       .then(() => rebuildSnapshot(family.id, 'entry_saved'))
       .catch((err) => console.error('[entries/POST] AI pipeline error:', err));
+  } else {
+    // Draft saved — schedule a gentle resume nudge (frequency-capped)
+    triggerDraftResume(family.id, { id: entry.id, title: entry.title })
+      .catch((err) => console.error('[entries/POST] draft_resume notification error:', err));
   }
 
   return NextResponse.json(entry, { status: 201 });

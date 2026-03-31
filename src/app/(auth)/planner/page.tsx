@@ -47,9 +47,42 @@ export default async function PlannerPage() {
     }),
   ]);
 
-  const snapshotData = (snapshot?.snapshotData ?? {}) as {
-    recommendations?: Array<{ title: string; subject?: string }>;
+  // Derive recommendations from snapshot gap analysis
+  type ChildSnapshot = {
+    name?: string;
+    gap_analysis?: { underserved_subjects?: string[]; suggested_focus_threads?: string[] };
+    recent_activity?: { subjects_this_week?: string[] };
   };
+
+  const snapshotData = (snapshot?.snapshotData ?? {}) as {
+    children?: Record<string, ChildSnapshot>;
+    family?: { dashboard_summary?: { nudge_message?: string | null } };
+  };
+
+  const recommendations: Array<{ title: string; subject?: string; reason?: string }> = [];
+  const childMap = snapshotData.children ?? {};
+
+  for (const [, child] of Object.entries(childMap)) {
+    const gaps = child.gap_analysis?.underserved_subjects ?? [];
+    const recentSubjects = new Set(child.recent_activity?.subjects_this_week ?? []);
+
+    for (const subject of gaps) {
+      if (!recentSubjects.has(subject) && !recommendations.some((r) => r.subject === subject)) {
+        const label = subject.charAt(0).toUpperCase() + subject.slice(1);
+        recommendations.push({
+          title: `${label} activity${child.name ? ` for ${child.name}` : ''}`,
+          subject,
+          reason: 'gap',
+        });
+      }
+    }
+  }
+
+  // Add nudge-based recommendation
+  const nudge = snapshotData.family?.dashboard_summary?.nudge_message;
+  if (nudge && recommendations.length < 6) {
+    recommendations.push({ title: nudge, reason: 'nudge' });
+  }
 
   return (
     <PlannerClient
@@ -68,7 +101,7 @@ export default async function PlannerPage() {
         name: l.name,
         colourToken: l.colourToken ?? null,
       }))}
-      recommendations={snapshotData.recommendations ?? []}
+      recommendations={recommendations}
       today={todayStr}
     />
   );

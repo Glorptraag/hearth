@@ -5,12 +5,14 @@ import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq } from 'drizzle-orm';
+import { addHours } from 'date-fns';
 import { NOTIFICATION_STATES } from '@/types';
 
 type Params = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   state: z.enum(NOTIFICATION_STATES),
+  snoozeHours: z.number().min(1).max(72).optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -31,9 +33,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const updates: Record<string, unknown> = { state: parsed.data.state };
+
+  if (parsed.data.state === 'snoozed') {
+    const hours = parsed.data.snoozeHours ?? 4;
+    updates.snoozedUntil = addHours(new Date(), hours);
+  }
+
   const [updated] = await db
     .update(notifications)
-    .set({ state: parsed.data.state })
+    .set(updates)
     .where(and(eq(notifications.id, id), eq(notifications.familyId, family.id)))
     .returning();
 

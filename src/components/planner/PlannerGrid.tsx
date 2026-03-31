@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useCallback } from 'react';
 import ModuleCard from './ModuleCard';
 
 interface Learner {
@@ -26,6 +29,7 @@ interface PlannerGridProps {
   onAdd: (date: string, session: string) => void;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
+  onMove?: (id: string, toDate: string, toSession: string) => void;
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -54,8 +58,31 @@ export default function PlannerGrid({
   onAdd,
   onToggle,
   onDelete,
+  onMove,
 }: PlannerGridProps) {
   const isReadOnly = !isCurrentOrFutureWeek;
+  const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const handleDragOver = useCallback((e: React.DragEvent, cellKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverCell(cellKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverCell(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, date: string, session: string) => {
+    e.preventDefault();
+    const entryId = e.dataTransfer.getData('text/plain');
+    setDragOverCell(null);
+    setDraggingId(null);
+    if (entryId && onMove) {
+      onMove(entryId, date, session);
+    }
+  }, [onMove]);
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-panel shadow-[var(--shadow-soft)]">
@@ -123,12 +150,20 @@ export default function PlannerGrid({
           const isPast = dateStr < today;
           const morningEntries = entries.filter((e) => e.date === dateStr && (e.session ?? 'morning') === 'morning');
 
+          const morningCellKey = `morning-${dateStr}`;
+          const isMorningDragOver = dragOverCell === morningCellKey && !isPast && !isReadOnly;
+
           return (
             <div
-              key={`morning-${dateStr}`}
-              className={`flex min-h-[110px] flex-col gap-xs border-b border-r border-border-subtle p-xs ${
+              key={morningCellKey}
+              onDragOver={!isReadOnly && !isPast ? (e) => handleDragOver(e, morningCellKey) : undefined}
+              onDragLeave={handleDragLeave}
+              onDrop={!isReadOnly && !isPast ? (e) => handleDrop(e, dateStr, 'morning') : undefined}
+              className={`flex min-h-[110px] flex-col gap-xs border-b border-r border-border-subtle p-xs transition-colors duration-200 ${
                 isToday ? 'bg-ember-glow/20' : ''
-              } ${isPast ? 'opacity-70' : ''}`}
+              } ${isPast ? 'opacity-70' : ''} ${
+                isMorningDragOver ? 'bg-ember/10 border-ember/30' : ''
+              }`}
             >
               {morningEntries.map((entry) => (
                 <ModuleCard
@@ -138,6 +173,8 @@ export default function PlannerGrid({
                   isReadOnly={isReadOnly}
                   onToggle={onToggle}
                   onDelete={onDelete}
+                  onDragStart={setDraggingId}
+                  onDragEnd={() => { setDraggingId(null); setDragOverCell(null); }}
                 />
               ))}
               {!isReadOnly && !isPast && (
@@ -164,12 +201,20 @@ export default function PlannerGrid({
           const isPast = dateStr < today;
           const afternoonEntries = entries.filter((e) => e.date === dateStr && e.session === 'afternoon');
 
+          const afternoonCellKey = `afternoon-${dateStr}`;
+          const isAfternoonDragOver = dragOverCell === afternoonCellKey && !isPast && !isReadOnly;
+
           return (
             <div
-              key={`afternoon-${dateStr}`}
-              className={`flex min-h-[110px] flex-col gap-xs border-r border-border-subtle p-xs ${
+              key={afternoonCellKey}
+              onDragOver={!isReadOnly && !isPast ? (e) => handleDragOver(e, afternoonCellKey) : undefined}
+              onDragLeave={handleDragLeave}
+              onDrop={!isReadOnly && !isPast ? (e) => handleDrop(e, dateStr, 'afternoon') : undefined}
+              className={`flex min-h-[110px] flex-col gap-xs border-r border-border-subtle p-xs transition-colors duration-200 ${
                 isToday ? 'bg-ember-glow/20' : ''
-              } ${isPast ? 'opacity-70' : ''}`}
+              } ${isPast ? 'opacity-70' : ''} ${
+                isAfternoonDragOver ? 'bg-ember/10 border-ember/30' : ''
+              }`}
             >
               {afternoonEntries.map((entry) => (
                 <ModuleCard
@@ -179,6 +224,8 @@ export default function PlannerGrid({
                   isReadOnly={isReadOnly}
                   onToggle={onToggle}
                   onDelete={onDelete}
+                  onDragStart={setDraggingId}
+                  onDragEnd={() => { setDraggingId(null); setDragOverCell(null); }}
                 />
               ))}
               {!isReadOnly && !isPast && (

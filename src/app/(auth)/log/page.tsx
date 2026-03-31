@@ -303,8 +303,10 @@ export default function LogPage() {
   const [observations, setObservations] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
-  // ─── Draft auto-save (30s to localStorage) ───
+  // ─── Draft auto-save (10s to localStorage) ───
   const DRAFT_KEY = 'hearth:logger:draft';
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   // Restore draft on mount
   useEffect(() => {
@@ -323,26 +325,31 @@ export default function LogPage() {
       if (d.location) setLocation(d.location);
       if (d.observations?.length) setObservations(d.observations);
       if (d.evidence?.length) setEvidence(d.evidence);
+      if (d.description || d.selectedLearners?.length) setDraftRestored(true);
     } catch { /* ignore corrupt draft */ }
   }, []);
 
-  // Save draft every 30s
+  // Save draft every 10s
   useEffect(() => {
     const timer = setInterval(() => {
       if (!description && selectedLearners.length === 0) return;
+      const now = Date.now();
       const draft = {
         description, selectedLearners, discoveries, activityType,
         lessonSubjects, engagement, whenDate, duration, location,
-        observations, evidence, savedAt: Date.now(),
+        observations, evidence, savedAt: now,
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    }, 30_000);
+      setLastSavedAt(now);
+    }, 10_000);
     return () => clearInterval(timer);
   }, [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
 
   // Clear draft on successful save
   const clearDraft = useCallback(() => {
     localStorage.removeItem(DRAFT_KEY);
+    setLastSavedAt(null);
+    setDraftRestored(false);
   }, []);
 
   // ─── AI Insights (keyword matcher) ───
@@ -555,11 +562,28 @@ export default function LogPage() {
 
   return (
     <div className="relative">
+      {/* Draft restored banner */}
+      {draftRestored && (
+        <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">
+          <p className="font-sans text-[11px] text-text-secondary">📝 Draft restored from your last session</p>
+          <button
+            onClick={() => setDraftRestored(false)}
+            className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-200"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Header bar with completeness */}
       <div className="sticky top-0 z-10 flex items-center gap-md border-b border-border-subtle bg-surface-panel px-md py-sm lg:px-lg">
         <div className="flex-1 min-w-0">
           <h1 className="font-serif text-[1.1rem] font-semibold text-text-primary">Log a Learning Moment</h1>
-          <p className="font-sans text-[0.75rem] text-text-muted hidden sm:block">Capture what happened, we&apos;ll find the learning</p>
+          <p className="font-sans text-[0.75rem] text-text-muted hidden sm:block">
+            {lastSavedAt
+              ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : 'Capture what happened, we\u2019ll find the learning'}
+          </p>
         </div>
         <div className="flex items-center gap-sm">
           <CompletenessRing score={completeness} />

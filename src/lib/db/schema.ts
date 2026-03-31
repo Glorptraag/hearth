@@ -242,6 +242,7 @@ export const notifications = pgTable(
     body: text('body'),
     bodyData: jsonb('body_data').default({}),
     state: text('state').notNull().default('visible'),
+    snoozedUntil: timestamp('snoozed_until'),
     destinationRoute: text('destination_route'),
     createdAt: timestamp('created_at').defaultNow(),
     expiresAt: timestamp('expires_at'),

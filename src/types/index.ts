@@ -62,7 +62,7 @@ export type ObservationStatus = (typeof OBSERVATION_STATUSES)[number];
 export const NOTIFICATION_TIERS = ['whisper', 'nudge', 'chime', 'flare'] as const;
 export type NotificationTier = (typeof NOTIFICATION_TIERS)[number];
 
-export const NOTIFICATION_STATES = ['visible', 'dismissed', 'actioned', 'expired'] as const;
+export const NOTIFICATION_STATES = ['visible', 'dismissed', 'actioned', 'snoozed', 'expired'] as const;
 export type NotificationState = (typeof NOTIFICATION_STATES)[number];
 
 export const PEDAGOGIES = [

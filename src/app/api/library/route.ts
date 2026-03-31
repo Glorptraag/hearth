@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
+import { sanityClient } from '@/lib/sanity/client';
 
 export async function GET() {
   const { userId } = await auth();
@@ -18,7 +19,29 @@ export async function GET() {
     .from(familyLibrary)
     .where(eq(familyLibrary.familyId, family.id));
 
-  return NextResponse.json(records);
+  if (records.length === 0) return NextResponse.json([]);
+
+  // Enrich with Sanity data (titles + subjects)
+  const packIds = records.map((r) => r.sanityPackId);
+  const modules = await sanityClient.fetch<
+    Array<{ _id: string; title: string; subjects: string[] }>
+  >(
+    `*[_type == "module" && _id in $ids]{ _id, title, subjects }`,
+    { ids: packIds }
+  ).catch(() => [] as Array<{ _id: string; title: string; subjects: string[] }>);
+
+  const moduleMap = new Map(modules.map((m) => [m._id, m]));
+
+  const enriched = records.map((r) => {
+    const mod = moduleMap.get(r.sanityPackId);
+    return {
+      title: mod?.title ?? r.sanityPackId,
+      moduleId: r.sanityPackId,
+      subjects: mod?.subjects ?? [],
+    };
+  });
+
+  return NextResponse.json(enriched);
 }
 
 const addPackSchema = z.object({

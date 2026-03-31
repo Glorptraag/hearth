@@ -284,6 +284,468 @@ async function saveDraft(pathway: string, draftData: unknown, status: 'draft' | 
   return res.ok;
 }
 
+// ── Cross-Path Redirect Nudge ─────────────────────────────────────────────
+
+const RESOURCE_KEYWORDS = ['book', 'video', 'kit', 'app', 'youtube', 'documentary', 'podcast', 'website', 'game', 'lego', 'minecraft'];
+const QUESTION_KEYWORDS = ['why', 'how', 'what if', 'what would', 'wonder', 'curious', 'asked', 'question'];
+const GOAL_KEYWORDS = ['want them to', 'learn to', 'get better at', 'develop', 'improve', 'skill', 'capability', 'goal'];
+const PROCESS_KEYWORDS = ['steps', 'first we', 'then we', 'recipe', 'procedure', 'instructions', 'build', 'make', 'cook'];
+
+type NudgeSuggestion = { pathway: Pathway; label: string; reason: string } | null;
+
+function detectCrossPathNudge(currentPathway: Pathway, text: string): NudgeSuggestion {
+  const lower = text.toLowerCase();
+  if (!lower || lower.length < 15) return null;
+
+  if (currentPathway !== 'material' && RESOURCE_KEYWORDS.some((kw) => lower.includes(kw))) {
+    return { pathway: 'material', label: 'Material-Anchored', reason: 'Sounds like you have a resource in mind' };
+  }
+  if (currentPathway !== 'inquiry' && QUESTION_KEYWORDS.some((kw) => lower.includes(kw))) {
+    const questionMarks = (text.match(/\?/g) || []).length;
+    if (questionMarks > 0 || QUESTION_KEYWORDS.filter((kw) => lower.includes(kw)).length >= 2) {
+      return { pathway: 'inquiry', label: 'Inquiry', reason: 'This sounds like a question to explore' };
+    }
+  }
+  if (currentPathway !== 'goal' && GOAL_KEYWORDS.some((kw) => lower.includes(kw))) {
+    return { pathway: 'goal', label: 'Goal-Forward', reason: 'Sounds like a learning target' };
+  }
+  if (currentPathway !== 'process' && PROCESS_KEYWORDS.filter((kw) => lower.includes(kw)).length >= 2) {
+    return { pathway: 'process', label: 'Process', reason: 'Sounds like you know the steps already' };
+  }
+  return null;
+}
+
+function CrossPathNudge({
+  suggestion,
+  onSwitch,
+}: {
+  suggestion: NudgeSuggestion;
+  onSwitch: (pathway: Pathway) => void;
+}) {
+  if (!suggestion) return null;
+  return (
+    <div className="rounded-md border border-ember/20 bg-ember-glow/30 px-md py-sm flex items-center justify-between gap-md">
+      <p className="font-sans text-xs text-text-secondary">
+        <span className="text-ember font-semibold">Hmm —</span> {suggestion.reason}.{' '}
+        <button
+          type="button"
+          onClick={() => onSwitch(suggestion.pathway)}
+          className="text-ember font-semibold underline underline-offset-2 transition-colors hover:text-ember-hover"
+        >
+          Try {suggestion.label} pathway?
+        </button>
+      </p>
+    </div>
+  );
+}
+
+// ── Shared Editing View ───────────────────────────────────────────────────
+
+interface ModuleStep {
+  id: string;
+  title: string;
+  instructions: string;
+  observationHint: string;
+}
+
+interface SharedEditData {
+  pathway: Pathway;
+  title: string;
+  targetUnderstanding: string;
+  watchFor: string;
+  pivot: string;
+  steps: ModuleStep[];
+  materials: string[];
+  subjects: string[];
+  duration: string;
+  setting: string;
+  ageRange: string;
+  capabilities: Array<{ threadId: string; confidence: 'explicit' | 'inferred' }>;
+  provenance: Record<string, unknown>;
+}
+
+function normalizeToEditData(pathway: Pathway, data: Record<string, unknown>): SharedEditData {
+  const base: SharedEditData = {
+    pathway,
+    title: '',
+    targetUnderstanding: '',
+    watchFor: '',
+    pivot: '',
+    steps: [],
+    materials: [],
+    subjects: (data.subjects as string[]) ?? [],
+    duration: (data.duration as string) ?? '',
+    setting: (data.setting as string) ?? 'either',
+    ageRange: (data.ageRange as string) ?? '',
+    capabilities: [],
+    provenance: {},
+  };
+
+  switch (pathway) {
+    case 'material':
+      base.title = (data.resourceName as string) ?? '';
+      base.provenance = {
+        type: 'sourceResource',
+        resourceType: data.resourceType,
+        resourceName: data.resourceName,
+        excitement: data.excitement,
+      };
+      break;
+    case 'process':
+      base.title = (data.activityName as string) ?? '';
+      if (data.whatHappens) {
+        const lines = (data.whatHappens as string).split('\n').filter(Boolean);
+        base.steps = lines.map((line, i) => ({
+          id: `step-${i}`,
+          title: `Step ${i + 1}`,
+          instructions: line.trim(),
+          observationHint: '',
+        }));
+      }
+      if (data.hasProduct && data.productName) {
+        base.materials.push(data.productName as string);
+      }
+      break;
+    case 'inquiry':
+      base.title = (data.question as string) ?? '';
+      base.provenance = {
+        type: 'sourceQuestion',
+        question: data.question,
+        priorKnowledge: data.priorKnowledge,
+        investigationTypes: data.investigationTypes,
+      };
+      break;
+    case 'retrospective':
+      base.title = (data.moduleName as string) ?? (data.subject as string) ?? '';
+      base.provenance = {
+        type: 'sourceLogs',
+        subject: data.subject,
+        entryIds: data.entryIds,
+      };
+      break;
+    case 'goal':
+      base.title = (data.goal as string) ?? (data.threadName as string) ?? '';
+      if (data.mode === 'capability') {
+        base.provenance = {
+          type: 'sourceCapability',
+          threadId: data.threadId,
+          threadName: data.threadName,
+          targetTier: data.tier,
+        };
+        if (data.threadId) {
+          base.capabilities = [{ threadId: data.threadId as string, confidence: 'explicit' }];
+        }
+      } else {
+        base.provenance = {
+          type: 'sourceGoal',
+          goal: data.goal,
+          successLooksLike: data.successLooksLike,
+        };
+      }
+      break;
+  }
+  return base;
+}
+
+const PROVENANCE_LABELS: Record<string, string> = {
+  sourceResource: 'Source Resource',
+  sourceQuestion: 'Driving Question',
+  sourceLogs: 'Lifted from Logs',
+  sourceGoal: 'Learning Target',
+  sourceCapability: 'Capability Target',
+};
+
+function SharedEditView({
+  initialData,
+  onBack,
+  onSaved,
+}: {
+  initialData: SharedEditData;
+  onBack: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState(initialData);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function addStep() {
+    const id = `step-${Date.now()}`;
+    setForm((f) => ({
+      ...f,
+      steps: [...f.steps, { id, title: `Step ${f.steps.length + 1}`, instructions: '', observationHint: '' }],
+    }));
+  }
+
+  function updateStep(id: string, field: keyof ModuleStep, value: string) {
+    setForm((f) => ({
+      ...f,
+      steps: f.steps.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+    }));
+  }
+
+  function removeStep(id: string) {
+    setForm((f) => ({
+      ...f,
+      steps: f.steps.filter((s) => s.id !== id),
+    }));
+  }
+
+  function moveStep(idx: number, direction: -1 | 1) {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= form.steps.length) return;
+    setForm((f) => {
+      const steps = [...f.steps];
+      [steps[idx], steps[newIdx]] = [steps[newIdx], steps[idx]];
+      return { ...f, steps };
+    });
+  }
+
+  const toggleSubject = (s: string) =>
+    setForm((f) => ({
+      ...f,
+      subjects: f.subjects.includes(s) ? f.subjects.filter((x) => x !== s) : [...f.subjects, s],
+    }));
+
+  const handleSave = async (status: 'draft' | 'complete') => {
+    if (!form.title.trim()) { setError('Module title is required.'); return; }
+    setSaving(true); setError(null);
+    const ok = await saveDraft(form.pathway, { ...form }, status);
+    setSaving(false);
+    if (ok) onSaved();
+    else setError('Something went wrong. Please try again.');
+  };
+
+  const provenanceType = form.provenance.type as string | undefined;
+
+  return (
+    <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
+      <div className="flex flex-col gap-lg">
+        <div className="flex items-center gap-sm">
+          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200">
+            ← Back to entry
+          </button>
+          <span className="text-text-muted font-sans text-sm">/</span>
+          <span className="font-sans text-sm text-text-secondary">Edit module</span>
+        </div>
+
+        <div>
+          <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">Shape your module</h2>
+          <p className="font-serif text-sm text-text-secondary">
+            Review and refine what Hearth has pre-populated. Edit anything — this is your module.
+          </p>
+        </div>
+
+        {/* Provenance context */}
+        {provenanceType && (
+          <div className="bg-surface-raised/50 rounded-lg border border-border-subtle p-md">
+            <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">
+              {PROVENANCE_LABELS[provenanceType] ?? 'Source'}
+            </p>
+            {provenanceType === 'sourceResource' && (
+              <p className="font-serif text-sm text-text-secondary">
+                {String(form.provenance.resourceType)} — {String(form.provenance.resourceName)}
+                {form.provenance.excitement ? (
+                  <span className="block mt-xs text-text-muted italic">&ldquo;{String(form.provenance.excitement)}&rdquo;</span>
+                ) : null}
+              </p>
+            )}
+            {provenanceType === 'sourceQuestion' && (
+              <p className="font-serif text-sm text-text-secondary italic">&ldquo;{form.provenance.question as string}&rdquo;</p>
+            )}
+            {provenanceType === 'sourceLogs' && (
+              <p className="font-serif text-sm text-text-secondary">
+                Built from {(form.provenance.entryIds as string[])?.length ?? 0} logged entries in {form.provenance.subject as string}
+              </p>
+            )}
+            {provenanceType === 'sourceGoal' && (
+              <p className="font-serif text-sm text-text-secondary">{form.provenance.goal as string}</p>
+            )}
+            {provenanceType === 'sourceCapability' && (
+              <p className="font-serif text-sm text-text-secondary">
+                {form.provenance.threadName as string} — targeting {form.provenance.targetTier as string}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Module title */}
+        <div>
+          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">Module title</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="Give this module a name"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+          />
+        </div>
+
+        {/* Target understanding */}
+        <div>
+          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">What will they understand?</label>
+          <textarea
+            value={form.targetUnderstanding}
+            onChange={(e) => setForm((f) => ({ ...f, targetUnderstanding: e.target.value }))}
+            placeholder="What's the key understanding this module develops? AI will suggest one if you leave this blank."
+            rows={2}
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+          />
+        </div>
+
+        {/* Steps */}
+        <div>
+          <div className="flex items-center justify-between mb-sm">
+            <OLabel>Steps</OLabel>
+            <button
+              type="button"
+              onClick={addStep}
+              className="font-sans text-xs font-semibold text-ember transition-colors hover:text-ember-hover"
+            >
+              + Add step
+            </button>
+          </div>
+
+          {form.steps.length === 0 && (
+            <div className="rounded-md border border-dashed border-border-subtle bg-surface-raised/30 p-md text-center">
+              <p className="font-sans text-xs text-text-muted">No steps yet. Add one above, or AI will generate them on save.</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-sm">
+            {form.steps.map((step, idx) => (
+              <div key={step.id} className="bg-surface-raised rounded-md border border-border-subtle p-sm">
+                <div className="flex items-center justify-between mb-xs">
+                  <div className="flex items-center gap-xs">
+                    <button
+                      type="button"
+                      onClick={() => moveStep(idx, -1)}
+                      disabled={idx === 0}
+                      className="font-sans text-xs text-text-muted disabled:opacity-30 hover:text-text-secondary"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveStep(idx, 1)}
+                      disabled={idx === form.steps.length - 1}
+                      className="font-sans text-xs text-text-muted disabled:opacity-30 hover:text-text-secondary"
+                    >
+                      ↓
+                    </button>
+                    <span className="font-sans text-[11px] font-semibold text-text-muted">{idx + 1}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeStep(step.id)}
+                    className="font-sans text-xs text-text-muted hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={step.title}
+                  onChange={(e) => updateStep(step.id, 'title', e.target.value)}
+                  placeholder="Step title"
+                  className="w-full bg-transparent border-b border-border-subtle mb-xs pb-xs font-sans text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-ember"
+                />
+                <textarea
+                  value={step.instructions}
+                  onChange={(e) => updateStep(step.id, 'instructions', e.target.value)}
+                  placeholder="Instructions..."
+                  rows={2}
+                  className="w-full bg-transparent font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed"
+                />
+                <input
+                  type="text"
+                  value={step.observationHint}
+                  onChange={(e) => updateStep(step.id, 'observationHint', e.target.value)}
+                  placeholder="Watch for... (optional)"
+                  className="w-full bg-transparent border-t border-border-subtle mt-xs pt-xs font-sans text-xs text-text-muted placeholder:text-text-muted outline-none focus:text-text-secondary"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Watch-for + Pivot */}
+        <div className="flex flex-col sm:flex-row gap-md">
+          <div className="flex-1">
+            <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">Watch for</label>
+            <textarea
+              value={form.watchFor}
+              onChange={(e) => setForm((f) => ({ ...f, watchFor: e.target.value }))}
+              placeholder="What moments of understanding should you look for?"
+              rows={2}
+              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">Pivot if needed</label>
+            <textarea
+              value={form.pivot}
+              onChange={(e) => setForm((f) => ({ ...f, pivot: e.target.value }))}
+              placeholder="If things go sideways, what's a good redirect?"
+              rows={2}
+              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember"
+            />
+          </div>
+        </div>
+
+        {/* Settings */}
+        <QuickSettings
+          duration={form.duration}
+          setting={form.setting}
+          onDuration={(v) => setForm((f) => ({ ...f, duration: v }))}
+          onSetting={(v) => setForm((f) => ({ ...f, setting: v }))}
+        />
+
+        {/* Subjects */}
+        <div>
+          <OLabel>Subject areas</OLabel>
+          <div className="flex flex-wrap gap-sm">
+            {SUBJECT_TAGS.map((s) => (
+              <PillButton key={s} active={form.subjects.includes(s)} onClick={() => toggleSubject(s)}>{s}</PillButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Capabilities */}
+        {form.capabilities.length > 0 && (
+          <div>
+            <OLabel>Mapped capabilities</OLabel>
+            <div className="flex flex-wrap gap-sm">
+              {form.capabilities.map((cap) => {
+                const thread = CAPABILITY_THREADS.find((t) => t.id === cap.threadId);
+                return (
+                  <span key={cap.threadId} className="rounded-full bg-sage/10 border border-sage/30 px-sm py-[3px] font-sans text-xs text-sage">
+                    {thread?.name ?? cap.threadId} ({cap.confidence})
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {error && <p className="font-sans text-sm text-red-400">{error}</p>}
+
+        <FormActions
+          saving={saving}
+          onDraft={() => handleSave('draft')}
+          onContinue={() => handleSave('complete')}
+          continueLabel="Save module"
+        />
+      </div>
+
+      <AiCompanionPanel hints={[
+        'Leave fields blank and AI will suggest content on save.',
+        'Steps are optional — some modules work better as guided exploration.',
+        'Watch-for hints help you know when learning is happening.',
+      ]} />
+    </div>
+  );
+}
+
 // ── Material-Anchored Pathway ──────────────────────────────────────────────
 
 interface MaterialDraft {
@@ -294,7 +756,7 @@ interface MaterialDraft {
   subjects: string[];
 }
 
-function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
+function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; onSwitchPathway: (p: Pathway) => void }) {
   const [form, setForm] = useState<MaterialDraft>({
     resourceType: '',
     resourceName: '',
@@ -304,7 +766,9 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const nudge = detectCrossPathNudge('material', form.excitement);
 
   const toggleSubject = (subject: string) => {
     setForm((f) => ({
@@ -317,6 +781,10 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
 
   const handleSave = async (status: 'draft' | 'complete') => {
     if (!form.resourceName.trim()) { setError('Resource name is required.'); return; }
+    if (status === 'complete') {
+      setEditing(normalizeToEditData('material', form as unknown as Record<string, unknown>));
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft('material', form, status);
     setSaving(false);
@@ -325,6 +793,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
   };
 
   if (saved) return <SavedView onBack={onBack} />;
+  if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
@@ -386,6 +855,7 @@ function MaterialPathwayForm({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
+        <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}
 
         <FormActions saving={saving} onDraft={() => handleSave('draft')} onContinue={() => handleSave('complete')} />
@@ -413,7 +883,7 @@ interface ProcessDraft {
   ageRange: string;
 }
 
-function ProcessPathwayForm({ onBack }: { onBack: () => void }) {
+function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; onSwitchPathway: (p: Pathway) => void }) {
   const [form, setForm] = useState<ProcessDraft>({
     activityName: '',
     whatHappens: '',
@@ -426,13 +896,19 @@ function ProcessPathwayForm({ onBack }: { onBack: () => void }) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const nudge = detectCrossPathNudge('process', form.whatHappens);
 
   const toggleSubject = (s: string) =>
     setForm((f) => ({ ...f, subjects: f.subjects.includes(s) ? f.subjects.filter((x) => x !== s) : [...f.subjects, s] }));
 
   const handleSave = async (status: 'draft' | 'complete') => {
     if (!form.activityName.trim()) { setError('Activity name is required.'); return; }
+    if (status === 'complete') {
+      setEditing(normalizeToEditData('process', form as unknown as Record<string, unknown>));
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft('process', form, status);
     setSaving(false);
@@ -441,6 +917,7 @@ function ProcessPathwayForm({ onBack }: { onBack: () => void }) {
   };
 
   if (saved) return <SavedView onBack={onBack} />;
+  if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
@@ -525,6 +1002,7 @@ function ProcessPathwayForm({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
+        <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}
 
         <FormActions saving={saving} onDraft={() => handleSave('draft')} onContinue={() => handleSave('complete')} continueLabel="Capture the steps →" />
@@ -550,7 +1028,7 @@ interface InquiryDraft {
   subjects: string[];
 }
 
-function InquiryPathwayForm({ onBack }: { onBack: () => void }) {
+function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; onSwitchPathway: (p: Pathway) => void }) {
   const [form, setForm] = useState<InquiryDraft>({
     question: '',
     priorKnowledge: '',
@@ -561,7 +1039,9 @@ function InquiryPathwayForm({ onBack }: { onBack: () => void }) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const nudge = detectCrossPathNudge('inquiry', form.question + ' ' + form.priorKnowledge);
 
   const toggleType = (id: string) =>
     setForm((f) => ({ ...f, investigationTypes: f.investigationTypes.includes(id) ? f.investigationTypes.filter((x) => x !== id) : [...f.investigationTypes, id] }));
@@ -571,6 +1051,10 @@ function InquiryPathwayForm({ onBack }: { onBack: () => void }) {
 
   const handleSave = async (status: 'draft' | 'complete') => {
     if (!form.question.trim()) { setError('The question is required.'); return; }
+    if (status === 'complete') {
+      setEditing(normalizeToEditData('inquiry', form as unknown as Record<string, unknown>));
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft('inquiry', form, status);
     setSaving(false);
@@ -579,6 +1063,7 @@ function InquiryPathwayForm({ onBack }: { onBack: () => void }) {
   };
 
   if (saved) return <SavedView onBack={onBack} />;
+  if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
@@ -640,6 +1125,7 @@ function InquiryPathwayForm({ onBack }: { onBack: () => void }) {
           onSetting={(v) => setForm((f) => ({ ...f, setting: v }))}
         />
 
+        <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}
 
         <FormActions saving={saving} onDraft={() => handleSave('draft')} onContinue={() => handleSave('complete')} continueLabel="Plan the exploration →" />
@@ -678,6 +1164,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
   const [moduleName, setModuleName] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -714,12 +1201,17 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
 
   const handleSave = async (status: 'draft' | 'complete') => {
     if (!selectedPattern) { setError('Select a pattern to lift.'); return; }
-    setSaving(true); setError(null);
-    const ok = await saveDraft('retrospective', {
+    const draftData = {
       subject: selectedPattern.subject,
       entryIds: selectedPattern.entries.map((e) => e.id),
       moduleName: moduleName || selectedPattern.subject,
-    }, status);
+    };
+    if (status === 'complete') {
+      setEditing(normalizeToEditData('retrospective', draftData as unknown as Record<string, unknown>));
+      return;
+    }
+    setSaving(true); setError(null);
+    const ok = await saveDraft('retrospective', draftData, status);
     setSaving(false);
     if (ok) setSaved(true);
     else setError('Something went wrong. Please try again.');
@@ -728,6 +1220,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
   const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
 
   if (saved) return <SavedView onBack={onBack} />;
+  if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
     <div className="flex flex-col gap-lg">
@@ -829,7 +1322,7 @@ interface GoalForwardDraft {
   preferences: string[];
 }
 
-function GoalForwardPathwayForm({ onBack }: { onBack: () => void }) {
+function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; onSwitchPathway: (p: Pathway) => void }) {
   const [mode, setMode] = useState<GoalMode>('aspiration');
   const [form, setForm] = useState<GoalForwardDraft>({
     mode: 'aspiration',
@@ -845,7 +1338,9 @@ function GoalForwardPathwayForm({ onBack }: { onBack: () => void }) {
   const [threadSearch, setThreadSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const nudge = detectCrossPathNudge('goal', form.goal + ' ' + form.successLooksLike);
 
   const togglePref = (id: string) =>
     setForm((f) => ({ ...f, preferences: f.preferences.includes(id) ? f.preferences.filter((x) => x !== id) : [...f.preferences, id] }));
@@ -863,6 +1358,10 @@ function GoalForwardPathwayForm({ onBack }: { onBack: () => void }) {
   const handleSave = async (status: 'draft' | 'complete') => {
     if (mode === 'aspiration' && !form.goal.trim()) { setError('Describe your learning goal.'); return; }
     if (mode === 'capability' && (!form.threadId || !form.tier)) { setError('Select a capability thread and a tier.'); return; }
+    if (status === 'complete') {
+      setEditing(normalizeToEditData('goal', { ...form, mode } as unknown as Record<string, unknown>));
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft('goal', { ...form, mode }, status);
     setSaving(false);
@@ -871,6 +1370,7 @@ function GoalForwardPathwayForm({ onBack }: { onBack: () => void }) {
   };
 
   if (saved) return <SavedView onBack={onBack} />;
+  if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
@@ -1000,6 +1500,7 @@ function GoalForwardPathwayForm({ onBack }: { onBack: () => void }) {
           </>
         )}
 
+        <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}
 
         <FormActions
@@ -1033,19 +1534,19 @@ export default function BuildModulesPage() {
   const [selected, setSelected] = useState<Pathway | null>(null);
 
   if (selected === 'material') {
-    return <div className="px-md py-lg max-w-4xl mx-auto"><MaterialPathwayForm onBack={() => setSelected(null)} /></div>;
+    return <div className="px-md py-lg max-w-4xl mx-auto"><MaterialPathwayForm onBack={() => setSelected(null)} onSwitchPathway={setSelected} /></div>;
   }
   if (selected === 'process') {
-    return <div className="px-md py-lg max-w-4xl mx-auto"><ProcessPathwayForm onBack={() => setSelected(null)} /></div>;
+    return <div className="px-md py-lg max-w-4xl mx-auto"><ProcessPathwayForm onBack={() => setSelected(null)} onSwitchPathway={setSelected} /></div>;
   }
   if (selected === 'inquiry') {
-    return <div className="px-md py-lg max-w-4xl mx-auto"><InquiryPathwayForm onBack={() => setSelected(null)} /></div>;
+    return <div className="px-md py-lg max-w-4xl mx-auto"><InquiryPathwayForm onBack={() => setSelected(null)} onSwitchPathway={setSelected} /></div>;
   }
   if (selected === 'retrospective') {
     return <div className="px-md py-lg max-w-2xl mx-auto"><RetrospectiveLiftPathwayForm onBack={() => setSelected(null)} /></div>;
   }
   if (selected === 'goal') {
-    return <div className="px-md py-lg max-w-4xl mx-auto"><GoalForwardPathwayForm onBack={() => setSelected(null)} /></div>;
+    return <div className="px-md py-lg max-w-4xl mx-auto"><GoalForwardPathwayForm onBack={() => setSelected(null)} onSwitchPathway={setSelected} /></div>;
   }
 
   return (

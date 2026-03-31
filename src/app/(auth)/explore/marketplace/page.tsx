@@ -34,6 +34,7 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
+  const [detailPack, setDetailPack] = useState<SanityPack | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -213,12 +214,19 @@ export default function MarketplacePage() {
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
                 {filtered.map((pack) => (
-                  <MarketplaceCard
+                  <div
                     key={pack._id}
-                    pack={pack}
-                    inLibrary={libraryIds.has(pack._id)}
-                    onAddToLibrary={handleAddToLibrary}
-                  />
+                    onClick={() => setDetailPack(pack)}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer"
+                  >
+                    <MarketplaceCard
+                      pack={pack}
+                      inLibrary={libraryIds.has(pack._id)}
+                      onAddToLibrary={handleAddToLibrary}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -248,6 +256,108 @@ export default function MarketplacePage() {
           </>
         )}
       </div>
+
+      {/* Pack detail modal */}
+      {detailPack && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-lg"
+          onClick={() => setDetailPack(null)}
+        >
+          <div
+            className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle — mobile only */}
+            <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
+
+            {/* Ember top line */}
+            <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-ember opacity-70 hidden sm:block" />
+
+            {/* Header */}
+            <div className="px-xl pt-lg pb-md border-b border-border-subtle">
+              <div className="flex items-start justify-between gap-md">
+                <div className="flex-1">
+                  <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                    {detailPack.subjects?.slice(0, 2).join(' · ') ?? 'Learning Pack'}
+                  </p>
+                  <h2 className="font-serif text-xl font-semibold text-text-primary leading-snug">
+                    {detailPack.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setDetailPack(null)}
+                  className="shrink-0 rounded-full border border-border-subtle p-xs font-sans text-text-muted hover:text-text-primary transition-colors duration-200"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-xl py-lg space-y-lg">
+              {detailPack.description && (
+                <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                  {detailPack.description}
+                </p>
+              )}
+
+              {/* Creator */}
+              {detailPack.creator && (
+                <div>
+                  <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                    Creator
+                  </p>
+                  <p className="font-serif text-sm text-text-primary">{detailPack.creator}</p>
+                </div>
+              )}
+
+              {/* Age range & duration */}
+              <div className="grid grid-cols-2 gap-md">
+                {detailPack.ageRange && (
+                  <div>
+                    <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                      Age Range
+                    </p>
+                    <p className="font-serif text-sm text-text-primary">
+                      {detailPack.ageRange.min}–{detailPack.ageRange.max} years
+                    </p>
+                  </div>
+                )}
+                {detailPack.moduleCount && (
+                  <div>
+                    <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                      Modules
+                    </p>
+                    <p className="font-serif text-sm text-text-primary">{detailPack.moduleCount}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action */}
+              <div className="pt-sm border-t border-border-subtle">
+                {libraryIds.has(detailPack._id) ? (
+                  <button
+                    disabled
+                    className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm cursor-default"
+                  >
+                    In Library
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleAddToLibrary(detailPack._id);
+                      setDetailPack(null);
+                    }}
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+                  >
+                    Add to Library
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

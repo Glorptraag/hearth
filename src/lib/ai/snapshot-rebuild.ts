@@ -12,6 +12,12 @@ import {
 import { eq, and, desc, count } from 'drizzle-orm';
 import { subDays, differenceInCalendarDays, format } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
+import {
+  triggerBadgeReady,
+  triggerComplianceNudge,
+  triggerStreakPrompt,
+  cleanStaleNotifications,
+} from '@/lib/notifications/triggers';
 
 type RebuildTrigger = 'entry_saved' | 'library_change' | 'settings_change' | 'manual';
 
@@ -310,18 +316,41 @@ export async function rebuildSnapshot(
       });
     }
 
-    // Create badge-ready notifications
+    // Clean stale notifications before creating new ones
+    await cleanStaleNotifications(familyId);
+
+    // Create badge-ready notifications via trigger system (frequency-capped)
     for (const notif of pendingNotifications) {
       const n = notif as { type: string; target_learner_id: string; payload: Record<string, unknown> };
-      await db.insert(notifications).values({
-        familyId,
-        type: n.type,
-        tier: 'chime',
-        title: `${n.payload.badge_emoji} Badge ready: ${n.payload.badge_title}`,
-        body: `${n.payload.learner_name} has enough observations for the ${n.payload.badge_title} badge!`,
-        bodyData: n.payload,
-        destinationRoute: `/badges/assess/${n.payload.badge_id}?learner=${n.payload.learner_id}&name=${encodeURIComponent(String(n.payload.learner_name))}`,
+      await triggerBadgeReady(familyId, {
+        badgeId: String(n.payload.badge_id),
+        badgeTitle: String(n.payload.badge_title),
+        badgeEmoji: String(n.payload.badge_emoji),
+        learnerId: String(n.payload.learner_id),
+        learnerName: String(n.payload.learner_name),
       });
+    }
+
+    // Compliance nudge: if HEU deadline approaching + coverage gaps
+    if (daysUntilDue !== null && daysUntilDue <= 28) {
+      const allChildGaps = Object.values(childSnapshots)
+        .flatMap((cs) => {
+          const snap = cs as { gap_analysis?: { underserved_subjects?: string[] } };
+          return snap.gap_analysis?.underserved_subjects ?? [];
+        });
+      const uniqueGaps = [...new Set(allChildGaps)];
+      await triggerComplianceNudge(familyId, {
+        daysUntilDue,
+        gapSubjects: uniqueGaps,
+      });
+    }
+
+    // Streak prompt: if ≥5 days since last logged activity
+    if (entryDates[0]) {
+      const daysSinceLastLog = differenceInCalendarDays(now, new Date(entryDates[0]));
+      if (daysSinceLastLog >= 5) {
+        await triggerStreakPrompt(familyId, daysSinceLastLog);
+      }
     }
 
     console.log(`[snapshotRebuild] family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);

@@ -17,6 +17,8 @@ interface ModuleCardProps {
   isReadOnly?: boolean;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
 }
 
 const COLOUR_DOT: Record<string, string> = {
@@ -55,6 +57,8 @@ export default function ModuleCard({
   isReadOnly = false,
   onToggle,
   onDelete,
+  onDragStart,
+  onDragEnd,
 }: ModuleCardProps) {
   const entryLearners = learners.filter((l) => entry.learnerIds?.includes(l.id));
   const isComplete = entry.status === 'completed';
@@ -62,7 +66,16 @@ export default function ModuleCard({
 
   return (
     <div
+      draggable={!isReadOnly}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', entry.id);
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart?.(entry.id);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        !isReadOnly ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${
         isComplete
           ? 'border-border-subtle bg-[linear-gradient(135deg,rgba(74,222,128,0.04),transparent)] opacity-55'
           : 'border-border-subtle bg-surface-raised hover:border-border-medium hover:shadow-[var(--shadow-soft)] hover:-translate-y-[1px]'

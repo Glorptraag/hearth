@@ -25,6 +25,7 @@ interface PlannerEntry {
 interface Recommendation {
   title: string;
   subject?: string;
+  reason?: string;
 }
 
 interface PlannerClientProps {
@@ -146,6 +147,26 @@ export default function PlannerClient({
     }
   }, [weekStart]);
 
+  const handleMove = useCallback(async (id: string, toDate: string, toSession: string) => {
+    const entry = entries.find((e) => e.id === id);
+    if (!entry || (entry.date === toDate && (entry.session ?? 'morning') === toSession)) return;
+
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, date: toDate, session: toSession } : e))
+    );
+
+    const res = await fetch(`/api/planner/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: toDate, session: toSession }),
+    });
+    if (!res.ok) {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, date: entry.date, session: entry.session } : e))
+      );
+    }
+  }, [entries]);
+
   const isCurrentWeek = isSameWeek(weekStart, todayDate, { weekStartsOn: 1 });
 
   return (
@@ -221,6 +242,7 @@ export default function PlannerClient({
         onAdd={handleOpenSheet}
         onToggle={handleToggle}
         onDelete={handleDelete}
+        onMove={handleMove}
       />
 
       {/* Bottom sheet */}

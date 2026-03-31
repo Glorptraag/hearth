@@ -12,6 +12,13 @@ interface Learner {
 interface Recommendation {
   title: string;
   subject?: string;
+  reason?: string;
+}
+
+interface CatalogItem {
+  title: string;
+  moduleId: string;
+  subjects: string[];
 }
 
 interface BottomSheetProps {
@@ -32,7 +39,7 @@ const COLOUR_CHIP: Record<string, string> = {
   amber: 'bg-amber-400/20 text-amber-400 border-amber-400/30',
 };
 
-type SheetTab = 'recommendations' | 'custom';
+type SheetTab = 'recommendations' | 'browse' | 'custom';
 
 export default function BottomSheet({
   isOpen,
@@ -48,7 +55,11 @@ export default function BottomSheet({
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [session, setSession] = useState<string>('morning');
   const [saving, setSaving] = useState(false);
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -56,9 +67,31 @@ export default function BottomSheet({
       setSelectedLearners([]);
       setSession(targetSession ?? 'morning');
       setTab(recommendations.length > 0 ? 'recommendations' : 'custom');
+      setCatalogSearch('');
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [isOpen, recommendations.length, targetSession]);
+
+  useEffect(() => {
+    if (tab === 'browse' && catalogItems.length === 0 && !catalogLoading) {
+      setCatalogLoading(true);
+      fetch('/api/library')
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data: CatalogItem[]) => setCatalogItems(data))
+        .catch(() => setCatalogItems([]))
+        .finally(() => setCatalogLoading(false));
+    }
+    if (tab === 'browse') {
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [tab, catalogItems.length, catalogLoading]);
+
+  const filteredCatalog = catalogSearch
+    ? catalogItems.filter((item) =>
+        item.title.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+        item.subjects.some((s) => s.toLowerCase().includes(catalogSearch.toLowerCase()))
+      )
+    : catalogItems;
 
   function toggleLearner(id: string) {
     setSelectedLearners((prev) =>
@@ -180,6 +213,16 @@ export default function BottomSheet({
             </button>
           )}
           <button
+            onClick={() => setTab('browse')}
+            className={`mr-md pb-sm font-sans text-xs font-semibold transition-colors ${
+              tab === 'browse'
+                ? 'border-b-2 border-ember text-ember'
+                : 'text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            Browse Library
+          </button>
+          <button
             onClick={() => setTab('custom')}
             className={`pb-sm font-sans text-xs font-semibold transition-colors ${
               tab === 'custom'
@@ -200,6 +243,40 @@ export default function BottomSheet({
                   key={i}
                   title={r.title}
                   subject={r.subject}
+                  onAdd={handleSubmit}
+                />
+              ))}
+            </div>
+          )}
+
+          {tab === 'browse' && (
+            <div className="flex flex-col gap-sm">
+              <input
+                ref={searchRef}
+                type="text"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder="Search your library..."
+                className="w-full rounded-[6px] border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-border-medium focus:outline-none"
+              />
+              {catalogLoading && (
+                <p className="py-md text-center font-sans text-xs text-text-muted animate-pulse">Loading library...</p>
+              )}
+              {!catalogLoading && filteredCatalog.length === 0 && (
+                <div className="py-lg text-center">
+                  <p className="font-serif text-sm text-text-secondary">
+                    {catalogSearch ? 'No matches found' : 'Your library is empty'}
+                  </p>
+                  <p className="mt-xs font-sans text-xs text-text-muted">
+                    <a href="/explore/activities" className="text-ember hover:underline">Browse activities</a> to add to your library
+                  </p>
+                </div>
+              )}
+              {filteredCatalog.map((item) => (
+                <RecommendationChip
+                  key={item.moduleId}
+                  title={item.title}
+                  subject={item.subjects[0]}
                   onAdd={handleSubmit}
                 />
               ))}

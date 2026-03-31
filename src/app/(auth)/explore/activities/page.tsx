@@ -21,6 +21,7 @@ interface Module {
   ageRange?: { min: number; max: number };
   duration?: { min: number; max: number };
   approaches?: Approach[];
+  packId?: string;
 }
 
 const SUBJECTS = [
@@ -53,54 +54,69 @@ const MODALITY_EMOJI: Record<string, string> = {
 
 // ─── Module Card ──────────────────────────────────────────────────────────────
 
-function ModuleCard({ module, onPreview }: { module: Module; onPreview: (m: Module) => void }) {
+function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module: Module; onPreview: (m: Module) => void; isInLibrary: boolean; onAddToLibrary: (moduleId: string) => void }) {
   return (
-    <button
-      onClick={() => onPreview(module)}
-      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full"
+    <div
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
 
-      <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
-        {module.title}
-      </h3>
+      <button
+        onClick={() => onPreview(module)}
+        className="text-left flex-1"
+      >
+        <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
+          {module.title}
+        </h3>
 
-      {/* Subjects */}
-      {module.subjects && module.subjects.length > 0 && (
-        <div className="flex flex-wrap gap-xs mb-sm">
-          {module.subjects.map((s) => {
-            const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
-            return (
-              <span
-                key={s}
-                className={`font-sans text-xs rounded-full px-sm py-xs border ${colorClass}`}
-              >
-                {s}
-              </span>
-            );
-          })}
+        {/* Subjects */}
+        {module.subjects && module.subjects.length > 0 && (
+          <div className="flex flex-wrap gap-xs mb-sm">
+            {module.subjects.map((s) => {
+              const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
+              return (
+                <span
+                  key={s}
+                  className={`font-sans text-xs rounded-full px-sm py-xs border ${colorClass}`}
+                >
+                  {s}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Meta row */}
+        <div className="flex items-center gap-md flex-wrap mt-auto mb-md">
+          {module.ageRange && (
+            <span className="font-sans text-xs text-text-muted">
+              👶 {module.ageRange.min}–{module.ageRange.max} yrs
+            </span>
+          )}
+          {module.duration && (
+            <span className="font-sans text-xs text-text-muted">
+              ⏱ {module.duration.min}–{module.duration.max} min
+            </span>
+          )}
+          {module.approaches && (
+            <span className="font-sans text-xs text-text-muted">
+              {module.approaches.length} approach{module.approaches.length !== 1 ? 'es' : ''}
+            </span>
+          )}
         </div>
-      )}
+      </button>
 
-      {/* Meta row */}
-      <div className="flex items-center gap-md flex-wrap mt-auto">
-        {module.ageRange && (
-          <span className="font-sans text-xs text-text-muted">
-            👶 {module.ageRange.min}–{module.ageRange.max} yrs
-          </span>
-        )}
-        {module.duration && (
-          <span className="font-sans text-xs text-text-muted">
-            ⏱ {module.duration.min}–{module.duration.max} min
-          </span>
-        )}
-        {module.approaches && (
-          <span className="font-sans text-xs text-text-muted">
-            {module.approaches.length} approach{module.approaches.length !== 1 ? 'es' : ''}
-          </span>
-        )}
-      </div>
-    </button>
+      {/* Action button */}
+      {isInLibrary ? (
+        <button disabled className="rounded-md border border-sage/30 bg-sage/15 px-sm py-[4px] font-sans text-[11px] font-semibold text-sage cursor-not-allowed">
+          In Library
+        </button>
+      ) : (
+        <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover">
+          Add to Library
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -222,9 +238,11 @@ function PreviewModal({
 export default function ExploreActivitiesPage() {
   const router = useRouter();
   const [modules, setModules] = useState<Module[]>([]);
+  const [packIds, setPackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
+  const [libraryOnly, setLibraryOnly] = useState(false);
   const [previewModule, setPreviewModule] = useState<Module | null>(null);
   const [, setPlannerSaving] = useState(false);
   const [plannerSuccess, setPlannerSuccess] = useState<string | null>(null);
@@ -234,19 +252,20 @@ export default function ExploreActivitiesPage() {
       const libraryRes = await fetch('/api/library');
       if (!libraryRes.ok) return;
       const library: { sanityPackId: string }[] = await libraryRes.json();
-      const packIds = library.map((r) => r.sanityPackId);
+      const ids = library.map((r) => r.sanityPackId);
+      setPackIds(ids);
 
-      if (packIds.length === 0) {
+      if (ids.length === 0) {
         setLoading(false);
         return;
       }
 
-      const packs: { modules: Module[] | null }[] = await sanityClient.fetch(
+      const packs: { _id: string; modules: Module[] | null }[] = await sanityClient.fetch(
         LIBRARY_MODULES_QUERY,
-        { packIds }
+        { packIds: ids }
       );
 
-      const allModules = packs.flatMap((p) => p.modules ?? []);
+      const allModules = packs.flatMap((p) => (p.modules ?? []).map((m) => ({ ...m, packId: p._id })));
       setModules(allModules);
     } finally {
       setLoading(false);
@@ -257,6 +276,10 @@ export default function ExploreActivitiesPage() {
 
   const filtered = useMemo(() => {
     let result = modules;
+
+    if (libraryOnly) {
+      result = result.filter((m) => packIds.includes(m.packId ?? ''));
+    }
 
     if (subjectFilter !== 'all') {
       result = result.filter((m) => m.subjects?.includes(subjectFilter));
@@ -269,7 +292,7 @@ export default function ExploreActivitiesPage() {
     }
 
     return result;
-  }, [modules, subjectFilter, sortBy]);
+  }, [modules, packIds, libraryOnly, subjectFilter, sortBy]);
 
   const handleAddToPlanner = async (module: Module) => {
     setPlannerSaving(true);
@@ -288,6 +311,19 @@ export default function ExploreActivitiesPage() {
     }
   };
 
+  const handleAddToLibrary = async (moduleId: string) => {
+    try {
+      await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId }),
+      });
+      loadModules();
+    } catch (err) {
+      console.error('Failed to add to library', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-surface-body">
       {/* Header */}
@@ -303,6 +339,18 @@ export default function ExploreActivitiesPage() {
       {/* Filter bar */}
       <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md lg:px-lg py-md max-w-[1280px] mx-auto">
         <div className="flex flex-col gap-md">
+          {/* My Library toggle */}
+          <button
+            onClick={() => setLibraryOnly((v) => !v)}
+            className={`shrink-0 rounded-full border px-md py-[5px] font-sans text-[12px] font-semibold transition-all duration-200 w-fit ${
+              libraryOnly
+                ? 'border-sage bg-sage/15 text-sage'
+                : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            {libraryOnly ? '✓ My Library' : 'My Library'}
+          </button>
+
           {/* Subject filter pills */}
           <div className="flex gap-xs overflow-x-auto pb-xs">
             <button
@@ -388,7 +436,13 @@ export default function ExploreActivitiesPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
             {filtered.map((m) => (
-              <ModuleCard key={m._id} module={m} onPreview={setPreviewModule} />
+              <ModuleCard
+                key={m._id}
+                module={m}
+                onPreview={setPreviewModule}
+                isInLibrary={packIds.includes(m.packId ?? '')}
+                onAddToLibrary={handleAddToLibrary}
+              />
             ))}
           </div>
         )}

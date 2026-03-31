@@ -15,6 +15,7 @@ interface NotificationRowProps {
   };
   onDismiss: (id: string) => void;
   onMarkRead: (id: string) => void;
+  onSnooze: (id: string) => void;
   basePath?: string;
 }
 
@@ -57,6 +58,7 @@ export default function NotificationRow({
   notification,
   onDismiss,
   onMarkRead,
+  onSnooze,
   basePath = '',
 }: NotificationRowProps) {
   const isUnread = notification.state === 'visible';
@@ -123,17 +125,32 @@ export default function NotificationRow({
           </div>
         </div>
 
-        {/* Dismiss — visible on hover */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDismiss(notification.id);
-          }}
-          className="mt-[-4px] mr-[-4px] flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-md font-sans text-sm text-text-muted opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-surface-raised hover:text-text-secondary"
-          aria-label="Dismiss"
-        >
-          ✕
-        </button>
+        {/* Snooze + Dismiss — visible on hover */}
+        <div className="mt-[-4px] mr-[-4px] flex shrink-0 flex-col gap-[2px] opacity-0 transition-all duration-200 group-hover:opacity-100">
+          {isUnread && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSnooze(notification.id);
+              }}
+              className="flex h-[28px] w-[28px] items-center justify-center rounded-md font-sans text-[13px] text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+              aria-label="Snooze for 4 hours"
+              title="Snooze"
+            >
+              💤
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss(notification.id);
+            }}
+            className="flex h-[28px] w-[28px] items-center justify-center rounded-md font-sans text-[13px] text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
   );

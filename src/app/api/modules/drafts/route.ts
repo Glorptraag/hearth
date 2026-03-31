@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { moduleDrafts } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
+import { enrichModuleDraft } from '@/lib/ai/enrich-module';
 
 export async function GET() {
   const { userId } = await auth();
@@ -49,6 +50,12 @@ export async function POST(request: NextRequest) {
       status: parsed.data.status,
     })
     .returning();
+
+  // Async AI enrichment for completed modules — fills in blank fields
+  if (parsed.data.status === 'complete') {
+    enrichModuleDraft(draft.id, family.id)
+      .catch((err) => console.error('[modules/drafts] enrichment error:', err));
+  }
 
   return NextResponse.json(draft, { status: 201 });
 }

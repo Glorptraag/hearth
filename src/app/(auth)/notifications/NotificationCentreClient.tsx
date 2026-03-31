@@ -40,7 +40,7 @@ export default function NotificationCentreClient({
   const [quietDay, setQuietDay] = useState(false);
 
   const visible = notifications.filter(
-    (n) => n.state !== 'dismissed' && n.state !== 'expired'
+    (n) => n.state !== 'dismissed' && n.state !== 'expired' && n.state !== 'snoozed'
   );
   const unreadCount = visible.filter((n) => n.state === 'visible').length;
 
@@ -76,6 +76,17 @@ export default function NotificationCentreClient({
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: 'actioned' }),
+    });
+  }
+
+  async function handleSnooze(id: string) {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, state: 'snoozed' } : n))
+    );
+    await fetch(`/api/notifications/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'snoozed', snoozeHours: 4 }),
     });
   }
 
@@ -204,6 +215,7 @@ export default function NotificationCentreClient({
                     notification={n}
                     onDismiss={handleDismiss}
                     onMarkRead={handleMarkRead}
+                    onSnooze={handleSnooze}
                     basePath={basePath}
                   />
                 ))}

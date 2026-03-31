@@ -24,6 +24,7 @@ const LEARNER_BORDER: Record<string, string> = {
   rose: 'border-child-rose',
   blue: 'border-child-blue',
   sage: 'border-child-sage',
+  violet: 'border-child-violet',
   amber: 'border-child-amber',
 };
 

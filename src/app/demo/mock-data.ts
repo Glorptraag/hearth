@@ -839,7 +839,7 @@ export const mockBadges: Badge[] = [
     emoji: '🔬',
     description: 'Demonstrates curiosity, careful observation, and inquiry skills across learning experiences.',
     threadName: 'scientific-thinking',
-    threshold: 10,
+    threshold: 3,
     assessmentQuestions: [
       {
         id: 'q1',
@@ -869,7 +869,7 @@ export const mockBadges: Badge[] = [
     emoji: '🔢',
     description: 'Shows growing confidence with number concepts, measurement, and mathematical reasoning in everyday contexts.',
     threadName: 'mathematical-reasoning',
-    threshold: 8,
+    threshold: 3,
     assessmentQuestions: [
       {
         id: 'q1',
@@ -899,7 +899,7 @@ export const mockBadges: Badge[] = [
     emoji: '📖',
     description: 'Engages deeply with stories, expressing ideas through writing, discussion, and creative response.',
     threadName: 'written-communication',
-    threshold: 8,
+    threshold: 2,
     assessmentQuestions: [
       {
         id: 'q1',

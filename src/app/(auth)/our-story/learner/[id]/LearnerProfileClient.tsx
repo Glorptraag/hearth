@@ -13,6 +13,9 @@ interface ProfileData {
   interests?: string[];
   strengths?: string[];
   notes?: string;
+  tagline?: string | null;
+  sparks?: Array<{ name: string; count?: number }>;
+  facilitatorNotes?: string | null;
 }
 
 interface LearnerProfileClientProps {
@@ -149,12 +152,34 @@ export default function LearnerProfileClient({
     learner.profileData.strengths ?? []
   );
   const [notes, setNotes] = useState(learner.profileData.notes ?? '');
+  const [tagline, setTagline] = useState(learner.profileData.tagline ?? '');
+  const [taglineEditing, setTaglineEditing] = useState(false);
+  const [facilitatorNotes, setFacilitatorNotes] = useState(
+    learner.profileData.facilitatorNotes ?? ''
+  );
+  const [facilitatorNotesEditing, setFacilitatorNotesEditing] = useState(false);
 
   // Snapshot for cancel
-  const snapshot = useRef({ about, workingStyle, interests, strengths, notes });
+  const snapshot = useRef({
+    about,
+    workingStyle,
+    interests,
+    strengths,
+    notes,
+    tagline,
+    facilitatorNotes,
+  });
 
   function startEdit() {
-    snapshot.current = { about, workingStyle, interests, strengths, notes };
+    snapshot.current = {
+      about,
+      workingStyle,
+      interests,
+      strengths,
+      notes,
+      tagline,
+      facilitatorNotes,
+    };
     setEditing(true);
   }
 
@@ -165,6 +190,8 @@ export default function LearnerProfileClient({
     setInterests(s.interests);
     setStrengths(s.strengths);
     setNotes(s.notes);
+    setTagline(s.tagline);
+    setFacilitatorNotes(s.facilitatorNotes);
     setEditing(false);
   }
 
@@ -180,7 +207,15 @@ export default function LearnerProfileClient({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          profileData: { about, workingStyle, interests, strengths, notes },
+          profileData: {
+            about,
+            workingStyle,
+            interests,
+            strengths,
+            notes,
+            tagline,
+            facilitatorNotes,
+          },
         }),
       });
       if (!res.ok) throw new Error('Save failed');
@@ -241,6 +276,32 @@ export default function LearnerProfileClient({
             <h1 className="font-serif text-[2rem] font-semibold leading-none text-text-primary">
               {learner.name}
             </h1>
+            {taglineEditing && editing ? (
+              <input
+                autoFocus
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                onBlur={() => setTaglineEditing(false)}
+                className="mt-xs w-full bg-transparent font-serif text-base italic text-text-secondary border-b border-border-subtle focus:outline-none focus:border-ember transition-colors duration-200"
+                placeholder="Add a tagline..."
+              />
+            ) : (
+              <button
+                onClick={() => editing && setTaglineEditing(true)}
+                disabled={!editing}
+                className={`mt-xs ${editing ? 'cursor-pointer' : 'cursor-default'}`}
+              >
+                {tagline ? (
+                  <p className="font-serif text-base italic text-text-secondary hover:text-text-primary transition-colors duration-200">
+                    {tagline}
+                  </p>
+                ) : (
+                  <p className="font-serif text-base italic text-text-muted">
+                    {editing ? 'Add a tagline...' : ''}
+                  </p>
+                )}
+              </button>
+            )}
             <div className="mt-xs flex flex-wrap items-center gap-sm">
               {learner.age !== null && (
                 <span className="font-sans text-xs text-text-muted">
@@ -263,6 +324,32 @@ export default function LearnerProfileClient({
       </div>
 
       <div className="flex flex-col gap-xl px-md">
+
+        {/* ── Sparks ── */}
+        {learner.profileData.sparks && learner.profileData.sparks.length > 0 && (
+          <section>
+            <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Sparks
+            </p>
+            <div className="flex flex-wrap gap-xs">
+              {learner.profileData.sparks.map((spark, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-xs rounded-full border border-border-subtle bg-surface-raised px-md py-xs"
+                >
+                  <span className="font-serif text-sm text-text-primary">
+                    {spark.name}
+                  </span>
+                  {spark.count !== undefined && (
+                    <span className="rounded-full bg-ember/15 px-xs py-[1px] font-sans text-[10px] font-semibold text-ember">
+                      {spark.count}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── About ── */}
         <section>
@@ -410,6 +497,43 @@ export default function LearnerProfileClient({
             <p className="font-serif text-base italic text-text-muted">
               Anything else worth knowing — private, never exported.
             </p>
+          )}
+        </section>
+
+        {/* ── Facilitator Notes ── */}
+        <section>
+          <div className="mb-md flex items-center gap-xs">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Facilitator Notes
+            </p>
+            <span className="rounded-full bg-surface-raised px-xs py-[1px] font-sans text-[9px] text-text-muted border border-border-subtle">
+              🔒 Private
+            </span>
+          </div>
+          {facilitatorNotesEditing && editing ? (
+            <textarea
+              autoFocus
+              value={facilitatorNotes}
+              onChange={(e) => setFacilitatorNotes(e.target.value)}
+              onBlur={() => setFacilitatorNotesEditing(false)}
+              rows={4}
+              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none transition-all duration-200"
+              placeholder="Private notes about this learner's style, needs, or observations…"
+            />
+          ) : (
+            <button
+              onClick={() => editing && setFacilitatorNotesEditing(true)}
+              disabled={!editing}
+              className="w-full text-left rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm italic text-text-secondary hover:border-border-medium transition-all duration-200 disabled:cursor-default"
+            >
+              {facilitatorNotes ? (
+                facilitatorNotes
+              ) : (
+                <span className="text-text-muted">
+                  {editing ? 'Add private notes...' : ''}
+                </span>
+              )}
+            </button>
           )}
         </section>
 

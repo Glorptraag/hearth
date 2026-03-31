@@ -3,12 +3,10 @@
 import { useState, useRef } from 'react';
 
 const CAPABILITY_THREADS = [
-  'Scientific Thinking',
-  'Mathematical Reasoning',
-  'Creative Expression',
-  'Written Communication',
-  'Physical Coordination',
-  'Social Awareness',
+  'Literacy & Communication', 'Numeracy & Logic', 'Scientific Inquiry',
+  'Creative Arts', 'Physical & Wellbeing', 'Digital & Technologies',
+  'Humanities & Social Understanding', 'Languages', 'Character & Values',
+  'Self-Direction & Executive Function', 'Environmental Stewardship', 'Entrepreneurship & Enterprise',
 ];
 
 interface BadgeForm {
@@ -32,6 +30,7 @@ export default function BuildBadgesPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [threadSearch, setThreadSearch] = useState('');
   const indicatorRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const setIndicator = (index: number, value: string) => {
@@ -244,25 +243,37 @@ export default function BuildBadgesPage() {
         {/* ─── Capability thread ─── */}
         <section className="flex flex-col gap-sm">
           <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Capability Thread</p>
-          <div className="flex flex-wrap gap-sm">
-            {CAPABILITY_THREADS.map((thread) => {
-              const active = form.capabilityThread === thread;
-              return (
-                <button
-                  key={thread}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, capabilityThread: active ? '' : thread }))}
-                  className={`rounded-full border px-md py-xs font-sans text-xs font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                    active
-                      ? 'border-ember bg-ember-glow text-ember'
-                      : 'border-border-subtle bg-surface-raised text-text-secondary hover:border-border-medium hover:text-text-primary'
-                  }`}
-                >
-                  {thread}
-                </button>
-              );
-            })}
+          <div className="relative">
+            <input
+              type="text"
+              value={threadSearch}
+              onChange={(e) => setThreadSearch(e.target.value)}
+              placeholder="Search capability threads..."
+              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] transition-all duration-200"
+            />
+            {threadSearch && (
+              <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+                {CAPABILITY_THREADS.filter((t) =>
+                  t.toLowerCase().includes(threadSearch.toLowerCase())
+                ).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setForm((f) => ({ ...f, capabilityThread: t }));
+                      setThreadSearch(t);
+                    }}
+                    className="block w-full px-md py-sm text-left font-sans text-sm text-text-primary hover:bg-surface-raised transition-colors duration-200 first:rounded-t-md last:rounded-b-md"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          {form.capabilityThread && (
+            <p className="mt-xs font-sans text-xs text-text-muted">Selected: <span className="text-ember font-semibold">{form.capabilityThread}</span></p>
+          )}
         </section>
 
         {/* ─── Observation threshold ─── */}

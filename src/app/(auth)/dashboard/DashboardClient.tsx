@@ -365,8 +365,8 @@ export default function DashboardClient({
                     className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
                   >
                     See full timeline →
-                    </Link>
-                  </div>
+                  </Link>
+                </div>
                   <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
                     {(todayEntries.length > 0 ? todayEntries : recentEntries.slice(0, 3)).map(
                       (entry) => (

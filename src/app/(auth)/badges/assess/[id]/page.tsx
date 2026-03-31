@@ -218,6 +218,19 @@ export default function BadgeAssessPage() {
         {/* ── QUESTIONS ── */}
         {step === 'questions' && (
           <div className="pt-lg">
+            {/* Queue indicator */}
+            {(() => {
+              const queuePosition = parseInt(searchParams.get('pos') ?? '1', 10);
+              const queueTotal = parseInt(searchParams.get('total') ?? '1', 10);
+              return queueTotal > 1 ? (
+                <div className="mb-md rounded-lg border border-border-subtle bg-surface-panel px-md py-sm flex items-center justify-between">
+                  <p className="font-sans text-xs text-text-muted">
+                    Badge <span className="font-semibold text-text-primary">{queuePosition}</span> of <span className="font-semibold text-text-primary">{queueTotal}</span>
+                  </p>
+                  <span className="font-sans text-xs text-ember">{queueTotal - queuePosition} more after this</span>
+                </div>
+              ) : null;
+            })()}
             <p className="font-sans text-xs text-text-muted mb-sm">
               Question {currentQ + 1} of {totalQ}
             </p>
@@ -312,13 +325,22 @@ export default function BadgeAssessPage() {
               >
                 {submitting ? 'Awarding...' : `Award ${badge.title}`}
               </button>
-              <button
-                onClick={handleDefer}
-                disabled={submitting}
-                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium disabled:opacity-50 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-              >
-                Not yet — we&apos;ll check again later
-              </button>
+              <div className="flex flex-col gap-sm">
+                <button
+                  onClick={handleDefer}
+                  disabled={submitting}
+                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium disabled:opacity-50 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                >
+                  Not yet — we&apos;ll check again later
+                </button>
+                <button
+                  onClick={handleDefer}
+                  disabled={submitting}
+                  className="font-sans text-xs font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
+                >
+                  Not ready yet · defer 7 days
+                </button>
+              </div>
             </div>
           </div>
         )}

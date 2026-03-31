@@ -2,14 +2,14 @@
 // that needs subject pill styling (Report, Portfolio, Capabilities, Project Detail).
 
 export const DOMAIN_CLASSES: Record<string, string> = {
-  english:      'bg-sky-900/30 text-sky-300 border-sky-700/30',
-  mathematics:  'bg-orange-900/20 text-orange-300 border-orange-700/20',
-  science:      'bg-emerald-900/20 text-emerald-300 border-emerald-700/20',
-  hass:         'bg-amber-900/20 text-amber-300 border-amber-700/20',
-  arts:         'bg-purple-900/20 text-purple-300 border-purple-700/20',
-  technologies: 'bg-teal-900/20 text-teal-300 border-teal-700/20',
-  hpe:          'bg-rose-900/20 text-rose-300 border-rose-700/20',
-  languages:    'bg-cyan-900/20 text-cyan-300 border-cyan-700/20',
+  english:      'bg-domain-english/15 text-domain-english border-domain-english/20',
+  mathematics:  'bg-domain-mathematics/15 text-domain-mathematics border-domain-mathematics/20',
+  science:      'bg-domain-science/15 text-domain-science border-domain-science/20',
+  hass:         'bg-domain-hass/15 text-domain-hass border-domain-hass/20',
+  arts:         'bg-domain-arts/15 text-domain-arts border-domain-arts/20',
+  technologies: 'bg-domain-technologies/15 text-domain-technologies border-domain-technologies/20',
+  hpe:          'bg-domain-hpe/15 text-domain-hpe border-domain-hpe/20',
+  languages:    'bg-domain-languages/15 text-domain-languages border-domain-languages/20',
 };
 
 export const DOMAIN_LABELS: Record<string, string> = {

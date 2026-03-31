@@ -6,7 +6,7 @@ export const LEARNER_COLOUR_MAP: Record<string, { dot: string; ring: string; pil
   blue:   { dot: 'bg-child-blue',   ring: 'ring-child-blue/40',   pill: 'bg-child-blue/15 text-child-blue border-child-blue/20' },
   sage:   { dot: 'bg-child-sage',   ring: 'ring-child-sage/40',   pill: 'bg-child-sage/15 text-child-sage border-child-sage/20' },
   violet: { dot: 'bg-child-violet', ring: 'ring-child-violet/40', pill: 'bg-child-violet/15 text-child-violet border-child-violet/20' },
-  amber:  { dot: 'bg-amber-400',    ring: 'ring-amber-400/40',    pill: 'bg-amber-400/15 text-amber-400 border-amber-400/20' },
+  amber:  { dot: 'bg-child-amber',   ring: 'ring-child-amber/40',   pill: 'bg-child-amber/15 text-child-amber border-child-amber/20' },
 };
 
 const DEFAULT_COLOUR = LEARNER_COLOUR_MAP.rose;
@@ -34,7 +34,7 @@ export default function LearnerAvatar({ name, colourToken, size = 'md', showName
       <div
         className={`flex shrink-0 items-center justify-center rounded-full ${circle} ${colour.dot} ring-2 ${colour.ring}`}
       >
-        <span className={`font-serif font-semibold text-white/90 ${text}`}>{initial}</span>
+        <span className={`font-serif font-semibold text-surface-body ${text}`}>{initial}</span>
       </div>
       {showName && (
         <span className="font-sans text-sm font-medium text-text-primary">{name}</span>

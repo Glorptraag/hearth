@@ -12,6 +12,7 @@ interface Material { name: string; alternative?: string; required: boolean }
 interface Activity {
   _id: string;
   title: string;
+  summary?: string;
   instructions?: unknown[];
   facilitatorGuidance?: { before?: string; during?: string; challenges?: string };
   materials?: Material[];
@@ -246,108 +247,250 @@ function FacilitateMode({
   if (!current) return null;
 
   return (
-    <div className="px-md py-xl max-w-2xl mx-auto pb-32">
-      {/* Progress dots */}
-      <div className="flex items-center gap-xs mb-xl">
-        {activities.map((_, i) => (
-          <div
-            key={i}
-            className={`h-2 rounded-full transition-all duration-200 ${
-              i === currentIdx
-                ? 'w-6 bg-ember'
-                : i < currentIdx
-                ? 'w-2 bg-ember/40'
-                : 'w-2 bg-border-subtle'
-            }`}
-          />
-        ))}
-        <span className="font-sans text-xs text-text-muted ml-sm">
-          {currentIdx + 1} of {activities.length}
-        </span>
-      </div>
-
-      {/* Activity header */}
-      <div className="mb-lg">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-xs">
-          {module.approaches?.[approachIdx]?.title}
-        </p>
-        <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
-          {current.title}
-        </h2>
-        <div className="flex gap-sm flex-wrap">
-          {current.duration && (
-            <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-              ⏱ {current.duration.min}–{current.duration.max} min
-            </span>
-          )}
-          {current.setting && (
-            <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-              {SETTING_EMOJI[current.setting]} {current.setting}
-            </span>
-          )}
-          {current.energyLevel && (
-            <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-              {ENERGY_EMOJI[current.energyLevel]} {current.energyLevel}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Instructions */}
-      {current.instructions && current.instructions.length > 0 && (
-        <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-          <PortableText value={current.instructions as Parameters<typeof PortableText>[0]['value']} components={ptComponents} />
-        </div>
-      )}
-
-      {/* Materials reminder */}
-      {current.materials && current.materials.length > 0 && (
-        <div className="mb-lg">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-            Materials
-          </p>
-          <div className="flex flex-wrap gap-xs">
-            {current.materials.map((mat, i) => (
-              <span
-                key={i}
-                className="font-sans text-xs text-text-secondary bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"
-              >
-                {mat.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Observation prompts */}
-      {current.observationPrompts && current.observationPrompts.length > 0 && (
-        <div className="mb-lg space-y-xs">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-            Watch For
-          </p>
-          {current.observationPrompts.map((prompt, i) => (
+    <div className="xl:grid xl:grid-cols-[1fr_280px]">
+      {/* Main facilitate content */}
+      <div className="px-md py-xl max-w-2xl mx-auto pb-32">
+        {/* Progress dots */}
+        <div className="flex items-center gap-xs mb-xl">
+          {activities.map((_, i) => (
             <div
               key={i}
-              className="bg-surface-raised rounded-md px-md py-sm border border-border-subtle"
-            >
-              <p className="font-serif text-sm text-text-secondary italic">👁 {prompt}</p>
-            </div>
+              className={`h-2 rounded-full transition-all duration-200 ${
+                i === currentIdx
+                  ? 'w-6 bg-ember'
+                  : i < currentIdx
+                  ? 'w-2 bg-ember/40'
+                  : 'w-2 bg-border-subtle'
+              }`}
+            />
           ))}
+          <span className="font-sans text-xs text-text-muted ml-sm">
+            {currentIdx + 1} of {activities.length}
+          </span>
         </div>
-      )}
 
-      {/* Pedagogy lens (collapsible, shown only when overlay exists) */}
-      {currentOverlay && (
+        {/* Activity header */}
         <div className="mb-lg">
-          <button
-            onClick={() => setOverlayOpen((v) => !v)}
-            className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
-          >
-            <span>{overlayOpen ? '▾' : '▸'}</span>
-            <span className="text-ember">✦</span>
-            <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
-          </button>
-          {overlayOpen && (
+          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-xs">
+            {module.approaches?.[approachIdx]?.title}
+          </p>
+          <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
+            {current.title}
+          </h2>
+          <div className="flex gap-sm flex-wrap">
+            {current.duration && (
+              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                ⏱ {current.duration.min}–{current.duration.max} min
+              </span>
+            )}
+            {current.setting && (
+              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                {SETTING_EMOJI[current.setting]} {current.setting}
+              </span>
+            )}
+            {current.energyLevel && (
+              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                {ENERGY_EMOJI[current.energyLevel]} {current.energyLevel}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Instructions */}
+        {current.instructions && current.instructions.length > 0 && (
+          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <PortableText value={current.instructions as Parameters<typeof PortableText>[0]['value']} components={ptComponents} />
+          </div>
+        )}
+
+        {/* Materials reminder */}
+        {current.materials && current.materials.length > 0 && (
+          <div className="mb-lg">
+            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
+              Materials
+            </p>
+            <div className="flex flex-wrap gap-xs">
+              {current.materials.map((mat, i) => (
+                <span
+                  key={i}
+                  className="font-sans text-xs text-text-secondary bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"
+                >
+                  {mat.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Observation prompts — mobile/tablet only, shown in right panel on xl */}
+        {current.observationPrompts && current.observationPrompts.length > 0 && (
+          <div className="mb-lg space-y-xs xl:hidden">
+            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
+              Watch For
+            </p>
+            {current.observationPrompts.map((prompt, i) => (
+              <div
+                key={i}
+                className="bg-surface-raised rounded-md px-md py-sm border border-border-subtle"
+              >
+                <p className="font-serif text-sm text-text-secondary italic">👁 {prompt}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pedagogy lens — mobile/tablet only collapsible, shown in right panel on xl */}
+        {currentOverlay && (
+          <div className="mb-lg xl:hidden">
+            <button
+              onClick={() => setOverlayOpen((v) => !v)}
+              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
+            >
+              <span>{overlayOpen ? '▾' : '▸'}</span>
+              <span className="text-ember">✦</span>
+              <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
+            </button>
+            {overlayOpen && (
+              <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
+                {currentOverlay.lens.perspective && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      Perspective
+                    </p>
+                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                      {currentOverlay.lens.perspective}
+                    </p>
+                  </div>
+                )}
+                {currentOverlay.lens.facilitatorTips && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      Tips for You
+                    </p>
+                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                      {currentOverlay.lens.facilitatorTips}
+                    </p>
+                  </div>
+                )}
+                {currentOverlay.lens.languageFrame && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      Language
+                    </p>
+                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                      {currentOverlay.lens.languageFrame}
+                    </p>
+                  </div>
+                )}
+                {currentOverlay.lens.watchFor && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      Watch For
+                    </p>
+                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
+                      {currentOverlay.lens.watchFor}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Facilitator guidance — mobile/tablet only collapsible, shown in right panel on xl */}
+        {current.facilitatorGuidance && (
+          <div className="mb-lg xl:hidden">
+            <button
+              onClick={() => setGuidanceOpen((v) => !v)}
+              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
+            >
+              <span>{guidanceOpen ? '▾' : '▸'}</span>
+              <span>Facilitator Guidance</span>
+            </button>
+            {guidanceOpen && (
+              <div className="bg-surface-raised rounded-lg border border-border-subtle p-lg space-y-md">
+                {current.facilitatorGuidance.before && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      Before
+                    </p>
+                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                      {current.facilitatorGuidance.before}
+                    </p>
+                  </div>
+                )}
+                {current.facilitatorGuidance.during && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      During
+                    </p>
+                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                      {current.facilitatorGuidance.during}
+                    </p>
+                  </div>
+                )}
+                {current.facilitatorGuidance.challenges && (
+                  <div>
+                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
+                      If Challenges Arise
+                    </p>
+                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                      {current.facilitatorGuidance.challenges}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="fixed bottom-20 left-0 right-0 lg:left-[220px] px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
+          {isLast ? (
+            <button
+              onClick={onFinish}
+              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
+            >
+              Finish & Log →
+            </button>
+          ) : (
+            <button
+              onClick={() => { setCurrentIdx((i) => i + 1); setGuidanceOpen(false); setOverlayOpen(false); }}
+              className="w-full bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
+            >
+              Next Activity →
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Right guidance panel — desktop only */}
+      <aside className="hidden xl:block bg-surface-panel border-l border-border-subtle sticky top-0 h-dvh overflow-y-auto p-lg space-y-xl">
+        {/* Observation prompts */}
+        {current.observationPrompts && current.observationPrompts.length > 0 && (
+          <div>
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-sage mb-md pb-sm border-b border-border-subtle">
+              👁 Watch For
+            </p>
+            <div className="space-y-sm">
+              {current.observationPrompts.map((prompt, i) => (
+                <div
+                  key={i}
+                  className="bg-surface-raised rounded-md px-md py-sm border border-border-subtle"
+                >
+                  <p className="font-serif text-sm text-text-secondary italic">{prompt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pedagogy lens — always visible */}
+        {currentOverlay && (
+          <div>
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-md pb-sm border-b border-border-subtle">
+              ✦ {pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}
+            </p>
             <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
               {currentOverlay.lens.perspective && (
                 <div>
@@ -390,21 +533,15 @@ function FacilitateMode({
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Facilitator guidance (collapsible) */}
-      {current.facilitatorGuidance && (
-        <div className="mb-lg">
-          <button
-            onClick={() => setGuidanceOpen((v) => !v)}
-            className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
-          >
-            <span>{guidanceOpen ? '▾' : '▸'}</span>
-            <span>Facilitator Guidance</span>
-          </button>
-          {guidanceOpen && (
+        {/* Facilitator guidance — always visible */}
+        {current.facilitatorGuidance && (
+          <div>
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md pb-sm border-b border-border-subtle">
+              Facilitator Guidance
+            </p>
             <div className="bg-surface-raised rounded-lg border border-border-subtle p-lg space-y-md">
               {current.facilitatorGuidance.before && (
                 <div>
@@ -437,28 +574,16 @@ function FacilitateMode({
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="fixed bottom-20 left-0 right-0 px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
-        {isLast ? (
-          <button
-            onClick={onFinish}
-            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
-          >
-            Finish & Log →
-          </button>
-        ) : (
-          <button
-            onClick={() => { setCurrentIdx((i) => i + 1); setGuidanceOpen(false); setOverlayOpen(false); }}
-            className="w-full bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
-          >
-            Next Activity →
-          </button>
+          </div>
         )}
-      </div>
+
+        {/* Fallback when no overlay or guidance */}
+        {!currentOverlay && !current.facilitatorGuidance && !current.observationPrompts?.length && (
+          <div className="text-center py-xl">
+            <p className="font-serif text-sm text-text-muted italic">No guidance available for this activity.</p>
+          </div>
+        )}
+      </aside>
     </div>
   );
 }
@@ -847,40 +972,116 @@ export default function ModuleDetailPage() {
   }
 
   return (
-    <>
-      {/* Mode tabs — hidden during approach selection */}
-      {mode !== 'approach-pick' && (
-        <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg">
-          {(['prep', 'facilitate', 'log'] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
-                mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
-              }`}
-            >
-              {m === 'prep' ? '📋 Prep' : m === 'facilitate' ? '▶ Go' : '✏️ Log'}
-            </button>
-          ))}
+    <div className="lg:grid lg:grid-cols-[220px_1fr]">
+      {/* Desktop module sidebar */}
+      <aside className="hidden lg:flex flex-col bg-surface-panel border-r border-border-subtle sticky top-0 h-dvh overflow-y-auto">
+        {/* Module title */}
+        <div className="p-xl border-b border-border-subtle">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
+            Module
+          </p>
+          <p className="font-serif text-base font-semibold text-text-primary truncate">
+            {module.title}
+          </p>
+          <p className="font-serif text-sm italic text-text-secondary mt-xs truncate">
+            {module.targetUnderstanding}
+          </p>
         </div>
-      )}
 
-      {mode === 'approach-pick' && (
-        <ApproachPickMode module={module} onSelect={handleApproachSelect} />
-      )}
-      {mode === 'prep' && (
-        <PrepMode module={module} approachIdx={selectedApproachIdx} onStart={() => setMode('facilitate')} />
-      )}
-      {mode === 'facilitate' && (
-        <FacilitateMode
-          module={module}
-          approachIdx={selectedApproachIdx}
-          overlays={overlays}
-          pedagogy={pedagogy}
-          onFinish={() => setMode('log')}
-        />
-      )}
-      {mode === 'log' && <LogMode module={module} />}
-    </>
+        {/* Approach nav */}
+        {module.approaches && module.approaches.length > 1 && (
+          <div className="py-md border-b border-border-subtle">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted px-xl mb-sm">
+              Approaches
+            </p>
+            {module.approaches.map((approach, idx) => (
+              <button
+                key={approach._id}
+                onClick={() => handleApproachSelect(idx)}
+                className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  selectedApproachIdx === idx && mode !== 'approach-pick'
+                    ? 'bg-ember-glow border-l-ember'
+                    : 'border-l-transparent hover:bg-ember-glow'
+                }`}
+              >
+                <span className="text-lg">{MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}</span>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="font-sans text-sm font-medium text-text-primary truncate">{approach.title}</p>
+                  {approach.modality && (
+                    <p className="font-sans text-[11px] text-text-muted capitalize">{approach.modality}</p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Session flow nav */}
+        {mode !== 'approach-pick' && (
+          <nav className="flex-1 py-md">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted px-xl mb-sm">
+              Session Flow
+            </p>
+            {(['prep', 'facilitate', 'log'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  mode === m
+                    ? 'bg-ember-glow border-l-ember'
+                    : 'border-l-transparent hover:bg-ember-glow'
+                }`}
+              >
+                <span className="text-lg">
+                  {m === 'prep' ? '📋' : m === 'facilitate' ? '▶' : '✏️'}
+                </span>
+                <span className={`font-sans text-sm font-medium ${
+                  mode === m ? 'text-ember' : 'text-text-primary'
+                }`}>
+                  {m === 'prep' ? 'Prep' : m === 'facilitate' ? 'Go' : 'Log'}
+                </span>
+              </button>
+            ))}
+          </nav>
+        )}
+      </aside>
+
+      {/* Main content */}
+      <div className="min-w-0">
+        {/* Mobile mode tabs — hidden on desktop */}
+        {mode !== 'approach-pick' && (
+          <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg lg:hidden">
+            {(['prep', 'facilitate', 'log'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
+                  mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                {m === 'prep' ? '📋 Prep' : m === 'facilitate' ? '▶ Go' : '✏️ Log'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode === 'approach-pick' && (
+          <ApproachPickMode module={module} onSelect={handleApproachSelect} />
+        )}
+        {mode === 'prep' && (
+          <PrepMode module={module} approachIdx={selectedApproachIdx} onStart={() => setMode('facilitate')} />
+        )}
+        {mode === 'facilitate' && (
+          <FacilitateMode
+            module={module}
+            approachIdx={selectedApproachIdx}
+            overlays={overlays}
+            pedagogy={pedagogy}
+            onFinish={() => setMode('log')}
+          />
+        )}
+        {mode === 'log' && <LogMode module={module} />}
+      </div>
+    </div>
   );
 }

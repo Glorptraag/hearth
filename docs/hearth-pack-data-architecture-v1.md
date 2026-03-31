@@ -54,6 +54,7 @@ The activity is the pack's workhorse. Here's what an activity document actually 
   // Identity
   title: string,                  // "Observe What Lives Under a Rock"
   slug: slug,                     // Auto-generated from title
+  summary: text,                  // 1-2 sentence overview shown on activity cards
 
   // Parent reference
   approach: reference,            // → approach document

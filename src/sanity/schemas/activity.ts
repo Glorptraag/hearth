@@ -7,6 +7,7 @@ export const activity = defineType({
   fields: [
     defineField({ name: 'title', title: 'Title', type: 'string', validation: (r) => r.required() }),
     defineField({ name: 'slug', title: 'Slug', type: 'slug', options: { source: 'title' } }),
+    defineField({ name: 'summary', title: 'Summary', type: 'text', description: '1-2 sentence overview shown on activity cards' }),
     defineField({
       name: 'approach',
       title: 'Approach',

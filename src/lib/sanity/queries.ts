@@ -12,7 +12,7 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]
     approaches[]->{
       _id, title, slug, modality,
       activities[]->{
-        _id, title, slug, duration, setting, energyLevel
+        _id, title, slug, summary, duration, setting, energyLevel
       }
     }
   },

@@ -104,6 +104,56 @@ With ember top-line on hover via `::before` pseudo-element.
 8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types.
 9. **Sanity = reusable content. Postgres = user/transactional data.** Never store user data in Sanity. Never store portable content in Postgres.
 
+## Writing Sanity Content Programmatically
+
+To create modules (with approaches and activities) in Sanity, use the publish API or the mutations layer directly.
+
+### Publish API — `POST /api/modules/publish`
+
+Accepts a full module tree and writes all documents to Sanity. Auth required (Clerk). Zod-validated.
+
+```json
+{
+  "title": "Module Title",
+  "targetUnderstanding": "What the child will understand",
+  "subjects": ["science", "mathematics"],
+  "ageRange": { "min": 5, "max": 8 },
+  "duration": { "min": 30, "max": 60 },
+  "status": "published",
+  "approaches": [{
+    "title": "Approach Title",
+    "modality": "kinesthetic",
+    "description": "How this approach enters the understanding",
+    "activities": [{
+      "title": "Activity Title",
+      "summary": "1-2 sentence card overview",
+      "instructions": "Plain text converted to Portable Text automatically",
+      "facilitatorGuidance": { "before": "...", "during": "...", "challenges": "..." },
+      "materials": [{ "name": "Item", "required": true, "alternative": "Alt" }],
+      "duration": { "min": 15, "max": 30 },
+      "setting": "indoor",
+      "energyLevel": "moderate",
+      "modality": "kinesthetic"
+    }]
+  }]
+}
+```
+
+Returns `{ moduleId, approaches: [{ approachId, activityIds }] }`.
+
+### Direct mutations — `src/lib/sanity/mutations.ts`
+
+Typed creators: `createModule()`, `createApproach()`, `createActivity()`, `createFullModule()` (handles circular refs). Use `keyedRefs()` from `helpers.ts` for all array reference fields (provides required `_key`).
+
+### Helpers — `src/lib/sanity/helpers.ts`
+
+- `ref(id)` — single reference (for back-refs like `approach.module`)
+- `keyedRef(id)` / `keyedRefs(ids)` — array references with `_key` (for `module.approaches`, `approach.activities`, etc.)
+- `blockText(text)` — plain text → Portable Text
+- `material(name, required?, alternative?)` — material object
+- `autoSlug(title)` — auto-generate slug from title
+- `range(min, max)` — `{ min, max }` object
+
 ## File & Versioning Rules
 
 - Prototype files: `hearth-{component}-v{N}.{ext}` — reference only, do not modify.

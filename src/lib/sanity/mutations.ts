@@ -1,5 +1,5 @@
 import { sanityWriteClient, sanityClient } from './client';
-import { autoSlug, ref, refs, key, blockText } from './helpers';
+import { autoSlug, ref, keyedRefs, key, blockText } from './helpers';
 
 type SanityDoc = Record<string, unknown> & { _id?: string; _type: string };
 
@@ -119,8 +119,8 @@ export async function createCapabilityThread(input: CreateCapabilityThread) {
       return o;
     });
   }
-  if (input.prerequisites) doc.prerequisites = refs(input.prerequisites);
-  if (input.enables) doc.enables = refs(input.enables);
+  if (input.prerequisites) doc.prerequisites = keyedRefs(input.prerequisites);
+  if (input.enables) doc.enables = keyedRefs(input.enables);
   if (input.curriculumCodes) doc.curriculumCodes = input.curriculumCodes;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
@@ -151,7 +151,7 @@ export async function createBadge(input: CreateBadge) {
     status: input.status ?? 'draft',
   };
   if (input._id) doc._id = input._id;
-  if (input.capabilityThreadIds) doc.capabilityThreads = refs(input.capabilityThreadIds);
+  if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -165,6 +165,7 @@ interface CreateActivity {
   title: string;
   slug?: string;
   approachId: string;
+  summary?: string;
   instructions: string | ReturnType<typeof blockText>;
   facilitatorGuidance?: FacilitatorGuidance;
   materials?: MaterialInput[];
@@ -189,6 +190,7 @@ export async function createActivity(input: CreateActivity) {
     status: input.status ?? 'draft',
   };
   if (input._id) doc._id = input._id;
+  if (input.summary) doc.summary = input.summary;
   if (input.facilitatorGuidance) doc.facilitatorGuidance = input.facilitatorGuidance;
   if (input.materials) {
     doc.materials = input.materials.map((m) => {
@@ -203,8 +205,8 @@ export async function createActivity(input: CreateActivity) {
   if (input.modality) doc.modality = input.modality;
   if (input.observationPrompts) doc.observationPrompts = input.observationPrompts;
   if (input.reflectionPrompts) doc.reflectionPrompts = input.reflectionPrompts;
-  if (input.capabilityThreadIds) doc.capabilityThreads = refs(input.capabilityThreadIds);
-  if (input.badgeIds) doc.enabledBadges = refs(input.badgeIds);
+  if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
+  if (input.badgeIds) doc.enabledBadges = keyedRefs(input.badgeIds);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -232,7 +234,7 @@ export async function createApproach(input: CreateApproach) {
   if (input._id) doc._id = input._id;
   if (input.modality) doc.modality = input.modality;
   if (input.description) doc.description = input.description;
-  if (input.activityIds) doc.activities = refs(input.activityIds);
+  if (input.activityIds) doc.activities = keyedRefs(input.activityIds);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -263,12 +265,12 @@ export async function createModule(input: CreateModule) {
   };
   if (input._id) doc._id = input._id;
   if (input.understandingIndicators) doc.understandingIndicators = input.understandingIndicators;
-  if (input.approachIds) doc.approaches = refs(input.approachIds);
+  if (input.approachIds) doc.approaches = keyedRefs(input.approachIds);
   if (input.subjects) doc.subjects = input.subjects;
   if (input.ageRange) doc.ageRange = input.ageRange;
   if (input.duration) doc.duration = input.duration;
-  if (input.badgeIds) doc.badges = refs(input.badgeIds);
-  if (input.capabilityThreadIds) doc.capabilityThreads = refs(input.capabilityThreadIds);
+  if (input.badgeIds) doc.badges = keyedRefs(input.badgeIds);
+  if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -305,9 +307,9 @@ export async function createPack(input: CreatePack) {
     status: input.status ?? 'draft',
   };
   if (input._id) doc._id = input._id;
-  if (input.moduleIds) doc.modules = refs(input.moduleIds);
-  if (input.badgeIds) doc.badges = refs(input.badgeIds);
-  if (input.projectIds) doc.projects = refs(input.projectIds);
+  if (input.moduleIds) doc.modules = keyedRefs(input.moduleIds);
+  if (input.badgeIds) doc.badges = keyedRefs(input.badgeIds);
+  if (input.projectIds) doc.projects = keyedRefs(input.projectIds);
   if (input.ageRange) doc.ageRange = input.ageRange;
   if (input.subjects) doc.subjects = input.subjects;
   if (input.termWeeks) doc.termWeeks = input.termWeeks;
@@ -372,12 +374,12 @@ export async function createProject(input: CreateProject) {
   };
   if (input._id) doc._id = input._id;
   if (input.description) doc.description = input.description;
-  if (input.stageIds) doc.stages = refs(input.stageIds);
+  if (input.stageIds) doc.stages = keyedRefs(input.stageIds);
   if (input.subjects) doc.subjects = input.subjects;
   if (input.ageRange) doc.ageRange = input.ageRange;
   if (input.duration) doc.duration = input.duration;
-  if (input.capabilityThreadIds) doc.capabilityThreads = refs(input.capabilityThreadIds);
-  if (input.badgeIds) doc.badges = refs(input.badgeIds);
+  if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
+  if (input.badgeIds) doc.badges = keyedRefs(input.badgeIds);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -448,11 +450,11 @@ export async function createFullModule(input: FullModuleInput) {
       activityIds.push(activity._id);
     }
 
-    await patch(approach._id, { activities: refs(activityIds) });
+    await patch(approach._id, { activities: keyedRefs(activityIds) });
     approachResults.push({ ...approach, activityIds });
   }
 
-  await patch(mod._id, { approaches: refs(approachResults.map((a) => a._id)) });
+  await patch(mod._id, { approaches: keyedRefs(approachResults.map((a) => a._id)) });
 
   return { module: mod, approaches: approachResults };
 }

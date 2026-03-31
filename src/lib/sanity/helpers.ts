@@ -53,6 +53,14 @@ export function refs(ids: string[]) {
   return ids.map(ref);
 }
 
+export function keyedRef(id: string) {
+  return { _type: 'reference' as const, _ref: id, _key: key('ref') };
+}
+
+export function keyedRefs(ids: string[]) {
+  return ids.map(keyedRef);
+}
+
 export function range(min: number, max: number) {
   return { min, max };
 }

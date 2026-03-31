@@ -8,7 +8,7 @@ import LearnerAvatar from '@/components/ui/LearnerAvatar';
 import { mockLearners, mockOurStoryLearners } from '../mock-data';
 
 export default function DemoOurStoryHub() {
-  const [selectedId, setSelectedId] = useState('learner-1');
+  const [selectedId, setSelectedId] = useState('1');
 
   const selected = mockLearners.find((l) => l.id === selectedId);
   const selectedProfile = mockOurStoryLearners.find((l) => l.id === selectedId);

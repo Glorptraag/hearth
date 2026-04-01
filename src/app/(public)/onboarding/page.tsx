@@ -274,7 +274,7 @@ export default function OnboardingPage() {
               <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm block">
                 Learning Approach
               </label>
-              <div className="grid grid-cols-2 gap-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                 {PEDAGOGY_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}

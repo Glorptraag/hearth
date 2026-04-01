@@ -142,7 +142,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
         </div>
 
         {/* Title */}
-        <h3 className="font-serif text-[1.05rem] font-semibold text-text-primary leading-snug">
+        <h3 className="font-serif text-[1.05rem] font-semibold text-text-primary leading-snug line-clamp-2">
           {pack.title}
         </h3>
 

@@ -42,7 +42,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
   const hasOverlay = overlay && (overlay.perspective || overlay.facilitatorTips || overlay.watchFor);
 
   return (
-    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]">
+    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-md sm:p-lg lg:p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]">
       {/* Ember top-line */}
       <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
 
@@ -64,7 +64,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
       </div>
 
       {/* Summary */}
-      <p className="font-serif text-sm text-text-secondary leading-relaxed mb-md">
+      <p className="font-serif text-sm text-text-secondary leading-relaxed mb-md line-clamp-3">
         {activity.summary}
       </p>
 

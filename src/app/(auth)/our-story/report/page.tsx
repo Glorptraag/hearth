@@ -354,7 +354,7 @@ export default function ReportPage() {
             {' '}of 6 complete
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
           {workSampleSlots.map((slot) => {
             const statusStyle = SLOT_STATUS[slot.status];
             const domain = SUBJECT_DOMAIN_CLASSES[slot.area];
@@ -473,7 +473,7 @@ export default function ReportPage() {
         <div className="mt-lg">
           <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Suggested Next Steps</p>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Recommended Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
             {gaps.slice(0, 3).map((g, i) => {
               const tagLabel = i === 0 ? 'Fills biggest gap' : i === 1 ? 'Quick win' : 'Natural fit';
               const tagColor = i === 0 ? 'bg-child-rose/15 text-child-rose' : i === 1 ? 'bg-sage/15 text-sage' : 'bg-ember-glow text-ember';

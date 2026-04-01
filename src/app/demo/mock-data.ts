@@ -1522,6 +1522,8 @@ export const mockNotifications = [
 export const mockSettings = {
   familyName: 'Douglas',
   pedagogyPreference: 'charlotte_mason',
+  values: ['child-led', 'nature', 'whole-child'],
+  practices: ['living-books', 'narration', 'nature-journaling'],
   heuRegistrationNumber: 'HEU-2025-04821',
   heuNextReportDate: '2026-05-30',
   state: 'QLD',

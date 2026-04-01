@@ -3,9 +3,45 @@ import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { rateLimit } from '@/lib/rate-limit';
+import sharp from 'sharp';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+
+async function compressIfImage(
+  file: File
+): Promise<{ buffer: Buffer; contentType: string; filename: string }> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const contentType = file.type;
+  const originalName = file.name;
+
+  if (!contentType.startsWith('image/') || contentType === 'image/gif') {
+    return { buffer, contentType, filename: originalName };
+  }
+
+  try {
+    const isWebP = contentType === 'image/webp';
+    const pipeline = sharp(buffer).resize({ width: 1920, withoutEnlargement: true });
+
+    let compressed: Buffer;
+    let outType: string;
+    let newName: string;
+
+    if (isWebP) {
+      compressed = await pipeline.webp({ quality: 80 }).withMetadata({ exif: {} }).toBuffer();
+      outType = 'image/webp';
+      newName = originalName.replace(/\.[^.]+$/, '.webp');
+    } else {
+      compressed = await pipeline.jpeg({ quality: 80, mozjpeg: true }).withMetadata({ exif: {} }).toBuffer();
+      outType = 'image/jpeg';
+      newName = originalName.replace(/\.[^.]+$/, '.jpg');
+    }
+
+    return { buffer: compressed, contentType: outType, filename: newName };
+  } catch {
+    return { buffer, contentType, filename: originalName };
+  }
+}
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
@@ -52,13 +88,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg';
+  const { buffer, contentType, filename } = await compressIfImage(file);
+  const ext = filename.split('.').pop() ?? 'jpg';
   const path = `evidence/${family.id}/${Date.now()}.${ext}`;
 
   try {
-    const blob = await put(path, file, {
+    const blob = await put(path, buffer, {
       access: 'public',
       addRandomSuffix: true,
+      contentType,
     });
 
     return NextResponse.json({ url: blob.url });

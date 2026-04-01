@@ -292,6 +292,13 @@ export default function OnboardingPage() {
               <p className="mt-xs font-sans text-xs text-text-muted">
                 Not sure? Eclectic is a great starting point.
               </p>
+              <button
+                type="button"
+                onClick={handleSaveFamily}
+                className="mt-xs font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors duration-200"
+              >
+                Skip for now — I&rsquo;ll set this up later
+              </button>
             </div>
 
             {error && (

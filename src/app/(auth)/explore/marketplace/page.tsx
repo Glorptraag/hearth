@@ -4,7 +4,25 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
-import { MarketplaceCard, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
+import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
+
+function getCreatorEmoji(type?: CreatorType): string {
+  switch (type) {
+    case 'content-team': return '🌿';
+    case 'educator':     return '🎓';
+    case 'parent':       return '💛';
+    default:             return '✨';
+  }
+}
+
+function getCreatorLabel(type?: CreatorType): string {
+  switch (type) {
+    case 'content-team': return 'Hearth Team';
+    case 'educator':     return 'Educator';
+    case 'parent':       return 'Parent Creator';
+    default:             return 'Creator';
+  }
+}
 
 // ─── Subject filter config ────────────────────────────────────────────────────
 
@@ -352,14 +370,22 @@ export default function MarketplacePage() {
               )}
 
               {/* Creator */}
-              {detailPack.creator && (
-                <div>
-                  <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                    Creator
-                  </p>
-                  <p className="font-serif text-sm text-text-primary">{detailPack.creator}</p>
+              <div>
+                <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  Creator
+                </p>
+                <div className="flex items-center gap-xs">
+                  <span className="text-sm" aria-hidden="true">
+                    {getCreatorEmoji(detailPack.creatorType)}
+                  </span>
+                  <span className="font-serif text-sm text-text-primary">
+                    {detailPack.creator ?? 'Hearth Team'}
+                  </span>
+                  <span className="font-sans text-[10px] text-text-muted bg-surface-raised rounded-full px-xs py-[1px] border border-border-subtle">
+                    {getCreatorLabel(detailPack.creatorType)}
+                  </span>
                 </div>
-              )}
+              </div>
 
               {/* Age range & duration */}
               <div className="grid grid-cols-2 gap-md">

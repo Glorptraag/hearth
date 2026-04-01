@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
+import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
 import HEUFields from '@/components/settings/HEUFields';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 
@@ -295,6 +296,8 @@ interface Child {
 interface SettingsData {
   familyName: string;
   pedagogyPreference: string;
+  values: string[];
+  practices: string[];
   heuRegistrationNumber: string;
   heuNextReportDate: string;
   state: string;
@@ -353,6 +356,8 @@ export default function SettingsClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             pedagogyPreference: settingsFields.pedagogyPreference,
+            pedagogyValues: settingsFields.values,
+            pedagogyPractices: settingsFields.practices,
             heuRegistrationNumber: settingsFields.heuRegistrationNumber || undefined,
             heuNextReportDate: settingsFields.heuNextReportDate || undefined,
             state: settingsFields.state,
@@ -595,6 +600,28 @@ export default function SettingsClient({
               saveSettings({ pedagogyPreference: value });
             }}
           />
+          <p className="font-sans text-xs text-text-muted mt-sm">
+            Your philosophy shapes how Hearth interprets your learning logs.{' '}
+            <a href="/settings?tab=pedagogy" className="text-ember underline underline-offset-2 hover:text-ember-hover transition-colors duration-200">
+              Update any time →
+            </a>
+          </p>
+          {/* Learning values & practices */}
+          <div className="mt-md">
+            <PedagogyProfilePanel
+              philosophy={settings.pedagogyPreference}
+              selectedValues={settings.values}
+              selectedPractices={settings.practices}
+              onValuesChange={(values) => {
+                setSettings((s) => ({ ...s, values }));
+                saveSettings({ values });
+              }}
+              onPracticesChange={(practices) => {
+                setSettings((s) => ({ ...s, practices }));
+                saveSettings({ practices });
+              }}
+            />
+          </div>
           {saved && (
             <p className="font-sans text-xs text-sage">Saved ✓</p>
           )}

@@ -31,6 +31,8 @@ export default async function SettingsPage() {
       initialSettings={{
         familyName: family.familyName,
         pedagogyPreference: settings?.pedagogyPreference ?? 'eclectic',
+        values: (settings?.pedagogyValues ?? []) as string[],
+        practices: (settings?.pedagogyPractices ?? []) as string[],
         heuRegistrationNumber: settings?.heuRegistrationNumber ?? '',
         heuNextReportDate: settings?.heuNextReportDate ?? '',
         state: settings?.state ?? 'QLD',

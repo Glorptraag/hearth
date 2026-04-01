@@ -1,0 +1,1 @@
+ALTER TABLE badge_awards ADD COLUMN IF NOT EXISTS retracted_at TIMESTAMP;

@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { badgeAwards, badgeDefinitions, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -17,10 +17,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'learnerId required' }, { status: 400 });
   }
 
+  const includeArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
+
   const learner = await db.query.learners.findFirst({
     where: and(eq(learners.id, learnerId), eq(learners.familyId, family.id)),
   });
   if (!learner) return NextResponse.json({ error: 'Learner not found' }, { status: 404 });
+
+  const whereClause = includeArchived
+    ? eq(badgeAwards.learnerId, learnerId)
+    : and(eq(badgeAwards.learnerId, learnerId), isNull(badgeAwards.retractedAt));
 
   const awards = await db
     .select({
@@ -28,13 +34,14 @@ export async function GET(request: NextRequest) {
       awardedAt: badgeAwards.awardedAt,
       awardedBy: badgeAwards.awardedBy,
       notes: badgeAwards.notes,
+      retractedAt: badgeAwards.retractedAt,
       badgeTitle: badgeDefinitions.title,
       badgeEmoji: badgeDefinitions.emoji,
       badgeDescription: badgeDefinitions.description,
     })
     .from(badgeAwards)
     .innerJoin(badgeDefinitions, eq(badgeAwards.badgeDefinitionId, badgeDefinitions.id))
-    .where(eq(badgeAwards.learnerId, learnerId));
+    .where(whereClause);
 
   return NextResponse.json(awards);
 }

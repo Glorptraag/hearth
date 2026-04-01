@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import { BatchLogForm } from '@/components/logger/BatchLogForm';
 
 type Learner = {
   id: string;
@@ -292,6 +293,7 @@ export default function LogPage() {
   }, []);
 
   // ─── Form state ───
+  const [showBatch, setShowBatch] = useState(false);
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [togetherMode, setTogetherMode] = useState(false);
   const [description, setDescription] = useState('');
@@ -597,6 +599,13 @@ export default function LogPage() {
               ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
               : vocab.logNudge}
           </p>
+          <button
+            type="button"
+            onClick={() => setShowBatch(true)}
+            className="font-sans text-sm text-text-muted hover:text-ember underline underline-offset-2 transition-colors duration-200"
+          >
+            Log multiple sessions at once
+          </button>
         </div>
         <div className="flex items-center gap-sm">
           <CompletenessRing score={completeness} />
@@ -618,7 +627,19 @@ export default function LogPage() {
         </button>
       </div>
 
-      <div className="flex-1 lg:flex">
+      {showBatch && (
+        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
+          <div className="w-full max-w-[560px] xl:max-w-[600px]">
+            <BatchLogForm
+              learners={learners.map((l) => ({ id: l.id, name: l.name }))}
+              onComplete={() => setShowBatch(false)}
+              onCancel={() => setShowBatch(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {!showBatch && <div className="flex-1 lg:flex">
         {/* ─── Left: Capture Form ─── */}
         <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
@@ -1010,7 +1031,7 @@ export default function LogPage() {
           </div>
           <InsightsContent match={keywordMatch} />
         </aside>
-      </div>
+      </div>}
 
       {/* ─── Mobile AI Insights Drawer ─── */}
       <div className="lg:hidden fixed bottom-[72px] left-0 right-0 z-40">

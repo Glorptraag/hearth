@@ -1,7 +1,7 @@
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
-  availability, version, creator, stripePriceId, "badgeCount": count(badges)
+  availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges)
 }`;
 
 // Single pack with full module tree
@@ -94,3 +94,21 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
     }
   }
 }`;
+
+export interface SkeletonRecord {
+  _id: string;
+  skeletonId: string;
+  threadId?: string;
+  domain: string;
+  targetTier: string;
+  activityPreference: string;
+  confidence: 'curated' | 'domain-generic' | 'generated';
+  title: string;
+  description: string;
+  suggestedUnderstanding: string;
+  suggestedSteps: Array<{ title: string; instructions: string; observationHint: string }>;
+  suggestedMaterials: Array<{ name: string; isCore: boolean }>;
+  indicatorsFocused: string[];
+  estimatedDuration?: number;
+  setting?: string;
+}

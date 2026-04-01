@@ -7,6 +7,7 @@ import { projectStage } from './projectStage';
 import { badge } from './badge';
 import { capabilityThread } from './capabilityThread';
 import { pedagogyOverlay } from './pedagogyOverlay';
+import { moduleSkeleton } from './moduleSkeleton';
 
 export const schemaTypes = [
   capabilityThread,
@@ -18,4 +19,5 @@ export const schemaTypes = [
   projectStage,
   project,
   pedagogyOverlay,
+  moduleSkeleton,
 ];

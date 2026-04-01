@@ -33,6 +33,8 @@ export async function GET() {
 
 const updateSettingsSchema = z.object({
   pedagogyPreference: z.enum(PEDAGOGIES).optional(),
+  pedagogyValues: z.array(z.string()).optional(),
+  pedagogyPractices: z.array(z.string()).optional(),
   heuRegistrationNumber: z.string().optional(),
   heuNextReportDate: z.string().optional(),
   state: z.string().optional(),

@@ -70,6 +70,7 @@ type BadgeAward = {
   badgeEmoji: string | null;
   badgeDescription: string | null;
   awardedAt: string;
+  retractedAt: string | null;
 };
 
 type ActiveThread = {
@@ -132,6 +133,16 @@ export default function PortfolioPage() {
     }
   }
 
+  async function handleRetract(id: string) {
+    setBadges((prev) => prev.map((b) => b.id === id ? { ...b, retractedAt: new Date().toISOString() } : b));
+    await fetch(`/api/badges/${id}/retract`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+  }
+
+  async function handleRestore(id: string) {
+    setBadges((prev) => prev.map((b) => b.id === id ? { ...b, retractedAt: null } : b));
+    await fetch(`/api/badges/${id}/retract`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restore: true }) });
+  }
+
   useEffect(() => {
     fetch('/api/learners')
       .then((r) => r.json())
@@ -148,7 +159,7 @@ export default function PortfolioPage() {
     if (!selectedLearnerId) return;
     Promise.all([
       fetch(`/api/entries?learnerId=${selectedLearnerId}`).then((r) => r.json()),
-      fetch(`/api/badges/awards?learnerId=${selectedLearnerId}`).then((r) => r.json()),
+      fetch(`/api/badges/awards?learnerId=${selectedLearnerId}&includeArchived=true`).then((r) => r.json()),
       fetch(`/api/capabilities/${selectedLearnerId}`).then((r) => r.json()),
       fetch('/api/snapshot').then((r) => r.json()).catch(() => ({})),
     ]).then(([e, b, t, snap]) => {
@@ -350,14 +361,17 @@ export default function PortfolioPage() {
           {/* Entry cards */}
           {filteredEntries.length === 0 ? (
             <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-              <span className="text-2xl block mb-sm">📖</span>
-              <p className="font-serif text-sm text-text-secondary">
-                No entries yet. Head to the{' '}
-                <Link href="/log" className="font-semibold text-ember hover:text-ember-hover transition-colors">
-                  Logger
-                </Link>{' '}
-                to capture your first {vocab.sessionNoun}.
+              <span className="text-3xl mb-md block">📖</span>
+              <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
+              <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
+                Every log you add becomes part of your learning story. Once you&apos;ve captured a few sessions, they&apos;ll appear here as a portrait of your child&apos;s growing knowledge.
               </p>
+              <Link
+                href="/log"
+                className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
+              >
+                Add your first log →
+              </Link>
             </div>
           ) : viewMode === 'thread' ? (
             /* Thread view — grouped by thread in accordions */
@@ -744,10 +758,12 @@ export default function PortfolioPage() {
           {/* Badge collection */}
           <div className="mt-xl">
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Badges</h2>
-            {badges.length === 0 ? (
-              <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg text-center">
-                <p className="font-serif text-sm text-text-muted italic">
-                  No badges earned yet — keep exploring!
+            {badges.filter((b) => !b.retractedAt).length === 0 && badges.filter((b) => b.retractedAt).length === 0 ? (
+              <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
+                <span className="text-3xl mb-md block">🏅</span>
+                <p className="font-serif text-base font-semibold text-text-primary mb-xs">Milestones will appear here</p>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  Badges and capability milestones are earned through logged learning. Keep going!
                 </p>
               </div>
             ) : (
@@ -755,15 +771,37 @@ export default function PortfolioPage() {
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className="rounded-[16px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className={`rounded-[16px] border bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
                   >
-                    <span className="text-2xl">{badge.badgeEmoji}</span>
+                    <span className={`text-2xl ${badge.retractedAt ? 'grayscale' : ''}`}>{badge.badgeEmoji}</span>
                     <h3 className="font-serif text-sm font-semibold text-text-primary mt-xs">
                       {badge.badgeTitle}
                     </h3>
                     <p className="font-sans text-[10px] text-text-muted mt-xs">
                       {format(new Date(badge.awardedAt), 'd MMM yyyy')}
                     </p>
+                    <div className="mt-sm flex items-center gap-sm">
+                      {badge.retractedAt ? (
+                        <>
+                          <span className="font-sans text-xs text-text-muted italic">Archived</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRestore(badge.id)}
+                            className="font-sans text-xs text-ember hover:underline transition-colors duration-200"
+                          >
+                            Restore
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRetract(badge.id)}
+                          className="font-sans text-xs text-text-muted hover:text-red-400 transition-colors duration-200"
+                        >
+                          Archive
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -778,7 +816,13 @@ export default function PortfolioPage() {
               Capability Threads
             </h3>
             {sortedThreads.length === 0 ? (
-              <p className="font-serif text-sm text-text-muted italic">No observations yet</p>
+              <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
+                <span className="text-3xl mb-md block">🌱</span>
+                <p className="font-serif text-base font-semibold text-text-primary mb-xs">No evidence here yet</p>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  Keep logging — when you capture learning in this area, it&apos;ll show up here.
+                </p>
+              </div>
             ) : (
               <div className="space-y-sm">
                 {sortedThreads.map((t) => (

@@ -59,6 +59,8 @@ export const familySettings = pgTable('family_settings', {
     .unique()
     .notNull(),
   pedagogyPreference: text('pedagogy_preference').default('eclectic'),
+  pedagogyValues: text('pedagogy_values').array().default([]),
+  pedagogyPractices: text('pedagogy_practices').array().default([]),
   heuRegistrationNumber: text('heu_registration_number'),
   heuNextReportDate: date('heu_next_report_date'),
   state: text('state').default('QLD'),
@@ -168,6 +170,7 @@ export const badgeAwards = pgTable('badge_awards', {
   awardedBy: text('awarded_by').default('parent'),
   evidenceEntryIds: uuid('evidence_entry_ids').array(),
   notes: text('notes'),
+  retractedAt: timestamp('retracted_at'),
 });
 
 export const badgeAssessmentLogs = pgTable('badge_assessment_logs', {

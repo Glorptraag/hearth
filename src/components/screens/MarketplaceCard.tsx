@@ -10,10 +10,13 @@ export type Subject =
   | 'hpe'
   | 'languages';
 
+export type CreatorType = 'content-team' | 'educator' | 'parent' | string;
+
 export interface SanityPack {
   _id: string;
   title: string;
   creator?: string;
+  creatorType?: CreatorType;
   subjects?: Subject[];
   ageRange?: { min: number; max: number };
   moduleCount?: number;
@@ -21,6 +24,24 @@ export interface SanityPack {
   availability?: 'included' | 'premium';
   stripePriceId?: string;
   description?: string;
+}
+
+function getCreatorEmoji(type?: CreatorType): string {
+  switch (type) {
+    case 'content-team': return '🌿';
+    case 'educator':     return '🎓';
+    case 'parent':       return '💛';
+    default:             return '✨';
+  }
+}
+
+function getCreatorLabel(type?: CreatorType): string {
+  switch (type) {
+    case 'content-team': return 'Hearth Team';
+    case 'educator':     return 'Educator';
+    case 'parent':       return 'Parent Creator';
+    default:             return 'Creator';
+  }
 }
 
 const SUBJECT_META: Record<Subject, { label: string; hex: string; emoji: string }> = {
@@ -108,9 +129,17 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
         </div>
 
         {/* Creator */}
-        {pack.creator && (
-          <p className="font-sans text-xs text-text-muted">by {pack.creator}</p>
-        )}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs" aria-hidden="true">
+            {getCreatorEmoji(pack.creatorType)}
+          </span>
+          <span className="font-sans text-xs text-text-muted">
+            {pack.creator ?? 'Hearth Team'}
+          </span>
+          <span className="font-sans text-[10px] text-text-muted bg-surface-raised rounded-full px-1.5 py-[1px] border border-border-subtle">
+            {getCreatorLabel(pack.creatorType)}
+          </span>
+        </div>
 
         {/* Title */}
         <h3 className="font-serif text-[1.05rem] font-semibold text-text-primary leading-snug">

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
+import { usePedagogy } from '@/hooks/use-pedagogy';
 
 type Learner = {
   id: string;
@@ -126,6 +127,7 @@ function descriptorToSubject(code: string): string | null {
 }
 
 export default function ReportPage() {
+  const { vocab } = usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -273,6 +275,17 @@ export default function ReportPage() {
 
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
+      {entries.length === 0 && (
+        <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
+          <span className="text-3xl block mb-sm">📋</span>
+          <h2 className="font-serif text-base font-semibold text-text-primary mb-xs">Your report builds automatically</h2>
+          <p className="font-serif text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
+            As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors,
+            and assembles your HEU compliance evidence. Start logging to see your report take shape.
+          </p>
+        </div>
+      )}
+
       {/* Timeline Hero */}
       <div className="mt-lg rounded-lg border border-border-subtle bg-surface-raised p-xl shadow-[var(--shadow-soft)]">
         <div className="flex items-center justify-between mb-md">
@@ -418,7 +431,7 @@ export default function ReportPage() {
       {/* Gap Analysis */}
       {gaps.length > 0 && (
         <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Gap Analysis</p>
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">{vocab.coverageFrame}</p>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
           <div className="space-y-xs">
             {gaps.map((g) => {

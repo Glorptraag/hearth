@@ -6,10 +6,15 @@ import { familyMembers } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
+import { parseBody } from '@/lib/api-helpers';
 
 const inviteSchema = z.object({
   email: z.string().email(),
   role: z.enum(['editor', 'viewer']).default('editor'),
+});
+
+const removeMemberSchema = z.object({
+  memberId: z.string().min(1),
 });
 
 export async function GET() {
@@ -56,13 +61,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only the family owner can invite members' }, { status: 403 });
   }
 
-  const body = await request.json();
-  const parsed = inviteSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { email, role } = parsed.data;
+  const result = await parseBody(request, inviteSchema);
+  if ('error' in result) return result.error;
+  const { email, role } = result.data;
 
   // Check if already invited or active
   const existing = await db.query.familyMembers.findFirst({
@@ -120,8 +121,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Only the family owner can remove members' }, { status: 403 });
   }
 
-  const { memberId } = await request.json();
-  if (!memberId) return NextResponse.json({ error: 'memberId required' }, { status: 400 });
+  const deleteResult = await parseBody(request, removeMemberSchema);
+  if ('error' in deleteResult) return deleteResult.error;
+  const { memberId } = deleteResult.data;
 
   await db
     .update(familyMembers)

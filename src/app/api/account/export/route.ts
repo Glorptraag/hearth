@@ -6,7 +6,6 @@ import {
   learners,
   familySettings,
   learningEntries,
-  capabilityObservations,
   badgeAwards,
   badgeDefinitions,
   plannerEntries,
@@ -32,7 +31,7 @@ export async function GET() {
     .where(eq(learners.familyId, familyId));
   const learnerIds = familyLearners.map((l) => l.id);
 
-  const [settings, entries, planner, library, notes, observations, awards] =
+  const [settings, entries, planner, library, notes, awards] =
     await Promise.all([
       db.query.familySettings.findFirst({
         where: eq(familySettings.familyId, familyId),
@@ -41,9 +40,6 @@ export async function GET() {
       db.select().from(plannerEntries).where(eq(plannerEntries.familyId, familyId)),
       db.select().from(familyLibrary).where(eq(familyLibrary.familyId, familyId)),
       db.select().from(facilitatorNotes).where(eq(facilitatorNotes.familyId, familyId)),
-      learnerIds.length > 0
-        ? db.select().from(capabilityObservations).where(inArray(capabilityObservations.learnerId, learnerIds))
-        : Promise.resolve([]),
       learnerIds.length > 0
         ? db.select().from(badgeAwards).where(inArray(badgeAwards.learnerId, learnerIds))
         : Promise.resolve([]),
@@ -87,13 +83,6 @@ export async function GET() {
       title: p.title,
       moduleId: p.moduleId,
       status: p.status,
-    })),
-    capabilityObservations: observations.map((o) => ({
-      learnerId: o.learnerId,
-      threadId: o.threadId,
-      dloId: o.dloId,
-      status: o.status,
-      observedAt: o.observedAt,
     })),
     badgeAwards: awards.map((a) => ({
       learnerId: a.learnerId,

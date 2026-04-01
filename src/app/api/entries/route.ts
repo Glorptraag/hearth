@@ -10,6 +10,7 @@ import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
 import { rateLimit } from '@/lib/rate-limit';
+import { parseBody } from '@/lib/api-helpers';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -84,11 +85,9 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = createEntrySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, createEntrySchema);
+  if ('error' in result) return result.error;
+  const parsed = result;
 
   const [entry] = await db
     .insert(learningEntries)

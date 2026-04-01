@@ -7,6 +7,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { PEDAGOGIES } from '@/types';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { parseBody } from '@/lib/api-helpers';
 
 export async function GET() {
   const { userId } = await auth();
@@ -45,11 +46,9 @@ export async function PATCH(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = updateSettingsSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, updateSettingsSchema);
+  if ('error' in result) return result.error;
+  const parsed = result;
 
   const existing = await db.query.familySettings.findFirst({
     where: eq(familySettings.familyId, family.id),

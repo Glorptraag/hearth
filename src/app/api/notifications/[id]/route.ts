@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { parseBody } from '@/lib/api-helpers';
 import { and, eq } from 'drizzle-orm';
 import { addHours } from 'date-fns';
 import { NOTIFICATION_STATES } from '@/types';
@@ -29,14 +30,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const result = await parseBody(request, patchSchema);
+  if ('error' in result) return result.error;
 
-  const updates: Record<string, unknown> = { state: parsed.data.state };
+  const updates: Record<string, unknown> = { state: result.data.state };
 
-  if (parsed.data.state === 'snoozed') {
-    const hours = parsed.data.snoozeHours ?? 4;
+  if (result.data.state === 'snoozed') {
+    const hours = result.data.snoozeHours ?? 4;
     updates.snoozedUntil = addHours(new Date(), hours);
   }
 

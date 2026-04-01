@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { plannerEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, gte, lte } from 'drizzle-orm';
+import { parseBody } from '@/lib/api-helpers';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -48,15 +49,12 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = createPlannerEntrySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, createPlannerEntrySchema);
+  if ('error' in result) return result.error;
 
   const [entry] = await db
     .insert(plannerEntries)
-    .values({ familyId: family.id, ...parsed.data })
+    .values({ familyId: family.id, ...result.data })
     .returning();
 
   return NextResponse.json(entry, { status: 201 });

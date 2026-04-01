@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { families } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
+import { parseBody } from '@/lib/api-helpers';
 
 export async function GET() {
   const { userId } = await auth();
@@ -27,9 +28,9 @@ export async function PATCH(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = updateFamilySchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const result = await parseBody(request, updateFamilySchema);
+  if ('error' in result) return result.error;
+  const parsed = result;
 
   const [updated] = await db
     .update(families)

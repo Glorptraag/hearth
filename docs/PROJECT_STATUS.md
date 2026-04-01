@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v1.md` for design values.
-> **Last updated:** 30 March 2026
+> **Last updated:** 1 April 2026
 
 ---
 
@@ -67,12 +67,11 @@
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 15 tables
+### PostgreSQL (Neon + Drizzle) — 14 tables
 - **Identity:** `families`, `familySettings`
 - **Learners:** `learners`
 - **Learning data:** `learningEntries`
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
-- **Capabilities:** `capabilityObservations` (deprecated — data now lives in AI enrichment on entries)
 - **Badges:** `badgeDefinitions`, `badgeAwards`, `badgeAssessmentLogs`
 - **Planner:** `plannerEntries`
 - **Notifications:** `notifications`
@@ -157,9 +156,9 @@
 ## Known Gaps
 
 ### Technical
-- **End-to-end validation** — full loop not yet tested with real family data
-- **Production error handling** — API routes need consistent error responses and rate limiting
-- **Photo/media storage** — infrastructure not yet provisioned (cloud storage TBD)
+- **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema).
+- **Production error handling** — RESOLVED: `parseBody()` utility added, all 19 JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
+- **Photo/media storage** — Vercel Blob infrastructure wired (`@vercel/blob`). Requires `BLOB_READ_WRITE_TOKEN` in environment. Upload route returns 503 with clear message if unconfigured.
 - **Offline support** — not addressed
 
 ### Cross-Screen Coherence (Open Design Questions)
@@ -167,15 +166,15 @@
 
 | # | Question | Status |
 |---|----------|--------|
-| 7 | **Regression handling** — can parents un-confirm a DLO? | OPEN — affects data integrity, resolve before launch |
+| 7 | **Regression handling** — can parents un-confirm a DLO? | RESOLVED — tier override API at `/api/capabilities/[learnerId]/override`. Overrides stored in learner `profileData.tierOverrides`, respected in snapshot rebuild (can only lower, never raise). UI added to Constellation thread detail panel. |
 | 8 | **Historical data import / batch retrospective logging** | PARTIAL — 30-day backdating exists, bulk import not designed |
-| 10 | **Repeat module logging evolution** | OPEN |
-| 11 | **Voice input integration** | PARTIAL — Web Speech API spec for Logger only |
-| 12 | **Empty / first-use states per screen** | PARTIAL — Logger and Settings have them, others don't |
-| 13 | **Gentle migration from retro logging to modules** | OPEN |
+| 10 | **Repeat module logging evolution** | RESOLVED — Module log mode detects attempt number, shifts prompts (Session 1: capture, Session 2: what shifted, Session 3+: deepening). Reflection prompts replace observation prompts on repeat runs. |
+| 11 | **Voice input integration** | RESOLVED — Web Speech API implemented in Logger (en-AU). Other screens not applicable. |
+| 12 | **Empty / first-use states per screen** | RESOLVED — Dashboard, Planner, Portfolio, Notifications, Settings, Capabilities, Report, Our Story Hub, and Explore screens all have empty states. |
+| 13 | **Gentle migration from retro logging to modules** | RESOLVED — `module_nudge` notification trigger fires after 10+ retro entries with no module usage. 2-week cooldown, pedagogy-aware copy, links to marketplace. |
 | 16 | **Offline / poor connectivity** | OPEN |
 
-**Resolved:** #1 (badge logging), #2 (badge award), #3 (dashboard vs Our Story), #4 (AI architecture), #5 (notifications), #6 (HEU curation), #9 (constellation drill-down), #14 (data deletion), #15 (learner views scoped to Phase 2).
+**Resolved:** #1 (badge logging), #2 (badge award), #3 (dashboard vs Our Story), #4 (AI architecture), #5 (notifications), #6 (HEU curation), #7 (regression/tier override), #9 (constellation drill-down), #10 (repeat module logging), #11 (voice input), #12 (empty/first-use states), #13 (module migration nudge), #14 (data deletion), #15 (learner views scoped to Phase 2).
 
 ---
 

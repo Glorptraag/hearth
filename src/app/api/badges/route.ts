@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { badgeDefinitions } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, or, isNull } from 'drizzle-orm';
+import { parseBody } from '@/lib/api-helpers';
 
 export async function GET() {
   const { userId } = await auth();
@@ -40,17 +41,14 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = createBadgeSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, createBadgeSchema);
+  if ('error' in result) return result.error;
 
   const [badge] = await db
     .insert(badgeDefinitions)
     .values({
       familyId: family.id,
-      ...parsed.data,
+      ...result.data,
     })
     .returning();
 

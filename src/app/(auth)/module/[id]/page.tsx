@@ -643,6 +643,7 @@ function LogMode({ module }: { module: Module }) {
   const [description, setDescription] = useState(`Completed ${module.title}`);
   const [activePrompts, setActivePrompts] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [attemptNumber, setAttemptNumber] = useState(1);
 
   // Collect all observation prompts from all activities
   const allPrompts = Array.from(
@@ -653,15 +654,32 @@ function LogMode({ module }: { module: Module }) {
     )
   );
 
+  // Shifted prompts for repeat sessions
+  const reflectionPrompts = Array.from(
+    new Set(
+      module.approaches?.flatMap((app) =>
+        app.activities?.flatMap((act) => act.reflectionPrompts ?? []) ?? []
+      ) ?? []
+    )
+  );
+
   useEffect(() => {
-    fetch('/api/learners')
-      .then((r) => r.json())
-      .then((data: Learner[]) => {
+    Promise.all([
+      fetch('/api/learners').then((r) => r.json()),
+      fetch(`/api/entries?status=complete&limit=100`).then((r) => r.json()),
+    ])
+      .then(([learnerData, entries]) => {
+        const data = learnerData as Learner[];
         setLearners(data);
         if (data.length > 0) setSelectedLearnerIds([data[0].id]);
+
+        const previousRuns = (entries as { sourceModuleId?: string }[]).filter(
+          (e) => e.sourceModuleId === module._id
+        );
+        setAttemptNumber(previousRuns.length + 1);
       })
       .catch(() => {});
-  }, []);
+  }, [module._id]);
 
   const toggleLearner = (id: string) =>
     setSelectedLearnerIds((prev) =>
@@ -705,13 +723,21 @@ function LogMode({ module }: { module: Module }) {
     <div className="px-md py-xl max-w-2xl mx-auto pb-32">
       <div className="mb-xl">
         <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
-          Log
+          Log {attemptNumber > 1 ? `· Session ${attemptNumber}` : ''}
         </p>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
-          Capture this session
+          {attemptNumber === 1
+            ? 'Capture this session'
+            : attemptNumber === 2
+              ? 'What shifted this time?'
+              : 'Deepening the understanding'}
         </h2>
         <p className="font-serif text-sm text-text-secondary">
-          A few moments to record what happened.
+          {attemptNumber === 1
+            ? 'A few moments to record what happened.'
+            : attemptNumber === 2
+              ? 'Notice what changed since last time — new questions, deeper engagement, different approaches.'
+              : 'Look for evidence of growing independence, richer language, or connections to other areas.'}
         </p>
       </div>
 
@@ -810,30 +836,38 @@ function LogMode({ module }: { module: Module }) {
         />
       </div>
 
-      {/* Observation prompt chips */}
-      {allPrompts.length > 0 && (
-        <div className="mb-xl">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-            Observations Noted
-          </p>
-          <div className="flex flex-wrap gap-xs">
-            {allPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => togglePrompt(prompt)}
-                className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-200 ${
-                  activePrompts.includes(prompt)
-                    ? 'bg-sage/20 text-sage border-sage/30'
-                    : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'
-                }`}
-              >
-                {activePrompts.includes(prompt) ? '✓ ' : ''}
-                {prompt}
-              </button>
-            ))}
+      {/* Observation/reflection prompt chips — shifts on repeat sessions */}
+      {(() => {
+        const prompts = attemptNumber >= 2 && reflectionPrompts.length > 0
+          ? reflectionPrompts
+          : allPrompts;
+        const label = attemptNumber >= 2 && reflectionPrompts.length > 0
+          ? 'Reflections'
+          : 'Observations Noted';
+        return prompts.length > 0 ? (
+          <div className="mb-xl">
+            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
+              {label}
+            </p>
+            <div className="flex flex-wrap gap-xs">
+              {prompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => togglePrompt(prompt)}
+                  className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-200 ${
+                    activePrompts.includes(prompt)
+                      ? 'bg-sage/20 text-sage border-sage/30'
+                      : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'
+                  }`}
+                >
+                  {activePrompts.includes(prompt) ? '✓ ' : ''}
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ) : null;
+      })()}
 
       {/* Save button */}
       <button

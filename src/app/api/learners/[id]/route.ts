@@ -6,6 +6,7 @@ import { learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { LEARNER_COLOURS } from '@/types';
+import { parseBody } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -65,15 +66,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = updateLearnerSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, updateLearnerSchema);
+  if ('error' in result) return result.error;
 
   const [updated] = await db
     .update(learners)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({ ...result.data, updatedAt: new Date() })
     .where(
       and(eq(learners.id, id), eq(learners.familyId, family.id))
     )

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { plannerEntries, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { parseBody } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { format } from 'date-fns';
 import { rateLimit } from '@/lib/rate-limit';
@@ -49,13 +50,10 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = triggerSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, triggerSchema);
+  if ('error' in result) return result.error;
 
-  const data = parsed.data;
+  const data = result.data;
   let created = false;
 
   switch (data.type) {

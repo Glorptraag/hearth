@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { familyMembers, families } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { parseBody } from '@/lib/api-helpers';
 
 const acceptSchema = z.object({
   token: z.string().min(1),
@@ -13,10 +14,9 @@ export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
-  const parsed = acceptSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Token required' }, { status: 400 });
-  const { token } = parsed.data;
+  const result = await parseBody(request, acceptSchema);
+  if ('error' in result) return result.error;
+  const { token } = result.data;
 
   const invite = await db.query.familyMembers.findFirst({
     where: eq(familyMembers.inviteToken, token),

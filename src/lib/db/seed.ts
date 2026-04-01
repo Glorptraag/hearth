@@ -28,7 +28,6 @@ async function seed() {
     for (const lid of learnerIds) {
       await db.delete(schema.badgeAwards).where(eq(schema.badgeAwards.learnerId, lid));
       await db.delete(schema.badgeAssessmentLogs).where(eq(schema.badgeAssessmentLogs.learnerId, lid));
-      await db.delete(schema.capabilityObservations).where(eq(schema.capabilityObservations.learnerId, lid));
       await db.delete(schema.facilitatorNotes).where(eq(schema.facilitatorNotes.learnerId, lid));
     }
     await db.delete(schema.notifications).where(eq(schema.notifications.familyId, existingFamily.id));
@@ -242,39 +241,6 @@ async function seed() {
   }
 
   console.log(`✅ ${insertedEntries.length} learning entries`);
-
-  // ─── Capability Observations ───
-  // Emma: 5 observations across 3 threads
-  const emmaObservations = [
-    { threadId: 'science-inquiry', status: 'developing', sourceEntryId: insertedEntries[0].id },
-    { threadId: 'science-inquiry', status: 'emerging', sourceEntryId: insertedEntries[7].id },
-    { threadId: 'english-writing', status: 'developing', sourceEntryId: insertedEntries[1].id },
-    { threadId: 'english-writing', status: 'emerging', sourceEntryId: insertedEntries[6].id },
-    { threadId: 'mathematics-number', status: 'developing', sourceEntryId: insertedEntries[3].id },
-  ];
-
-  for (const obs of emmaObservations) {
-    await db.insert(schema.capabilityObservations).values({
-      learnerId: emma.id,
-      ...obs,
-    });
-  }
-
-  // Liam: 3 observations, all emerging
-  const liamObservations = [
-    { threadId: 'science-inquiry', status: 'emerging', sourceEntryId: insertedEntries[0].id },
-    { threadId: 'mathematics-number', status: 'emerging', sourceEntryId: insertedEntries[10].id },
-    { threadId: 'english-speaking', status: 'emerging', sourceEntryId: insertedEntries[4].id },
-  ];
-
-  for (const obs of liamObservations) {
-    await db.insert(schema.capabilityObservations).values({
-      learnerId: liam.id,
-      ...obs,
-    });
-  }
-
-  console.log('✅ Capability observations (5 for Emma, 3 for Liam)');
 
   // ─── Badge Definitions ───
   const [natureExplorer] = await db

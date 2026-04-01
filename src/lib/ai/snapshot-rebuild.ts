@@ -8,7 +8,6 @@ import {
   badgeAwards,
   notifications,
   familyLibrary,
-  capabilityObservations,
 } from '@/lib/db/schema';
 import { eq, and, desc, count } from 'drizzle-orm';
 import { subDays, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
@@ -17,6 +16,7 @@ import {
   triggerBadgeReady,
   triggerComplianceNudge,
   triggerStreakPrompt,
+  triggerModuleNudge,
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
@@ -86,28 +86,50 @@ export async function rebuildSnapshot(
       }
 
       // Compute tiers based on observation count
-      for (const [, data] of Object.entries(threadCounts)) {
+      const tierOverrides = (child.profileData as Record<string, unknown>)?.tierOverrides as
+        Record<string, { tier: string }> | null | undefined;
+      for (const [threadId, data] of Object.entries(threadCounts)) {
         if (data.count >= 8) data.tier = 'demonstrating';
         else if (data.count >= 4) data.tier = 'developing';
         else data.tier = 'emerging';
+
+        // Parent override takes precedence (can only lower, never raise)
+        const override = tierOverrides?.[threadId];
+        if (override) {
+          const tierRank = { emerging: 0, developing: 1, demonstrating: 2 };
+          const autoRank = tierRank[data.tier as keyof typeof tierRank] ?? 0;
+          const overrideRank = tierRank[override.tier as keyof typeof tierRank] ?? 0;
+          if (overrideRank < autoRank) {
+            data.tier = override.tier;
+          }
+        }
       }
 
-      // Query confirmed capability observations for this child
-      const confirmedObs = await db
-        .select()
-        .from(capabilityObservations)
-        .where(
-          and(
-            eq(capabilityObservations.learnerId, child.id),
-            eq(capabilityObservations.confirmed, true)
-          )
-        );
-      const confirmedBySubject: Record<string, number> = {};
-      for (const obs of confirmedObs) {
-        // Map thread_id to subject via the enrichment data
-        // Thread IDs follow the pattern "subject.thread_name"
-        const subj = obs.threadId.split('.')[0];
-        if (subj) confirmedBySubject[subj] = (confirmedBySubject[subj] ?? 0) + 1;
+      // Count AC V9 descriptors per subject from AI enrichment
+      const descriptorsBySubject: Record<string, Set<string>> = {};
+      for (const entry of childEntries) {
+        const enrichment = entry.aiEnrichment as EnrichmentResult | null;
+        if (enrichment) {
+          for (const desc of enrichment.curriculum_descriptors ?? []) {
+            // AC9 codes start with AC9 + subject abbreviation (e.g. AC9E = English, AC9MA = Maths)
+            const code = desc.code;
+            for (const [subj, prefix] of Object.entries({
+              english: 'AC9E',
+              mathematics: 'AC9MA',
+              science: 'AC9S',
+              hass: 'AC9HS',
+              arts: 'AC9A',
+              technologies: 'AC9T',
+              hpe: 'AC9HP',
+              languages: 'AC9L',
+            })) {
+              if (code.startsWith(prefix)) {
+                if (!descriptorsBySubject[subj]) descriptorsBySubject[subj] = new Set();
+                descriptorsBySubject[subj].add(code);
+              }
+            }
+          }
+        }
       }
 
       // Curriculum coverage by subject
@@ -115,11 +137,10 @@ export async function rebuildSnapshot(
       const allSubjects = ['english', 'mathematics', 'science', 'hass', 'arts', 'technologies', 'hpe', 'languages'];
       for (const subj of allSubjects) {
         const touched = subjectCounts[subj] ?? 0;
-        const confirmed = confirmedBySubject[subj] ?? 0;
+        const descriptorCount = descriptorsBySubject[subj]?.size ?? 0;
         curriculumCoverage[subj] = {
-          total_descriptors_touched: touched,
-          confirmed_descriptors: confirmed,
-          suggested_descriptors: Math.max(0, touched - confirmed),
+          total_entries: touched,
+          unique_descriptors: descriptorCount,
           coverage_percentage: Math.min(100, Math.round((touched / 20) * 100)),
         };
       }
@@ -412,6 +433,27 @@ export async function rebuildSnapshot(
       if (daysSinceLastLog >= 5) {
         await triggerStreakPrompt(familyId, daysSinceLastLog);
       }
+    }
+
+    // Module nudge: if family has logged ≥10 retro entries but never used a module
+    const retroEntries = allEntries.filter((e) => e.source === 'logger');
+    const hasUsedModule = allEntries.some((e) => e.source === 'module_log');
+    if (retroEntries.length >= 10 && !hasUsedModule) {
+      const subjectCounts: Record<string, number> = {};
+      for (const e of retroEntries) {
+        for (const s of e.subjects ?? []) {
+          subjectCounts[s] = (subjectCounts[s] ?? 0) + 1;
+        }
+      }
+      const topSubjects = Object.entries(subjectCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(([s]) => s);
+      await triggerModuleNudge(familyId, {
+        retroEntryCount: retroEntries.length,
+        hasUsedModule,
+        topSubjects,
+      });
     }
 
     console.log(`[snapshotRebuild] family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);

@@ -10,7 +10,6 @@ import {
   learningEntries,
   familyIntelligenceSnapshots,
   aiPipelineLogs,
-  capabilityObservations,
   plannerEntries,
   notifications,
   familyLibrary,
@@ -64,7 +63,6 @@ export async function POST(request: NextRequest) {
   if (learnerIds.length > 0) {
     await db.delete(badgeAssessmentLogs).where(inArray(badgeAssessmentLogs.learnerId, learnerIds));
     await db.delete(badgeAwards).where(inArray(badgeAwards.learnerId, learnerIds));
-    await db.delete(capabilityObservations).where(inArray(capabilityObservations.learnerId, learnerIds));
     await db.delete(facilitatorNotes).where(eq(facilitatorNotes.familyId, familyId));
   }
 

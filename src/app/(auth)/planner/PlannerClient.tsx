@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { addDays, startOfWeek, format, isSameWeek } from 'date-fns';
 import PlannerGrid from '@/components/planner/PlannerGrid';
 import BottomSheet from '@/components/planner/BottomSheet';
+import { usePedagogy } from '@/hooks/use-pedagogy';
 
 interface Learner {
   id: string;
@@ -56,6 +57,7 @@ export default function PlannerClient({
   today,
   basePath = '',
 }: PlannerClientProps) {
+  const { vocab } = usePedagogy();
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [entries, setEntries] = useState<PlannerEntry[]>(initialEntries);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -223,7 +225,7 @@ export default function PlannerClient({
         <div className="mb-lg rounded-lg border border-border-subtle bg-surface-panel p-lg text-center">
           <span className="text-3xl mb-sm block">📝</span>
           <p className="font-serif text-sm text-text-secondary mb-xs">
-            Nothing planned this week yet
+            {vocab.plannerFrame}
           </p>
           <p className="font-sans text-xs text-text-muted">
             Tap + in any session to add an activity, or browse the{' '}

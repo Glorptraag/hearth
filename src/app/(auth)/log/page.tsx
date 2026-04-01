@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
+import { usePedagogy } from '@/hooks/use-pedagogy';
 
 type Learner = {
   id: string;
@@ -272,6 +273,7 @@ function CompletenessRing({ score }: { score: number }) {
 }
 
 export default function LogPage() {
+  const { vocab } = usePedagogy();
   const searchParams = useSearchParams();
   const projectContext = {
     source: searchParams.get('source') ?? 'logger',
@@ -593,7 +595,7 @@ export default function LogPage() {
           <p className="font-sans text-[0.75rem] text-text-muted hidden sm:block">
             {lastSavedAt
               ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'Capture what happened, we\u2019ll find the learning'}
+              : vocab.logNudge}
           </p>
         </div>
         <div className="flex items-center gap-sm">
@@ -1210,10 +1212,15 @@ function EvidenceModal({
         const formData = new FormData();
         formData.append('file', selectedFileRef.current);
         const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
-        if (!res.ok) throw new Error('Upload failed');
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+          alert(err.error ?? 'Upload failed. Please try again.');
+          return;
+        }
         const { url } = await res.json();
         onSave({ type: 'photo', content: url, caption });
       } catch {
+        alert('Upload failed. Check your connection and try again.');
         return;
       } finally {
         setUploading(false);

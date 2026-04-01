@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { parseBody } from '@/lib/api-helpers';
 import { eq, and, lte } from 'drizzle-orm';
 import { NOTIFICATION_STATES } from '@/types';
 
@@ -49,17 +50,14 @@ export async function PATCH(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = updateNotificationSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, updateNotificationSchema);
+  if ('error' in result) return result.error;
 
   const updated = [];
-  for (const id of parsed.data.ids) {
-    const [result] = await db
+  for (const id of result.data.ids) {
+    const [row] = await db
       .update(notifications)
-      .set({ state: parsed.data.state })
+      .set({ state: result.data.state })
       .where(
         and(
           eq(notifications.id, id),
@@ -68,7 +66,7 @@ export async function PATCH(request: NextRequest) {
       )
       .returning();
 
-    if (result) updated.push(result);
+    if (row) updated.push(row);
   }
 
   return NextResponse.json(updated);

@@ -81,13 +81,42 @@ function getThreadPositions(
 
 function ThreadDetailPanel({
   thread,
+  learnerId,
   onClose,
+  onTierOverride,
 }: {
   thread: { id: string; tier: string; obsCount: number; name: string; lastDate?: string };
+  learnerId: string | null;
   onClose: () => void;
+  onTierOverride?: (threadId: string, tier: string | null) => void;
 }) {
+  const [showAdjust, setShowAdjust] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
   const tierCfg = TIER_CONFIG[thread.tier] ?? TIER_CONFIG.unobserved;
   const progressWidth = thread.tier === 'emerging' ? '25%' : thread.tier === 'developing' ? '60%' : thread.tier === 'demonstrating' ? '90%' : '0%';
+
+  const lowerTiers = (['emerging', 'developing', 'demonstrating'] as const).filter(
+    (t) => {
+      const rank = { emerging: 0, developing: 1, demonstrating: 2 };
+      return rank[t] < rank[thread.tier as keyof typeof rank];
+    }
+  );
+
+  const handleOverride = async (tier: string | null) => {
+    if (!learnerId || !onTierOverride) return;
+    setAdjusting(true);
+    try {
+      await fetch(`/api/capabilities/${learnerId}/override`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId: thread.id, tier }),
+      });
+      onTierOverride(thread.id, tier);
+      setShowAdjust(false);
+    } finally {
+      setAdjusting(false);
+    }
+  };
 
   return (
     <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -119,6 +148,53 @@ function ThreadDetailPanel({
               ? 'Solid evidence building. A few more observations to reach demonstrating.'
               : 'Strong evidence of capability. Well documented.'}
       </p>
+
+      {thread.tier !== 'unobserved' && learnerId && (
+        <div className="mt-md pt-md border-t border-border-subtle">
+          {!showAdjust ? (
+            <button
+              onClick={() => setShowAdjust(true)}
+              className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              Adjust tier
+            </button>
+          ) : (
+            <div className="space-y-sm">
+              <p className="font-sans text-[11px] text-text-muted">
+                Override the auto-detected tier if it doesn&apos;t match your observations.
+              </p>
+              <div className="flex flex-wrap gap-xs">
+                {lowerTiers.map((t) => {
+                  const cfg = TIER_CONFIG[t];
+                  return (
+                    <button
+                      key={t}
+                      disabled={adjusting}
+                      onClick={() => handleOverride(t)}
+                      className={`rounded-md px-sm py-[3px] font-sans text-[11px] font-medium border border-border-subtle hover:border-border-medium transition-all duration-200 ${cfg.badge} disabled:opacity-50`}
+                    >
+                      {cfg.label}
+                    </button>
+                  );
+                })}
+                <button
+                  disabled={adjusting}
+                  onClick={() => handleOverride(null)}
+                  className="rounded-md px-sm py-[3px] font-sans text-[11px] text-text-muted border border-border-subtle hover:border-border-medium transition-all duration-200 disabled:opacity-50"
+                >
+                  Reset to auto
+                </button>
+              </div>
+              <button
+                onClick={() => setShowAdjust(false)}
+                className="font-sans text-[10px] text-text-muted hover:text-text-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -457,6 +533,26 @@ export default function CapabilitiesPage() {
         </div>
       </div>
 
+      {/* First-use empty state */}
+      {totalObservations === 0 && (
+        <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <span className="text-3xl block mb-md">✦</span>
+          <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">
+            Capabilities emerge from logging
+          </h2>
+          <p className="font-serif text-sm text-text-secondary leading-relaxed max-w-md mx-auto mb-lg">
+            As you log learning moments, Hearth maps them to capability threads automatically.
+            Each thread grows from emerging to demonstrating as evidence builds.
+          </p>
+          <a
+            href="/log"
+            className="inline-block rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover"
+          >
+            Log your first moment
+          </a>
+        </div>
+      )}
+
       {viewMode === 'constellation' ? (
         <>
           {/* Constellation visualization */}
@@ -474,7 +570,18 @@ export default function CapabilitiesPage() {
             <div className="mt-md">
               <ThreadDetailPanel
                 thread={selectedThread}
+                learnerId={selectedLearnerId || null}
                 onClose={() => setSelectedThreadId(null)}
+                onTierOverride={(threadId, tier) => {
+                  setActiveThreads((prev) =>
+                    prev.map((t) =>
+                      t.thread_id === threadId
+                        ? { ...t, suggested_tier: tier ?? (t.observation_count >= 8 ? 'demonstrating' : t.observation_count >= 4 ? 'developing' : 'emerging') }
+                        : t
+                    )
+                  );
+                  setSelectedThreadId(null);
+                }}
               />
             </div>
           )}

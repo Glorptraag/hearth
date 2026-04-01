@@ -19,7 +19,12 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
+  }
   const file = formData.get('file') as File | null;
 
   if (!file) {
@@ -40,13 +45,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      { error: 'Evidence storage not configured. Set BLOB_READ_WRITE_TOKEN in environment.' },
+      { status: 503 }
+    );
+  }
+
   const ext = file.name.split('.').pop() ?? 'jpg';
   const path = `evidence/${family.id}/${Date.now()}.${ext}`;
 
-  const blob = await put(path, file, {
-    access: 'public',
-    addRandomSuffix: true,
-  });
+  try {
+    const blob = await put(path, file, {
+      access: 'public',
+      addRandomSuffix: true,
+    });
 
-  return NextResponse.json({ url: blob.url });
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    console.error('[evidence/upload] Blob storage error:', err);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
 }

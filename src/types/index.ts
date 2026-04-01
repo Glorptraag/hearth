@@ -4,7 +4,6 @@ import type {
   learners,
   familySettings,
   learningEntries,
-  capabilityObservations,
   badgeDefinitions,
   badgeAwards,
   plannerEntries,
@@ -22,7 +21,6 @@ export type Family = InferSelectModel<typeof families>;
 export type Learner = InferSelectModel<typeof learners>;
 export type FamilySettings = InferSelectModel<typeof familySettings>;
 export type LearningEntry = InferSelectModel<typeof learningEntries>;
-export type CapabilityObservation = InferSelectModel<typeof capabilityObservations>;
 export type BadgeDefinition = InferSelectModel<typeof badgeDefinitions>;
 export type BadgeAward = InferSelectModel<typeof badgeAwards>;
 export type BadgeAssessmentLog = InferSelectModel<typeof badgeAssessmentLogs>;

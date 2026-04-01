@@ -46,6 +46,7 @@ export const learners = pgTable('learners', {
     attentionWindowEnd?: number | null;
     preferredTimes?: string[] | null;
     stylePreferences?: Record<string, string> | null;
+    tierOverrides?: Record<string, { tier: 'emerging' | 'developing' | 'demonstrating'; reason?: string; setAt?: string }> | null;
   }>().default({}),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -136,32 +137,6 @@ export const aiPipelineLogs = pgTable(
   (table) => [
     index('apl_family_idx').on(table.familyId),
     index('apl_created_idx').on(table.createdAt),
-  ]
-);
-
-// ─── Capability Tracking ───
-// DEPRECATED: data now comes from ai_enrichment on learning_entries
-// and family_intelligence_snapshots. This table is no longer populated.
-
-export const capabilityObservations = pgTable(
-  'capability_observations',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    learnerId: uuid('learner_id')
-      .references(() => learners.id)
-      .notNull(),
-    threadId: text('thread_id').notNull(),
-    dloId: text('dlo_id'),
-    status: text('status').notNull().default('emerging'),
-    sourceEntryId: uuid('source_entry_id').references(
-      () => learningEntries.id
-    ),
-    observedAt: timestamp('observed_at').defaultNow(),
-    confirmed: boolean('confirmed').default(false),
-    createdAt: timestamp('created_at').defaultNow(),
-  },
-  (table) => [
-    index('co_learner_thread_idx').on(table.learnerId, table.threadId),
   ]
 );
 

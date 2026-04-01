@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName } from '@/lib/capability-threads';
+import { usePedagogy } from '@/hooks/use-pedagogy';
 
 type CardType = 'evidence' | 'journey' | 'milestone';
 
@@ -98,6 +99,7 @@ const DATE_FILTERS = [
 ] as const;
 
 export default function PortfolioPage() {
+  const { vocab } = usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -354,7 +356,7 @@ export default function PortfolioPage() {
                 <Link href="/log" className="font-semibold text-ember hover:text-ember-hover transition-colors">
                   Logger
                 </Link>{' '}
-                to capture your first moment.
+                to capture your first {vocab.sessionNoun}.
               </p>
             </div>
           ) : viewMode === 'thread' ? (

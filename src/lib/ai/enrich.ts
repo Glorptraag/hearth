@@ -123,7 +123,7 @@ async function assembleContext(entryId: string, familyId: string) {
     ? await db.select().from(learners).where(inArray(learners.id, entryLearnerIds))
     : [];
 
-  // Derive active threads from previous entries' aiEnrichment (not the deprecated capabilityObservations table)
+  // Derive active threads from previous entries' aiEnrichment
   const activeThreads: Record<string, string[]> = {};
   for (const child of childRecords) {
     const childEntries = recentEntries.filter((e) => e.learnerIds?.includes(child.id));

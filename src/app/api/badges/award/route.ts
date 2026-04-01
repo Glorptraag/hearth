@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { badgeAwards, badgeAssessmentLogs, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { parseBody } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { resolveBadgeDefinitionId } from '@/lib/resolve-badge-id';
@@ -27,13 +28,10 @@ export async function POST(request: NextRequest) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = awardSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, awardSchema);
+  if ('error' in result) return result.error;
 
-  const { badgeId, learnerId, responses } = parsed.data;
+  const { badgeId, learnerId, responses } = result.data;
 
   const learner = await db.query.learners.findFirst({
     where: and(eq(learners.id, learnerId), eq(learners.familyId, family.id)),

@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { rateLimit } from '@/lib/rate-limit';
+import { z } from 'zod';
 
 export function apiError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -35,4 +36,21 @@ export async function authenticatedFamily(opts?: {
   if (!family) return { error: apiError('Family not found', 404) } as const;
 
   return { userId, family } as const;
+}
+
+export async function parseBody<T>(
+  request: NextRequest,
+  schema: z.ZodType<T>
+): Promise<{ data: T } | { error: NextResponse }> {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return { error: apiError('Invalid JSON in request body', 400) };
+  }
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return { error: NextResponse.json({ error: parsed.error.flatten() }, { status: 400 }) };
+  }
+  return { data: parsed.data };
 }

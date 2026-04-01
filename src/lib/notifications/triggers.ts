@@ -19,7 +19,8 @@ type NotificationType =
   | 'compliance_nudge'
   | 'log_invitation'
   | 'prep_reminder'
-  | 'streak_prompt';
+  | 'streak_prompt'
+  | 'module_nudge';
 
 type NotificationTier = 'whisper' | 'nudge' | 'chime';
 
@@ -43,6 +44,7 @@ const TYPE_COOLDOWNS: Record<NotificationType, number> = {
   log_invitation: 24 * 60 * 60 * 1000,     // 1 day
   prep_reminder: 24 * 60 * 60 * 1000,      // 1 day
   streak_prompt: 5 * 24 * 60 * 60 * 1000,  // 5 days
+  module_nudge: 14 * 24 * 60 * 60 * 1000,  // 2 weeks
 };
 
 const DAILY_CAP = 4;
@@ -349,6 +351,38 @@ export async function triggerStreakPrompt(
     body: adapted?.body ?? `${daysSinceLastLog} days since your last log. Even a short entry helps!`,
     bodyData: { days_since_last_log: daysSinceLastLog },
     destinationRoute: '/log',
+  });
+}
+
+// ─── Trigger: module_nudge ───
+// Called from snapshot rebuild when family has logged enough retro entries
+// but hasn't tried a module yet. Gentle migration from pure retro logging.
+
+export async function triggerModuleNudge(
+  familyId: string,
+  stats: { retroEntryCount: number; hasUsedModule: boolean; topSubjects: string[] }
+): Promise<boolean> {
+  if (stats.hasUsedModule) return false;
+  if (stats.retroEntryCount < 10) return false;
+
+  const subjectHint = stats.topSubjects.length > 0
+    ? ` We have ${stats.topSubjects[0]} activities that match what you've been logging.`
+    : '';
+
+  const pedagogy = await getFamilyPedagogy(familyId);
+  const vocab = (await import('@/lib/pedagogy/adapter')).getPedagogyVocabulary(pedagogy);
+
+  return createNotification({
+    familyId,
+    type: 'module_nudge',
+    tier: 'whisper',
+    title: `You've logged ${stats.retroEntryCount} ${vocab.sessionNoun}s — ready to try a guided module?`,
+    body: `Modules give structure while you stay in control.${subjectHint}`,
+    bodyData: {
+      retro_entry_count: stats.retroEntryCount,
+      top_subjects: stats.topSubjects,
+    },
+    destinationRoute: '/explore/marketplace',
   });
 }
 

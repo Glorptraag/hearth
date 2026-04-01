@@ -6,6 +6,7 @@ import { learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
+import { parseBody } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -61,11 +62,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await request.json();
-  const parsed = updateEntrySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const result = await parseBody(request, updateEntrySchema);
+  if ('error' in result) return result.error;
+  const parsed = result;
 
   const [updated] = await db
     .update(learningEntries)

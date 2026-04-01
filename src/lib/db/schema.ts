@@ -19,6 +19,7 @@ export const families = pgTable('families', {
   clerkUserId: text('clerk_user_id').unique().notNull(),
   familyName: text('family_name').notNull(),
   onboardingComplete: boolean('onboarding_complete').default(false).notNull(),
+  welcomeCompletedAt: timestamp('welcome_completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -311,4 +312,14 @@ export const facilitatorNotes = pgTable('facilitator_notes', {
   isPrivate: boolean('is_private').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ─── Provider Codes ───
+
+export const providerCodes = pgTable('provider_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull().unique(),
+  redeemedByFamilyId: uuid('redeemed_by_family_id').references(() => families.id),
+  redeemedAt: timestamp('redeemed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
 });

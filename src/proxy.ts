@@ -7,6 +7,7 @@ const isDemo = createRouteMatcher(["/demo(.*)"]);
 const isPublicRoute = createRouteMatcher([
   "/",
   "/onboarding",
+  "/welcome",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/admin(.*)",

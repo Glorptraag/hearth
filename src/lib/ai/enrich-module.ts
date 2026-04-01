@@ -14,6 +14,34 @@ const VALID_THREAD_IDS = new Set([
   'EF1','EF2','EF3','EF4','EF5','EF6','EF7','EF8',
 ]);
 
+const PATHWAY_GUIDANCE: Record<string, string> = {
+  material: `PATHWAY: Material-first. The parent started with a resource (book, kit, object) and is building a module around it.
+- targetUnderstanding should describe what the child will understand through interacting with this material.
+- steps should begin with introducing/exploring the material, then progress to deeper engagement.
+- watchFor should focus on how the child engages with the physical resource.
+- pivot should suggest alternative ways to interact with the same material.`,
+  process: `PATHWAY: Process-first. The parent started with an activity or process (baking, building, experimenting) and is wrapping a module around it.
+- targetUnderstanding should describe the conceptual learning embedded in the process.
+- steps should follow the natural sequence of the process itself.
+- watchFor should focus on moments of discovery during the hands-on work.
+- pivot should suggest simplifying or extending the process.`,
+  inquiry: `PATHWAY: Inquiry-first. The parent started with a question the child asked or a curiosity they noticed.
+- targetUnderstanding should honour the original question and frame what exploring it reveals.
+- steps should follow an inquiry arc: wonder → investigate → synthesise → share.
+- watchFor should focus on deepening questions and moments of insight.
+- pivot should suggest alternative angles on the same question.`,
+  retrospective: `PATHWAY: Retrospective. The parent is capturing learning that already happened organically.
+- targetUnderstanding should articulate what the child actually learned (past tense framing is fine).
+- steps should reconstruct the natural sequence that occurred.
+- watchFor should highlight evidence of learning the parent may not have noticed in the moment.
+- pivot is less relevant here — suggest how to extend or revisit the topic.`,
+  goal: `PATHWAY: Goal-first. The parent has a specific curriculum outcome or skill target in mind.
+- targetUnderstanding should connect the goal to a child-meaningful framing.
+- steps should scaffold toward the goal with concrete activities.
+- watchFor should focus on progress indicators toward the target.
+- pivot should suggest alternative routes to the same goal.`,
+};
+
 const SYSTEM_PROMPT = `You are Hearth's module enrichment engine. Given a module draft from a parent's pathway entry, infer any missing educational fields. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation.
 
 OUTPUT SCHEMA:
@@ -41,7 +69,8 @@ RULES:
 - Steps should be practical and parent-friendly, not academic.
 - Keep language warm and observational, not prescriptive.
 - Return 2-5 steps maximum.
-- Return 1-3 capability threads maximum.`;
+- Return 1-3 capability threads maximum.
+- CRITICAL: Tailor your inference to the pathway the parent used to create this module. Each pathway implies a different starting point and pedagogical intent.`;
 
 interface ModuleDraftData {
   pathway: string;
@@ -93,6 +122,8 @@ export async function enrichModuleDraft(
     }
 
     // Build context prompt
+    const pathwayHint = PATHWAY_GUIDANCE[data.pathway] ?? '';
+
     const provenanceContext = data.provenance
       ? `\nPathway provenance: ${JSON.stringify(data.provenance)}`
       : '';
@@ -101,7 +132,7 @@ export async function enrichModuleDraft(
       ? `\nExisting steps (DO NOT replace): ${JSON.stringify(data.steps)}`
       : '';
 
-    const userPrompt = `Module draft from "${data.pathway}" pathway:
+    const userPrompt = `${pathwayHint ? pathwayHint + '\n\n' : ''}Module draft from "${data.pathway}" pathway:
 Title: ${data.title}
 Subjects: ${data.subjects?.join(', ') || 'not specified'}
 Duration: ${data.duration || 'not specified'}

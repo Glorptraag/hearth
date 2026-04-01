@@ -13,7 +13,14 @@ type BadgeData = {
 };
 type Response = { questionId: string; response: 'yes' | 'sometimes' | 'not_yet'; note?: string };
 
-type Step = 'intro' | 'questions' | 'decision' | 'celebration' | 'deferred';
+type AssessmentLog = {
+  id: string;
+  responses: Response[];
+  outcome: string;
+  assessedAt: string;
+};
+
+type Step = 'intro' | 'questions' | 'decision' | 'celebration' | 'deferred' | 'compare';
 
 export default function BadgeAssessPage() {
   const params = useParams();
@@ -31,6 +38,7 @@ export default function BadgeAssessPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previousAssessments, setPreviousAssessments] = useState<AssessmentLog[]>([]);
 
   useEffect(() => {
     fetch(`/api/badges/${badgeId}`)
@@ -43,7 +51,16 @@ export default function BadgeAssessPage() {
         setError('Could not load badge');
         setLoading(false);
       });
-  }, [badgeId]);
+
+    if (learnerId) {
+      fetch(`/api/badges/history?badgeId=${badgeId}&learnerId=${learnerId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) setPreviousAssessments(data);
+        })
+        .catch(() => {});
+    }
+  }, [badgeId, learnerId]);
 
   const personalize = useCallback(
     (text: string) => text.replace(/\[child\]/gi, learnerName),
@@ -139,7 +156,7 @@ export default function BadgeAssessPage() {
 
       <div className="relative z-10 max-w-lg mx-auto px-md py-lg">
         {/* Header */}
-        {step !== 'celebration' && step !== 'deferred' && (
+        {step !== 'celebration' && step !== 'deferred' && step !== 'compare' && (
           <header className="flex items-center justify-between mb-xl">
             <button
               onClick={() => {
@@ -341,9 +358,105 @@ export default function BadgeAssessPage() {
                   Not ready yet · defer 7 days
                 </button>
               </div>
+              {previousAssessments.length > 0 && (
+                <button
+                  onClick={() => setStep('compare')}
+                  className="w-full mt-sm font-sans text-xs text-text-muted hover:text-ember border border-border-subtle rounded-md px-md py-sm transition-all duration-200 hover:border-border-medium"
+                >
+                  Compare with previous assessment ({previousAssessments.length} prior)
+                </button>
+              )}
             </div>
           </div>
         )}
+
+        {/* ── COMPARE ── */}
+        {step === 'compare' && badge && (() => {
+          const prev = previousAssessments[0];
+          if (!prev) return null;
+          const prevResponses = prev.responses as Response[];
+          const RESPONSE_LABELS: Record<string, { icon: string; label: string; rank: number }> = {
+            yes: { icon: '✅', label: 'Yes', rank: 2 },
+            sometimes: { icon: '🟡', label: 'Sometimes', rank: 1 },
+            not_yet: { icon: '⬜', label: 'Not yet', rank: 0 },
+          };
+
+          return (
+            <div className="pt-lg">
+              <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm text-center">
+                Assessment Comparison
+              </h2>
+              <p className="font-serif text-sm text-text-secondary text-center mb-xl">
+                {learnerName}&apos;s progress on {badge.title}
+              </p>
+
+              <div className="bg-surface-panel rounded-lg border border-border-subtle overflow-hidden mb-xl">
+                {/* Header */}
+                <div className="grid grid-cols-[1fr_80px_80px_40px] gap-sm px-md py-sm border-b border-border-subtle bg-surface-raised">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-text-muted">Question</span>
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-text-muted text-center">
+                    {new Date(prev.assessedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+                  </span>
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-text-muted text-center">Now</span>
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-text-muted text-center">Δ</span>
+                </div>
+
+                {/* Rows */}
+                {badge.assessmentQuestions.map((q) => {
+                  const prevR = prevResponses.find((r) => r.questionId === q.id);
+                  const currR = responses.find((r) => r.questionId === q.id);
+                  const prevMeta = RESPONSE_LABELS[prevR?.response ?? 'not_yet'];
+                  const currMeta = RESPONSE_LABELS[currR?.response ?? 'not_yet'];
+                  const delta = currMeta.rank - prevMeta.rank;
+                  const deltaIcon = delta > 0 ? '📈' : delta < 0 ? '📉' : '—';
+                  const deltaColor = delta > 0 ? 'text-sage' : delta < 0 ? 'text-amber-400' : 'text-text-muted';
+
+                  return (
+                    <div key={q.id} className="grid grid-cols-[1fr_80px_80px_40px] gap-sm px-md py-md border-b border-border-subtle last:border-0">
+                      <p className="font-serif text-sm text-text-secondary leading-snug">
+                        {personalize(q.question)}
+                      </p>
+                      <div className="flex items-center justify-center">
+                        <span className="text-sm">{prevMeta.icon}</span>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <span className="text-sm">{currMeta.icon}</span>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <span className={`text-sm ${deltaColor}`}>{deltaIcon}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Summary */}
+              {(() => {
+                const improvements = badge.assessmentQuestions.filter((q) => {
+                  const prevR = prevResponses.find((r) => r.questionId === q.id);
+                  const currR = responses.find((r) => r.questionId === q.id);
+                  return (RESPONSE_LABELS[currR?.response ?? 'not_yet'].rank) > (RESPONSE_LABELS[prevR?.response ?? 'not_yet'].rank);
+                }).length;
+                return improvements > 0 ? (
+                  <div className="rounded-lg border border-sage/30 bg-sage/10 p-md mb-xl text-center">
+                    <p className="font-serif text-sm text-sage">
+                      {improvements} area{improvements !== 1 ? 's' : ''} showing growth since last assessment
+                    </p>
+                  </div>
+                ) : null;
+              })()}
+
+              <div className="space-y-sm">
+                <button
+                  onClick={() => setStep('decision')}
+                  className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200"
+                >
+                  Back to decision
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── CELEBRATION ── */}
         {step === 'celebration' && (

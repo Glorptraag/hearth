@@ -4,7 +4,18 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import DomainChip from '@/components/ui/DomainChip';
-import { mockModules } from '@/app/demo/mock-data';
+import { mockModules, mockOverlays } from '@/app/demo/mock-data';
+import { ActivityCard } from '@/components/screens/ActivityCard';
+import type { Pedagogy } from '@/types';
+
+const PEDAGOGY_OPTIONS: { value: Pedagogy; label: string }[] = [
+  { value: 'eclectic', label: 'Eclectic' },
+  { value: 'charlotte_mason', label: 'Charlotte Mason' },
+  { value: 'classical', label: 'Classical' },
+  { value: 'montessori', label: 'Montessori' },
+  { value: 'waldorf_steiner', label: 'Waldorf' },
+  { value: 'unschooling', label: 'Unschooling' },
+];
 
 type Mode = 'select' | 'prep' | 'facilitate' | 'complete';
 
@@ -18,6 +29,7 @@ export default function ModuleExperiencePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [checkedMaterials, setCheckedMaterials] = useState<Set<number>>(new Set());
   const [checkedObservations, setCheckedObservations] = useState<Set<number>>(new Set());
+  const [demoPedagogy, setDemoPedagogy] = useState<Pedagogy>('eclectic');
 
   if (!module) {
     return (
@@ -136,6 +148,39 @@ export default function ModuleExperiencePage() {
                   </div>
                 </div>
               </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Philosophy Activity Preview */}
+        <div className="mt-xl pt-xl border-t border-border-subtle">
+          <div className="flex items-center justify-between mb-md">
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Activity preview with philosophy lens
+            </p>
+            <select
+              value={demoPedagogy}
+              onChange={(e) => setDemoPedagogy(e.target.value as Pedagogy)}
+              className="bg-surface-raised border border-border-subtle rounded-md px-sm py-[4px] font-sans text-xs text-text-primary outline-none focus:border-ember"
+            >
+              {PEDAGOGY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-md">
+            {module.approaches[0]?.activities.slice(0, 2).map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                pedagogy={demoPedagogy}
+                overlay={mockOverlays[demoPedagogy]?.[activity.id] ?? null}
+                onStart={() => {
+                  setSelectedApproachIndex(0);
+                  setCurrentStep(module.approaches[0].activities.indexOf(activity));
+                  setMode('facilitate');
+                }}
+              />
             ))}
           </div>
         </div>

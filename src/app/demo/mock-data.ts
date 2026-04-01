@@ -1674,3 +1674,87 @@ export const mockOurStoryLearners = [
     evidenceThumbs: ['📷', '📄', '🎨'],
   },
 ];
+
+// ─── Pedagogy Overlays (per framework × activity) ───────────────────────────
+
+type ActivityOverlay = { perspective?: string; facilitatorTips?: string; languageFrame?: string; watchFor?: string };
+
+export const mockOverlays: Record<string, Record<string, ActivityOverlay>> = {
+  charlotte_mason: {
+    'act-creek-walk': {
+      perspective: 'Nature study is the living book of the outdoors — invite the child to observe closely and narrate what they see.',
+      facilitatorTips: 'Read a passage from a nature study book before heading out. Encourage narration on the walk home.',
+      languageFrame: 'student',
+      watchFor: 'Detailed narration of what was observed, ability to draw from nature without copying.',
+    },
+    'act-creek-sketch': {
+      perspective: 'Nature journaling builds the habit of attention — accuracy matters less than careful looking.',
+      facilitatorTips: 'Let the student choose their subject. Guide with gentle questions, not corrections.',
+      watchFor: 'Sustained attention to a single subject, growing detail in sketches over time.',
+    },
+  },
+  classical: {
+    'act-creek-walk': {
+      perspective: 'At the Grammar stage, gathering concrete facts about creek life builds the foundation for later scientific reasoning.',
+      facilitatorTips: 'Name species and features clearly — this is knowledge-gathering. Quiz gently on the walk back.',
+      languageFrame: 'student',
+      watchFor: 'Retention of vocabulary and facts about organisms observed.',
+    },
+    'act-creek-sketch': {
+      perspective: 'Precise observation and classification train the student in systematic thinking.',
+      facilitatorTips: 'Have the student label their sketch with proper terms.',
+      watchFor: 'Accurate labelling and attempts at classification.',
+    },
+  },
+  montessori: {
+    'act-creek-walk': {
+      perspective: 'The creek is a prepared environment created by nature — follow the child\'s interest as they explore it.',
+      facilitatorTips: 'Resist directing attention. Observe which element draws the child\'s concentration and support that thread.',
+      languageFrame: 'child',
+      watchFor: 'Deep concentration on a self-chosen element, independent exploration without prompting.',
+    },
+    'act-creek-sketch': {
+      perspective: 'The hand and eye work together to build the child\'s understanding of the natural world.',
+      facilitatorTips: 'Offer real specimens alongside the drawing. Allow repeated attempts without judgement.',
+      watchFor: 'Refinement of motor control, satisfaction in the process over the product.',
+    },
+  },
+  waldorf_steiner: {
+    'act-creek-walk': {
+      perspective: 'A creek walk is a sensory journey — the sounds, textures, and rhythms of water connect the child to the living earth.',
+      facilitatorTips: 'Begin with a verse or song about water. Walk in reverent silence for part of the journey.',
+      languageFrame: 'child',
+      watchFor: 'Sense impressions shared imaginatively, wonder expressed through stories or movement.',
+    },
+    'act-creek-sketch': {
+      perspective: 'Drawing from nature cultivates the artistic eye and connects feeling to form.',
+      facilitatorTips: 'Use watercolours or beeswax crayons. Let colours blend as the child captures the mood of the scene.',
+      watchFor: 'Expressive use of colour and form rather than photographic accuracy.',
+    },
+  },
+  unschooling: {
+    'act-creek-walk': {
+      perspective: 'The creek is an invitation, not an assignment — real learning happens when curiosity leads.',
+      facilitatorTips: 'Don\'t set goals for the visit. Notice what sparks excitement and follow that thread wherever it leads.',
+      languageFrame: 'learner',
+      watchFor: 'Self-directed investigation, questions that lead to further exploration, joy in discovery.',
+    },
+    'act-creek-sketch': {
+      perspective: 'Sketching is one of many ways to process experience — offer it without requiring it.',
+      facilitatorTips: 'If the learner prefers to collect objects, photograph, or narrate instead, honour that.',
+      watchFor: 'Voluntary engagement, creative expression in any medium.',
+    },
+  },
+  eclectic: {
+    'act-creek-walk': {
+      perspective: 'Outdoor exploration combines science, observation, and physical activity in one natural session.',
+      facilitatorTips: 'Bring a mix of tools — field guides, magnifying glasses, containers. See what approach works today.',
+      watchFor: 'Engagement with the environment, questions asked, connections made to prior learning.',
+    },
+    'act-creek-sketch': {
+      perspective: 'Sketching integrates art and science — a flexible tool that suits many learning styles.',
+      facilitatorTips: 'Some children prefer detailed diagrams, others prefer impressionistic sketches. Both are valid.',
+      watchFor: 'Willingness to observe closely and transfer observations to paper.',
+    },
+  },
+};

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChildSelector } from '@/components/ui/child-selector';
-import { getThreadName, THREAD_NAMES, THREAD_DOMAINS, getThreadDomain, type ThreadDomain } from '@/lib/capability-threads';
+import { getThreadName, THREAD_NAMES, THREAD_DOMAINS, getThreadDomain, THREAD_CONNECTIONS, type ThreadDomain } from '@/lib/capability-threads';
 
 type Learner = {
   id: string;
@@ -262,14 +262,44 @@ function ConstellationView({
       {!focusDomain ? (
         // Galaxy overview — domain clusters
         <>
-          {/* Connection lines between domains */}
+          {/* Cross-domain connection arcs */}
+          {(() => {
+            const crossDomain = THREAD_CONNECTIONS.filter(([from, to]) => {
+              const d1 = getThreadDomain(from);
+              const d2 = getThreadDomain(to);
+              return d1 && d2 && d1.key !== d2.key;
+            });
+            const seen = new Set<string>();
+            return crossDomain.map(([from, to]) => {
+              const d1 = getThreadDomain(from)!;
+              const d2 = getThreadDomain(to)!;
+              const pairKey = [d1.key, d2.key].sort().join('-');
+              if (seen.has(pairKey)) return null;
+              seen.add(pairKey);
+              const p1 = domainPositions[d1.key];
+              const p2 = domainPositions[d2.key];
+              const bothActive = activeThreads.some((t) => t.thread_id === from) &&
+                activeThreads.some((t) => t.thread_id === to);
+              return (
+                <line
+                  key={`xconn-${pairKey}`}
+                  x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
+                  stroke={bothActive ? 'rgba(217,123,58,0.15)' : 'rgba(255,255,255,0.04)'}
+                  strokeWidth={bothActive ? 1 : 0.5}
+                  strokeDasharray="4,4"
+                />
+              );
+            });
+          })()}
+
+          {/* Ring connection lines between adjacent domains */}
           {THREAD_DOMAINS.map((d, i) => {
             const next = THREAD_DOMAINS[(i + 1) % THREAD_DOMAINS.length];
             const p1 = domainPositions[d.key];
             const p2 = domainPositions[next.key];
             return (
               <line
-                key={`conn-${i}`}
+                key={`ring-${i}`}
                 x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
                 stroke="rgba(217,123,58,0.06)"
                 strokeWidth="1"
@@ -347,6 +377,42 @@ function ConstellationView({
             {THREAD_DOMAINS.find((d) => d.key === focusDomain)?.emoji}{' '}
             {THREAD_DOMAINS.find((d) => d.key === focusDomain)?.label}
           </text>
+
+          {/* Connection lines between threads */}
+          {focusedThreads && (() => {
+            const threadMap = new Map(focusedThreads.map((t) => [t.id, t]));
+            const domainConnections = THREAD_CONNECTIONS.filter(
+              ([from, to]) => threadMap.has(from) && threadMap.has(to)
+            );
+            return domainConnections.map(([from, to]) => {
+              const p1 = threadMap.get(from)!;
+              const p2 = threadMap.get(to)!;
+              const midX = (p1.x + p2.x) / 2;
+              const midY = (p1.y + p2.y) / 2;
+              const dx = p2.x - p1.x;
+              const dy = p2.y - p1.y;
+              const perpX = midX - dy * 0.15;
+              const perpY = midY + dx * 0.15;
+              const bothObserved = p1.tier !== 'unobserved' && p2.tier !== 'unobserved';
+              return (
+                <g key={`conn-${from}-${to}`}>
+                  <path
+                    d={`M${p1.x},${p1.y} Q${perpX},${perpY} ${p2.x},${p2.y}`}
+                    fill="none"
+                    stroke={bothObserved ? 'rgba(217,123,58,0.25)' : 'rgba(255,255,255,0.06)'}
+                    strokeWidth={bothObserved ? 1.5 : 0.8}
+                    strokeDasharray={bothObserved ? 'none' : '3,3'}
+                  />
+                  {/* Arrow head */}
+                  <circle
+                    cx={p2.x} cy={p2.y}
+                    r={2}
+                    fill={bothObserved ? 'rgba(217,123,58,0.4)' : 'rgba(255,255,255,0.1)'}
+                  />
+                </g>
+              );
+            });
+          })()}
 
           {/* Thread stars */}
           {focusedThreads?.map((t) => {

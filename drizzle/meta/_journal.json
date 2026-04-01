@@ -43,6 +43,13 @@
       "when": 1775033436342,
       "tag": "0005_eminent_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775039840719,
+      "tag": "0006_unknown_jane_foster",
+      "breakpoints": true
     }
   ]
 }

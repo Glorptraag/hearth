@@ -21,7 +21,7 @@ export default function DemoOurStoryLayout({
     <div>
       {/* Sub-navigation tabs — hidden on hub root */}
       {!isHub && (
-      <nav className="flex gap-xs border-b border-border-subtle bg-surface-panel px-md">
+      <nav className="flex gap-xs overflow-x-auto border-b border-border-subtle bg-surface-panel px-md">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           return (

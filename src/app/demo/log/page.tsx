@@ -80,7 +80,7 @@ export default function DemoLog() {
               <div className="mb-sm font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
                 What happened
               </div>
-              <div className="grid grid-cols-2 gap-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                 {ACTIVITY_TYPES.map((t) => (
                   <button
                     key={t.key}
@@ -143,7 +143,7 @@ export default function DemoLog() {
               <div className="mb-sm font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
                 Learners
               </div>
-              <div className="flex gap-sm">
+              <div className="flex flex-wrap gap-sm">
                 {mockLearners.map((l) => {
                   const selected = selectedLearners.includes(l.id);
                   return (

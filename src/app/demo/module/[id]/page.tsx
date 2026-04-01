@@ -294,7 +294,7 @@ export default function ModuleExperiencePage() {
     return (
       <div className="flex-1 flex flex-col px-md py-xl gap-lg max-w-2xl mx-auto">
         {/* Progress bar */}
-        <div className="sticky top-0 z-20 bg-surface-body pt-xl pb-md -mx-md px-md">
+        <div className="sticky top-[32px] z-20 bg-surface-body pt-xl pb-md -mx-md px-md">
           <div className="bg-surface-raised h-1 rounded-full overflow-hidden mb-md">
             <div
               className="bg-ember h-full transition-all duration-300"
@@ -383,7 +383,7 @@ export default function ModuleExperiencePage() {
         )}
 
         {/* Navigation */}
-        <div className="flex gap-md mt-lg pt-lg border-t border-border-subtle">
+        <div className="flex flex-col sm:flex-row gap-md mt-lg pt-lg border-t border-border-subtle">
           {currentStep > 0 && (
             <button
               onClick={() => setCurrentStep(currentStep - 1)}

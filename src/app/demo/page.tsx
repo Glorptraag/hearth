@@ -31,7 +31,7 @@ export default function DemoLanding() {
       </div>
 
       {/* Quick nav cards */}
-      <div className="grid grid-cols-2 gap-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
         {[
           { href: '/demo/dashboard', emoji: '🏠', title: 'Dashboard', desc: 'Your family hub' },
           { href: '/demo/log', emoji: '✏️', title: 'Logger', desc: 'Capture learning moments' },

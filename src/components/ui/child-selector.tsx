@@ -27,7 +27,7 @@ export function ChildSelector({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-sm border-b border-border-subtle">
+    <div className="flex gap-sm overflow-x-auto border-b border-border-subtle">
       {learners.map((learner) => {
         const active = learner.id === selectedId;
         const age = learner.dateOfBirth

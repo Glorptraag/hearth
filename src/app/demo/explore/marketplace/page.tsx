@@ -64,7 +64,7 @@ export default function DemoMarketplace() {
       </div>
 
       {/* Pack grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-lg lg:grid-cols-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-lg">
         {filtered.map((p) => (
           <div
             key={p.id}

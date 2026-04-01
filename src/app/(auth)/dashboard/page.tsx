@@ -48,6 +48,21 @@ export default async function DashboardPage() {
   const todayEntryCount = recentEntries.filter((e) => e.dateOccurred === today).length;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 
+  // Cascading dashboard state resolution
+  type DashboardState = 'no-children' | 'no-entries' | 'returning-inactive' | 'active';
+  let dashboardState: DashboardState = 'active';
+  if (familyLearners.length === 0) {
+    dashboardState = 'no-children';
+  } else if (recentEntries.length === 0) {
+    dashboardState = 'no-entries';
+  } else {
+    const latestDate = recentEntries[0].dateOccurred;
+    const daysSince = Math.floor(
+      (Date.now() - new Date(latestDate).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (daysSince > 7) dashboardState = 'returning-inactive';
+  }
+
   const snapshotData = (snapshot?.snapshotData ?? {}) as {
     activityStreak?: number;
     lastLogDate?: string;
@@ -90,6 +105,7 @@ export default async function DashboardPage() {
       }))}
       todayEntryCount={todayEntryCount}
       pedagogy={pedagogy}
+      dashboardState={dashboardState}
     />
   );
 }

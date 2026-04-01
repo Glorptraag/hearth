@@ -35,6 +35,7 @@ interface PlannerClientProps {
   recommendations: Recommendation[];
   today: string;
   basePath?: string;
+  hasLibraryModules?: boolean;
 }
 
 function getWeekStart(date: Date): Date {
@@ -56,6 +57,7 @@ export default function PlannerClient({
   recommendations,
   today,
   basePath = '',
+  hasLibraryModules = true,
 }: PlannerClientProps) {
   const { vocab } = usePedagogy();
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
@@ -223,14 +225,33 @@ export default function PlannerClient({
       {/* Empty week nudge */}
       {!loading && entries.length === 0 && isCurrentWeek && (
         <div className="mb-lg rounded-lg border border-border-subtle bg-surface-panel p-lg text-center">
-          <span className="text-3xl mb-sm block">📝</span>
-          <p className="font-serif text-sm text-text-secondary mb-xs">
-            {vocab.plannerFrame}
-          </p>
-          <p className="font-sans text-xs text-text-muted">
-            Tap + in any session to add an activity, or browse the{' '}
-            <a href={`${basePath}/explore/activities`} className="text-ember hover:underline">activity library</a>.
-          </p>
+          <span className="text-3xl mb-sm block">{hasLibraryModules ? '📝' : '📚'}</span>
+          {hasLibraryModules ? (
+            <>
+              <p className="font-serif text-sm text-text-secondary mb-xs">
+                {vocab.plannerFrame}
+              </p>
+              <p className="font-sans text-xs text-text-muted">
+                Tap + in any session to add an activity, or browse the{' '}
+                <a href={`${basePath}/explore/activities`} className="text-ember hover:underline">activity library</a>.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-serif text-sm font-semibold text-text-primary mb-xs">
+                Build your activity library first
+              </p>
+              <p className="font-sans text-xs text-text-muted mb-md">
+                Browse the marketplace to add packs and activities to your library, then plan your week here.
+              </p>
+              <a
+                href={`${basePath}/explore/marketplace`}
+                className="inline-block rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+              >
+                Explore the marketplace
+              </a>
+            </>
+          )}
         </div>
       )}
 

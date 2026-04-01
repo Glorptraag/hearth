@@ -289,6 +289,20 @@ export default function OurStoryHubClient() {
             logged, patterns and growth will become visible here.
           </p>
         )}
+        {stats && stats.portfolioTotal === 0 && stats.capabilityThreadsActive === 0 && (
+          <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <span className="text-3xl">✨</span>
+            <p className="font-serif text-sm text-text-secondary leading-relaxed">
+              Log your first learning moment and watch {learner.name}&rsquo;s story come to life.
+            </p>
+            <a
+              href="/log"
+              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+            >
+              Log a moment
+            </a>
+          </div>
+        )}
       </section>
 
       {/* Nav cards */}

@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { ALL_MODULES_QUERY } from '@/lib/sanity/queries';
+import EmptyState from '@/components/ui/EmptyState';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -478,35 +479,21 @@ export default function ExploreActivitiesPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-3xl">
+          <div className="py-3xl">
             {modules.length === 0 ? (
-              <>
-                <p className="text-4xl mb-md">📚</p>
-                <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
-                  No modules available yet
-                </h2>
-                <p className="font-serif text-text-secondary mb-lg">
-                  Browse the Marketplace to add packs with modules and activities.
-                </p>
-                <button
-                  onClick={() => router.push('/explore/marketplace')}
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
-                >
-                  Browse Marketplace
-                </button>
-              </>
+              <EmptyState
+                emoji="📚"
+                heading="No modules available yet"
+                body="Browse the Marketplace to add packs with modules and activities."
+                cta={{ label: 'Browse Marketplace', onClick: () => router.push('/explore/marketplace') }}
+              />
             ) : (
-              <div className="flex flex-col items-center gap-md py-2xl text-center">
-                <span className="text-4xl">🔍</span>
-                <p className="font-serif text-lg font-semibold text-text-primary">No activities found</p>
-                <p className="font-serif text-sm text-text-secondary">Try a different subject or clear the filter.</p>
-                <button
-                  onClick={() => setSubjectFilter('all')}
-                  className="font-sans text-sm text-ember hover:underline"
-                >
-                  Clear filter
-                </button>
-              </div>
+              <EmptyState
+                emoji="🔍"
+                heading="No activities found"
+                body="Try a different subject or clear the filter."
+                cta={{ label: 'Clear filter', onClick: () => setSubjectFilter('all') }}
+              />
             )}
           </div>
         ) : viewMode === 'grid' ? (

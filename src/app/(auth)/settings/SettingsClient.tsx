@@ -6,6 +6,7 @@ import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
 import HEUFields from '@/components/settings/HEUFields';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
+import EmptyState from '@/components/ui/EmptyState';
 
 function AccountSecurityPanel() {
   const [showDelete, setShowDelete] = useState(false);
@@ -251,12 +252,11 @@ function FamilyAccessPanel() {
       {loading ? (
         <p className="font-sans text-sm text-text-muted">Loading...</p>
       ) : members.length === 0 ? (
-        <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-          <span className="text-2xl">🔑</span>
-          <p className="mt-sm font-serif text-base text-text-secondary">
-            No co-facilitators yet. Invite someone above.
-          </p>
-        </div>
+        <EmptyState
+          emoji="🔑"
+          heading="No co-facilitators yet"
+          body="Invite someone above to share access to your family's Hearth."
+        />
       ) : (
         <div className="flex flex-col gap-sm">
           {members.map((member) => (

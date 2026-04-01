@@ -359,20 +359,45 @@ export default function PortfolioPage() {
           )}
 
           {/* Entry cards */}
+          {/* Early nudge */}
+          {entries.length > 0 && entries.length <= 5 && (
+            <p className="mb-md font-serif text-sm italic text-text-muted">
+              You&rsquo;re building momentum &mdash; {entries.length} moment{entries.length !== 1 ? 's' : ''} and counting.
+            </p>
+          )}
+
           {filteredEntries.length === 0 ? (
-            <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-              <span className="text-3xl mb-md block">📖</span>
-              <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
-              <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
-                Every log you add becomes part of your learning story. Once you&apos;ve captured a few sessions, they&apos;ll appear here as a portrait of your child&apos;s growing knowledge.
-              </p>
-              <Link
-                href="/log"
-                className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
-              >
-                Add your first log →
-              </Link>
-            </div>
+            entries.length > 0 ? (
+              /* Filtered-empty: data exists but current filters match nothing */
+              <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
+                <span className="text-3xl mb-md block">📅</span>
+                <p className="font-serif text-base font-semibold text-text-primary mb-xs">Nothing logged this period</p>
+                <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
+                  Try a different month or clear your filters to see all moments.
+                </p>
+                <button
+                  onClick={() => { setSubjectFilter(null); setDateFilter('all'); }}
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              /* True empty: no entries at all */
+              <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
+                <span className="text-3xl mb-md block">📖</span>
+                <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
+                <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
+                  Every log you add becomes part of your learning story. Once you&apos;ve captured a few sessions, they&apos;ll appear here as a portrait of your child&apos;s growing knowledge.
+                </p>
+                <Link
+                  href="/log"
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
+                >
+                  Add your first log &rarr;
+                </Link>
+              </div>
+            )
           ) : viewMode === 'thread' ? (
             /* Thread view — grouped by thread in accordions */
             <div className="space-y-md">

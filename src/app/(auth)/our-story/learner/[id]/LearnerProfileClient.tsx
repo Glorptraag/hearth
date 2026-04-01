@@ -4,6 +4,7 @@ import { useState, useRef, KeyboardEvent } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
+import { useToast } from '@/hooks/use-toast';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -146,11 +147,11 @@ export default function LearnerProfileClient({
   familyName,
 }: LearnerProfileClientProps) {
   const colour = COLOUR_MAP[learner.colourToken ?? ''] ?? DEFAULT_COLOUR;
+  const { toast } = useToast();
 
   // Local editable state
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
 
   const [about, setAbout] = useState(learner.profileData.about ?? '');
   const [workingStyle, setWorkingStyle] = useState<string[]>(
@@ -230,11 +231,6 @@ export default function LearnerProfileClient({
     setEditing(false);
   }
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }
-
   async function save() {
     setSaving(true);
     try {
@@ -259,9 +255,9 @@ export default function LearnerProfileClient({
       });
       if (!res.ok) throw new Error('Save failed');
       setEditing(false);
-      showToast(`${learner.name}'s portrait saved ✓`);
+      toast(`${learner.name}'s portrait saved ✓`);
     } catch {
-      showToast('Save failed — please try again');
+      toast('Save failed — please try again', 'error');
     } finally {
       setSaving(false);
     }
@@ -367,6 +363,22 @@ export default function LearnerProfileClient({
       </div>
 
       <div className="flex flex-col gap-xl px-md">
+
+        {/* ── Empty profile banner ── */}
+        {!learner.profileData.about &&
+          (!learner.profileData.workingStyle || learner.profileData.workingStyle.length === 0) &&
+          (!learner.profileData.interests || learner.profileData.interests.length === 0) &&
+          (!learner.profileData.strengths || learner.profileData.strengths.length === 0) && (
+          <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <span className="text-3xl">🌟</span>
+            <h2 className="font-serif text-lg font-semibold text-text-primary">
+              {learner.name}&rsquo;s profile is ready to grow
+            </h2>
+            <p className="font-serif text-sm text-text-secondary leading-relaxed">
+              Add a few details about how {learner.name} learns best. Tap &ldquo;Edit portrait&rdquo; above to get started.
+            </p>
+          </div>
+        )}
 
         {/* ── Sparks ── */}
         {learner.profileData.sparks && learner.profileData.sparks.length > 0 && (
@@ -701,12 +713,6 @@ export default function LearnerProfileClient({
         </div>
       )}
 
-      {/* ── Toast ── */}
-      {toast && (
-        <div className="fixed bottom-[80px] left-1/2 z-[60] -translate-x-1/2 rounded-[10px] border border-border-subtle bg-surface-panel px-lg py-sm font-sans text-sm text-text-secondary shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-          {toast}
-        </div>
-      )}
     </div>
   );
 }

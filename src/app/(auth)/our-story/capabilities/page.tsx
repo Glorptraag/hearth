@@ -619,6 +619,13 @@ export default function CapabilitiesPage() {
         </div>
       )}
 
+      {/* Partial state — some domains active but coverage is thin */}
+      {totalObservations > 0 && domainSummaries.filter((d) => d.observedCount > 0).length < 4 && (
+        <p className="mt-md font-serif text-sm italic text-text-muted text-center">
+          Some domains are still emerging. As you log more varied activities, new capability threads will light up.
+        </p>
+      )}
+
       {viewMode === 'constellation' ? (
         <>
           {/* Constellation visualization */}

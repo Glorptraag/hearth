@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
 import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
+import { useToast } from '@/hooks/use-toast';
 
 function getCreatorEmoji(type?: CreatorType): string {
   switch (type) {
@@ -47,6 +48,7 @@ function hexToRgb(hex: string): string {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MarketplacePage() {
+  const { toast } = useToast();
   const [packs, setPacks] = useState<SanityPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -113,6 +115,7 @@ export default function MarketplacePage() {
         next.delete(id);
         return next;
       });
+      toast("Couldn't add to library — please try again", 'error');
     }
   }
 
@@ -268,6 +271,15 @@ export default function MarketplacePage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ── All-in-library banner ── */}
+            {packs.length > 0 && filtered.length > 0 && filtered.every((p) => libraryIds.has(p._id)) && (
+              <div className="mb-lg rounded-[10px] border border-sage/20 bg-sage/5 px-lg py-sm">
+                <p className="font-serif text-sm text-sage">
+                  🎉 You&rsquo;ve added everything here — nice curation!
+                </p>
               </div>
             )}
 

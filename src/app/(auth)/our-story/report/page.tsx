@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import EmptyState from '@/components/ui/EmptyState';
 
 type Learner = {
   id: string;
@@ -276,13 +277,12 @@ export default function ReportPage() {
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
       {entries.length === 0 && (
-        <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-          <span className="text-3xl block mb-sm">📋</span>
-          <h2 className="font-serif text-base font-semibold text-text-primary mb-xs">Your report builds automatically</h2>
-          <p className="font-serif text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
-            As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors,
-            and assembles your HEU compliance evidence. Start logging to see your report take shape.
-          </p>
+        <div className="mt-lg">
+          <EmptyState
+            emoji="📋"
+            heading="Your report builds automatically"
+            body="As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors, and assembles your HEU compliance evidence. Start logging to see your report take shape."
+          />
         </div>
       )}
 

@@ -5,6 +5,7 @@ import {
   plannerEntries,
   learners,
   familyIntelligenceSnapshots,
+  familyLibrary,
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, gte, lte } from 'drizzle-orm';
@@ -26,7 +27,7 @@ export default async function PlannerPage() {
   const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
   const todayStr = format(today, 'yyyy-MM-dd');
 
-  const [weekEntries, familyLearners, snapshot] = await Promise.all([
+  const [weekEntries, familyLearners, snapshot, libraryItems] = await Promise.all([
     db
       .select()
       .from(plannerEntries)
@@ -45,6 +46,11 @@ export default async function PlannerPage() {
     db.query.familyIntelligenceSnapshots.findFirst({
       where: eq(familyIntelligenceSnapshots.familyId, family.id),
     }),
+    db
+      .select({ id: familyLibrary.id })
+      .from(familyLibrary)
+      .where(eq(familyLibrary.familyId, family.id))
+      .limit(1),
   ]);
 
   // Derive recommendations from snapshot gap analysis
@@ -103,6 +109,7 @@ export default async function PlannerPage() {
       }))}
       recommendations={recommendations}
       today={todayStr}
+      hasLibraryModules={libraryItems.length > 0}
     />
   );
 }

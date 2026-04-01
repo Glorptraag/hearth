@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const NAV_SECTIONS = [
   {
@@ -216,7 +217,9 @@ export default function AuthLayout({
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto pb-[72px] lg:pb-0">{children}</main>
+        <main className="flex-1 overflow-y-auto pb-[72px] lg:pb-0">
+          <ToastProvider>{children}</ToastProvider>
+        </main>
       </div>
 
       {/* Mobile bottom nav — hidden at lg */}

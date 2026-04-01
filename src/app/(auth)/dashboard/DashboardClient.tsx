@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
+import EmptyState from '@/components/ui/EmptyState';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ interface SnapshotData {
   recommendations?: Array<{ title: string; subject?: string }>;
 }
 
+type DashboardState = 'no-children' | 'no-entries' | 'returning-inactive' | 'active';
+
 interface DashboardClientProps {
   familyName: string;
   snapshot: SnapshotData;
@@ -56,6 +59,7 @@ interface DashboardClientProps {
   todayEntryCount: number;
   basePath?: string;
   pedagogy?: string;
+  dashboardState?: DashboardState;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -208,6 +212,7 @@ export default function DashboardClient({
   todayEntryCount,
   basePath = '',
   pedagogy = 'eclectic',
+  dashboardState = 'active',
 }: DashboardClientProps) {
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
@@ -248,24 +253,43 @@ export default function DashboardClient({
           </p>
         </div>
 
-        {/* Empty state — new family */}
-        {!hasEntries && (
-          <div className="mb-3xl flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <span className="text-4xl">🌱</span>
-            <div>
-              <h2 className="font-serif text-xl font-semibold text-text-primary">
-                Your learning journey starts here
-              </h2>
-              <p className="mt-xs font-sans text-sm text-text-secondary">
-                Log your first session and Hearth will begin building a picture of your family&rsquo;s learning.
-              </p>
+        {/* Cascading empty states */}
+        {dashboardState === 'no-children' && (
+          <div className="mb-3xl">
+            <EmptyState
+              emoji="👋"
+              heading="Welcome to Hearth"
+              body="Let's set up your family. Who's learning at your hearth?"
+              cta={{ label: 'Add your first learner', href: `${basePath}/settings` }}
+            />
+          </div>
+        )}
+        {dashboardState === 'no-entries' && (
+          <div className="mb-3xl">
+            <EmptyState
+              emoji="🌱"
+              heading="Your hearth is ready"
+              body="Start by logging something that happened today — even five minutes of play counts."
+              cta={{ label: 'Log a moment', href: `${basePath}/log` }}
+            />
+          </div>
+        )}
+        {dashboardState === 'returning-inactive' && (
+          <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center gap-md">
+              <span className="text-2xl">🌅</span>
+              <div>
+                <p className="font-serif text-sm text-text-secondary">
+                  It&rsquo;s been a few days. Learning has been happening &mdash; let&rsquo;s capture some of it.
+                </p>
+              </div>
+              <Link
+                href={`${basePath}/log`}
+                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+              >
+                Log a moment
+              </Link>
             </div>
-            <Link
-              href={`${basePath}/log`}
-              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
-            >
-              Log your first session
-            </Link>
           </div>
         )}
 

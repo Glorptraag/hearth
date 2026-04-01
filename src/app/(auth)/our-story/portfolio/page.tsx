@@ -110,6 +110,25 @@ export default function PortfolioPage() {
   const [openThreads, setOpenThreads] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'thread' | 'chronological'>('thread');
   const [monthlyNarrative, setMonthlyNarrative] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  async function saveEntryEdit(id: string) {
+    setSavingEdit(true);
+    try {
+      await fetch(`/api/entries/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle, description: editDesc }),
+      });
+      setEntries((prev) => prev.map((e) => e.id === id ? { ...e, title: editTitle, description: editDesc } : e));
+      setEditingId(null);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   useEffect(() => {
     fetch('/api/learners')
@@ -456,8 +475,50 @@ export default function PortfolioPage() {
                             {/* Expanded view */}
                             {isExpanded && (
                               <div className="border-t border-border-subtle px-md py-sm space-y-sm">
-                                {entry.description && (
-                                  <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
+                                {/* Editable description */}
+                                {editingId === entry.id ? (
+                                  <div className="space-y-xs">
+                                    <input
+                                      value={editTitle}
+                                      onChange={(e) => setEditTitle(e.target.value)}
+                                      className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm font-semibold text-text-primary focus:border-ember focus:outline-none"
+                                      placeholder="Title"
+                                    />
+                                    <textarea
+                                      value={editDesc}
+                                      onChange={(e) => setEditDesc(e.target.value)}
+                                      rows={3}
+                                      className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none"
+                                      placeholder="Description"
+                                    />
+                                    <div className="flex gap-xs">
+                                      <button
+                                        onClick={() => saveEntryEdit(entry.id)}
+                                        disabled={savingEdit}
+                                        className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50"
+                                      >
+                                        {savingEdit ? 'Saving…' : 'Save'}
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingId(null)}
+                                        className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="group relative">
+                                    {entry.description && (
+                                      <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
+                                    )}
+                                    <button
+                                      onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
+                                      className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                  </div>
                                 )}
                                 {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
                                   <div>
@@ -604,8 +665,40 @@ export default function PortfolioPage() {
                     {/* Expanded view */}
                     {isExpanded && (
                       <div className="border-t border-border-subtle px-md py-sm space-y-sm">
-                        {entry.description && (
-                          <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
+                        {editingId === entry.id ? (
+                          <div className="space-y-xs">
+                            <input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm font-semibold text-text-primary focus:border-ember focus:outline-none"
+                              placeholder="Title"
+                            />
+                            <textarea
+                              value={editDesc}
+                              onChange={(e) => setEditDesc(e.target.value)}
+                              rows={3}
+                              className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none"
+                              placeholder="Description"
+                            />
+                            <div className="flex gap-xs">
+                              <button onClick={() => saveEntryEdit(entry.id)} disabled={savingEdit} className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50">
+                                {savingEdit ? 'Saving…' : 'Save'}
+                              </button>
+                              <button onClick={() => setEditingId(null)} className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200">Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            {entry.description && (
+                              <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
+                            )}
+                            <button
+                              onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
+                              className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
+                            >
+                              ✏️ Edit
+                            </button>
+                          </div>
                         )}
                         {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
                           <div>

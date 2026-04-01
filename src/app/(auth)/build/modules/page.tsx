@@ -224,14 +224,55 @@ function AiCompanionPanel({ hints }: { hints: string[] }) {
   );
 }
 
-function SavedView({ onBack }: { onBack: () => void }) {
+function ModulePreviewCard({ title, subjects, approaches }: { title: string; subjects: string[]; approaches: { title: string; activities: { title: string }[] }[] }) {
   return (
-    <div className="flex flex-col items-center gap-lg py-2xl text-center">
+    <div className="relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-70" />
+      <div className="mb-sm flex flex-wrap gap-xs">
+        {subjects.slice(0, 3).map((s) => (
+          <span key={s} className="rounded-full bg-surface-raised px-sm py-[2px] font-sans text-[10px] font-semibold text-text-muted capitalize">{s}</span>
+        ))}
+      </div>
+      <h3 className="font-serif text-lg font-semibold text-text-primary mb-xs">{title || 'Untitled Module'}</h3>
+      <p className="font-sans text-xs text-text-muted mb-md">{approaches.length} approach{approaches.length !== 1 ? 'es' : ''} · {approaches.reduce((n, a) => n + (a.activities?.length ?? 0), 0)} activities</p>
+      <div className="space-y-xs">
+        {approaches.slice(0, 2).map((a, i) => (
+          <div key={i} className="rounded-md bg-surface-raised px-md py-xs border border-border-subtle">
+            <p className="font-serif text-sm text-text-secondary">{a.title}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SavedView({ onBack, preview }: { onBack: () => void; preview?: { title: string; subjects: string[]; approaches: { title: string; activities: { title: string }[] }[] } }) {
+  const [showPreview, setShowPreview] = useState(false);
+
+  return (
+    <div className="flex flex-col items-center gap-lg py-2xl text-center max-w-xl mx-auto">
       <span className="text-4xl">✅</span>
       <h2 className="font-serif text-xl font-semibold text-text-primary">Draft saved</h2>
-      <p className="font-serif text-text-secondary max-w-xs">
+      <p className="font-serif text-text-secondary">
         Your module draft has been saved. You can come back to finish it anytime.
       </p>
+
+      {preview && (
+        <div className="w-full">
+          <button
+            onClick={() => setShowPreview(!showPreview)}
+            className="font-sans text-sm text-ember hover:underline mb-md transition-colors"
+          >
+            {showPreview ? '▼ Hide preview' : '▶ Show preview'}
+          </button>
+          {showPreview && (
+            <div className="text-left">
+              <ModulePreviewCard {...preview} />
+            </div>
+          )}
+        </div>
+      )}
+
       <button
         onClick={onBack}
         className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -1092,6 +1133,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
   const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const nudge = detectCrossPathNudge('process', form.whatHappens);
+  const showResourceNudge = /\b(book|read|watch|video|documentary|podcast|resource)\b/i.test(form.activityName);
 
   const toggleSubject = (s: string) =>
     setForm((f) => ({ ...f, subjects: f.subjects.includes(s) ? f.subjects.filter((x) => x !== s) : [...f.subjects, s] }));
@@ -1109,7 +1151,14 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
     else setError('Something went wrong. Please try again.');
   };
 
-  if (saved) return <SavedView onBack={onBack} />;
+  if (saved) {
+    const preview = {
+      title: form.activityName,
+      subjects: form.subjects,
+      approaches: [{ title: 'Process', activities: [{ title: form.activityName }] }],
+    };
+    return <SavedView onBack={onBack} preview={preview} />;
+  }
   if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
@@ -1195,6 +1244,20 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
           </div>
         </div>
 
+        {showResourceNudge && (
+          <div className="mt-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm flex items-center justify-between gap-md">
+            <p className="font-serif text-sm text-text-secondary italic">
+              Sounds like a resource — try the <strong>Inquiry pathway</strong> for resource-led learning.
+            </p>
+            <button
+              onClick={() => onSwitchPathway('inquiry')}
+              className="shrink-0 font-sans text-xs text-ember hover:underline"
+            >
+              Switch →
+            </button>
+          </div>
+        )}
+
         <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}
 
@@ -1235,6 +1298,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
   const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const nudge = detectCrossPathNudge('inquiry', form.question + ' ' + form.priorKnowledge);
+  const showGoalNudge = form.question.length < 10 && form.priorKnowledge.length > 50;
 
   const toggleType = (id: string) =>
     setForm((f) => ({ ...f, investigationTypes: f.investigationTypes.includes(id) ? f.investigationTypes.filter((x) => x !== id) : [...f.investigationTypes, id] }));
@@ -1255,7 +1319,14 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
     else setError('Something went wrong. Please try again.');
   };
 
-  if (saved) return <SavedView onBack={onBack} />;
+  if (saved) {
+    const preview = {
+      title: form.question,
+      subjects: form.subjects,
+      approaches: [{ title: 'Inquiry', activities: [{ title: form.question }] }],
+    };
+    return <SavedView onBack={onBack} preview={preview} />;
+  }
   if (editing) return <SharedEditView initialData={editing} onBack={() => setEditing(null)} onSaved={() => setSaved(true)} />;
 
   return (
@@ -1317,6 +1388,20 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
           onDuration={(v) => setForm((f) => ({ ...f, duration: v }))}
           onSetting={(v) => setForm((f) => ({ ...f, setting: v }))}
         />
+
+        {showGoalNudge && (
+          <div className="mt-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm flex items-center justify-between gap-md">
+            <p className="font-serif text-sm text-text-secondary italic">
+              Lots of prior knowledge — this might work well as a <strong>Goal-Forward</strong> module instead.
+            </p>
+            <button
+              onClick={() => onSwitchPathway('goal')}
+              className="shrink-0 font-sans text-xs text-ember hover:underline"
+            >
+              Switch →
+            </button>
+          </div>
+        )}
 
         <CrossPathNudge suggestion={nudge} onSwitch={onSwitchPathway} />
         {error && <p className="font-sans text-sm text-red-400">{error}</p>}

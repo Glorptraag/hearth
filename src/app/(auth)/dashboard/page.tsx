@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import {
   familyIntelligenceSnapshots,
+  familySettings,
   learningEntries,
   plannerEntries,
   learners,
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const [snapshot, recentEntries, todayPlanner, familyLearners] = await Promise.all([
+  const [snapshot, recentEntries, todayPlanner, familyLearners, settings] = await Promise.all([
     db.query.familyIntelligenceSnapshots.findFirst({
       where: eq(familyIntelligenceSnapshots.familyId, family.id),
     }),
@@ -39,9 +40,13 @@ export default async function DashboardPage() {
       .from(learners)
       .where(eq(learners.familyId, family.id))
       .orderBy(learners.displayOrder),
+    db.query.familySettings.findFirst({
+      where: eq(familySettings.familyId, family.id),
+    }),
   ]);
 
   const todayEntryCount = recentEntries.filter((e) => e.dateOccurred === today).length;
+  const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 
   const snapshotData = (snapshot?.snapshotData ?? {}) as {
     activityStreak?: number;
@@ -84,6 +89,7 @@ export default async function DashboardPage() {
         dateOfBirth: l.dateOfBirth ?? null,
       }))}
       todayEntryCount={todayEntryCount}
+      pedagogy={pedagogy}
     />
   );
 }

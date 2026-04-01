@@ -109,6 +109,7 @@ export default function PortfolioPage() {
   const [loading, setLoading] = useState(true);
   const [openThreads, setOpenThreads] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'thread' | 'chronological'>('thread');
+  const [monthlyNarrative, setMonthlyNarrative] = useState<string>('');
 
   useEffect(() => {
     fetch('/api/learners')
@@ -128,10 +129,13 @@ export default function PortfolioPage() {
       fetch(`/api/entries?learnerId=${selectedLearnerId}`).then((r) => r.json()),
       fetch(`/api/badges/awards?learnerId=${selectedLearnerId}`).then((r) => r.json()),
       fetch(`/api/capabilities/${selectedLearnerId}`).then((r) => r.json()),
-    ]).then(([e, b, t]) => {
+      fetch('/api/snapshot').then((r) => r.json()).catch(() => ({})),
+    ]).then(([e, b, t, snap]) => {
       setEntries(Array.isArray(e) ? e : []);
       setBadges(Array.isArray(b) ? b : []);
       setThreads(Array.isArray(t) ? t : []);
+      const childSnap = snap?.snapshotData?.children?.[selectedLearnerId];
+      setMonthlyNarrative(childSnap?.monthly_narrative ?? '');
     });
   }, [selectedLearnerId]);
 
@@ -225,20 +229,27 @@ export default function PortfolioPage() {
         {monthlySummary.count === 0 ? (
           <p className="font-serif text-sm text-text-muted italic">No entries yet this month</p>
         ) : (
-          <div className="flex gap-xl">
-            <div>
-              <p className="font-sans text-2xl font-semibold text-ember">{monthlySummary.count}</p>
-              <p className="font-sans text-xs text-text-muted">Entries</p>
+          <>
+            <div className="flex gap-xl mb-md">
+              <div>
+                <p className="font-sans text-2xl font-semibold text-ember">{monthlySummary.count}</p>
+                <p className="font-sans text-xs text-text-muted">Entries</p>
+              </div>
+              <div>
+                <p className="font-sans text-2xl font-semibold text-text-primary">{monthlySummary.subjects}</p>
+                <p className="font-sans text-xs text-text-muted">Subjects</p>
+              </div>
+              <div>
+                <p className="font-sans text-2xl font-semibold text-text-primary">{monthlySummary.threads}</p>
+                <p className="font-sans text-xs text-text-muted">Threads</p>
+              </div>
             </div>
-            <div>
-              <p className="font-sans text-2xl font-semibold text-text-primary">{monthlySummary.subjects}</p>
-              <p className="font-sans text-xs text-text-muted">Subjects</p>
-            </div>
-            <div>
-              <p className="font-sans text-2xl font-semibold text-text-primary">{monthlySummary.threads}</p>
-              <p className="font-sans text-xs text-text-muted">Threads</p>
-            </div>
-          </div>
+            {monthlyNarrative && (
+              <p className="font-serif text-sm text-text-secondary leading-relaxed italic">
+                {monthlyNarrative}
+              </p>
+            )}
+          </>
         )}
       </div>
 

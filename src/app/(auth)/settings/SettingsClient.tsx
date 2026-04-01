@@ -6,6 +6,285 @@ import PedagogySelector from '@/components/settings/PedagogySelector';
 import HEUFields from '@/components/settings/HEUFields';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 
+function AccountSecurityPanel() {
+  const [showDelete, setShowDelete] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (confirmation !== 'DELETE MY ACCOUNT') return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation }),
+      });
+      if (res.ok) {
+        window.location.href = '/sign-in';
+      } else {
+        const data = await res.json();
+        setError(data.error ?? 'Deletion failed');
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-md">
+      <div>
+        <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Security</p>
+        <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Account & Security</h2>
+      </div>
+      <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg">
+        <p className="font-sans text-sm text-text-secondary">
+          Account and security settings are managed through your Clerk account. Password, two-factor authentication, and connected accounts are all available there.
+        </p>
+      </div>
+
+      {/* Data export */}
+      <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg">
+        <h3 className="font-sans text-sm font-semibold text-text-primary">Export Your Data</h3>
+        <p className="mt-xs font-sans text-sm text-text-secondary">
+          Download all your family&rsquo;s learning entries, observations, planner history, and badge awards as a JSON file.
+        </p>
+        <button
+          onClick={() => window.open('/api/account/export', '_blank')}
+          className="mt-md rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-semibold text-text-primary transition-all hover:border-border-medium hover:text-ember"
+        >
+          Download export
+        </button>
+      </div>
+
+      {/* Danger zone */}
+      <div className="mt-lg rounded-[10px] border border-red-900/30 bg-red-900/10 p-lg">
+        <h3 className="font-sans text-sm font-semibold text-red-400">Danger Zone</h3>
+        <p className="mt-sm font-sans text-sm text-text-secondary">
+          Deleting your account permanently removes all family data, learning entries, portfolio evidence, badge awards, and planner history. This cannot be undone.
+        </p>
+        {!showDelete ? (
+          <button
+            onClick={() => setShowDelete(true)}
+            className="mt-md rounded-[6px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all hover:bg-red-900/30"
+          >
+            Delete account
+          </button>
+        ) : (
+          <div className="mt-md flex flex-col gap-sm">
+            <p className="font-sans text-xs text-red-400">
+              Type <strong>DELETE MY ACCOUNT</strong> to confirm:
+            </p>
+            <input
+              type="text"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              placeholder="DELETE MY ACCOUNT"
+              className="w-full rounded-[6px] border border-red-900/30 bg-surface-raised px-md py-sm font-mono text-sm text-text-primary placeholder:text-text-muted focus:border-red-400 focus:outline-none"
+            />
+            {error && <p className="font-sans text-xs text-red-400">{error}</p>}
+            <div className="flex gap-sm">
+              <button
+                onClick={handleDelete}
+                disabled={confirmation !== 'DELETE MY ACCOUNT' || deleting}
+                className="rounded-[6px] bg-red-600 px-md py-sm font-sans text-sm font-semibold text-white transition-all hover:bg-red-500 disabled:opacity-40"
+              >
+                {deleting ? 'Deleting...' : 'Permanently delete'}
+              </button>
+              <button
+                onClick={() => { setShowDelete(false); setConfirmation(''); setError(null); }}
+                className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface FamilyMember {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  joinedAt: string | null;
+  invitedAt: string | null;
+}
+
+function FamilyAccessPanel() {
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
+  const [inviting, setInviting] = useState(false);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadMembers() {
+    try {
+      const res = await fetch('/api/family/members');
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data.members);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useState(() => { loadMembers(); });
+
+  async function handleInvite() {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    setError(null);
+    setInviteLink(null);
+    try {
+      const res = await fetch('/api/family/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const link = `${window.location.origin}/invite?token=${data.token}`;
+        setInviteLink(link);
+        setInviteEmail('');
+        loadMembers();
+      } else {
+        const data = await res.json();
+        setError(data.error ?? 'Failed to send invite');
+      }
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function handleRemove(memberId: string) {
+    const res = await fetch('/api/family/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId }),
+    });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    }
+  }
+
+  async function copyLink() {
+    if (inviteLink) {
+      await navigator.clipboard.writeText(inviteLink);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-md">
+      <div>
+        <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Sharing</p>
+        <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Family Access</h2>
+        <p className="font-sans text-sm text-text-secondary">
+          Invite another parent or tutor to view or contribute to your family&rsquo;s learning story.
+        </p>
+      </div>
+
+      {/* Invite form */}
+      <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-md">
+        <p className="mb-sm font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
+          Invite a co-facilitator
+        </p>
+        <div className="flex flex-col gap-sm sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+              placeholder="Email address"
+              className="w-full rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-border-medium focus:outline-none"
+            />
+          </div>
+          <select
+            value={inviteRole}
+            onChange={(e) => setInviteRole(e.target.value as 'editor' | 'viewer')}
+            className="rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary focus:border-border-medium focus:outline-none"
+          >
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          <button
+            onClick={handleInvite}
+            disabled={!inviteEmail.trim() || inviting}
+            className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+          >
+            {inviting ? 'Inviting...' : 'Invite'}
+          </button>
+        </div>
+        {error && (
+          <p className="mt-sm font-sans text-xs text-red-400">{error}</p>
+        )}
+        {inviteLink && (
+          <div className="mt-sm rounded-[6px] border border-border-subtle bg-surface-raised p-sm">
+            <p className="mb-xs font-sans text-xs text-text-muted">Share this link with them:</p>
+            <div className="flex items-center gap-sm">
+              <code className="flex-1 truncate font-mono text-xs text-text-secondary">{inviteLink}</code>
+              <button
+                onClick={copyLink}
+                className="shrink-0 rounded-[6px] border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary hover:text-text-primary"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+        <p className="mt-sm font-sans text-xs text-text-muted">
+          Editors can log entries, add to the planner, and run modules. Viewers can see the dashboard and portfolio.
+        </p>
+      </div>
+
+      {/* Members list */}
+      {loading ? (
+        <p className="font-sans text-sm text-text-muted">Loading...</p>
+      ) : members.length === 0 ? (
+        <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
+          <span className="text-2xl">🔑</span>
+          <p className="mt-sm font-serif text-base text-text-secondary">
+            No co-facilitators yet. Invite someone above.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-sm">
+          {members.map((member) => (
+            <div
+              key={member.id}
+              className="flex items-center justify-between rounded-[10px] border border-border-subtle bg-surface-panel px-md py-sm"
+            >
+              <div className="flex flex-col">
+                <span className="font-sans text-sm font-medium text-text-primary">{member.email}</span>
+                <span className="font-sans text-xs text-text-muted">
+                  {member.role === 'editor' ? 'Editor' : 'Viewer'}
+                  {member.status === 'invited' && ' — Pending invite'}
+                  {member.status === 'active' && member.joinedAt && ` — Joined ${new Date(member.joinedAt).toLocaleDateString()}`}
+                </span>
+              </div>
+              <button
+                onClick={() => handleRemove(member.id)}
+                className="rounded-[6px] border border-red-900/30 bg-red-900/20 px-sm py-xs font-sans text-xs text-red-400 transition-all hover:bg-red-900/30"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Child {
   id: string;
   name: string;
@@ -367,33 +646,12 @@ export default function SettingsClient({
 
       {/* ─── Family Access ─── */}
       {activeTab === 'access' && (
-        <div className="flex flex-col gap-md">
-          <div>
-            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Sharing</p>
-            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Family Access</h2>
-          </div>
-          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-3xl">🔑</span>
-            <p className="mt-md font-serif text-base text-text-secondary">
-              Invite co-facilitators and manage family access. Coming soon.
-            </p>
-          </div>
-        </div>
+        <FamilyAccessPanel />
       )}
 
       {/* ─── Account & Security ─── */}
       {activeTab === 'account' && (
-        <div className="flex flex-col gap-md">
-          <div>
-            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Security</p>
-            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Account & Security</h2>
-          </div>
-          <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg">
-            <p className="font-sans text-sm text-text-secondary">
-              Account and security settings are managed through your Clerk account. Password, two-factor authentication, and connected accounts are all available there.
-            </p>
-          </div>
-        </div>
+        <AccountSecurityPanel />
       )}
 
       {/* ─── Billing ─── */}

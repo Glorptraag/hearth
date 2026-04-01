@@ -8,6 +8,7 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, gte, desc, count, sql } from 'drizzle-orm';
 import { format, subDays, subHours, addHours, differenceInCalendarDays } from 'date-fns';
+import { adaptNotificationCopy } from '@/lib/pedagogy/adapter';
 
 // ─── Types ───
 
@@ -161,37 +162,49 @@ async function createNotification(input: CreateNotificationInput): Promise<boole
 }
 
 // ─── Trigger: draft_resume ───
-// Called when an auto-saved incomplete entry exists and user leaves logger
+// Called when a stale localStorage draft is detected on logger page load
 
 export async function triggerDraftResume(
   familyId: string,
-  entry: { id: string; title: string }
+  draft: { title?: string }
 ): Promise<boolean> {
+  const label = draft.title?.slice(0, 40) || 'an entry';
   return createNotification({
     familyId,
     type: 'draft_resume',
     tier: 'whisper',
-    title: `You were logging "${entry.title}" — pick up where you left off?`,
-    bodyData: { entryId: entry.id, entryTitle: entry.title },
-    destinationRoute: `/log?resume=${entry.id}`,
+    title: `You were logging "${label}" — pick up where you left off?`,
+    bodyData: { draftTitle: label },
+    destinationRoute: '/log',
     expiresAt: addHours(new Date(), 48),
   });
 }
 
 // ─── Trigger: pause_ack ───
-// Called after ~10 min inactivity during logging
+// Called when user pauses a module session or has inactivity during logging
 
 export async function triggerPauseAck(
   familyId: string,
-  entry: { id: string; title: string }
+  context: { moduleId?: string; moduleTitle?: string; entryId?: string; title?: string }
 ): Promise<boolean> {
+  const label = context.moduleTitle ?? context.title ?? 'your session';
+  const route = context.moduleId
+    ? `/module/${context.moduleId}`
+    : context.entryId
+      ? `/log?resume=${context.entryId}`
+      : '/dashboard';
+
   return createNotification({
     familyId,
     type: 'pause_ack',
     tier: 'whisper',
-    title: `Looks like life called — we've saved your spot on "${entry.title}"`,
-    bodyData: { entryId: entry.id, entryTitle: entry.title },
-    destinationRoute: `/log?resume=${entry.id}`,
+    title: `Looks like life called — we've saved your spot on "${label}"`,
+    bodyData: {
+      moduleId: context.moduleId ?? null,
+      moduleTitle: context.moduleTitle ?? null,
+      entryId: context.entryId ?? null,
+    },
+    destinationRoute: route,
     expiresAt: addHours(new Date(), 24),
   });
 }
@@ -256,6 +269,15 @@ export async function triggerComplianceNudge(
   });
 }
 
+// ─── Helper: get family pedagogy ───
+
+async function getFamilyPedagogy(familyId: string): Promise<string> {
+  const settings = await db.query.familySettings.findFirst({
+    where: eq(familySettings.familyId, familyId),
+  });
+  return settings?.pedagogyPreference ?? 'eclectic';
+}
+
 // ─── Trigger: log_invitation ───
 // Called after module session completed or at end-of-day
 
@@ -263,15 +285,19 @@ export async function triggerLogInvitation(
   familyId: string,
   context: { moduleTitle?: string; reason: 'session_complete' | 'end_of_day' }
 ): Promise<boolean> {
+  const pedagogy = await getFamilyPedagogy(familyId);
+  const adapted = adaptNotificationCopy(pedagogy, 'log_invitation', {});
+
   const title = context.moduleTitle
     ? `You ran ${context.moduleTitle} today — want to capture what happened?`
-    : "Today's learning is still fresh — want to jot down a quick note?";
+    : adapted?.title ?? "Today's learning is still fresh — want to jot down a quick note?";
 
   return createNotification({
     familyId,
     type: 'log_invitation',
     tier: 'chime',
     title,
+    body: adapted?.body,
     bodyData: {
       module_title: context.moduleTitle ?? null,
       reason: context.reason,
@@ -312,12 +338,15 @@ export async function triggerStreakPrompt(
 ): Promise<boolean> {
   if (daysSinceLastLog < 5) return false;
 
+  const pedagogy = await getFamilyPedagogy(familyId);
+  const adapted = adaptNotificationCopy(pedagogy, 'streak_prompt', {});
+
   return createNotification({
     familyId,
     type: 'streak_prompt',
     tier: 'chime',
-    title: "It's been a little while — a quick note keeps the story going",
-    body: `${daysSinceLastLog} days since your last log. Even a short entry helps!`,
+    title: adapted?.title ?? "It's been a little while — a quick note keeps the story going",
+    body: adapted?.body ?? `${daysSinceLastLog} days since your last log. Even a short entry helps!`,
     bodyData: { days_since_last_log: daysSinceLastLog },
     destinationRoute: '/log',
   });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { differenceInYears } from 'date-fns';
+import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ interface DashboardClientProps {
   learners: Learner[];
   todayEntryCount: number;
   basePath?: string;
+  pedagogy?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -78,15 +80,29 @@ function getGreetingMessage(
   timeOfDay: TimeOfDay,
   familyName: string,
   todayEntryCount: number,
-  todayPlannerCount: number
+  todayPlannerCount: number,
+  learnerNames: string[],
+  todaySubjects: string[]
 ): { heading: string; message: string } {
   const firstName = familyName.replace(/ Family$/, '');
+  const names = learnerNames.length === 1
+    ? learnerNames[0]
+    : learnerNames.length === 2
+    ? `${learnerNames[0]} and ${learnerNames[1]}`
+    : learnerNames.length > 2
+    ? `${learnerNames[0]}, ${learnerNames[1]} and ${learnerNames.length - 2} more`
+    : null;
+  const subjectNote = todaySubjects.length > 0
+    ? ` covering ${todaySubjects.slice(0, 2).join(' and ')}`
+    : '';
 
   if (timeOfDay === 'evening') {
     if (todayEntryCount > 0) {
       return {
         heading: `A gentle close to the day, <strong>${firstName}</strong>.`,
-        message: `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} of learning. The ${firstName} hearth has been busy with quiet discoveries.`,
+        message: names
+          ? `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} for ${names}${subjectNote}. A good day\u2019s learning.`
+          : `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} of learning${subjectNote}. The ${firstName} hearth has been busy.`,
       };
     }
     return {
@@ -99,12 +115,16 @@ function getGreetingMessage(
     if (todayPlannerCount > 0) {
       return {
         heading: `Good morning, <strong>${firstName}</strong>.`,
-        message: `You have ${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned for today. What will the day bring?`,
+        message: names
+          ? `${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned for ${names} today${subjectNote}. What will the day bring?`
+          : `You have ${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned${subjectNote}. What will the day bring?`,
       };
     }
     return {
       heading: `Good morning, <strong>${firstName}</strong>.`,
-      message: "What will today\u2019s learning look like?",
+      message: names
+        ? `Ready to learn with ${names} today. What will today look like?`
+        : "What will today\u2019s learning look like?",
     };
   }
 
@@ -112,12 +132,16 @@ function getGreetingMessage(
   if (todayEntryCount === 0) {
     return {
       heading: `Good afternoon, <strong>${firstName}</strong>.`,
-      message: "Nothing logged yet today \u2014 capture what you\u2019ve been up to.",
+      message: names
+        ? `Nothing logged for ${names} yet \u2014 capture what you\u2019ve been up to.`
+        : "Nothing logged yet today \u2014 capture what you\u2019ve been up to.",
     };
   }
   return {
     heading: `Good afternoon, <strong>${firstName}</strong>.`,
-    message: `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged today. Keep it up!`,
+    message: names
+      ? `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged for ${names} today${subjectNote}. Keep it up!`
+      : `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged today${subjectNote}. Keep it up!`,
   };
 }
 
@@ -183,12 +207,18 @@ export default function DashboardClient({
   learners,
   todayEntryCount,
   basePath = '',
+  pedagogy = 'eclectic',
 }: DashboardClientProps) {
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
+  const learnerNames = useMemo(() => learners.map((l) => l.name.split(' ')[0]), [learners]);
+  const todaySubjects = useMemo(
+    () => [...new Set(todayPlanner.flatMap((e) => e.subjects ?? []))],
+    [todayPlanner]
+  );
   const { heading, message } = useMemo(
-    () => getGreetingMessage(timeOfDay, familyName, todayEntryCount, todayPlanner.length),
-    [timeOfDay, familyName, todayEntryCount, todayPlanner.length]
+    () => getGreetingMessage(timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects),
+    [timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects]
   );
 
   const todayEntries = recentEntries.filter(
@@ -451,7 +481,7 @@ export default function DashboardClient({
 
         {/* Gentle Prompt */}
         {snapshot.recommendations && snapshot.recommendations.length > 0 && (
-          <div className="mt-auto rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(74,222,128,0.08)] p-lg">
+          <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(74,222,128,0.08)] p-lg mb-2xl">
             <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
               {snapshot.recommendations[0].title}
             </p>
@@ -463,6 +493,48 @@ export default function DashboardClient({
             </Link>
           </div>
         )}
+
+        {/* Pedagogical Prompt */}
+        {pedagogy !== 'eclectic' && (() => {
+          const vocab = getPedagogyVocabulary(pedagogy);
+          const prompts: Record<string, { prompt: string; tip: string }> = {
+            charlotte_mason: {
+              prompt: 'What living ideas captured attention today?',
+              tip: 'Look for narration moments — when your child retells in their own words, learning is taking root.',
+            },
+            classical: {
+              prompt: 'What was practised or memorised today?',
+              tip: 'The grammar stage thrives on repetition and chanting. Even small daily drills compound over time.',
+            },
+            montessori: {
+              prompt: 'What did the child choose to work on?',
+              tip: 'Notice periods of deep concentration — these are signs the prepared environment is working.',
+            },
+            waldorf_steiner: {
+              prompt: 'What stories or art shaped today\'s learning?',
+              tip: 'Rhythm and beauty support the whole child. Trust the seasonal pace of the main lesson.',
+            },
+            unschooling: {
+              prompt: 'What sparked curiosity today?',
+              tip: 'Interest-led doesn\'t mean unintentional. Notice the threads your child keeps returning to.',
+            },
+          };
+          const p = prompts[pedagogy];
+          if (!p) return null;
+          return (
+            <div className="mt-auto rounded-[16px] border border-border-subtle bg-surface-raised p-lg">
+              <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-sm">
+                {vocab.tagline}
+              </p>
+              <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary italic mb-md">
+                &ldquo;{p.prompt}&rdquo;
+              </p>
+              <p className="font-serif text-[0.8rem] leading-[1.5] text-text-muted">
+                {p.tip}
+              </p>
+            </div>
+          );
+        })()}
       </aside>
     </div>
   );

@@ -496,12 +496,22 @@ export default function ReportPage() {
       {/* Export Button */}
       <div className="mt-lg">
         <button
-          disabled
-          className="rounded-md bg-surface-raised px-lg py-sm font-sans text-sm font-semibold text-text-muted cursor-not-allowed opacity-50"
-          title="Coming Soon"
+          onClick={() => {
+            if (!selectedLearnerId) return;
+            window.open(`/api/report/export?learnerId=${selectedLearnerId}`, '_blank');
+          }}
+          disabled={!selectedLearnerId || entries.length === 0}
+          className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-200 ${
+            selectedLearnerId && entries.length > 0
+              ? 'bg-ember text-text-inverse hover:bg-ember-hover shadow-[0_4px_16px_rgba(217,123,58,0.3)]'
+              : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'
+          }`}
         >
-          Export Report (Coming Soon)
+          Export PDF for HEU
         </button>
+        {entries.length === 0 && (
+          <p className="font-sans text-xs text-text-muted mt-xs">Log some entries first to generate a report.</p>
+        )}
       </div>
     </div>
   );

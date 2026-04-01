@@ -339,6 +339,176 @@ function CrossPathNudge({
   );
 }
 
+// ── Module Preview ───────────────────────────────────────────────────────
+
+function ModulePreview({
+  data,
+  onBack,
+  onPublish,
+  saving,
+}: {
+  data: SharedEditData;
+  onBack: () => void;
+  onPublish: () => void;
+  saving: boolean;
+}) {
+  const provenanceType = data.provenance.type as string | undefined;
+
+  return (
+    <div className="flex flex-col gap-lg max-w-2xl mx-auto">
+      <div className="flex items-center gap-sm">
+        <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200">
+          ← Back to editing
+        </button>
+      </div>
+
+      <div>
+        <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-ember mb-xs">
+          Preview
+        </p>
+        <h2 className="font-serif text-xl font-semibold text-text-primary">
+          Review before saving
+        </h2>
+      </div>
+
+      {/* Module card preview */}
+      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] p-xl">
+        <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
+          {data.title || 'Untitled module'}
+        </h3>
+
+        {data.targetUnderstanding && (
+          <p className="font-serif text-sm italic text-text-secondary mb-md leading-relaxed">
+            {data.targetUnderstanding}
+          </p>
+        )}
+
+        {/* Meta row */}
+        <div className="flex flex-wrap gap-md mb-md">
+          {data.subjects.length > 0 && (
+            <div className="flex flex-wrap gap-xs">
+              {data.subjects.map((s) => (
+                <span key={s} className="font-sans text-xs rounded-full px-sm py-xs border border-border-subtle bg-surface-raised text-text-secondary">
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+          {data.duration && (
+            <span className="font-sans text-xs text-text-muted">⏱ {data.duration}</span>
+          )}
+          {data.setting && data.setting !== 'either' && (
+            <span className="font-sans text-xs text-text-muted">
+              {data.setting === 'indoor' ? '🏠' : '🌿'} {data.setting}
+            </span>
+          )}
+          {data.ageRange && (
+            <span className="font-sans text-xs text-text-muted">👶 {data.ageRange}</span>
+          )}
+        </div>
+
+        {/* Steps */}
+        {data.steps.length > 0 && (
+          <div className="mb-md">
+            <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-sm">
+              Steps ({data.steps.length})
+            </p>
+            <div className="flex flex-col gap-xs">
+              {data.steps.map((step, idx) => (
+                <div key={step.id} className="flex gap-sm bg-surface-raised rounded-md border border-border-subtle p-sm">
+                  <span className="font-sans text-xs font-semibold text-text-muted shrink-0 mt-[2px]">{idx + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-serif text-sm text-text-primary font-semibold">{step.title}</p>
+                    {step.instructions && (
+                      <p className="font-serif text-sm text-text-secondary mt-xs leading-relaxed">{step.instructions}</p>
+                    )}
+                    {step.observationHint && (
+                      <p className="font-sans text-xs text-text-muted italic mt-xs">Watch for: {step.observationHint}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Watch-for / Pivot */}
+        <div className="flex flex-col sm:flex-row gap-md mb-md">
+          {data.watchFor && (
+            <div className="flex-1 bg-sage/5 rounded-md border border-sage/20 p-sm">
+              <p className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-sage mb-xs">Watch for</p>
+              <p className="font-serif text-sm text-text-secondary">{data.watchFor}</p>
+            </div>
+          )}
+          {data.pivot && (
+            <div className="flex-1 bg-ember-glow/20 rounded-md border border-ember/20 p-sm">
+              <p className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-ember mb-xs">Pivot</p>
+              <p className="font-serif text-sm text-text-secondary">{data.pivot}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Capabilities */}
+        {data.capabilities.length > 0 && (
+          <div className="mb-md">
+            <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-sm">Capabilities</p>
+            <div className="flex flex-wrap gap-sm">
+              {data.capabilities.map((cap) => {
+                const thread = CAPABILITY_THREADS.find((t) => t.id === cap.threadId);
+                return (
+                  <span key={cap.threadId} className="rounded-full bg-sage/10 border border-sage/30 px-sm py-[3px] font-sans text-xs text-sage">
+                    {thread?.name ?? cap.threadId}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Provenance */}
+        {provenanceType && (
+          <div className="border-t border-border-subtle pt-sm mt-sm">
+            <p className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">
+              Source: {PROVENANCE_LABELS[provenanceType] ?? provenanceType}
+            </p>
+          </div>
+        )}
+
+        {/* Empty field warnings */}
+        {(!data.targetUnderstanding || !data.watchFor || data.steps.length === 0) && (
+          <div className="mt-md rounded-md border border-ember/20 bg-ember-glow/20 p-sm">
+            <p className="font-sans text-xs text-text-secondary">
+              <span className="text-ember font-semibold">Note:</span> Some fields are empty — AI will fill them in when you save.
+              {!data.targetUnderstanding && ' (Target understanding)'}
+              {!data.watchFor && ' (Watch for)'}
+              {data.steps.length === 0 && ' (Steps)'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-md pt-sm border-t border-border-subtle">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition-all duration-200"
+        >
+          ← Edit
+        </button>
+        <button
+          type="button"
+          onClick={onPublish}
+          disabled={saving}
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save module'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Shared Editing View ───────────────────────────────────────────────────
 
 interface ModuleStep {
@@ -467,6 +637,7 @@ function SharedEditView({
   const [form, setForm] = useState(initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   function addStep() {
     const id = `step-${Date.now()}`;
@@ -514,6 +685,25 @@ function SharedEditView({
     if (ok) onSaved();
     else setError('Something went wrong. Please try again.');
   };
+
+  const handlePublishFromPreview = async () => {
+    setSaving(true); setError(null);
+    const ok = await saveDraft(form.pathway, { ...form }, 'complete');
+    setSaving(false);
+    if (ok) onSaved();
+    else { setError('Something went wrong. Please try again.'); setPreviewing(false); }
+  };
+
+  if (previewing) {
+    return (
+      <ModulePreview
+        data={form}
+        onBack={() => setPreviewing(false)}
+        onPublish={handlePublishFromPreview}
+        saving={saving}
+      />
+    );
+  }
 
   const provenanceType = form.provenance.type as string | undefined;
 
@@ -732,8 +922,11 @@ function SharedEditView({
         <FormActions
           saving={saving}
           onDraft={() => handleSave('draft')}
-          onContinue={() => handleSave('complete')}
-          continueLabel="Save module"
+          onContinue={() => {
+            if (!form.title.trim()) { setError('Module title is required.'); return; }
+            setPreviewing(true);
+          }}
+          continueLabel="Preview & Save"
         />
       </div>
 

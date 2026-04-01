@@ -326,6 +326,17 @@ export default function LogPage() {
       if (d.observations?.length) setObservations(d.observations);
       if (d.evidence?.length) setEvidence(d.evidence);
       if (d.description || d.selectedLearners?.length) setDraftRestored(true);
+
+      // If draft is stale (>4 hours old), trigger a draft_resume notification
+      const STALE_THRESHOLD = 4 * 60 * 60 * 1000;
+      if (d.savedAt && Date.now() - d.savedAt > STALE_THRESHOLD) {
+        const draftTitle = d.description?.slice(0, 40) || undefined;
+        fetch('/api/notifications/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'draft_resume', draftTitle }),
+        }).catch(() => {});
+      }
     } catch { /* ignore corrupt draft */ }
   }, []);
 
@@ -1180,19 +1191,33 @@ function EvidenceModal({
   const [caption, setCaption] = useState('');
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setContent(reader.result as string);
-    reader.readAsDataURL(file);
+    selectedFileRef.current = file;
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSave = () => {
-    if (type === 'photo' && content) {
-      onSave({ type: 'photo', content, caption });
+  const handleSave = async () => {
+    if (type === 'photo' && selectedFileRef.current) {
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFileRef.current);
+        const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('Upload failed');
+        const { url } = await res.json();
+        onSave({ type: 'photo', content: url, caption });
+      } catch {
+        return;
+      } finally {
+        setUploading(false);
+      }
     } else if (type === 'quote' && content.trim()) {
       onSave({ type: 'quote', content: content.trim() });
     } else if (type === 'note' && content.trim()) {
@@ -1227,10 +1252,10 @@ function EvidenceModal({
               onClick={() => fileRef.current?.click()}
               className="w-full rounded-md border-2 border-dashed border-border-medium p-xl text-center font-sans text-sm text-text-secondary hover:border-ember transition-all duration-200"
             >
-              {content ? '📷 Photo selected — tap to change' : '📷 Tap to select photo'}
+              {previewUrl ? '📷 Photo selected — tap to change' : '📷 Tap to select photo'}
             </button>
-            {content && (
-              <img src={content} alt="Preview" className="w-full max-h-[200px] object-cover rounded-md" />
+            {previewUrl && (
+              <img src={previewUrl} alt="Preview" className="w-full max-h-[200px] object-cover rounded-md" />
             )}
             <input
               value={caption}
@@ -1272,9 +1297,10 @@ function EvidenceModal({
 
         <button
           onClick={handleSave}
-          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 min-h-[44px]"
+          disabled={uploading}
+          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 min-h-[44px] disabled:opacity-40"
         >
-          Add Evidence
+          {uploading ? 'Uploading...' : 'Add Evidence'}
         </button>
       </div>
     </div>

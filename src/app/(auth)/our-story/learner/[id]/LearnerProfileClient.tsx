@@ -49,6 +49,13 @@ const WORKING_STYLE_OPTIONS = [
   'Verbal processor',
 ];
 
+const CHILD_COLOR_HEX: Record<string, string> = {
+  rose: '#F9A8D4',
+  blue: '#60A5FA',
+  sage: '#4ADE80',
+  amber: '#FBBF24',
+};
+
 const COLOUR_MAP = LEARNER_COLOUR_MAP;
 const DEFAULT_COLOUR = COLOUR_MAP.rose;
 
@@ -272,7 +279,10 @@ export default function LearnerProfileClient({
     : null;
 
   return (
-    <div className="mx-auto max-w-2xl pb-[120px]">
+    <div
+      style={{ '--color-child-accent': CHILD_COLOR_HEX[learner.colourToken ?? 'rose'] } as React.CSSProperties}
+      className="mx-auto max-w-2xl pb-[120px]"
+    >
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between px-md pb-md pt-lg">
         <Link
@@ -298,7 +308,8 @@ export default function LearnerProfileClient({
       <div className="px-md pb-xl">
         <div className="flex items-center gap-md">
           <div
-            className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full ${colour.dot} ring-4 ${colour.ring}`}
+            className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full border-2 ${colour.dot} ring-4 ${colour.ring}`}
+            style={{ borderColor: `color-mix(in srgb, var(--color-child-accent) 40%, transparent)` }}
           >
             <span className="font-serif text-3xl font-semibold text-white/90">
               {learner.name.charAt(0).toUpperCase()}
@@ -314,7 +325,7 @@ export default function LearnerProfileClient({
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 onBlur={() => setTaglineEditing(false)}
-                className="mt-xs w-full bg-transparent font-serif text-base italic text-text-secondary border-b border-border-subtle focus:outline-none focus:border-ember transition-colors duration-200"
+                className="mt-xs w-full bg-transparent font-serif text-base italic text-text-secondary border-b border-border-subtle focus:outline-none transition-colors duration-200 focus:[border-color:var(--color-child-accent)]"
                 placeholder="Add a tagline..."
               />
             ) : (

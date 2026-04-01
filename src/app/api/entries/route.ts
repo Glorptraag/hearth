@@ -9,6 +9,7 @@ import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -74,6 +75,12 @@ export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Rate limit: 30 entries per minute per user (protects AI pipeline)
+  const rl = rateLimit(`entries:${userId}`, { limit: 30, windowMs: 60_000 });
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
@@ -98,7 +105,7 @@ export async function POST(request: NextRequest) {
       .catch((err) => console.error('[entries/POST] AI pipeline error:', err));
   } else {
     // Draft saved — schedule a gentle resume nudge (frequency-capped)
-    triggerDraftResume(family.id, { id: entry.id, title: entry.title })
+    triggerDraftResume(family.id, { title: entry.title })
       .catch((err) => console.error('[entries/POST] draft_resume notification error:', err));
   }
 

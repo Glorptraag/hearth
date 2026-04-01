@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { LIBRARY_MODULES_QUERY } from '@/lib/sanity/queries';
+import { ALL_MODULES_QUERY } from '@/lib/sanity/queries';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,13 @@ interface Module {
   duration?: { min: number; max: number };
   approaches?: Approach[];
   packId?: string;
+}
+interface Pack {
+  _id: string;
+  title: string;
+  description?: string;
+  subjects?: string[];
+  modules: Module[];
 }
 
 const SUBJECTS = [
@@ -265,35 +272,40 @@ function PreviewModal({
 
 export default function ExploreActivitiesPage() {
   const router = useRouter();
+  const [packs, setPacks] = useState<Pack[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [packIds, setPackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
   const [libraryOnly, setLibraryOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'packs'>('packs');
   const [previewModule, setPreviewModule] = useState<Module | null>(null);
   const [, setPlannerSaving] = useState(false);
   const [plannerSuccess, setPlannerSuccess] = useState<string | null>(null);
 
   const loadModules = useCallback(async () => {
     try {
-      const libraryRes = await fetch('/api/library');
-      if (!libraryRes.ok) return;
-      const library: { sanityPackId: string }[] = await libraryRes.json();
-      const ids = library.map((r) => r.sanityPackId);
-      setPackIds(ids);
+      const [libraryRes, rawPacks] = await Promise.all([
+        fetch('/api/library'),
+        sanityClient.fetch<{ _id: string; title: string; description?: string; subjects?: string[]; modules: Module[] | null }[]>(ALL_MODULES_QUERY),
+      ]);
 
-      if (ids.length === 0) {
-        setLoading(false);
-        return;
+      if (libraryRes.ok) {
+        const library: { sanityPackId: string }[] = await libraryRes.json();
+        setPackIds(library.map((r) => r.sanityPackId));
       }
 
-      const packs: { _id: string; modules: Module[] | null }[] = await sanityClient.fetch(
-        LIBRARY_MODULES_QUERY,
-        { packIds: ids }
-      );
+      const enrichedPacks: Pack[] = rawPacks.map((p) => ({
+        _id: p._id,
+        title: p.title,
+        description: p.description,
+        subjects: p.subjects,
+        modules: (p.modules ?? []).map((m) => ({ ...m, packId: p._id })),
+      }));
+      setPacks(enrichedPacks);
 
-      const allModules = packs.flatMap((p) => (p.modules ?? []).map((m) => ({ ...m, packId: p._id })));
+      const allModules = enrichedPacks.flatMap((p) => p.modules);
       setModules(allModules);
     } finally {
       setLoading(false);
@@ -322,6 +334,18 @@ export default function ExploreActivitiesPage() {
     return result;
   }, [modules, packIds, libraryOnly, subjectFilter, sortBy]);
 
+  const filteredPacks = useMemo(() => {
+    return packs
+      .map((pack) => {
+        let mods = pack.modules;
+        if (libraryOnly) mods = mods.filter((m) => packIds.includes(m.packId ?? ''));
+        if (subjectFilter !== 'all') mods = mods.filter((m) => m.subjects?.includes(subjectFilter));
+        if (sortBy === 'name') mods = [...mods].sort((a, b) => a.title.localeCompare(b.title));
+        return { ...pack, modules: mods };
+      })
+      .filter((p) => p.modules.length > 0);
+  }, [packs, packIds, libraryOnly, subjectFilter, sortBy]);
+
   const handleAddToPlanner = async (module: Module) => {
     setPlannerSaving(true);
     try {
@@ -340,13 +364,22 @@ export default function ExploreActivitiesPage() {
   };
 
   const handleAddToLibrary = async (moduleId: string) => {
+    // Find the pack that contains this module
+    const mod = modules.find((m) => m._id === moduleId);
+    if (!mod?.packId) return;
+
     try {
       await fetch('/api/library', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ moduleId }),
+        body: JSON.stringify({ sanityPackId: mod.packId }),
       });
-      loadModules();
+      // Refresh library state
+      const libraryRes = await fetch('/api/library');
+      if (libraryRes.ok) {
+        const library: { sanityPackId: string }[] = await libraryRes.json();
+        setPackIds(library.map((r) => r.sanityPackId));
+      }
     } catch (err) {
       console.error('Failed to add to library', err);
     }
@@ -357,7 +390,7 @@ export default function ExploreActivitiesPage() {
       {/* Header */}
       <div className="max-w-[1280px] mx-auto px-md lg:px-lg pt-xl pb-lg">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">
-          Your Library
+          Explore
         </p>
         <h1 className="font-serif text-2xl font-semibold text-text-primary">
           Explore Modules
@@ -406,8 +439,23 @@ export default function ExploreActivitiesPage() {
             ))}
           </div>
 
-          {/* Sort select (right-aligned) */}
-          <div className="flex justify-end">
+          {/* Sort + view toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-xs">
+              {(['packs', 'grid'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setViewMode(v)}
+                  className={`rounded-md px-sm py-[4px] font-sans text-xs font-semibold transition-all duration-200 ${
+                    viewMode === v
+                      ? 'bg-ember text-text-inverse'
+                      : 'bg-surface-raised border border-border-subtle text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {v === 'packs' ? 'By Pack' : 'All Modules'}
+                </button>
+              ))}
+            </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -435,10 +483,10 @@ export default function ExploreActivitiesPage() {
               <>
                 <p className="text-4xl mb-md">📚</p>
                 <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
-                  Your library is empty
+                  No modules available yet
                 </h2>
                 <p className="font-serif text-text-secondary mb-lg">
-                  Add packs from the Marketplace to start exploring.
+                  Browse the Marketplace to add packs with modules and activities.
                 </p>
                 <button
                   onClick={() => router.push('/explore/marketplace')}
@@ -461,7 +509,7 @@ export default function ExploreActivitiesPage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
             {filtered.map((m) => (
               <ModuleCard
@@ -472,6 +520,65 @@ export default function ExploreActivitiesPage() {
                 onAddToLibrary={handleAddToLibrary}
               />
             ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-xl">
+            {filteredPacks.map((pack) => {
+              const primarySubject = pack.subjects?.[0] ?? '';
+              const isInLib = packIds.includes(pack._id);
+              return (
+                <section key={pack._id}>
+                  {/* Pack hero */}
+                  <div className={`relative rounded-[16px] border border-border-subtle bg-surface-panel p-lg mb-md overflow-hidden ${isInLib ? 'border-sage/30' : ''}`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
+                    <div className="relative z-10 flex items-start justify-between gap-md">
+                      <div>
+                        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">
+                          Pack — {pack.modules.length} module{pack.modules.length !== 1 ? 's' : ''}
+                        </p>
+                        <h2 className="font-serif text-lg font-semibold text-text-primary leading-snug">
+                          {pack.title}
+                        </h2>
+                        {pack.description && (
+                          <p className="mt-xs font-serif text-sm text-text-secondary leading-relaxed line-clamp-2">
+                            {pack.description}
+                          </p>
+                        )}
+                        {pack.subjects && pack.subjects.length > 0 && (
+                          <div className="flex flex-wrap gap-xs mt-sm">
+                            {pack.subjects.map((s) => {
+                              const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
+                              return (
+                                <span key={s} className={`font-sans text-[10px] rounded-full px-sm py-[1px] border ${colorClass}`}>
+                                  {s}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      {isInLib && (
+                        <span className="shrink-0 rounded-full bg-sage/15 border border-sage/30 px-sm py-[2px] font-sans text-[10px] font-semibold text-sage">
+                          In Library
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Pack modules */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md pl-0 sm:pl-md">
+                    {pack.modules.map((m) => (
+                      <ModuleCard
+                        key={m._id}
+                        module={m}
+                        onPreview={setPreviewModule}
+                        isInLibrary={isInLib}
+                        onAddToLibrary={handleAddToLibrary}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </div>

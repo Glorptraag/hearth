@@ -1147,7 +1147,18 @@ export default function ModuleDetailPage() {
             overlays={overlays}
             pedagogy={pedagogy}
             onFinish={() => { clearSession(); setMode('log'); }}
-            onPause={() => setMode('prep')}
+            onPause={() => {
+              setMode('prep');
+              fetch('/api/notifications/trigger', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'pause_ack',
+                  moduleId: module._id,
+                  moduleTitle: module.title,
+                }),
+              }).catch(() => {});
+            }}
             initialChunkIdx={savedChunkIdx}
             onChunkChange={persistChunk}
           />

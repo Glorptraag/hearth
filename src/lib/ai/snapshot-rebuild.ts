@@ -8,9 +8,10 @@ import {
   badgeAwards,
   notifications,
   familyLibrary,
+  capabilityObservations,
 } from '@/lib/db/schema';
 import { eq, and, desc, count } from 'drizzle-orm';
-import { subDays, differenceInCalendarDays, format } from 'date-fns';
+import { subDays, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import {
   triggerBadgeReady,
@@ -18,6 +19,7 @@ import {
   triggerStreakPrompt,
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
+import { generateMonthlyNarrative } from './generate-monthly-narrative';
 
 type RebuildTrigger = 'entry_saved' | 'library_change' | 'settings_change' | 'manual';
 
@@ -90,15 +92,34 @@ export async function rebuildSnapshot(
         else data.tier = 'emerging';
       }
 
+      // Query confirmed capability observations for this child
+      const confirmedObs = await db
+        .select()
+        .from(capabilityObservations)
+        .where(
+          and(
+            eq(capabilityObservations.learnerId, child.id),
+            eq(capabilityObservations.confirmed, true)
+          )
+        );
+      const confirmedBySubject: Record<string, number> = {};
+      for (const obs of confirmedObs) {
+        // Map thread_id to subject via the enrichment data
+        // Thread IDs follow the pattern "subject.thread_name"
+        const subj = obs.threadId.split('.')[0];
+        if (subj) confirmedBySubject[subj] = (confirmedBySubject[subj] ?? 0) + 1;
+      }
+
       // Curriculum coverage by subject
       const curriculumCoverage: Record<string, unknown> = {};
       const allSubjects = ['english', 'mathematics', 'science', 'hass', 'arts', 'technologies', 'hpe', 'languages'];
       for (const subj of allSubjects) {
         const touched = subjectCounts[subj] ?? 0;
+        const confirmed = confirmedBySubject[subj] ?? 0;
         curriculumCoverage[subj] = {
           total_descriptors_touched: touched,
-          confirmed_descriptors: 0,
-          suggested_descriptors: touched,
+          confirmed_descriptors: confirmed,
+          suggested_descriptors: Math.max(0, touched - confirmed),
           coverage_percentage: Math.min(100, Math.round((touched / 20) * 100)),
         };
       }
@@ -172,6 +193,22 @@ export async function rebuildSnapshot(
         ),
       ];
 
+      // Current sparks (top 3 threads by recent frequency)
+      const recentEntries = childEntries.filter((e) => e.dateOccurred >= sevenDaysAgo);
+      const sparkCounts: Record<string, number> = {};
+      for (const entry of recentEntries) {
+        const enrichment = entry.aiEnrichment as EnrichmentResult | null;
+        if (enrichment) {
+          for (const t of enrichment.capability_threads ?? []) {
+            sparkCounts[t.thread_id] = (sparkCounts[t.thread_id] ?? 0) + 1;
+          }
+        }
+      }
+      const currentSparks = Object.entries(sparkCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, sparkCount]) => ({ name, count: sparkCount }));
+
       // Gap analysis
       const underservedSubjects = allSubjects.filter(
         (s) => (subjectCounts[s] ?? 0) < 2
@@ -179,6 +216,29 @@ export async function rebuildSnapshot(
       const suggestedFocusThreads = Object.entries(threadCounts)
         .filter(([, data]) => data.lastDate < thirtyDaysAgo)
         .map(([threadId]) => threadId);
+
+      // Monthly narrative (AI-generated, only when entries exist this month)
+      const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
+      const monthEntries = childEntries.filter((e) => e.dateOccurred >= monthStart);
+      let monthlyNarrative = '';
+      if (monthEntries.length > 0) {
+        const monthSubjects = [...new Set(monthEntries.flatMap((e) => e.subjects ?? []))];
+        const monthThreadNames = Object.entries(threadCounts)
+          .filter(([, d]) => d.lastDate >= monthStart)
+          .sort((a, b) => b[1].count - a[1].count)
+          .slice(0, 5)
+          .map(([id]) => id);
+        const topActivities = monthEntries.slice(0, 4).map((e) => e.title);
+
+        monthlyNarrative = await generateMonthlyNarrative({
+          childName: child.name,
+          entryCount: monthEntries.length,
+          subjects: monthSubjects,
+          threadNames: monthThreadNames,
+          topActivities,
+          badgesEarned: badgeReady.map((b) => String((b as Record<string, unknown>).badge_id)),
+        });
+      }
 
       childSnapshots[child.id] = {
         learner_id: child.id,
@@ -190,12 +250,13 @@ export async function rebuildSnapshot(
           entries_last_7_days: entriesLast7,
           entries_last_30_days: entriesLast30,
           subjects_this_week: subjectsThisWeek,
-          current_sparks: [],
+          current_sparks: currentSparks,
         },
         gap_analysis: {
           underserved_subjects: underservedSubjects,
           suggested_focus_threads: suggestedFocusThreads,
         },
+        monthly_narrative: monthlyNarrative,
       };
     }
 

@@ -294,6 +294,31 @@ export const moduleDrafts = pgTable(
   (table) => [index('md_family_status_idx').on(table.familyId, table.status)]
 );
 
+// ─── Family Members (Co-Facilitators) ───
+
+export const familyMembers = pgTable(
+  'family_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    clerkUserId: text('clerk_user_id'),
+    email: text('email').notNull(),
+    role: text('role').notNull().default('editor'), // 'owner' | 'editor' | 'viewer'
+    status: text('status').notNull().default('invited'), // 'invited' | 'active' | 'removed'
+    inviteToken: text('invite_token').unique(),
+    invitedAt: timestamp('invited_at').defaultNow(),
+    joinedAt: timestamp('joined_at'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('fm_family_idx').on(table.familyId),
+    index('fm_clerk_idx').on(table.clerkUserId),
+    unique('fm_family_email_uniq').on(table.familyId, table.email),
+  ]
+);
+
 // ─── Facilitator Notes ───
 
 export const facilitatorNotes = pgTable('facilitator_notes', {

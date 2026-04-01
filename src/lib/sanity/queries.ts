@@ -79,3 +79,18 @@ export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
     }
   }
 }`;
+
+// All published modules with pack back-reference for explore/browse
+export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
+  _id,
+  title,
+  description,
+  subjects,
+  modules[]->{
+    _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+    approaches[]->{
+      _id, title, modality,
+      "activityCount": count(activities)
+    }
+  }
+}`;

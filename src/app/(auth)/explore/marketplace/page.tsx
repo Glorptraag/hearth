@@ -35,17 +35,31 @@ export default function MarketplacePage() {
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
   const [detailPack, setDetailPack] = useState<SanityPack | null>(null);
+  const [gapSubjects, setGapSubjects] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
-      const [sanityPacks, libraryRes] = await Promise.all([
+      const [sanityPacks, libraryRes, snapshotRes] = await Promise.all([
         sanityClient.fetch<SanityPack[]>(PACKS_QUERY),
         fetch('/api/library'),
+        fetch('/api/snapshot').catch(() => null),
       ]);
       setPacks(sanityPacks ?? []);
       if (libraryRes.ok) {
         const library: { sanityPackId: string }[] = await libraryRes.json();
         setLibraryIds(new Set(library.map((l) => l.sanityPackId)));
+      }
+      // Extract gap subjects from snapshot
+      if (snapshotRes?.ok) {
+        const snap = await snapshotRes.json();
+        const children = snap?.snapshotData?.children ?? {};
+        const allGaps = new Set<string>();
+        for (const child of Object.values(children) as Array<{ gap_analysis?: { underserved_subjects?: string[] } }>) {
+          for (const s of child?.gap_analysis?.underserved_subjects ?? []) {
+            allGaps.add(s);
+          }
+        }
+        setGapSubjects([...allGaps]);
       }
     } finally {
       setLoading(false);
@@ -199,6 +213,42 @@ export default function MarketplacePage() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Family Fit Banner ── */}
+            {gapSubjects.length > 0 && (
+              <div className="mb-xl rounded-[16px] border border-ember/20 bg-ember-glow/20 p-lg overflow-hidden relative">
+                <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
+                <div className="flex items-start gap-md">
+                  <span className="text-2xl shrink-0">🎯</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">
+                      Family Fit
+                    </p>
+                    <p className="font-serif text-sm text-text-primary mb-sm">
+                      Your learning journey has room to grow in{' '}
+                      {gapSubjects.slice(0, 3).map((s, i) => {
+                        const label = SUBJECT_FILTERS.find((sf) => sf.value === s)?.label ?? s;
+                        return (
+                          <span key={s}>
+                            {i > 0 && (i === Math.min(gapSubjects.length, 3) - 1 ? ' and ' : ', ')}
+                            <button
+                              onClick={() => setActiveSubject(s as Subject)}
+                              className="text-ember font-semibold underline underline-offset-2 hover:text-ember-hover transition-colors"
+                            >
+                              {label}
+                            </button>
+                          </span>
+                        );
+                      })}
+                      .
+                    </p>
+                    <p className="font-serif text-xs text-text-secondary">
+                      Packs covering these subjects will help round out your curriculum evidence.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, lte } from 'drizzle-orm';
 import { NOTIFICATION_STATES } from '@/types';
 
 export async function GET() {
@@ -13,6 +13,18 @@ export async function GET() {
 
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  // Re-queue snoozed notifications whose snooze period has expired
+  await db
+    .update(notifications)
+    .set({ state: 'visible', snoozedUntil: null })
+    .where(
+      and(
+        eq(notifications.familyId, family.id),
+        eq(notifications.state, 'snoozed'),
+        lte(notifications.snoozedUntil, new Date())
+      )
+    );
 
   const result = await db.query.notifications.findMany({
     where: and(

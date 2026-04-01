@@ -6,7 +6,9 @@ import { plannerEntries, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { format } from 'date-fns';
+import { rateLimit } from '@/lib/rate-limit';
 import {
+  triggerDraftResume,
   triggerPauseAck,
   triggerLogInvitation,
   triggerPrepReminder,
@@ -14,8 +16,15 @@ import {
 
 const triggerSchema = z.discriminatedUnion('type', [
   z.object({
+    type: z.literal('draft_resume'),
+    draftTitle: z.string().optional(),
+  }),
+  z.object({
     type: z.literal('pause_ack'),
-    entryId: z.string().uuid(),
+    entryId: z.string().uuid().optional(),
+    moduleId: z.string().optional(),
+    moduleTitle: z.string().optional(),
+    title: z.string().optional(),
   }),
   z.object({
     type: z.literal('log_invitation'),
@@ -32,6 +41,11 @@ export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = rateLimit(`notif-trigger:${userId}`, { limit: 20, windowMs: 60_000 });
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+  }
+
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
@@ -45,15 +59,27 @@ export async function POST(request: NextRequest) {
   let created = false;
 
   switch (data.type) {
+    case 'draft_resume': {
+      created = await triggerDraftResume(family.id, { title: data.draftTitle });
+      break;
+    }
     case 'pause_ack': {
-      const entry = await db.query.learningEntries.findFirst({
-        where: and(
-          eq(learningEntries.id, data.entryId),
-          eq(learningEntries.familyId, family.id)
-        ),
-      });
-      if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
-      created = await triggerPauseAck(family.id, { id: entry.id, title: entry.title });
+      if (data.entryId) {
+        const entry = await db.query.learningEntries.findFirst({
+          where: and(
+            eq(learningEntries.id, data.entryId),
+            eq(learningEntries.familyId, family.id)
+          ),
+        });
+        if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+        created = await triggerPauseAck(family.id, { entryId: entry.id, title: entry.title });
+      } else {
+        created = await triggerPauseAck(family.id, {
+          moduleId: data.moduleId,
+          moduleTitle: data.moduleTitle,
+          title: data.title,
+        });
+      }
       break;
     }
     case 'log_invitation': {

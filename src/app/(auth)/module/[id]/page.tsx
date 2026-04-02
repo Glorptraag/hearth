@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { PortableText } from '@portabletext/react';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY } from '@/lib/sanity/queries';
+import EmptyState from '@/components/ui/EmptyState';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1042,8 +1043,13 @@ export default function ModuleDetailPage() {
 
   if (!module) {
     return (
-      <div className="px-md py-xl">
-        <p className="font-serif text-text-secondary">Module not found.</p>
+      <div className="flex min-h-[40vh] items-center justify-center px-md py-xl">
+        <EmptyState
+          emoji="🔧"
+          heading="Module not available"
+          body="This module may have been removed or is temporarily unavailable. Your learning data is safe."
+          cta={{ label: 'Browse activities', href: '/explore/activities' }}
+        />
       </div>
     );
   }

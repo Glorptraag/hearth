@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import NotificationRow from '@/components/notifications/NotificationRow';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Notification {
   id: string;
@@ -175,15 +176,12 @@ export default function NotificationCentreClient({
       <div className="px-md py-md">
         {/* Empty state */}
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-md py-2xl text-center">
-            <span className="text-[40px]">🌿</span>
-            <p className="font-serif text-lg font-semibold text-text-primary">
-              Nothing here right now.
-            </p>
-            <p className="font-serif text-sm text-text-secondary">
-              That&apos;s a good thing.
-            </p>
-          </div>
+          <EmptyState
+            emoji="🌿"
+            heading="Nothing here right now"
+            body="That's a good thing."
+            variant="inline"
+          />
         )}
 
         {/* Grouped notification list */}

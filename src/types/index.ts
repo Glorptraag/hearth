@@ -13,6 +13,9 @@ import type {
   badgeAssessmentLogs,
   familyLibrary,
   aiPipelineLogs,
+  heuReports,
+  workSamples,
+  workSampleAnnotations,
 } from '@/lib/db/schema';
 
 // ─── Entity types inferred from schema ───
@@ -30,6 +33,9 @@ export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
 export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
 export type FamilyLibraryEntry = InferSelectModel<typeof familyLibrary>;
 export type AiPipelineLog = InferSelectModel<typeof aiPipelineLogs>;
+export type HeuReport = InferSelectModel<typeof heuReports>;
+export type WorkSample = InferSelectModel<typeof workSamples>;
+export type WorkSampleAnnotation = InferSelectModel<typeof workSampleAnnotations>;
 
 // ─── Enum / Union types ───
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import EmptyState from '@/components/ui/EmptyState';
+import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 
 type Learner = {
   id: string;
@@ -26,11 +27,45 @@ type Entry = {
   id: string;
   title: string;
   dateOccurred: string;
+  description: string | null;
   subjects: string[] | null;
   learnerIds: string[] | null;
   evidenceUrls: string[] | null;
   aiEnrichment: AiEnrichment;
+  heuCandidate: boolean | null;
   status: string;
+};
+
+type ReportData = {
+  id: string;
+  learnerId: string;
+  reportYear: number;
+  status: string;
+  lastExportedAt: string | null;
+  choiceArea: string | null;
+  samples: WorkSampleData[];
+};
+
+type WorkSampleData = {
+  id: string;
+  reportId: string;
+  slot: string;
+  entryId: string | null;
+  status: string;
+  annotation: {
+    id: string;
+    observations: string | null;
+    observationsSource: string | null;
+    needsStrengths: string | null;
+    needsStrengthsSource: string | null;
+    adjustment: string | null;
+    adjustmentSource: string | null;
+    planning: string | null;
+    planningSource: string | null;
+    progressionSummary: string | null;
+    progressionSummaryEdited: boolean | null;
+    confirmedAt: string | null;
+  } | null;
 };
 
 type Settings = {
@@ -86,6 +121,7 @@ const SUBJECT_DOMAIN_CLASSES: Record<string, { bar: string; pill: string; border
 
 type WorkSampleSlot = {
   id: number;
+  slotKey: string;
   area: string;
   altArea?: string;
   areaLabel: string;
@@ -95,12 +131,12 @@ type WorkSampleSlot = {
 };
 
 const WORK_SAMPLE_SLOTS: WorkSampleSlot[] = [
-  { id: 1, area: 'english',     areaLabel: 'English',        label: 'Early Writing', timing: 'Term 1–2 · Jan–Jun', termHalf: 'early' },
-  { id: 2, area: 'english',     areaLabel: 'English',        label: 'Later Writing', timing: 'Term 3–4 · Jul–Dec', termHalf: 'late'  },
-  { id: 3, area: 'mathematics', areaLabel: 'Mathematics',    label: 'Early Maths',   timing: 'Term 1–2 · Jan–Jun', termHalf: 'early' },
-  { id: 4, area: 'mathematics', areaLabel: 'Mathematics',    label: 'Later Maths',   timing: 'Term 3–4 · Jul–Dec', termHalf: 'late'  },
-  { id: 5, area: 'science',     areaLabel: 'Science / HASS', label: 'Early Choice',  timing: 'Term 1–2 · Jan–Jun', termHalf: 'early', altArea: 'hass' },
-  { id: 6, area: 'science',     areaLabel: 'Science / HASS', label: 'Later Choice',  timing: 'Term 3–4 · Jul–Dec', termHalf: 'late',  altArea: 'hass' },
+  { id: 1, slotKey: 'early_writing', area: 'english',     areaLabel: 'English',        label: 'Early Writing', timing: 'Term 1–2 · Jan–Jun', termHalf: 'early' },
+  { id: 2, slotKey: 'later_writing', area: 'english',     areaLabel: 'English',        label: 'Later Writing', timing: 'Term 3–4 · Jul–Dec', termHalf: 'late'  },
+  { id: 3, slotKey: 'early_maths',   area: 'mathematics', areaLabel: 'Mathematics',    label: 'Early Maths',   timing: 'Term 1–2 · Jan–Jun', termHalf: 'early' },
+  { id: 4, slotKey: 'later_maths',   area: 'mathematics', areaLabel: 'Mathematics',    label: 'Later Maths',   timing: 'Term 3–4 · Jul–Dec', termHalf: 'late'  },
+  { id: 5, slotKey: 'early_choice',  area: 'science',     areaLabel: 'Science / HASS', label: 'Early Choice',  timing: 'Term 1–2 · Jan–Jun', termHalf: 'early', altArea: 'hass' },
+  { id: 6, slotKey: 'later_choice',  area: 'science',     areaLabel: 'Science / HASS', label: 'Later Choice',  timing: 'Term 3–4 · Jul–Dec', termHalf: 'late',  altArea: 'hass' },
 ];
 
 const SLOT_STATUS = {
@@ -134,6 +170,35 @@ export default function ReportPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [curationSlot, setCurationSlot] = useState<WorkSampleSlot | null>(null);
+
+  // Ensure report exists for this learner + year
+  const ensureReport = useCallback(async (learnerId: string) => {
+    const year = new Date().getFullYear();
+    const res = await fetch(`/api/report?learnerId=${learnerId}&year=${year}`);
+    let data = await res.json();
+    if (!data) {
+      // Create report + 6 empty slots
+      const createRes = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ learnerId, year }),
+      });
+      data = await createRes.json();
+    }
+    // Fetch samples with annotations
+    if (data?.id) {
+      const samplesRes = await fetch(`/api/report/${data.id}/samples`);
+      const samples = await samplesRes.json();
+      data.samples = Array.isArray(samples) ? samples : [];
+    }
+    setReport(data);
+  }, []);
+
+  const refreshReport = useCallback(() => {
+    if (selectedLearnerId) ensureReport(selectedLearnerId);
+  }, [selectedLearnerId, ensureReport]);
 
   useEffect(() => {
     Promise.all([
@@ -153,8 +218,11 @@ export default function ReportPage() {
     if (!selectedLearnerId) return;
     fetch(`/api/entries?learnerId=${selectedLearnerId}`)
       .then((r) => r.json())
-      .then((data) => setEntries(Array.isArray(data) ? data : []));
-  }, [selectedLearnerId]);
+      .then((data) => {
+        setEntries(Array.isArray(data) ? data : []);
+        ensureReport(selectedLearnerId);
+      });
+  }, [selectedLearnerId, ensureReport]);
 
   // Timeline
   const dueDateStr = settings?.heuNextReportDate ?? null;
@@ -221,12 +289,32 @@ export default function ReportPage() {
     return { label: 'At Risk', color: 'bg-child-rose/15 text-child-rose border-child-rose/30' };
   }, [coveredSubjects, entries.length]);
 
-  // Work sample slots — match entries to 6 QHE slots
+  // Report year for sample matching
+  const reportYear = useMemo(() => {
+    return dueDateStr ? new Date(dueDateStr).getFullYear() : new Date().getFullYear();
+  }, [dueDateStr]);
+
+  // Work sample slots — merge DB-backed samples with slot config
   const workSampleSlots = useMemo(() => {
-    const dueDate = dueDateStr ? new Date(dueDateStr) : null;
-    const reportYear = dueDate?.getFullYear() ?? new Date().getFullYear();
+    const sampleMap = new Map(
+      (report?.samples ?? []).map((s) => [s.slot, s])
+    );
 
     return WORK_SAMPLE_SLOTS.map((slot) => {
+      const dbSample = sampleMap.get(slot.slotKey) ?? null;
+
+      // If DB has a selected entry, use that
+      if (dbSample?.entryId) {
+        const matchedEntry = entries.find((e) => e.id === dbSample.entryId) ?? null;
+        const dbStatus = dbSample.status as string;
+        const displayStatus: 'complete' | 'partial' | 'empty' =
+          dbStatus === 'complete' || dbStatus === 'annotated' ? 'complete'
+          : dbStatus === 'selected' ? 'partial'
+          : 'empty';
+        return { ...slot, matchedEntry, status: displayStatus, dbSample };
+      }
+
+      // Fallback: auto-match like before
       const candidates = entries.filter((e) => {
         const d = new Date(e.dateOccurred + 'T00:00:00');
         if (d.getFullYear() !== reportYear) return false;
@@ -252,9 +340,9 @@ export default function ReportPage() {
         ? (match.evidenceUrls?.length ?? 0) > 0 ? 'complete' : 'partial'
         : 'empty';
 
-      return { ...slot, matchedEntry: match, status };
+      return { ...slot, matchedEntry: match, status, dbSample };
     });
-  }, [entries, dueDateStr]);
+  }, [entries, report?.samples, reportYear]);
 
   const completedSlots = workSampleSlots.filter((s) => s.status === 'complete').length;
 
@@ -359,13 +447,12 @@ export default function ReportPage() {
           {workSampleSlots.map((slot) => {
             const statusStyle = SLOT_STATUS[slot.status];
             const domain = SUBJECT_DOMAIN_CLASSES[slot.area];
-            const actionHref = slot.status === 'empty'
-              ? `/explore/activities?subject=${slot.area}`
-              : statusStyle.href;
+            const isConfirmed = slot.dbSample?.annotation?.confirmedAt;
             return (
-              <div
+              <button
                 key={slot.id}
-                className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md ${domain?.border ?? 'border-t-border-medium'}`}
+                onClick={() => setCurationSlot(slot)}
+                className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
               >
                 <div className="flex items-center justify-between mb-sm">
                   <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
@@ -378,20 +465,17 @@ export default function ReportPage() {
                 <p className="font-sans text-[10px] text-text-muted mt-[2px]">{slot.timing}</p>
 
                 <span className={`inline-block mt-sm rounded-full px-sm py-[2px] font-sans text-[10px] ${statusStyle.badge}`}>
-                  {statusStyle.label}
+                  {isConfirmed ? '✓ Confirmed' : statusStyle.label}
                 </span>
 
                 <p className="font-serif text-xs text-text-secondary mt-sm truncate">
                   {slot.matchedEntry ? slot.matchedEntry.title : 'No matching entry yet'}
                 </p>
 
-                <Link
-                  href={actionHref}
-                  className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200"
-                >
-                  {statusStyle.action} →
-                </Link>
-              </div>
+                <span className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200">
+                  {slot.status === 'empty' ? 'Select sample' : slot.dbSample?.entryId ? 'Edit annotation' : 'Choose entry'} →
+                </span>
+              </button>
             );
           })}
         </div>
@@ -508,11 +592,20 @@ export default function ReportPage() {
       )}
 
       {/* Export Button */}
-      <div className="mt-lg">
+      <div className="mt-lg flex items-center gap-md">
         <button
           onClick={() => {
             if (!selectedLearnerId) return;
-            window.open(`/api/report/export?learnerId=${selectedLearnerId}`, '_blank');
+            const reportId = report?.id ?? '';
+            window.open(`/api/report/export?learnerId=${selectedLearnerId}&reportId=${reportId}`, '_blank');
+            // Mark report as exported
+            if (reportId) {
+              fetch(`/api/report/${reportId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'exported' }),
+              }).then(() => refreshReport());
+            }
           }}
           disabled={!selectedLearnerId || entries.length === 0}
           className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-200 ${
@@ -523,10 +616,28 @@ export default function ReportPage() {
         >
           Export PDF for HEU
         </button>
+        {report?.lastExportedAt && (
+          <span className="font-sans text-[10px] text-text-muted">
+            Last exported {format(new Date(report.lastExportedAt), 'd MMM yyyy')}
+          </span>
+        )}
         {entries.length === 0 && (
-          <p className="font-sans text-xs text-text-muted mt-xs">Log some entries first to generate a report.</p>
+          <p className="font-sans text-xs text-text-muted">Log some entries first to generate a report.</p>
         )}
       </div>
+
+      {/* Work Sample Curation Modal */}
+      {curationSlot && report && (
+        <WorkSampleCuration
+          reportId={report.id}
+          slot={curationSlot}
+          entries={entries}
+          reportYear={reportYear}
+          sample={report.samples?.find((s) => s.slot === curationSlot.slotKey) ?? null}
+          onSampleChanged={refreshReport}
+          onClose={() => setCurationSlot(null)}
+        />
+      )}
     </div>
   );
 }

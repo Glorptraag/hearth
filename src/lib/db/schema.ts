@@ -93,6 +93,7 @@ export const learningEntries = pgTable(
     sourceStageNumber: integer('source_stage_number'),
     status: text('status').notNull().default('draft'),
     aiEnrichment: jsonb('ai_enrichment'),
+    heuCandidate: boolean('heu_candidate').default(false),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -310,6 +311,70 @@ export const facilitatorNotes = pgTable('facilitator_notes', {
     .notNull(),
   noteText: text('note_text').notNull(),
   isPrivate: boolean('is_private').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ─── HEU Compliance ───
+
+export const heuReports = pgTable(
+  'heu_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    learnerId: uuid('learner_id')
+      .references(() => learners.id)
+      .notNull(),
+    reportYear: integer('report_year').notNull(),
+    status: text('status').notNull().default('draft'), // 'draft' | 'complete' | 'exported'
+    lastExportedAt: timestamp('last_exported_at'),
+    choiceArea: text('choice_area').default('science'), // 'science' | 'hass' for slots 5-6
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    unique('hr_family_learner_year').on(table.familyId, table.learnerId, table.reportYear),
+  ]
+);
+
+export const workSamples = pgTable(
+  'work_samples',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    reportId: uuid('report_id')
+      .references(() => heuReports.id)
+      .notNull(),
+    slot: text('slot').notNull(), // 'early_writing' | 'later_writing' | 'early_maths' | 'later_maths' | 'early_choice' | 'later_choice'
+    entryId: uuid('entry_id').references(() => learningEntries.id),
+    status: text('status').notNull().default('empty'), // 'empty' | 'selected' | 'annotated' | 'complete'
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    unique('ws_report_slot').on(table.reportId, table.slot),
+    index('ws_entry_idx').on(table.entryId),
+  ]
+);
+
+export const workSampleAnnotations = pgTable('work_sample_annotations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workSampleId: uuid('work_sample_id')
+    .references(() => workSamples.id)
+    .unique()
+    .notNull(),
+  observations: text('observations'),
+  observationsSource: text('observations_source').default('parent_written'), // 'ai_draft' | 'parent_edited' | 'parent_written'
+  needsStrengths: text('needs_strengths'),
+  needsStrengthsSource: text('needs_strengths_source').default('parent_written'),
+  adjustment: text('adjustment'),
+  adjustmentSource: text('adjustment_source').default('parent_written'),
+  planning: text('planning'),
+  planningSource: text('planning_source').default('parent_written'),
+  progressionSummary: text('progression_summary'),
+  progressionSummaryEdited: boolean('progression_summary_edited').default(false),
+  confirmedAt: timestamp('confirmed_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

@@ -60,6 +60,7 @@ type Entry = {
   discoveriesPerLearner: Record<string, string> | null;
   evidenceUrls: string[] | null;
   aiEnrichment: AiEnrichment;
+  heuCandidate: boolean | null;
   status: string;
   createdAt: string;
 };
@@ -131,6 +132,18 @@ export default function PortfolioPage() {
     } finally {
       setSavingEdit(false);
     }
+  }
+
+  async function toggleHeuCandidate(id: string) {
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) return;
+    const newValue = !entry.heuCandidate;
+    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, heuCandidate: newValue } : e));
+    await fetch(`/api/entries/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ heuCandidate: newValue }),
+    });
   }
 
   async function handleRetract(id: string) {
@@ -589,8 +602,15 @@ export default function PortfolioPage() {
                                     </div>
                                   </div>
                                 )}
-                                <button className="mt-xs font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
-                                  ✓ Mark as HEU work sample
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); toggleHeuCandidate(entry.id); }}
+                                  className={`mt-xs font-sans text-[11px] font-semibold transition-colors duration-200 ${
+                                    entry.heuCandidate
+                                      ? 'text-sage hover:text-sage/80'
+                                      : 'text-text-muted hover:text-sage'
+                                  }`}
+                                >
+                                  {entry.heuCandidate ? '✓ HEU work sample' : '☐ Mark as HEU work sample'}
                                 </button>
                               </div>
                             )}

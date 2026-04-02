@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { families, familySettings, learningEntries, learners } from '@/lib/db/schema';
+import { families, familySettings, learningEntries, learners, heuReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     { area: 'science', label: 'Later Science/HASS', termHalf: 'late' as const, altArea: 'hass' },
   ];
 
-  const workSamples = WORK_SAMPLE_SLOTS.map((slot) => {
+  const slotData = WORK_SAMPLE_SLOTS.map((slot) => {
     const candidates = entries.filter((e) => {
       const d = new Date(e.dateOccurred + 'T00:00:00');
       if (d.getFullYear() !== reportYear) return false;
@@ -150,6 +150,68 @@ export async function GET(request: NextRequest) {
 
   // Gap analysis
   const gaps = subjectCoverage.filter((s) => s.count <= 1);
+
+  // Fetch DB-backed work samples with annotations (if report exists)
+  const reportId = request.nextUrl.searchParams.get('reportId');
+  let dbSamples: Array<{
+    slot: string;
+    entryId: string | null;
+    status: string;
+    annotation: {
+      observations: string | null;
+      needsStrengths: string | null;
+      adjustment: string | null;
+      planning: string | null;
+      confirmedAt: Date | null;
+    } | null;
+  }> = [];
+
+  if (reportId) {
+    const report = await db.query.heuReports.findFirst({
+      where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
+    });
+    if (report) {
+      const samples = await db.query.workSamples.findMany({
+        where: eq(workSamples.reportId, report.id),
+      });
+      const sampleIds = samples.map((s) => s.id);
+      const annotations = sampleIds.length
+        ? await db.query.workSampleAnnotations.findMany({
+            where: (a, { inArray }) => inArray(a.workSampleId, sampleIds),
+          })
+        : [];
+      const annotationMap = new Map(annotations.map((a) => [a.workSampleId, a]));
+
+      dbSamples = samples.map((s) => ({
+        slot: s.slot,
+        entryId: s.entryId,
+        status: s.status,
+        annotation: annotationMap.get(s.id) ?? null,
+      }));
+
+      // Update report export timestamp
+      await db.update(heuReports).set({
+        lastExportedAt: new Date(),
+        status: 'exported',
+        updatedAt: new Date(),
+      }).where(eq(heuReports.id, report.id));
+    }
+  }
+
+  // Merge DB samples into work sample data
+  const SLOT_KEY_MAP: Record<string, number> = {
+    early_writing: 0, later_writing: 1, early_maths: 2, later_maths: 3, early_choice: 4, later_choice: 5,
+  };
+  for (const dbs of dbSamples) {
+    const idx = SLOT_KEY_MAP[dbs.slot];
+    if (idx !== undefined && dbs.entryId) {
+      const entry = entries.find((e) => e.id === dbs.entryId);
+      if (entry) {
+        slotData[idx].entryTitle = entry.title ?? '—';
+        slotData[idx].status = dbs.annotation?.confirmedAt ? 'Confirmed' : 'Selected';
+      }
+    }
+  }
 
   // ─── Generate PDF ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -230,7 +292,7 @@ export async function GET(request: NextRequest) {
   doc.autoTable({
     startY: y,
     head: [['Slot', 'Subject Area', 'Status', 'Matched Entry']],
-    body: workSamples.map((ws) => [
+    body: slotData.map((ws) => [
       ws.label,
       SUBJECT_CONFIG[ws.area]?.label ?? ws.area,
       ws.status,
@@ -243,6 +305,63 @@ export async function GET(request: NextRequest) {
   });
 
   y = doc.lastAutoTable.finalY + 10;
+
+  // Per-sample annotation pages
+  const annotatedSamples = dbSamples.filter((s) => s.annotation?.confirmedAt);
+  if (annotatedSamples.length > 0) {
+    doc.addPage();
+    y = 20;
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Work Sample Annotations', pageW / 2, y, { align: 'center' });
+    y += 12;
+
+    for (const sample of annotatedSamples) {
+      if (y > 220) { doc.addPage(); y = 20; }
+      const slotIdx = SLOT_KEY_MAP[sample.slot];
+      const slotInfo = slotIdx !== undefined ? slotData[slotIdx] : null;
+      const entry = sample.entryId ? entries.find((e) => e.id === sample.entryId) : null;
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(slotInfo?.label ?? sample.slot, 14, y);
+      y += 6;
+
+      if (entry) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Entry: ${entry.title ?? '—'}  •  ${format(new Date(entry.dateOccurred + 'T00:00:00'), 'd MMM yyyy')}`, 14, y);
+        y += 7;
+      }
+
+      const a = sample.annotation;
+      const fields = [
+        { label: 'What I Observed', value: a?.observations },
+        { label: 'Needs & Strengths', value: a?.needsStrengths },
+        { label: 'How I Adjusted', value: a?.adjustment },
+        { label: 'Where to Next', value: a?.planning },
+      ];
+
+      for (const field of fields) {
+        if (!field.value) continue;
+        if (y > 260) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 80, 60);
+        doc.text(field.label, 14, y);
+        y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const lines = doc.splitTextToSize(field.value, pageW - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 4.5 + 3;
+      }
+
+      y += 8;
+    }
+  }
 
   // Gap analysis
   if (gaps.length > 0) {

@@ -6,6 +6,7 @@ import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
+import { CsvImportForm } from '@/components/logger/CsvImportForm';
 
 type Learner = {
   id: string;
@@ -294,6 +295,7 @@ export default function LogPage() {
 
   // ─── Form state ───
   const [showBatch, setShowBatch] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [togetherMode, setTogetherMode] = useState(false);
   const [description, setDescription] = useState('');
@@ -636,6 +638,13 @@ export default function LogPage() {
           >
             Log multiple sessions at once
           </button>
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="font-sans text-sm text-text-muted hover:text-ember underline underline-offset-2 transition-colors duration-200"
+          >
+            Import from CSV
+          </button>
         </div>
         <div className="flex items-center gap-sm">
           <CompletenessRing score={completeness} />
@@ -669,7 +678,18 @@ export default function LogPage() {
         </div>
       )}
 
-      {!showBatch && <div className="flex-1 lg:flex">
+      {showImport && (
+        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
+          <div className="w-full max-w-[560px] xl:max-w-[600px]">
+            <CsvImportForm
+              onComplete={() => setShowImport(false)}
+              onCancel={() => setShowImport(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {!showBatch && !showImport && <div className="flex-1 lg:flex">
         {/* ─── Left: Capture Form ─── */}
         <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">

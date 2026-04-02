@@ -101,6 +101,26 @@ export default function MarketplacePage() {
     });
   }, [search, activeSubject, packs]);
 
+  async function handlePurchase(id: string) {
+    const pack = packs.find((p) => p._id === id);
+    if (!pack?.stripePriceId) return;
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: pack.stripePriceId, packId: pack._id, packTitle: pack.title }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast('Could not start checkout — please try again', 'error');
+      }
+    } catch {
+      toast('Something went wrong — please try again', 'error');
+    }
+  }
+
   async function handleAddToLibrary(id: string) {
     setLibraryIds((prev) => new Set(prev).add(id));
     try {
@@ -305,6 +325,7 @@ export default function MarketplacePage() {
                       pack={pack}
                       inLibrary={libraryIds.has(pack._id)}
                       onAddToLibrary={handleAddToLibrary}
+                      onPurchase={handlePurchase}
                     />
                   </div>
                 ))}

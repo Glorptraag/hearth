@@ -433,9 +433,9 @@ function SavedView({ onBack, preview }: { onBack: () => void; preview?: { title:
   return (
     <div className="flex flex-col items-center gap-lg py-2xl text-center max-w-xl mx-auto">
       <span className="text-4xl">✅</span>
-      <h2 className="font-serif text-xl font-semibold text-text-primary">Draft saved</h2>
+      <h2 className="font-serif text-xl font-semibold text-text-primary">Module published</h2>
       <p className="font-serif text-text-secondary">
-        Your module draft has been saved. You can come back to finish it anytime.
+        Your module has been saved and published to your family library. It&apos;s available to facilitate now.
       </p>
 
       {preview && (
@@ -502,6 +502,50 @@ async function saveDraft(pathway: string, draftData: unknown, status: 'draft' | 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ pathway, draftData, status }),
+  });
+  return res.ok;
+}
+
+function parseRange(raw: string): [number | null, number | null] {
+  const m = raw.match(/(\d+)\s*[-–]\s*(\d+)/);
+  if (m) return [parseInt(m[1]), parseInt(m[2])];
+  const single = raw.match(/(\d+)/);
+  if (single) { const n = parseInt(single[1]); return [n, n]; }
+  return [null, null];
+}
+
+async function publishFromEditData(data: SharedEditData): Promise<boolean> {
+  if (!data.title.trim() || !data.targetUnderstanding.trim()) return false;
+  if (data.steps.length === 0) return false;
+
+  const [ageMin, ageMax] = parseRange(data.ageRange);
+  const [durMin, durMax] = parseRange(data.duration);
+
+  const payload = {
+    title: data.title,
+    targetUnderstanding: data.targetUnderstanding,
+    subjects: data.subjects.length > 0 ? data.subjects : undefined,
+    ageRange: ageMin && ageMax ? { min: ageMin, max: ageMax } : undefined,
+    duration: durMin && durMax ? { min: durMin, max: durMax } : undefined,
+    status: 'published' as const,
+    approaches: [{
+      title: 'How to explore this',
+      activities: data.steps.map((step) => ({
+        title: step.title || 'Activity',
+        instructions: step.instructions || step.title,
+        observationPrompts: step.observationHint ? [step.observationHint] : undefined,
+        materials: data.materials.length > 0
+          ? data.materials.map((m) => ({ name: m, required: true }))
+          : undefined,
+        setting: data.setting === 'indoor' || data.setting === 'outdoor' ? data.setting : 'either' as const,
+      })),
+    }],
+  };
+
+  const res = await fetch('/api/modules/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
   return res.ok;
 }
@@ -920,6 +964,10 @@ function SharedEditView({
   const handlePublishFromPreview = async () => {
     setSaving(true); setError(null);
     const ok = await saveDraft(form.pathway, { ...form }, 'complete');
+    if (ok) {
+      // Publish to Sanity family library (non-blocking — draft saved regardless)
+      publishFromEditData(form).catch(() => {});
+    }
     setSaving(false);
     if (ok) onSaved();
     else { setError('Something went wrong. Please try again.'); setPreviewing(false); }

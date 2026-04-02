@@ -95,6 +95,58 @@
   --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ==========================================================================
+   Gathering Mode — Warm parchment theme for family review & celebration
+   Activate by setting data-theme="gathering" on <html>
+   ========================================================================== */
+
+[data-theme="gathering"] {
+  /* Surfaces */
+  --color-surface-body:   #FDF6F0;
+  --color-surface-panel:  #FAF8F5;
+  --color-surface-raised: #F5F5F0;
+  --color-surface-hover:  #E2E8F0;
+
+  /* Text */
+  --color-text-primary:   #2C2418;
+  --color-text-secondary: #4A5568;
+  --color-text-muted:     #718096;
+  --color-text-inverse:   #F5F5F0;
+
+  /* Ember — richer, darker in gathering mode */
+  --color-ember:          #C05621;
+  --color-ember-hover:    #92400E;
+  --color-ember-glow:     rgba(192, 86, 33, 0.12);
+  --color-ember-strong:   rgba(192, 86, 33, 0.20);
+
+  /* Sage — emerald in gathering mode */
+  --color-sage:           #059669;
+  --color-sage-muted:     #047857;
+
+  /* Child identity — muted for light backgrounds */
+  --color-child-rose:     #B5838D;
+  --color-child-blue:     #3182CE;
+  --color-child-violet:   #7C6A8D;
+
+  /* Borders — warm brown-tinted */
+  --color-border-subtle:  rgba(44, 36, 24, 0.08);
+  --color-border-medium:  rgba(44, 36, 24, 0.12);
+
+  /* Shadows — lighter, warm-tinted */
+  --shadow-soft:   0 2px 8px rgba(44, 36, 24, 0.06);
+  --shadow-medium: 0 4px 16px rgba(44, 36, 24, 0.08);
+  --shadow-warm:   0 8px 32px rgba(192, 86, 33, 0.08);
+  --shadow-glow:   0 0 20px rgba(192, 86, 33, 0.12);
+}
+
+/* Adapt ambient atmospheric glow for gathering mode */
+[data-theme="gathering"] body::before {
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(192, 86, 33, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(192, 86, 33, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(192, 86, 33, 0.02) 0%, transparent 70%);
+}
+
 /* Entrance animations */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }

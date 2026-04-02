@@ -94,6 +94,11 @@ export default function AuthLayout({
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
+  const [gathering, setGathering] = useState(false);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', gathering ? 'gathering' : '');
+  }, [gathering]);
+
   const firstName = user?.firstName ?? "there";
   const initials = `${(user?.firstName ?? "H")[0]}${(user?.lastName ?? "")[0] ?? ""}`;
 
@@ -142,6 +147,18 @@ export default function AuthLayout({
           <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
             System
           </div>
+          {/* Gathering mode toggle */}
+          <button
+            onClick={() => setGathering((g) => !g)}
+            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+              gathering
+                ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'
+                : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
+            }`}
+          >
+            <span className="text-lg">☀️</span>
+            Gathering Mode
+          </button>
           <Link
             href="/notifications"
             className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${

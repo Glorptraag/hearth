@@ -71,9 +71,10 @@ interface MarketplaceCardProps {
   pack: SanityPack;
   inLibrary: boolean;
   onAddToLibrary: (id: string) => void;
+  onPurchase?: (id: string) => void;
 }
 
-export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: MarketplaceCardProps) {
+export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }: MarketplaceCardProps) {
   const subjects = pack.subjects ?? [];
   const primary = subjects[0];
   const primaryMeta = primary ? SUBJECT_META[primary] : null;
@@ -188,6 +189,17 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary }: Marketplace
               className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer whitespace-nowrap"
             >
               Add to Library
+            </button>
+          ) : pack.stripePriceId ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPurchase?.(pack._id);
+              }}
+              aria-label={`Purchase ${pack.title}`}
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember text-text-inverse hover:bg-ember-hover transition-all duration-200 cursor-pointer whitespace-nowrap shadow-[0_2px_8px_rgba(217,123,58,0.25)]"
+            >
+              Get Pack
             </button>
           ) : (
             <button

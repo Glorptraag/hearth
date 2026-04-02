@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
-import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { SUBJECTS } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
@@ -60,6 +60,11 @@ export async function POST(request: NextRequest) {
 
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return NextResponse.json({ error: 'Insufficient permissions to import entries' }, { status: writeCheck.statusCode });
+  }
 
   const body = await request.json() as { csv: string };
   if (!body.csv || typeof body.csv !== 'string') {
@@ -126,7 +131,7 @@ export async function POST(request: NextRequest) {
 
   // Rebuild snapshot once after all imports
   if (saved.length > 0) {
-    rebuildSnapshot({ familyId: family.id, trigger: 'entry_saved' }).catch(() => {});
+    rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
   }
 
   return NextResponse.json({

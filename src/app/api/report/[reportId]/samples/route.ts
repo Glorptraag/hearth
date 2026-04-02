@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { heuReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
+import { heuReports, workSamples, workSampleAnnotations, learningEntries } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
 type Params = { params: Promise<{ reportId: string }> };
@@ -51,7 +52,12 @@ const assignSampleSchema = z.object({
 export async function PATCH(request: NextRequest, { params }: Params) {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
-  const { family } = result;
+  const { userId, family } = result;
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return apiError('Insufficient permissions to assign samples', writeCheck.statusCode);
+  }
 
   const { reportId } = await params;
 
@@ -63,6 +69,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const body = await parseBody(request, assignSampleSchema);
   if ('error' in body) return body.error;
   const { slot, entryId } = body.data;
+
+  // Verify entryId belongs to this family
+  if (entryId) {
+    const entry = await db.query.learningEntries.findFirst({
+      where: and(eq(learningEntries.id, entryId), eq(learningEntries.familyId, family.id)),
+    });
+    if (!entry) return apiError('Entry not found', 404);
+  }
 
   // Check for cross-slot conflict (same entry assigned to another slot)
   if (entryId) {

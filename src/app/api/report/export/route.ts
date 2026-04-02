@@ -188,13 +188,6 @@ export async function GET(request: NextRequest) {
         status: s.status,
         annotation: annotationMap.get(s.id) ?? null,
       }));
-
-      // Update report export timestamp
-      await db.update(heuReports).set({
-        lastExportedAt: new Date(),
-        status: 'exported',
-        updatedAt: new Date(),
-      }).where(eq(heuReports.id, report.id));
     }
   }
 

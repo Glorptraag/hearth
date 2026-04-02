@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { heuReports, workSamples } from '@/lib/db/schema';
+import { heuReports, workSamples, learners } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
 const WORK_SAMPLE_SLOTS = [
@@ -51,11 +52,22 @@ const createReportSchema = z.object({
 export async function POST(request: NextRequest) {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
-  const { family } = result;
+  const { userId, family } = result;
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return apiError('Insufficient permissions to create reports', writeCheck.statusCode);
+  }
 
   const body = await parseBody(request, createReportSchema);
   if ('error' in body) return body.error;
   const { learnerId, year = new Date().getFullYear() } = body.data;
+
+  // Verify learnerId belongs to this family
+  const learner = await db.query.learners.findFirst({
+    where: and(eq(learners.id, learnerId), eq(learners.familyId, family.id)),
+  });
+  if (!learner) return apiError('Learner not found', 404);
 
   // Check if report already exists
   const existing = await db.query.heuReports.findFirst({

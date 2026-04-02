@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { heuReports } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
 type Params = { params: Promise<{ reportId: string }> };
@@ -16,7 +17,12 @@ const updateReportSchema = z.object({
 export async function PATCH(request: NextRequest, { params }: Params) {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
-  const { family } = result;
+  const { userId, family } = result;
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return apiError('Insufficient permissions to update reports', writeCheck.statusCode);
+  }
 
   const { reportId } = await params;
 

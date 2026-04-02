@@ -66,6 +66,7 @@ const createEntrySchema = z.object({
   sourceModuleId: z.string().optional(),
   sourceProjectId: z.string().optional(),
   sourceStageNumber: z.number().optional(),
+  sourceSessionId: z.string().uuid().optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
 });
 

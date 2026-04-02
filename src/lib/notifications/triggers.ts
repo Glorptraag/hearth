@@ -20,7 +20,12 @@ type NotificationType =
   | 'log_invitation'
   | 'prep_reminder'
   | 'streak_prompt'
-  | 'module_nudge';
+  | 'module_nudge'
+  | 'hearth_invite'
+  | 'session_created'
+  | 'session_completed'
+  | 'observation_received'
+  | 'scaffold_expiring';
 
 type NotificationTier = 'whisper' | 'nudge' | 'chime';
 
@@ -45,6 +50,11 @@ const TYPE_COOLDOWNS: Record<NotificationType, number> = {
   prep_reminder: 24 * 60 * 60 * 1000,      // 1 day
   streak_prompt: 5 * 24 * 60 * 60 * 1000,  // 5 days
   module_nudge: 14 * 24 * 60 * 60 * 1000,  // 2 weeks
+  hearth_invite: 14 * 24 * 60 * 60 * 1000,      // 14 days
+  session_created: 24 * 60 * 60 * 1000,          // 1 day
+  session_completed: 24 * 60 * 60 * 1000,        // 1 day
+  observation_received: 24 * 60 * 60 * 1000,     // 1 day
+  scaffold_expiring: 5 * 24 * 60 * 60 * 1000,    // 5 days
 };
 
 const DAILY_CAP = 4;
@@ -383,6 +393,83 @@ export async function triggerModuleNudge(
       top_subjects: stats.topSubjects,
     },
     destinationRoute: '/explore/marketplace',
+  });
+}
+
+// ─── Community Triggers ───
+
+export async function triggerHearthInvite(
+  familyId: string,
+  opts: { hearthName: string; code: string }
+): Promise<boolean> {
+  return createNotification({
+    familyId,
+    type: 'hearth_invite',
+    tier: 'nudge',
+    title: `You've been invited to ${opts.hearthName}`,
+    body: 'A learning community is waiting for you. Tap to review and join.',
+    destinationRoute: `/hearths/join/${opts.code}`,
+    expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+  });
+}
+
+export async function triggerSessionCreated(
+  familyId: string,
+  opts: { hearthName: string; sessionTitle: string; sessionDate: string; hearthId: string }
+): Promise<boolean> {
+  return createNotification({
+    familyId,
+    type: 'session_created',
+    tier: 'whisper',
+    title: `New session: ${opts.sessionTitle}`,
+    body: `${opts.hearthName} has a new session on ${opts.sessionDate}.`,
+    destinationRoute: `/hearths/${opts.hearthId}`,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+}
+
+export async function triggerSessionCompleted(
+  familyId: string,
+  opts: { hearthName: string; sessionTitle: string; sessionId: string; hearthId: string }
+): Promise<boolean> {
+  return createNotification({
+    familyId,
+    type: 'session_completed',
+    tier: 'nudge',
+    title: `${opts.sessionTitle} is ready to log`,
+    body: `The shared record from ${opts.hearthName} is ready. Tap to log your family's experience.`,
+    destinationRoute: `/log?scaffold=${opts.sessionId}&hearthId=${opts.hearthId}`,
+    expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+  });
+}
+
+export async function triggerObservationReceived(
+  familyId: string,
+  opts: { observerName: string; learnerName: string; sessionId: string; hearthId: string }
+): Promise<boolean> {
+  return createNotification({
+    familyId,
+    type: 'observation_received',
+    tier: 'nudge',
+    title: `${opts.observerName} noticed something about ${opts.learnerName}`,
+    body: 'A cross-family observation is waiting for your review.',
+    destinationRoute: `/log?scaffold=${opts.sessionId}&hearthId=${opts.hearthId}`,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+}
+
+export async function triggerScaffoldExpiring(
+  familyId: string,
+  opts: { hearthName: string; sessionTitle: string; sessionId: string; hearthId: string }
+): Promise<boolean> {
+  return createNotification({
+    familyId,
+    type: 'scaffold_expiring',
+    tier: 'whisper',
+    title: `Don't forget: ${opts.sessionTitle}`,
+    body: `Your ${opts.hearthName} session scaffold will expire soon. Log it when you're ready.`,
+    destinationRoute: `/log?scaffold=${opts.sessionId}&hearthId=${opts.hearthId}`,
+    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
   });
 }
 

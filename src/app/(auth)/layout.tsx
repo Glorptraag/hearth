@@ -52,6 +52,7 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/explore/marketplace") return pathname.startsWith("/explore/marketplace");
   if (href === "/settings") return pathname === "/settings";
   if (href === "/notifications") return pathname === "/notifications";
+  if (href.startsWith("/hearths/")) return pathname.startsWith(href);
   return false;
 }
 
@@ -73,6 +74,7 @@ export default function AuthLayout({
   const { user } = useUser();
   const familyName = user?.lastName ? `${user.lastName} Family` : "My Family";
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hearths, setHearths] = useState<Array<{ id: string; name: string; pendingCount: number }>>([]);
 
   async function fetchUnreadCount() {
     try {
@@ -92,6 +94,23 @@ export default function AuthLayout({
     const onFocus = () => fetchUnreadCount();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    async function fetchHearths() {
+      try {
+        const res = await fetch('/api/hearths');
+        if (res.ok) {
+          const data = await res.json();
+          setHearths((data.hearths ?? []).map((h: { id: string; name: string; pendingScaffoldCount: number }) => ({
+            id: h.id,
+            name: h.name,
+            pendingCount: h.pendingScaffoldCount ?? 0,
+          })));
+        }
+      } catch { /* silent */ }
+    }
+    fetchHearths();
   }, []);
 
   const [gathering, setGathering] = useState(false);
@@ -141,6 +160,37 @@ export default function AuthLayout({
             })}
           </div>
         ))}
+
+        {/* Community hearths */}
+        {hearths.length > 0 && (
+          <div className="mb-xl">
+            <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              Community
+            </div>
+            {hearths.map((h) => {
+              const active = pathname.startsWith(`/hearths/${h.id}`);
+              return (
+                <Link
+                  key={h.id}
+                  href={`/hearths/${h.id}`}
+                  className={`mb-xs flex items-center gap-sm rounded-md px-md py-[10px] font-sans text-[0.85rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+                    active
+                      ? 'border-border-medium bg-surface-raised text-ember'
+                      : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full flex-shrink-0 ${h.pendingCount > 0 ? 'bg-ember' : 'bg-sage'}`} />
+                  <span className="truncate">{h.name}</span>
+                  {h.pendingCount > 0 && (
+                    <span className="ml-auto flex-shrink-0 rounded-[6px] bg-ember px-1.5 py-px font-sans text-[0.65rem] font-semibold text-text-inverse">
+                      {h.pendingCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         {/* Bottom section: settings, notifications */}
         <div className="mb-xl">

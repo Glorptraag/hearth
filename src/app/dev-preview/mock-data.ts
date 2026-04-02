@@ -50,6 +50,7 @@ export const mockEntries = [
     dateOccurred: today,
     subjects: ['science', 'arts'],
     learnerIds: ['1', '2'],
+    source: 'logger',
   },
   {
     id: 'e2',
@@ -58,6 +59,7 @@ export const mockEntries = [
     dateOccurred: today,
     subjects: ['mathematics'],
     learnerIds: ['1', '2'],
+    source: 'logger',
   },
   {
     id: 'e3',
@@ -66,6 +68,7 @@ export const mockEntries = [
     dateOccurred: yesterday,
     subjects: ['english'],
     learnerIds: ['1'],
+    source: 'hearth_session',
   },
   {
     id: 'e4',
@@ -74,6 +77,7 @@ export const mockEntries = [
     dateOccurred: twoDaysAgo,
     subjects: ['mathematics', 'arts'],
     learnerIds: ['2'],
+    source: 'logger',
   },
   {
     id: 'e5',
@@ -82,6 +86,7 @@ export const mockEntries = [
     dateOccurred: threeDaysAgo,
     subjects: ['science', 'hpe'],
     learnerIds: ['1', '2'],
+    source: 'hearth_session',
   },
   {
     id: 'e6',
@@ -90,6 +95,7 @@ export const mockEntries = [
     dateOccurred: fourDaysAgo,
     subjects: ['hass'],
     learnerIds: ['1', '2'],
+    source: 'logger',
   },
 ];
 

@@ -321,9 +321,16 @@ function ThreadEvidencePanel({
                 className="flex items-start gap-md rounded-[10px] border border-border-subtle bg-surface-raised p-md hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 group"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-serif text-sm font-semibold text-text-primary truncate group-hover:text-ember transition-colors duration-200">
-                    {entry.title}
-                  </p>
+                  <div className="flex items-center gap-sm">
+                    <p className="font-serif text-sm font-semibold text-text-primary truncate group-hover:text-ember transition-colors duration-200">
+                      {entry.title}
+                    </p>
+                    {entry.source === 'hearth_session' && (
+                      <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
+                        🔥 From community
+                      </span>
+                    )}
+                  </div>
                   {entry.description && (
                     <p className="font-serif text-xs text-text-muted mt-xs line-clamp-2">
                       {entry.description.slice(0, 120)}
@@ -331,9 +338,6 @@ function ThreadEvidencePanel({
                   )}
                   <div className="flex items-center gap-sm mt-xs">
                     <span className="font-sans text-[10px] text-text-muted">{entry.dateOccurred}</span>
-                    <span className="font-sans text-[10px] text-text-muted">
-                      {entry.source === 'module_log' ? '📋 Module' : '✏️ Logger'}
-                    </span>
                     {confidence != null && (
                       <span className={`font-sans text-[10px] ${confidence >= 0.8 ? 'text-sage' : 'text-text-muted'}`}>
                         {confidence >= 0.8 ? 'High' : 'Moderate'} match

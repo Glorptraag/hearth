@@ -14,6 +14,7 @@ interface RecentEntryCardProps {
     dateOccurred: string;
     subjects: string[] | null;
     learnerIds: string[] | null;
+    source: string;
   };
   learners: Learner[];
 }
@@ -73,9 +74,16 @@ export default function RecentEntryCard({ entry, learners }: RecentEntryCardProp
       </div>
 
       {/* Title */}
-      <p className="font-serif text-base font-semibold leading-snug text-text-primary">
-        {entry.title}
-      </p>
+      <div className="flex items-center gap-sm">
+        <p className="font-serif text-base font-semibold leading-snug text-text-primary">
+          {entry.title}
+        </p>
+        {entry.source === 'hearth_session' && (
+          <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium">
+            🔥 From community
+          </span>
+        )}
+      </div>
 
       {/* Description */}
       {entry.description && (

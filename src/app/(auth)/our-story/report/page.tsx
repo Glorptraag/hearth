@@ -34,6 +34,7 @@ type Entry = {
   aiEnrichment: AiEnrichment;
   heuCandidate: boolean | null;
   status: string;
+  source: string;
 };
 
 type ReportData = {

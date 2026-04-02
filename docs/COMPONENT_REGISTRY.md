@@ -96,6 +96,23 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 |---|--------|---------------|------|------|-----------------|
 | 20 | **Notification Center** | `hearth-notification-centre-v2.html` | `hearth-notification-system-spec.md` | Compliance reminders, logging nudges, weekly digests, streak prompts, capability growth moments | Filter tabs, gentle "I noticed" language, swipe-to-dismiss |
 
+#### Nav Group: Community (Hearths) — Built 3 April 2026
+
+| # | Screen | Canonical File | Spec | Role | Key Interactions |
+|---|--------|---------------|------|------|-----------------|
+| 21 | **Hearth Home** | `src/components/hearth/HearthHomeClient.tsx` | `hearth-community-architecture-v1.md`, `hearth-community-handoff-v1.md` | Multi-family group hub with 4 tabs: Our Story, Sessions, Members, Settings | AI-generated term narrative, session timeline with reflections, shared gallery, session CRUD, member grid, invite flow, consent management |
+| 22 | **Session Detail** | `src/app/(auth)/hearths/[hearthId]/sessions/[sessionId]/page.tsx` | (shares community spec) | Session shared record with evidence grid and privacy-filtered observations | Scaffold action ("Log this session"), observation review, evidence display |
+| 23 | **Join / Invite** | `src/app/(auth)/hearths/join/[code]/page.tsx` + `JoinClient.tsx` | (shares community spec) | Invite acceptance with consent toggles | Code validation, consent checkboxes (cross-family observations, evidence sharing), Clerk auth redirect for unauthenticated users |
+
+**Community components:** `HearthDashboardCard.tsx`, `ObservationCard.tsx`, `CreateSessionModal.tsx`, `InviteModal.tsx`, `ReflectionModal.tsx`
+
+**Integration points:**
+- Sidebar: dynamic "Community" section with per-hearth nav items and scaffold count badges
+- Dashboard: "My Hearths" section with HearthDashboardCard (next session + pending scaffolds)
+- Logger: scaffold mode via `?scaffold=sessionId` (pre-fills form, evidence toggles, reflection modal)
+- Notifications: 5 new trigger types (hearth_invite, session_created/completed, observation_received, scaffold_expiring)
+- Entry provenance: "From community" pills on entries with `source: 'hearth_session'`
+
 ### Shelved — MVP Scope Reduction
 
 These screens were designed or planned but removed from MVP scope. Preserved here for Phase 2+ reference.
@@ -104,7 +121,8 @@ These screens were designed or planned but removed from MVP scope. Preserved her
 |--------|--------|--------------|
 | **Facilitator Pedagogical Dashboard** | No distinct facilitator role in MVP — all users are family facilitators using the standard Dashboard. Over-engineered for current scope. | Community hubs built (Phase 2+), when external facilitators / co-ops are a real user type |
 | **Learner-facing views** | Learner-facing interface is out of scope for Phase 1. Parents facilitate and log on behalf of children. Scoping brief exists: `hearth-student-module-experience-scoping-brief.md` | Phase 2 when direct learner engagement is validated |
-| **Community features** | Co-op tools, group modules, educator forums not needed for solo family validation | Phase 2 community build-out |
+| **Facilitator capture UI** | API routes exist for observations, session completion, attendance. UI for quick-capture during sessions deferred | Phase 2 — when coordinator workflow validated with test families |
+| **Planner hearth sessions** | Hearth sessions as distinct card type in weekly planner | Phase 2 — API ready, UI integration deferred |
 
 ---
 
@@ -265,10 +283,10 @@ These files have been superseded. Candidates for removal to reduce project file 
 | Phase | Status | Screens |
 |-------|--------|---------|
 | **Phase 1 MVP** | **19 of 19 built** (100%) + Badge Assessment as 20th screen. Design system conformance complete. All screens have dedicated specs. | All core screens complete, conformant, and documented |
+| **Phase 2 Community** | **3 screens built** (3 Apr 2026) + 5 reusable components + 4 integration points. 19 API routes, 8 DB tables, AI narrative pipeline | Hearth Home, Session Detail, Join/Invite |
 | Test Family Launch | Next milestone | 10-20 families, requires data persistence + Next.js deployment |
-| Phase 2 Community | Planned | 50-100 families. Shelved items revisited here |
 | Phase 3 Scale | Planned | 500+ families |
 
 ---
 
-*Registry updated 2 April 2026 — pedagogy engine implementation clarified, verified date updated. Update when adding or modifying screens.*
+*Registry updated 3 April 2026 — Community (Hearth) feature added: 3 screens, 5 components, 19 API routes, 8 tables. Update when adding or modifying screens.*

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
 
   const conditions = [eq(learningEntries.familyId, family.id)];
 
+  if (learnerId) {
+    conditions.push(arrayContains(learningEntries.learnerIds, [learnerId]));
+  }
   if (status) {
     conditions.push(eq(learningEntries.status, status));
   }
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
     conditions.push(lte(learningEntries.dateOccurred, endDate));
   }
 
-  const query = db
+  const entries = await db
     .select()
     .from(learningEntries)
     .where(and(...conditions))
@@ -47,13 +50,7 @@ export async function GET(request: NextRequest) {
     .limit(limit)
     .offset(offset);
 
-  const entries = await query;
-
-  const filtered = learnerId
-    ? entries.filter((e) => e.learnerIds?.includes(learnerId))
-    : entries;
-
-  return NextResponse.json(filtered);
+  return NextResponse.json(entries);
 }
 
 const createEntrySchema = z.object({

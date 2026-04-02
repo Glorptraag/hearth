@@ -287,17 +287,15 @@ function PrepMode({
 
 // ─── Session Timer ───────────────────────────────────────────────────────────
 
-function SessionTimer({ suggestedMax }: { suggestedMax?: number }) {
-  const [elapsed, setElapsed] = useState(0);
-  const startRef = useRef<number>(0);
+function SessionTimer({ suggestedMax, startTime }: { suggestedMax?: number; startTime: number }) {
+  const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - startTime) / 1000));
 
   useEffect(() => {
-    startRef.current = Date.now();
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [startTime]);
 
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
@@ -328,6 +326,7 @@ function FacilitateMode({
   onPause,
   initialChunkIdx = 0,
   onChunkChange,
+  sessionStartTime,
 }: {
   module: Module;
   approachIdx: number;
@@ -337,6 +336,7 @@ function FacilitateMode({
   onPause?: () => void;
   initialChunkIdx?: number;
   onChunkChange?: (idx: number) => void;
+  sessionStartTime: number;
 }) {
   const activities = module.approaches?.[approachIdx]?.activities ?? [];
   const [currentIdx, setCurrentIdx] = useState(initialChunkIdx);
@@ -371,7 +371,7 @@ function FacilitateMode({
               {currentIdx + 1} of {activities.length}
             </span>
           </div>
-          <SessionTimer suggestedMax={current?.duration?.max} />
+          <SessionTimer suggestedMax={current?.duration?.max} startTime={sessionStartTime} />
         </div>
 
         {/* Activity header */}
@@ -1084,6 +1084,7 @@ export default function ModuleDetailPage() {
   const facilitateStartRef = useRef<number | null>(null);
 
   const STORAGE_KEY = `hearth_module_${id}_session`;
+  const START_TIME_KEY = `hearth_module_${id}_start`;
 
   function persistChunk(chunkIdx: number) {
     setSavedChunkIdx(chunkIdx);
@@ -1092,7 +1093,10 @@ export default function ModuleDetailPage() {
 
   function clearSession() {
     setSavedChunkIdx(0);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(START_TIME_KEY);
+    } catch { /* ignore */ }
   }
 
   const fetchModule = useCallback(async () => {
@@ -1310,9 +1314,23 @@ export default function ModuleDetailPage() {
           <PrepMode
             module={module}
             approachIdx={selectedApproachIdx}
-            onStart={() => { clearSession(); facilitateStartRef.current = Date.now(); setMode('facilitate'); }}
+            onStart={() => {
+              clearSession();
+              const now = Date.now();
+              facilitateStartRef.current = now;
+              try { localStorage.setItem(START_TIME_KEY, String(now)); } catch { /* ignore */ }
+              setMode('facilitate');
+            }}
             savedChunkIdx={savedChunkIdx}
-            onResume={() => setMode('facilitate')}
+            onResume={() => {
+              if (!facilitateStartRef.current) {
+                try {
+                  const saved = localStorage.getItem(START_TIME_KEY);
+                  facilitateStartRef.current = saved ? parseInt(saved, 10) : Date.now();
+                } catch { facilitateStartRef.current = Date.now(); }
+              }
+              setMode('facilitate');
+            }}
           />
         )}
         {mode === 'facilitate' && (
@@ -1342,6 +1360,7 @@ export default function ModuleDetailPage() {
             }}
             initialChunkIdx={savedChunkIdx}
             onChunkChange={persistChunk}
+            sessionStartTime={facilitateStartRef.current ?? Date.now()}
           />
         )}
         {mode === 'log' && <LogMode module={module} sessionElapsed={sessionElapsed} />}

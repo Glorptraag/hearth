@@ -62,7 +62,7 @@ export default function PlannerGrid({
 }: PlannerGridProps) {
   const isReadOnly = !isCurrentOrFutureWeek;
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [, setDraggingId] = useState<string | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent, cellKey: string) => {
     e.preventDefault();

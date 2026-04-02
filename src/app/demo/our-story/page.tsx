@@ -16,7 +16,7 @@ export default function DemoOurStoryHub() {
   if (!selected || !selectedProfile) return null;
 
   const age = differenceInYears(new Date(), new Date(selected.dateOfBirth));
-  const learningStartYear = new Date().getFullYear() - Math.floor(Math.random() * 3 + 1);
+  const learningStartYear = new Date().getFullYear() - (selectedId.charCodeAt(0) % 3 + 1);
 
   return (
     <div className="mx-auto max-w-4xl px-md py-lg lg:py-2xl">
@@ -46,7 +46,7 @@ export default function DemoOurStoryHub() {
           className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
           <div className="mb-md text-3xl">📷</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}'s Portfolio</h3>
+          <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}&apos;s Portfolio</h3>
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.portfolioThisTerm} evidence items this term
           </p>

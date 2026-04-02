@@ -1832,7 +1832,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
   const [editing, setEditing] = useState<SharedEditData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [skeletons, setSkeletons] = useState<import('@/lib/sanity/queries').SkeletonRecord[] | null>(null);
-  const [selectedSkeleton, setSelectedSkeleton] = useState<import('@/lib/sanity/queries').SkeletonRecord | null>(null);
+  const [selectedSkeleton] = useState<import('@/lib/sanity/queries').SkeletonRecord | null>(null);
   const [loadingSkeletons, setLoadingSkeletons] = useState(false);
   const nudge = detectCrossPathNudge('goal', form.goal + ' ' + form.successLooksLike);
 

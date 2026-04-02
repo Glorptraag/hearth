@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { families, familySettings, learningEntries, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';

@@ -393,7 +393,7 @@ export default function DashboardClient({
                   return uniqueSubjects.length > 0 ? (
                     <div className="mt-lg">
                       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
-                        Today's subjects
+                        Today&apos;s subjects
                       </p>
                       <div className="flex gap-[4px] flex-wrap">
                         {uniqueSubjects.map((sub) => (

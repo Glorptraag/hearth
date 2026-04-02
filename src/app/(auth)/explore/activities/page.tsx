@@ -56,11 +56,6 @@ const SUBJECT_GRADIENT: Record<string, string> = {
   languages:    'from-[rgba(138,107,155,0.12)] to-transparent',
 };
 
-const DURATION_FILTERS = [
-  { label: 'Quick (<15 min)', value: 'quick', test: (m: Module) => (m.duration?.max ?? 99) < 15 },
-  { label: 'Medium (15–30)', value: 'medium', test: (m: Module) => { const max = m.duration?.max ?? 0; return max >= 15 && max <= 30; } },
-  { label: 'Long (30+)', value: 'long', test: (m: Module) => (m.duration?.min ?? 0) >= 30 },
-] as const;
 
 const MODALITY_EMOJI: Record<string, string> = {
   kinesthetic: '🤲',

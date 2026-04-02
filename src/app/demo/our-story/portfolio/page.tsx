@@ -2,10 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
-import LearnerAvatar, { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
+import LearnerAvatar from '@/components/ui/LearnerAvatar';
 import DomainChip, { DOMAIN_LABELS } from '@/components/ui/DomainChip';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { mockLearners, mockPortfolioEntries } from '../../mock-data';

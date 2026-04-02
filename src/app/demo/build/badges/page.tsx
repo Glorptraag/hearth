@@ -24,10 +24,10 @@ export default function BadgeCreatorPage() {
           <div className="text-4xl flex-shrink-0">🏆</div>
           <div className="space-y-md">
             <h2 className="font-serif font-semibold text-text-primary">
-              Create custom badges to celebrate your family's unique achievements
+              Create custom badges to celebrate your family&apos;s unique achievements
             </h2>
             <p className="font-serif text-sm text-text-secondary">
-              Define observable indicators and link them to capability threads. Create badges that reflect your family's values and learning journey.
+              Define observable indicators and link them to capability threads. Create badges that reflect your family&apos;s values and learning journey.
             </p>
             <p className="font-sans text-xs text-text-muted">
               Available after sign-up

@@ -21,7 +21,7 @@ export default function BadgeAssessmentPage() {
   const [step, setStep] = useState<Step>('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [responses, setResponses] = useState<Response[]>([]);
-  const [selectedLearner, setSelectedLearner] = useState(mockLearners[0]);
+  const [selectedLearner] = useState(mockLearners[0]);
 
   if (!badge) {
     return (
@@ -31,7 +31,7 @@ export default function BadgeAssessmentPage() {
             Badge not found
           </h1>
           <p className="font-serif text-text-secondary mb-2xl">
-            The badge you're looking for doesn't exist in this demo.
+            The badge you&apos;re looking for doesn&apos;t exist in this demo.
           </p>
           <Link
             href="/demo/dashboard"
@@ -182,7 +182,7 @@ export default function BadgeAssessmentPage() {
               Not yet
             </p>
             <p className="font-serif text-sm text-text-secondary">
-              This hasn't been observed yet, or appears very rarely
+              This hasn&apos;t been observed yet, or appears very rarely
             </p>
           </button>
         </div>

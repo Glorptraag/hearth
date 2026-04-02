@@ -57,8 +57,9 @@ export default async function DashboardPage() {
     dashboardState = 'no-entries';
   } else {
     const latestDate = recentEntries[0].dateOccurred;
+    const now = new Date();
     const daysSince = Math.floor(
-      (Date.now() - new Date(latestDate).getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - new Date(latestDate).getTime()) / (1000 * 60 * 60 * 24)
     );
     if (daysSince > 7) dashboardState = 'returning-inactive';
   }

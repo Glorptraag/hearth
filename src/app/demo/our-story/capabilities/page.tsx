@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChildSelector } from '@/components/ui/child-selector';
-import DomainChip, { DOMAIN_LABELS } from '@/components/ui/DomainChip';
+import DomainChip from '@/components/ui/DomainChip';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { mockLearners, mockCapabilities, mockOurStoryLearners } from '../../mock-data';
 
@@ -17,16 +17,15 @@ export default function DemoCapabilities() {
 
   const selected = mockLearners.find((l) => l.id === selectedId);
   const childProfile = mockOurStoryLearners.find((l) => l.id === selectedId);
-  const capabilities = mockCapabilities[selectedId as keyof typeof mockCapabilities] || [];
-
   const groupedByDomain = useMemo(() => {
-    const groups: Record<string, typeof capabilities> = {};
-    capabilities.forEach((cap) => {
+    const caps = mockCapabilities[selectedId as keyof typeof mockCapabilities] || [];
+    const groups: Record<string, typeof caps> = {};
+    caps.forEach((cap) => {
       if (!groups[cap.domain]) groups[cap.domain] = [];
       groups[cap.domain].push(cap);
     });
     return groups;
-  }, [capabilities]);
+  }, [selectedId]);
 
   const getTierBadge = (tier: string) => {
     const tiers: Record<string, { bg: string; text: string }> = {

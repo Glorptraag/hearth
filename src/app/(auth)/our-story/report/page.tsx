@@ -223,7 +223,8 @@ export default function ReportPage() {
 
   // Work sample slots — match entries to 6 QHE slots
   const workSampleSlots = useMemo(() => {
-    const reportYear = reportDueDate?.getFullYear() ?? today.getFullYear();
+    const dueDate = dueDateStr ? new Date(dueDateStr) : null;
+    const reportYear = dueDate?.getFullYear() ?? new Date().getFullYear();
 
     return WORK_SAMPLE_SLOTS.map((slot) => {
       const candidates = entries.filter((e) => {
@@ -253,7 +254,7 @@ export default function ReportPage() {
 
       return { ...slot, matchedEntry: match, status };
     });
-  }, [entries, reportDueDate]);
+  }, [entries, dueDateStr]);
 
   const completedSlots = workSampleSlots.filter((s) => s.status === 'complete').length;
 

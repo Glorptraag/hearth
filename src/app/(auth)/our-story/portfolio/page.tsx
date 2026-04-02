@@ -100,7 +100,7 @@ const DATE_FILTERS = [
 ] as const;
 
 export default function PortfolioPage() {
-  const { vocab } = usePedagogy();
+  usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -232,7 +232,7 @@ export default function PortfolioPage() {
   const toggleThread = (thread: string) => {
     setOpenThreads((prev) => {
       const next = new Set(prev);
-      next.has(thread) ? next.delete(thread) : next.add(thread);
+      if (next.has(thread)) { next.delete(thread); } else { next.add(thread); }
       return next;
     });
   };

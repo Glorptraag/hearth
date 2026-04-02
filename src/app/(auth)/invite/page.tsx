@@ -7,16 +7,12 @@ export default function InvitePage() {
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get('token');
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(token ? 'loading' : 'error');
   const [familyName, setFamilyName] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(token ? '' : 'No invitation token found.');
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setErrorMsg('No invitation token found.');
-      return;
-    }
+    if (!token) return;
 
     fetch('/api/family/invite', {
       method: 'POST',

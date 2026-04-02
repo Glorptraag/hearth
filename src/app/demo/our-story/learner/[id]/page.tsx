@@ -111,13 +111,13 @@ export default function DemoLearnerProfile({
           href={`/demo/explore/activities?learner=${id}`}
           className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
         >
-          Find activities for {learner.name}'s interests →
+          Find activities for {learner.name}&apos;s interests →
         </Link>
         <Link
           href="/demo/settings"
           className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
         >
-          Edit {learner.name}'s profile →
+          Edit {learner.name}&apos;s profile →
         </Link>
       </div>
     </div>

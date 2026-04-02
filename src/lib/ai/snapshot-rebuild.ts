@@ -6,7 +6,6 @@ import {
   familyIntelligenceSnapshots,
   badgeDefinitions,
   badgeAwards,
-  notifications,
   familyLibrary,
 } from '@/lib/db/schema';
 import { eq, and, desc, count } from 'drizzle-orm';

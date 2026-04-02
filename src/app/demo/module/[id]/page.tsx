@@ -22,7 +22,7 @@ type Mode = 'select' | 'prep' | 'facilitate' | 'complete';
 export default function ModuleExperiencePage() {
   const params = useParams();
   const moduleId = params.id as string;
-  const module = mockModules.find((m) => m.id === moduleId);
+  const moduleData = mockModules.find((m) => m.id === moduleId);
 
   const [mode, setMode] = useState<Mode>('select');
   const [selectedApproachIndex, setSelectedApproachIndex] = useState(0);
@@ -31,7 +31,7 @@ export default function ModuleExperiencePage() {
   const [checkedObservations, setCheckedObservations] = useState<Set<number>>(new Set());
   const [demoPedagogy, setDemoPedagogy] = useState<Pedagogy>('eclectic');
 
-  if (!module) {
+  if (!moduleData) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-md py-xl gap-lg">
         <div className="text-center">
@@ -39,7 +39,7 @@ export default function ModuleExperiencePage() {
             Module not found
           </h1>
           <p className="font-serif text-text-secondary mb-2xl">
-            The module you're looking for doesn't exist in this demo.
+            The module you&apos;re looking for doesn&apos;t exist in this demo.
           </p>
           <Link
             href="/demo/explore/activities"
@@ -52,7 +52,7 @@ export default function ModuleExperiencePage() {
     );
   }
 
-  const selectedApproach = module.approaches[selectedApproachIndex];
+  const selectedApproach = moduleData.approaches[selectedApproachIndex];
   const currentActivity = selectedApproach?.activities[currentStep];
   const totalActivities = selectedApproach?.activities.length || 0;
 
@@ -98,15 +98,15 @@ export default function ModuleExperiencePage() {
         {/* Module title and meta */}
         <div className="gap-md flex flex-col">
           <h1 className="font-serif text-2xl font-semibold text-text-primary">
-            {module.title}
+            {moduleData.title}
           </h1>
           <p className="font-serif text-text-secondary italic">
-            {module.targetUnderstanding}
+            {moduleData.targetUnderstanding}
           </p>
 
           {/* Subject chips */}
           <div className="flex flex-wrap gap-xs">
-            {module.subjects.map((subject) => (
+            {moduleData.subjects.map((subject) => (
               <DomainChip key={subject} subject={subject} showEmoji />
             ))}
           </div>
@@ -119,7 +119,7 @@ export default function ModuleExperiencePage() {
           </div>
 
           <div className="gap-md flex flex-col">
-            {module.approaches.map((approach, idx) => (
+            {moduleData.approaches.map((approach, idx) => (
               <button
                 key={approach.id}
                 onClick={() => {
@@ -169,7 +169,7 @@ export default function ModuleExperiencePage() {
             </select>
           </div>
           <div className="space-y-md">
-            {module.approaches[0]?.activities.slice(0, 2).map((activity) => (
+            {moduleData.approaches[0]?.activities.slice(0, 2).map((activity) => (
               <ActivityCard
                 key={activity.id}
                 activity={activity}
@@ -177,7 +177,7 @@ export default function ModuleExperiencePage() {
                 overlay={mockOverlays[demoPedagogy]?.[activity.id] ?? null}
                 onStart={() => {
                   setSelectedApproachIndex(0);
-                  setCurrentStep(module.approaches[0].activities.indexOf(activity));
+                  setCurrentStep(moduleData.approaches[0].activities.indexOf(activity));
                   setMode('facilitate');
                 }}
               />
@@ -217,7 +217,7 @@ export default function ModuleExperiencePage() {
         {/* Why This Matters */}
         <div className="bg-surface-raised border border-border-subtle rounded-lg p-lg">
           <p className="font-serif text-sm text-text-secondary italic">
-            {module.targetUnderstanding}
+            {moduleData.targetUnderstanding}
           </p>
         </div>
 
@@ -424,7 +424,7 @@ export default function ModuleExperiencePage() {
             Session complete!
           </h1>
           <p className="font-serif text-text-secondary">
-            {module.title} — {selectedApproach.title}
+            {moduleData.title} — {selectedApproach.title}
           </p>
           <p className="font-sans text-sm text-text-muted">
             You covered {totalActivities} {totalActivities === 1 ? 'activity' : 'activities'}

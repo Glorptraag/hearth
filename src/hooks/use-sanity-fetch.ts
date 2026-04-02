@@ -22,7 +22,9 @@ export function useSanityFetch<T>(
     setLoading(true);
     setError(false);
     try {
-      const result = await sanityClient.fetch<T>(query, params);
+      const result = params
+        ? await sanityClient.fetch<T>(query, params)
+        : await sanityClient.fetch<T>(query);
       setData(result);
     } catch {
       setError(true);

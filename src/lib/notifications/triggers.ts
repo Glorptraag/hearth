@@ -6,8 +6,8 @@ import {
   plannerEntries,
   families,
 } from '@/lib/db/schema';
-import { eq, and, gte, desc, count, sql } from 'drizzle-orm';
-import { format, subDays, subHours, addHours, differenceInCalendarDays } from 'date-fns';
+import { eq, and, gte, desc, count } from 'drizzle-orm';
+import { format, addHours, differenceInCalendarDays } from 'date-fns';
 import { adaptNotificationCopy } from '@/lib/pedagogy/adapter';
 
 // ─── Types ───

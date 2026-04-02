@@ -210,7 +210,7 @@ export default function MarketplacePage() {
             {packs.length > 0 && (
               <div className="mb-xl">
                 <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  Editor's Picks
+                  Editor&apos;s Picks
                 </p>
                 <div className="flex gap-md overflow-x-auto pb-sm scrollbar-none">
                   {packs.slice(0, 4).map((pack, i) => {

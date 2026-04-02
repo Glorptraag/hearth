@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import {
-  families,
   learners,
   familySettings,
   learningEntries,
   badgeAwards,
-  badgeDefinitions,
   plannerEntries,
   familyLibrary,
   facilitatorNotes,

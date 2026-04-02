@@ -110,7 +110,7 @@ export async function fetchWithQueue(
   try {
     const res = await fetch(url, options);
     return res;
-  } catch (err) {
+  } catch {
     // Network failure — queue the request
     if (options.method !== undefined) {
       enqueueRequest(

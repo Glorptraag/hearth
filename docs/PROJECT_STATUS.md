@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v1.md` for design values.
-> **Last updated:** 1 April 2026
+> **Last updated:** 2 April 2026
 
 ---
 
@@ -38,36 +38,39 @@
 | `/badges/assess/[id]` | Badge Assessment |
 | `/module/[id]` | Module Experience |
 | `/project/[id]` | Project Experience |
+| `/invite` | Invite / Provider Codes |
 
 ### Other
 | Route | Screen |
 |-------|--------|
+| `/` | Landing Page (public) |
+| `/welcome` | Welcome Wizard (public) |
 | `/onboarding` | Onboarding flow (public) |
 | `/dev-preview/*` | Dev preview bypass routes (no Clerk) |
 | `/admin` | Sanity Studio |
 
 ---
 
-## API Surface (25 endpoints)
+## API Surface (28+ endpoints)
 
 | Domain | Endpoints |
 |--------|-----------|
 | Entries | `POST /api/entries`, `GET\|PUT\|DELETE /api/entries/[id]`, `POST /api/entries/[id]/complete` |
 | Learners | `GET\|POST /api/learners`, `GET\|PUT\|DELETE /api/learners/[id]` |
-| Badges | `GET\|POST /api/badges`, `GET\|PUT\|DELETE /api/badges/[id]`, `POST /api/badges/award`, `GET /api/badges/awards`, `POST /api/badges/check-thresholds`, `POST /api/badges/defer` |
+| Badges | `GET\|POST /api/badges`, `GET\|PUT\|DELETE /api/badges/[id]`, `POST /api/badges/award`, `GET /api/badges/awards`, `POST /api/badges/check-thresholds`, `POST /api/badges/defer`, `GET /api/badges/history`, `POST /api/badges/retract` |
 | Planner | `GET\|POST /api/planner`, `GET\|PUT\|DELETE /api/planner/[id]` |
 | Notifications | `GET\|POST /api/notifications`, `GET\|PUT\|DELETE /api/notifications/[id]`, `POST /api/notifications/mark-all-read` |
 | Dashboard | `GET /api/dashboard`, `GET /api/snapshot`, `GET /api/capabilities/[learnerId]` |
 | Library | `GET\|POST /api/library` |
 | Settings | `GET\|PUT /api/settings`, `GET\|POST /api/family` |
-| Modules | `GET\|POST /api/modules/drafts` |
+| Modules | `GET\|POST /api/modules/drafts`, `POST /api/modules/publish` |
 | Onboarding | `POST /api/onboarding/complete` |
 
 ---
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 14 tables
+### PostgreSQL (Neon + Drizzle) — 16 tables
 - **Identity:** `families`, `familySettings`
 - **Learners:** `learners`
 - **Learning data:** `learningEntries`
@@ -78,6 +81,8 @@
 - **Content:** `familyLibrary`
 - **Builder:** `moduleDrafts`
 - **Notes:** `facilitatorNotes`
+- **Family members:** `familyMembers`
+- **Provider codes:** `providerCodes`
 
 ### Sanity CMS — 9 schemas
 `capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`
@@ -208,4 +213,4 @@
 
 ---
 
-*Updated 30 March 2026. Update this file when priorities shift or major decisions are made.*
+*Updated 2 April 2026. Update this file when priorities shift or major decisions are made.*

@@ -223,7 +223,7 @@ function ConstellationView({
     return map;
   }, [activeThreads]);
 
-  const domainPositions = useMemo(() => getDomainPositions(CX, CY, 160), []);
+  const domainPositions = useMemo(() => getDomainPositions(CX, CY, 160), [CX, CY]);
 
   // When a domain is focused, show it zoomed in at center
   const focusedThreads = useMemo(() => {
@@ -231,7 +231,7 @@ function ConstellationView({
     const domain = THREAD_DOMAINS.find((d) => d.key === focusDomain);
     if (!domain) return null;
     return getThreadPositions(domain, CX, CY, 140, threadDataMap);
-  }, [focusDomain, threadDataMap]);
+  }, [focusDomain, threadDataMap, CX, CY]);
 
   return (
     <svg

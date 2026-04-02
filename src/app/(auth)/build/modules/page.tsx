@@ -954,6 +954,10 @@ function SharedEditView({
 
   const handleSave = async (status: 'draft' | 'complete') => {
     if (!form.title.trim()) { setError('Module title is required.'); return; }
+    if (status === 'complete' && !form.targetUnderstanding.trim()) {
+      setError('Target understanding is required before completing. What will the child understand?');
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft(form.pathway, { ...form }, status);
     setSaving(false);
@@ -962,10 +966,14 @@ function SharedEditView({
   };
 
   const handlePublishFromPreview = async () => {
+    if (!form.targetUnderstanding.trim()) {
+      setError('Target understanding is required to publish. This is the heart of UbD — what will the child understand?');
+      setPreviewing(false);
+      return;
+    }
     setSaving(true); setError(null);
     const ok = await saveDraft(form.pathway, { ...form }, 'complete');
     if (ok) {
-      // Publish to Sanity family library (non-blocking — draft saved regardless)
       publishFromEditData(form).catch(() => {});
     }
     setSaving(false);
@@ -1051,11 +1059,13 @@ function SharedEditView({
 
         {/* Target understanding */}
         <div>
-          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">What will they understand?</label>
+          <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
+            What will they understand? <span className="text-ember">*</span>
+          </label>
           <textarea
             value={form.targetUnderstanding}
             onChange={(e) => setForm((f) => ({ ...f, targetUnderstanding: e.target.value }))}
-            placeholder="What's the key understanding this module develops? AI will suggest one if you leave this blank."
+            placeholder="The key understanding this module develops — required for publishing."
             rows={2}
             className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
           />
@@ -1203,6 +1213,7 @@ function SharedEditView({
           onDraft={() => handleSave('draft')}
           onContinue={() => {
             if (!form.title.trim()) { setError('Module title is required.'); return; }
+            if (!form.targetUnderstanding.trim()) { setError('Target understanding is required before preview. What will the child understand?'); return; }
             setPreviewing(true);
           }}
           continueLabel="Preview & Save"

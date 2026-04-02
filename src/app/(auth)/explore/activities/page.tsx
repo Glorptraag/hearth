@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { ALL_MODULES_QUERY } from '@/lib/sanity/queries';
+import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
+import { usePedagogy } from '@/hooks/use-pedagogy';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,17 @@ interface Pack {
   description?: string;
   subjects?: string[];
   modules: Module[];
+}
+
+interface ProjectSummary {
+  _id: string;
+  title: string;
+  description?: string;
+  subjects?: string[];
+  ageRange?: { min: number; max: number };
+  duration?: string;
+  stageCount: number;
+  badges?: { _id: string; title: string; emoji?: string }[];
 }
 
 const SUBJECTS = [
@@ -268,8 +280,10 @@ function PreviewModal({
 
 export default function ExploreActivitiesPage() {
   const router = useRouter();
+  const { pedagogy, vocab } = usePedagogy();
   const [packs, setPacks] = useState<Pack[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [packIds, setPackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
@@ -282,15 +296,18 @@ export default function ExploreActivitiesPage() {
 
   const loadModules = useCallback(async () => {
     try {
-      const [libraryRes, rawPacks] = await Promise.all([
+      const [libraryRes, rawPacks, rawProjects] = await Promise.all([
         fetch('/api/library'),
         sanityClient.fetch<{ _id: string; title: string; description?: string; subjects?: string[]; modules: Module[] | null }[]>(ALL_MODULES_QUERY),
+        sanityClient.fetch<ProjectSummary[]>(ALL_PROJECTS_QUERY),
       ]);
 
       if (libraryRes.ok) {
         const library: { sanityPackId: string }[] = await libraryRes.json();
         setPackIds(library.map((r) => r.sanityPackId));
       }
+
+      setProjects(Array.isArray(rawProjects) ? rawProjects : []);
 
       const enrichedPacks: Pack[] = rawPacks.map((p) => ({
         _id: p._id,
@@ -389,7 +406,7 @@ export default function ExploreActivitiesPage() {
           Explore
         </p>
         <h1 className="font-serif text-2xl font-semibold text-text-primary">
-          Explore Modules
+          {pedagogy !== 'eclectic' ? `Find Your Next ${vocab.sessionNoun.charAt(0).toUpperCase() + vocab.sessionNoun.slice(1)}` : 'Explore Modules'}
         </h1>
       </div>
 
@@ -564,6 +581,80 @@ export default function ExploreActivitiesPage() {
           </div>
         )}
       </div>
+
+      {/* Projects section */}
+      {projects.length > 0 && (
+        <div className="max-w-[1280px] mx-auto px-md lg:px-lg pb-lg">
+          <div className="border-t border-border-subtle pt-xl mt-md">
+            <div className="flex items-center gap-sm mb-lg">
+              <span className="text-lg">◆</span>
+              <h2 className="font-serif text-xl font-semibold text-text-primary">Multi-Stage Projects</h2>
+              <span className="font-sans text-xs text-text-muted">{projects.length} available</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
+              {projects.map((project) => {
+                const primarySubject = project.subjects?.[0] ?? '';
+                return (
+                  <button
+                    key={project._id}
+                    onClick={() => router.push(`/project/${project._id}`)}
+                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
+                    <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(167,139,250,0.6),var(--color-ember),transparent)] opacity-60" />
+
+                    <div className="relative z-10">
+                      <div className="inline-flex items-center gap-xs px-sm py-[2px] rounded-full font-sans text-[10px] font-semibold uppercase tracking-wider mb-sm"
+                        style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.2)' }}
+                      >
+                        ◆ {project.stageCount} Stages
+                      </div>
+
+                      <h3 className="font-serif text-base font-semibold text-text-primary mb-sm leading-snug">
+                        {project.title}
+                      </h3>
+
+                      {project.description && (
+                        <p className="font-serif text-sm text-text-secondary mb-md line-clamp-2 leading-relaxed">
+                          {project.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center gap-md flex-wrap">
+                        {project.duration && (
+                          <span className="font-sans text-xs text-text-muted">📅 {project.duration}</span>
+                        )}
+                        {project.ageRange && (
+                          <span className="font-sans text-xs text-text-muted">👶 {project.ageRange.min}–{project.ageRange.max} yrs</span>
+                        )}
+                      </div>
+
+                      {project.subjects && project.subjects.length > 0 && (
+                        <div className="flex flex-wrap gap-xs mt-sm">
+                          {project.subjects.map((s) => {
+                            const colorClass = SUBJECT_COLOR_MAP[s] ?? 'text-text-muted bg-surface-raised border-border-subtle';
+                            return (
+                              <span key={s} className={`font-sans text-xs rounded-full px-sm py-xs border ${colorClass}`}>
+                                {s}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {project.badges && project.badges.length > 0 && (
+                        <div className="mt-sm flex items-center gap-xs">
+                          <span className="font-sans text-[10px] text-text-muted">🏅 {project.badges.length} badge{project.badges.length !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Planner success toast */}
       {plannerSuccess && (

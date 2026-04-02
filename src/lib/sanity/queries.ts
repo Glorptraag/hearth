@@ -62,6 +62,14 @@ export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id][0]{
   badges[]->{ _id, title, emoji, criteriaSummary }
 }`;
 
+// All published projects for explore/browse
+export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "published"]{
+  _id, title, slug, description, subjects, ageRange, duration,
+  "stageCount": count(stages),
+  badges[]->{ _id, title, emoji },
+  capabilityThreads[]->{ _id, title, domain }
+}`;
+
 // All capability threads (reference data)
 export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(domain, title){
   _id, title, slug, domain, description, dlos,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PortableText } from '@portabletext/react';
 import { sanityClient } from '@/lib/sanity/client';
@@ -129,6 +129,47 @@ function PrepMode({
         </p>
       </div>
 
+      {/* Understanding indicators */}
+      {module.understandingIndicators && (
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+            What to Look For
+          </h2>
+          <div className="space-y-sm">
+            {module.understandingIndicators.emerging && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-amber-400/15 text-amber-400 mt-[2px]">
+                  Emerging
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.emerging}
+                </p>
+              </div>
+            )}
+            {module.understandingIndicators.developing && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-domain-science/15 text-domain-science mt-[2px]">
+                  Developing
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.developing}
+                </p>
+              </div>
+            )}
+            {module.understandingIndicators.demonstrating && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-sage/15 text-sage mt-[2px]">
+                  Demonstrating
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.demonstrating}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Session overview */}
       {activities.length > 0 && (
         <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
@@ -244,6 +285,38 @@ function PrepMode({
   );
 }
 
+// ─── Session Timer ───────────────────────────────────────────────────────────
+
+function SessionTimer({ suggestedMax }: { suggestedMax?: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef<number>(0);
+
+  useEffect(() => {
+    startRef.current = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const exceeding = suggestedMax != null && mins >= suggestedMax;
+  const approaching = suggestedMax != null && !exceeding && mins >= suggestedMax * 0.8;
+
+  return (
+    <div className={`flex items-center gap-xs font-sans text-xs tabular-nums transition-colors duration-200 ${
+      exceeding ? 'text-amber-400' : approaching ? 'text-text-secondary' : 'text-text-muted'
+    }`}>
+      <span>⏱</span>
+      <span>{mins}:{secs.toString().padStart(2, '0')}</span>
+      {suggestedMax != null && (
+        <span className="text-text-muted">/ {suggestedMax}m</span>
+      )}
+    </div>
+  );
+}
+
 // ─── Mode: Facilitate ─────────────────────────────────────────────────────────
 
 function FacilitateMode({
@@ -279,23 +352,26 @@ function FacilitateMode({
     <div className="xl:grid xl:grid-cols-[1fr_280px]">
       {/* Main facilitate content */}
       <div className="px-md py-xl max-w-2xl mx-auto pb-32">
-        {/* Progress dots */}
-        <div className="flex items-center gap-xs mb-xl">
-          {activities.map((_, i) => (
-            <div
-              key={i}
-              className={`h-2 rounded-full transition-all duration-200 ${
-                i === currentIdx
-                  ? 'w-6 bg-ember'
-                  : i < currentIdx
-                  ? 'w-2 bg-ember/40'
-                  : 'w-2 bg-border-subtle'
-              }`}
-            />
-          ))}
-          <span className="font-sans text-xs text-text-muted ml-sm">
-            {currentIdx + 1} of {activities.length}
-          </span>
+        {/* Progress dots + timer */}
+        <div className="flex items-center justify-between mb-xl">
+          <div className="flex items-center gap-xs">
+            {activities.map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 rounded-full transition-all duration-200 ${
+                  i === currentIdx
+                    ? 'w-6 bg-ember'
+                    : i < currentIdx
+                    ? 'w-2 bg-ember/40'
+                    : 'w-2 bg-border-subtle'
+                }`}
+              />
+            ))}
+            <span className="font-sans text-xs text-text-muted ml-sm">
+              {currentIdx + 1} of {activities.length}
+            </span>
+          </div>
+          <SessionTimer suggestedMax={current?.duration?.max} />
         </div>
 
         {/* Activity header */}
@@ -635,12 +711,13 @@ function FacilitateMode({
 
 // ─── Mode: Log ────────────────────────────────────────────────────────────────
 
-function LogMode({ module }: { module: Module }) {
+function LogMode({ module, sessionElapsed }: { module: Module; sessionElapsed?: number }) {
   const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
   const [engagement, setEngagement] = useState<Record<string, number>>({});
   const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
+  const [understandingLevel, setUnderstandingLevel] = useState<Record<string, string>>({});
   const [description, setDescription] = useState(`Completed ${module.title}`);
   const [activePrompts, setActivePrompts] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -695,9 +772,19 @@ function LogMode({ module }: { module: Module }) {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const understandingSuffix = Object.entries(understandingLevel)
+        .filter(([, v]) => v)
+        .map(([lid, level]) => {
+          const name = learners.find((l) => l.id === lid)?.name ?? '';
+          return `${name}: ${level}`;
+        })
+        .join(', ');
       const body = {
         title: `Module: ${module.title}`,
-        description: description + (activePrompts.length > 0 ? '\n\nObservations:\n' + activePrompts.map((p) => `• ${p}`).join('\n') : ''),
+        description: description
+          + (activePrompts.length > 0 ? '\n\nObservations:\n' + activePrompts.map((p) => `• ${p}`).join('\n') : '')
+          + (understandingSuffix ? `\n\nUnderstanding: ${understandingSuffix}` : '')
+          + (sessionElapsed != null ? `\n\nSession duration: ${Math.floor(sessionElapsed / 60)}m ${sessionElapsed % 60}s` : ''),
         dateOccurred: new Date().toISOString().split('T')[0],
         subjects: module.subjects,
         learnerIds: selectedLearnerIds,
@@ -789,6 +876,42 @@ function LogMode({ module }: { module: Module }) {
                       }`}
                     >
                       {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Understanding level — per-child */}
+      {module.understandingIndicators && selectedLearnerIds.length > 0 && (
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
+            Understanding Level
+          </p>
+          {selectedLearnerIds.map((lid) => {
+            const learner = learners.find((l) => l.id === lid);
+            return (
+              <div key={lid} className="mb-md last:mb-0">
+                <p className="font-serif text-sm text-text-primary mb-sm">{learner?.name}</p>
+                <div className="flex gap-xs flex-wrap">
+                  {([
+                    { key: 'emerging', label: 'Emerging', badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30', desc: module.understandingIndicators!.emerging },
+                    { key: 'developing', label: 'Developing', badge: 'bg-domain-science/15 text-domain-science border-domain-science/30', desc: module.understandingIndicators!.developing },
+                    { key: 'demonstrating', label: 'Demonstrating', badge: 'bg-sage/15 text-sage border-sage/30', desc: module.understandingIndicators!.demonstrating },
+                  ] as const).map(({ key, label, badge }) => (
+                    <button
+                      key={key}
+                      onClick={() => setUnderstandingLevel((prev) => ({ ...prev, [lid]: prev[lid] === key ? '' : key }))}
+                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition-all duration-200 ${
+                        understandingLevel[lid] === key
+                          ? badge
+                          : 'bg-transparent border-border-subtle text-text-muted hover:border-border-medium'
+                      }`}
+                    >
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -957,6 +1080,8 @@ export default function ModuleDetailPage() {
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
   const [pedagogy, setPedagogy] = useState<string | null>(null);
   const [savedChunkIdx, setSavedChunkIdx] = useState<number>(0);
+  const [sessionElapsed, setSessionElapsed] = useState<number | undefined>(undefined);
+  const facilitateStartRef = useRef<number | null>(null);
 
   const STORAGE_KEY = `hearth_module_${id}_session`;
 
@@ -1128,7 +1253,12 @@ export default function ModuleDetailPage() {
             {(['prep', 'facilitate', 'log'] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
+                onClick={() => {
+                  if (m === 'log' && facilitateStartRef.current) {
+                    setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
+                  }
+                  setMode(m);
+                }}
                 className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                   mode === m
                     ? 'bg-ember-glow border-l-ember'
@@ -1157,7 +1287,12 @@ export default function ModuleDetailPage() {
             {(['prep', 'facilitate', 'log'] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
+                onClick={() => {
+                  if (m === 'log' && facilitateStartRef.current) {
+                    setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
+                  }
+                  setMode(m);
+                }}
                 className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
                   mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
                 }`}
@@ -1175,7 +1310,7 @@ export default function ModuleDetailPage() {
           <PrepMode
             module={module}
             approachIdx={selectedApproachIdx}
-            onStart={() => { clearSession(); setMode('facilitate'); }}
+            onStart={() => { clearSession(); facilitateStartRef.current = Date.now(); setMode('facilitate'); }}
             savedChunkIdx={savedChunkIdx}
             onResume={() => setMode('facilitate')}
           />
@@ -1186,7 +1321,13 @@ export default function ModuleDetailPage() {
             approachIdx={selectedApproachIdx}
             overlays={overlays}
             pedagogy={pedagogy}
-            onFinish={() => { clearSession(); setMode('log'); }}
+            onFinish={() => {
+              clearSession();
+              if (facilitateStartRef.current) {
+                setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
+              }
+              setMode('log');
+            }}
             onPause={() => {
               setMode('prep');
               fetch('/api/notifications/trigger', {
@@ -1203,7 +1344,7 @@ export default function ModuleDetailPage() {
             onChunkChange={persistChunk}
           />
         )}
-        {mode === 'log' && <LogMode module={module} />}
+        {mode === 'log' && <LogMode module={module} sessionElapsed={sessionElapsed} />}
       </div>
     </div>
   );

@@ -108,7 +108,7 @@ const DATE_FILTERS = [
 const PAGE_SIZE = 20;
 
 export default function PortfolioPage() {
-  usePedagogy();
+  const { vocab } = usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -282,7 +282,9 @@ export default function PortfolioPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-md py-xl lg:px-lg lg:py-2xl">
-      <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">Learning Journey</h1>
+      <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">
+        {vocab.sessionNoun === 'session' ? 'Learning Journey' : `${vocab.learnerNoun.charAt(0).toUpperCase() + vocab.learnerNoun.slice(1)}'s Journey`}
+      </h1>
 
       {/* Child selector */}
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
@@ -292,13 +294,13 @@ export default function PortfolioPage() {
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm">{currentMonthName} Summary</p>
         {monthlySummary.count === 0 ? (
-          <p className="font-serif text-sm text-text-muted italic">No entries yet this month</p>
+          <p className="font-serif text-sm text-text-muted italic">No {vocab.sessionNoun}s logged yet this month</p>
         ) : (
           <>
             <div className="flex gap-xl mb-md">
               <div>
                 <p className="font-sans text-2xl font-semibold text-ember">{monthlySummary.count}</p>
-                <p className="font-sans text-xs text-text-muted">Entries</p>
+                <p className="font-sans text-xs text-text-muted capitalize">{vocab.sessionNoun}s</p>
               </div>
               <div>
                 <p className="font-sans text-2xl font-semibold text-text-primary">{monthlySummary.subjects}</p>
@@ -403,7 +405,7 @@ export default function PortfolioPage() {
           {/* Early nudge */}
           {entries.length > 0 && entries.length <= 5 && (
             <p className="mb-md font-serif text-sm italic text-text-muted">
-              You&rsquo;re building momentum &mdash; {entries.length} moment{entries.length !== 1 ? 's' : ''} and counting.
+              You&rsquo;re building momentum &mdash; {entries.length} {vocab.sessionNoun}{entries.length !== 1 ? 's' : ''} and counting.
             </p>
           )}
 
@@ -429,7 +431,7 @@ export default function PortfolioPage() {
                 <span className="text-3xl mb-md block">📖</span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
                 <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
-                  Every log you add becomes part of your learning story. Once you&apos;ve captured a few sessions, they&apos;ll appear here as a portrait of your child&apos;s growing knowledge.
+                  Every {vocab.sessionNoun} you log becomes part of your learning story. Once you&apos;ve captured a few, they&apos;ll appear here as a portrait of your {vocab.learnerNoun}&apos;s {vocab.growthNoun}.
                 </p>
                 <Link
                   href="/log"

@@ -170,14 +170,17 @@ function ProjectOverview({
             return (
               <div key={stage._id}>
                 <button
-                  onClick={() => onStageSelect(idx)}
+                  onClick={() => { if (!isLocked) onStageSelect(idx); }}
+                  disabled={isLocked}
                   className={`w-full flex items-start gap-md rounded-lg border p-lg text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
                     isCompleted
                       ? 'border-sage/20 bg-sage/5 hover:border-sage/30'
                       : isActive
                         ? 'border-ember/30 bg-ember-glow hover:border-ember/50'
-                        : 'border-border-subtle bg-surface-panel hover:border-border-medium'
-                  } ${isLocked ? 'opacity-50' : ''}`}
+                        : isLocked
+                          ? 'border-border-subtle bg-surface-panel opacity-50 cursor-not-allowed'
+                          : 'border-border-subtle bg-surface-panel hover:border-border-medium'
+                  }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-sans text-sm font-semibold ${
@@ -253,9 +256,11 @@ function StageDetail({
   stage: Stage;
   isCompleted: boolean;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (artifactNote?: string) => void;
 }) {
   const [materialsChecked, setMaterialsChecked] = useState<Record<string, boolean>>({});
+  const [showCompletePrompt, setShowCompletePrompt] = useState(false);
+  const [artifactNote, setArtifactNote] = useState('');
   const materials = stage.materials ?? [];
   const totalStages = project.stages?.length ?? 0;
 
@@ -343,9 +348,43 @@ function StageDetail({
             <div className="text-center py-md">
               <span className="font-sans text-sm text-sage font-semibold">✓ Stage complete</span>
             </div>
+          ) : showCompletePrompt ? (
+            <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg">
+              {stage.artifactDescription && (
+                <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
+                  What did you create?
+                </p>
+              )}
+              <p className="font-serif text-sm text-text-secondary mb-md">
+                {stage.artifactDescription
+                  ? `This stage produces: ${stage.artifactDescription}. Add a quick note about what was made.`
+                  : 'Any notes about this stage before completing?'}
+              </p>
+              <textarea
+                value={artifactNote}
+                onChange={(e) => setArtifactNote(e.target.value)}
+                placeholder="Brief note (optional)"
+                rows={2}
+                className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-serif text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium resize-none mb-md"
+              />
+              <div className="flex gap-sm">
+                <button
+                  onClick={() => onComplete(artifactNote || undefined)}
+                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+                >
+                  Complete Stage ✓
+                </button>
+                <button
+                  onClick={() => setShowCompletePrompt(false)}
+                  className="font-sans text-sm text-text-muted hover:text-text-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           ) : (
             <button
-              onClick={onComplete}
+              onClick={() => setShowCompletePrompt(true)}
               className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
             >
               Mark Stage Complete
@@ -405,13 +444,22 @@ export default function ProjectDetailPage() {
     window.scrollTo(0, 0);
   }
 
-  function handleComplete() {
+  function handleComplete(artifactNote?: string) {
     if (!project?.stages) return;
     const stage = project.stages[selectedStageIdx];
     const next = new Set(completedIds);
     next.add(stage._id);
     setCompletedIds(next);
     setCompletedStages(project._id, next);
+    // Store artifact note if provided
+    if (artifactNote) {
+      try {
+        const key = `hearth:project:${project._id}:artifacts`;
+        const existing = JSON.parse(localStorage.getItem(key) ?? '{}');
+        existing[stage._id] = artifactNote;
+        localStorage.setItem(key, JSON.stringify(existing));
+      } catch { /* ignore */ }
+    }
     setView('overview');
     window.scrollTo(0, 0);
   }

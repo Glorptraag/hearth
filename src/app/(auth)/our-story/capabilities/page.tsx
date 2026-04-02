@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName, THREAD_NAMES, THREAD_DOMAINS, getThreadDomain, THREAD_CONNECTIONS, type ThreadDomain } from '@/lib/capability-threads';
 
@@ -17,6 +18,20 @@ type ActiveThread = {
   observation_count: number;
   suggested_tier: string;
   last_evidence_date: string;
+};
+
+type CapabilityThread = { thread_id: string; confidence: number };
+type EvidenceEntry = {
+  id: string;
+  title: string;
+  description: string | null;
+  dateOccurred: string;
+  source: string;
+  sourceModuleId?: string;
+  aiEnrichment: {
+    capability_threads?: CapabilityThread[];
+    confidence?: number;
+  } | null;
 };
 
 const TIER_CONFIG: Record<string, { label: string; badge: string; bar: string; glow: string; radius: number; opacity: number }> = {
@@ -193,6 +208,143 @@ function ThreadDetailPanel({
               </button>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Breadcrumb ──────────────────────────────────────────────────────────
+
+function ConstellationBreadcrumb({
+  focusDomain,
+  selectedThreadName,
+  onNavigate,
+}: {
+  focusDomain: string | null;
+  selectedThreadName: string | null;
+  onNavigate: (level: 'domains' | 'domain' | 'thread') => void;
+}) {
+  const domain = focusDomain ? THREAD_DOMAINS.find((d) => d.key === focusDomain) : null;
+
+  return (
+    <nav className="flex items-center gap-xs font-sans text-xs text-text-muted mt-md mb-sm overflow-x-auto">
+      <button
+        onClick={() => onNavigate('domains')}
+        className={`shrink-0 transition-colors duration-200 ${!focusDomain ? 'text-text-primary font-semibold' : 'hover:text-text-secondary'}`}
+      >
+        Domains
+      </button>
+      {domain && (
+        <>
+          <span className="text-border-medium">›</span>
+          <button
+            onClick={() => onNavigate('domain')}
+            className={`shrink-0 transition-colors duration-200 ${focusDomain && !selectedThreadName ? 'text-text-primary font-semibold' : 'hover:text-text-secondary'}`}
+          >
+            {domain.emoji} {domain.label}
+          </button>
+        </>
+      )}
+      {selectedThreadName && (
+        <>
+          <span className="text-border-medium">›</span>
+          <span className="text-text-primary font-semibold truncate max-w-[200px]">
+            {selectedThreadName}
+          </span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+// ─── Thread Evidence Panel ───────────────────────────────────────────────
+
+function ThreadEvidencePanel({
+  threadId,
+  threadName,
+  learnerId,
+}: {
+  threadId: string;
+  threadName: string;
+  learnerId: string;
+}) {
+  const [entries, setEntries] = useState<EvidenceEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/entries?learnerId=${learnerId}&limit=500`)
+      .then((r) => r.json())
+      .then((data: EvidenceEntry[]) => {
+        if (cancelled) return;
+        const contributing = (Array.isArray(data) ? data : []).filter((e) =>
+          e.aiEnrichment?.capability_threads?.some(
+            (ct) => ct.thread_id === threadId && ct.confidence >= 0.5
+          )
+        );
+        setEntries(contributing.sort((a, b) => new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime()));
+      })
+      .catch(() => { if (!cancelled) setEntries([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [threadId, learnerId]);
+
+  return (
+    <div className="mt-md rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md">
+        Evidence for {threadName}
+      </p>
+
+      {loading ? (
+        <div className="space-y-sm">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse h-14 bg-surface-raised rounded-md" />
+          ))}
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="text-center py-lg">
+          <p className="font-serif text-sm text-text-muted italic">
+            No observations mapped to this thread yet. When you log learning that relates to &ldquo;{threadName}&rdquo;, evidence will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-sm">
+          {entries.map((entry) => {
+            const confidence = entry.aiEnrichment?.capability_threads?.find(
+              (ct) => ct.thread_id === threadId
+            )?.confidence;
+            return (
+              <Link
+                key={entry.id}
+                href="/our-story/portfolio"
+                className="flex items-start gap-md rounded-[10px] border border-border-subtle bg-surface-raised p-md hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 group"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif text-sm font-semibold text-text-primary truncate group-hover:text-ember transition-colors duration-200">
+                    {entry.title}
+                  </p>
+                  {entry.description && (
+                    <p className="font-serif text-xs text-text-muted mt-xs line-clamp-2">
+                      {entry.description.slice(0, 120)}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-sm mt-xs">
+                    <span className="font-sans text-[10px] text-text-muted">{entry.dateOccurred}</span>
+                    <span className="font-sans text-[10px] text-text-muted">
+                      {entry.source === 'module_log' ? '📋 Module' : '✏️ Logger'}
+                    </span>
+                    {confidence != null && (
+                      <span className={`font-sans text-[10px] ${confidence >= 0.8 ? 'text-sage' : 'text-text-muted'}`}>
+                        {confidence >= 0.8 ? 'High' : 'Moderate'} match
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="font-sans text-xs text-text-muted mt-sm shrink-0 group-hover:text-ember transition-colors duration-200">→</span>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
@@ -573,6 +725,16 @@ export default function CapabilitiesPage() {
 
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
+      {/* Breadcrumb */}
+      <ConstellationBreadcrumb
+        focusDomain={focusDomain}
+        selectedThreadName={selectedThread?.name ?? null}
+        onNavigate={(level) => {
+          if (level === 'domains') { setFocusDomain(null); setSelectedThreadId(null); }
+          else if (level === 'domain') { setSelectedThreadId(null); }
+        }}
+      />
+
       {/* Stats row */}
       <div className="mt-lg flex gap-md">
         <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
@@ -638,7 +800,7 @@ export default function CapabilitiesPage() {
             />
           </div>
 
-          {/* Thread detail panel */}
+          {/* Thread detail panel + evidence drill-down (Level 3) */}
           {selectedThread && (
             <div className="mt-md">
               <ThreadDetailPanel
@@ -656,6 +818,13 @@ export default function CapabilitiesPage() {
                   setSelectedThreadId(null);
                 }}
               />
+              {selectedLearnerId && (
+                <ThreadEvidencePanel
+                  threadId={selectedThread.id}
+                  threadName={selectedThread.name}
+                  learnerId={selectedLearnerId}
+                />
+              )}
             </div>
           )}
         </>
@@ -707,28 +876,40 @@ export default function CapabilitiesPage() {
                         threads.map((thread) => {
                           const tierCfg = TIER_CONFIG[thread.suggested_tier] ?? TIER_CONFIG.emerging;
                           const progressWidth = thread.suggested_tier === 'emerging' ? '25%' : thread.suggested_tier === 'developing' ? '60%' : '90%';
+                          const isSelected = selectedThreadId === thread.thread_id;
                           return (
-                            <div
-                              key={thread.thread_id}
-                              className="rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-sm">
-                                  <h3 className="font-serif text-sm font-semibold text-text-primary">
-                                    {getThreadName(thread.thread_id)}
-                                  </h3>
-                                  <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${tierCfg.badge}`}>
-                                    {tierCfg.label}
-                                  </span>
+                            <div key={thread.thread_id}>
+                              <button
+                                onClick={() => setSelectedThreadId(isSelected ? null : thread.thread_id)}
+                                className={`w-full text-left rounded-[10px] border bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ${
+                                  isSelected ? 'border-ember' : 'border-border-subtle'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-sm">
+                                    <h3 className="font-serif text-sm font-semibold text-text-primary">
+                                      {getThreadName(thread.thread_id)}
+                                    </h3>
+                                    <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${tierCfg.badge}`}>
+                                      {tierCfg.label}
+                                    </span>
+                                  </div>
+                                  <span className="font-sans text-[10px] font-semibold text-text-muted">{thread.observation_count} obs</span>
                                 </div>
-                                <span className="font-sans text-[10px] font-semibold text-text-muted">{thread.observation_count} obs</span>
-                              </div>
-                              {thread.last_evidence_date && (
-                                <p className="font-sans text-[10px] text-text-muted mt-xs">Last: {thread.last_evidence_date}</p>
+                                {thread.last_evidence_date && (
+                                  <p className="font-sans text-[10px] text-text-muted mt-xs">Last: {thread.last_evidence_date}</p>
+                                )}
+                                <div className="mt-sm h-1 w-full rounded-full bg-surface-hover overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`} style={{ width: progressWidth }} />
+                                </div>
+                              </button>
+                              {isSelected && selectedLearnerId && (
+                                <ThreadEvidencePanel
+                                  threadId={thread.thread_id}
+                                  threadName={getThreadName(thread.thread_id)}
+                                  learnerId={selectedLearnerId}
+                                />
                               )}
-                              <div className="mt-sm h-1 w-full rounded-full bg-surface-hover overflow-hidden">
-                                <div className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`} style={{ width: progressWidth }} />
-                              </div>
                             </div>
                           );
                         })

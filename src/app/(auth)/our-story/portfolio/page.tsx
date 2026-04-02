@@ -47,6 +47,10 @@ type AiEnrichment = {
   confidence?: number;
   milestone_flag?: boolean;
   suggested_thread?: string;
+  journey_observation?: {
+    text: string;
+    trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
+  } | null;
 } | null;
 
 type Entry = {
@@ -98,7 +102,10 @@ const DATE_FILTERS = [
   { key: 'month', label: 'This Month' },
   { key: 'last', label: 'Last Month' },
   { key: 'all', label: 'All Time' },
+  { key: 'custom', label: 'Pick Month' },
 ] as const;
+
+const PAGE_SIZE = 20;
 
 export default function PortfolioPage() {
   usePedagogy();
@@ -109,7 +116,9 @@ export default function PortfolioPage() {
   const [threads, setThreads] = useState<ActiveThread[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all'>('all');
+  const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all' | 'custom'>('all');
+  const [customMonth, setCustomMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [openThreads, setOpenThreads] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'thread' | 'chronological'>('thread');
@@ -169,6 +178,10 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedLearnerId, subjectFilter]);
+
+  useEffect(() => {
     if (!selectedLearnerId) return;
     Promise.all([
       fetch(`/api/entries?learnerId=${selectedLearnerId}`).then((r) => r.json()),
@@ -196,9 +209,14 @@ export default function PortfolioPage() {
       const start = format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd');
       const end = format(startOfMonth(new Date()), 'yyyy-MM-dd');
       result = result.filter((e) => e.dateOccurred >= start && e.dateOccurred < end);
+    } else if (dateFilter === 'custom' && customMonth) {
+      const start = `${customMonth}-01`;
+      const [y, m] = customMonth.split('-').map(Number);
+      const nextMonth = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+      result = result.filter((e) => e.dateOccurred >= start && e.dateOccurred < nextMonth);
     }
     return result;
-  }, [entries, subjectFilter, dateFilter]);
+  }, [entries, subjectFilter, dateFilter, customMonth]);
 
   const monthlySummary = useMemo(() => {
     const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
@@ -218,9 +236,9 @@ export default function PortfolioPage() {
   }, [threads]);
 
   const getCardType = (entry: Entry): CardType => {
-    if (entry.evidenceUrls && entry.evidenceUrls.length > 0) return 'evidence';
     if (entry.aiEnrichment?.milestone_flag === true) return 'milestone';
-    return 'journey';
+    if (entry.aiEnrichment?.journey_observation) return 'journey';
+    return 'evidence';
   };
 
   const groupedAndSortedEntries = useMemo(() => {
@@ -238,9 +256,11 @@ export default function PortfolioPage() {
     return sorted;
   }, [filteredEntries]);
 
-  const chronologicalEntries = useMemo(() => {
+  const sortedChronological = useMemo(() => {
     return [...filteredEntries].sort((a, b) => new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime());
   }, [filteredEntries]);
+
+  const chronologicalEntries = useMemo(() => sortedChronological.slice(0, visibleCount), [sortedChronological, visibleCount]);
 
   const toggleThread = (thread: string) => {
     setOpenThreads((prev) => {
@@ -304,11 +324,11 @@ export default function PortfolioPage() {
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-sm mb-md">
             {/* Date filter */}
-            <div className="flex gap-xs">
+            <div className="flex flex-wrap gap-xs">
               {DATE_FILTERS.map((f) => (
                 <button
                   key={f.key}
-                  onClick={() => setDateFilter(f.key)}
+                  onClick={() => { setDateFilter(f.key); setVisibleCount(PAGE_SIZE); }}
                   className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
                     dateFilter === f.key
                       ? 'bg-ember text-text-inverse'
@@ -318,6 +338,14 @@ export default function PortfolioPage() {
                   {f.label}
                 </button>
               ))}
+              {dateFilter === 'custom' && (
+                <input
+                  type="month"
+                  value={customMonth}
+                  onChange={(e) => { setCustomMonth(e.target.value); setVisibleCount(PAGE_SIZE); }}
+                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-200 focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] min-h-[32px]"
+                />
+              )}
             </div>
 
             <div className="h-[16px] w-px bg-border-subtle" />
@@ -753,6 +781,12 @@ export default function PortfolioPage() {
                             {entry.description && (
                               <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
                             )}
+                            {entry.aiEnrichment?.journey_observation && (
+                              <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
+                                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">✨ Journey Observation</p>
+                                <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
+                              </div>
+                            )}
                             <button
                               onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
                               className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
@@ -797,6 +831,18 @@ export default function PortfolioPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Load earlier */}
+          {visibleCount < sortedChronological.length && (
+            <div className="mt-md text-center">
+              <button
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="font-sans text-sm text-text-secondary border border-border-subtle rounded-md px-lg py-sm hover:border-border-medium hover:text-text-primary transition-all duration-200"
+              >
+                Load earlier ({sortedChronological.length - visibleCount} more)
+              </button>
             </div>
           )}
 

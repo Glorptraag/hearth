@@ -45,6 +45,10 @@ OUTPUT SCHEMA:
     "description_richness": "thin|adequate|rich",
     "evidence_present": true/false,
     "multi_subject": true/false
+  },
+  "journey_observation": null | {
+    "text": "string",
+    "trigger": "cross_domain|independence|metacognition|transfer"
   }
 }
 
@@ -75,7 +79,8 @@ RULES:
 - Only use real AC V9 descriptor codes (format: AC9[Subject][Year][Strand][Number]). If unsure, omit.
 - Per-child signals are required if multiple children participated.
 - insight_suggestions: 1-3 short sentences a parent would find encouraging and specific. Use family's pedagogical philosophy if provided.
-- If entry text is very thin (<20 words), return minimal mappings with low confidence.`;
+- If entry text is very thin (<20 words), return minimal mappings with low confidence.
+- journey_observation: Include ONLY when you detect a genuinely meaningful pattern — cross-domain connection (learning from one area applied to another), independence marker (child self-directed, initiated, or persisted without adult prompting), metacognition (child reflecting on their own learning process), or transfer of learning (applying prior knowledge to a new context). Aim for roughly 1 per 5 entries — do NOT include for every entry. When included: 1-2 warm, interpretive sentences written from the facilitator's perspective. Set to null when not warranted.`;
 
 export type EnrichmentResult = {
   subjects_detected: string[];
@@ -93,6 +98,10 @@ export type EnrichmentResult = {
     evidence_present: boolean;
     multi_subject: boolean;
   };
+  journey_observation: {
+    text: string;
+    trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
+  } | null;
 };
 
 interface EnrichmentContext {
@@ -203,7 +212,18 @@ ${discoveriesLine || '(none)'}
 Engagement selections: ${engagementLine || '(none)'}`;
 }
 
+const VALID_JOURNEY_TRIGGERS = new Set(['cross_domain', 'independence', 'metacognition', 'transfer']);
+
 function validateEnrichment(raw: EnrichmentResult, childNames: string[]): EnrichmentResult {
+  const rawJourney = raw.journey_observation;
+  const journey_observation =
+    rawJourney &&
+    typeof rawJourney.text === 'string' &&
+    rawJourney.text.length > 10 &&
+    VALID_JOURNEY_TRIGGERS.has(rawJourney.trigger)
+      ? { text: rawJourney.text, trigger: rawJourney.trigger }
+      : null;
+
   return {
     ...raw,
     capability_threads: (raw.capability_threads ?? []).filter(
@@ -225,6 +245,7 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
       evidence_present: false,
       multi_subject: false,
     },
+    journey_observation,
   };
 }
 

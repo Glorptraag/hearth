@@ -62,3 +62,35 @@ export async function getFamilyRole(
   });
   return (membership?.role as 'editor' | 'viewer') ?? null;
 }
+
+/**
+ * Check if a user has write permission for a family.
+ * Only 'owner' and 'editor' roles can write. 'viewer' is read-only.
+ * Returns { allowed: true } or { allowed: false, statusCode: 403 }
+ */
+export async function checkWritePermission(
+  clerkUserId: string,
+  familyId: string
+): Promise<{ allowed: true } | { allowed: false; statusCode: 403 }> {
+  const role = await getFamilyRole(clerkUserId, familyId);
+  if (role === 'owner' || role === 'editor') {
+    return { allowed: true };
+  }
+  return { allowed: false, statusCode: 403 };
+}
+
+/**
+ * Check if a user is the owner of a family.
+ * Only owners can manage family members, settings, and account.
+ * Returns { allowed: true } or { allowed: false, statusCode: 403 }
+ */
+export async function checkOwnerPermission(
+  clerkUserId: string,
+  familyId: string
+): Promise<{ allowed: true } | { allowed: false; statusCode: 403 }> {
+  const role = await getFamilyRole(clerkUserId, familyId);
+  if (role === 'owner') {
+    return { allowed: true };
+  }
+  return { allowed: false, statusCode: 403 };
+}

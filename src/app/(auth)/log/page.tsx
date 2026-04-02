@@ -389,7 +389,7 @@ export default function LogPage() {
   // ─── UI state ───
   const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'badge'; message: string; action?: { label: string; href: string } } | null>(null);
   const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
@@ -542,6 +542,7 @@ export default function LogPage() {
 
       clearDraft();
       setToast({ type: 'success', message: 'Learning entry saved!' });
+      const learnersToCheck = [...selectedLearners];
       setSelectedLearners([]);
       setTogetherMode(false);
       setDescription('');
@@ -554,6 +555,35 @@ export default function LogPage() {
       setLocation(null);
       setObservations([]);
       setEvidence([]);
+
+      // Check badge thresholds after pipeline settles (~3s for enrichment + snapshot rebuild)
+      setTimeout(async () => {
+        try {
+          const badgeResults = await Promise.all(
+            learnersToCheck.map(async (learnerId) => {
+              const r = await fetch('/api/badges/check-thresholds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ learnerId }),
+              });
+              if (!r.ok) return [];
+              const d = await r.json();
+              return (d.badgeIds ?? []) as string[];
+            })
+          );
+          const readyIds = badgeResults.flat();
+          if (readyIds.length > 0) {
+            setToast({
+              type: 'badge',
+              message: `${readyIds.length} badge${readyIds.length > 1 ? 's' : ''} ready to assess`,
+              action: { label: 'Review →', href: `/badges/assess/${readyIds[0]}` },
+            });
+            setTimeout(() => setToast(null), 8000);
+          }
+        } catch {
+          // badge check is non-critical — silently ignore
+        }
+      }, 3000);
     } catch {
       setToast({ type: 'error', message: 'Failed to save. Please try again.' });
     } finally {
@@ -1070,13 +1100,23 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 rounded-md px-lg py-sm font-sans text-sm font-medium shadow-[var(--shadow-medium)] transition-all duration-200 ${
-            toast.type === 'success'
+          className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-[var(--shadow-medium)] transition-all duration-200 ${
+            toast.type === 'badge'
+              ? 'bg-ember/20 text-ember border border-ember/30'
+              : toast.type === 'success'
               ? 'bg-sage/20 text-sage border border-sage/30'
               : 'bg-red-900/20 text-red-400 border border-red-900/30'
           }`}
         >
-          {toast.message}
+          <span>{toast.message}</span>
+          {toast.action && (
+            <a
+              href={toast.action.href}
+              className="ml-sm font-semibold underline underline-offset-2 hover:no-underline"
+            >
+              {toast.action.label}
+            </a>
+          )}
         </div>
       )}
     </div>

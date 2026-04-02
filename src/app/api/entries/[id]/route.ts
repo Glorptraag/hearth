@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
-import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { parseBody } from '@/lib/api-helpers';
@@ -52,6 +52,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return NextResponse.json({ error: 'Insufficient permissions to modify entries' }, { status: writeCheck.statusCode });
+  }
+
   const { id } = await params;
 
   const existing = await db.query.learningEntries.findFirst({
@@ -87,6 +92,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return NextResponse.json({ error: 'Insufficient permissions to delete entries' }, { status: writeCheck.statusCode });
+  }
 
   const { id } = await params;
 

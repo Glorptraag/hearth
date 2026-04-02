@@ -1,240 +1,336 @@
 /**
- * API Endpoints for Digital Badging and Learning Assurance
- * Base URL: /api/v1
+ * Hearth LMS — API Route Reference
+ * Base URL: /api
+ * Auth: Clerk (@clerk/nextjs/server)
+ * RBAC: checkWritePermission(clerkUserId, familyId) gates all write endpoints to owner/editor roles
+ * Route count: 48 route files, 65 handlers
+ *
+ * Updated: 2 April 2026
  */
 
-// BADGE MANAGEMENT
-// =============================
+// ═══════════════════════════════════════
+// ENTRIES (Learning Data)
+// ═══════════════════════════════════════
 
-// Get all badges (with filtering options)
-// GET /api/v1/badges
-// Query params: creatorId, frameworkType, skillsRepresented, isPublic
+// List entries for authenticated family
+// GET /api/entries
+// Query: learnerId, from, to, status
 
-// Get a specific badge
-// GET /api/v1/badges/:badgeId
+// Create a new learning entry
+// POST /api/entries
+// Body: { title, description, dateOccurred, subjects[], learnerIds[], engagementPerLearner, discoveriesPerLearner, evidenceUrls[], source, sourceModuleId?, sourceProjectId?, sourceStageNumber? }
+// RBAC: checkWritePermission required
+// Side effect: triggers AI enrichment (enrich.ts → Haiku)
 
-// Create a new badge
-// POST /api/v1/badges
-// Body: {
-//   name: String,
-//   description: String,
-//   criteria: String,
-//   skillsRepresented: [String],
-//   frameworkMappings: [
-//     {
-//       frameworkType: String,
-//       frameworkIdentifier: String,
-//       description: String,
-//       level: String
-//     }
-//   ],
-//   isPublic: Boolean
-// }
+// Get a single entry
+// GET /api/entries/[id]
 
-// Update a badge
-// PUT /api/v1/badges/:badgeId
-// Body: same as POST with updated fields
+// Update an entry
+// PATCH /api/entries/[id]
+// Body: partial entry fields
+// RBAC: checkWritePermission required
 
-// Delete a badge
-// DELETE /api/v1/badges/:badgeId
+// Delete an entry
+// DELETE /api/entries/[id]
+// RBAC: checkWritePermission required
 
-// Upload badge image
-// POST /api/v1/badges/:badgeId/image
-// Body: FormData with image file
+// Mark entry as complete (triggers snapshot rebuild)
+// POST /api/entries/[id]/complete
+// Side effect: rebuildSnapshot(familyId, 'entry_saved')
 
-// LEARNER BADGE MANAGEMENT
-// =============================
+// Import entries from CSV
+// POST /api/entries/import
+// Body: { csv: string }
+// RBAC: checkWritePermission required
+// Side effect: AI enrichment + snapshot rebuild
 
-// Get all badges for a learner
-// GET /api/v1/learners/:learnerId/badges
-// Query params: visibility, dateFrom, dateTo
+// ═══════════════════════════════════════
+// LEARNERS
+// ═══════════════════════════════════════
+
+// List all learners for authenticated family
+// GET /api/learners
+
+// Create a new learner
+// POST /api/learners
+// Body: { name, dateOfBirth?, shapeIcon?, colourToken? }
+
+// Get a single learner
+// GET /api/learners/[id]
+
+// Update a learner
+// PATCH /api/learners/[id]
+// Body: partial learner fields (including profileData)
+
+// Delete a learner
+// DELETE /api/learners/[id]
+
+// ═══════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════
+
+// List all badge definitions for family
+// GET /api/badges
+
+// Create a badge definition
+// POST /api/badges
+// Body: { title, description?, emoji?, criteriaSummary?, indicatorStatements[], capabilityThreadIds[], observationThreshold? }
+
+// Get a single badge definition
+// GET /api/badges/[id]
+
+// Retract a badge award
+// PATCH /api/badges/[id]/retract
+// Body: { learnerId }
 
 // Award a badge to a learner
-// POST /api/v1/learners/:learnerId/badges
-// Body: {
-//   badgeId: String,
-//   notes: String,
-//   evidenceIds: [String],
-//   visibility: String
-// }
+// POST /api/badges/award
+// Body: { badgeDefinitionId, learnerId, evidenceEntryIds[], notes? }
 
-// Update a learner's badge
-// PUT /api/v1/learners/:learnerId/badges/:learnerBadgeId
-// Body: same as POST with updated fields
+// List all badge awards (optionally filtered by learner)
+// GET /api/badges/awards
+// Query: learnerId
 
-// Delete a learner's badge
-// DELETE /api/v1/learners/:learnerId/badges/:learnerBadgeId
+// Check if any badge thresholds are met for a learner
+// POST /api/badges/check-thresholds
+// Body: { learnerId }
 
-// PORTFOLIO MANAGEMENT
-// =============================
+// Defer a badge assessment (set cooling period)
+// POST /api/badges/defer
+// Body: { badgeDefinitionId, learnerId, coolingDays? }
 
-// Get a learner's portfolio
-// GET /api/v1/learners/:learnerId/portfolio
-// Query params: visibility
+// Get assessment history for a badge+learner
+// GET /api/badges/history
+// Query: badgeDefinitionId, learnerId
 
-// Create or update a learner's portfolio
-// PUT /api/v1/learners/:learnerId/portfolio
-// Body: {
-//   name: String,
-//   description: String,
-//   sections: [
-//     {
-//       title: String,
-//       description: String,
-//       items: [
-//         {
-//           type: String,
-//           itemId: String,
-//           notes: String,
-//           featured: Boolean
-//         }
-//       ]
-//     }
-//   ],
-//   visibility: String
-// }
+// ═══════════════════════════════════════
+// CAPABILITIES
+// ═══════════════════════════════════════
 
-// Add item to portfolio section
-// POST /api/v1/learners/:learnerId/portfolio/sections/:sectionId/items
-// Body: {
-//   type: String,
-//   itemId: String,
-//   notes: String,
-//   featured: Boolean
-// }
+// Get capability profile for a learner (from snapshot)
+// GET /api/capabilities/[learnerId]
 
-// Remove item from portfolio section
-// DELETE /api/v1/learners/:learnerId/portfolio/sections/:sectionId/items/:itemId
+// Override a capability tier for a learner
+// POST /api/capabilities/[learnerId]/override
+// Body: { threadId, tier, reason? }
+// Stored in learner profileData.tierOverrides
 
-// EVIDENCE MANAGEMENT
-// =============================
+// ═══════════════════════════════════════
+// PLANNER
+// ═══════════════════════════════════════
 
-// Get all evidence for a learner
-// GET /api/v1/learners/:learnerId/evidence
-// Query params: evidenceType, dateFrom, dateTo
+// List planner entries for a date range
+// GET /api/planner
+// Query: from, to
 
-// Get specific evidence
-// GET /api/v1/evidence/:evidenceId
+// Create a planner entry
+// POST /api/planner
+// Body: { date, title?, moduleId?, activityId?, learnerIds[], session?, subjects[], notes? }
 
-// Create new evidence
-// POST /api/v1/learners/:learnerId/evidence
-// Body: {
-//   title: String,
-//   description: String,
-//   evidenceType: String,
-//   frameworkMappings: [
-//     {
-//       frameworkType: String,
-//       frameworkIdentifier: String,
-//       description: String,
-//       level: String
-//     }
-//   ]
-// }
+// Update a planner entry
+// PATCH /api/planner/[id]
+// Body: partial planner fields
 
-// Update evidence
-// PUT /api/v1/evidence/:evidenceId
-// Body: same as POST with updated fields
+// Delete a planner entry
+// DELETE /api/planner/[id]
 
-// Delete evidence
-// DELETE /api/v1/evidence/:evidenceId
+// ═══════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════
 
-// Upload evidence media
-// POST /api/v1/evidence/:evidenceId/media
-// Body: FormData with media files
+// List all notifications for family
+// GET /api/notifications
 
-// Verify evidence
-// POST /api/v1/evidence/:evidenceId/verify
-// Body: {
-//   notes: String
-// }
+// Batch update notification states
+// PATCH /api/notifications
+// Body: { ids[], state }
 
-// ACTIVITY TRACKING
-// =============================
+// Update a single notification
+// PATCH /api/notifications/[id]
+// Body: { state, snoozedUntil? }
 
-// Get all activities for a learner
-// GET /api/v1/learners/:learnerId/activities
-// Query params: activityType, dateFrom, dateTo
+// Mark all notifications as read
+// PATCH /api/notifications/mark-all-read
 
-// Get specific activity
-// GET /api/v1/activities/:activityId
+// Trigger a notification (internal use)
+// POST /api/notifications/trigger
+// Body: { type, learnerId?, data? }
 
-// Create new activity
-// POST /api/v1/activities
-// Body: {
-//   title: String,
-//   description: String,
-//   activityType: String,
-//   location: String,
-//   startDate: Date,
-//   endDate: Date,
-//   duration: Number,
-//   participants: [
-//     {
-//       learnerId: String,
-//       role: String,
-//       notes: String
-//     }
-//   ],
-//   learningOutcomes: [String],
-//   evidenceIds: [String],
-//   frameworkMappings: [
-//     {
-//       frameworkType: String,
-//       frameworkIdentifier: String,
-//       description: String,
-//       level: String
-//     }
-//   ]
-// }
+// ═══════════════════════════════════════
+// DASHBOARD & SNAPSHOT
+// ═══════════════════════════════════════
 
-// Update activity
-// PUT /api/v1/activities/:activityId
-// Body: same as POST with updated fields
+// Get dashboard data (recent entries, stats, moments)
+// GET /api/dashboard
 
-// Delete activity
-// DELETE /api/v1/activities/:activityId
+// Get family intelligence snapshot
+// GET /api/snapshot
 
-// FRAMEWORK MAPPINGS
-// =============================
+// ═══════════════════════════════════════
+// FAMILY & SETTINGS
+// ═══════════════════════════════════════
 
-// Get all available frameworks
-// GET /api/v1/frameworks
-// Query params: country, state
+// Get family profile
+// GET /api/family
 
-// Get specific framework
-// GET /api/v1/frameworks/:frameworkId
+// Update family profile
+// PATCH /api/family
+// Body: { familyName? }
 
-// Search framework items
-// GET /api/v1/frameworks/:frameworkId/search
-// Query params: query, category, level
+// List family members (co-facilitators)
+// GET /api/family/members
 
-// Get framework item by identifier
-// GET /api/v1/frameworks/:frameworkId/items/:identifier
+// Invite a family member
+// POST /api/family/members
+// Body: { email, role }
 
-// REPORTING
-// =============================
+// Remove a family member
+// DELETE /api/family/members
+// Body: { memberId }
 
-// Generate educational equivalency report
-// POST /api/v1/learners/:learnerId/reports/equivalency
-// Body: {
-//   frameworkType: String,
-//   dateRange: {
-//     start: Date,
-//     end: Date
-//   },
-//   includeEvidence: Boolean,
-//   format: String // "pdf", "html", "json"
-// }
+// Accept a family invite
+// POST /api/family/invite
+// Body: { inviteToken }
 
-// Generate portfolio export
-// POST /api/v1/learners/:learnerId/portfolio/export
-// Body: {
-//   sections: [String], // section IDs to include
-//   includeEvidence: Boolean,
-//   format: String // "pdf", "html", "json"
-// }
+// Get family settings
+// GET /api/settings
 
-// Get learning progress summary
-// GET /api/v1/learners/:learnerId/progress
-// Query params: dateRange
+// Update family settings
+// PATCH /api/settings
+// Body: { pedagogyPreference?, pedagogyValues?, pedagogyPractices?, heuRegistrationNumber?, heuNextReportDate?, state?, notificationPrefs? }
+
+// ═══════════════════════════════════════
+// MODULES (Builder + Publishing)
+// ═══════════════════════════════════════
+
+// List module drafts
+// GET /api/modules/drafts
+
+// Create or update a module draft
+// POST /api/modules/drafts
+// Body: { pathway, draftData, status? }
+
+// Publish a module to Sanity CMS
+// POST /api/modules/publish
+// Body: full module tree (see CLAUDE.md "Publish API" section)
+// Returns: { moduleId, approaches: [{ approachId, activityIds }] }
+
+// ═══════════════════════════════════════
+// CONTENT LIBRARY
+// ═══════════════════════════════════════
+
+// Get family's purchased packs
+// GET /api/library
+
+// Add a pack to family library
+// POST /api/library
+// Body: { sanityPackId }
+
+// ═══════════════════════════════════════
+// EVIDENCE
+// ═══════════════════════════════════════
+
+// Upload evidence file (photo/document)
+// POST /api/evidence/upload
+// Body: FormData with file
+// Returns: { url } (Vercel Blob URL)
+// Requires: BLOB_READ_WRITE_TOKEN env var
+
+// ═══════════════════════════════════════
+// HEU REPORT & WORK SAMPLES
+// ═══════════════════════════════════════
+
+// Get or check for existing report
+// GET /api/report
+// Query: learnerId, year?
+
+// Create a report with 6 empty work sample slots
+// POST /api/report
+// Body: { learnerId, year? }
+// RBAC: checkWritePermission required
+// Authz: verifies learnerId belongs to authenticated family
+
+// Update report metadata
+// PATCH /api/report/[reportId]
+// Body: { choiceArea?, status? }
+// RBAC: checkWritePermission required
+
+// List work samples with annotations for a report
+// GET /api/report/[reportId]/samples
+
+// Assign or clear an entry on a work sample slot
+// PATCH /api/report/[reportId]/samples
+// Body: { slot, entryId }
+// RBAC: checkWritePermission required
+// Authz: verifies entryId belongs to authenticated family
+
+// Upsert annotation on a work sample
+// PATCH /api/report/[reportId]/samples/[sampleId]
+// Body: { observations?, needsStrengths?, adjustment?, planning?, confirmed? }
+// RBAC: checkWritePermission required
+
+// Export HEU compliance report as PDF
+// GET /api/report/export
+// Query: learnerId, reportId?
+// Returns: application/pdf
+
+// ═══════════════════════════════════════
+// STRIPE (Marketplace Payments)
+// ═══════════════════════════════════════
+
+// Create a Stripe checkout session
+// POST /api/stripe/checkout
+// Body: { priceId, packId }
+
+// Stripe webhook handler
+// POST /api/stripe/webhook
+// Verifies Stripe signature, provisions pack to family library
+
+// ═══════════════════════════════════════
+// ONBOARDING & WELCOME
+// ═══════════════════════════════════════
+
+// Complete onboarding flow
+// POST /api/onboarding/complete
+
+// Complete welcome wizard
+// POST /api/welcome/complete
+
+// ═══════════════════════════════════════
+// ACCOUNT MANAGEMENT
+// ═══════════════════════════════════════
+
+// Export all family data (GDPR)
+// GET /api/account/export
+// Returns: JSON dump of all family data
+
+// Delete family account
+// POST /api/account/delete
+// Body: { confirmation }
+
+// ═══════════════════════════════════════
+// ADMIN & SEED
+// ═══════════════════════════════════════
+
+// Get AI pipeline token usage stats
+// GET /api/admin/tokens
+
+// Data retention — list or purge old data
+// GET /api/admin/retention
+// POST /api/admin/retention
+// Body: { action, olderThanDays? }
+
+// Seed capability threads from static data
+// POST /api/seed/capability-threads
+
+// Validate a provider/access code
+// POST /api/provider-code/validate
+// Body: { code }
+
+// ═══════════════════════════════════════
+// CONTENT QUERIES (Read-only from Sanity)
+// ═══════════════════════════════════════
+
+// Fetch module skeletons for builder suggestions
+// GET /api/skeletons
+// Query: domain?, tier?

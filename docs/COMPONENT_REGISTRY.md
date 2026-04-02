@@ -3,7 +3,7 @@
 > **Purpose:** Single source of truth for every UI screen, its canonical file, status, and role.
 > **Rule:** Before proposing new work, check this file. Before creating a new screen, update this file.
 > **Cross-screen coherence:** `Hearth_System_Interaction_Map.md` is the canonical document for navigation flows, data relationships, and inter-screen dependencies.
-> **Last verified:** 24 March 2026
+> **Last verified:** 2 April 2026
 
 ---
 
@@ -69,7 +69,7 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 | 12 | **Module Builder** | `hearth-module-builder-v3.jsx` | `Hearth_Module_Builder_Design_Specification.md`, `hearth-module-builder-pathways-architecture-v2.md` | Content creation tool — UbD backward design enforced | Linear 5-stage flow: Topic, Understanding, Evidence, Approaches, Review. Five-pathway system in v2 architecture |
 | 13 | **Badge Creator** | `badge-creation-component-v2.tsx` | — | Badge design + curriculum descriptor linking | Name/icon, capability description, curriculum link, save |
 | 14 | **Badge Assessment** | `hearth-badge-assessment-v2.html` | `hearth-badge-assessment-spec.md` | Secondary assessment interface — triggered post-log when badge threshold is crossed | 3-5 confidence-building questions, award or defer, secondhand delight moment, physical badge ordering |
-| 15 | **Pedagogy Engine** | `hearth-pedagogy-engine-v2.jsx` | `hearth-pedagogy-engine-spec-v1.md` | Mobile-first philosophy selection and emphasis adjustment | Onboarding wizard (6 philosophies + Eclectic) then values/practices selection. Settings view for post-onboarding adjustments. Produces familyPedagogicalProfile consumed by all overlay-active screens |
+| 15 | **Pedagogy Engine** | `hearth-pedagogy-engine-v2.jsx` | `hearth-pedagogy-engine-spec-v1.md` | Mobile-first philosophy selection and emphasis adjustment. **React implementation:** integrated into Family Settings (`/settings`), not a standalone route. Vocabulary adapter at `src/lib/pedagogy/adapter.ts` drives UI terminology across overlay-active screens via `usePedagogy()` hook | Onboarding wizard (6 philosophies + Eclectic) then values/practices selection. Settings view for post-onboarding adjustments. Produces familyPedagogicalProfile consumed by all overlay-active screens |
 | 16 | **Activity Discovery v3** | `hearth-activity-discovery-v3.html` | `hearth-activity-discovery-docs.md` | Module browser for family's content library | Filter by subject/age/duration, preview modal, start now or save for later. Under 2 min to decision |
 | 17 | **Marketplace v2** | `hearth-marketplace-v2.html` | `hearth-marketplace-spec-v1.md` | Content discovery and acquisition — primary content use case | Browse/filter/sort, pack detail modal with module list, included vs premium pricing, Stripe checkout for premium, Family Fit AI banner |
 | 18 | **Project Experience v3** | `hearth-project-experience-v3.html` | `hearth-project-design-specification.md` | Multi-stage scaffolded learning — sits above Packs in content hierarchy | Sequential stages with artifact dependencies, 3-6 week pacing, cross-domain |
@@ -271,4 +271,4 @@ These files have been superseded. Candidates for removal to reduce project file 
 
 ---
 
-*Registry updated 24 March 2026 — pathway prototypes registered, founding brief added. Update when adding or modifying screens.*
+*Registry updated 2 April 2026 — pedagogy engine implementation clarified, verified date updated. Update when adding or modifying screens.*

@@ -8,7 +8,7 @@
 
 ## Current Phase: Pre-Launch Hardening
 
-**Build progress:** Next.js 16 app fully implemented — 20+ auth-protected routes, 25 API endpoints, 15 Drizzle tables, 9 Sanity schemas, AI enrichment pipeline operational.
+**Build progress:** Next.js 16 app fully implemented — 20+ auth-protected routes, 48 API route files (65 handlers), 19 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational.
 **Design system:** Conformance pass complete — all screens revised to canonical tokens (2026-03-20).
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities).
 **Launch target:** 10-20 test families in Queensland, Australia.
@@ -51,28 +51,35 @@
 
 ---
 
-## API Surface (28+ endpoints)
+## API Surface (48 route files, 65 handlers)
 
 | Domain | Endpoints |
 |--------|-----------|
-| Entries | `POST /api/entries`, `GET\|PUT\|DELETE /api/entries/[id]`, `POST /api/entries/[id]/complete` |
-| Learners | `GET\|POST /api/learners`, `GET\|PUT\|DELETE /api/learners/[id]` |
-| Badges | `GET\|POST /api/badges`, `GET\|PUT\|DELETE /api/badges/[id]`, `POST /api/badges/award`, `GET /api/badges/awards`, `POST /api/badges/check-thresholds`, `POST /api/badges/defer`, `GET /api/badges/history`, `POST /api/badges/retract` |
-| Planner | `GET\|POST /api/planner`, `GET\|PUT\|DELETE /api/planner/[id]` |
-| Notifications | `GET\|POST /api/notifications`, `GET\|PUT\|DELETE /api/notifications/[id]`, `POST /api/notifications/mark-all-read` |
-| Dashboard | `GET /api/dashboard`, `GET /api/snapshot`, `GET /api/capabilities/[learnerId]` |
-| Library | `GET\|POST /api/library` |
-| Settings | `GET\|PUT /api/settings`, `GET\|POST /api/family` |
+| Entries | `GET\|POST /api/entries`, `GET\|PATCH\|DELETE /api/entries/[id]`, `POST /api/entries/[id]/complete`, `POST /api/entries/import` |
+| Learners | `GET\|POST /api/learners`, `GET\|PATCH\|DELETE /api/learners/[id]` |
+| Badges | `GET\|POST /api/badges`, `GET /api/badges/[id]`, `PATCH /api/badges/[id]/retract`, `POST /api/badges/award`, `GET /api/badges/awards`, `POST /api/badges/check-thresholds`, `POST /api/badges/defer`, `GET /api/badges/history` |
+| Capabilities | `GET /api/capabilities/[learnerId]`, `POST /api/capabilities/[learnerId]/override` |
+| Planner | `GET\|POST /api/planner`, `PATCH\|DELETE /api/planner/[id]` |
+| Notifications | `GET\|PATCH /api/notifications`, `PATCH /api/notifications/[id]`, `PATCH /api/notifications/mark-all-read`, `POST /api/notifications/trigger` |
+| Dashboard | `GET /api/dashboard`, `GET /api/snapshot` |
+| Family | `GET\|PATCH /api/family`, `GET\|POST\|DELETE /api/family/members`, `POST /api/family/invite` |
+| Settings | `GET\|PATCH /api/settings` |
 | Modules | `GET\|POST /api/modules/drafts`, `POST /api/modules/publish` |
-| Onboarding | `POST /api/onboarding/complete` |
+| Library | `GET\|POST /api/library` |
+| Evidence | `POST /api/evidence/upload` |
+| Report | `GET\|POST /api/report`, `PATCH /api/report/[reportId]`, `GET\|PATCH /api/report/[reportId]/samples`, `PATCH /api/report/[reportId]/samples/[sampleId]`, `GET /api/report/export` |
+| Stripe | `POST /api/stripe/checkout`, `POST /api/stripe/webhook` |
+| Account | `GET /api/account/export`, `POST /api/account/delete` |
+| Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention` |
+| Onboarding | `POST /api/onboarding/complete`, `POST /api/welcome/complete` |
+| Seed | `POST /api/seed/capability-threads`, `POST /api/provider-code/validate`, `GET /api/skeletons` |
 
 ---
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 16 tables
-- **Identity:** `families`, `familySettings`
-- **Learners:** `learners`
+### PostgreSQL (Neon + Drizzle) — 19 tables
+- **Identity:** `families`, `learners`, `familySettings`, `familyMembers`
 - **Learning data:** `learningEntries`
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
 - **Badges:** `badgeDefinitions`, `badgeAwards`, `badgeAssessmentLogs`
@@ -81,11 +88,11 @@
 - **Content:** `familyLibrary`
 - **Builder:** `moduleDrafts`
 - **Notes:** `facilitatorNotes`
-- **Family members:** `familyMembers`
+- **HEU Compliance:** `heuReports`, `workSamples`, `workSampleAnnotations`
 - **Provider codes:** `providerCodes`
 
-### Sanity CMS — 9 schemas
-`capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`
+### Sanity CMS — 10 schemas
+`capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`, `moduleSkeleton`
 
 ### AI Pipeline
 - **Enrichment** (`src/lib/ai/enrich.ts`): Claude Haiku enriches entries at save-time with subject detection, capability mapping, AC V9 descriptors, engagement scores, insight suggestions.

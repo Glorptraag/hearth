@@ -859,7 +859,7 @@ PROJECT: "My Imaginary Friend" (8 stages, 3–4 weeks)
 - This process runs **alongside** the Constellation — project data feeds capability threads the same way module data does
 - The Module Experience shell handles individual stage facilitation; the Project Experience screen handles the cross-stage navigation and artifact threading
 
-> ⚠️ **ARTIFACT NEEDED:** Full Project Experience integration specification — how stage artifacts are stored, referenced, and synthesised at capstone. Existing `hearth-project-design-specification.md` covers content architecture but not the logging/portfolio/constellation integration pipeline. See Artifact Tracker.
+> **IMPLEMENTED (2 April 2026):** Project Experience at `src/app/(auth)/project/[id]/page.tsx`. Stage locking enforces sequential dependencies. Artifact notes captured per-stage via localStorage. Each completed stage creates a `learning_entry` with `sourceProjectId` and `sourceStageNumber`. Entries flow through standard AI enrichment → snapshot rebuild pipeline. Pedagogy overlay applied via `usePedagogy()` hook. Project discovery integrated into Activity Discovery page (`/explore/activities`).
 
 ---
 
@@ -918,7 +918,7 @@ This is the sequence of interactions that constitutes Hearth's primary value del
 | "Our Story" vs Dashboard | Both retained. Dashboard = family-wide internal messaging, present tense, celebrates. Our Story = per-child reflective evidence layer, retrospective, documents. |
 | Planned vs. logged identity | Same record, state transition: planned → in_progress → completed. |
 | Badge trigger mechanism | Constellation detects threshold OR project capstone met → secondary logging interface appears after next relevant log session. Badges awarded seldomly. |
-| Pedagogy overlay scope | Active on 7 screens, inactive on 5. Confirmed list above. |
+| Pedagogy overlay scope | Active on 7+ screens, inactive on 5. Vocabulary adapter at `src/lib/pedagogy/adapter.ts` + `usePedagogy()` hook drive terminology. Sanity `pedagogyOverlay` documents provide per-activity guidance. Overlay-active screens: Dashboard, Logger, Module Experience, Activity Discovery, Portfolio, HEU Report, Capabilities Constellation. |
 | Content library buckets | Five states: unpurchased → purchased → library → planned → completed. Membership-included content skips purchase. |
 | Multi-child entries | One entry with colour-coded multi-select per-child engagement and per-child discovery fields. Not N separate loops. |
 | User vs. system badges | Separate systems. User badges are legitimate but outside Constellation. |
@@ -928,24 +928,24 @@ This is the sequence of interactions that constitutes Hearth's primary value del
 
 ### Still Open — Requires Design Work
 
-| # | Question | Impact | Resolution Path |
-|---|----------|--------|----------------|
-| 1 | **Badge secondary logging interface:** The flow is defined (post-log, 3–5 questions, award or defer) but the UI is undesigned. What does this secondary interface look like? | High | New artifact needed |
-| 2 | **Badge award moment:** Delight is secondhand (parent holds device, not child). Design for "show [child] what they've earned" as shareable moment. Physical badge tie-in. | High | New artifact needed |
-| 3 | **Dashboard vs Our Story content spec:** The distinction is defined conceptually but the specific cards, copy, and data on each surface need design. | High | New artifact needed |
-| 4 | **AI/Intelligence layer architecture:** Expansive cross-cutting concern. Consumes pedagogy, history, library, gaps, sparks, time patterns. Produces logger insights, recommendations, sort order, badge detection, gap analysis. Most critical and costly use: retrospective logger formalising user-provided information. | High | Separate dedicated session |
-| 5 | **Notification system detailed design:** Types identified, but priority ordering, frequency caps, suppression rules, quiet hours, channel strategy undesigned. | High | New artifact needed |
-| 6 | **HEU six-work-sample curation flow:** Queensland requires six annotated work samples. Where/how does the parent select, annotate, and curate these? | High | Update to HEU Report spec |
-| 7 | **Regression handling:** Can parents un-confirm a DLO? | Medium | Decision + add to Constellation spec |
-| 8 | **Historical data import / batch retrospective logging:** Families with years of evidence need onboarding bootstrap. | Medium | Update to Logger spec |
-| 9 | **Constellation → logged moments drill-down:** Read-only evidence trail from DLO to specific observations. | Medium | Update to Constellation spec |
-| 10 | **Repeat module logging evolution:** How prompts shift on 2nd/3rd attempts. | Medium | Update to Module Experience spec |
-| 11 | **Voice input integration:** Which screens, real-time vs record-then-transcribe. | Medium | Cross-cutting concern, add to relevant specs |
-| 12 | **Empty/first-use states per screen:** What each screen shows before data exists. Trust-building moments. | Medium | Per-screen additions to existing artifacts |
-| 13 | **Gentle migration from retro logging to modules:** What nudge mechanisms move families toward module-based learning over time. | Low | Dashboard/notification design |
-| 14 | **Data deletion and privacy model:** Cascade rules, evidence deletion, child removal, Australian privacy compliance. | Medium | New specification needed |
-| 15 | **Learner-facing views:** MVP is parent-only, but where do learner modes eventually slot in? | Low | Architecture note, not MVP |
-| 16 | **Offline/poor connectivity:** Regional QLD families. Module caching, offline auto-save, sync on reconnect. | Low | Architecture constraint, not MVP |
+| # | Question | Impact | Status |
+|---|----------|--------|--------|
+| 1 | **Badge secondary logging interface** | High | RESOLVED — `hearth-badge-assessment-spec.md` + `/badges/assess/[id]` implemented |
+| 2 | **Badge award moment** | High | RESOLVED — Badge assessment UI with secondhand delight moment implemented |
+| 3 | **Dashboard vs Our Story content spec** | High | RESOLVED — `Hearth_Dashboard_Our_Story_Content_Spec.md` created |
+| 4 | **AI/Intelligence layer architecture** | High | RESOLVED — `Hearth_AI_Intelligence_Layer_Architecture.md` created, pipeline operational |
+| 5 | **Notification system detailed design** | High | RESOLVED — `hearth-notification-system-spec.md` created, `/notifications` route implemented |
+| 6 | **HEU six-work-sample curation flow** | High | RESOLVED — `hearth-heu-work-sample-curation-spec-v1.md` created, report APIs with sample slots + annotations implemented |
+| 7 | **Regression handling** | Medium | RESOLVED — Tier override API at `/api/capabilities/[learnerId]/override`, stored in `profileData.tierOverrides` |
+| 8 | **Historical data import / batch retrospective logging** | Medium | PARTIAL — CSV import at `/api/entries/import`. Bulk retrospective not designed |
+| 9 | **Constellation → logged moments drill-down** | Medium | RESOLVED — Evidence drill-down in Capabilities Constellation, filters entries by thread_id from `/api/entries` |
+| 10 | **Repeat module logging evolution** | Medium | RESOLVED — Module log mode detects attempt number, shifts prompts (Session 1: capture, Session 2+: what shifted/deepening) |
+| 11 | **Voice input integration** | Medium | RESOLVED — Web Speech API (en-AU) in Logger |
+| 12 | **Empty/first-use states per screen** | Medium | RESOLVED — All screens have empty states via shared EmptyState component |
+| 13 | **Gentle migration from retro logging to modules** | Low | RESOLVED — `module_nudge` notification trigger after 10+ retro entries, 2-week cooldown |
+| 14 | **Data deletion and privacy model** | Medium | RESOLVED — `hearth-data-deletion-privacy-model-v1.md`, `/api/account/delete` + `/api/account/export` |
+| 15 | **Learner-facing views** | Low | Scoped to Phase 2 |
+| 16 | **Offline/poor connectivity** | Low | OPEN — not addressed |
 
 ### Shelved — Not MVP
 
@@ -1015,31 +1015,31 @@ Work identified by this document that requires new artifacts or updates to exist
 
 ### New Artifacts Needed
 
-| # | Artifact | Description | Priority | Depends On |
-|---|----------|-------------|----------|------------|
-| A1 | 🆕 **Dashboard vs Our Story Content Spec** | Specific cards, copy, data sources, and visual treatment that differentiates the two surfaces. Defines what "internal family messaging" looks like vs "per-child evidence narrative." | High | Navigation architecture (this doc) |
-| A2 | 🆕 **Badge Assessment Secondary Interface** | UI design for the post-logging badge assessment flow. 3–5 question format, award/defer actions, physical badge tie-in, "show your child" shareable moment. | High | Badge lifecycle (this doc) |
-| A3 | 🆕 **Notification / Nudge System Design Spec** | Full specification for the last unbuilt screen. Priority ordering, frequency caps, suppression rules, notification types, channel strategy (in-app vs push). | High | All screen specs (existing) |
-| A4 | 🆕 **AI/Intelligence Layer Architecture** | Cross-cutting service design. Data inputs, outputs, token optimisation, memory-like backend processing. Separate dedicated session due to scope. | High | All screen specs + data model |
-| A5 | 🆕 **Project Experience Integration Spec** | How stage artifacts are stored, referenced between stages, and synthesised at capstone. Logging pipeline, portfolio feed, constellation feed. Extends `hearth-project-design-specification.md`. | Medium | Project design spec (existing) |
-| A6 | 🆕 **Data Deletion & Privacy Model** | Cascade rules for entry deletion, evidence removal, child removal. Australian privacy law intersection. | Medium | Data model (this doc) |
+| # | Artifact | Description | Priority | Status |
+|---|----------|-------------|----------|--------|
+| A1 | ~~Dashboard vs Our Story Content Spec~~ | Content differentiation spec | High | **DONE** — `Hearth_Dashboard_Our_Story_Content_Spec.md` |
+| A2 | ~~Badge Assessment Secondary Interface~~ | Badge assessment UI | High | **DONE** — `hearth-badge-assessment-spec.md` + `/badges/assess/[id]` |
+| A3 | ~~Notification / Nudge System Design Spec~~ | Notification system spec | High | **DONE** — `hearth-notification-system-spec.md` + `/notifications` route |
+| A4 | ~~AI/Intelligence Layer Architecture~~ | AI service design | High | **DONE** — `Hearth_AI_Intelligence_Layer_Architecture.md`, pipeline operational |
+| A5 | ~~Project Experience Integration Spec~~ | Project stage artifacts + logging pipeline | Medium | **DONE** — Implemented in `src/app/(auth)/project/[id]/page.tsx`. Stage locking, artifact notes, `sourceProjectId` entries |
+| A6 | ~~Data Deletion & Privacy Model~~ | Cascade rules, privacy compliance | Medium | **DONE** — `hearth-data-deletion-privacy-model-v1.md` + `/api/account/delete` |
 
 ### Existing Artifacts Needing Updates
 
-| # | Artifact | File | What Needs Updating | Priority |
-|---|----------|------|---------------------|----------|
-| B1 | 🔄 **Retrospective Logger** | `hearth-logger-workspace.html` | Add colour-coded multi-select per-child engagement fields. Two discovery fields instead of one. Per-child annotation support. | High |
-| B2 | 🔄 **Module Experience Log Mode** | `hearth-module-experience-v2.html` | Same per-child multi-select updates as Logger. Add badge threshold → secondary interface transition. | High |
-| B3 | 🔄 **HEU Report Screen** | `hearth-report-screen.html` | Add six-work-sample curation flow. How parent selects, annotates, exports the required samples. | High |
-| B4 | 🔄 **Capabilities Constellation** | `hearth-capabilities-v3.html` | Add DLO → logged moments drill-down. Read-only evidence trail. Update to reflect badge threshold detection role. | Medium |
-| B5 | 🔄 **Activity Discovery** | `hearth-activity-discovery.html` | Add "Add to [Day]" direct planner integration. Clarify membership-included vs marketplace content display. | Medium |
-| B6 | 🔄 **Weekly Planner** | `hearth-weekly-planner.html` | Clarify data source for subject balance (module subject tags). Show planned → completed state transition. | Medium |
-| B7 | 🔄 **Complete User Flow** | `hearth-complete-user-flow.md` | Replace with this System Interaction Map as canonical reference. Or update to align — currently lists "Our Story" as retired which is incorrect. | Medium |
-| B8 | 🔄 **Module Experience UX Flows** | `Hearth_Module_Experience_UX_Flows.md` | Add repeat-session logging evolution (shifted prompts on 2nd/3rd attempts). Add voice input support. | Low |
-| B9 | 🔄 **Dashboard Design Decisions** | `hearth_dashboard_design_decisions.md` | Add content specification — what cards/sections exist, what data each displays, how morning/afternoon/evening states differ from Our Story. | Medium |
-| B10 | 🔄 **Project Design Specification** | `hearth-project-design-specification.md` | Add stage-level logging integration. Capstone synthesis entry. Artifact threading between stages. Align with A5 once created. | Medium |
-| B11 | 🔄 **COMPONENT_REGISTRY.md** | `COMPONENT_REGISTRY.md` | Mark Facilitator Dashboard as shelved. Update Our Story navigation notes. Add badge secondary interface as planned screen. | High |
-| B12 | 🔄 **PROJECT_STATUS.md** | `PROJECT_STATUS.md` | Update known gaps to reference this interaction map. Note Our Story retention. Add shelved items section. | High |
+| # | Artifact | File | What Needs Updating | Status |
+|---|----------|------|---------------------|--------|
+| B1 | 🔄 **Retrospective Logger** | `hearth-logger-workspace-v3.html` | Per-child engagement fields, discovery fields | **DONE** — v3 prototype + React implementation |
+| B2 | 🔄 **Module Experience Log Mode** | `hearth-module-experience-v3.html` | Per-child multi-select, badge threshold transition | **DONE** — v3 prototype + React at `/module/[id]` |
+| B3 | 🔄 **HEU Report Screen** | `hearth-report-screen-v2.html` | Six-work-sample curation flow | **DONE** — Spec + report APIs with sample slots + annotations |
+| B4 | 🔄 **Capabilities Constellation** | `hearth-capabilities-v4.html` | DLO → moments drill-down, evidence trail | **DONE** — Evidence drill-down in React at `/our-story/capabilities` |
+| B5 | 🔄 **Activity Discovery** | `hearth-activity-discovery-v3.html` | Planner integration, project discovery | **DONE** — v3 prototype + React at `/explore/activities` with project cards |
+| B6 | 🔄 **Weekly Planner** | `hearth-weekly-planner-v4.html` | Subject balance data source, state transitions | **DONE** — v4 prototype + React at `/planner` |
+| B7 | 🔄 **Complete User Flow** | `hearth-complete-user-flow.md` | Replace with System Interaction Map | **DONE** — Marked deprecated in COMPONENT_REGISTRY |
+| B8 | 🔄 **Module Experience UX Flows** | `Hearth_Module_Experience_UX_Flows.md` | Repeat-session logging, voice input | Repeat logging **DONE** in React. Voice input Logger only |
+| B9 | 🔄 **Dashboard Design Decisions** | `hearth_dashboard_design_decisions.md` | Content specification | Covered by `Hearth_Dashboard_Our_Story_Content_Spec.md` |
+| B10 | 🔄 **Project Design Specification** | `hearth-project-design-specification.md` | Stage logging, artifact threading | **DONE** — Implemented in React at `/project/[id]` |
+| B11 | 🔄 **COMPONENT_REGISTRY.md** | `COMPONENT_REGISTRY.md` | Shelved items, badge assessment | **DONE** — Updated 2 April 2026 |
+| B12 | 🔄 **PROJECT_STATUS.md** | `PROJECT_STATUS.md` | Known gaps, API counts, table counts | **DONE** — Updated 2 April 2026 |
 
 ### Session Planning
 
@@ -1058,4 +1058,4 @@ Work identified by this document that requires new artifacts or updates to exist
 ---
 
 *This document maps the complete interaction surface of Hearth LMS as designed. Update when screens are added, removed, or when integration decisions change.*
-*Last updated: February 2026*
+*Last updated: 2 April 2026*

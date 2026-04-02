@@ -16,6 +16,14 @@ import type {
   heuReports,
   workSamples,
   workSampleAnnotations,
+  hearths,
+  hearthMemberships,
+  hearthSessions,
+  sessionAttendance,
+  sessionEvidence,
+  suggestedObservations,
+  sessionReflections,
+  hearthInvites,
 } from '@/lib/db/schema';
 
 // ─── Entity types inferred from schema ───
@@ -36,6 +44,14 @@ export type AiPipelineLog = InferSelectModel<typeof aiPipelineLogs>;
 export type HeuReport = InferSelectModel<typeof heuReports>;
 export type WorkSample = InferSelectModel<typeof workSamples>;
 export type WorkSampleAnnotation = InferSelectModel<typeof workSampleAnnotations>;
+export type Hearth = InferSelectModel<typeof hearths>;
+export type HearthMembership = InferSelectModel<typeof hearthMemberships>;
+export type HearthSession = InferSelectModel<typeof hearthSessions>;
+export type SessionAttendance = InferSelectModel<typeof sessionAttendance>;
+export type SessionEvidence = InferSelectModel<typeof sessionEvidence>;
+export type SuggestedObservation = InferSelectModel<typeof suggestedObservations>;
+export type SessionReflection = InferSelectModel<typeof sessionReflections>;
+export type HearthInvite = InferSelectModel<typeof hearthInvites>;
 
 // ─── Enum / Union types ───
 
@@ -54,7 +70,7 @@ export type Subject = (typeof SUBJECTS)[number];
 export const LEARNER_COLOURS = ['rose', 'blue', 'sage', 'amber'] as const;
 export type LearnerColour = (typeof LEARNER_COLOURS)[number];
 
-export const ENTRY_SOURCES = ['logger', 'module_log', 'project_stage'] as const;
+export const ENTRY_SOURCES = ['logger', 'module_log', 'project_stage', 'hearth_session'] as const;
 export type EntrySource = (typeof ENTRY_SOURCES)[number];
 
 export const ENTRY_STATUSES = ['draft', 'complete'] as const;
@@ -78,3 +94,23 @@ export const PEDAGOGIES = [
   'eclectic',
 ] as const;
 export type Pedagogy = (typeof PEDAGOGIES)[number];
+
+// ─── Community (Hearths) ───
+
+export const HEARTH_STATUSES = ['active', 'archived'] as const;
+export type HearthStatus = (typeof HEARTH_STATUSES)[number];
+
+export const MEMBERSHIP_ROLES = ['coordinator', 'member'] as const;
+export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number];
+
+export const MEMBERSHIP_STATUSES = ['active', 'left', 'removed'] as const;
+export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
+
+export const SESSION_STATUSES = ['upcoming', 'completed', 'cancelled'] as const;
+export type SessionStatus = (typeof SESSION_STATUSES)[number];
+
+export const RSVP_STATUSES = ['pending', 'attending', 'declined'] as const;
+export type RsvpStatus = (typeof RSVP_STATUSES)[number];
+
+export const SUGGESTED_OBSERVATION_STATUSES = ['pending', 'accepted', 'dismissed'] as const;
+export type SuggestedObservationStatus = (typeof SUGGESTED_OBSERVATION_STATUSES)[number];

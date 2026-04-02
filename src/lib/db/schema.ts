@@ -91,6 +91,7 @@ export const learningEntries = pgTable(
     sourceModuleId: text('source_module_id'),
     sourceProjectId: text('source_project_id'),
     sourceStageNumber: integer('source_stage_number'),
+    sourceSessionId: uuid('source_session_id'),
     status: text('status').notNull().default('draft'),
     aiEnrichment: jsonb('ai_enrichment'),
     heuCandidate: boolean('heu_candidate').default(false),
@@ -386,5 +387,132 @@ export const providerCodes = pgTable('provider_codes', {
   code: text('code').notNull().unique(),
   redeemedByFamilyId: uuid('redeemed_by_family_id').references(() => families.id),
   redeemedAt: timestamp('redeemed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// ─── Community (Hearths) ───
+
+export const hearths = pgTable('hearths', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  location: text('location'),
+  createdByFamilyId: uuid('created_by_family_id').references(() => families.id).notNull(),
+  status: text('status').notNull().default('active'),
+  settings: jsonb('settings').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const hearthMemberships = pgTable(
+  'hearth_memberships',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    hearthId: uuid('hearth_id').references(() => hearths.id).notNull(),
+    familyId: uuid('family_id').references(() => families.id).notNull(),
+    role: text('role').notNull().default('member'),
+    status: text('status').notNull().default('active'),
+    joinedAt: timestamp('joined_at').defaultNow(),
+    invitedByFamilyId: uuid('invited_by_family_id').references(() => families.id),
+    consentCrossObservation: boolean('consent_cross_observation').default(false).notNull(),
+    consentEvidenceSharing: boolean('consent_evidence_sharing').default(false).notNull(),
+    leftAt: timestamp('left_at'),
+  },
+  (table) => [
+    unique('hm_hearth_family_uniq').on(table.hearthId, table.familyId),
+    index('hm_family_status_idx').on(table.familyId, table.status),
+  ]
+);
+
+export const hearthSessions = pgTable(
+  'hearth_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    hearthId: uuid('hearth_id').references(() => hearths.id).notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    date: date('date').notNull(),
+    timeStart: text('time_start'),
+    timeEnd: text('time_end'),
+    location: text('location'),
+    facilitatorFamilyId: uuid('facilitator_family_id').references(() => families.id).notNull(),
+    facilitatorUserId: text('facilitator_user_id'),
+    status: text('status').notNull().default('upcoming'),
+    moduleReference: text('module_reference'),
+    activityReference: text('activity_reference'),
+    prepNotes: text('prep_notes'),
+    sharedRecord: text('shared_record'),
+    createdAt: timestamp('created_at').defaultNow(),
+    completedAt: timestamp('completed_at'),
+  },
+  (table) => [
+    index('hs_hearth_date_idx').on(table.hearthId, table.date),
+  ]
+);
+
+export const sessionAttendance = pgTable(
+  'session_attendance',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessionId: uuid('session_id').references(() => hearthSessions.id).notNull(),
+    familyId: uuid('family_id').references(() => families.id).notNull(),
+    rsvpStatus: text('rsvp_status').notNull().default('pending'),
+    actuallyAttended: boolean('actually_attended'),
+    learnerIds: uuid('learner_ids').array(),
+  },
+  (table) => [
+    unique('sa_session_family_uniq').on(table.sessionId, table.familyId),
+  ]
+);
+
+export const sessionEvidence = pgTable('session_evidence', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').references(() => hearthSessions.id).notNull(),
+  uploadedByFamilyId: uuid('uploaded_by_family_id').references(() => families.id).notNull(),
+  uploadedByUserId: text('uploaded_by_user_id'),
+  fileUrl: text('file_url').notNull(),
+  fileType: text('file_type'),
+  caption: text('caption'),
+  uploadedAt: timestamp('uploaded_at').defaultNow(),
+});
+
+export const suggestedObservations = pgTable(
+  'suggested_observations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessionId: uuid('session_id').references(() => hearthSessions.id).notNull(),
+    observerFamilyId: uuid('observer_family_id').references(() => families.id).notNull(),
+    observerUserId: text('observer_user_id'),
+    targetFamilyId: uuid('target_family_id').references(() => families.id).notNull(),
+    targetLearnerId: uuid('target_learner_id').references(() => learners.id).notNull(),
+    observationText: text('observation_text').notNull(),
+    evidenceIds: uuid('evidence_ids').array().default([]),
+    status: text('status').notNull().default('pending'),
+    createdAt: timestamp('created_at').defaultNow(),
+    reviewedAt: timestamp('reviewed_at'),
+    familyEntryId: uuid('family_entry_id').references(() => learningEntries.id),
+  },
+  (table) => [
+    index('so_target_status_idx').on(table.targetFamilyId, table.status),
+  ]
+);
+
+export const sessionReflections = pgTable('session_reflections', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').references(() => hearthSessions.id).notNull(),
+  familyId: uuid('family_id').references(() => families.id).notNull(),
+  userId: text('user_id'),
+  reflectionText: text('reflection_text').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const hearthInvites = pgTable('hearth_invites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  hearthId: uuid('hearth_id').references(() => hearths.id).notNull(),
+  invitedByFamilyId: uuid('invited_by_family_id').references(() => families.id).notNull(),
+  code: text('code').unique().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedByFamilyId: uuid('used_by_family_id').references(() => families.id),
+  usedAt: timestamp('used_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });

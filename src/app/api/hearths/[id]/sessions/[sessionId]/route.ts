@@ -9,12 +9,15 @@ import {
   sessionEvidence,
   suggestedObservations,
   sessionReflections,
+  hearthMemberships,
+  hearths,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   requireHearthMember,
   requireHearthCoordinator,
 } from '@/lib/auth/hearth-helpers';
+import { triggerSessionCompleted } from '@/lib/notifications/triggers';
 
 export async function GET(
   _request: NextRequest,
@@ -119,6 +122,23 @@ export async function PATCH(
     .returning();
 
   if (!updated) return apiError('Session not found', 404);
+
+  if (data.status === 'completed') {
+    const hearth = await db.query.hearths.findFirst({ where: eq(hearths.id, id) });
+    const members = await db.query.hearthMemberships.findMany({
+      where: and(eq(hearthMemberships.hearthId, id), eq(hearthMemberships.status, 'active')),
+    });
+    for (const m of members) {
+      if (m.familyId !== family.id) {
+        triggerSessionCompleted(m.familyId, {
+          hearthName: hearth?.name ?? '',
+          sessionTitle: updated.title,
+          sessionId: updated.id,
+          hearthId: id,
+        }).catch(console.error);
+      }
+    }
+  }
 
   return NextResponse.json(updated);
 }

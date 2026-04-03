@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { hearths, hearthMemberships, hearthSessions } from '@/lib/db/schema';
+import { hearths, hearthMemberships, hearthSessions, sessionAttendance, learningEntries } from '@/lib/db/schema';
 import { apiError, parseBody, authenticatedFamily } from '@/lib/api-helpers';
-import { eq, and, gte, asc, count } from 'drizzle-orm';
+import { eq, and, gte, asc, count, inArray } from 'drizzle-orm';
 
 export async function GET() {
   const result = await authenticatedFamily({ rateLimitKey: 'hearths' });
@@ -48,6 +48,41 @@ export async function GET() {
         orderBy: [asc(hearthSessions.date)],
       });
 
+      const completedSessions = await db
+        .select({ id: hearthSessions.id })
+        .from(hearthSessions)
+        .where(and(
+          eq(hearthSessions.hearthId, hearth.id),
+          eq(hearthSessions.status, 'completed')
+        ));
+      const completedIds = completedSessions.map(s => s.id);
+
+      let pendingScaffoldCount = 0;
+      if (completedIds.length > 0) {
+        const attended = await db
+          .select({ sessionId: sessionAttendance.sessionId })
+          .from(sessionAttendance)
+          .where(and(
+            eq(sessionAttendance.familyId, family.id),
+            inArray(sessionAttendance.sessionId, completedIds)
+          ));
+        const attendedIds = attended.map(a => a.sessionId);
+
+        if (attendedIds.length > 0) {
+          const logged = await db
+            .select({ sourceSessionId: learningEntries.sourceSessionId })
+            .from(learningEntries)
+            .where(and(
+              eq(learningEntries.familyId, family.id),
+              eq(learningEntries.source, 'hearth_session'),
+              inArray(learningEntries.sourceSessionId, attendedIds)
+            ));
+          const loggedIds = new Set(logged.map(l => l.sourceSessionId).filter(Boolean));
+
+          pendingScaffoldCount = attendedIds.filter(id => !loggedIds.has(id)).length;
+        }
+      }
+
       return {
         ...hearth,
         role: membership.role,
@@ -55,7 +90,7 @@ export async function GET() {
         nextSession: nextSession
           ? { id: nextSession.id, title: nextSession.title, date: nextSession.date }
           : null,
-        pendingScaffoldCount: 0,
+        pendingScaffoldCount,
       };
     })
   );

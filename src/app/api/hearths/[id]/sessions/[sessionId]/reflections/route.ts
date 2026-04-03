@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { sessionReflections, families } from '@/lib/db/schema';
+import { generateTermNarrative } from '@/lib/ai/hearth-narrative';
 import { apiError, parseBody } from '@/lib/api-helpers';
 import { requireSessionAccess } from '@/lib/auth/hearth-helpers';
 
@@ -48,6 +49,10 @@ export async function POST(
       reflectionText: data.reflectionText,
     })
     .returning();
+
+  generateTermNarrative(hearthId).catch((err) =>
+    console.error('[reflections/POST] narrative generation error:', err)
+  );
 
   return NextResponse.json(reflection, { status: 201 });
 }

@@ -3,7 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { apiError, parseBody } from '@/lib/api-helpers';
-import { suggestedObservations, hearthMemberships } from '@/lib/db/schema';
+import { suggestedObservations, hearthMemberships, learners, families } from '@/lib/db/schema';
+import { triggerObservationReceived } from '@/lib/notifications/triggers';
 import { eq, and } from 'drizzle-orm';
 import {
   requireSessionFacilitator,
@@ -50,6 +51,17 @@ export async function POST(
     return apiError('Target family has not consented to cross-family observations', 403);
   }
 
+  // Verify learner belongs to target family
+  const learner = await db.query.learners.findFirst({
+    where: and(
+      eq(learners.id, data.targetLearnerId),
+      eq(learners.familyId, data.targetFamilyId)
+    ),
+  });
+  if (!learner) {
+    return apiError('Learner does not belong to the target family', 400);
+  }
+
   const [observation] = await db
     .insert(suggestedObservations)
     .values({
@@ -63,6 +75,16 @@ export async function POST(
       status: 'pending',
     })
     .returning();
+
+  const observerFamily = await db.query.families.findFirst({
+    where: eq(families.id, family.id),
+  });
+  triggerObservationReceived(data.targetFamilyId, {
+    observerName: observerFamily?.familyName ?? 'A facilitator',
+    learnerName: learner?.name?.split(' ')[0] ?? 'your child',
+    sessionId,
+    hearthId,
+  }).catch(console.error);
 
   return NextResponse.json(observation, { status: 201 });
 }

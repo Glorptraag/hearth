@@ -10,9 +10,10 @@ import {
   hearthMemberships,
   hearths,
   hearthSessions,
+  sessionAttendance,
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq, and, desc, gte } from 'drizzle-orm';
+import { eq, and, desc, gte, inArray } from 'drizzle-orm';
 import DashboardClient from './DashboardClient';
 
 export default async function DashboardPage() {
@@ -76,6 +77,42 @@ export default async function DashboardPage() {
               .then((rows) => rows[0] ?? null),
           ]);
           if (!hearth) return null;
+
+          const completedSessions = await db
+            .select({ id: hearthSessions.id })
+            .from(hearthSessions)
+            .where(and(
+              eq(hearthSessions.hearthId, hearth.id),
+              eq(hearthSessions.status, 'completed')
+            ));
+          const completedIds = completedSessions.map(s => s.id);
+
+          let pendingScaffoldCount = 0;
+          if (completedIds.length > 0) {
+            const attended = await db
+              .select({ sessionId: sessionAttendance.sessionId })
+              .from(sessionAttendance)
+              .where(and(
+                eq(sessionAttendance.familyId, family.id),
+                inArray(sessionAttendance.sessionId, completedIds)
+              ));
+            const attendedIds = attended.map(a => a.sessionId);
+
+            if (attendedIds.length > 0) {
+              const logged = await db
+                .select({ sourceSessionId: learningEntries.sourceSessionId })
+                .from(learningEntries)
+                .where(and(
+                  eq(learningEntries.familyId, family.id),
+                  eq(learningEntries.source, 'hearth_session'),
+                  inArray(learningEntries.sourceSessionId, attendedIds)
+                ));
+              const loggedIds = new Set(logged.map(l => l.sourceSessionId).filter(Boolean));
+
+              pendingScaffoldCount = attendedIds.filter(id => !loggedIds.has(id)).length;
+            }
+          }
+
           return {
             id: hearth.id,
             name: hearth.name,
@@ -83,7 +120,7 @@ export default async function DashboardPage() {
             nextSession: nextSession
               ? { id: nextSession.id, title: nextSession.title, date: nextSession.date }
               : null,
-            pendingScaffoldCount: 0,
+            pendingScaffoldCount,
           };
         })
       )

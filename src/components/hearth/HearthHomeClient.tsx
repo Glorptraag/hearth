@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import CreateSessionModal from '@/components/hearth/CreateSessionModal';
+import InviteModal from '@/components/hearth/InviteModal';
 
 // ─── Types ───
 
@@ -136,6 +138,8 @@ export default function HearthHomeClient({
     hearth.description ?? ''
   );
   const [saving, setSaving] = useState(false);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -156,6 +160,21 @@ export default function HearthHomeClient({
       toast('Failed to save settings', 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleLeave() {
+    if (!confirm('Are you sure you want to leave this Hearth?')) return;
+    try {
+      const res = await fetch(`/api/hearths/${hearth.id}/leave`, { method: 'POST' });
+      if (res.ok) {
+        router.push('/dashboard');
+      } else {
+        const data = await res.json();
+        toast(data.error ?? 'Failed to leave', 'error');
+      }
+    } catch {
+      toast('Something went wrong', 'error');
     }
   }
 
@@ -229,6 +248,7 @@ export default function HearthHomeClient({
             upcoming={upcoming}
             recent={recent}
             isCoordinator={isCoordinator}
+            onCreateSession={() => setShowCreateSession(true)}
           />
         )}
 
@@ -236,6 +256,7 @@ export default function HearthHomeClient({
           <MembersTab
             members={members}
             isCoordinator={isCoordinator}
+            onInvite={() => setShowInvite(true)}
           />
         )}
 
@@ -249,9 +270,24 @@ export default function HearthHomeClient({
             onNameChange={setEditName}
             onDescriptionChange={setEditDescription}
             onSave={handleSaveSettings}
+            onLeave={handleLeave}
           />
         )}
       </div>
+
+      <CreateSessionModal
+        hearthId={hearth.id}
+        defaultLocation={hearth.location ?? undefined}
+        isOpen={showCreateSession}
+        onClose={() => setShowCreateSession(false)}
+        onCreated={() => { setShowCreateSession(false); router.refresh(); }}
+      />
+
+      <InviteModal
+        hearthId={hearth.id}
+        isOpen={showInvite}
+        onClose={() => setShowInvite(false)}
+      />
     </div>
   );
 }
@@ -292,8 +328,8 @@ function OurStoryTab({
       </div>
 
       <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-        <p className="font-serif text-base text-text-muted">
-          Our Story content will be rendered here
+        <p className="font-serif text-sm italic text-text-muted">
+          Your group&apos;s collective story will grow as sessions are completed and reflections are shared.
         </p>
       </div>
     </div>
@@ -307,22 +343,24 @@ function SessionsTab({
   upcoming,
   recent,
   isCoordinator,
+  onCreateSession,
 }: {
   hearthId: string;
   upcoming: SessionData[];
   recent: SessionData[];
   isCoordinator: boolean;
+  onCreateSession: () => void;
 }) {
   return (
     <div>
       {isCoordinator && (
         <div className="mb-xl">
-          <Link
-            href={`/hearths/${hearthId}/sessions/new`}
+          <button
+            onClick={onCreateSession}
             className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
           >
             + New Session
-          </Link>
+          </button>
         </div>
       )}
 
@@ -415,15 +453,20 @@ function SessionCard({
 function MembersTab({
   members,
   isCoordinator,
+  onInvite,
 }: {
   members: MemberData[];
   isCoordinator: boolean;
+  onInvite: () => void;
 }) {
   return (
     <div>
       {isCoordinator && (
         <div className="mb-xl">
-          <button className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110">
+          <button
+            onClick={onInvite}
+            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
+          >
             + Invite Family
           </button>
         </div>
@@ -491,6 +534,7 @@ function SettingsTab({
   onNameChange,
   onDescriptionChange,
   onSave,
+  onLeave,
 }: {
   hearth: { id: string; name: string; description: string | null; location: string | null };
   isCoordinator: boolean;
@@ -500,6 +544,7 @@ function SettingsTab({
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onSave: () => void;
+  onLeave: () => void;
 }) {
   return (
     <div className="flex flex-col gap-xl">
@@ -559,9 +604,15 @@ function SettingsTab({
         <h2 className="mb-lg font-serif text-xl font-semibold text-text-primary">
           Consent Settings
         </h2>
-        <p className="font-serif text-sm text-text-muted">
-          Consent toggles for cross-observation and evidence sharing will be managed here.
+        <p className="mb-md font-serif text-sm text-text-secondary">
+          Cross-observation and evidence sharing consent is managed in your family settings.
         </p>
+        <Link
+          href="/settings"
+          className="font-sans text-sm font-semibold text-ember transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
+        >
+          Manage in Family Settings →
+        </Link>
       </div>
 
       {/* Leave */}
@@ -569,7 +620,10 @@ function SettingsTab({
         <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">
           Danger Zone
         </h2>
-        <button className="rounded-[10px] bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 border border-red-900/30 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-red-900/30">
+        <button
+          onClick={onLeave}
+          className="rounded-[10px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-red-900/30"
+        >
           Leave this Hearth
         </button>
       </div>

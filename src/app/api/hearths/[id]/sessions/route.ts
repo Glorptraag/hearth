@@ -3,9 +3,10 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { apiError, parseBody } from '@/lib/api-helpers';
-import { hearthSessions } from '@/lib/db/schema';
+import { hearthSessions, hearthMemberships, hearths } from '@/lib/db/schema';
 import { eq, and, gte, ne, desc, asc } from 'drizzle-orm';
 import { requireHearthMember, requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
+import { triggerSessionCreated } from '@/lib/notifications/triggers';
 
 export async function GET(
   _request: NextRequest,
@@ -94,6 +95,21 @@ export async function POST(
       prepNotes: data.prepNotes,
     })
     .returning();
+
+  const hearth = await db.query.hearths.findFirst({ where: eq(hearths.id, id) });
+  const members = await db.query.hearthMemberships.findMany({
+    where: and(eq(hearthMemberships.hearthId, id), eq(hearthMemberships.status, 'active')),
+  });
+  for (const m of members) {
+    if (m.familyId !== family.id) {
+      triggerSessionCreated(m.familyId, {
+        hearthName: hearth?.name ?? '',
+        sessionTitle: session.title,
+        sessionDate: session.date,
+        hearthId: id,
+      }).catch(console.error);
+    }
+  }
 
   return NextResponse.json(session, { status: 201 });
 }

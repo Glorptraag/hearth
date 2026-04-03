@@ -30,6 +30,7 @@ export default function DevPreviewDashboard() {
         dateOccurred: e.dateOccurred,
         subjects: e.subjects,
         learnerIds: e.learnerIds,
+        source: e.source,
       }))}
       todayPlanner={mockPlannerEntries
         .filter((p) => p.date === today)

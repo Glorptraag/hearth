@@ -7,6 +7,14 @@ import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
+import ReflectionModal from '@/components/hearth/ReflectionModal';
+
+type ScaffoldData = {
+  session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
+  evidence: Array<{ id: string; fileUrl: string; fileType: string | null; caption: string | null }>;
+  observations: Array<{ id: string; observationText: string; targetLearnerId: string; evidenceIds: string[] }>;
+  attendingLearnerIds: string[];
+};
 
 type Learner = {
   id: string;
@@ -283,6 +291,11 @@ export default function LogPage() {
     stageNumber: searchParams.get('stageNumber') ?? undefined,
   };
 
+  // ─── Scaffold (from Hearth session) ───
+  const scaffoldSessionId = searchParams.get('scaffold');
+  const [scaffoldData, setScaffoldData] = useState<ScaffoldData | null>(null);
+  const [showReflection, setShowReflection] = useState(false);
+
   // ─── Data ───
   const [learners, setLearners] = useState<Learner[]>([]);
   const [isLoadingLearners, setIsLoadingLearners] = useState(true);
@@ -308,6 +321,22 @@ export default function LogPage() {
   const [location, setLocation] = useState<string | null>(null);
   const [observations, setObservations] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
+  // Fetch scaffold data when navigating from a hearth session
+  useEffect(() => {
+    if (!scaffoldSessionId) return;
+    fetch(`/api/scaffolds/${scaffoldSessionId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then((data: ScaffoldData | null) => {
+        if (!data) return;
+        setScaffoldData(data);
+        setDescription(data.session.sharedRecord ?? data.session.description ?? '');
+        if (data.session.location) setLocation(data.session.location);
+        if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scaffoldSessionId]);
 
   // ─── Draft auto-save (10s to localStorage) ───
   const DRAFT_KEY = 'hearth:logger:draft';
@@ -533,7 +562,8 @@ export default function LogPage() {
           engagementPerLearner: engagement,
           discoveriesPerLearner: discoveries,
           evidenceUrls,
-          source: projectContext.source,
+          source: scaffoldData ? 'hearth_session' : projectContext.source,
+          sourceSessionId: scaffoldData?.session.id,
           projectId: projectContext.projectId,
           stageNumber: projectContext.stageNumber,
           status: 'complete',
@@ -543,7 +573,13 @@ export default function LogPage() {
       if (!res.ok) throw new Error('Save failed');
 
       clearDraft();
-      setToast({ type: 'success', message: 'Learning entry saved!' });
+
+      // Show reflection modal for hearth session entries instead of normal toast
+      if (scaffoldData) {
+        setShowReflection(true);
+      } else {
+        setToast({ type: 'success', message: 'Learning entry saved!' });
+      }
       const learnersToCheck = [...selectedLearners];
       setSelectedLearners([]);
       setTogetherMode(false);
@@ -619,6 +655,21 @@ export default function LogPage() {
           >
             Dismiss
           </button>
+        </div>
+      )}
+
+      {/* Scaffold banner (from Hearth session) */}
+      {scaffoldData && (
+        <div className="flex items-center gap-md p-md px-lg bg-ember/[0.08] border border-ember/15 rounded-[10px] mx-md mt-md mb-sm">
+          <span className="text-xl shrink-0">📋</span>
+          <div className="min-w-0">
+            <div className="font-sans text-sm text-ember font-medium">
+              Logging from: {scaffoldData.session.hearthName ?? 'Hearth'}
+            </div>
+            <div className="font-sans text-xs text-text-muted truncate">
+              {scaffoldData.session.title} · {scaffoldData.session.date} · Pre-filled from shared record
+            </div>
+          </div>
         </div>
       )}
 
@@ -1138,6 +1189,20 @@ export default function LogPage() {
             </a>
           )}
         </div>
+      )}
+
+      {/* ─── Reflection Modal (hearth session scaffold) ─── */}
+      {scaffoldData && (
+        <ReflectionModal
+          isOpen={showReflection}
+          sessionId={scaffoldData.session.id}
+          hearthId={scaffoldData.session.hearthId}
+          hearthName={scaffoldData.session.hearthName ?? 'Hearth'}
+          sessionTitle={scaffoldData.session.title}
+          onClose={() => setShowReflection(false)}
+          onShared={() => setShowReflection(false)}
+          onSkipped={() => setShowReflection(false)}
+        />
       )}
     </div>
   );

@@ -67,6 +67,7 @@ type Entry = {
   heuCandidate: boolean | null;
   status: string;
   createdAt: string;
+  source: string;
 };
 
 type BadgeAward = {
@@ -496,9 +497,16 @@ export default function PortfolioPage() {
 
                               <div className="flex items-start justify-between gap-sm mt-sm">
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-serif text-base font-semibold text-text-primary truncate">
-                                    {entry.title}
-                                  </h3>
+                                  <div className="flex items-center gap-sm">
+                                    <h3 className="font-serif text-base font-semibold text-text-primary truncate">
+                                      {entry.title}
+                                    </h3>
+                                    {entry.source === 'hearth_session' && (
+                                      <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
+                                        🔥 From community
+                                      </span>
+                                    )}
+                                  </div>
                                   <p className="font-sans text-xs text-text-muted mt-xs">
                                     {format(new Date(entry.dateOccurred), 'd MMM yyyy')}
                                   </p>

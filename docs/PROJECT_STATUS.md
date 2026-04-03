@@ -8,7 +8,7 @@
 
 ## Current Phase: Pre-Launch Hardening
 
-**Build progress:** Next.js 16 app fully implemented — 20+ auth-protected routes, 48 API route files (65 handlers), 19 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational.
+**Build progress:** Next.js 16 app fully implemented — 25+ auth-protected routes, 67 API route files (85+ handlers), 27 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational. Community (Hearth) feature complete.
 **Design system:** Conformance pass complete — all screens revised to canonical tokens (2026-03-20).
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities).
 **Launch target:** 10-20 test families in Queensland, Australia.
@@ -39,6 +39,9 @@
 | `/module/[id]` | Module Experience |
 | `/project/[id]` | Project Experience |
 | `/invite` | Invite / Provider Codes |
+| `/hearths/[hearthId]` | Hearth Home (Our Story, Sessions, Members, Settings tabs) |
+| `/hearths/[hearthId]/sessions/[sessionId]` | Session Detail |
+| `/hearths/join/[code]` | Invite Acceptance / Join Flow |
 
 ### Other
 | Route | Screen |
@@ -51,7 +54,7 @@
 
 ---
 
-## API Surface (48 route files, 65 handlers)
+## API Surface (67 route files, 85+ handlers)
 
 | Domain | Endpoints |
 |--------|-----------|
@@ -73,14 +76,17 @@
 | Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention` |
 | Onboarding | `POST /api/onboarding/complete`, `POST /api/welcome/complete` |
 | Seed | `POST /api/seed/capability-threads`, `POST /api/provider-code/validate`, `GET /api/skeletons` |
+| Hearths | `GET\|POST /api/hearths`, `GET\|PATCH /api/hearths/[id]`, `GET /api/hearths/[id]/members`, `DELETE /api/hearths/[id]/members/[familyId]`, `POST /api/hearths/[id]/members/[familyId]/promote`, `POST /api/hearths/[id]/leave`, `POST /api/hearths/[id]/invite`, `POST /api/hearths/[id]/join`, `GET\|POST /api/hearths/[id]/sessions`, `GET\|PATCH /api/hearths/[id]/sessions/[sessionId]`, `POST /api/hearths/[id]/sessions/[sessionId]/rsvp`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/evidence`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/observations`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/reflections`, `GET /api/hearths/[id]/our-story` |
+| Scaffolds | `GET /api/scaffolds`, `GET /api/scaffolds/[sessionId]`, `POST /api/scaffolds/[sessionId]/dismiss` |
+| Observations | `POST /api/observations/[id]/accept`, `POST /api/observations/[id]/dismiss` |
 
 ---
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 19 tables
+### PostgreSQL (Neon + Drizzle) — 27 tables
 - **Identity:** `families`, `learners`, `familySettings`, `familyMembers`
-- **Learning data:** `learningEntries`
+- **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance)
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
 - **Badges:** `badgeDefinitions`, `badgeAwards`, `badgeAssessmentLogs`
 - **Planner:** `plannerEntries`
@@ -90,6 +96,7 @@
 - **Notes:** `facilitatorNotes`
 - **HEU Compliance:** `heuReports`, `workSamples`, `workSampleAnnotations`
 - **Provider codes:** `providerCodes`
+- **Community:** `hearths`, `hearthMemberships`, `hearthSessions`, `sessionAttendance`, `sessionEvidence`, `suggestedObservations`, `sessionReflections`, `hearthInvites`
 
 ### Sanity CMS — 10 schemas
 `capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`, `moduleSkeleton`
@@ -99,6 +106,7 @@
 - **Keyword fallback** (`src/lib/ai/keyword-matcher.ts`): Baseline subject detection when AI unavailable.
 - **Snapshot rebuild** (`src/lib/ai/snapshot-rebuild.ts`): Aggregates entries into per-child capability profiles, triggers badge threshold checks.
 - **Pipeline logging:** Token usage, latency, confidence scores tracked in `aiPipelineLogs`.
+- **Hearth narrative** (`src/lib/ai/hearth-narrative.ts`): Generates collective term narrative for community groups from session records and family reflections. Cached in hearth settings JSONB.
 
 ---
 
@@ -196,7 +204,9 @@
 |------|--------|---------|
 | Facilitator Pedagogical Dashboard | No distinct facilitator role in MVP | Phase 2+ |
 | Learner-facing views | Phase 1 is parent-operated | Phase 2 |
-| Community features | Co-ops, group modules, forums | Phase 2 |
+| ~~Community features~~ | ~~Co-ops, group modules, forums~~ | **SHIPPED** — Hearth community feature complete (multi-family groups, sessions, scaffold logging, Our Story narrative, invites, cross-family observations) |
+| Facilitator capture UI | Observation quick-capture during sessions, session completion UI, attendance marking | Phase 2 — API routes exist, UI deferred |
+| Planner hearth sessions | Hearth sessions as distinct card type in weekly planner | Phase 2 |
 
 ---
 
@@ -205,7 +215,7 @@
 | Phase | Milestone | Families | Status |
 |-------|-----------|----------|--------|
 | **1 — MVP** | App built, content seeded, test family launch | 10-20 | Pre-launch hardening |
-| **2 — Community** | User feedback, community features | 50-100 | Planned |
+| **2 — Community** | User feedback, community features | 50-100 | Core feature shipped (3 Apr 2026) |
 | **3 — Scale** | Infrastructure hardening, performance | 500+ | Planned |
 | **4 — Seed** | Funding readiness, growth metrics | 500+ | Planned |
 
@@ -220,4 +230,4 @@
 
 ---
 
-*Updated 2 April 2026. Update this file when priorities shift or major decisions are made.*
+*Updated 3 April 2026. Update this file when priorities shift or major decisions are made.*

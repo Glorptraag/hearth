@@ -13,6 +13,7 @@ type Entry = {
   evidenceUrls: string[] | null;
   description: string | null;
   heuCandidate: boolean | null;
+  source: string;
   aiEnrichment: {
     subjects_detected?: string[];
     curriculum_descriptors?: { code: string; confidence: number }[];
@@ -299,7 +300,14 @@ export default function WorkSampleCuration({
                       >
                         <div className="flex items-start justify-between gap-sm">
                           <div className="flex-1 min-w-0">
-                            <p className="font-serif text-sm font-semibold text-text-primary truncate">{entry.title}</p>
+                            <div className="flex items-center gap-sm">
+                              <p className="font-serif text-sm font-semibold text-text-primary truncate">{entry.title}</p>
+                              {entry.source === 'hearth_session' && (
+                                <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
+                                  🔥 From community
+                                </span>
+                              )}
+                            </div>
                             <p className="font-sans text-xs text-text-muted mt-[2px]">
                               {format(new Date(entry.dateOccurred + 'T00:00:00'), 'd MMM yyyy')}
                             </p>

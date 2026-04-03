@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
+import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ interface LearningEntry {
   dateOccurred: string;
   subjects: string[] | null;
   learnerIds: string[] | null;
+  source: string;
 }
 
 interface PlannerItem {
@@ -50,6 +52,14 @@ interface SnapshotData {
 
 type DashboardState = 'no-children' | 'no-entries' | 'returning-inactive' | 'active';
 
+interface HearthItem {
+  id: string;
+  name: string;
+  memberCount: number;
+  nextSession: { id: string; title: string; date: string } | null;
+  pendingScaffoldCount: number;
+}
+
 interface DashboardClientProps {
   familyName: string;
   snapshot: SnapshotData;
@@ -60,6 +70,7 @@ interface DashboardClientProps {
   basePath?: string;
   pedagogy?: string;
   dashboardState?: DashboardState;
+  hearths?: HearthItem[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -213,6 +224,7 @@ export default function DashboardClient({
   basePath = '',
   pedagogy = 'eclectic',
   dashboardState = 'active',
+  hearths,
 }: DashboardClientProps) {
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
@@ -350,6 +362,26 @@ export default function DashboardClient({
                   </Link>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* My Hearths */}
+        {hearths && hearths.length > 0 && (
+          <section className="animate-in delay-3 mb-3xl">
+            <div className="flex items-center justify-between mb-lg">
+              <h2 className="font-serif text-lg font-semibold text-text-primary">My Hearths</h2>
+              <Link
+                href="/hearths"
+                className="font-sans text-sm text-ember font-medium hover:text-ember-hover"
+              >
+                View all →
+              </Link>
+            </div>
+            <div className="flex flex-col gap-lg">
+              {hearths.map((h) => (
+                <HearthDashboardCard key={h.id} {...h} />
+              ))}
             </div>
           </section>
         )}

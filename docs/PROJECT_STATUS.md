@@ -71,7 +71,7 @@
 | Library | `GET\|POST /api/library` |
 | Evidence | `POST /api/evidence/upload` |
 | Report | `GET\|POST /api/report`, `PATCH /api/report/[reportId]`, `GET\|PATCH /api/report/[reportId]/samples`, `PATCH /api/report/[reportId]/samples/[sampleId]`, `GET /api/report/export` |
-| Stripe | `POST /api/stripe/checkout`, `POST /api/stripe/webhook` |
+| Stripe | `POST /api/stripe/checkout`, `POST /api/stripe/webhook` *(stubbed — returns 503)* |
 | Account | `GET /api/account/export`, `POST /api/account/delete` |
 | Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention` |
 | Onboarding | `POST /api/onboarding/complete`, `POST /api/welcome/complete` |
@@ -176,6 +176,7 @@
 ## Known Gaps
 
 ### Technical
+- **Payment processing (Stripe)** — STUBBED. API routes return 503. Marketplace UI renders but purchase flow is non-functional. Stripe package removed from dependencies. Revisit when ready to onboard paying families (Phase 3+). Requires: Stripe account, product/price IDs in Sanity, `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` env vars, restore `stripe` package and real implementations in `src/lib/stripe/client.ts`, `api/stripe/checkout`, `api/stripe/webhook`.
 - **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema).
 - **Production error handling** — RESOLVED: `parseBody()` utility added, all 19 JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
 - **Photo/media storage** — Vercel Blob infrastructure wired (`@vercel/blob`). Requires `BLOB_READ_WRITE_TOKEN` in environment. Upload route returns 503 with clear message if unconfigured.

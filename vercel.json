@@ -1,4 +1,10 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "_": false
+    }
+  },
   "crons": [
     {
       "path": "/api/admin/retention",

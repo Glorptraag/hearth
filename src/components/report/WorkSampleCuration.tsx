@@ -13,7 +13,7 @@ type Entry = {
   subjects: string[] | null;
   evidenceUrls: string[] | null;
   description: string | null;
-  heuCandidate: boolean | null;
+  workSampleCandidate: boolean | null;
   source: string;
   aiEnrichment: {
     subjects_detected?: string[];
@@ -118,8 +118,8 @@ export default function WorkSampleCuration({
 
   // Sort: HEU candidates first, then by evidence, then by recency
   const sortedCandidates = [...candidates].sort((a, b) => {
-    if (a.heuCandidate && !b.heuCandidate) return -1;
-    if (!a.heuCandidate && b.heuCandidate) return 1;
+    if (a.workSampleCandidate && !b.workSampleCandidate) return -1;
+    if (!a.workSampleCandidate && b.workSampleCandidate) return 1;
     const aEvidence = (a.evidenceUrls?.length ?? 0) > 0;
     const bEvidence = (b.evidenceUrls?.length ?? 0) > 0;
     if (aEvidence !== bEvidence) return aEvidence ? -1 : 1;
@@ -302,7 +302,7 @@ export default function WorkSampleCuration({
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-xs shrink-0">
-                            {entry.heuCandidate && (
+                            {entry.workSampleCandidate && (
                               <span className="rounded-full bg-sage/15 text-sage px-sm py-[1px] font-sans text-[10px] font-semibold">
                                 📋 Work Sample
                               </span>

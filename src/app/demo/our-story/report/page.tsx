@@ -19,7 +19,7 @@ const WORK_SAMPLE_AREAS = [
   { name: 'HPE', domain: 'hpe' },
 ];
 
-export default function DemoHEUReport() {
+export default function DemoComplianceReport() {
   const searchParams = useSearchParams();
   const initialSelectedId = searchParams.get('child') || 'learner-1';
   const [selectedId, setSelectedId] = useState(initialSelectedId);

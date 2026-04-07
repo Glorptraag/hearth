@@ -94,7 +94,7 @@
 - **Content:** `familyLibrary`
 - **Builder:** `moduleDrafts`
 - **Notes:** `facilitatorNotes`
-- **HEU Compliance:** `heuReports`, `workSamples`, `workSampleAnnotations`
+- **Compliance:** `complianceReports`, `workSamples`, `workSampleAnnotations`
 - **Provider codes:** `providerCodes`
 - **Community:** `hearths`, `hearthMemberships`, `hearthSessions`, `sessionAttendance`, `sessionEvidence`, `suggestedObservations`, `sessionReflections`, `hearthInvites`
 

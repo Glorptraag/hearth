@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { heuReports, workSamples, learners } from '@/lib/db/schema';
+import { complianceReports, workSamples, learners } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
@@ -26,11 +26,11 @@ export async function GET(request: NextRequest) {
 
   if (!learnerId) return apiError('learnerId required', 400);
 
-  const report = await db.query.heuReports.findFirst({
+  const report = await db.query.complianceReports.findFirst({
     where: and(
-      eq(heuReports.familyId, family.id),
-      eq(heuReports.learnerId, learnerId),
-      eq(heuReports.reportYear, parseInt(year)),
+      eq(complianceReports.familyId, family.id),
+      eq(complianceReports.learnerId, learnerId),
+      eq(complianceReports.reportYear, parseInt(year)),
     ),
   });
 
@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
   if (!learner) return apiError('Learner not found', 404);
 
   // Check if report already exists
-  const existing = await db.query.heuReports.findFirst({
+  const existing = await db.query.complianceReports.findFirst({
     where: and(
-      eq(heuReports.familyId, family.id),
-      eq(heuReports.learnerId, learnerId),
-      eq(heuReports.reportYear, year),
+      eq(complianceReports.familyId, family.id),
+      eq(complianceReports.learnerId, learnerId),
+      eq(complianceReports.reportYear, year),
     ),
   });
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
   // Create report
   const [report] = await db
-    .insert(heuReports)
+    .insert(complianceReports)
     .values({
       familyId: family.id,
       learnerId,

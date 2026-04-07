@@ -94,7 +94,7 @@ export const learningEntries = pgTable(
     sourceSessionId: uuid('source_session_id'),
     status: text('status').notNull().default('draft'),
     aiEnrichment: jsonb('ai_enrichment'),
-    heuCandidate: boolean('heu_candidate').default(false),
+    workSampleCandidate: boolean('work_sample_candidate').default(false),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -316,10 +316,10 @@ export const facilitatorNotes = pgTable('facilitator_notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// ─── HEU Compliance ───
+// ─── Compliance Reports ───
 
-export const heuReports = pgTable(
-  'heu_reports',
+export const complianceReports = pgTable(
+  'compliance_reports',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     familyId: uuid('family_id')
@@ -345,7 +345,7 @@ export const workSamples = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     reportId: uuid('report_id')
-      .references(() => heuReports.id)
+      .references(() => complianceReports.id)
       .notNull(),
     slot: text('slot').notNull(), // 'early_writing' | 'later_writing' | 'early_maths' | 'later_maths' | 'early_choice' | 'later_choice'
     entryId: uuid('entry_id').references(() => learningEntries.id),

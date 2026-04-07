@@ -316,9 +316,9 @@ export async function rebuildSnapshot(
       : null;
 
     // HEU compliance
-    const heuNextReport = settings?.nextReportDate ?? null;
-    const daysUntilDue = heuNextReport
-      ? differenceInCalendarDays(new Date(heuNextReport), now)
+    const nextReportDue = settings?.nextReportDate ?? null;
+    const daysUntilDue = nextReportDue
+      ? differenceInCalendarDays(new Date(nextReportDue), now)
       : null;
     const coverageSufficient = totalEntries >= 20 && weekSubjects.length >= 3;
 
@@ -356,7 +356,7 @@ export async function rebuildSnapshot(
           streak_count: streakCount,
         },
         heu_status: {
-          next_report_due: heuNextReport,
+          next_report_due: nextReportDue,
           days_until_due: daysUntilDue,
           coverage_sufficient: coverageSufficient,
         },

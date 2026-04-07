@@ -1,0 +1,318 @@
+'use client';
+
+import { useState } from 'react';
+import type { Module, ActivityOverlay } from './types';
+import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
+
+export default function PrepMode({
+  module,
+  approachIdx,
+  onStart,
+  savedChunkIdx,
+  onResume,
+  overlays,
+  pedagogy,
+}: {
+  module: Module;
+  approachIdx: number;
+  onStart: () => void;
+  savedChunkIdx?: number;
+  onResume?: () => void;
+  overlays?: ActivityOverlay[];
+  pedagogy?: string | null;
+}) {
+  const approach = module.approaches?.[approachIdx];
+  const activities = approach?.activities ?? [];
+  const firstActivityMaterials = activities[0]?.materials ?? [];
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  const toggleCheck = (key: string) =>
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  return (
+    <div className="px-md py-xl max-w-2xl mx-auto pb-32">
+      {/* Header */}
+      <div className="mb-xl">
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
+          Prep
+        </p>
+        <h1 className="font-serif text-2xl font-semibold text-text-primary leading-snug mb-sm">
+          {module.title}
+        </h1>
+        <p className="font-serif text-base italic text-text-secondary leading-relaxed">
+          {module.targetUnderstanding}
+        </p>
+      </div>
+
+      {/* Understanding indicators */}
+      {module.understandingIndicators && (
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+            What to Look For
+          </h2>
+          <div className="space-y-sm">
+            {module.understandingIndicators.emerging && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-amber-400/15 text-amber-400 mt-[2px]">
+                  Emerging
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.emerging}
+                </p>
+              </div>
+            )}
+            {module.understandingIndicators.developing && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-domain-science/15 text-domain-science mt-[2px]">
+                  Developing
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.developing}
+                </p>
+              </div>
+            )}
+            {module.understandingIndicators.demonstrating && (
+              <div className="flex items-start gap-sm">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-sage/15 text-sage mt-[2px]">
+                  Demonstrating
+                </span>
+                <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                  {module.understandingIndicators.demonstrating}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Session overview */}
+      {activities.length > 0 && (
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+            Session Flow
+          </h2>
+          <div className="space-y-sm">
+            {activities.map((act, i) => (
+              <div key={act._id} className="flex items-start gap-sm">
+                <span className="font-sans text-xs font-semibold text-ember mt-1 w-5 shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1">
+                  <span className="font-serif text-sm font-semibold text-text-primary">
+                    {act.title}
+                  </span>
+                  {act.duration && (
+                    <span className="font-sans text-xs text-text-muted ml-sm">
+                      {act.duration.min}–{act.duration.max} min
+                    </span>
+                  )}
+                  <div className="flex gap-xs mt-xs">
+                    {act.setting && (
+                      <span className="font-sans text-xs text-text-muted">
+                        {SETTING_EMOJI[act.setting]} {act.setting}
+                      </span>
+                    )}
+                    {act.energyLevel && (
+                      <span className="font-sans text-xs text-text-muted">
+                        · {ENERGY_EMOJI[act.energyLevel]} {act.energyLevel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Materials checklist */}
+      {firstActivityMaterials.length > 0 && (
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+            Gather First — Materials for Activity 1
+          </h2>
+          <div className="space-y-sm">
+            {firstActivityMaterials.map((mat, i) => {
+              const key = `mat-${i}`;
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleCheck(key)}
+                  className="flex items-center gap-sm w-full text-left group"
+                >
+                  <span
+                    className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center transition-all duration-200 ${
+                      checked[key]
+                        ? 'bg-ember border-ember text-text-inverse'
+                        : 'border-border-medium bg-transparent'
+                    }`}
+                  >
+                    {checked[key] && <span className="text-xs">✓</span>}
+                  </span>
+                  <span
+                    className={`font-serif text-sm transition-colors duration-200 ${
+                      checked[key] ? 'text-text-muted line-through' : 'text-text-primary'
+                    }`}
+                  >
+                    {mat.name}
+                    {!mat.required && (
+                      <span className="font-sans text-xs text-text-muted ml-xs">(optional)</span>
+                    )}
+                    {mat.alternative && (
+                      <span className="font-sans text-xs text-text-muted ml-xs">
+                        · alt: {mat.alternative}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Why This Matters */}
+      <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+          Why This Matters
+        </h2>
+        <p className="font-serif text-base text-text-primary leading-relaxed mb-md">
+          {module.targetUnderstanding}
+        </p>
+        {module.capabilityThreads && module.capabilityThreads.length > 0 && (
+          <div className="flex flex-wrap gap-xs">
+            {module.capabilityThreads.map((thread) => (
+              <span
+                key={thread._id}
+                className="font-sans text-[11px] text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"
+              >
+                {thread.title}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Your Lens — pedagogy overlay perspectives */}
+      {(() => {
+        if (!overlays || overlays.length === 0) return null;
+        const lensItems: { activityTitle: string; perspective: string; watchFor?: string }[] = [];
+        activities.forEach((act) => {
+          const ov = overlays.find((o) => o.activityId === act._id);
+          if (ov?.lens.perspective) {
+            lensItems.push({ activityTitle: act.title, perspective: ov.lens.perspective, watchFor: ov.lens.watchFor });
+          }
+        });
+        if (lensItems.length === 0) return null;
+        const label = pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Your Lens';
+        return (
+          <div className="mb-xl rounded-lg border border-border-medium bg-ember-glow p-lg">
+            <h2 className="font-sans text-sm font-semibold text-ember uppercase tracking-widest mb-md">
+              ✦ {label}
+            </h2>
+            <div className="space-y-md">
+              {lensItems.map((item, i) => (
+                <div key={i}>
+                  <p className="font-sans text-[11px] text-text-muted mb-xs">{item.activityTitle}</p>
+                  <p className="font-serif text-sm text-text-secondary leading-relaxed">
+                    {item.perspective}
+                  </p>
+                  {item.watchFor && (
+                    <p className="font-serif text-xs text-text-muted leading-relaxed mt-xs italic">
+                      Watch for: {item.watchFor}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Key Phrases */}
+      {(() => {
+        const sayBlocks: { activityTitle: string; text: string }[] = [];
+        activities.forEach((act) => {
+          if (act.instructions) {
+            (act.instructions as { _type?: string; style?: string; children?: { text?: string }[] }[]).forEach((block) => {
+              if (block.style === 'sayBlock' && block.children) {
+                const text = block.children.map((c) => c.text ?? '').join('');
+                if (text) sayBlocks.push({ activityTitle: act.title, text });
+              }
+            });
+          }
+        });
+        return sayBlocks.length > 0 ? (
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+            <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+              Key Phrases — Read through these now so they feel natural
+            </h2>
+            <div className="space-y-md">
+              {sayBlocks.map((sb, i) => (
+                <div key={i} className="border-l-[3px] border-ember pl-md">
+                  <p className="font-sans text-[11px] text-text-muted mb-xs">{sb.activityTitle}</p>
+                  <p className="font-serif text-sm text-text-primary leading-relaxed">{sb.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+      })()}
+
+      {/* Watch For — aggregated */}
+      {(() => {
+        const prompts: { activityTitle: string; prompt: string }[] = [];
+        activities.forEach((act) => {
+          act.observationPrompts?.forEach((prompt) => {
+            prompts.push({ activityTitle: act.title, prompt });
+          });
+        });
+        return prompts.length > 0 ? (
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+            <h2 className="font-sans text-sm font-semibold text-sage uppercase tracking-widest mb-md">
+              What to Watch For
+            </h2>
+            <div className="space-y-sm">
+              {prompts.map((p, i) => (
+                <div key={i} className="flex items-start gap-sm">
+                  <span className="shrink-0 font-sans text-[11px] text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle mt-[2px]">
+                    {p.activityTitle}
+                  </span>
+                  <p className="font-serif text-sm text-text-secondary leading-relaxed italic">
+                    {p.prompt}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+      })()}
+
+      {/* Resume banner */}
+      {savedChunkIdx !== undefined && savedChunkIdx > 0 && onResume && (
+        <div className="mb-md rounded-lg border border-ember/30 bg-ember-glow p-md flex items-center justify-between">
+          <div>
+            <p className="font-sans text-xs font-semibold text-ember mb-[2px]">Session in progress</p>
+            <p className="font-serif text-sm text-text-secondary">
+              Activity {savedChunkIdx + 1} of {module.approaches?.[approachIdx]?.activities?.length ?? 1}
+            </p>
+          </div>
+          <button
+            onClick={onResume}
+            className="font-sans text-sm font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
+          >
+            Resume →
+          </button>
+        </div>
+      )}
+
+      {/* Start button */}
+      <button
+        onClick={onStart}
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
+      >
+        {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session →'}
+      </button>
+    </div>
+  );
+}

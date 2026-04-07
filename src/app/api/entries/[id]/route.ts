@@ -42,7 +42,7 @@ const updateEntrySchema = z.object({
   evidenceUrls: z.array(z.string()).optional(),
   source: z.enum(ENTRY_SOURCES).optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
-  heuCandidate: z.boolean().optional(),
+  workSampleCandidate: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {

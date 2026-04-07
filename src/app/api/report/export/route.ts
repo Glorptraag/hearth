@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { families, familySettings, learningEntries, learners, heuReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
+import { families, familySettings, learningEntries, learners, complianceReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';
@@ -242,8 +242,8 @@ export async function GET(request: NextRequest) {
     }> = [];
 
     if (reportId) {
-      const report = await db.query.heuReports.findFirst({
-        where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
+      const report = await db.query.complianceReports.findFirst({
+        where: and(eq(complianceReports.id, reportId), eq(complianceReports.familyId, family.id)),
       });
       if (report) {
         const samples = await db.query.workSamples.findMany({

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { differenceInYears } from 'date-fns';
-import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
+import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
@@ -216,6 +216,11 @@ export default function DashboardClient({
     [timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects]
   );
 
+  const adaptedHeading = useMemo(
+    () => pedagogy !== 'eclectic' ? adaptGreeting(pedagogy, learnerNames, { timeOfDay }) : null,
+    [pedagogy, learnerNames, timeOfDay]
+  );
+
   const todayEntries = recentEntries.filter(
     (e) => e.dateOccurred === new Date().toISOString().split('T')[0]
   );
@@ -234,10 +239,9 @@ export default function DashboardClient({
 
         {/* Greeting */}
         <div className="animate-in delay-2 mb-3xl">
-          <h1
-            className="font-serif text-[2.25rem] font-normal leading-[1.3] text-text-primary mb-lg [&_strong]:font-bold [&_strong]:text-ember"
-            dangerouslySetInnerHTML={{ __html: heading }}
-          />
+          <h1 className="font-serif text-[2.25rem] font-normal leading-[1.3] text-text-primary mb-lg [&_strong]:font-bold [&_strong]:text-ember">
+            {adaptedHeading ?? <span dangerouslySetInnerHTML={{ __html: heading }} />}
+          </h1>
           <p className="font-serif text-[1.15rem] leading-[1.7] text-text-secondary max-w-[560px]">
             {message}
           </p>

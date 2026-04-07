@@ -784,14 +784,14 @@ export default function LogPage() {
 
           {/* Section 2: What Happened? */}
           <section>
-            <SectionHeader number={2} done={sectionDone[2]} label="What happened?" />
+            <SectionHeader number={2} done={sectionDone[2]} label={vocab.logWhatLabel} />
 
             {/* 2a: Description */}
             <div className="mb-lg">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the activity or moment... What were they doing? Where did it happen?"
+                placeholder={vocab.logWhatPlaceholder}
                 rows={4}
                 className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.3)] transition-all duration-200 resize-y"
               />
@@ -1026,7 +1026,7 @@ export default function LogPage() {
 
           {/* Section 5: What Did You Observe? */}
           <section>
-            <SectionHeader number={5} done={sectionDone[5]} label="What did you observe?" />
+            <SectionHeader number={5} done={sectionDone[5]} label={vocab.logObserveLabel} />
             <div className="space-y-md">
               {OBSERVATION_CATEGORIES.map((cat) => {
                 const colorClasses = OBS_COLOR_CLASSES[cat.color] ?? OBS_COLOR_CLASSES['child-sage'];

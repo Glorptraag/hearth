@@ -1,1071 +1,18 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
-import { PortableText } from '@portabletext/react';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Material { name: string; alternative?: string; required: boolean }
-interface Activity {
-  _id: string;
-  title: string;
-  summary?: string;
-  instructions?: unknown[];
-  facilitatorGuidance?: { before?: string; during?: string; challenges?: string };
-  materials?: Material[];
-  duration?: { min: number; max: number };
-  setting?: string;
-  energyLevel?: string;
-  observationPrompts?: string[];
-  reflectionPrompts?: string[];
-}
-interface Approach {
-  _id: string;
-  title: string;
-  modality?: string;
-  activities?: Activity[];
-}
-interface Module {
-  _id: string;
-  title: string;
-  targetUnderstanding: string;
-  understandingIndicators?: { emerging?: string; developing?: string; demonstrating?: string };
-  approaches?: Approach[];
-  subjects?: string[];
-}
-interface Learner { id: string; name: string; colourToken?: string }
-
-interface PedagogyLens {
-  perspective?: string;
-  facilitatorTips?: string;
-  languageFrame?: string;
-  watchFor?: string;
-}
-interface ActivityOverlay { activityId: string; lens: PedagogyLens }
-
-type Mode = 'approach-pick' | 'prep' | 'facilitate' | 'log';
-
-const MODALITY_EMOJI: Record<string, string> = {
-  kinesthetic: '🤲',
-  visual: '👁',
-  auditory: '👂',
-  narrative: '📖',
-  social: '🤝',
-  exploratory: '🔍',
-};
-
-const ENERGY_EMOJI: Record<string, string> = {
-  calm: '🌿',
-  moderate: '⚡',
-  active: '🏃',
-};
-
-const SETTING_EMOJI: Record<string, string> = {
-  indoor: '🏠',
-  outdoor: '🌳',
-  either: '🌐',
-};
-
-const ENGAGEMENT_EMOJI = ['😴', '🙂', '😊', '🌟'];
-
-const PEDAGOGY_LABELS: Record<string, string> = {
-  charlotte_mason: 'Charlotte Mason Lens',
-  classical: 'Classical Lens',
-  montessori: 'Montessori Lens',
-  waldorf_steiner: 'Waldorf Lens',
-  unschooling: 'Unschooling Lens',
-  eclectic: 'Your Lens',
-};
-
-// ─── Portable text renderer ───────────────────────────────────────────────────
-
-const ptComponents = {
-  block: {
-    normal: ({ children }: { children?: React.ReactNode }) => (
-      <p className="mb-3 font-serif text-base leading-relaxed text-text-primary">{children}</p>
-    ),
-  },
-};
-
-// ─── Mode: Prep ───────────────────────────────────────────────────────────────
-
-function PrepMode({
-  module,
-  approachIdx,
-  onStart,
-  savedChunkIdx,
-  onResume,
-}: {
-  module: Module;
-  approachIdx: number;
-  onStart: () => void;
-  savedChunkIdx?: number;
-  onResume?: () => void;
-}) {
-  const approach = module.approaches?.[approachIdx];
-  const activities = approach?.activities ?? [];
-  const firstActivityMaterials = activities[0]?.materials ?? [];
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
-
-  const toggleCheck = (key: string) =>
-    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  return (
-    <div className="px-md py-xl max-w-2xl mx-auto pb-32">
-      {/* Header */}
-      <div className="mb-xl">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
-          Prep
-        </p>
-        <h1 className="font-serif text-2xl font-semibold text-text-primary leading-snug mb-sm">
-          {module.title}
-        </h1>
-        <p className="font-serif text-base italic text-text-secondary leading-relaxed">
-          {module.targetUnderstanding}
-        </p>
-      </div>
-
-      {/* Understanding indicators */}
-      {module.understandingIndicators && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
-            What to Look For
-          </h2>
-          <div className="space-y-sm">
-            {module.understandingIndicators.emerging && (
-              <div className="flex items-start gap-sm">
-                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-amber-400/15 text-amber-400 mt-[2px]">
-                  Emerging
-                </span>
-                <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                  {module.understandingIndicators.emerging}
-                </p>
-              </div>
-            )}
-            {module.understandingIndicators.developing && (
-              <div className="flex items-start gap-sm">
-                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-domain-science/15 text-domain-science mt-[2px]">
-                  Developing
-                </span>
-                <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                  {module.understandingIndicators.developing}
-                </p>
-              </div>
-            )}
-            {module.understandingIndicators.demonstrating && (
-              <div className="flex items-start gap-sm">
-                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-sage/15 text-sage mt-[2px]">
-                  Demonstrating
-                </span>
-                <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                  {module.understandingIndicators.demonstrating}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Session overview */}
-      {activities.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
-            Session Flow
-          </h2>
-          <div className="space-y-sm">
-            {activities.map((act, i) => (
-              <div key={act._id} className="flex items-start gap-sm">
-                <span className="font-sans text-xs font-semibold text-ember mt-1 w-5 shrink-0">
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <span className="font-serif text-sm font-semibold text-text-primary">
-                    {act.title}
-                  </span>
-                  {act.duration && (
-                    <span className="font-sans text-xs text-text-muted ml-sm">
-                      {act.duration.min}–{act.duration.max} min
-                    </span>
-                  )}
-                  <div className="flex gap-xs mt-xs">
-                    {act.setting && (
-                      <span className="font-sans text-xs text-text-muted">
-                        {SETTING_EMOJI[act.setting]} {act.setting}
-                      </span>
-                    )}
-                    {act.energyLevel && (
-                      <span className="font-sans text-xs text-text-muted">
-                        · {ENERGY_EMOJI[act.energyLevel]} {act.energyLevel}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Materials checklist */}
-      {firstActivityMaterials.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
-            Gather First — Materials for Activity 1
-          </h2>
-          <div className="space-y-sm">
-            {firstActivityMaterials.map((mat, i) => {
-              const key = `mat-${i}`;
-              return (
-                <button
-                  key={key}
-                  onClick={() => toggleCheck(key)}
-                  className="flex items-center gap-sm w-full text-left group"
-                >
-                  <span
-                    className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center transition-all duration-200 ${
-                      checked[key]
-                        ? 'bg-ember border-ember text-text-inverse'
-                        : 'border-border-medium bg-transparent'
-                    }`}
-                  >
-                    {checked[key] && <span className="text-xs">✓</span>}
-                  </span>
-                  <span
-                    className={`font-serif text-sm transition-colors duration-200 ${
-                      checked[key] ? 'text-text-muted line-through' : 'text-text-primary'
-                    }`}
-                  >
-                    {mat.name}
-                    {!mat.required && (
-                      <span className="font-sans text-xs text-text-muted ml-xs">(optional)</span>
-                    )}
-                    {mat.alternative && (
-                      <span className="font-sans text-xs text-text-muted ml-xs">
-                        · alt: {mat.alternative}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Resume banner */}
-      {savedChunkIdx !== undefined && savedChunkIdx > 0 && onResume && (
-        <div className="mb-md rounded-lg border border-ember/30 bg-ember-glow p-md flex items-center justify-between">
-          <div>
-            <p className="font-sans text-xs font-semibold text-ember mb-[2px]">Session in progress</p>
-            <p className="font-serif text-sm text-text-secondary">
-              Activity {savedChunkIdx + 1} of {module.approaches?.[approachIdx]?.activities?.length ?? 1}
-            </p>
-          </div>
-          <button
-            onClick={onResume}
-            className="font-sans text-sm font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
-          >
-            Resume →
-          </button>
-        </div>
-      )}
-
-      {/* Start button */}
-      <button
-        onClick={onStart}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
-      >
-        {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session →'}
-      </button>
-    </div>
-  );
-}
-
-// ─── Session Timer ───────────────────────────────────────────────────────────
-
-function SessionTimer({ suggestedMax, startTime }: { suggestedMax?: number; startTime: number }) {
-  const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - startTime) / 1000));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [startTime]);
-
-  const mins = Math.floor(elapsed / 60);
-  const secs = elapsed % 60;
-  const exceeding = suggestedMax != null && mins >= suggestedMax;
-  const approaching = suggestedMax != null && !exceeding && mins >= suggestedMax * 0.8;
-
-  return (
-    <div className={`flex items-center gap-xs font-sans text-xs tabular-nums transition-colors duration-200 ${
-      exceeding ? 'text-amber-400' : approaching ? 'text-text-secondary' : 'text-text-muted'
-    }`}>
-      <span>⏱</span>
-      <span>{mins}:{secs.toString().padStart(2, '0')}</span>
-      {suggestedMax != null && (
-        <span className="text-text-muted">/ {suggestedMax}m</span>
-      )}
-    </div>
-  );
-}
-
-// ─── Mode: Facilitate ─────────────────────────────────────────────────────────
-
-function FacilitateMode({
-  module,
-  approachIdx,
-  overlays,
-  pedagogy,
-  onFinish,
-  onPause,
-  initialChunkIdx = 0,
-  onChunkChange,
-  sessionStartTime,
-}: {
-  module: Module;
-  approachIdx: number;
-  overlays: ActivityOverlay[];
-  pedagogy: string | null;
-  onFinish: () => void;
-  onPause?: () => void;
-  initialChunkIdx?: number;
-  onChunkChange?: (idx: number) => void;
-  sessionStartTime: number;
-}) {
-  const activities = module.approaches?.[approachIdx]?.activities ?? [];
-  const [currentIdx, setCurrentIdx] = useState(initialChunkIdx);
-  const [guidanceOpen, setGuidanceOpen] = useState(false);
-  const [overlayOpen, setOverlayOpen] = useState(false);
-  const current = activities[currentIdx];
-  const currentOverlay = overlays.find((o) => o.activityId === current?._id) ?? null;
-  const isLast = currentIdx === activities.length - 1;
-
-  if (!current) return null;
-
-  return (
-    <div className="xl:grid xl:grid-cols-[1fr_280px]">
-      {/* Main facilitate content */}
-      <div className="px-md py-xl max-w-2xl mx-auto pb-32">
-        {/* Progress dots + timer */}
-        <div className="flex items-center justify-between mb-xl">
-          <div className="flex items-center gap-xs">
-            {activities.map((_, i) => (
-              <div
-                key={i}
-                className={`h-2 rounded-full transition-all duration-200 ${
-                  i === currentIdx
-                    ? 'w-6 bg-ember'
-                    : i < currentIdx
-                    ? 'w-2 bg-ember/40'
-                    : 'w-2 bg-border-subtle'
-                }`}
-              />
-            ))}
-            <span className="font-sans text-xs text-text-muted ml-sm">
-              {currentIdx + 1} of {activities.length}
-            </span>
-          </div>
-          <SessionTimer suggestedMax={current?.duration?.max} startTime={sessionStartTime} />
-        </div>
-
-        {/* Activity header */}
-        <div className="mb-lg">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-xs">
-            {module.approaches?.[approachIdx]?.title}
-          </p>
-          <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
-            {current.title}
-          </h2>
-          <div className="flex gap-sm flex-wrap">
-            {current.duration && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                ⏱ {current.duration.min}–{current.duration.max} min
-              </span>
-            )}
-            {current.setting && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                {SETTING_EMOJI[current.setting]} {current.setting}
-              </span>
-            )}
-            {current.energyLevel && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                {ENERGY_EMOJI[current.energyLevel]} {current.energyLevel}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Instructions */}
-        {current.instructions && current.instructions.length > 0 && (
-          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-            <PortableText value={current.instructions as Parameters<typeof PortableText>[0]['value']} components={ptComponents} />
-          </div>
-        )}
-
-        {/* Materials reminder */}
-        {current.materials && current.materials.length > 0 && (
-          <div className="mb-lg">
-            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-              Materials
-            </p>
-            <div className="flex flex-wrap gap-xs">
-              {current.materials.map((mat, i) => (
-                <span
-                  key={i}
-                  className="font-sans text-xs text-text-secondary bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"
-                >
-                  {mat.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Observation prompts — mobile/tablet only, shown in right panel on xl */}
-        {current.observationPrompts && current.observationPrompts.length > 0 && (
-          <div className="mb-lg space-y-xs xl:hidden">
-            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-              Watch For
-            </p>
-            {current.observationPrompts.map((prompt, i) => (
-              <div
-                key={i}
-                className="bg-surface-raised rounded-md px-md py-sm border border-border-subtle"
-              >
-                <p className="font-serif text-sm text-text-secondary italic">👁 {prompt}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pedagogy lens — mobile/tablet only collapsible, shown in right panel on xl */}
-        {currentOverlay && (
-          <div className="mb-lg xl:hidden">
-            <button
-              onClick={() => setOverlayOpen((v) => !v)}
-              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
-            >
-              <span>{overlayOpen ? '▾' : '▸'}</span>
-              <span className="text-ember" aria-hidden="true">✦</span>
-              <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
-            </button>
-            {overlayOpen && (
-              <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
-                {currentOverlay.lens.perspective && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      Perspective
-                    </p>
-                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                      {currentOverlay.lens.perspective}
-                    </p>
-                  </div>
-                )}
-                {currentOverlay.lens.facilitatorTips && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      Tips for You
-                    </p>
-                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                      {currentOverlay.lens.facilitatorTips}
-                    </p>
-                  </div>
-                )}
-                {currentOverlay.lens.languageFrame && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      Language
-                    </p>
-                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                      {currentOverlay.lens.languageFrame}
-                    </p>
-                  </div>
-                )}
-                {currentOverlay.lens.watchFor && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      Watch For
-                    </p>
-                    <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                      {currentOverlay.lens.watchFor}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Facilitator guidance — mobile/tablet only collapsible, shown in right panel on xl */}
-        {current.facilitatorGuidance && (
-          <div className="mb-lg xl:hidden">
-            <button
-              onClick={() => setGuidanceOpen((v) => !v)}
-              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
-            >
-              <span>{guidanceOpen ? '▾' : '▸'}</span>
-              <span>Facilitator Guidance</span>
-            </button>
-            {guidanceOpen && (
-              <div className="bg-surface-raised rounded-lg border border-border-subtle p-lg space-y-md">
-                {current.facilitatorGuidance.before && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      Before
-                    </p>
-                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                      {current.facilitatorGuidance.before}
-                    </p>
-                  </div>
-                )}
-                {current.facilitatorGuidance.during && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      During
-                    </p>
-                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                      {current.facilitatorGuidance.during}
-                    </p>
-                  </div>
-                )}
-                {current.facilitatorGuidance.challenges && (
-                  <div>
-                    <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                      If Challenges Arise
-                    </p>
-                    <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                      {current.facilitatorGuidance.challenges}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="fixed bottom-20 left-0 right-0 lg:left-[220px] px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
-          <div className="flex gap-sm">
-            {onPause && (
-              <button
-                onClick={onPause}
-                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
-              >
-                ⏸ Pause
-              </button>
-            )}
-            {isLast ? (
-              <button
-                onClick={onFinish}
-                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
-              >
-                Finish & Log →
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  const next = currentIdx + 1;
-                  setCurrentIdx(next);
-                  setGuidanceOpen(false);
-                  setOverlayOpen(false);
-                  onChunkChange?.(next);
-                }}
-                className="flex-1 bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
-              >
-                Next Activity →
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Right guidance panel — desktop only */}
-      <aside className="hidden xl:block bg-surface-panel border-l border-border-subtle sticky top-0 h-dvh overflow-y-auto p-lg space-y-xl">
-        {/* Observation prompts */}
-        {current.observationPrompts && current.observationPrompts.length > 0 && (
-          <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-sage mb-md pb-sm border-b border-border-subtle">
-              👁 Watch For
-            </p>
-            <div className="space-y-sm">
-              {current.observationPrompts.map((prompt, i) => (
-                <div
-                  key={i}
-                  className="bg-surface-raised rounded-md px-md py-sm border border-border-subtle"
-                >
-                  <p className="font-serif text-sm text-text-secondary italic">{prompt}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Pedagogy lens — always visible */}
-        {currentOverlay && (
-          <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-md pb-sm border-b border-border-subtle">
-              ✦ {pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}
-            </p>
-            <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
-              {currentOverlay.lens.perspective && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    Perspective
-                  </p>
-                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                    {currentOverlay.lens.perspective}
-                  </p>
-                </div>
-              )}
-              {currentOverlay.lens.facilitatorTips && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    Tips for You
-                  </p>
-                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                    {currentOverlay.lens.facilitatorTips}
-                  </p>
-                </div>
-              )}
-              {currentOverlay.lens.languageFrame && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    Language
-                  </p>
-                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                    {currentOverlay.lens.languageFrame}
-                  </p>
-                </div>
-              )}
-              {currentOverlay.lens.watchFor && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    Watch For
-                  </p>
-                  <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                    {currentOverlay.lens.watchFor}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Facilitator guidance — always visible */}
-        {current.facilitatorGuidance && (
-          <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md pb-sm border-b border-border-subtle">
-              Facilitator Guidance
-            </p>
-            <div className="bg-surface-raised rounded-lg border border-border-subtle p-lg space-y-md">
-              {current.facilitatorGuidance.before && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    Before
-                  </p>
-                  <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                    {current.facilitatorGuidance.before}
-                  </p>
-                </div>
-              )}
-              {current.facilitatorGuidance.during && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    During
-                  </p>
-                  <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                    {current.facilitatorGuidance.during}
-                  </p>
-                </div>
-              )}
-              {current.facilitatorGuidance.challenges && (
-                <div>
-                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-xs">
-                    If Challenges Arise
-                  </p>
-                  <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                    {current.facilitatorGuidance.challenges}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Fallback when no overlay or guidance */}
-        {!currentOverlay && !current.facilitatorGuidance && !current.observationPrompts?.length && (
-          <div className="text-center py-xl">
-            <p className="font-serif text-sm text-text-muted italic">No guidance available for this activity.</p>
-          </div>
-        )}
-      </aside>
-    </div>
-  );
-}
-
-// ─── Mode: Log ────────────────────────────────────────────────────────────────
-
-function LogMode({ module, sessionElapsed }: { module: Module; sessionElapsed?: number }) {
-  const router = useRouter();
-  const [learners, setLearners] = useState<Learner[]>([]);
-  const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
-  const [engagement, setEngagement] = useState<Record<string, number>>({});
-  const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
-  const [understandingLevel, setUnderstandingLevel] = useState<Record<string, string>>({});
-  const [description, setDescription] = useState(`Completed ${module.title}`);
-  const [activePrompts, setActivePrompts] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [attemptNumber, setAttemptNumber] = useState(1);
-
-  // Collect all observation prompts from all activities
-  const allPrompts = Array.from(
-    new Set(
-      module.approaches?.flatMap((app) =>
-        app.activities?.flatMap((act) => act.observationPrompts ?? []) ?? []
-      ) ?? []
-    )
-  );
-
-  // Shifted prompts for repeat sessions
-  const reflectionPrompts = Array.from(
-    new Set(
-      module.approaches?.flatMap((app) =>
-        app.activities?.flatMap((act) => act.reflectionPrompts ?? []) ?? []
-      ) ?? []
-    )
-  );
-
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/learners').then((r) => r.json()),
-      fetch(`/api/entries?status=complete&limit=100`).then((r) => r.json()),
-    ])
-      .then(([learnerData, entries]) => {
-        const data = learnerData as Learner[];
-        setLearners(data);
-        if (data.length > 0) setSelectedLearnerIds([data[0].id]);
-
-        const previousRuns = (entries as { sourceModuleId?: string }[]).filter(
-          (e) => e.sourceModuleId === module._id
-        );
-        setAttemptNumber(previousRuns.length + 1);
-      })
-      .catch(() => {});
-  }, [module._id]);
-
-  const toggleLearner = (id: string) =>
-    setSelectedLearnerIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-
-  const togglePrompt = (prompt: string) =>
-    setActivePrompts((prev) =>
-      prev.includes(prompt) ? prev.filter((p) => p !== prompt) : [...prev, prompt]
-    );
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const understandingSuffix = Object.entries(understandingLevel)
-        .filter(([, v]) => v)
-        .map(([lid, level]) => {
-          const name = learners.find((l) => l.id === lid)?.name ?? '';
-          return `${name}: ${level}`;
-        })
-        .join(', ');
-      const body = {
-        title: `Module: ${module.title}`,
-        description: description
-          + (activePrompts.length > 0 ? '\n\nObservations:\n' + activePrompts.map((p) => `• ${p}`).join('\n') : '')
-          + (understandingSuffix ? `\n\nUnderstanding: ${understandingSuffix}` : '')
-          + (sessionElapsed != null ? `\n\nSession duration: ${Math.floor(sessionElapsed / 60)}m ${sessionElapsed % 60}s` : ''),
-        dateOccurred: new Date().toISOString().split('T')[0],
-        subjects: module.subjects,
-        learnerIds: selectedLearnerIds,
-        engagementPerLearner: engagement,
-        discoveriesPerLearner: discoveries,
-        source: 'module_log',
-        sourceModuleId: module._id,
-        status: 'complete',
-      };
-      const res = await fetch('/api/entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        router.push('/our-story/portfolio');
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="px-md py-xl max-w-2xl mx-auto pb-32">
-      <div className="mb-xl">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
-          Log {attemptNumber > 1 ? `· Session ${attemptNumber}` : ''}
-        </p>
-        <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
-          {attemptNumber === 1
-            ? 'Capture this session'
-            : attemptNumber === 2
-              ? 'What shifted this time?'
-              : 'Deepening the understanding'}
-        </h2>
-        <p className="font-serif text-sm text-text-secondary">
-          {attemptNumber === 1
-            ? 'A few moments to record what happened.'
-            : attemptNumber === 2
-              ? 'Notice what changed since last time — new questions, deeper engagement, different approaches.'
-              : 'Look for evidence of growing independence, richer language, or connections to other areas.'}
-        </p>
-      </div>
-
-      {/* Child selector */}
-      {learners.length > 0 && (
-        <div className="mb-xl">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-            Who was learning?
-          </p>
-          <div className="flex flex-wrap gap-sm">
-            {learners.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => toggleLearner(l.id)}
-                className={`font-sans text-sm px-md py-sm rounded-full border transition-all duration-200 ${
-                  selectedLearnerIds.includes(l.id)
-                    ? 'bg-ember text-text-inverse border-ember'
-                    : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
-                }`}
-              >
-                {l.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Per-child engagement */}
-      {selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
-            Engagement
-          </p>
-          {selectedLearnerIds.map((lid) => {
-            const learner = learners.find((l) => l.id === lid);
-            return (
-              <div key={lid} className="mb-md last:mb-0">
-                <p className="font-serif text-sm text-text-primary mb-sm">{learner?.name}</p>
-                <div className="flex gap-sm">
-                  {ENGAGEMENT_EMOJI.map((emoji, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setEngagement((prev) => ({ ...prev, [lid]: i + 1 }))}
-                      className={`text-2xl rounded-md p-xs transition-all duration-200 ${
-                        engagement[lid] === i + 1
-                          ? 'bg-ember-glow scale-110'
-                          : 'opacity-40 hover:opacity-70'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Understanding level — per-child */}
-      {module.understandingIndicators && selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
-            Understanding Level
-          </p>
-          {selectedLearnerIds.map((lid) => {
-            const learner = learners.find((l) => l.id === lid);
-            return (
-              <div key={lid} className="mb-md last:mb-0">
-                <p className="font-serif text-sm text-text-primary mb-sm">{learner?.name}</p>
-                <div className="flex gap-xs flex-wrap">
-                  {([
-                    { key: 'emerging', label: 'Emerging', badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30', desc: module.understandingIndicators!.emerging },
-                    { key: 'developing', label: 'Developing', badge: 'bg-domain-science/15 text-domain-science border-domain-science/30', desc: module.understandingIndicators!.developing },
-                    { key: 'demonstrating', label: 'Demonstrating', badge: 'bg-sage/15 text-sage border-sage/30', desc: module.understandingIndicators!.demonstrating },
-                  ] as const).map(({ key, label, badge }) => (
-                    <button
-                      key={key}
-                      onClick={() => setUnderstandingLevel((prev) => ({ ...prev, [lid]: prev[lid] === key ? '' : key }))}
-                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition-all duration-200 ${
-                        understandingLevel[lid] === key
-                          ? badge
-                          : 'bg-transparent border-border-subtle text-text-muted hover:border-border-medium'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Per-child discoveries */}
-      {selectedLearnerIds.length > 0 && (
-        <div className="mb-xl">
-          <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-            Discoveries
-          </p>
-          {selectedLearnerIds.map((lid) => {
-            const learner = learners.find((l) => l.id === lid);
-            return (
-              <div key={lid} className="mb-sm">
-                <label className="font-serif text-sm text-text-secondary mb-xs block">
-                  {learner?.name}
-                </label>
-                <input
-                  type="text"
-                  placeholder="What did they discover or say?"
-                  value={discoveries[lid] ?? ''}
-                  onChange={(e) => setDiscoveries((prev) => ({ ...prev, [lid]: e.target.value }))}
-                  className="w-full bg-surface-panel border border-border-subtle rounded-md px-md py-sm font-serif text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium"
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Description */}
-      <div className="mb-xl">
-        <label className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm block">
-          Session Notes
-        </label>
-        <textarea
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full bg-surface-panel border border-border-subtle rounded-md px-md py-sm font-serif text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium resize-none"
-        />
-      </div>
-
-      {/* Observation/reflection prompt chips — shifts on repeat sessions */}
-      {(() => {
-        const prompts = attemptNumber >= 2 && reflectionPrompts.length > 0
-          ? reflectionPrompts
-          : allPrompts;
-        const label = attemptNumber >= 2 && reflectionPrompts.length > 0
-          ? 'Reflections'
-          : 'Observations Noted';
-        return prompts.length > 0 ? (
-          <div className="mb-xl">
-            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
-              {label}
-            </p>
-            <div className="flex flex-wrap gap-xs">
-              {prompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => togglePrompt(prompt)}
-                  className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-200 ${
-                    activePrompts.includes(prompt)
-                      ? 'bg-sage/20 text-sage border-sage/30'
-                      : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'
-                  }`}
-                >
-                  {activePrompts.includes(prompt) ? '✓ ' : ''}
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null;
-      })()}
-
-      {/* Save button */}
-      <button
-        onClick={handleSave}
-        disabled={saving || selectedLearnerIds.length === 0}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {saving ? 'Saving...' : 'Save to Portfolio →'}
-      </button>
-    </div>
-  );
-}
-
-// ─── Mode: Approach pick ─────────────────────────────────────────────────────
-
-function ApproachPickMode({
-  module,
-  onSelect,
-}: {
-  module: Module;
-  onSelect: (idx: number) => void;
-}) {
-  const approaches = module.approaches ?? [];
-
-  return (
-    <div className="px-md py-xl max-w-2xl mx-auto">
-      <div className="mb-xl">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ember mb-sm">
-          Choose an approach
-        </p>
-        <h1 className="font-serif text-2xl font-semibold text-text-primary leading-snug mb-sm">
-          {module.title}
-        </h1>
-        <p className="font-serif text-base italic text-text-secondary leading-relaxed">
-          {module.targetUnderstanding}
-        </p>
-      </div>
-
-      {approaches.length === 0 ? (
-        <p className="font-serif text-sm text-text-muted">No approaches available for this module.</p>
-      ) : (
-        <div className="space-y-sm">
-          {approaches.map((approach, idx) => {
-            const actCount = approach.activities?.length ?? 0;
-            return (
-              <button
-                key={approach._id}
-                onClick={() => onSelect(idx)}
-                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-soft transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
-              >
-                <span className="mt-[2px] text-lg">
-                  {MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}
-                </span>
-                <div className="flex-1">
-                  <p className="font-serif text-base font-semibold text-text-primary">
-                    {approach.title}
-                  </p>
-                  {approach.modality && (
-                    <p className="mt-xs font-sans text-xs capitalize text-text-muted">
-                      {approach.modality} · {actCount} {actCount === 1 ? 'activity' : 'activities'}
-                    </p>
-                  )}
-                </div>
-                <span className="mt-[3px] font-sans text-xs text-ember">→</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
+import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
+import PrepMode from './_components/PrepMode';
+import FacilitateMode from './_components/FacilitateMode';
+import LogMode from './_components/LogMode';
+import ApproachPickMode from './_components/ApproachPicker';
+import ModuleSidebar from './_components/ModuleSidebar';
+import ProgressBar from './_components/ProgressBar';
 
 export default function ModuleDetailPage() {
   const params = useParams();
@@ -1080,24 +27,63 @@ export default function ModuleDetailPage() {
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
   const [pedagogy, setPedagogy] = useState<string | null>(null);
   const [savedChunkIdx, setSavedChunkIdx] = useState<number>(0);
+  const [currentActivityIdx, setCurrentActivityIdx] = useState<number>(0);
+  const [completedActivityIdxs, setCompletedActivityIdxs] = useState<number[]>([]);
   const [sessionElapsed, setSessionElapsed] = useState<number | undefined>(undefined);
+  const [quickCaptures, setQuickCaptures] = useState<QuickCaptureItem[]>([]);
   const facilitateStartRef = useRef<number | null>(null);
+
+  const handleAddCapture = useCallback((item: QuickCaptureItem) => {
+    setQuickCaptures((prev) => [...prev, item]);
+  }, []);
+
+  const handleRemoveCapture = useCallback((timestamp: number) => {
+    setQuickCaptures((prev) => prev.filter((c) => c.timestamp !== timestamp));
+  }, []);
 
   const STORAGE_KEY = `hearth_module_${id}_session`;
   const START_TIME_KEY = `hearth_module_${id}_start`;
 
   function persistChunk(chunkIdx: number) {
     setSavedChunkIdx(chunkIdx);
+    setCurrentActivityIdx(chunkIdx);
+    setCompletedActivityIdxs((prev) => {
+      const next = new Set(prev);
+      for (let i = 0; i < chunkIdx; i++) next.add(i);
+      return Array.from(next);
+    });
     try { localStorage.setItem(STORAGE_KEY, String(chunkIdx)); } catch { /* ignore */ }
   }
 
   function clearSession() {
     setSavedChunkIdx(0);
+    setCurrentActivityIdx(0);
+    setCompletedActivityIdxs([]);
+    setQuickCaptures([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(START_TIME_KEY);
     } catch { /* ignore */ }
   }
+
+  const handleModeChange = useCallback((newMode: Mode) => {
+    if (newMode === 'log' && facilitateStartRef.current) {
+      setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
+    }
+    setMode(newMode);
+  }, []);
+
+  const handleActivitySelect = useCallback((idx: number) => {
+    setCurrentActivityIdx(idx);
+    setSavedChunkIdx(idx);
+    setCompletedActivityIdxs((prev) => {
+      const next = new Set(prev);
+      for (let i = 0; i < idx; i++) next.add(i);
+      return Array.from(next);
+    });
+    try { localStorage.setItem(`hearth_module_${id}_session`, String(idx)); } catch { /* ignore */ }
+    setMode('facilitate');
+  }, [id]);
 
   const fetchModule = useCallback(async () => {
     try {
@@ -1110,8 +96,6 @@ export default function ModuleDetailPage() {
 
       if (libraryRes.ok) {
         const library: { sanityPackId: string }[] = await libraryRes.json();
-        // For now check access via the library records — in Phase 5 we'll add pack membership check
-        // Simple: if family has any library record, assume access (seed links them to the starter pack)
         setHasAccess(library.length > 0);
       }
 
@@ -1122,12 +106,14 @@ export default function ModuleDetailPage() {
         setPedagogy(resolvedPedagogy);
       }
 
-      // Skip picker if only one approach — fetch overlays immediately
       if ((mod?.approaches?.length ?? 0) <= 1) {
         const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
         if (activityIds.length > 0) {
-          const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+          let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
             await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: resolvedPedagogy });
+          if (raw.length === 0 && resolvedPedagogy !== 'eclectic') {
+            raw = await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: 'eclectic' });
+          }
           setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
         }
         setMode('prep');
@@ -1141,8 +127,11 @@ export default function ModuleDetailPage() {
     setSelectedApproachIdx(idx);
     const activityIds: string[] = module?.approaches?.[idx]?.activities?.map((a) => a._id) ?? [];
     if (activityIds.length > 0 && pedagogy) {
-      const raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+      let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
         await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: pedagogy });
+      if (raw.length === 0 && pedagogy !== 'eclectic') {
+        raw = await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: 'eclectic' });
+      }
       setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
     } else {
       setOverlays([]);
@@ -1154,9 +143,18 @@ export default function ModuleDetailPage() {
     fetchModule();
     try {
       const saved = localStorage.getItem(`hearth_module_${id}_session`);
-      if (saved) setSavedChunkIdx(parseInt(saved, 10) || 0);
+      if (saved) {
+        const idx = parseInt(saved, 10) || 0;
+        setSavedChunkIdx(idx);
+        setCurrentActivityIdx(idx);
+        if (idx > 0) {
+          setCompletedActivityIdxs(Array.from({ length: idx }, (_, i) => i));
+        }
+      }
     } catch { /* ignore */ }
   }, [fetchModule, id]);
+
+  // ─── Loading / error / access states ──────────────────────────────────────────
 
   if (loading) {
     return (
@@ -1203,107 +201,45 @@ export default function ModuleDetailPage() {
     );
   }
 
+  // ─── Main layout ──────────────────────────────────────────────────────────────
+
   return (
     <div className="lg:grid lg:grid-cols-[220px_1fr]">
-      {/* Desktop module sidebar */}
-      <aside className="hidden lg:flex flex-col bg-surface-panel border-r border-border-subtle sticky top-0 h-dvh overflow-y-auto">
-        {/* Module title */}
-        <div className="p-xl border-b border-border-subtle">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
-            Module
-          </p>
-          <p className="font-serif text-base font-semibold text-text-primary truncate">
-            {module.title}
-          </p>
-          <p className="font-serif text-sm italic text-text-secondary mt-xs truncate">
-            {module.targetUnderstanding}
-          </p>
-        </div>
+      <ModuleSidebar
+        module={module}
+        mode={mode}
+        selectedApproachIdx={selectedApproachIdx}
+        currentActivityIdx={currentActivityIdx}
+        completedActivityIdxs={completedActivityIdxs}
+        onApproachSelect={handleApproachSelect}
+        onModeChange={handleModeChange}
+        onActivitySelect={handleActivitySelect}
+      />
 
-        {/* Approach nav */}
-        {module.approaches && module.approaches.length > 1 && (
-          <div className="py-md border-b border-border-subtle">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted px-xl mb-sm">
-              Approaches
-            </p>
-            {module.approaches.map((approach, idx) => (
-              <button
-                key={approach._id}
-                onClick={() => handleApproachSelect(idx)}
-                className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                  selectedApproachIdx === idx && mode !== 'approach-pick'
-                    ? 'bg-ember-glow border-l-ember'
-                    : 'border-l-transparent hover:bg-ember-glow'
-                }`}
-              >
-                <span className="text-lg">{MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}</span>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="font-sans text-sm font-medium text-text-primary truncate">{approach.title}</p>
-                  {approach.modality && (
-                    <p className="font-sans text-[11px] text-text-muted capitalize">{approach.modality}</p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Session flow nav */}
-        {mode !== 'approach-pick' && (
-          <nav className="flex-1 py-md">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted px-xl mb-sm">
-              Session Flow
-            </p>
-            {(['prep', 'facilitate', 'log'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  if (m === 'log' && facilitateStartRef.current) {
-                    setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
-                  }
-                  setMode(m);
-                }}
-                className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                  mode === m
-                    ? 'bg-ember-glow border-l-ember'
-                    : 'border-l-transparent hover:bg-ember-glow'
-                }`}
-              >
-                <span className="text-lg">
-                  {m === 'prep' ? '📋' : m === 'facilitate' ? '▶' : '✏️'}
-                </span>
-                <span className={`font-sans text-sm font-medium ${
-                  mode === m ? 'text-ember' : 'text-text-primary'
-                }`}>
-                  {m === 'prep' ? 'Prep' : m === 'facilitate' ? 'Go' : 'Log'}
-                </span>
-              </button>
-            ))}
-          </nav>
-        )}
-      </aside>
-
-      {/* Main content */}
       <div className="min-w-0">
-        {/* Mobile mode tabs — hidden on desktop */}
+        {/* Mobile mode tabs */}
         {mode !== 'approach-pick' && (
           <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg lg:hidden">
-            {(['prep', 'facilitate', 'log'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  if (m === 'log' && facilitateStartRef.current) {
-                    setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
-                  }
-                  setMode(m);
-                }}
-                className={`font-sans text-sm font-semibold capitalize transition-colors duration-200 ${
-                  mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                {m === 'prep' ? '📋 Prep' : m === 'facilitate' ? '▶ Go' : '✏️ Log'}
-              </button>
-            ))}
+            {(['prep', 'facilitate', 'log'] as const).map((m) => {
+              const activities = module.approaches?.[selectedApproachIdx]?.activities ?? [];
+              const label =
+                m === 'prep'
+                  ? '📋 Prep'
+                  : m === 'facilitate'
+                  ? `▶ Go (${currentActivityIdx + 1}/${activities.length})`
+                  : '✏️ Log';
+              return (
+                <button
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`font-sans text-sm font-semibold transition-colors duration-200 ${
+                    mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -1314,6 +250,8 @@ export default function ModuleDetailPage() {
           <PrepMode
             module={module}
             approachIdx={selectedApproachIdx}
+            overlays={overlays}
+            pedagogy={pedagogy}
             onStart={() => {
               clearSession();
               const now = Date.now();
@@ -1334,6 +272,13 @@ export default function ModuleDetailPage() {
           />
         )}
         {mode === 'facilitate' && (
+          <div>
+            <div className="px-md pt-xl lg:px-xl">
+              <ProgressBar
+                activities={module.approaches?.[selectedApproachIdx]?.activities ?? []}
+                currentIdx={currentActivityIdx}
+              />
+            </div>
           <FacilitateMode
             module={module}
             approachIdx={selectedApproachIdx}
@@ -1361,9 +306,21 @@ export default function ModuleDetailPage() {
             initialChunkIdx={savedChunkIdx}
             onChunkChange={persistChunk}
             sessionStartTime={facilitateStartRef.current ?? Date.now()}
+            quickCaptures={quickCaptures}
+            onAddCapture={handleAddCapture}
+            onRemoveCapture={handleRemoveCapture}
+            currentActivityIdx={currentActivityIdx}
+          />
+          </div>
+        )}
+        {mode === 'log' && (
+          <LogMode
+            module={module}
+            sessionElapsed={sessionElapsed}
+            quickCaptures={quickCaptures}
+            onRemoveCapture={handleRemoveCapture}
           />
         )}
-        {mode === 'log' && <LogMode module={module} sessionElapsed={sessionElapsed} />}
       </div>
     </div>
   );

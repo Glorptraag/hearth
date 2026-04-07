@@ -48,8 +48,8 @@ Hearth is a Learning Management System (LMS) specifically tailored for Australia
 4. **Log mode** captures per-child engagement, discoveries, understanding level — creates a `learning_entry` with `sourceModuleId` / `sourceProjectId`.
 5. Entry flows through standard enrichment pipeline.
 
-### Tertiary: HEU Compliance
-1. Parent creates an HEU report (`heu_reports` table) for a learner + year.
+### Tertiary: Compliance Reporting
+1. Parent creates a compliance report (`compliance_reports` table) for a learner + year.
 2. Six work sample slots created (`work_samples`): early/later writing, maths, choice area.
 3. Parent assigns entries to slots, adds annotations (`work_sample_annotations`).
 4. PDF export generates compliance document with curriculum coverage, work samples, and gap analysis.
@@ -61,7 +61,7 @@ Hearth is a Learning Management System (LMS) specifically tailored for Australia
 - **Weekly Planner** → `planner_entries` + Sanity module library.
 - **Our Story (Portfolio)** → `learning_entries` (filtered for evidence) + `learners` profile data.
 - **Capabilities Constellation** → `family_intelligence_snapshots` + capability thread taxonomy + tier overrides.
-- **HEU Report** → `heu_reports` + `work_samples` + `work_sample_annotations` + PDF generation.
+- **Compliance Report** → `compliance_reports` + `work_samples` + `work_sample_annotations` + PDF generation.
 - **Badges** → `badge_definitions` + `badge_awards` + `badge_assessment_logs` + threshold checks.
 - **Compliance Tracking** → `capability_threads.ts` static data + AI enrichment layer.
 - **Pedagogy Overlay** → Sanity `pedagogyOverlay` documents + `familySettings.pedagogyPreference` + vocabulary adapter.

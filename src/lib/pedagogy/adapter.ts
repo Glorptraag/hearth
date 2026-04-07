@@ -29,6 +29,10 @@ interface PedagogyVocabulary {
   celebrationFrame: string;
   // Planner framing
   plannerFrame: string;
+  // Logger section labels
+  logWhatLabel: string;
+  logWhatPlaceholder: string;
+  logObserveLabel: string;
 }
 
 const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
@@ -45,6 +49,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'This area is waiting for its living book moment',
     celebrationFrame: 'A beautiful habit is forming',
     plannerFrame: 'Plan a feast of ideas for the week',
+    logWhatLabel: 'What living ideas were encountered?',
+    logWhatPlaceholder: 'Describe the lesson… What living books or nature moments captured attention?',
+    logObserveLabel: 'What habits did you notice forming?',
   },
   classical: {
     sessionNoun: 'lesson',
@@ -59,6 +66,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'This subject needs attention in the trivium',
     celebrationFrame: 'Excellent progress through the stages',
     plannerFrame: 'Structure the week across your trivium',
+    logWhatLabel: 'What was studied or practised?',
+    logWhatPlaceholder: 'Describe the lesson… What knowledge was gathered or skills drilled?',
+    logObserveLabel: 'What mastery or progress did you observe?',
   },
   montessori: {
     sessionNoun: 'work cycle',
@@ -73,6 +83,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'This area of the environment is waiting to be discovered',
     celebrationFrame: 'Deep concentration and self-directed work',
     plannerFrame: 'Prepare the environment for the week ahead',
+    logWhatLabel: 'What work was chosen?',
+    logWhatPlaceholder: 'Describe the work cycle… What did the child choose? How long did they concentrate?',
+    logObserveLabel: 'What concentration or self-direction did you observe?',
   },
   waldorf_steiner: {
     sessionNoun: 'main lesson',
@@ -87,6 +100,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'This thread of learning is ready to be woven in',
     celebrationFrame: 'A beautiful unfolding of understanding',
     plannerFrame: 'Weave the week with rhythm and imagination',
+    logWhatLabel: 'What was experienced?',
+    logWhatPlaceholder: 'Describe the main lesson… What stories, art, or rhythm shaped the day?',
+    logObserveLabel: 'What unfolding of understanding did you notice?',
   },
   unschooling: {
     sessionNoun: 'experience',
@@ -101,6 +117,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'Opportunities to follow curiosity here',
     celebrationFrame: 'Following the spark led somewhere wonderful',
     plannerFrame: 'Ideas and invitations for the week',
+    logWhatLabel: 'What sparked curiosity?',
+    logWhatPlaceholder: 'What happened naturally… What caught their interest? Where did it lead?',
+    logObserveLabel: 'What connections or enthusiasm did you notice?',
   },
   eclectic: {
     sessionNoun: 'session',
@@ -115,6 +134,9 @@ const VOCABULARY: Record<Pedagogy, PedagogyVocabulary> = {
     gapFrame: 'This area could use some attention',
     celebrationFrame: 'Great progress this week',
     plannerFrame: 'Plan the week ahead',
+    logWhatLabel: 'What happened?',
+    logWhatPlaceholder: 'Describe the activity or moment… What were they doing?',
+    logObserveLabel: 'What did you observe?',
   },
 };
 

@@ -97,7 +97,7 @@ const learningEntries = {
   sourceStageNumber: 'integer',       // Project stage number
   status: "text NOT NULL DEFAULT 'draft'",    // 'draft' | 'complete'
   aiEnrichment: 'jsonb',              // AI-generated enrichment data (see below)
-  heuCandidate: 'boolean DEFAULT false',
+  workSampleCandidate: 'boolean DEFAULT false',
   createdAt: 'timestamp DEFAULT now()',
   updatedAt: 'timestamp DEFAULT now()',
   // Indexes: le_family_date_idx(familyId, dateOccurred), le_family_status_idx(familyId, status)
@@ -248,9 +248,9 @@ const facilitatorNotes = {
   updatedAt: 'timestamp DEFAULT now()',
 };
 
-// ─── HEU Compliance ───
+// ─── Compliance Reports ───
 
-const heuReports = {
+const complianceReports = {
   id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
   familyId: 'uuid NOT NULL REFERENCES families(id)',
   learnerId: 'uuid NOT NULL REFERENCES learners(id)',
@@ -265,7 +265,7 @@ const heuReports = {
 
 const workSamples = {
   id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
-  reportId: 'uuid NOT NULL REFERENCES heu_reports(id)',
+  reportId: 'uuid NOT NULL REFERENCES compliance_reports(id)',
   slot: 'text NOT NULL',              // 'early_writing' | 'later_writing' | 'early_maths' | 'later_maths' | 'early_choice' | 'later_choice'
   entryId: 'uuid REFERENCES learning_entries(id)',
   status: "text NOT NULL DEFAULT 'empty'",  // 'empty' | 'selected' | 'annotated' | 'complete'

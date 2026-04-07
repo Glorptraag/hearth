@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { heuReports, workSamples, workSampleAnnotations, learningEntries } from '@/lib/db/schema';
+import { complianceReports, workSamples, workSampleAnnotations, learningEntries } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const { reportId } = await params;
 
-  const report = await db.query.heuReports.findFirst({
-    where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
+  const report = await db.query.complianceReports.findFirst({
+    where: and(eq(complianceReports.id, reportId), eq(complianceReports.familyId, family.id)),
   });
   if (!report) return apiError('Report not found', 404);
 
@@ -61,8 +61,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const { reportId } = await params;
 
-  const report = await db.query.heuReports.findFirst({
-    where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
+  const report = await db.query.complianceReports.findFirst({
+    where: and(eq(complianceReports.id, reportId), eq(complianceReports.familyId, family.id)),
   });
   if (!report) return apiError('Report not found', 404);
 

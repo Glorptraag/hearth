@@ -19,7 +19,17 @@ export const activity = defineType({
       name: 'instructions',
       title: 'Instructions',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [
+        {
+          type: 'block',
+          styles: [
+            { title: 'Normal', value: 'normal' },
+            { title: 'Say Block', value: 'sayBlock' },
+            { title: 'Pause Note', value: 'pauseNote' },
+            { title: 'Watch Block', value: 'watchBlock' },
+          ],
+        },
+      ],
     }),
     defineField({
       name: 'facilitatorGuidance',

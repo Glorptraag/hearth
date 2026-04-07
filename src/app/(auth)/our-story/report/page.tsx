@@ -33,7 +33,7 @@ type Entry = {
   learnerIds: string[] | null;
   evidenceUrls: string[] | null;
   aiEnrichment: AiEnrichment;
-  heuCandidate: boolean | null;
+  workSampleCandidate: boolean | null;
   status: string;
   source: string;
 };
@@ -693,12 +693,12 @@ export default function ReportPage() {
           )}
 
           {/* Work Samples (flat list, no 6-slot structure) */}
-          {entries.filter((e) => e.heuCandidate).length > 0 && (
+          {entries.filter((e) => e.workSampleCandidate).length > 0 && (
             <div className="mt-lg">
               <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Evidence</p>
               <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Work Samples</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
-                {entries.filter((e) => e.heuCandidate).map((entry) => {
+                {entries.filter((e) => e.workSampleCandidate).map((entry) => {
                   const subjectKey = entry.subjects?.[0] ?? entry.aiEnrichment?.subjects_detected?.[0]?.toLowerCase() ?? null;
                   const domain = subjectKey ? SUBJECT_DOMAIN_CLASSES[subjectKey] : null;
                   const subjectLabel = subjectKey ? SUBJECT_CONFIG[subjectKey]?.label : null;

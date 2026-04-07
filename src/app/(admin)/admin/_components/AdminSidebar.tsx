@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/families', label: 'Families', emoji: '👥' },
   { href: '/admin/analytics', label: 'Analytics', emoji: '📊' },
   { href: '/admin/snapshots', label: 'Snapshots', emoji: '⚡' },
+  { href: '/admin/audit-log', label: 'Audit Log', emoji: '📋' },
 ];
 
 export default function AdminSidebar() {

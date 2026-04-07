@@ -2,15 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const RESOURCE_TYPES = [
-  'all',
-  'invitation',
-  'content_draft',
-  'pack',
-  'family',
-  'snapshot',
-] as const;
-
 interface AuditEntry {
   id: string;
   adminUserId: string;
@@ -20,246 +11,171 @@ interface AuditEntry {
   targetId: string | null;
   reason: string | null;
   metadata: Record<string, unknown> | null;
-  ipAddress: string | null;
-  userAgent: string | null;
-  mfaSatisfied: boolean | null;
-  createdAt: string | null;
+  createdAt: string;
 }
 
-function timeAgo(d: string | null): string {
-  if (!d) return '\u2014';
-  const now = Date.now();
-  const then = new Date(d).getTime();
-  const diffMs = now - then;
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDays = Math.floor(diffHr / 24);
-  if (diffDays < 30) return `${diffDays}d ago`;
-  return new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function absoluteTime(d: string | null): string {
-  if (!d) return '';
-  return new Date(d).toLocaleString('en-AU', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
+const ACTION_GROUPS = [
+  { label: 'All', value: '' },
+  { label: 'Invitations', value: 'invitation.' },
+  { label: 'Content', value: 'content.' },
+  { label: 'Families', value: 'family.' },
+  { label: 'QA', value: 'qa.' },
+  { label: 'Snapshots', value: 'snapshot.' },
+];
 
 export default function AuditLogClient() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [actionFilter, setActionFilter] = useState('');
-  const [resourceType, setResourceType] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchEntries = useCallback(async () => {
+  const PAGE_SIZE = 50;
+
+  const fetchEntries = useCallback(async (pageNum: number, actionPrefix: string) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page) });
-    if (actionFilter) params.set('action', actionFilter);
-    if (resourceType !== 'all') params.set('resource_type', resourceType);
-    if (dateFrom) params.set('date_from', dateFrom);
-    if (dateTo) params.set('date_to', dateTo);
     try {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(pageNum * PAGE_SIZE),
+      });
+      if (actionPrefix) params.set('action', actionPrefix);
       const res = await fetch(`/api/admin/audit-log?${params}`);
-      const data = await res.json();
-      setEntries(data.entries);
-      setTotal(data.total);
+      if (res.ok) {
+        const data = await res.json();
+        setEntries(data.entries);
+        setHasMore(data.entries.length === PAGE_SIZE);
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, actionFilter, resourceType, dateFrom, dateTo]);
+  }, []);
 
-  useEffect(() => { fetchEntries(); }, [fetchEntries]);
+  useEffect(() => {
+    fetchEntries(page, filter);
+  }, [fetchEntries, page, filter]);
 
-  const pageCount = Math.ceil(total / 50);
+  function handleFilterChange(value: string) {
+    setFilter(value);
+    setPage(0);
+  }
 
   return (
-    <div className="p-lg">
-      {/* Header */}
+    <div className="p-lg max-w-[960px]">
       <div className="flex items-center justify-between mb-lg">
         <h1 className="font-serif text-xl font-semibold text-text-primary">
           Audit Log
         </h1>
-        <span className="font-sans text-xs text-text-muted">
-          {total.toLocaleString()} event{total !== 1 ? 's' : ''}
-        </span>
+        <button
+          onClick={() => fetchEntries(page, filter)}
+          className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-200"
+        >
+          Refresh
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-md mb-md">
-        <input
-          type="text"
-          value={actionFilter}
-          onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-          placeholder="Filter by action..."
-          className="rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-200 w-[200px]"
-        />
-        <select
-          value={resourceType}
-          onChange={(e) => { setResourceType(e.target.value); setPage(1); }}
-          className="rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
-        >
-          {RESOURCE_TYPES.map((r) => (
-            <option key={r} value={r}>
-              {r === 'all' ? 'All resources' : r}
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center gap-xs">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
-          />
-          <span className="font-sans text-xs text-text-muted">to</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
-          />
-        </div>
-        {(actionFilter || resourceType !== 'all' || dateFrom || dateTo) && (
+      <div className="flex gap-xs mb-md flex-wrap">
+        {ACTION_GROUPS.map((g) => (
           <button
-            onClick={() => { setActionFilter(''); setResourceType('all'); setDateFrom(''); setDateTo(''); setPage(1); }}
-            className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+            key={g.value}
+            onClick={() => handleFilterChange(g.value)}
+            className={`rounded-md px-sm py-xs font-sans text-[0.7rem] font-medium border transition-all duration-200 ${
+              filter === g.value
+                ? 'border-border-medium bg-surface-raised text-ember'
+                : 'border-border-subtle text-text-muted hover:text-text-primary hover:border-border-medium'
+            }`}
           >
-            Clear filters
+            {g.label}
           </button>
-        )}
+        ))}
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border border-border-subtle overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border-subtle bg-surface-raised">
-              <Th>Timestamp</Th>
-              <Th>Admin</Th>
-              <Th>Action</Th>
-              <Th>Resource</Th>
-              <Th>Target ID</Th>
-              <Th>Reason</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="px-md py-lg text-center font-sans text-sm text-text-muted">
-                  Loading...
-                </td>
-              </tr>
-            ) : entries.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-md py-xl text-center">
-                  <p className="font-sans text-sm text-text-muted">
-                    No audit events found.
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              entries.map((entry) => (
-                <tr
-                  key={entry.id}
-                  className="border-b border-border-subtle hover:bg-surface-hover transition-colors duration-200"
-                  style={{ height: '40px' }}
-                >
-                  <td className="px-md" title={absoluteTime(entry.createdAt)}>
-                    <span className="font-sans text-xs text-text-muted">
-                      {timeAgo(entry.createdAt)}
-                    </span>
-                  </td>
-                  <td className="px-md">
-                    <span className="font-sans text-xs text-text-secondary" title={entry.adminUserId}>
-                      {entry.adminEmail}
-                    </span>
-                  </td>
-                  <td className="px-md">
-                    <span className="inline-flex rounded-[6px] border border-border-subtle bg-surface-raised px-1.5 py-px font-mono text-[0.65rem] text-text-primary">
+      {loading ? (
+        <AuditLogSkeleton />
+      ) : entries.length === 0 ? (
+        <p className="font-sans text-sm text-text-muted">No audit entries found.</p>
+      ) : (
+        <div className="space-y-xs">
+          {entries.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-lg border border-border-subtle bg-surface-panel p-md"
+            >
+              <div className="flex items-start justify-between gap-md">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-sm flex-wrap">
+                    <span className="font-sans text-[0.75rem] font-semibold text-text-primary">
                       {entry.action}
                     </span>
-                  </td>
-                  <td className="px-md">
-                    {entry.targetResource ? (
-                      <span className="inline-flex rounded-[6px] border border-border-subtle bg-surface-raised px-1.5 py-px font-sans text-[0.65rem] text-text-secondary">
+                    {entry.targetResource && (
+                      <span className="rounded-[6px] bg-surface-raised px-1.5 py-px font-sans text-[0.6rem] font-medium text-text-muted">
                         {entry.targetResource}
+                        {entry.targetId ? ` #${entry.targetId.slice(0, 8)}` : ''}
                       </span>
-                    ) : (
-                      <span className="font-sans text-xs text-text-muted">&mdash;</span>
                     )}
-                  </td>
-                  <td className="px-md">
-                    {entry.targetId ? (
-                      <span className="font-mono text-xs text-text-muted" title={entry.targetId}>
-                        {entry.targetId.length > 12 ? `${entry.targetId.slice(0, 8)}\u2026` : entry.targetId}
-                      </span>
-                    ) : (
-                      <span className="font-sans text-xs text-text-muted">&mdash;</span>
-                    )}
-                  </td>
-                  <td className="px-md">
-                    {entry.reason ? (
-                      <span className="font-sans text-xs text-text-secondary">
-                        {entry.reason}
-                      </span>
-                    ) : (
-                      <span className="font-sans text-xs text-text-muted">&mdash;</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                  <p className="font-sans text-[0.7rem] text-text-muted mt-xs">
+                    {entry.adminEmail}
+                  </p>
+                  {entry.reason && (
+                    <p className="font-sans text-[0.7rem] text-text-secondary mt-xs italic">
+                      {entry.reason}
+                    </p>
+                  )}
+                </div>
+                <time className="font-sans text-[0.65rem] text-text-muted whitespace-nowrap">
+                  {new Date(entry.createdAt).toLocaleString()}
+                </time>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
-      {pageCount > 1 && (
+      {!loading && (entries.length > 0 || page > 0) && (
         <div className="flex items-center justify-between mt-md">
-          <span className="font-sans text-xs text-text-muted">
-            {total.toLocaleString()} event{total !== 1 ? 's' : ''}
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="font-sans text-[0.65rem] text-text-muted">
+            Page {page + 1}
           </span>
-          <div className="flex gap-xs">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-200"
-            >
-              Prev
-            </button>
-            <span className="font-sans text-xs text-text-muted px-sm py-xs">
-              {page} / {pageCount}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={page >= pageCount}
-              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-200"
-            >
-              Next
-            </button>
-          </div>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasMore}
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function AuditLogSkeleton() {
   return (
-    <th className="px-md py-sm text-left font-sans text-[0.65rem] font-semibold text-text-muted uppercase tracking-wider">
-      {children}
-    </th>
+    <div className="space-y-xs">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-lg border border-border-subtle bg-surface-panel p-md animate-pulse"
+        >
+          <div className="flex items-start justify-between gap-md">
+            <div className="flex-1">
+              <div className="h-3 w-32 rounded bg-surface-raised mb-xs" />
+              <div className="h-2.5 w-48 rounded bg-surface-raised" />
+            </div>
+            <div className="h-2.5 w-24 rounded bg-surface-raised" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

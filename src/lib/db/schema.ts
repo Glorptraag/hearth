@@ -517,6 +517,58 @@ export const hearthInvites = pgTable('hearth_invites', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// ─── Admin: Audit Log ───
+
+export const adminAuditLog = pgTable(
+  'admin_audit_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    adminUserId: text('admin_user_id').notNull(),
+    adminEmail: text('admin_email').notNull(),
+    action: text('action').notNull(),
+    targetResource: text('target_resource'),
+    targetId: text('target_id'),
+    reason: text('reason'),
+    metadata: jsonb('metadata'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    mfaSatisfied: boolean('mfa_satisfied').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('audit_admin_user_idx').on(table.adminUserId, table.createdAt),
+    index('audit_target_idx').on(table.targetResource, table.targetId, table.createdAt),
+    index('audit_action_idx').on(table.action, table.createdAt),
+  ]
+);
+
+// ─── Admin: Invitations ───
+
+export const invitations = pgTable(
+  'invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: text('code').unique().notNull(),
+    intendedFamilyName: text('intended_family_name').notNull(),
+    intendedPrimaryEmail: text('intended_primary_email'),
+    intendedLocationState: text('intended_location_state'),
+    sourceLabel: text('source_label'),
+    notes: text('notes'),
+    status: text('status').notNull().default('pending'),
+    expiresAt: timestamp('expires_at'),
+    redeemedAt: timestamp('redeemed_at'),
+    redeemedByFamilyId: uuid('redeemed_by_family_id').references(() => families.id),
+    revokedAt: timestamp('revoked_at'),
+    revokedReason: text('revoked_reason'),
+    createdByAdminId: text('created_by_admin_id').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('invitations_status_idx').on(table.status, table.createdAt),
+    index('invitations_code_idx').on(table.code),
+  ]
+);
+
 // ─── Admin: Content Studio Drafts ───
 
 export const contentStudioDrafts = pgTable(

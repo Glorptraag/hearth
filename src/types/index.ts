@@ -25,6 +25,8 @@ import type {
   sessionReflections,
   hearthInvites,
   contentStudioDrafts,
+  adminAuditLog,
+  invitations,
 } from '@/lib/db/schema';
 
 // ─── Entity types inferred from schema ───
@@ -54,6 +56,8 @@ export type SuggestedObservation = InferSelectModel<typeof suggestedObservations
 export type SessionReflection = InferSelectModel<typeof sessionReflections>;
 export type HearthInvite = InferSelectModel<typeof hearthInvites>;
 export type ContentStudioDraft = InferSelectModel<typeof contentStudioDrafts>;
+export type AdminAuditLogEntry = InferSelectModel<typeof adminAuditLog>;
+export type Invitation = InferSelectModel<typeof invitations>;
 
 // ─── Enum / Union types ───
 
@@ -116,3 +120,11 @@ export type RsvpStatus = (typeof RSVP_STATUSES)[number];
 
 export const SUGGESTED_OBSERVATION_STATUSES = ['pending', 'accepted', 'dismissed'] as const;
 export type SuggestedObservationStatus = (typeof SUGGESTED_OBSERVATION_STATUSES)[number];
+
+// ─── Admin ───
+
+export const INVITATION_STATUSES = ['pending', 'redeemed', 'revoked', 'expired'] as const;
+export type InvitationStatus = (typeof INVITATION_STATUSES)[number];
+
+export const AU_STATES = ['QLD', 'NSW', 'VIC', 'SA', 'WA', 'TAS', 'ACT', 'NT'] as const;
+export type AuState = (typeof AU_STATES)[number];

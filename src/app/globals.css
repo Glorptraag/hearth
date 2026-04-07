@@ -207,6 +207,13 @@ body::after {
   z-index: 0;
 }
 
+/* Admin density tokens — operator-grade UX */
+[data-admin] {
+  --admin-row-height: 40px;
+  --admin-table-cell-padding: 8px 12px;
+  --admin-section-gap: 16px;
+}
+
 /* Reduced motion — respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *,

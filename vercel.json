@@ -9,6 +9,10 @@
     {
       "path": "/api/admin/retention",
       "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/admin/invitations/expire",
+      "schedule": "0 20 * * *"
     }
   ]
 }

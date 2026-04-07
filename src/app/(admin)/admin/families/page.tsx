@@ -1,8 +1,12 @@
-export default function FamiliesPage() {
-  return (
-    <div className="p-lg">
-      <h1 className="font-serif text-xl font-semibold text-text-primary mb-md">Families</h1>
-      <p className="font-sans text-sm text-text-muted">Coming soon.</p>
-    </div>
-  );
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { isAdmin } from '@/lib/auth/admin';
+import FamiliesClient from './FamiliesClient';
+
+export default async function FamiliesPage() {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  if (!isAdmin(userId)) redirect('/dashboard');
+
+  return <FamiliesClient />;
 }

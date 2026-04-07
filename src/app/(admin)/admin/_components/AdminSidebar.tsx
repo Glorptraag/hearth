@@ -18,7 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/content', label: 'Content', emoji: '📚' },
   { href: '/admin/content/qa', label: 'Content QA', emoji: '✅', indent: true },
   { href: '/admin/families', label: 'Families', emoji: '👥' },
-  { href: '/admin/analytics', label: 'Analytics', emoji: '📊', disabled: true },
+  { href: '/admin/analytics', label: 'Analytics', emoji: '📊' },
   { href: '/admin/snapshots', label: 'Snapshots', emoji: '⚡', disabled: true },
 ];
 

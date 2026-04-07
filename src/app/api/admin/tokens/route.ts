@@ -1,18 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { aiPipelineLogs } from '@/lib/db/schema';
 import { desc, gte } from 'drizzle-orm';
 import { subDays } from 'date-fns';
+import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const adminIds = (process.env.ADMIN_CLERK_IDS ?? '').split(',').filter(Boolean);
-  if (!adminIds.includes(userId)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const admin = await requireAdmin();
+  if (!isAdminContext(admin)) return admin;
 
   const since = subDays(new Date(), 30);
 

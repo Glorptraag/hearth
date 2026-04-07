@@ -24,6 +24,7 @@ import type {
   suggestedObservations,
   sessionReflections,
   hearthInvites,
+  contentStudioDrafts,
 } from '@/lib/db/schema';
 
 // ─── Entity types inferred from schema ───
@@ -52,6 +53,7 @@ export type SessionEvidence = InferSelectModel<typeof sessionEvidence>;
 export type SuggestedObservation = InferSelectModel<typeof suggestedObservations>;
 export type SessionReflection = InferSelectModel<typeof sessionReflections>;
 export type HearthInvite = InferSelectModel<typeof hearthInvites>;
+export type ContentStudioDraft = InferSelectModel<typeof contentStudioDrafts>;
 
 // ─── Enum / Union types ───
 

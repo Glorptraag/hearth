@@ -516,3 +516,23 @@ export const hearthInvites = pgTable('hearth_invites', {
   usedAt: timestamp('used_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// ─── Admin: Content Studio Drafts ───
+
+export const contentStudioDrafts = pgTable(
+  'content_studio_drafts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    title: text('title').notNull(),
+    draftType: text('draft_type').notNull().default('pack'),
+    draftData: jsonb('draft_data').notNull().default({}),
+    status: text('status').notNull().default('draft'),
+    sanityPackId: text('sanity_pack_id'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    index('csd_user_status_idx').on(table.clerkUserId, table.status),
+  ]
+);

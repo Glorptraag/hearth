@@ -39,7 +39,7 @@ export default function DemoHEUReport() {
 
   const weeksUntilDeadline = useMemo(() => {
     const today = new Date();
-    const deadline = parseISO(mockSettings.heuNextReportDate);
+    const deadline = parseISO(mockSettings.nextReportDate);
     return Math.ceil(differenceInDays(deadline, today) / 7);
   }, []);
 
@@ -58,7 +58,7 @@ export default function DemoHEUReport() {
       {/* Child Selector */}
       <ChildSelector learners={mockLearners} selectedId={selectedId} onChange={setSelectedId} />
 
-      <SectionHeader overline="HEU COMPLIANCE" title="Quarterly Report" />
+      <SectionHeader overline="COMPLIANCE REPORT" title="Quarterly Report" />
 
       {/* Registration Banner */}
       <div className="mt-xl mb-2xl rounded-lg border border-border-subtle bg-surface-raised p-lg">
@@ -66,17 +66,17 @@ export default function DemoHEUReport() {
           Registration
         </p>
         <p className="mb-md font-sans text-sm font-medium text-text-primary">
-          {mockSettings.heuRegistrationNumber}
+          {mockSettings.registrationNumber}
         </p>
         <p className="font-sans text-xs text-text-secondary">
-          Next report due: {mockSettings.heuNextReportDate} ({weeksUntilDeadline} weeks)
+          Next report due: {mockSettings.nextReportDate} ({weeksUntilDeadline} weeks)
         </p>
       </div>
 
       {/* Overall Status */}
       <div className="mb-3xl">
         <div className="inline-flex items-center gap-md rounded-full bg-sage/20 px-md py-sm border border-sage/30">
-          <span className="text-lg">✓</span>
+          <span className="text-lg" aria-hidden="true">✓</span>
           <span className="font-sans font-semibold text-sage">On Track</span>
         </div>
       </div>
@@ -95,7 +95,14 @@ export default function DemoHEUReport() {
                   <DomainChip subject={subject} size="sm" showEmoji />
                   <span className="font-sans text-xs font-semibold text-text-muted">{count}/5</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-surface-raised overflow-hidden">
+                <div
+                  className="h-2 w-full rounded-full bg-surface-raised overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={Math.round(percent)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${subject} coverage: ${count} of 5 entries`}
+                >
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${colors.text}`}
                     style={{ width: `${percent}%` }}

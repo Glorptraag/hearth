@@ -71,7 +71,7 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
               {source === 'sanity' ? '✓ Sanity' : '⚠ Fallback'}
             </span>
             <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2">
-              <span>📚</span>
+              <span aria-hidden="true">📚</span>
               <span>My Library</span>
               {libraryIds.size > 0 && (
                 <span className="bg-ember text-text-inverse font-sans text-[0.65rem] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center">
@@ -154,7 +154,7 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <span className="text-5xl mb-4">🔭</span>
+            <span className="text-5xl mb-4" aria-hidden="true">🔭</span>
             <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
               No content matches your filters
             </h3>

@@ -28,7 +28,7 @@ export default function PlannerStrip({ items }: PlannerStripProps) {
 
       {items.length === 0 ? (
         <div className="flex items-center gap-sm rounded-[10px] border border-border-subtle bg-surface-panel px-md py-sm">
-          <span className="text-lg">📅</span>
+          <span className="text-lg" aria-hidden="true">📅</span>
           <p className="font-sans text-sm text-text-muted">Nothing planned for today.</p>
           <Link
             href="/planner"

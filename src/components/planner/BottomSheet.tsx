@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import RecommendationChip from './RecommendationChip';
 
 interface Learner {
@@ -60,6 +61,7 @@ export default function BottomSheet({
   const [catalogLoading, setCatalogLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const trapRef = useFocusTrap(isOpen);
 
   useEffect(() => {
     if (isOpen) {
@@ -122,7 +124,7 @@ export default function BottomSheet({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 ${
+        className={`fixed inset-0 z-40 bg-overlay-backdrop transition-opacity duration-200 ${
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
@@ -130,9 +132,14 @@ export default function BottomSheet({
 
       {/* Sheet */}
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bottom-sheet-title"
         className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[80dvh] flex-col rounded-t-[16px] border-t border-border-subtle bg-surface-panel shadow-[0_-8px_32px_rgba(0,0,0,0.5)] transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
+        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-sm pb-xs">
@@ -142,7 +149,7 @@ export default function BottomSheet({
         {/* Header */}
         <div className="flex items-center justify-between px-md pb-sm">
           <div>
-            <p className="font-serif text-base font-semibold text-text-primary">Add to planner</p>
+            <p id="bottom-sheet-title" className="font-serif text-base font-semibold text-text-primary">Add to planner</p>
             {dateLabel && (
               <p className="font-sans text-xs text-text-muted">{dateLabel}</p>
             )}

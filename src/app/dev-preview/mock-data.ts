@@ -193,7 +193,7 @@ export const mockNotifications = [
   {
     id: 'n3',
     type: 'compliance_nudge',
-    title: 'Your HEU check-in is 8 weeks away',
+    title: 'Your reporting check-in is 8 weeks away',
     body: 'You have 3 of 6 required work samples. Science and HPE need attention.',
     bodyData: {},
     tier: 'nudge',
@@ -232,8 +232,8 @@ export const mockSettings = {
   pedagogyPreference: 'charlotte_mason',
   values: ['child-led', 'nature', 'whole-child'],
   practices: ['living-books', 'narration', 'nature-journaling'],
-  heuRegistrationNumber: 'HEU-2025-04821',
-  heuNextReportDate: '2026-05-30',
+  registrationNumber: 'HEU-2025-04821',
+  nextReportDate: '2026-05-30',
   state: 'QLD',
   notificationPrefs: {
     draft_resume: true,

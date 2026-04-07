@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Crimson_Text, Inter } from "next/font/google";
 import { headers } from "next/headers";
-import { ClerkProvider } from "@clerk/nextjs";
+import ClerkThemeProvider from "@/components/ClerkThemeProvider";
 import "./globals.css";
 
 const crimsonText = Crimson_Text({
@@ -34,11 +34,18 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="dark"
+      suppressHydrationWarning
       className={`${crimsonText.variable} ${inter.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('hearth-theme');var a=localStorage.getItem('hearth-theme-auto');if(a!=='false'&&!s){var h=new Date().getHours();s=(h>=6&&h<18)?'gathering':''}document.documentElement.setAttribute('data-theme',s==='gathering'?'gathering':'')}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
-        {isDevPreview ? children : <ClerkProvider>{children}</ClerkProvider>}
+        {isDevPreview ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
       </body>
     </html>
   );

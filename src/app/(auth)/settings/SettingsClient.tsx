@@ -4,7 +4,8 @@ import { useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
-import HEUFields from '@/components/settings/HEUFields';
+import ReportingFields from '@/components/settings/ReportingFields';
+import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -298,9 +299,9 @@ interface SettingsData {
   pedagogyPreference: string;
   values: string[];
   practices: string[];
-  heuRegistrationNumber: string;
-  heuNextReportDate: string;
-  state: string;
+  registrationNumber: string;
+  nextReportDate: string;
+  state: string | null;
   notificationPrefs: Record<string, unknown>;
 }
 
@@ -309,13 +310,13 @@ interface SettingsClientProps {
   initialChildren: Child[];
 }
 
-type Tab = 'profile' | 'children' | 'pedagogy' | 'heu' | 'notifications' | 'access' | 'account' | 'billing';
+type Tab = 'profile' | 'children' | 'pedagogy' | 'reporting' | 'notifications' | 'access' | 'account' | 'billing';
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'profile', label: 'Family Profile', emoji: '🏡' },
   { id: 'children', label: 'Our Learners', emoji: '👧' },
   { id: 'pedagogy', label: 'Learning Approach', emoji: '🌿' },
-  { id: 'heu', label: 'Compliance', emoji: '📋' },
+  { id: 'reporting', label: 'Reporting', emoji: '📋' },
   { id: 'notifications', label: 'Notifications', emoji: '🔔' },
   { id: 'access', label: 'Family Access', emoji: '🔑' },
   { id: 'account', label: 'Account & Security', emoji: '🛡️' },
@@ -358,8 +359,8 @@ export default function SettingsClient({
             pedagogyPreference: settingsFields.pedagogyPreference,
             pedagogyValues: settingsFields.values,
             pedagogyPractices: settingsFields.practices,
-            heuRegistrationNumber: settingsFields.heuRegistrationNumber || undefined,
-            heuNextReportDate: settingsFields.heuNextReportDate || undefined,
+            registrationNumber: settingsFields.registrationNumber || undefined,
+            nextReportDate: settingsFields.nextReportDate || undefined,
             state: settingsFields.state,
             notificationPrefs: settingsFields.notificationPrefs,
           }),
@@ -628,17 +629,26 @@ export default function SettingsClient({
         </div>
       )}
 
-      {/* ─── HEU Compliance ─── */}
-      {activeTab === 'heu' && (
+      {/* ─── Reporting ─── */}
+      {activeTab === 'reporting' && (
         <div className="flex flex-col gap-lg">
           <div>
-            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Queensland HEU</p>
-            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Compliance & Reporting</h2>
+            {(() => {
+              const config = getJurisdiction(settings.state);
+              return (
+                <>
+                  <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
+                    {config.abbreviation} {config.regulatoryBodyShort}
+                  </p>
+                  <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Reporting</h2>
+                </>
+              );
+            })()}
           </div>
-          <HEUFields
-            registrationNumber={settings.heuRegistrationNumber}
-            nextReportDate={settings.heuNextReportDate}
-            state={settings.state}
+          <ReportingFields
+            registrationNumber={settings.registrationNumber}
+            nextReportDate={settings.nextReportDate}
+            state={settings.state ?? ''}
             onChange={(field, value) => setSettings((s) => ({ ...s, [field]: value }))}
           />
           <button
@@ -689,7 +699,7 @@ export default function SettingsClient({
             <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Subscription</h2>
           </div>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-3xl">🌿</span>
+            <span className="text-3xl" aria-hidden="true">🌿</span>
             <h2 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Founding Member
             </h2>

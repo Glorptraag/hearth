@@ -79,18 +79,78 @@ Design tokens are defined in src/app/globals.css via @theme inline. No tailwind.
 ### Card Pattern (canonical)
 
 ```
-bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)]
-hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft
+hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm
 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
 ```
 
 With ember top-line on hover via `::before` pseudo-element.
 
+### Shadow Utilities
+
+Shadows are defined in `@theme inline` and generate Tailwind utilities:
+- `shadow-soft` — card resting state
+- `shadow-medium` — elevated panels
+- `shadow-warm` — card hover, featured elements
+- `shadow-glow` — ember ambient glow
+
+Do NOT use hardcoded `shadow-[0_2px_8px_rgba(...)]` — use the token classes.
+**Exception:** Ember accent glows on primary CTAs (`shadow-[0_4px_16px_rgba(217,123,58,0.3)]`) are intentionally inline.
+
 ### Button Variants
 
 - **Primary:** `bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm`
 - **Secondary/Ghost:** `bg-transparent border border-border-subtle text-text-secondary font-sans`
-- **Danger:** `bg-red-900/20 text-red-400 border border-red-900/30`
+- **Danger:** `bg-red-900/20 text-red-400 border border-red-900/30` — uses `text-white` on `bg-red-600` for destructive confirm buttons (intentional exception, not themed)
+
+## Theme System
+
+Hearth has two visual modes that swap via `data-theme` attribute on `<html>`:
+
+- **Dark (default):** Mont Blanc dark coffee. `data-theme=""` or absent.
+- **Gathering:** Warm parchment. `data-theme="gathering"`.
+
+### Auto time-of-day switching
+
+By default, themes switch automatically: **Gathering 6am–6pm, Dark 6pm–6am**. Manual override persists to `localStorage` key `hearth-theme`. The `useTheme()` hook (`src/hooks/use-theme.ts`) manages all theme state.
+
+### Flash prevention
+
+Root `layout.tsx` includes an inline `<script>` that sets the theme attribute before React hydrates. Do not remove this.
+
+### Clerk theming
+
+Clerk components cannot read CSS custom properties. `src/app/clerk-theme.ts` exports `getClerkAppearance(theme)` which returns hardcoded palette objects for each theme. `src/components/ClerkThemeProvider.tsx` wraps `ClerkProvider` and passes the correct appearance based on current theme.
+
+### Key theme files
+
+| File | Role |
+|------|------|
+| `src/hooks/use-theme.ts` | Theme state, auto-switch, manual override |
+| `src/app/clerk-theme.ts` | `getClerkAppearance(theme)` for Clerk components |
+| `src/components/ClerkThemeProvider.tsx` | Wraps ClerkProvider with dynamic theme |
+| `src/app/globals.css` | All token definitions and `[data-theme="gathering"]` overrides |
+
+### Child identity colors
+
+A single centralized map lives in `src/components/ui/LearnerAvatar.tsx` (`LEARNER_COLOUR_MAP`). It exports Tailwind classes (`bg`, `border`, `text`, `pill`) and `cssVar` references for each child color. **Do not create duplicate color maps** — import from LearnerAvatar.
+
+### Token value exceptions (WCAG AA)
+
+Two token values deviate from the original design spec for accessibility:
+- Dark `--text-muted`: `#726458` (was `#6B5D52`) — 3.15:1 on panel
+- Gathering `--text-inverse`: `#FFFFFF` (was `#F5F5F0`) — 4.57:1 on ember
+
+See `docs/hearth-canonical-design-tokens-v1.md` Appendix A for details.
+
+## Accessibility
+
+- **Target:** WCAG AA across all screens in both themes.
+- **Modals:** Use `role="dialog"`, `aria-modal="true"`, `aria-labelledby`. Use `useFocusTrap()` hook from `src/hooks/use-focus-trap.ts`.
+- **Modal backdrops:** Use `bg-overlay-backdrop` (theme-adaptive). Never `bg-black/50`.
+- **Progress indicators:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`.
+- **Reduced motion:** `@media (prefers-reduced-motion: reduce)` zeroes all animation/transition durations in `globals.css`.
+- **Nav blur backgrounds:** Use `var(--color-surface-nav-blur)` for frosted nav overlays.
 
 ## Architecture Principles — Do Not Violate
 
@@ -179,3 +239,9 @@ Do not span multiple phases in one session.
 - Generating decorative SVGs or custom icons (use emoji)
 - Making runtime API calls to Anthropic (write-time only)
 - Building philosophy-specific content (always philosophy-neutral)
+- Using hardcoded `shadow-[...]` instead of `shadow-soft`/`shadow-warm`/`shadow-medium`/`shadow-glow` token classes
+- Using `bg-black/50` for modal backdrops instead of `bg-overlay-backdrop`
+- Using hardcoded `rgba(15,13,11,0.85)` for nav blur instead of `var(--color-surface-nav-blur)`
+- Creating duplicate child color maps instead of importing `LEARNER_COLOUR_MAP` from `LearnerAvatar.tsx`
+- Using `text-white` on colored backgrounds instead of `text-surface-body` or `text-text-inverse` (exception: danger confirm buttons)
+- Hardcoding `data-theme="dark"` — theme is managed by the inline script and `useTheme()` hook

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 
 interface ObservationCardProps {
   id: string;
@@ -21,20 +22,7 @@ export default function ObservationCard({
 }: ObservationCardProps) {
   const [status, setStatus] = useState(initialStatus);
 
-  const colourMap: Record<string, string> = {
-    rose: 'rgba(249,168,212,0.12)',
-    blue: 'rgba(96,165,250,0.12)',
-    sage: 'rgba(74,222,128,0.12)',
-    violet: 'rgba(167,139,250,0.12)',
-    amber: 'rgba(245,158,11,0.12)',
-  };
-  const textColourMap: Record<string, string> = {
-    rose: '#F9A8D4',
-    blue: '#60A5FA',
-    sage: '#4ADE80',
-    violet: '#A78BFA',
-    amber: '#F59E0B',
-  };
+  const colourEntry = LEARNER_COLOUR_MAP[targetLearnerColour ?? 'rose'] ?? LEARNER_COLOUR_MAP.rose;
 
   const handleAccept = () => {
     setStatus('accepted');
@@ -44,9 +32,6 @@ export default function ObservationCard({
     setStatus('dismissed');
     onDismiss?.(id);
   };
-
-  const bgColour = colourMap[targetLearnerColour ?? 'rose'] ?? colourMap.rose;
-  const txtColour = textColourMap[targetLearnerColour ?? 'rose'] ?? textColourMap.rose;
 
   if (status === 'dismissed') {
     return (
@@ -62,8 +47,7 @@ export default function ObservationCard({
       <div className="flex items-center gap-sm mb-md">
         <span className="font-sans text-sm font-medium text-ember">{observerName} observed:</span>
         <span
-          className="px-2 py-0.5 rounded-[6px] font-sans text-xs font-medium"
-          style={{ background: bgColour, color: txtColour }}
+          className={`px-2 py-0.5 rounded-[6px] font-sans text-xs font-medium border ${colourEntry.pill}`}
         >
           {targetLearnerName}
         </span>

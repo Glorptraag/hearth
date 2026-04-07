@@ -1,23 +1,19 @@
+'use client';
+
 import { SignUp } from '@clerk/nextjs';
 import Link from 'next/link';
-import { clerkAppearance } from '../../../clerk-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { getClerkAppearance } from '../../../clerk-theme';
 
 export default function SignUpPage() {
+  const { theme } = useTheme();
+
   return (
     <>
-      {/* Atmospheric glow */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            'radial-gradient(ellipse at 30% 10%, rgba(217,123,58,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 90%, rgba(217,123,58,0.04) 0%, transparent 50%)',
-        }}
-      />
-
       {/* Nav */}
       <nav
         className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]"
-        style={{ background: 'rgba(15,13,11,0.85)' }}
+        style={{ background: 'var(--color-surface-nav-blur)' }}
       >
         <Link
           href="/"
@@ -36,7 +32,7 @@ export default function SignUpPage() {
       </nav>
 
       <div className="relative z-10 flex min-h-dvh items-center justify-center px-lg pt-[80px] pb-2xl">
-        <SignUp appearance={clerkAppearance} />
+        <SignUp appearance={getClerkAppearance(theme)} />
       </div>
     </>
   );

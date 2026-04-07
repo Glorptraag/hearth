@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { differenceInYears, format, startOfMonth } from 'date-fns';
+import { getJurisdiction } from '@/config/jurisdictions';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ export default function OurStoryHubClient() {
   const [stats, setStats] = useState<LearnerStats | null>(null);
   const [statsLearnerId, setStatsLearnerId] = useState<string>('');
   const [loadingLearners, setLoadingLearners] = useState(true);
+  const [familyState, setFamilyState] = useState<string | null>(null);
 
   const tabs = [
     { href: `/our-story/portfolio?child=${selectedId}`, label: 'Portfolio' },
@@ -95,6 +97,16 @@ export default function OurStoryHubClient() {
     setSelectedId(id);
     router.replace(`${pathname}?child=${id}`, { scroll: false });
   };
+
+  // Fetch family settings once (for jurisdiction config)
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.state) setFamilyState(data.state);
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch learner list once
   useEffect(() => {
@@ -161,7 +173,7 @@ export default function OurStoryHubClient() {
   if (learners.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-md py-xl text-center">
-        <span className="text-4xl block mb-md">📖</span>
+        <span className="text-4xl block mb-md" aria-hidden="true">📖</span>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
           Your story starts here
         </h2>
@@ -199,7 +211,7 @@ export default function OurStoryHubClient() {
                 onClick={() => handleChildSelect(l.id)}
                 className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                   active
-                    ? `bg-surface-raised shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${c.activeBorder}`
+                    ? `bg-surface-raised shadow-soft ${c.activeBorder}`
                     : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-raised'
                 }`}
               >
@@ -290,8 +302,8 @@ export default function OurStoryHubClient() {
           </p>
         )}
         {stats && stats.portfolioTotal === 0 && stats.capabilityThreadsActive === 0 && (
-          <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <span className="text-3xl">✨</span>
+          <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-soft">
+            <span className="text-3xl" aria-hidden="true">✨</span>
             <p className="font-serif text-sm text-text-secondary leading-relaxed">
               Log your first learning moment and watch {learner.name}&rsquo;s story come to life.
             </p>
@@ -322,8 +334,8 @@ export default function OurStoryHubClient() {
         <NavCard
           href="/our-story/report"
           icon="📋"
-          title="HEU Report"
-          stat1="Compliance view"
+          title={getJurisdiction(familyState).reportScreenTitle}
+          stat1={getJurisdiction(familyState).reportTier === 'cd_level' ? 'Compliance view' : 'Learning summary'}
         />
 
         <NavCard
@@ -404,7 +416,7 @@ function NavCard({
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]"
+      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100" />
       <div className="mb-md text-[2rem] opacity-90">{icon}</div>

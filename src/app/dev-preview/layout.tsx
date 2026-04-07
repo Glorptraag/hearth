@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTheme } from '@/hooks/use-theme';
 
 const NAV_ITEMS = [
   { href: '/dev-preview/dashboard', label: 'Home', emoji: '🏠' },
@@ -28,6 +29,8 @@ export default function DevPreviewLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
+  const gathering = theme === 'gathering';
 
   if (process.env.NODE_ENV === 'production') {
     return (
@@ -52,14 +55,22 @@ export default function DevPreviewLayout({
           Hearth
         </span>
         <div className="flex items-center gap-md">
+          <button
+            onClick={toggleTheme}
+            className="font-sans text-xs font-medium text-text-secondary hover:text-text-primary transition-colors duration-200"
+            aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
+          >
+            {gathering ? '🌙' : '☀️'}
+          </button>
           <span className="font-sans text-sm text-text-secondary">
             Douglas Family
           </span>
           <Link
             href="/dev-preview/notifications"
             className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
+            aria-label="Notifications"
           >
-            <span className="text-lg">🔔</span>
+            <span className="text-lg" aria-hidden="true">🔔</span>
             <span className="absolute right-[2px] top-[2px] flex h-[16px] w-[16px] items-center justify-center rounded-full bg-ember font-sans text-[10px] font-bold text-text-inverse">
               4
             </span>
@@ -94,6 +105,7 @@ export default function DevPreviewLayout({
                     ? 'flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)]'
                     : ''
                 }`}
+                aria-hidden="true"
               >
                 {item.emoji}
               </span>

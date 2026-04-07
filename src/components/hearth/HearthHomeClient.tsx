@@ -193,7 +193,7 @@ export default function HearthHomeClient({
         {/* Header */}
         <div className="mb-xl">
           <h1 className="font-serif text-3xl font-semibold text-text-primary">
-            <span className="mr-sm">🏠</span>
+            <span className="mr-sm" aria-hidden="true">🏠</span>
             {hearth.name}
           </h1>
           {hearth.description && (
@@ -327,7 +327,7 @@ function OurStoryTab({
         ))}
       </div>
 
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
         <p className="font-serif text-sm italic text-text-muted">
           Your group&apos;s collective story will grow as sessions are completed and reflections are shared.
         </p>
@@ -418,7 +418,7 @@ function SessionCard({
   return (
     <Link
       href={`/hearths/${hearthId}/sessions/${session.id}`}
-      className="block rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+      className="block rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
     >
       <div className="mb-sm flex items-center gap-sm">
         <span
@@ -485,7 +485,7 @@ function MemberCard({ member }: { member: MemberData }) {
   const initials = getInitials(member.familyName);
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium">
       <div className="mb-md flex items-center gap-md">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember/15 font-sans text-sm font-semibold text-ember">
           {initials}
@@ -549,7 +549,7 @@ function SettingsTab({
   return (
     <div className="flex flex-col gap-xl">
       {/* Name & Description */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
         <h2 className="mb-lg font-serif text-xl font-semibold text-text-primary">
           Hearth Details
         </h2>
@@ -600,7 +600,7 @@ function SettingsTab({
       </div>
 
       {/* Consent */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
         <h2 className="mb-lg font-serif text-xl font-semibold text-text-primary">
           Consent Settings
         </h2>
@@ -616,7 +616,7 @@ function SettingsTab({
       </div>
 
       {/* Leave */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
         <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">
           Danger Zone
         </h2>

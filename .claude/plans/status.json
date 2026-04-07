@@ -1,0 +1,15 @@
+{
+  "plan": "PLAN-multi-state",
+  "generated": "2026-04-06T00:00:00Z",
+  "tasks": {
+    "1.1": { "status": "done", "completed_at": "2026-04-06T00:00:00Z", "completed_by": "T1" },
+    "1.2": { "status": "done", "completed_at": "2026-04-06T00:00:00Z", "completed_by": "T1" },
+    "2.1": { "status": "done", "completed_at": "2026-04-06T00:00:00Z", "completed_by": "T2" },
+    "2.2": { "status": "done", "blocked_by": [], "completed_at": "2026-04-06T06:30:00Z", "completed_by": "T1" },
+    "2.3": { "status": "done", "completed_at": "2026-04-06T06:00:00Z", "completed_by": "sonnet" },
+    "3.1": { "status": "done", "completed_at": "2026-04-06T08:00:00Z", "completed_by": "sonnet" },
+    "3.2": { "status": "done", "completed_at": "2026-04-06T07:00:00Z", "completed_by": "T3" },
+    "3.3": { "status": "done", "completed_at": "2026-04-06T07:00:00Z", "completed_by": "sonnet" },
+    "4.1": { "status": "done", "completed_at": "2026-04-06T09:00:00Z", "completed_by": "T1" }
+  }
+}

@@ -20,7 +20,7 @@ export default function HearthDashboardCard({
   return (
     <Link
       href={'/hearths/' + id}
-      className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] relative overflow-hidden cursor-pointer before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-ember before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-[400ms] block"
+      className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft hover:-translate-y-[2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] relative overflow-hidden cursor-pointer before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-ember before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-[400ms] block"
     >
       <div className="flex items-start justify-between mb-md">
         <div>

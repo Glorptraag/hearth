@@ -134,7 +134,7 @@ function ThreadDetailPanel({
   };
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
       <div className="flex items-center justify-between mb-sm">
         <h3 className="font-serif text-base font-semibold text-text-primary">{thread.name}</h3>
         <button onClick={onClose} className="font-sans text-xs text-text-muted hover:text-text-secondary">Close</button>
@@ -148,7 +148,14 @@ function ThreadDetailPanel({
           <span className="font-sans text-xs text-text-muted">Last: {thread.lastDate}</span>
         )}
       </div>
-      <div className="h-[6px] w-full rounded-full bg-surface-hover overflow-hidden">
+      <div
+        className="h-[6px] w-full rounded-full bg-surface-hover overflow-hidden"
+        role="progressbar"
+        aria-valuenow={progressWidth === '25%' ? 25 : progressWidth === '60%' ? 60 : progressWidth === '90%' ? 90 : 0}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${thread.name} capability: ${tierCfg.label}`}
+      >
         <div
           className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`}
           style={{ width: progressWidth }}
@@ -291,7 +298,7 @@ function ThreadEvidencePanel({
   }, [threadId, learnerId]);
 
   return (
-    <div className="mt-md rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="mt-md rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft animate-in fade-in slide-in-from-bottom-2 duration-200">
       <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md">
         Evidence for {threadName}
       </p>
@@ -741,11 +748,11 @@ export default function CapabilitiesPage() {
 
       {/* Stats row */}
       <div className="mt-lg flex gap-md">
-        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-soft">
           <p className="font-sans text-2xl font-semibold text-ember">{totalObservations}</p>
           <p className="font-sans text-xs text-text-muted">Observations</p>
         </div>
-        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-soft">
           <p className="font-sans text-2xl font-semibold text-text-primary">{totalThreads}</p>
           <p className="font-sans text-xs text-text-muted">Threads</p>
         </div>
@@ -767,8 +774,8 @@ export default function CapabilitiesPage() {
 
       {/* First-use empty state */}
       {totalObservations === 0 && (
-        <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-          <span className="text-3xl block mb-md">✦</span>
+        <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-soft">
+          <span className="text-3xl block mb-md" aria-hidden="true">✦</span>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">
             Capabilities emerge from logging
           </h2>
@@ -795,7 +802,7 @@ export default function CapabilitiesPage() {
       {viewMode === 'constellation' ? (
         <>
           {/* Constellation visualization */}
-          <div className="mt-lg rounded-[16px] border border-border-subtle bg-surface-body overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <div className="mt-lg rounded-[16px] border border-border-subtle bg-surface-body overflow-hidden shadow-soft">
             <ConstellationView
               activeThreads={activeThreads}
               focusDomain={focusDomain}
@@ -840,7 +847,7 @@ export default function CapabilitiesPage() {
               <button
                 key={domain.key}
                 onClick={() => handleFocusDomain(focusDomain === domain.key ? null : domain.key)}
-                className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left w-full"
+                className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left w-full"
               >
                 <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
                 <span className="text-2xl">{domain.emoji}</span>
@@ -885,7 +892,7 @@ export default function CapabilitiesPage() {
                             <div key={thread.thread_id}>
                               <button
                                 onClick={() => setSelectedThreadId(isSelected ? null : thread.thread_id)}
-                                className={`w-full text-left rounded-[10px] border bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ${
+                                className={`w-full text-left rounded-[10px] border bg-surface-panel p-md shadow-soft hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ${
                                   isSelected ? 'border-ember' : 'border-border-subtle'
                                 }`}
                               >
@@ -903,7 +910,14 @@ export default function CapabilitiesPage() {
                                 {thread.last_evidence_date && (
                                   <p className="font-sans text-[10px] text-text-muted mt-xs">Last: {thread.last_evidence_date}</p>
                                 )}
-                                <div className="mt-sm h-1 w-full rounded-full bg-surface-hover overflow-hidden">
+                                <div
+                                  className="mt-sm h-1 w-full rounded-full bg-surface-hover overflow-hidden"
+                                  role="progressbar"
+                                  aria-valuenow={progressWidth === '25%' ? 25 : progressWidth === '60%' ? 60 : 90}
+                                  aria-valuemin={0}
+                                  aria-valuemax={100}
+                                  aria-label={`${getThreadName(thread.thread_id)} capability: ${tierCfg.label}`}
+                                >
                                   <div className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`} style={{ width: progressWidth }} />
                                 </div>
                               </button>

@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           {toasts.map((t) => (
             <div
               key={t.id}
-              className={`rounded-[10px] border border-border-subtle bg-surface-panel px-lg py-sm font-sans text-sm shadow-[0_8px_32px_rgba(0,0,0,0.5)] ${
+              className={`rounded-[10px] border border-border-subtle bg-surface-panel px-lg py-sm font-sans text-sm shadow-medium ${
                 t.type === 'error' ? 'text-red-400' : 'text-text-secondary'
               }`}
             >

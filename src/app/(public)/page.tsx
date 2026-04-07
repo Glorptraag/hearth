@@ -4,17 +4,8 @@ import ProviderCodeInput from './provider-code-input';
 export default function LandingPage() {
   return (
     <>
-      {/* Atmospheric glow */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            'radial-gradient(ellipse at 30% 10%, rgba(217,123,58,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 90%, rgba(217,123,58,0.04) 0%, transparent 50%)',
-        }}
-      />
-
       {/* Nav */}
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]" style={{ background: 'rgba(15,13,11,0.85)' }}>
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]" style={{ background: 'var(--color-surface-nav-blur)' }}>
         <Link href="/" className="font-serif text-xl font-semibold tracking-[0.02em] text-text-primary">
           Hearth
         </Link>
@@ -68,7 +59,7 @@ export default function LandingPage() {
         {/* Social proof */}
         <div className="px-lg py-2xl text-center">
           <p className="font-sans text-xs uppercase tracking-[0.05em] text-text-muted">
-            Built for Australian homeschool families · Queensland HEU compliant
+            Built for Australian homeschool families · All Australian states supported
           </p>
         </div>
 
@@ -90,7 +81,7 @@ export default function LandingPage() {
             <PillarCard
               emoji="📋"
               title="Compliance without the stress"
-              body="Queensland HEU documentation that builds itself. Capability tracking, portfolio evidence, work sample curation. Export when you need it."
+              body="Home education documentation that builds itself. Capability tracking, portfolio evidence, work sample curation. Export when you need it."
             />
           </div>
         </section>
@@ -108,7 +99,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 gap-xl md:grid-cols-3 md:gap-2xl">
             <Step number={1} title="Log" body="Describe what happened today. Hearth spots the learning and maps it to capability threads across eight domains." />
             <Step number={2} title="Grow" body="Watch your child's Capabilities Constellation come alive — a visual map of growth that reveals connections you didn't plan for." />
-            <Step number={3} title="Report" body="Export HEU-ready documentation with one tap. Portfolio evidence, curriculum coverage, and work samples — sorted." />
+            <Step number={3} title="Report" body="Export portfolio documentation with one tap. Evidence, curriculum coverage, and work samples — sorted for your state's requirements." />
           </div>
         </section>
 
@@ -123,8 +114,8 @@ export default function LandingPage() {
             Hearth meets you where you are and grows with you.
           </p>
           <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
-            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-              <div className="mb-md text-2xl">🌱</div>
+            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+              <div className="mb-md text-2xl" aria-hidden="true">🌱</div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 New to homeschooling?
               </h3>
@@ -132,8 +123,8 @@ export default function LandingPage() {
                 You don&apos;t need a teaching degree. Hearth puts real pedagogical frameworks in your hands and walks you through them. Start by logging what you&apos;re already doing &mdash; you&apos;ll be surprised how much learning is already happening.
               </p>
             </div>
-            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-              <div className="mb-md text-2xl">🔥</div>
+            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+              <div className="mb-md text-2xl" aria-hidden="true">🔥</div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 Already homeschooling?
               </h3>
@@ -154,7 +145,7 @@ export default function LandingPage() {
           <p className="mb-2xl font-serif text-base text-text-secondary">
             No feature tiers. No content gates. Full access from day one.
           </p>
-          <div className="relative mx-auto max-w-[480px] overflow-hidden rounded-[24px] border border-border-medium bg-surface-panel p-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+          <div className="relative mx-auto max-w-[480px] overflow-hidden rounded-[24px] border border-border-medium bg-surface-panel p-2xl shadow-warm">
             {/* Ember top-line */}
             <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, var(--color-ember), transparent)' }} />
 
@@ -168,7 +159,7 @@ export default function LandingPage() {
             </div>
             <p className="my-lg font-serif text-[0.95rem] leading-[1.8] text-text-secondary">
               All content packs · All features · All compliance tools<br />
-              Unlimited learners · AI-powered insights · HEU export
+              Unlimited learners · AI-powered insights · Learning report export
             </p>
             <Link
               href="/sign-up"
@@ -185,7 +176,7 @@ export default function LandingPage() {
         {/* Demo */}
         <section id="demo" className="mx-auto max-w-[960px] px-lg py-4xl text-center">
           <div className="mx-auto max-w-[560px] rounded-[16px] border border-border-subtle bg-surface-raised p-2xl">
-            <div className="mb-md text-[2rem]">🏠</div>
+            <div className="mb-md text-[2rem]" aria-hidden="true">🏠</div>
             <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
               Want to explore first?
             </h3>
@@ -233,7 +224,7 @@ function Divider() {
 
 function PillarCard({ emoji, title, body }: { emoji: string; title: string; body: string }) {
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm">
       <div className="absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" style={{ background: 'linear-gradient(90deg, var(--color-ember), transparent)' }} />
       <div className="mb-md text-[2rem]">{emoji}</div>
       <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">{title}</h3>

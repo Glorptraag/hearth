@@ -6,6 +6,7 @@ import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
+import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -177,31 +178,8 @@ const SUBJECT_PIP: Record<string, string> = {
   languages:    'bg-domain-languages',
 };
 
-const COLOUR_MAP: Record<string, { bg: string; border: string; text: string }> = {
-  rose: {
-    bg: 'linear-gradient(135deg, rgba(249,168,212,0.15), rgba(249,168,212,0.08))',
-    border: 'rgba(249,168,212,0.2)',
-    text: 'rgb(249,168,212)',
-  },
-  blue: {
-    bg: 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.08))',
-    border: 'rgba(96,165,250,0.2)',
-    text: 'rgb(96,165,250)',
-  },
-  sage: {
-    bg: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(74,222,128,0.08))',
-    border: 'rgba(74,222,128,0.2)',
-    text: 'rgb(74,222,128)',
-  },
-  amber: {
-    bg: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.08))',
-    border: 'rgba(251,191,36,0.2)',
-    text: 'rgb(251,191,36)',
-  },
-};
-
-function getColours(token: string | null) {
-  return COLOUR_MAP[token ?? 'rose'] ?? COLOUR_MAP.rose;
+function getLearnerColour(token: string | null) {
+  return LEARNER_COLOUR_MAP[token ?? 'rose'] ?? LEARNER_COLOUR_MAP.rose;
 }
 
 function getSubjectLabel(s: string): string {
@@ -287,9 +265,9 @@ export default function DashboardClient({
           </div>
         )}
         {dashboardState === 'returning-inactive' && (
-          <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-soft">
             <div className="flex items-center gap-md">
-              <span className="text-2xl">🌅</span>
+              <span className="text-2xl" aria-hidden="true">🌅</span>
               <div>
                 <p className="font-serif text-sm text-text-secondary">
                   It&rsquo;s been a few days. Learning has been happening &mdash; let&rsquo;s capture some of it.
@@ -321,7 +299,7 @@ export default function DashboardClient({
             </div>
             <div className="flex gap-xl overflow-x-auto pb-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {learners.map((l) => {
-                const colours = getColours(l.colourToken);
+                const colours = getLearnerColour(l.colourToken);
                 const age = l.dateOfBirth
                   ? differenceInYears(new Date(), new Date(l.dateOfBirth))
                   : null;
@@ -335,12 +313,7 @@ export default function DashboardClient({
                     className="flex flex-col items-center transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[4px]"
                   >
                     <div
-                      className="flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[400ms]"
-                      style={{
-                        background: colours.bg,
-                        borderColor: colours.border,
-                        color: colours.text,
-                      }}
+                      className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[400ms] ${colours.bg} ${colours.border} ${colours.text}`}
                     >
                       {l.shapeIcon ?? '🌟'}
                     </div>
@@ -405,7 +378,7 @@ export default function DashboardClient({
                   {todayPlanner.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     >
                       <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
                         {item.title}
@@ -427,10 +400,12 @@ export default function DashboardClient({
                       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
                         Today&apos;s subjects
                       </p>
-                      <div className="flex gap-[4px] flex-wrap">
+                      <div className="flex gap-[4px] flex-wrap" role="list" aria-label="Today's subjects">
                         {uniqueSubjects.map((sub) => (
                           <span
                             key={sub}
+                            role="listitem"
+                            aria-label={getSubjectLabel(sub)}
                             className={`w-2 h-2 rounded-full ${SUBJECT_PIP[sub]}`}
                           />
                         ))}
@@ -492,7 +467,7 @@ export default function DashboardClient({
           href={`${basePath}/log`}
           className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(217,123,58,0.4),0_0_32px_rgba(217,123,58,0.2)] mb-2xl"
         >
-          <span className="text-lg">✏️</span>
+          <span className="text-lg" aria-hidden="true">✏️</span>
           Log a Moment
         </Link>
 
@@ -501,7 +476,7 @@ export default function DashboardClient({
           <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
             <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember-glow mb-md shadow-[0_0_12px_rgba(217,123,58,0.2)]">
-              <span className="text-sm text-ember">🔥</span>
+              <span className="text-sm text-ember" aria-hidden="true">🔥</span>
             </div>
             <p className="font-serif text-[0.95rem] italic leading-[1.65] text-text-secondary">
               &ldquo;{snapshot.hearthVoice}&rdquo;
@@ -518,7 +493,7 @@ export default function DashboardClient({
             <h3 className="font-serif text-base font-semibold text-text-primary mb-lg">
               This Week
             </h3>
-            <div className="rounded-[16px] border border-border-subtle bg-surface-raised p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <div className="rounded-[16px] border border-border-subtle bg-surface-raised p-xl shadow-soft">
               <WeekStat label="Moments logged" value={weekStats.momentsLogged ?? 0} />
               <WeekStat
                 label="Collaborative activities"
@@ -611,7 +586,7 @@ function MomentCard({
   const isTogether = entryLearners.length > 1;
 
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm">
       {/* Ember top-line on hover */}
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
 
@@ -623,11 +598,7 @@ function MomentCard({
           </div>
         ) : entryLearners.length === 1 ? (
           <div
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-full text-[10px]"
-            style={{
-              background: getColours(entryLearners[0].colourToken).bg,
-              color: getColours(entryLearners[0].colourToken).text,
-            }}
+            className={`flex h-[24px] w-[24px] items-center justify-center rounded-full text-[10px] ${getLearnerColour(entryLearners[0].colourToken).bg} ${getLearnerColour(entryLearners[0].colourToken).text}`}
           >
             {entryLearners[0].shapeIcon ?? '🌟'}
           </div>

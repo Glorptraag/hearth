@@ -7,6 +7,7 @@ import { ChildSelector } from '@/components/ui/child-selector';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import EmptyState from '@/components/ui/EmptyState';
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
+import { getJurisdiction } from '@/config/jurisdictions';
 
 type Learner = {
   id: string;
@@ -70,8 +71,9 @@ type WorkSampleData = {
 };
 
 type Settings = {
-  heuNextReportDate: string | null;
-  heuRegistrationNumber: string | null;
+  nextReportDate: string | null;
+  registrationNumber: string | null;
+  state: string | null;
   createdAt: string;
 };
 
@@ -174,6 +176,9 @@ export default function ReportPage() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [curationSlot, setCurationSlot] = useState<WorkSampleSlot | null>(null);
 
+  const config = useMemo(() => getJurisdiction(settings?.state ?? null), [settings?.state]);
+  const isCdLevel = config.reportTier === 'cd_level';
+
   // Ensure report exists for this learner + year
   const ensureReport = useCallback(async (learnerId: string) => {
     const year = new Date().getFullYear();
@@ -226,7 +231,7 @@ export default function ReportPage() {
   }, [selectedLearnerId, ensureReport]);
 
   // Timeline
-  const dueDateStr = settings?.heuNextReportDate ?? null;
+  const dueDateStr = settings?.nextReportDate ?? null;
   const registeredStr = settings?.createdAt ?? null;
   const today = new Date();
   const registrationDate = registeredStr ? new Date(registeredStr) : today;
@@ -362,7 +367,7 @@ export default function ReportPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-md py-lg">
-      <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">HEU Compliance Report</h1>
+      <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">{config.reportScreenTitle}</h1>
 
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
@@ -371,7 +376,7 @@ export default function ReportPage() {
           <EmptyState
             emoji="📋"
             heading="Your report builds automatically"
-            body="As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors, and assembles your HEU compliance evidence. Start logging to see your report take shape."
+            body="As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors, and assembles your report automatically. Start logging to see your report take shape."
           />
         </div>
       )}
@@ -389,7 +394,14 @@ export default function ReportPage() {
           )}
         </div>
 
-        <div className="relative h-[6px] rounded-full bg-surface-hover overflow-hidden">
+        <div
+          className="relative h-[6px] rounded-full bg-surface-hover overflow-hidden"
+          role="progressbar"
+          aria-valuenow={Math.round(timelineProgress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Report timeline progress"
+        >
           <div
             className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[1200ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
             style={{ width: `${timelineProgress}%` }}
@@ -425,171 +437,302 @@ export default function ReportPage() {
         </div>
         <p className="font-serif text-sm text-text-secondary leading-relaxed">
           {posture.label === 'On Track'
-            ? `Good coverage across ${coveredSubjects} of 8 subject areas with ${entries.length} logged entries. Evidence is building well for the next HEU report.`
+            ? `Good coverage across ${coveredSubjects} of 8 subject areas with ${entries.length} logged entries. Evidence is building well for your next report.`
             : posture.label === 'Needs Attention'
               ? `You have ${entries.length} entries covering ${coveredSubjects} of 8 subject areas. Consider logging activities in underrepresented areas to strengthen your portfolio.`
-              : `Limited evidence so far with ${entries.length} entries across ${coveredSubjects} subject areas. Regular logging will help build a strong portfolio for your HEU report.`}
+              : `Limited evidence so far with ${entries.length} entries across ${coveredSubjects} subject areas. Regular logging will help build a strong portfolio for your report.`}
         </p>
       </div>
 
-      {/* Required Work Samples Grid */}
-      <div className="mt-lg">
-        <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Evidence</p>
-        <div className="flex items-center justify-between mb-md">
-          <h2 className="font-serif text-lg font-semibold text-text-primary">Required Work Samples</h2>
-          <span className="font-sans text-sm text-text-secondary">
-            <span className={completedSlots >= 6 ? 'text-sage font-semibold' : 'text-ember font-semibold'}>
-              {completedSlots}
-            </span>
-            {' '}of 6 complete
-          </span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
-          {workSampleSlots.map((slot) => {
-            const statusStyle = SLOT_STATUS[slot.status];
-            const domain = SUBJECT_DOMAIN_CLASSES[slot.area];
-            const isConfirmed = slot.dbSample?.annotation?.confirmedAt;
-            return (
-              <button
-                key={slot.id}
-                onClick={() => setCurationSlot(slot)}
-                className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
-              >
-                <div className="flex items-center justify-between mb-sm">
-                  <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
-                    {slot.areaLabel}
-                  </span>
-                  <span className={`h-[8px] w-[8px] rounded-full ${statusStyle.dot}`} />
-                </div>
-
-                <p className="font-serif text-sm font-semibold text-text-primary">{slot.label}</p>
-                <p className="font-sans text-[10px] text-text-muted mt-[2px]">{slot.timing}</p>
-
-                <span className={`inline-block mt-sm rounded-full px-sm py-[2px] font-sans text-[10px] ${statusStyle.badge}`}>
-                  {isConfirmed ? '✓ Confirmed' : statusStyle.label}
+      {/* === CD-Level Tier (QLD/SA/NT): Work Samples + Curriculum Coverage + Gap Analysis === */}
+      {isCdLevel && (
+        <>
+          {/* Required Work Samples Grid */}
+          <div className="mt-lg">
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Evidence</p>
+            <div className="flex items-center justify-between mb-md">
+              <h2 className="font-serif text-lg font-semibold text-text-primary">Required Work Samples</h2>
+              <span className="font-sans text-sm text-text-secondary">
+                <span className={completedSlots >= 6 ? 'text-sage font-semibold' : 'text-ember font-semibold'}>
+                  {completedSlots}
                 </span>
-
-                <p className="font-serif text-xs text-text-secondary mt-sm truncate">
-                  {slot.matchedEntry ? slot.matchedEntry.title : 'No matching entry yet'}
-                </p>
-
-                <span className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200">
-                  {slot.status === 'empty' ? 'Select sample' : slot.dbSample?.entryId ? 'Edit annotation' : 'Choose entry'} →
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Curriculum Coverage */}
-      <div className="mt-lg">
-        <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Subject Areas</p>
-        <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Curriculum Coverage</h2>
-        <div className="rounded-lg border border-border-subtle bg-surface-panel overflow-hidden divide-y divide-border-subtle">
-          {subjectCoverage.map((s) => {
-            const domain = SUBJECT_DOMAIN_CLASSES[s.key];
-            return (
-              <div key={s.key} className="flex items-center gap-md px-md py-sm">
-                <div className="flex items-center gap-sm w-[140px] shrink-0">
-                  <span className="text-base">{s.emoji}</span>
-                  <span className="font-serif text-sm font-semibold text-text-primary">{s.label}</span>
-                </div>
-                <div className="flex-1 h-[6px] rounded-full bg-surface-hover overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-[600ms] ${domain?.bar ?? 'bg-text-muted'}`}
-                    style={{ width: `${Math.min(s.pct, 100)}%` }}
-                  />
-                </div>
-                <div className="text-right w-[80px] shrink-0">
-                  <span className="font-sans text-xs text-text-primary font-semibold">{s.count}</span>
-                  <span className="font-sans text-[10px] text-text-muted"> entries</span>
-                  {s.descriptors > 0 && (
-                    <p className="font-sans text-[10px] text-text-muted">{s.descriptors} CDs</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Gap Analysis */}
-      {gaps.length > 0 && (
-        <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
-          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">{vocab.coverageFrame}</p>
-          <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
-          <div className="space-y-xs">
-            {gaps.map((g) => {
-              const isCritical = g.count === 0;
-              return (
-                <div
-                  key={g.key}
-                  className={`flex items-center gap-md rounded-lg border px-md py-sm ${
-                    isCritical
-                      ? 'border-child-rose/30 bg-child-rose/5'
-                      : 'border-amber-400/20 bg-amber-400/5'
-                  }`}
-                >
-                  <span className={`font-sans text-[10px] font-semibold uppercase tracking-wide shrink-0 ${
-                    isCritical ? 'text-child-rose' : 'text-amber-400'
-                  }`}>
-                    {isCritical ? 'Critical' : 'Moderate'}
-                  </span>
-                  <span className="text-base shrink-0">{g.emoji}</span>
-                  <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
-                  <p className="font-sans text-xs text-text-muted hidden sm:block max-w-[200px] text-right">
-                    {GAP_ACTIONS[g.key] ?? 'Log an activity in this area'}
-                  </p>
-                  <Link
-                    href={`/explore/activities?subject=${g.key}`}
-                    className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
+                {' '}of 6 complete
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+              {workSampleSlots.map((slot) => {
+                const statusStyle = SLOT_STATUS[slot.status];
+                const domain = SUBJECT_DOMAIN_CLASSES[slot.area];
+                const isConfirmed = slot.dbSample?.annotation?.confirmedAt;
+                return (
+                  <button
+                    key={slot.id}
+                    onClick={() => setCurationSlot(slot)}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
                   >
-                    Explore →
-                  </Link>
-                </div>
-              );
-            })}
+                    <div className="flex items-center justify-between mb-sm">
+                      <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
+                        {slot.areaLabel}
+                      </span>
+                      <span className={`h-[8px] w-[8px] rounded-full ${statusStyle.dot}`} />
+                    </div>
+
+                    <p className="font-serif text-sm font-semibold text-text-primary">{slot.label}</p>
+                    <p className="font-sans text-[10px] text-text-muted mt-[2px]">{slot.timing}</p>
+
+                    <span className={`inline-block mt-sm rounded-full px-sm py-[2px] font-sans text-[10px] ${statusStyle.badge}`}>
+                      {isConfirmed ? '✓ Confirmed' : statusStyle.label}
+                    </span>
+
+                    <p className="font-serif text-xs text-text-secondary mt-sm truncate">
+                      {slot.matchedEntry ? slot.matchedEntry.title : 'No matching entry yet'}
+                    </p>
+
+                    <span className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200">
+                      {slot.status === 'empty' ? 'Select sample' : slot.dbSample?.entryId ? 'Edit annotation' : 'Choose entry'} →
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          {/* Curriculum Coverage */}
+          <div className="mt-lg">
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Subject Areas</p>
+            <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Curriculum Coverage</h2>
+            <div className="rounded-lg border border-border-subtle bg-surface-panel overflow-hidden divide-y divide-border-subtle">
+              {subjectCoverage.map((s) => {
+                const domain = SUBJECT_DOMAIN_CLASSES[s.key];
+                return (
+                  <div key={s.key} className="flex items-center gap-md px-md py-sm">
+                    <div className="flex items-center gap-sm w-[140px] shrink-0">
+                      <span className="text-base" aria-hidden="true">{s.emoji}</span>
+                      <span className="font-serif text-sm font-semibold text-text-primary">{s.label}</span>
+                    </div>
+                    <div
+                      className="flex-1 h-[6px] rounded-full bg-surface-hover overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={Math.round(Math.min(s.pct, 100))}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${s.label} coverage: ${s.count} entries`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all duration-[600ms] ${domain?.bar ?? 'bg-text-muted'}`}
+                        style={{ width: `${Math.min(s.pct, 100)}%` }}
+                      />
+                    </div>
+                    <div className="text-right w-[80px] shrink-0">
+                      <span className="font-sans text-xs text-text-primary font-semibold">{s.count}</span>
+                      <span className="font-sans text-[10px] text-text-muted"> entries</span>
+                      {s.descriptors > 0 && (
+                        <p className="font-sans text-[10px] text-text-muted">{s.descriptors} CDs</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Gap Analysis */}
+          {gaps.length > 0 && (
+            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+              <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">{vocab.coverageFrame}</p>
+              <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
+              <div className="space-y-xs">
+                {gaps.map((g) => {
+                  const isCritical = g.count === 0;
+                  return (
+                    <div
+                      key={g.key}
+                      className={`flex items-center gap-md rounded-lg border px-md py-sm ${
+                        isCritical
+                          ? 'border-child-rose/30 bg-child-rose/5'
+                          : 'border-amber-400/20 bg-amber-400/5'
+                      }`}
+                    >
+                      <span className={`font-sans text-[10px] font-semibold uppercase tracking-wide shrink-0 ${
+                        isCritical ? 'text-child-rose' : 'text-amber-400'
+                      }`}>
+                        {isCritical ? 'Critical' : 'Moderate'}
+                      </span>
+                      <span className="text-base shrink-0">{g.emoji}</span>
+                      <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
+                      <p className="font-sans text-xs text-text-muted hidden sm:block max-w-[200px] text-right">
+                        {GAP_ACTIONS[g.key] ?? 'Log an activity in this area'}
+                      </p>
+                      <Link
+                        href={`/explore/activities?subject=${g.key}`}
+                        className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
+                      >
+                        Explore →
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Recommended Modules */}
+          {gaps.length > 0 && (
+            <div className="mt-lg">
+              <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Suggested Next Steps</p>
+              <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Recommended Actions</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+                {gaps.slice(0, 3).map((g, i) => {
+                  const tagLabel = i === 0 ? 'Fills biggest gap' : i === 1 ? 'Quick win' : 'Natural fit';
+                  const tagColor = i === 0 ? 'bg-child-rose/15 text-child-rose' : i === 1 ? 'bg-sage/15 text-sage' : 'bg-ember-glow text-ember';
+                  return (
+                    <div
+                      key={g.key}
+                      className="relative rounded-lg border border-border-subtle bg-surface-panel p-md overflow-hidden"
+                    >
+                      <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-60" />
+                      <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold mb-sm ${tagColor}`}>
+                        {tagLabel}
+                      </span>
+                      <div className="flex items-center gap-sm mb-sm">
+                        <span className="text-xl">{g.emoji}</span>
+                        <span className="font-serif text-sm font-semibold text-text-primary">{g.label}</span>
+                      </div>
+                      <p className="font-sans text-xs text-text-muted mb-md">
+                        {g.count === 0 ? 'No entries yet' : `Only ${g.count} entr${g.count === 1 ? 'y' : 'ies'} logged`}
+                      </p>
+                      <Link
+                        href={`/explore/activities?subject=${g.key}`}
+                        className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
+                      >
+                        Browse Activities →
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Recommended Modules */}
-      {gaps.length > 0 && (
-        <div className="mt-lg">
-          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Suggested Next Steps</p>
-          <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Recommended Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
-            {gaps.slice(0, 3).map((g, i) => {
-              const tagLabel = i === 0 ? 'Fills biggest gap' : i === 1 ? 'Quick win' : 'Natural fit';
-              const tagColor = i === 0 ? 'bg-child-rose/15 text-child-rose' : i === 1 ? 'bg-sage/15 text-sage' : 'bg-ember-glow text-ember';
-              return (
-                <div
-                  key={g.key}
-                  className="relative rounded-lg border border-border-subtle bg-surface-panel p-md overflow-hidden"
-                >
-                  <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-60" />
-                  <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold mb-sm ${tagColor}`}>
-                    {tagLabel}
-                  </span>
-                  <div className="flex items-center gap-sm mb-sm">
-                    <span className="text-xl">{g.emoji}</span>
-                    <span className="font-serif text-sm font-semibold text-text-primary">{g.label}</span>
-                  </div>
-                  <p className="font-sans text-xs text-text-muted mb-md">
-                    {g.count === 0 ? 'No entries yet' : `Only ${g.count} entr${g.count === 1 ? 'y' : 'ies'} logged`}
-                  </p>
-                  <Link
-                    href={`/explore/activities?subject=${g.key}`}
-                    className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
+      {/* === Learning Area Tier (NSW/VIC/WA/TAS/ACT): Area Cards + Exploration Suggestions === */}
+      {!isCdLevel && (
+        <>
+          {/* Learning Area Cards */}
+          <div className="mt-lg">
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Learning Areas</p>
+            <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Coverage by Area</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+              {subjectCoverage.map((s) => {
+                const domain = SUBJECT_DOMAIN_CLASSES[s.key];
+                const strandSummary = s.descriptors > 0
+                  ? `${s.descriptors} curriculum strand${s.descriptors === 1 ? '' : 's'} touched`
+                  : 'No curriculum strands mapped yet';
+                return (
+                  <div
+                    key={s.key}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium ${domain?.border ?? 'border-t-border-medium'}`}
                   >
-                    Browse Activities →
-                  </Link>
-                </div>
-              );
-            })}
+                    <div className="flex items-center justify-between mb-sm">
+                      <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
+                      <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
+                        {s.count} {s.count === 1 ? 'entry' : 'entries'}
+                      </span>
+                    </div>
+                    <p className="font-serif text-sm font-semibold text-text-primary">{s.label}</p>
+                    <div
+                      className="mt-sm h-[4px] rounded-full bg-surface-hover overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={Math.round(Math.min(s.pct, 100))}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${s.label} coverage: ${s.count} entries`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all duration-[600ms] ${domain?.bar ?? 'bg-text-muted'}`}
+                        style={{ width: `${Math.min(s.pct, 100)}%` }}
+                      />
+                    </div>
+                    <p className="font-sans text-[10px] text-text-muted mt-sm">{strandSummary}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          {/* Areas to Explore */}
+          {gaps.length > 0 && (
+            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+              <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Opportunities</p>
+              <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">Areas to Explore</h2>
+              <p className="font-serif text-sm text-text-secondary mb-md leading-relaxed">
+                These areas have fewer logged entries. Consider weaving them into upcoming activities to broaden your learning story.
+              </p>
+              <div className="space-y-xs">
+                {gaps.map((g) => (
+                  <div
+                    key={g.key}
+                    className="flex items-center gap-md rounded-lg border border-border-subtle bg-surface-raised px-md py-sm"
+                  >
+                    <span className="text-base shrink-0">{g.emoji}</span>
+                    <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
+                    <span className="font-sans text-[10px] text-text-muted shrink-0">
+                      {g.count === 0 ? 'No entries yet' : `${g.count} entr${g.count === 1 ? 'y' : 'ies'}`}
+                    </span>
+                    <Link
+                      href={`/explore/activities?subject=${g.key}`}
+                      className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
+                    >
+                      Explore →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Work Samples (flat list, no 6-slot structure) */}
+          {entries.filter((e) => e.heuCandidate).length > 0 && (
+            <div className="mt-lg">
+              <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Evidence</p>
+              <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Work Samples</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+                {entries.filter((e) => e.heuCandidate).map((entry) => {
+                  const subjectKey = entry.subjects?.[0] ?? entry.aiEnrichment?.subjects_detected?.[0]?.toLowerCase() ?? null;
+                  const domain = subjectKey ? SUBJECT_DOMAIN_CLASSES[subjectKey] : null;
+                  const subjectLabel = subjectKey ? SUBJECT_CONFIG[subjectKey]?.label : null;
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md ${domain?.border ?? 'border-t-border-medium'}`}
+                    >
+                      <div className="flex items-center justify-between mb-sm">
+                        {subjectLabel && (
+                          <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
+                            {subjectLabel}
+                          </span>
+                        )}
+                        <span className="font-sans text-[10px] text-text-muted">
+                          {format(new Date(entry.dateOccurred), 'd MMM yyyy')}
+                        </span>
+                      </div>
+                      <p className="font-serif text-sm font-semibold text-text-primary truncate">{entry.title}</p>
+                      {entry.description && (
+                        <p className="font-serif text-xs text-text-secondary mt-xs line-clamp-2">{entry.description}</p>
+                      )}
+                      {(entry.evidenceUrls?.length ?? 0) > 0 && (
+                        <span className="inline-block mt-sm rounded-full bg-sage/15 text-sage px-sm py-[2px] font-sans text-[10px]">
+                          {entry.evidenceUrls!.length} attachment{entry.evidenceUrls!.length === 1 ? '' : 's'}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Export Button */}
@@ -599,7 +742,6 @@ export default function ReportPage() {
             if (!selectedLearnerId) return;
             const reportId = report?.id ?? '';
             window.open(`/api/report/export?learnerId=${selectedLearnerId}&reportId=${reportId}`, '_blank');
-            // Mark report as exported
             if (reportId) {
               fetch(`/api/report/${reportId}`, {
                 method: 'PATCH',
@@ -615,7 +757,7 @@ export default function ReportPage() {
               : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'
           }`}
         >
-          Export PDF for HEU
+          {isCdLevel ? 'Export PDF' : 'Export Learning Report'}
         </button>
         {report?.lastExportedAt && (
           <span className="font-sans text-[10px] text-text-muted">

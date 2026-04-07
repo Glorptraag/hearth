@@ -90,7 +90,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
     <article
       role="article"
       aria-label={`${pack.title} — ${moduleCount} modules${ageStr ? `, ${ageStr}` : ''}`}
-      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
+      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-soft overflow-hidden transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-warm ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
     >
       {/* Ember top-line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-ember to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms] z-10" />

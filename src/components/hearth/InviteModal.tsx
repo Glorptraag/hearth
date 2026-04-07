@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 interface InviteModalProps {
   hearthId: string;
@@ -15,6 +16,7 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
   const [joinUrl, setJoinUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const trapRef = useFocusTrap(isOpen);
 
   if (!isOpen) return null;
 
@@ -59,13 +61,13 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center"
+      className="fixed inset-0 bg-overlay-backdrop z-[200] flex items-center justify-center"
       onClick={handleOverlayClick}
     >
-      <div className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="invite-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-warm" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-md">
-          <h2 className="font-serif text-xl font-semibold text-text-primary">
+          <h2 id="invite-modal-title" className="font-serif text-xl font-semibold text-text-primary">
             Invite Families
           </h2>
           <button

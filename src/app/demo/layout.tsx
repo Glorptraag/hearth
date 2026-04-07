@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
+import { useTheme } from "@/hooks/use-theme";
 
 const NAV_SECTIONS = [
   {
@@ -67,6 +68,8 @@ export default function DemoLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { theme, toggleTheme, isAutoMode, resetToAuto } = useTheme();
+  const gathering = theme === 'gathering';
   const firstName = "Sarah";
   const familyName = "Douglas Family";
   const initials = "SD";
@@ -92,7 +95,7 @@ export default function DemoLayout({
         {/* Brand */}
         <div className="mb-3xl flex items-center gap-md">
           <div className="flex h-[40px] w-[40px] items-center justify-center rounded-md bg-ember shadow-[0_2px_12px_rgba(217,123,58,0.3),var(--shadow-glow)]">
-            <span className="text-lg">🔥</span>
+            <span className="text-lg" aria-hidden="true">🔥</span>
           </div>
           <span className="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]">
             Hearth
@@ -117,7 +120,7 @@ export default function DemoLayout({
                       : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
                   }`}
                 >
-                  <span className="text-lg">{item.emoji}</span>
+                  <span className="text-lg" aria-hidden="true">{item.emoji}</span>
                   {item.label}
                 </Link>
               );
@@ -130,6 +133,27 @@ export default function DemoLayout({
           <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
             System
           </div>
+          <button
+            onClick={toggleTheme}
+            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+              gathering
+                ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'
+                : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
+            }`}
+            aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
+          >
+            <span className="text-lg" aria-hidden="true">{gathering ? '🌙' : '☀️'}</span>
+            {gathering ? 'Dark Mode' : 'Gathering Mode'}
+          </button>
+          {!isAutoMode && (
+            <button
+              onClick={resetToAuto}
+              className="mb-xs flex w-full items-center gap-md rounded-md px-md py-sm font-sans text-[0.75rem] font-medium text-text-muted transition-all duration-200 hover:text-text-secondary"
+              aria-label="Reset to automatic theme switching"
+            >
+              Reset to auto
+            </button>
+          )}
           <Link
             href="/demo/notifications"
             className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
@@ -138,7 +162,7 @@ export default function DemoLayout({
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
-            <span className="relative text-lg">
+            <span className="relative text-lg" aria-hidden="true">
               🔔
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1">
@@ -156,7 +180,7 @@ export default function DemoLayout({
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
-            <span className="text-lg">⚙️</span>
+            <span className="text-lg" aria-hidden="true">⚙️</span>
             Settings
           </Link>
         </div>
@@ -193,8 +217,9 @@ export default function DemoLayout({
             <Link
               href="/demo/notifications"
               className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
+              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
-              <span className="text-lg">🔔</span>
+              <span className="text-lg" aria-hidden="true">🔔</span>
               {unreadCount > 0 && (
                 <span className="absolute right-[2px] top-[2px]">
                   <NotificationBadge count={unreadCount} />
@@ -232,6 +257,7 @@ export default function DemoLayout({
                     ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)]"
                     : ""
                 }`}
+                aria-hidden="true"
               >
                 {item.emoji}
               </span>

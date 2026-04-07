@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 // ─── Types ───
 
@@ -99,6 +100,7 @@ export default function WorkSampleCuration({
     planning: sample?.annotation?.planning ?? '',
   });
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trapRef = useFocusTrap(true);
 
   // Filter entries to candidates for this slot
   const candidates = entries.filter((e) => {
@@ -125,22 +127,6 @@ export default function WorkSampleCuration({
   });
 
   const selectedEntry = entries.find((e) => e.id === selectedEntryId) ?? null;
-
-  // Assign entry to slot
-  const assignEntry = useCallback(async (entryId: string | null) => {
-    setSaving(true);
-    try {
-      await fetch(`/api/report/${reportId}/samples`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slot: slot.label.toLowerCase().replace(/ /g, '_').replace('writing', 'writing').replace('maths', 'maths').replace('choice', 'choice'), entryId }),
-      });
-      // Use the actual slot key from the sample
-    } catch {
-      // fall through
-    }
-    setSaving(false);
-  }, [reportId, slot]);
 
   const handleSelect = async (entryId: string) => {
     const slotKey = sample?.slot ?? '';
@@ -228,13 +214,13 @@ export default function WorkSampleCuration({
   const isComplete = filledFields === 4;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-[640px] max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop backdrop-blur-sm">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="w-full max-w-[640px] max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-medium" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="sticky top-0 z-10 bg-surface-body border-b border-border-subtle px-lg py-md flex items-center justify-between">
           <div>
             <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">{slot.areaLabel}</p>
-            <h3 className="font-serif text-lg font-semibold text-text-primary">{slot.label}</h3>
+            <h3 id="work-sample-title" className="font-serif text-lg font-semibold text-text-primary">{slot.label}</h3>
             <p className="font-sans text-xs text-text-muted">{slot.timing}</p>
           </div>
           <button
@@ -273,7 +259,7 @@ export default function WorkSampleCuration({
             <div>
               {sortedCandidates.length === 0 ? (
                 <div className="text-center py-xl">
-                  <p className="text-3xl mb-sm">📭</p>
+                  <p className="text-3xl mb-sm" aria-hidden="true">📭</p>
                   <p className="font-serif text-sm text-text-secondary">No matching entries found for this slot.</p>
                   <p className="font-sans text-xs text-text-muted mt-xs">
                     Log a {slot.areaLabel.toLowerCase()} activity from {slot.timing.split('·')[1]?.trim()} to see candidates here.
@@ -318,7 +304,7 @@ export default function WorkSampleCuration({
                           <div className="flex flex-col items-end gap-xs shrink-0">
                             {entry.heuCandidate && (
                               <span className="rounded-full bg-sage/15 text-sage px-sm py-[1px] font-sans text-[10px] font-semibold">
-                                📋 HEU
+                                📋 Work Sample
                               </span>
                             )}
                             {hasEvidence && (
@@ -377,7 +363,7 @@ export default function WorkSampleCuration({
               {/* Annotation quality indicator */}
               <div className="flex items-center gap-sm mb-md">
                 <div className="flex gap-[3px]">
-                  {ANNOTATION_FIELDS.map((f, i) => (
+                  {ANNOTATION_FIELDS.map((f) => (
                     <div
                       key={f.key}
                       className={`h-[4px] w-[32px] rounded-full transition-colors duration-200 ${

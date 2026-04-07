@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 interface CreateSessionModalProps {
   hearthId: string;
@@ -21,10 +22,10 @@ export default function CreateSessionModal({
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [location, setLocation] = useState(defaultLocation);
-  const [moduleLink, setModuleLink] = useState('');
   const [prepNotes, setPrepNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const trapRef = useFocusTrap(isOpen);
 
   if (!isOpen) return null;
 
@@ -48,6 +49,7 @@ export default function CreateSessionModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, date, timeStart, timeEnd, location, prepNotes }),
+
       });
       if (res.ok) {
         onCreated();
@@ -65,11 +67,11 @@ export default function CreateSessionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center"
+      className="fixed inset-0 bg-overlay-backdrop z-[200] flex items-center justify-center"
       onClick={handleOverlayClick}
     >
-      <div className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
-        <h2 className="font-serif text-xl font-semibold mb-md text-text-primary">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="create-session-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-warm" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+        <h2 id="create-session-title" className="font-serif text-xl font-semibold mb-md text-text-primary">
           Create Session
         </h2>
 
@@ -130,21 +132,6 @@ export default function CreateSessionModal({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g. Community Hall"
-              className="w-full p-3 px-md bg-surface-raised border border-border-subtle rounded-[10px] text-text-primary font-serif text-[0.95rem] focus:outline-none focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)]"
-            />
-          </div>
-
-          {/* Link a module */}
-          <div className="mb-md">
-            <label className="font-sans text-sm font-medium text-text-secondary mb-sm block">
-              Link a module{' '}
-              <span className="font-normal text-text-muted">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={moduleLink}
-              onChange={(e) => setModuleLink(e.target.value)}
-              placeholder="Search modules..."
               className="w-full p-3 px-md bg-surface-raised border border-border-subtle rounded-[10px] text-text-primary font-serif text-[0.95rem] focus:outline-none focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)]"
             />
           </div>

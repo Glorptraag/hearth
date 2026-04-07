@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
@@ -661,7 +662,7 @@ export default function LogPage() {
       {/* Scaffold banner (from Hearth session) */}
       {scaffoldData && (
         <div className="flex items-center gap-md p-md px-lg bg-ember/[0.08] border border-ember/15 rounded-[10px] mx-md mt-md mb-sm">
-          <span className="text-xl shrink-0">📋</span>
+          <span className="text-xl shrink-0" aria-hidden="true">📋</span>
           <div className="min-w-0">
             <div className="font-sans text-sm text-ember font-medium">
               Logging from: {scaffoldData.session.hearthName ?? 'Hearth'}
@@ -1126,7 +1127,7 @@ export default function LogPage() {
         <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
           <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-[var(--shadow-glow)]">
-              <span className="text-sm">💡</span>
+              <span className="text-sm" aria-hidden="true">💡</span>
             </div>
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
@@ -1148,7 +1149,7 @@ export default function LogPage() {
         {insightsExpanded && (
           <div className="max-h-[60vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
             <div className="flex items-center gap-sm mb-md">
-              <span className="text-ember text-lg">✨</span>
+              <span className="text-ember text-lg" aria-hidden="true">✨</span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
             <InsightsContent match={keywordMatch} />
@@ -1235,7 +1236,7 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
   if (!match) {
     return (
       <div className="flex flex-col items-center justify-center py-xl text-center">
-        <span className="text-4xl mb-md opacity-30">🙂</span>
+        <span className="text-4xl mb-md opacity-30" aria-hidden="true">🙂</span>
         <p className="font-serif text-sm text-text-muted italic leading-relaxed">
           Start describing the activity and I&apos;ll begin finding the learning within it.
         </p>
@@ -1248,7 +1249,7 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
   if (!hasResults) {
     return (
       <div className="flex flex-col items-center justify-center py-xl text-center">
-        <span className="text-4xl mb-md opacity-30">🔍</span>
+        <span className="text-4xl mb-md opacity-30" aria-hidden="true">🔍</span>
         <p className="font-serif text-sm text-text-muted italic leading-relaxed">
           Keep writing — I&apos;m looking for learning signals...
         </p>
@@ -1343,6 +1344,7 @@ function EvidenceModal({
   const [previewUrl, setPreviewUrl] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const selectedFileRef = useRef<File | null>(null);
+  const trapRef = useFocusTrap(true);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1389,10 +1391,10 @@ function EvidenceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-warm)]">
+      <div className="absolute inset-0 bg-overlay-backdrop" onClick={onClose} />
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-warm)]" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         <div className="flex items-center justify-between mb-lg">
-          <h3 className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
+          <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary text-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
             ✕
           </button>

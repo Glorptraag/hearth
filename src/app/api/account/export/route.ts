@@ -54,8 +54,8 @@ export async function GET() {
       ? {
           pedagogy: settings.pedagogyPreference,
           state: settings.state,
-          heuRegistrationNumber: settings.heuRegistrationNumber,
-          heuNextReportDate: settings.heuNextReportDate,
+          registrationNumber: settings.registrationNumber,
+          nextReportDate: settings.nextReportDate,
         }
       : null,
     learners: familyLearners.map((l) => ({

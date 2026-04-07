@@ -60,7 +60,7 @@ export default function EmptyState({
   }
 
   return (
-    <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+    <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-soft">
       {content}
     </div>
   );

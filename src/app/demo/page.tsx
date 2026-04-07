@@ -9,7 +9,7 @@ export default function DemoLanding() {
       <div className="mb-3xl text-center">
         <div className="mb-lg flex justify-center">
           <div className="flex h-[64px] w-[64px] items-center justify-center rounded-lg bg-ember shadow-[0_4px_24px_rgba(217,123,58,0.4),var(--shadow-glow)]">
-            <span className="text-3xl">🔥</span>
+            <span className="text-3xl" aria-hidden="true">🔥</span>
           </div>
         </div>
         <h1 className="font-serif text-3xl font-semibold text-text-primary tracking-[-0.02em] mb-md">
@@ -38,12 +38,12 @@ export default function DemoLanding() {
           { href: '/demo/our-story', emoji: '📖', title: 'Our Story', desc: 'Portfolios & growth' },
           { href: '/demo/explore/activities', emoji: '🔍', title: 'Explore', desc: 'Discover modules' },
           { href: '/demo/planner', emoji: '📅', title: 'Planner', desc: 'Plan your week' },
-          { href: '/demo/our-story/report', emoji: '📄', title: 'HEU Report', desc: 'Compliance at a glance' },
+          { href: '/demo/our-story/report', emoji: '📄', title: 'Learning Report', desc: 'Compliance at a glance' },
         ].map((card) => (
           <Link
             key={card.href}
             href={card.href}
-            className="flex flex-col items-center gap-sm rounded-lg bg-surface-panel p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+            className="flex flex-col items-center gap-sm rounded-lg bg-surface-panel p-lg border border-border-subtle shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
           >
             <span className="text-2xl">{card.emoji}</span>
             <span className="font-serif text-sm font-semibold text-text-primary">{card.title}</span>

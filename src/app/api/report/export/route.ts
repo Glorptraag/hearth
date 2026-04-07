@@ -7,16 +7,17 @@ import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { getJurisdiction } from '@/config/jurisdictions';
 
-const SUBJECT_CONFIG: Record<string, { label: string }> = {
-  english: { label: 'English' },
-  mathematics: { label: 'Mathematics' },
-  science: { label: 'Science' },
-  hass: { label: 'HASS' },
-  arts: { label: 'Arts' },
-  technologies: { label: 'Technologies' },
-  hpe: { label: 'HPE' },
-  languages: { label: 'Languages' },
+const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
+  english: { label: 'English', emoji: '📖' },
+  mathematics: { label: 'Mathematics', emoji: '🔢' },
+  science: { label: 'Science', emoji: '🔬' },
+  hass: { label: 'HASS', emoji: '🌏' },
+  arts: { label: 'Arts', emoji: '🎨' },
+  technologies: { label: 'Technologies', emoji: '💻' },
+  hpe: { label: 'HPE', emoji: '⚽' },
+  languages: { label: 'Languages', emoji: '🗣️' },
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
@@ -68,6 +69,8 @@ export async function GET(request: NextRequest) {
   const learner = learnerRows[0];
   if (!learner) return NextResponse.json({ error: 'Learner not found' }, { status: 404 });
 
+  const config = getJurisdiction(settings?.state ?? null);
+
   // Filter entries for this learner
   const entries = allEntries.filter(
     (e) => e.status === 'complete' && e.learnerIds?.includes(learnerId)
@@ -75,7 +78,7 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
   const registrationDate = familyRow?.createdAt ? new Date(familyRow.createdAt) : now;
-  const reportDueDate = settings?.heuNextReportDate ? new Date(settings.heuNextReportDate) : null;
+  const reportDueDate = settings?.nextReportDate ? new Date(settings.nextReportDate) : null;
   const daysUntilDue = reportDueDate ? differenceInDays(reportDueDate, now) : null;
   const learnerAge = learner.dateOfBirth
     ? differenceInYears(now, new Date(learner.dateOfBirth))
@@ -116,96 +119,6 @@ export async function GET(request: NextRequest) {
   else if (coveredSubjects >= 4 || entries.length >= 3) postureLabel = 'Needs Attention';
   else postureLabel = 'At Risk';
 
-  // Work sample slots
-  const reportYear = reportDueDate?.getFullYear() ?? now.getFullYear();
-  const WORK_SAMPLE_SLOTS = [
-    { area: 'english', label: 'Early Writing', termHalf: 'early' as const },
-    { area: 'english', label: 'Later Writing', termHalf: 'late' as const },
-    { area: 'mathematics', label: 'Early Maths', termHalf: 'early' as const },
-    { area: 'mathematics', label: 'Later Maths', termHalf: 'late' as const },
-    { area: 'science', label: 'Early Science/HASS', termHalf: 'early' as const, altArea: 'hass' },
-    { area: 'science', label: 'Later Science/HASS', termHalf: 'late' as const, altArea: 'hass' },
-  ];
-
-  const slotData = WORK_SAMPLE_SLOTS.map((slot) => {
-    const candidates = entries.filter((e) => {
-      const d = new Date(e.dateOccurred + 'T00:00:00');
-      if (d.getFullYear() !== reportYear) return false;
-      const month = d.getMonth() + 1;
-      const inHalf = slot.termHalf === 'early' ? month <= 6 : month >= 7;
-      if (!inHalf) return false;
-      const enrichment = e.aiEnrichment as AiEnrichment;
-      const subjectSet = new Set([
-        ...(e.subjects ?? []),
-        ...(enrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
-      ]);
-      return subjectSet.has(slot.area) || (slot.altArea ? subjectSet.has(slot.altArea) : false);
-    });
-    const match = candidates[0] ?? null;
-    const status = match
-      ? (match.evidenceUrls?.length ?? 0) > 0 ? 'Complete' : 'Partial'
-      : 'Empty';
-    return { ...slot, entryTitle: match?.title ?? '—', status };
-  });
-
-  // Gap analysis
-  const gaps = subjectCoverage.filter((s) => s.count <= 1);
-
-  // Fetch DB-backed work samples with annotations (if report exists)
-  const reportId = request.nextUrl.searchParams.get('reportId');
-  let dbSamples: Array<{
-    slot: string;
-    entryId: string | null;
-    status: string;
-    annotation: {
-      observations: string | null;
-      needsStrengths: string | null;
-      adjustment: string | null;
-      planning: string | null;
-      confirmedAt: Date | null;
-    } | null;
-  }> = [];
-
-  if (reportId) {
-    const report = await db.query.heuReports.findFirst({
-      where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
-    });
-    if (report) {
-      const samples = await db.query.workSamples.findMany({
-        where: eq(workSamples.reportId, report.id),
-      });
-      const sampleIds = samples.map((s) => s.id);
-      const annotations = sampleIds.length
-        ? await db.query.workSampleAnnotations.findMany({
-            where: (a, { inArray }) => inArray(a.workSampleId, sampleIds),
-          })
-        : [];
-      const annotationMap = new Map(annotations.map((a) => [a.workSampleId, a]));
-
-      dbSamples = samples.map((s) => ({
-        slot: s.slot,
-        entryId: s.entryId,
-        status: s.status,
-        annotation: annotationMap.get(s.id) ?? null,
-      }));
-    }
-  }
-
-  // Merge DB samples into work sample data
-  const SLOT_KEY_MAP: Record<string, number> = {
-    early_writing: 0, later_writing: 1, early_maths: 2, later_maths: 3, early_choice: 4, later_choice: 5,
-  };
-  for (const dbs of dbSamples) {
-    const idx = SLOT_KEY_MAP[dbs.slot];
-    if (idx !== undefined && dbs.entryId) {
-      const entry = entries.find((e) => e.id === dbs.entryId);
-      if (entry) {
-        slotData[idx].entryTitle = entry.title ?? '—';
-        slotData[idx].status = dbs.annotation?.confirmedAt ? 'Confirmed' : 'Selected';
-      }
-    }
-  }
-
   // ─── Generate PDF ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doc = new jsPDF() as any;
@@ -215,7 +128,7 @@ export async function GET(request: NextRequest) {
   // Title
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('HEU Compliance Report', pageW / 2, y, { align: 'center' });
+  doc.text(config.reportScreenTitle, pageW / 2, y, { align: 'center' });
   y += 10;
 
   doc.setFontSize(11);
@@ -232,11 +145,13 @@ export async function GET(request: NextRequest) {
   doc.setFont('helvetica', 'normal');
   doc.text(`Name: ${learner.name}`, 14, y); y += 5;
   if (learnerAge !== null) { doc.text(`Age: ${learnerAge} years`, 14, y); y += 5; }
-  if (settings?.heuRegistrationNumber) { doc.text(`HEU Registration: ${settings.heuRegistrationNumber}`, 14, y); y += 5; }
+  if (settings?.registrationNumber) {
+    doc.text(`${config.registrationLabel}: ${settings.registrationNumber}`, 14, y); y += 5;
+  }
   doc.text(`Family: ${familyRow?.familyName ?? '—'}`, 14, y); y += 5;
   doc.text(`Registered: ${format(registrationDate, 'd MMM yyyy')}`, 14, y); y += 5;
   if (reportDueDate) {
-    doc.text(`Report Due: ${format(reportDueDate, 'd MMM yyyy')}`, 14, y); y += 5;
+    doc.text(`${config.reviewDateLabel}: ${format(reportDueDate, 'd MMM yyyy')}`, 14, y); y += 5;
     if (daysUntilDue !== null) {
       doc.text(daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} days overdue` : `${daysUntilDue} days remaining`, 14, y);
       y += 5;
@@ -244,132 +159,32 @@ export async function GET(request: NextRequest) {
   }
   y += 5;
 
-  // Overall posture
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Compliance Status', 14, y); y += 7;
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Status: ${postureLabel}`, 14, y); y += 5;
-  doc.text(`Total Entries: ${entries.length}`, 14, y); y += 5;
-  doc.text(`Subject Areas Covered: ${coveredSubjects} of 8`, 14, y); y += 10;
+  if (config.reportTier === 'cd_level') {
+    // ─── CD-LEVEL tier (QLD, SA, NT) ───
 
-  // Curriculum coverage table
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Curriculum Coverage', 14, y); y += 3;
-
-  doc.autoTable({
-    startY: y,
-    head: [['Subject', 'Entries', 'Coverage %', 'Curriculum Descriptors']],
-    body: subjectCoverage.map((s) => [
-      s.label,
-      String(s.count),
-      `${s.pct}%`,
-      s.descriptors > 0 ? `${s.descriptors} matched` : '—',
-    ]),
-    headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
-    bodyStyles: { fontSize: 9 },
-    theme: 'grid',
-    margin: { left: 14 },
-  });
-
-  y = doc.lastAutoTable.finalY + 10;
-
-  // Work samples table
-  if (y > 240) { doc.addPage(); y = 20; }
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Required Work Samples (QHE)', 14, y); y += 3;
-
-  doc.autoTable({
-    startY: y,
-    head: [['Slot', 'Subject Area', 'Status', 'Matched Entry']],
-    body: slotData.map((ws) => [
-      ws.label,
-      SUBJECT_CONFIG[ws.area]?.label ?? ws.area,
-      ws.status,
-      ws.entryTitle,
-    ]),
-    headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
-    bodyStyles: { fontSize: 9 },
-    theme: 'grid',
-    margin: { left: 14 },
-  });
-
-  y = doc.lastAutoTable.finalY + 10;
-
-  // Per-sample annotation pages
-  const annotatedSamples = dbSamples.filter((s) => s.annotation?.confirmedAt);
-  if (annotatedSamples.length > 0) {
-    doc.addPage();
-    y = 20;
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Work Sample Annotations', pageW / 2, y, { align: 'center' });
-    y += 12;
-
-    for (const sample of annotatedSamples) {
-      if (y > 220) { doc.addPage(); y = 20; }
-      const slotIdx = SLOT_KEY_MAP[sample.slot];
-      const slotInfo = slotIdx !== undefined ? slotData[slotIdx] : null;
-      const entry = sample.entryId ? entries.find((e) => e.id === sample.entryId) : null;
-
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(slotInfo?.label ?? sample.slot, 14, y);
-      y += 6;
-
-      if (entry) {
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Entry: ${entry.title ?? '—'}  •  ${format(new Date(entry.dateOccurred + 'T00:00:00'), 'd MMM yyyy')}`, 14, y);
-        y += 7;
-      }
-
-      const a = sample.annotation;
-      const fields = [
-        { label: 'What I Observed', value: a?.observations },
-        { label: 'Needs & Strengths', value: a?.needsStrengths },
-        { label: 'How I Adjusted', value: a?.adjustment },
-        { label: 'Where to Next', value: a?.planning },
-      ];
-
-      for (const field of fields) {
-        if (!field.value) continue;
-        if (y > 260) { doc.addPage(); y = 20; }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(100, 80, 60);
-        doc.text(field.label, 14, y);
-        y += 5;
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0, 0, 0);
-        const lines = doc.splitTextToSize(field.value, pageW - 28);
-        doc.text(lines, 14, y);
-        y += lines.length * 4.5 + 3;
-      }
-
-      y += 8;
-    }
-  }
-
-  // Gap analysis
-  if (gaps.length > 0) {
-    if (y > 240) { doc.addPage(); y = 20; }
+    // Overall posture
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Gap Analysis', 14, y); y += 3;
+    doc.text('Compliance Status', 14, y); y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Status: ${postureLabel}`, 14, y); y += 5;
+    doc.text(`Total Entries: ${entries.length}`, 14, y); y += 5;
+    doc.text(`Subject Areas Covered: ${coveredSubjects} of 8`, 14, y); y += 10;
+
+    // Curriculum coverage table
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Curriculum Coverage', 14, y); y += 3;
 
     doc.autoTable({
       startY: y,
-      head: [['Subject', 'Entries', 'Severity']],
-      body: gaps.map((g) => [
-        g.label,
-        String(g.count),
-        g.count === 0 ? 'Critical — No entries' : 'Moderate — Only 1 entry',
+      head: [['Subject', 'Entries', 'Coverage %', 'Curriculum Descriptors']],
+      body: subjectCoverage.map((s) => [
+        s.label,
+        String(s.count),
+        `${s.pct}%`,
+        s.descriptors > 0 ? `${s.descriptors} matched` : '—',
       ]),
       headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -378,13 +193,305 @@ export async function GET(request: NextRequest) {
     });
 
     y = doc.lastAutoTable.finalY + 10;
+
+    // Work samples — 6-slot QLD structure
+    const reportYear = reportDueDate?.getFullYear() ?? now.getFullYear();
+    const WORK_SAMPLE_SLOTS = [
+      { area: 'english', label: 'Early Writing', termHalf: 'early' as const },
+      { area: 'english', label: 'Later Writing', termHalf: 'late' as const },
+      { area: 'mathematics', label: 'Early Maths', termHalf: 'early' as const },
+      { area: 'mathematics', label: 'Later Maths', termHalf: 'late' as const },
+      { area: 'science', label: 'Early Science/HASS', termHalf: 'early' as const, altArea: 'hass' },
+      { area: 'science', label: 'Later Science/HASS', termHalf: 'late' as const, altArea: 'hass' },
+    ];
+
+    const slotData = WORK_SAMPLE_SLOTS.map((slot) => {
+      const candidates = entries.filter((e) => {
+        const d = new Date(e.dateOccurred + 'T00:00:00');
+        if (d.getFullYear() !== reportYear) return false;
+        const month = d.getMonth() + 1;
+        const inHalf = slot.termHalf === 'early' ? month <= 6 : month >= 7;
+        if (!inHalf) return false;
+        const enrichment = e.aiEnrichment as AiEnrichment;
+        const subjectSet = new Set([
+          ...(e.subjects ?? []),
+          ...(enrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
+        ]);
+        return subjectSet.has(slot.area) || (slot.altArea ? subjectSet.has(slot.altArea) : false);
+      });
+      const match = candidates[0] ?? null;
+      const status = match
+        ? (match.evidenceUrls?.length ?? 0) > 0 ? 'Complete' : 'Partial'
+        : 'Empty';
+      return { ...slot, entryTitle: match?.title ?? '—', status };
+    });
+
+    // Fetch DB-backed work samples with annotations (if report exists)
+    const reportId = request.nextUrl.searchParams.get('reportId');
+    let dbSamples: Array<{
+      slot: string;
+      entryId: string | null;
+      status: string;
+      annotation: {
+        observations: string | null;
+        needsStrengths: string | null;
+        adjustment: string | null;
+        planning: string | null;
+        confirmedAt: Date | null;
+      } | null;
+    }> = [];
+
+    if (reportId) {
+      const report = await db.query.heuReports.findFirst({
+        where: and(eq(heuReports.id, reportId), eq(heuReports.familyId, family.id)),
+      });
+      if (report) {
+        const samples = await db.query.workSamples.findMany({
+          where: eq(workSamples.reportId, report.id),
+        });
+        const sampleIds = samples.map((s) => s.id);
+        const annotations = sampleIds.length
+          ? await db.query.workSampleAnnotations.findMany({
+              where: (a, { inArray }) => inArray(a.workSampleId, sampleIds),
+            })
+          : [];
+        const annotationMap = new Map(annotations.map((a) => [a.workSampleId, a]));
+
+        dbSamples = samples.map((s) => ({
+          slot: s.slot,
+          entryId: s.entryId,
+          status: s.status,
+          annotation: annotationMap.get(s.id) ?? null,
+        }));
+      }
+    }
+
+    // Merge DB samples into work sample data
+    const SLOT_KEY_MAP: Record<string, number> = {
+      early_writing: 0, later_writing: 1, early_maths: 2, later_maths: 3, early_choice: 4, later_choice: 5,
+    };
+    for (const dbs of dbSamples) {
+      const idx = SLOT_KEY_MAP[dbs.slot];
+      if (idx !== undefined && dbs.entryId) {
+        const entry = entries.find((e) => e.id === dbs.entryId);
+        if (entry) {
+          slotData[idx].entryTitle = entry.title ?? '—';
+          slotData[idx].status = dbs.annotation?.confirmedAt ? 'Confirmed' : 'Selected';
+        }
+      }
+    }
+
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Required Work Samples', 14, y); y += 3;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Slot', 'Subject Area', 'Status', 'Matched Entry']],
+      body: slotData.map((ws) => [
+        ws.label,
+        SUBJECT_CONFIG[ws.area]?.label ?? ws.area,
+        ws.status,
+        ws.entryTitle,
+      ]),
+      headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
+      bodyStyles: { fontSize: 9 },
+      theme: 'grid',
+      margin: { left: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Per-sample annotation pages
+    const annotatedSamples = dbSamples.filter((s) => s.annotation?.confirmedAt);
+    if (annotatedSamples.length > 0) {
+      doc.addPage();
+      y = 20;
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Work Sample Annotations', pageW / 2, y, { align: 'center' });
+      y += 12;
+
+      for (const sample of annotatedSamples) {
+        if (y > 220) { doc.addPage(); y = 20; }
+        const slotIdx = SLOT_KEY_MAP[sample.slot];
+        const slotInfo = slotIdx !== undefined ? slotData[slotIdx] : null;
+        const entry = sample.entryId ? entries.find((e) => e.id === sample.entryId) : null;
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(slotInfo?.label ?? sample.slot, 14, y);
+        y += 6;
+
+        if (entry) {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Entry: ${entry.title ?? '—'}  •  ${format(new Date(entry.dateOccurred + 'T00:00:00'), 'd MMM yyyy')}`, 14, y);
+          y += 7;
+        }
+
+        const a = sample.annotation;
+        const fields = [
+          { label: 'What I Observed', value: a?.observations },
+          { label: 'Needs & Strengths', value: a?.needsStrengths },
+          { label: 'How I Adjusted', value: a?.adjustment },
+          { label: 'Where to Next', value: a?.planning },
+        ];
+
+        for (const field of fields) {
+          if (!field.value) continue;
+          if (y > 260) { doc.addPage(); y = 20; }
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(100, 80, 60);
+          doc.text(field.label, 14, y);
+          y += 5;
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(0, 0, 0);
+          const lines = doc.splitTextToSize(field.value, pageW - 28);
+          doc.text(lines, 14, y);
+          y += lines.length * 4.5 + 3;
+        }
+
+        y += 8;
+      }
+    }
+
+    // Gap analysis
+    const gaps = subjectCoverage.filter((s) => s.count <= 1);
+    if (gaps.length > 0) {
+      if (y > 240) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Gap Analysis', 14, y); y += 3;
+
+      doc.autoTable({
+        startY: y,
+        head: [['Subject', 'Entries', 'Severity']],
+        body: gaps.map((g) => [
+          g.label,
+          String(g.count),
+          g.count === 0 ? 'Critical — No entries' : 'Moderate — Only 1 entry',
+        ]),
+        headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
+        bodyStyles: { fontSize: 9 },
+        theme: 'grid',
+        margin: { left: 14 },
+      });
+
+      y = doc.lastAutoTable.finalY + 10;
+    }
+
+  } else {
+    // ─── LEARNING_AREA tier (NSW, VIC, WA, TAS, ACT) ───
+
+    // Summary
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Learning Summary', 14, y); y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Entries: ${entries.length}`, 14, y); y += 5;
+    doc.text(`Learning Areas Covered: ${coveredSubjects} of 8`, 14, y); y += 10;
+
+    // Learning area cards (one section per subject)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Learning Areas', 14, y); y += 3;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Learning Area', 'Entries', 'Coverage', 'Curriculum Links']],
+      body: subjectCoverage.map((s) => [
+        s.label,
+        String(s.count),
+        `${s.pct}%`,
+        s.descriptors > 0 ? `${s.descriptors} matched` : '—',
+      ]),
+      headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
+      bodyStyles: { fontSize: 9 },
+      theme: 'grid',
+      margin: { left: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Portfolio sections — entries grouped by learning area
+    const areasWithEntries = subjectCoverage.filter((s) => s.count > 0);
+    for (const area of areasWithEntries) {
+      const areaEntries = entries.filter((e) => {
+        const enrichment = e.aiEnrichment as AiEnrichment;
+        const subjectSet = new Set([
+          ...(e.subjects ?? []),
+          ...(enrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
+        ]);
+        return subjectSet.has(area.key);
+      }).sort((a, b) => new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime());
+
+      if (areaEntries.length === 0) continue;
+
+      if (y > 220) { doc.addPage(); y = 20; }
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 80, 60);
+      doc.text(area.label, 14, y); y += 6;
+      doc.setTextColor(0, 0, 0);
+
+      doc.autoTable({
+        startY: y,
+        head: [['Date', 'Entry Title', 'Evidence']],
+        body: areaEntries.slice(0, 20).map((e) => [
+          format(new Date(e.dateOccurred + 'T00:00:00'), 'd MMM yyyy'),
+          (e.title ?? '').slice(0, 70),
+          (e.evidenceUrls?.length ?? 0) > 0 ? `${e.evidenceUrls!.length} item(s)` : '—',
+        ]),
+        headStyles: { fillColor: [100, 80, 60], fontSize: 8 },
+        bodyStyles: { fontSize: 8 },
+        theme: 'grid',
+        margin: { left: 14 },
+        columnStyles: { 1: { cellWidth: 90 } },
+      });
+
+      y = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Areas to explore (softer language for learning_area tier)
+    const areasToExplore = subjectCoverage.filter((s) => s.count <= 1);
+    if (areasToExplore.length > 0) {
+      if (y > 240) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Areas to Explore', 14, y); y += 3;
+
+      doc.autoTable({
+        startY: y,
+        head: [['Learning Area', 'Entries', 'Note']],
+        body: areasToExplore.map((g) => [
+          g.label,
+          String(g.count),
+          g.count === 0 ? 'No entries yet — consider adding some activities' : 'Light coverage — a few more entries would round this out',
+        ]),
+        headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
+        bodyStyles: { fontSize: 9 },
+        theme: 'grid',
+        margin: { left: 14 },
+      });
+
+      y = doc.lastAutoTable.finalY + 10;
+    }
   }
 
-  // Entry log summary (last page)
+  // Entry log summary (shared across tiers)
   if (entries.length > 0) {
     if (y > 200) { doc.addPage(); y = 20; }
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text('Learning Entry Log', 14, y); y += 3;
 
     const sortedEntries = [...entries].sort(
@@ -416,7 +523,7 @@ export async function GET(request: NextRequest) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(128, 128, 128);
     doc.text(
-      `Hearth LMS — HEU Compliance Report — ${learner.name} — Page ${i} of ${pageCount}`,
+      `Hearth LMS — ${config.reportScreenTitle} — ${learner.name} — Page ${i} of ${pageCount}`,
       pageW / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
@@ -424,7 +531,7 @@ export async function GET(request: NextRequest) {
   }
 
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  const filename = `hearth-heu-report-${learner.name.toLowerCase().replace(/\s+/g, '-')}-${format(now, 'yyyy-MM-dd')}.pdf`;
+  const filename = `hearth-report-${learner.name.toLowerCase().replace(/\s+/g, '-')}-${format(now, 'yyyy-MM-dd')}.pdf`;
 
   return new NextResponse(pdfBuffer, {
     headers: {

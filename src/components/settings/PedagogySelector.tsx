@@ -71,7 +71,7 @@ export default function PedagogySelector({ selected, onChange }: PedagogySelecto
               <p className="mt-xs font-sans text-xs text-text-muted">{p.tagline}</p>
             </div>
             {isSelected && (
-              <span className="mt-[2px] text-ember">✓</span>
+              <span className="mt-[2px] text-ember" aria-hidden="true">✓</span>
             )}
           </button>
         );

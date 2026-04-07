@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getJurisdiction } from '@/config/jurisdictions';
 import { db } from '@/lib/db';
 import {
   hearths,
@@ -176,13 +177,17 @@ ${reflectionsBlock || '(none)'}
 Write a warm narrative about this group's learning journey this term. Ground it in the specific details above.`;
 }
 
-function getCurrentTermLabel(): string {
+function getCurrentTermLabel(state?: string | null): string {
+  const config = getJurisdiction(state ?? null);
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
-  if (month <= 4) return `Term 1, ${year}`;
-  if (month <= 6) return `Term 2, ${year}`;
-  if (month <= 9) return `Term 3, ${year}`;
+  const t1End = config.yearLevelCutoffMonth - 2;
+  const t2End = config.yearLevelCutoffMonth;
+  const t3End = config.yearLevelCutoffMonth + 3;
+  if (month <= t1End) return `Term 1, ${year}`;
+  if (month <= t2End) return `Term 2, ${year}`;
+  if (month <= t3End) return `Term 3, ${year}`;
   return `Term 4, ${year}`;
 }
 

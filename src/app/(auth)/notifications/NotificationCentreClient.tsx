@@ -160,7 +160,7 @@ export default function NotificationCentreClient({
                 {tab.count !== undefined && tab.count > 0 && (
                   <span
                     className={`rounded-full px-[5px] py-[1px] font-sans text-[11px] ${
-                      isActive ? 'bg-black/20' : 'bg-surface-raised text-text-muted'
+                      isActive ? 'bg-overlay-backdrop' : 'bg-surface-raised text-text-muted'
                     }`}
                   >
                     {tab.count}

@@ -202,7 +202,7 @@ export default function DemoLog() {
 
           {/* Right column — AI insight placeholder (desktop only) */}
           <div className="hidden lg:block w-[320px]">
-            <div className="sticky top-[80px] bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <div className="sticky top-[80px] bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft">
               <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
                 Hearth Voice
               </div>
@@ -221,9 +221,9 @@ export default function DemoLog() {
 
       {/* Success overlay */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-center">
-            <div className="text-5xl mb-lg">✨</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" className="bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-medium text-center">
+            <div className="text-5xl mb-lg" aria-hidden="true">✨</div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
               Moment captured!
             </h2>

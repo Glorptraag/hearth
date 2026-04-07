@@ -252,7 +252,7 @@ export default function BuildBadgesPage() {
               className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] transition-all duration-200"
             />
             {threadSearch && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+              <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-medium">
                 {CAPABILITY_THREADS.filter((t) =>
                   t.toLowerCase().includes(threadSearch.toLowerCase())
                 ).map((t) => (

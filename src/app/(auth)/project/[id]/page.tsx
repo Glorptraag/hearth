@@ -101,8 +101,7 @@ function ProjectOverview({
           ← Explore
         </a>
 
-        <div className="inline-flex items-center gap-xs px-sm py-xs rounded-full font-sans text-[0.6875rem] font-semibold uppercase tracking-wider mb-md"
-          style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.2)' }}
+        <div className="inline-flex items-center gap-xs px-sm py-xs rounded-full font-sans text-[0.6875rem] font-semibold uppercase tracking-wider mb-md bg-child-violet/12 text-child-violet border border-child-violet/20"
         >
           <span>◆</span> Multi-Stage Project · {stages.length} Stages
         </div>
@@ -149,8 +148,13 @@ function ProjectOverview({
           <div className="flex items-center gap-sm font-sans text-xs text-text-muted">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center"
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Project progress: ${completedCount} of ${stages.length} stages complete`}
               style={{
-                background: `conic-gradient(#D97B3A 0deg, #D97B3A ${progressPct * 3.6}deg, #252117 ${progressPct * 3.6}deg)`,
+                background: `conic-gradient(var(--color-ember) 0deg, var(--color-ember) ${progressPct * 3.6}deg, var(--color-surface-raised) ${progressPct * 3.6}deg)`,
               }}
             >
               <div className="w-5 h-5 rounded-full bg-surface-body flex items-center justify-center text-[0.5625rem] font-semibold text-ember">
@@ -479,7 +483,7 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="px-md py-xl text-center">
-        <span className="text-4xl mb-md block">🔭</span>
+        <span className="text-4xl mb-md block" aria-hidden="true">🔭</span>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">Project not found</h2>
         <p className="font-sans text-sm text-text-secondary mb-lg">This project may not exist or hasn&apos;t been published yet.</p>
         <button

@@ -291,7 +291,7 @@ export default function PortfolioPage() {
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
       {/* Monthly summary */}
-      <div className="relative mt-lg overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="relative mt-lg overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm">{currentMonthName} Summary</p>
         {monthlySummary.count === 0 ? (
@@ -414,7 +414,7 @@ export default function PortfolioPage() {
             entries.length > 0 ? (
               /* Filtered-empty: data exists but current filters match nothing */
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block">📅</span>
+                <span className="text-3xl mb-md block" aria-hidden="true">📅</span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Nothing logged this period</p>
                 <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
                   Try a different month or clear your filters to see all moments.
@@ -429,7 +429,7 @@ export default function PortfolioPage() {
             ) : (
               /* True empty: no entries at all */
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block">📖</span>
+                <span className="text-3xl mb-md block" aria-hidden="true">📖</span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
                 <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
                   Every {vocab.sessionNoun} you log becomes part of your learning story. Once you&apos;ve captured a few, they&apos;ll appear here as a portrait of your {vocab.learnerNoun}&apos;s {vocab.growthNoun}.
@@ -470,7 +470,7 @@ export default function PortfolioPage() {
                         return (
                           <div
                             key={entry.id}
-                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                           >
                             {/* Type-specific top line */}
                             <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -648,7 +648,7 @@ export default function PortfolioPage() {
                                       : 'text-text-muted hover:text-sage'
                                   }`}
                                 >
-                                  {entry.heuCandidate ? '✓ HEU work sample' : '☐ Mark as HEU work sample'}
+                                  {entry.heuCandidate ? '✓ Work sample' : '☐ Mark as work sample'}
                                 </button>
                               </div>
                             )}
@@ -674,7 +674,7 @@ export default function PortfolioPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:border-border-medium hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   >
                     {/* Type-specific top line */}
                     <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -834,7 +834,7 @@ export default function PortfolioPage() {
                           </div>
                         )}
                         <button className="mt-xs font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
-                          ✓ Mark as HEU work sample
+                          ✓ Mark as work sample
                         </button>
                       </div>
                     )}
@@ -861,7 +861,7 @@ export default function PortfolioPage() {
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Badges</h2>
             {badges.filter((b) => !b.retractedAt).length === 0 && badges.filter((b) => b.retractedAt).length === 0 ? (
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block">🏅</span>
+                <span className="text-3xl mb-md block" aria-hidden="true">🏅</span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Milestones will appear here</p>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
                   Badges and capability milestones are earned through logged learning. Keep going!
@@ -872,7 +872,7 @@ export default function PortfolioPage() {
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className={`rounded-[16px] border bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
+                    className={`rounded-[16px] border bg-surface-panel p-md shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
                   >
                     <span className={`text-2xl ${badge.retractedAt ? 'grayscale' : ''}`}>{badge.badgeEmoji}</span>
                     <h3 className="font-serif text-sm font-semibold text-text-primary mt-xs">
@@ -918,7 +918,7 @@ export default function PortfolioPage() {
             </h3>
             {sortedThreads.length === 0 ? (
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block">🌱</span>
+                <span className="text-3xl mb-md block" aria-hidden="true">🌱</span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">No evidence here yet</p>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
                   Keep logging — when you capture learning in this area, it&apos;ll show up here.

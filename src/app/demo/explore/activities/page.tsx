@@ -126,7 +126,7 @@ export default function DemoActivities() {
             <Link
               key={m.id}
               href={`/demo/module/${m.id}`}
-              className="group bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+              className="group bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
             >
               <h3 className="font-serif text-base font-semibold text-text-primary mb-sm">
                 {m.title}
@@ -154,7 +154,7 @@ export default function DemoActivities() {
         </div>
       ) : (
         <div className="flex flex-col items-center py-3xl text-center">
-          <span className="text-4xl mb-md">🔍</span>
+          <span className="text-4xl mb-md" aria-hidden="true">🔍</span>
           <p className="font-serif text-lg text-text-primary mb-sm">
             No modules match your filters
           </p>

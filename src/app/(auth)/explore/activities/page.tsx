@@ -6,6 +6,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
 
   return (
     <div
-      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full relative"
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-soft overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full relative"
     >
       <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
 
@@ -176,19 +177,25 @@ function PreviewModal({
   onStartNow: (id: string) => void;
   onAddToPlanner: (module: Module) => void;
 }) {
+  const trapRef = useFocusTrap(true);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 px-0 sm:px-md"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop px-0 sm:px-md"
       onClick={onClose}
     >
       <div
-        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] p-xl max-h-[85vh] overflow-y-auto"
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="preview-modal-title"
+        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-warm p-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
         {/* Handle */}
         <div className="w-10 h-1 bg-border-medium rounded-full mx-auto mb-lg sm:hidden" />
 
-        <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm leading-snug">
+        <h2 id="preview-modal-title" className="font-serif text-xl font-semibold text-text-primary mb-sm leading-snug">
           {module.title}
         </h2>
         {module.targetUnderstanding && (
@@ -598,14 +605,13 @@ export default function ExploreActivitiesPage() {
                   <button
                     key={project._id}
                     onClick={() => router.push(`/project/${project._id}`)}
-                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-soft overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                   >
                     <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
                     <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(167,139,250,0.6),var(--color-ember),transparent)] opacity-60" />
 
                     <div className="relative z-10">
-                      <div className="inline-flex items-center gap-xs px-sm py-[2px] rounded-full font-sans text-[10px] font-semibold uppercase tracking-wider mb-sm"
-                        style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.2)' }}
+                      <div className="inline-flex items-center gap-xs px-sm py-[2px] rounded-full font-sans text-[10px] font-semibold uppercase tracking-wider mb-sm bg-child-violet/12 text-child-violet border border-child-violet/20"
                       >
                         ◆ {project.stageCount} Stages
                       </div>

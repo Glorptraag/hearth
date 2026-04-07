@@ -166,7 +166,7 @@ export function PedagogyProfilePanel({
                   <p className="font-serif text-sm text-text-primary">{value.label}</p>
                   <CompatibilityDot score={compat} />
                 </div>
-                {isSelected && <span className="text-ember text-sm">✓</span>}
+                {isSelected && <span className="text-ember text-sm" aria-hidden="true">✓</span>}
               </button>
             );
           })}
@@ -245,7 +245,7 @@ export function PedagogyProfilePanel({
                   <p className="font-serif text-sm text-text-primary">{practice.label}</p>
                   <CompatibilityDot score={compat} />
                 </div>
-                {isSelected && <span className="text-ember text-sm">✓</span>}
+                {isSelected && <span className="text-ember text-sm" aria-hidden="true">✓</span>}
               </button>
             );
           })}

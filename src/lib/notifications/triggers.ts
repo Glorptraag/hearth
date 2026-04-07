@@ -6,6 +6,7 @@ import {
   plannerEntries,
   families,
 } from '@/lib/db/schema';
+import { getJurisdiction } from '@/config/jurisdictions';
 import { eq, and, gte, desc, count } from 'drizzle-orm';
 import { format, addHours, differenceInCalendarDays } from 'date-fns';
 import { adaptNotificationCopy } from '@/lib/pedagogy/adapter';
@@ -83,8 +84,8 @@ async function createNotification(input: CreateNotificationInput): Promise<boole
     const settings = await db.query.familySettings.findFirst({
       where: eq(familySettings.familyId, familyId),
     });
-    const daysUntil = settings?.heuNextReportDate
-      ? differenceInCalendarDays(new Date(settings.heuNextReportDate), now)
+    const daysUntil = settings?.nextReportDate
+      ? differenceInCalendarDays(new Date(settings.nextReportDate), now)
       : null;
     if (daysUntil === null || daysUntil > 14) return false;
   }
@@ -96,8 +97,8 @@ async function createNotification(input: CreateNotificationInput): Promise<boole
     const settings = await db.query.familySettings.findFirst({
       where: eq(familySettings.familyId, familyId),
     });
-    const daysUntil = settings?.heuNextReportDate
-      ? differenceInCalendarDays(new Date(settings.heuNextReportDate), now)
+    const daysUntil = settings?.nextReportDate
+      ? differenceInCalendarDays(new Date(settings.nextReportDate), now)
       : null;
     if (daysUntil !== null && daysUntil <= 14) {
       cooldown = 3 * 24 * 60 * 60 * 1000;
@@ -260,6 +261,11 @@ export async function triggerComplianceNudge(
 ): Promise<boolean> {
   if (heuStatus.daysUntilDue > 28) return false;
 
+  const settings = await db.query.familySettings.findFirst({
+    where: eq(familySettings.familyId, familyId),
+  });
+  const config = getJurisdiction(settings?.state ?? null);
+
   const urgency = heuStatus.daysUntilDue <= 14 ? 'soon' : 'approaching';
   const gapText =
     heuStatus.gapSubjects.length > 0
@@ -270,7 +276,7 @@ export async function triggerComplianceNudge(
     familyId,
     type: 'compliance_nudge',
     tier: 'nudge',
-    title: `Your HEU check-in is ${heuStatus.daysUntilDue <= 7 ? 'next week' : `${Math.ceil(heuStatus.daysUntilDue / 7)} weeks away`}`,
+    title: `Your ${config.regulatoryBodyShort} ${config.reviewTerminology} is ${heuStatus.daysUntilDue <= 7 ? 'next week' : `${Math.ceil(heuStatus.daysUntilDue / 7)} weeks away`}`,
     body: `Areas to review before your report.${gapText}`,
     bodyData: {
       days_until_due: heuStatus.daysUntilDue,
@@ -559,8 +565,8 @@ export async function cleanStaleNotifications(familyId: string): Promise<void> {
           const settings = await db.query.familySettings.findFirst({
             where: eq(familySettings.familyId, familyId),
           });
-          if (settings?.heuNextReportDate) {
-            if (new Date(settings.heuNextReportDate) < new Date()) shouldExpire = true;
+          if (settings?.nextReportDate) {
+            if (new Date(settings.nextReportDate) < new Date()) shouldExpire = true;
           }
           break;
         }

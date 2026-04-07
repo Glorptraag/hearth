@@ -33,9 +33,9 @@ export default async function SettingsPage() {
         pedagogyPreference: settings?.pedagogyPreference ?? 'eclectic',
         values: (settings?.pedagogyValues ?? []) as string[],
         practices: (settings?.pedagogyPractices ?? []) as string[],
-        heuRegistrationNumber: settings?.heuRegistrationNumber ?? '',
-        heuNextReportDate: settings?.heuNextReportDate ?? '',
-        state: settings?.state ?? 'QLD',
+        registrationNumber: settings?.registrationNumber ?? '',
+        nextReportDate: settings?.nextReportDate ?? '',
+        state: settings?.state ?? null,
         notificationPrefs: notifPrefs,
       }}
       initialChildren={familyLearners.map((l) => ({

@@ -85,11 +85,11 @@ export default function DemoCapabilities() {
                   return (
                     <div
                       key={thread.threadId}
-                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     >
                       <div className="mb-md flex items-start justify-between">
                         <h4 className="font-serif font-semibold text-text-primary flex-1">{thread.threadName}</h4>
-                        {thread.recentGrowth && <span className="text-sage">📈</span>}
+                        {thread.recentGrowth && <span className="text-sage" aria-hidden="true">📈</span>}
                       </div>
 
                       {/* Tier Badge */}
@@ -106,7 +106,14 @@ export default function DemoCapabilities() {
                             {thread.observationCount} observation{thread.observationCount !== 1 ? 's' : ''}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-surface-raised overflow-hidden">
+                        <div
+                          className="h-1.5 w-full rounded-full bg-surface-raised overflow-hidden"
+                          role="progressbar"
+                          aria-valuenow={Math.round(observationPercent)}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${thread.threadName} observations: ${thread.observationCount} of 10`}
+                        >
                           <div
                             className="h-full rounded-full bg-sage transition-all duration-300"
                             style={{ width: `${observationPercent}%` }}

@@ -318,7 +318,7 @@ export default function OnboardingPage() {
         {/* Step 3: First log prompt */}
         {step === 3 && (
           <div className="flex flex-col items-center gap-lg text-center">
-            <span className="text-4xl">🌱</span>
+            <span className="text-4xl" aria-hidden="true">🌱</span>
             <h1 className="font-serif text-2xl font-semibold text-text-primary">
               You&rsquo;re all set
             </h1>

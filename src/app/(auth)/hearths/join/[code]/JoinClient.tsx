@@ -50,10 +50,10 @@ export default function JoinClient({
 
   return (
     <div className="max-w-lg mx-auto px-lg py-2xl">
-      <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl shadow-soft">
         {/* Header */}
         <div className="text-center mb-xl">
-          <div className="text-3xl mb-md">🏡</div>
+          <div className="text-3xl mb-md" aria-hidden="true">🏡</div>
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-sm">
             You&apos;ve been invited to join
           </p>

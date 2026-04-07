@@ -83,7 +83,7 @@ export default async function SessionDetailPage({
     session.status === 'completed'
       ? 'bg-ember/15 text-ember'
       : session.status === 'upcoming'
-        ? 'bg-[rgba(96,165,250,0.12)] text-[#60A5FA]'
+        ? 'bg-child-blue/12 text-child-blue'
         : 'bg-sage/10 text-sage';
 
   // Format date for display
@@ -170,7 +170,7 @@ export default async function SessionDetailPage({
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">
               Shared Record
             </h2>
-            <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-soft">
               <p className="font-serif text-[0.95rem] text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {session.sharedRecord ?? session.description}
               </p>
@@ -225,7 +225,7 @@ export default async function SessionDetailPage({
                 return (
                   <div
                     key={obs.id}
-                    className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                    className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-soft"
                   >
                     {/* Observer + learner row */}
                     <div className="flex items-center justify-between mb-md">

@@ -19,9 +19,9 @@ export default function ProjectExperiencePage() {
       </h1>
 
       {/* Info card */}
-      <div className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft">
         <div className="flex gap-lg items-start">
-          <div className="text-4xl flex-shrink-0">📐</div>
+          <div className="text-4xl flex-shrink-0" aria-hidden="true">📐</div>
           <div className="space-y-md">
             <h2 className="font-serif font-semibold text-text-primary">
               Multi-stage learning projects with capstone outcomes

@@ -88,7 +88,7 @@ async function seed() {
     familyId: family.id,
     pedagogyPreference: 'eclectic',
     state: 'QLD',
-    heuNextReportDate: format(addMonths(today, 3), 'yyyy-MM-dd'),
+    nextReportDate: format(addMonths(today, 3), 'yyyy-MM-dd'),
   });
 
   console.log('✅ Family settings');
@@ -357,7 +357,7 @@ async function seed() {
       familyId: family.id,
       type: 'compliance_nudge',
       tier: 'nudge',
-      title: "Your HEU check-in is 3 weeks away. Science and HASS could use attention.",
+      title: "Your reporting check-in is 3 weeks away. Science and HASS could use attention.",
       body: 'A couple of focused sessions now will make your portfolio story complete.',
       bodyData: { actionLabel: 'View Report' },
       state: 'visible',

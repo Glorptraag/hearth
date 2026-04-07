@@ -35,7 +35,7 @@ export default function DemoOurStoryHub() {
       </div>
 
       {/* Term Summary */}
-      <div className="mb-3xl rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="mb-3xl rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft">
         <p className="font-serif text-text-secondary">{selectedProfile.termSummary}</p>
       </div>
 
@@ -43,9 +43,9 @@ export default function DemoOurStoryHub() {
       <div className="mb-3xl grid grid-cols-1 gap-lg sm:grid-cols-2">
         <Link
           href={`/demo/our-story/portfolio?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
-          <div className="mb-md text-3xl">📷</div>
+          <div className="mb-md text-3xl" aria-hidden="true">📷</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}&apos;s Portfolio</h3>
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.portfolioThisTerm} evidence items this term
@@ -55,10 +55,10 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/report?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
-          <div className="mb-md text-3xl">📄</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">HEU Report</h3>
+          <div className="mb-md text-3xl" aria-hidden="true">📄</div>
+          <h3 className="mb-sm font-serif font-semibold text-text-primary">Learning Report</h3>
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.heuSamplesReady} of 6 work samples ready
           </p>
@@ -67,9 +67,9 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/capabilities?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
-          <div className="mb-md text-3xl">🌟</div>
+          <div className="mb-md text-3xl" aria-hidden="true">🌟</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">Capabilities</h3>
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.capabilityThreadsActive} threads active
@@ -79,9 +79,9 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/learner/${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         >
-          <div className="mb-md text-3xl">💡</div>
+          <div className="mb-md text-3xl" aria-hidden="true">💡</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">About {selected.name}</h3>
           <p className="font-sans text-xs text-text-muted mb-md">
             Interests, strengths & learning style
@@ -99,7 +99,7 @@ export default function DemoOurStoryHub() {
           {selectedProfile.evidenceThumbs.map((emoji, idx) => (
             <div
               key={idx}
-              className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-2xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+              className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-2xl shadow-soft"
             >
               {emoji}
             </div>

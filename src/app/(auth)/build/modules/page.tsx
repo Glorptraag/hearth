@@ -407,7 +407,7 @@ function AiCompanionPanel({ hints }: { hints: string[] }) {
 
 function ModulePreviewCard({ title, subjects, approaches }: { title: string; subjects: string[]; approaches: { title: string; activities: { title: string }[] }[] }) {
   return (
-    <div className="relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+    <div className="relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-70" />
       <div className="mb-sm flex flex-wrap gap-xs">
         {subjects.slice(0, 3).map((s) => (
@@ -432,7 +432,7 @@ function SavedView({ onBack, preview }: { onBack: () => void; preview?: { title:
 
   return (
     <div className="flex flex-col items-center gap-lg py-2xl text-center max-w-xl mx-auto">
-      <span className="text-4xl">✅</span>
+      <span className="text-4xl" aria-hidden="true">✅</span>
       <h2 className="font-serif text-xl font-semibold text-text-primary">Module published</h2>
       <p className="font-serif text-text-secondary">
         Your module has been saved and published to your family library. It&apos;s available to facilitate now.
@@ -638,7 +638,7 @@ function ModulePreview({
       </div>
 
       {/* Module card preview */}
-      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] p-xl">
+      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-soft p-xl">
         <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
           {data.title || 'Untitled module'}
         </h3>
@@ -1780,7 +1780,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
         <p className="font-sans text-sm text-text-muted animate-pulse">Looking through your logs…</p>
       ) : patterns.length === 0 ? (
         <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-          <span className="text-3xl mb-md block">📋</span>
+          <span className="text-3xl mb-md block" aria-hidden="true">📋</span>
           <p className="font-serif text-base font-semibold text-text-primary mb-xs">No patterns yet</p>
           <p className="font-serif text-sm text-text-secondary">
             Log at least 2 activities in the same subject area and we&apos;ll spot the pattern for you.
@@ -1972,7 +1972,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
           <p className="font-sans text-sm text-text-muted animate-pulse">Finding ideas for you…</p>
         ) : skeletons.length === 0 ? (
           <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-            <span className="text-3xl mb-md block">🔮</span>
+            <span className="text-3xl mb-md block" aria-hidden="true">🔮</span>
             <p className="font-serif text-base font-semibold text-text-primary mb-xs">No pre-built ideas yet</p>
             <p className="font-serif text-sm text-text-secondary mb-lg">We&apos;re still building the library. Start from scratch — the editor will still help you structure the learning.</p>
             <button
@@ -2235,7 +2235,7 @@ export default function BuildModulesPage() {
             key={pathway.id}
             onClick={() => setSelected(pathway.id)}
             className={[
-              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
+              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
               pathway.id === 'retrospective' ? 'border-ember/25' : 'border-border-subtle',
             ].join(' ')}
           >
@@ -2268,7 +2268,7 @@ export default function BuildModulesPage() {
 
       <button
         onClick={() => setSelected(GOAL_PATHWAY.id)}
-        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
+        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
       >
         <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
           {GOAL_PATHWAY.emoji}

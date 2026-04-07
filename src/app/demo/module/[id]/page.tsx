@@ -129,7 +129,7 @@ export default function ModuleExperiencePage() {
                   setCheckedObservations(new Set());
                   setMode('prep');
                 }}
-                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
               >
                 <div className="flex items-start gap-md">
                   <div className="text-2xl">
@@ -295,13 +295,20 @@ export default function ModuleExperiencePage() {
       <div className="flex-1 flex flex-col px-md py-xl gap-lg max-w-2xl mx-auto">
         {/* Progress bar */}
         <div className="sticky top-[32px] z-20 bg-surface-body pt-xl pb-md -mx-md px-md">
-          <div className="bg-surface-raised h-1 rounded-full overflow-hidden mb-md">
+          <div
+            className="bg-surface-raised h-1 rounded-full overflow-hidden mb-md"
+            role="progressbar"
+            aria-valuenow={currentStep + 1}
+            aria-valuemin={1}
+            aria-valuemax={totalActivities}
+            aria-label={`Step ${currentStep + 1} of ${totalActivities}`}
+          >
             <div
               className="bg-ember h-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <p className="font-sans text-xs text-text-muted">
+          <p className="font-sans text-xs text-text-muted" aria-hidden="true">
             Step {currentStep + 1} of {totalActivities}
           </p>
         </div>
@@ -419,7 +426,7 @@ export default function ModuleExperiencePage() {
       <div className="flex-1 flex flex-col items-center justify-center px-md py-xl gap-lg max-w-2xl mx-auto">
         {/* Celebration */}
         <div className="text-center space-y-lg">
-          <div className="text-7xl">🎉</div>
+          <div className="text-7xl" aria-hidden="true">🎉</div>
           <h1 className="font-serif text-2xl font-semibold text-text-primary">
             Session complete!
           </h1>

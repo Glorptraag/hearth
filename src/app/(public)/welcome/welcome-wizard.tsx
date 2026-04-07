@@ -26,8 +26,8 @@ const slides = [
   },
   {
     emoji: '📋',
-    title: 'Queensland HEU compliance, handled',
-    body: 'Portfolio evidence, capability coverage, work sample curation \u2014 Hearth produces the documentation your HEU needs. No stress, no last-minute scramble.',
+    title: 'Reporting, handled',
+    body: 'Portfolio evidence, capability coverage, work sample curation \u2014 Hearth produces the documentation you need. No stress, no last-minute scramble.',
   },
   {
     emoji: '🔥',
@@ -112,7 +112,7 @@ export default function WelcomeWizard() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-[480px] overflow-hidden rounded-[24px] border border-border-subtle bg-surface-panel shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+      <div className="relative z-10 w-full max-w-[480px] overflow-hidden rounded-[24px] border border-border-subtle bg-surface-panel shadow-warm">
         {/* Skip */}
         <button
           onClick={complete}

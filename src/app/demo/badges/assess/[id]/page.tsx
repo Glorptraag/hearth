@@ -125,13 +125,20 @@ export default function BadgeAssessmentPage() {
       <div className="flex-1 flex flex-col px-md py-xl gap-lg max-w-2xl mx-auto">
         {/* Progress bar */}
         <div className="sticky top-[32px] z-20 bg-surface-body pt-xl pb-md -mx-md px-md">
-          <div className="bg-surface-raised h-1 rounded-full overflow-hidden mb-md">
+          <div
+            className="bg-surface-raised h-1 rounded-full overflow-hidden mb-md"
+            role="progressbar"
+            aria-valuenow={currentQuestion + 1}
+            aria-valuemin={1}
+            aria-valuemax={badge.assessmentQuestions.length}
+            aria-label={`Question ${currentQuestion + 1} of ${badge.assessmentQuestions.length}`}
+          >
             <div
               className="bg-ember h-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <p className="font-sans text-xs text-text-muted">
+          <p className="font-sans text-xs text-text-muted" aria-hidden="true">
             Question {currentQuestion + 1} of {badge.assessmentQuestions.length}
           </p>
         </div>
@@ -152,7 +159,7 @@ export default function BadgeAssessmentPage() {
         <div className="flex flex-col gap-md mt-lg pt-lg border-t border-border-subtle">
           <button
             onClick={() => handleResponse('yes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
           >
             <p className="font-sans font-semibold text-sage mb-xs">
               Yes — consistently
@@ -164,7 +171,7 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('sometimes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-amber-900/30 hover:bg-amber-900/20 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-amber-900/30 hover:bg-amber-900/20 hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
           >
             <p className="font-sans font-semibold text-amber-400 mb-xs">
               Sometimes
@@ -176,7 +183,7 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('not_yet')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
           >
             <p className="font-sans font-semibold text-text-secondary mb-xs">
               Not yet

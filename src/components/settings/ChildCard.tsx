@@ -110,7 +110,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
     <div className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[400ms] hover:border-border-medium">
       {/* Colour swatch */}
       <div className={`h-9 w-9 flex-shrink-0 rounded-full ${currentColour.bg} flex items-center justify-center`}>
-        <span className="font-sans text-sm font-semibold text-white/80">
+        <span className="font-sans text-sm font-semibold text-text-inverse">
           {child.name.charAt(0).toUpperCase()}
         </span>
       </div>

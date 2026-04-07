@@ -153,7 +153,7 @@ export default function MarketplacePage() {
             ← Dashboard
           </Link>
           <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200 cursor-pointer">
-            <span>📚</span>
+            <span aria-hidden="true">📚</span>
             <span>My Library</span>
             {libraryCount > 0 && (
               <span className="bg-ember text-text-inverse font-sans text-[0.65rem] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center">
@@ -263,7 +263,7 @@ export default function MarketplacePage() {
               <div className="mb-xl rounded-[16px] border border-ember/20 bg-ember-glow/20 p-lg overflow-hidden relative">
                 <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
                 <div className="flex items-start gap-md">
-                  <span className="text-2xl shrink-0">🎯</span>
+                  <span className="text-2xl shrink-0" aria-hidden="true">🎯</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">
                       Family Fit
@@ -333,7 +333,7 @@ export default function MarketplacePage() {
             ) : (
               /* ── Empty state ── */
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <span className="text-5xl mb-4">🔭</span>
+                <span className="text-5xl mb-4" aria-hidden="true">🔭</span>
                 <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
                   {packs.length === 0
                     ? 'No packs published yet'
@@ -361,12 +361,17 @@ export default function MarketplacePage() {
       {/* Pack detail modal */}
       {detailPack && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-lg"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop backdrop-blur-sm p-0 sm:p-lg"
           onClick={() => setDetailPack(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pack-detail-title"
+            tabIndex={-1}
             className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === 'Escape') setDetailPack(null); }}
           >
             {/* Drag handle — mobile only */}
             <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
@@ -381,7 +386,7 @@ export default function MarketplacePage() {
                   <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
                     {detailPack.subjects?.slice(0, 2).join(' · ') ?? 'Learning Pack'}
                   </p>
-                  <h2 className="font-serif text-xl font-semibold text-text-primary leading-snug">
+                  <h2 id="pack-detail-title" className="font-serif text-xl font-semibold text-text-primary leading-snug">
                     {detailPack.title}
                   </h2>
                 </div>

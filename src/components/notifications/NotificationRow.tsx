@@ -22,7 +22,7 @@ interface NotificationRowProps {
 // Tier 1 = ember left border, Tier 2 = violet, Tier 3 = muted
 const TIER_LEFT_ACCENT: Record<string, string> = {
   whisper: 'border-l-[3px] border-l-ember',
-  nudge:   'border-l-[3px] border-l-[#A78BFA]',
+  nudge:   'border-l-[3px] border-l-child-violet',
   chime:   'border-l-[3px] border-l-text-muted/40',
 };
 
@@ -75,7 +75,7 @@ export default function NotificationRow({
 
   return (
     <div
-      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:bg-surface-raised hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:-translate-y-[2px] cursor-pointer ${accent}`}
+      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:bg-surface-raised hover:shadow-medium hover:-translate-y-[2px] cursor-pointer ${accent}`}
       onClick={() => isUnread && onMarkRead(notification.id)}
     >
       <div className="flex items-start gap-md">

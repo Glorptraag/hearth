@@ -50,13 +50,6 @@ const WORKING_STYLE_OPTIONS = [
   'Verbal processor',
 ];
 
-const CHILD_COLOR_HEX: Record<string, string> = {
-  rose: '#F9A8D4',
-  blue: '#60A5FA',
-  sage: '#4ADE80',
-  amber: '#FBBF24',
-};
-
 const COLOUR_MAP = LEARNER_COLOUR_MAP;
 const DEFAULT_COLOUR = COLOUR_MAP.rose;
 
@@ -276,7 +269,7 @@ export default function LearnerProfileClient({
 
   return (
     <div
-      style={{ '--color-child-accent': CHILD_COLOR_HEX[learner.colourToken ?? 'rose'] } as React.CSSProperties}
+      style={{ '--color-child-accent': `var(${(LEARNER_COLOUR_MAP[learner.colourToken ?? 'rose'] ?? LEARNER_COLOUR_MAP.rose).cssVar})` } as React.CSSProperties}
       className="mx-auto max-w-2xl pb-[120px]"
     >
       {/* ── Top bar ── */}
@@ -307,7 +300,7 @@ export default function LearnerProfileClient({
             className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full border-2 ${colour.dot} ring-4 ${colour.ring}`}
             style={{ borderColor: `color-mix(in srgb, var(--color-child-accent) 40%, transparent)` }}
           >
-            <span className="font-serif text-3xl font-semibold text-white/90">
+            <span className="font-serif text-3xl font-semibold text-text-inverse">
               {learner.name.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -369,8 +362,8 @@ export default function LearnerProfileClient({
           (!learner.profileData.workingStyle || learner.profileData.workingStyle.length === 0) &&
           (!learner.profileData.interests || learner.profileData.interests.length === 0) &&
           (!learner.profileData.strengths || learner.profileData.strengths.length === 0) && (
-          <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <span className="text-3xl">🌟</span>
+          <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-soft">
+            <span className="text-3xl" aria-hidden="true">🌟</span>
             <h2 className="font-serif text-lg font-semibold text-text-primary">
               {learner.name}&rsquo;s profile is ready to grow
             </h2>
@@ -602,7 +595,7 @@ export default function LearnerProfileClient({
             Bright Moments
           </p>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-2xl">🏅</span>
+            <span className="text-2xl" aria-hidden="true">🏅</span>
             <p className="mt-sm font-serif text-sm text-text-muted">
               Badges earned will appear here as {learner.name}&rsquo;s portfolio grows.
             </p>
@@ -615,7 +608,7 @@ export default function LearnerProfileClient({
             Family Thread
           </p>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-2xl">🌿</span>
+            <span className="text-2xl" aria-hidden="true">🌿</span>
             <p className="mt-sm font-serif text-sm text-text-muted">
               Shared learning moments with siblings will appear here.
             </p>

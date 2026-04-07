@@ -316,7 +316,7 @@ export async function rebuildSnapshot(
       : null;
 
     // HEU compliance
-    const heuNextReport = settings?.heuNextReportDate ?? null;
+    const heuNextReport = settings?.nextReportDate ?? null;
     const daysUntilDue = heuNextReport
       ? differenceInCalendarDays(new Date(heuNextReport), now)
       : null;

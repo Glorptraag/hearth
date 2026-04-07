@@ -178,7 +178,7 @@ export function adaptNotificationCopy(
       };
     case 'compliance_nudge':
       return {
-        title: 'Your HEU report is approaching.',
+        title: 'Your report is approaching.',
         body: `${vocab.coverageFrame}: check your report for gaps.`,
       };
     case 'badge_ready':

@@ -201,7 +201,7 @@ export default function BadgeAssessPage() {
         {/* ── INTRO ── */}
         {step === 'intro' && (
           <div className="text-center pt-2xl">
-            <div className="w-24 h-24 mx-auto mb-lg rounded-full bg-surface-panel border border-border-subtle flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(217,123,58,0.15)]">
+            <div className="w-24 h-24 mx-auto mb-lg rounded-full bg-surface-panel border border-border-subtle flex items-center justify-center text-5xl shadow-glow">
               {badge.emoji}
             </div>
             <p className="font-sans text-xs uppercase tracking-widest text-text-muted mb-sm">
@@ -491,7 +491,7 @@ export default function BadgeAssessPage() {
         {/* ── DEFERRED ── */}
         {step === 'deferred' && (
           <div className="pt-2xl text-center">
-            <div className="text-6xl mb-lg">🌱</div>
+            <div className="text-6xl mb-lg" aria-hidden="true">🌱</div>
             <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
               Still growing
             </h1>

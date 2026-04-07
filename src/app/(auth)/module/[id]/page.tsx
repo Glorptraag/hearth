@@ -131,7 +131,7 @@ function PrepMode({
 
       {/* Understanding indicators */}
       {module.understandingIndicators && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             What to Look For
           </h2>
@@ -172,7 +172,7 @@ function PrepMode({
 
       {/* Session overview */}
       {activities.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             Session Flow
           </h2>
@@ -212,7 +212,7 @@ function PrepMode({
 
       {/* Materials checklist */}
       {firstActivityMaterials.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             Gather First — Materials for Activity 1
           </h2>
@@ -277,7 +277,7 @@ function PrepMode({
       {/* Start button */}
       <button
         onClick={onStart}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
       >
         {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session →'}
       </button>
@@ -403,7 +403,7 @@ function FacilitateMode({
 
         {/* Instructions */}
         {current.instructions && current.instructions.length > 0 && (
-          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
             <PortableText value={current.instructions as Parameters<typeof PortableText>[0]['value']} components={ptComponents} />
           </div>
         )}
@@ -452,7 +452,7 @@ function FacilitateMode({
               className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
             >
               <span>{overlayOpen ? '▾' : '▸'}</span>
-              <span className="text-ember">✦</span>
+              <span className="text-ember" aria-hidden="true">✦</span>
               <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
             </button>
             {overlayOpen && (
@@ -563,7 +563,7 @@ function FacilitateMode({
             {isLast ? (
               <button
                 onClick={onFinish}
-                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)]"
+                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
               >
                 Finish & Log →
               </button>
@@ -855,7 +855,7 @@ function LogMode({ module, sessionElapsed }: { module: Module; sessionElapsed?: 
 
       {/* Per-child engagement */}
       {selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
             Engagement
           </p>
@@ -887,7 +887,7 @@ function LogMode({ module, sessionElapsed }: { module: Module; sessionElapsed?: 
 
       {/* Understanding level — per-child */}
       {module.understandingIndicators && selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
             Understanding Level
           </p>
@@ -997,7 +997,7 @@ function LogMode({ module, sessionElapsed }: { module: Module; sessionElapsed?: 
       <button
         onClick={handleSave}
         disabled={saving || selectedLearnerIds.length === 0}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-[0_0_20px_rgba(217,123,58,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving ? 'Saving...' : 'Save to Portfolio →'}
       </button>
@@ -1040,7 +1040,7 @@ function ApproachPickMode({
               <button
                 key={approach._id}
                 onClick={() => onSelect(idx)}
-                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
+                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-soft transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
               >
                 <span className="mt-[2px] text-lg">
                   {MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}
@@ -1186,7 +1186,7 @@ export default function ModuleDetailPage() {
   if (!hasAccess) {
     return (
       <div className="px-md py-xl max-w-2xl mx-auto text-center">
-        <p className="text-4xl mb-md">🔒</p>
+        <p className="text-4xl mb-md" aria-hidden="true">🔒</p>
         <h1 className="font-serif text-xl font-semibold text-text-primary mb-sm">
           Not in your library yet
         </h1>

@@ -15,7 +15,7 @@
   /* Text */
   --color-text-primary: #E8DFD4;
   --color-text-secondary: #9B8B7E;
-  --color-text-muted: #6B5D52;
+  --color-text-muted: #726458;
   --color-text-inverse: #0F0D0B;
 
   /* Ember — actions only */
@@ -70,6 +70,20 @@
   --spacing-3xl: 64px;
   --spacing-4xl: 96px;
 
+  /* Overlay & nav blur */
+  --color-overlay-backdrop: rgba(0, 0, 0, 0.6);
+  --color-surface-nav-blur: rgba(15, 13, 11, 0.85);
+
+  /* Shadows (in @theme so Tailwind generates utility classes) */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-warm: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
+  --shadow-glow: 0 0 20px rgba(217, 123, 58, 0.15);
+
+  /* Transitions */
+  --transition-quick: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
   /* Container max-widths (prevent spacing scale from hijacking max-w-*) */
   --max-width-xs: 20rem;
   --max-width-sm: 24rem;
@@ -84,16 +98,7 @@
   --max-width-7xl: 80rem;
 }
 
-/* CSS custom properties for shadows and transitions (not Tailwind theme tokens) */
-:root {
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-warm: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
-  --shadow-glow: 0 0 20px rgba(217, 123, 58, 0.15);
-
-  --transition-quick: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Shadows and transitions now live in @theme inline above */
 
 /* ==========================================================================
    Gathering Mode — Warm parchment theme for family review & celebration
@@ -107,11 +112,11 @@
   --color-surface-raised: #F5F5F0;
   --color-surface-hover:  #E2E8F0;
 
-  /* Text */
+  /* Text — #FFFFFF for inverse fixes WCAG AA on ember buttons */
   --color-text-primary:   #2C2418;
   --color-text-secondary: #4A5568;
   --color-text-muted:     #718096;
-  --color-text-inverse:   #F5F5F0;
+  --color-text-inverse:   #FFFFFF;
 
   /* Ember — richer, darker in gathering mode */
   --color-ember:          #C05621;
@@ -126,11 +131,17 @@
   /* Child identity — muted for light backgrounds */
   --color-child-rose:     #B5838D;
   --color-child-blue:     #3182CE;
+  --color-child-sage:     #2D8659;
   --color-child-violet:   #7C6A8D;
+  --color-child-amber:    #B77F1A;
 
   /* Borders — warm brown-tinted */
   --color-border-subtle:  rgba(44, 36, 24, 0.08);
   --color-border-medium:  rgba(44, 36, 24, 0.12);
+
+  /* Overlay & nav blur */
+  --color-overlay-backdrop: rgba(44, 36, 24, 0.4);
+  --color-surface-nav-blur: rgba(253, 246, 240, 0.85);
 
   /* Shadows — lighter, warm-tinted */
   --shadow-soft:   0 2px 8px rgba(44, 36, 24, 0.06);
@@ -194,4 +205,15 @@ body::after {
   opacity: 0.03;
   pointer-events: none;
   z-index: 0;
+}
+
+/* Reduced motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

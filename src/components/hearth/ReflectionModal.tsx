@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 interface ReflectionModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function ReflectionModal({
 }: ReflectionModalProps) {
   const [reflectionText, setReflectionText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const trapRef = useFocusTrap(isOpen);
 
   if (!isOpen) return null;
 
@@ -52,13 +54,13 @@ export default function ReflectionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center"
+      className="fixed inset-0 bg-overlay-backdrop z-[200] flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) handleSkip(); }}
     >
-      <div className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_60px_rgba(217,123,58,0.08)]">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-warm" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
         {/* Success header */}
-        <div className="text-center text-3xl mb-md">✓</div>
-        <h2 className="font-serif text-xl font-semibold text-center mb-md">
+        <div className="text-center text-3xl mb-md" aria-hidden="true">✓</div>
+        <h2 id="reflection-modal-title" className="font-serif text-xl font-semibold text-center mb-md">
           Entry saved
         </h2>
         <p className="font-serif text-[0.95rem] text-text-secondary text-center leading-relaxed mb-xl">

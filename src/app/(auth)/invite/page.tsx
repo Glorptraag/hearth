@@ -37,16 +37,16 @@ export default function InvitePage() {
 
   return (
     <div className="mx-auto max-w-md px-md py-2xl">
-      <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-soft">
         {status === 'loading' && (
           <>
-            <span className="text-3xl">🔑</span>
+            <span className="text-3xl" aria-hidden="true">🔑</span>
             <p className="mt-md font-serif text-lg text-text-secondary">Accepting invitation...</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <span className="text-3xl">🎉</span>
+            <span className="text-3xl" aria-hidden="true">🎉</span>
             <h1 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Welcome to {familyName}
             </h1>
@@ -63,7 +63,7 @@ export default function InvitePage() {
         )}
         {status === 'error' && (
           <>
-            <span className="text-3xl">😕</span>
+            <span className="text-3xl" aria-hidden="true">😕</span>
             <h1 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Invitation Issue
             </h1>

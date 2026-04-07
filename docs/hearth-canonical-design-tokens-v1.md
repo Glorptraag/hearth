@@ -627,3 +627,55 @@ A quick reference for the build team — common drift patterns to watch for:
 ---
 
 *Canonical spec extracted 18 March 2026 from the Dashboard Dark/Evening pair. This is the source of truth for the Tailwind build.*
+
+---
+
+## APPENDIX A: WCAG AA COMPLIANCE AMENDMENTS (April 2026)
+
+The following token values were adjusted from the original spec to meet WCAG AA contrast requirements. These are the only sanctioned deviations from the Dashboard Dark/Evening source prototypes.
+
+### Dark mode
+
+| Token | Original | Adjusted | Reason |
+|---|---|---|---|
+| `--text-muted` | `#6B5D52` | `#726458` | 2.84:1 on `--surface-panel` failed AA 3.0:1 minimum for UI text. Adjusted value achieves 3.15:1. |
+
+### Gathering mode
+
+| Token | Original | Adjusted | Reason |
+|---|---|---|---|
+| `--text-inverse` | `#F5F5F0` | `#FFFFFF` | 4.18:1 on `--ember` (`#C05621`) failed AA 4.5:1 for normal text on buttons. Pure white achieves 4.57:1. |
+
+### New semantic tokens (April 2026)
+
+These tokens were added to support theme-adaptive UI patterns that had been using hardcoded values:
+
+```css
+/* Modal/overlay backdrop */
+--overlay-backdrop:    rgba(0, 0, 0, 0.6);          /* dark */
+--overlay-backdrop:    rgba(44, 36, 24, 0.4);        /* gathering */
+
+/* Frosted nav bar background */
+--surface-nav-blur:    rgba(15, 13, 11, 0.85);       /* dark */
+--surface-nav-blur:    rgba(253, 246, 240, 0.85);    /* gathering */
+```
+
+### Gathering mode — previously missing child colors
+
+```css
+--child-sage:    #2D8659;    /* Was undefined; muted green for light backgrounds */
+--child-amber:   #B77F1A;    /* Was undefined; muted amber for light backgrounds */
+```
+
+### Shadow token implementation
+
+Shadow tokens are now defined inside `@theme inline` in `globals.css` (not `:root`), enabling Tailwind utility classes:
+
+| Tailwind class | Token |
+|---|---|
+| `shadow-soft` | `--shadow-soft` |
+| `shadow-medium` | `--shadow-medium` |
+| `shadow-warm` | `--shadow-warm` |
+| `shadow-glow` | `--shadow-glow` |
+
+**Exception:** Seven ember-tinted accent shadows on primary CTA buttons remain as inline `shadow-[...]` values. These are decorative ember glow effects (`rgba(217,123,58,...)`) that are intentionally theme-invariant — ember glows the same in both modes.

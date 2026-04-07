@@ -25,7 +25,7 @@ const TOGGLES = [
   {
     key: 'complianceAlerts' as const,
     label: 'Compliance deadline alerts',
-    description: 'Reminders before your HEU reporting date.',
+    description: 'Reminders before your reporting date.',
   },
 ];
 

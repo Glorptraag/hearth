@@ -122,7 +122,7 @@ export default function DemoPortfolio() {
               {entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                 >
                   <h4 className="mb-sm font-serif font-semibold text-text-primary">{entry.title}</h4>
                   <p className="mb-md line-clamp-2 font-serif text-sm text-text-secondary">

@@ -1,15 +1,14 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { contentStudioDrafts } from '@/lib/db/schema';
-import { isAdmin } from '@/lib/auth/admin';
 import { eq, desc } from 'drizzle-orm';
 import { createEmptyStudioState } from '@/lib/content-studio/factories';
+import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { logAdminAction } from '@/lib/admin/audit';
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!isAdminContext(admin)) return admin;
 
   const drafts = await db
     .select({
@@ -20,7 +19,7 @@ export async function GET() {
       updatedAt: contentStudioDrafts.updatedAt,
     })
     .from(contentStudioDrafts)
-    .where(eq(contentStudioDrafts.clerkUserId, userId))
+    .where(eq(contentStudioDrafts.clerkUserId, admin.userId))
     .orderBy(desc(contentStudioDrafts.updatedAt))
     .limit(50);
 
@@ -28,9 +27,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!isAdminContext(admin)) return admin;
 
   const body = await req.json();
   const title = body.title?.trim() || 'Untitled Draft';
@@ -38,13 +36,21 @@ export async function POST(req: Request) {
   const [draft] = await db
     .insert(contentStudioDrafts)
     .values({
-      clerkUserId: userId,
+      clerkUserId: admin.userId,
       title,
       draftType: 'pack',
       draftData: createEmptyStudioState(),
       status: 'draft',
     })
     .returning();
+
+  await logAdminAction({
+    adminUserId: admin.userId,
+    adminEmail: admin.email,
+    action: 'content.draft_create',
+    targetResource: 'content_draft',
+    targetId: draft!.id,
+  });
 
   return NextResponse.json(draft, { status: 201 });
 }

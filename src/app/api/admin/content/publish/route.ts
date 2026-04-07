@@ -1,18 +1,17 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { contentStudioDrafts } from '@/lib/db/schema';
-import { isAdmin } from '@/lib/auth/admin';
 import { eq, and } from 'drizzle-orm';
+import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { logAdminAction } from '@/lib/admin/audit';
 import { createBadge, createFullModule, createPack } from '@/lib/sanity/mutations';
 import { transformBadge, transformModuleForFullCreate, transformPack } from '@/lib/content-studio/sanity-transform';
 import { packPublishSchema } from '@/lib/content-studio/validation';
 import type { StudioState, PackDraft } from '@/lib/content-studio/types';
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!isAdminContext(admin)) return admin;
 
   const body = await req.json();
   const { draftId, packIndex } = body as { draftId: string; packIndex: number };
@@ -23,7 +22,7 @@ export async function POST(req: Request) {
   const [draft] = await db
     .select()
     .from(contentStudioDrafts)
-    .where(and(eq(contentStudioDrafts.id, draftId), eq(contentStudioDrafts.clerkUserId, userId)))
+    .where(and(eq(contentStudioDrafts.id, draftId), eq(contentStudioDrafts.clerkUserId, admin.userId)))
     .limit(1);
 
   if (!draft) return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
@@ -66,6 +65,14 @@ export async function POST(req: Request) {
       .update(contentStudioDrafts)
       .set({ status: 'published', sanityPackId: createdPack._id, updatedAt: new Date() })
       .where(eq(contentStudioDrafts.id, draftId));
+
+    await logAdminAction({
+      adminUserId: admin.userId,
+      adminEmail: admin.email,
+      action: 'content.publish',
+      targetResource: 'pack',
+      targetId: createdPack._id,
+    });
 
     return NextResponse.json({
       packId: createdPack._id,

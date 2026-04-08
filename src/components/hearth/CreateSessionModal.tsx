@@ -92,7 +92,7 @@ export default function CreateSessionModal({
           </div>
 
           {/* Date + Time */}
-          <div className="grid grid-cols-2 gap-md mb-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-md mb-md">
             <div>
               <label className="font-sans text-sm font-medium text-text-secondary mb-sm block">
                 Date

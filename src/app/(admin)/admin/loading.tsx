@@ -2,7 +2,7 @@ export default function AdminDashboardLoading() {
   return (
     <div className="p-lg max-w-[960px] animate-pulse">
       <div className="h-6 w-40 rounded bg-surface-raised mb-lg" />
-      <div className="grid grid-cols-2 gap-md mb-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md mb-lg">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-lg border border-border-subtle bg-surface-panel p-md">
             <div className="h-3 w-20 rounded bg-surface-raised mb-sm" />

@@ -34,6 +34,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
   const [jsonView, setJsonView] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'dirty' | 'idle'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Prompt dialog state
   const [promptOpen, setPromptOpen] = useState(false);
@@ -275,7 +276,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
       <Sidebar
         state={state}
         sel={sel}
-        setSel={setSel}
+        setSel={(s) => { setSel(s); setSidebarOpen(false); }}
         dispatch={dispatchAndSelect}
         showPrompt={showPrompt}
         draftId={draftId}
@@ -285,6 +286,8 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
         onDeleteDraft={deleteDraft}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* Main content */}
@@ -292,6 +295,15 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
         {/* Topbar */}
         <div className="flex items-center justify-between px-xl py-3.5 border-b border-border-subtle bg-surface-panel gap-md shrink-0">
           <div className="flex items-center gap-2 text-sm text-text-muted">
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="lg:hidden rounded-md p-xs text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-200 mr-sm"
+              aria-label="Toggle sidebar"
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
             {!doc && <span className="text-text-primary font-medium">Select a document to edit</span>}
             {doc && sel?.type && (
               <span className="text-text-primary font-medium capitalize">{sel.type}</span>

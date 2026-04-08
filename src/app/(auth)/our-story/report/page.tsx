@@ -565,7 +565,8 @@ export default function ReportPage() {
           <div className="mt-lg">
             <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Subject Areas</p>
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Curriculum Coverage</h2>
-            <div className="rounded-lg border border-border-subtle bg-surface-panel overflow-hidden divide-y divide-border-subtle">
+            <div className="overflow-x-auto">
+            <div className="rounded-lg border border-border-subtle bg-surface-panel overflow-hidden divide-y divide-border-subtle min-w-[380px]">
               {subjectCoverage.map((s) => {
                 const domain = SUBJECT_DOMAIN_CLASSES[s.key];
                 return (
@@ -597,6 +598,7 @@ export default function ReportPage() {
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
 

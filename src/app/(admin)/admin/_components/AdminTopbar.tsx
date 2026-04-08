@@ -23,7 +23,11 @@ function getBreadcrumb(pathname: string): string {
   return 'Admin';
 }
 
-export default function AdminTopbar() {
+interface AdminTopbarProps {
+  onMenuToggle: () => void;
+}
+
+export default function AdminTopbar({ onMenuToggle }: AdminTopbarProps) {
   const { user } = useUser();
   const pathname = usePathname();
   const breadcrumb = getBreadcrumb(pathname);
@@ -32,6 +36,15 @@ export default function AdminTopbar() {
   return (
     <header className="flex h-[48px] items-center justify-between border-b border-border-subtle bg-surface-panel px-lg">
       <div className="flex items-center gap-sm">
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden rounded-md p-xs text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-200"
+          aria-label="Toggle menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
         <span className="font-sans text-[0.8rem] font-semibold text-text-primary">
           {breadcrumb}
         </span>
@@ -45,7 +58,7 @@ export default function AdminTopbar() {
           Exit to family view
         </Link>
 
-        <span className="font-sans text-[0.75rem] text-text-muted">
+        <span className="hidden sm:inline font-sans text-[0.75rem] text-text-muted">
           {email}
         </span>
 

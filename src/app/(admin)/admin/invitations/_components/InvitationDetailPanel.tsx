@@ -75,7 +75,9 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-[400px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
+    <>
+    <div className="fixed inset-0 z-30 bg-overlay-backdrop sm:hidden" onClick={onClose} />
+    <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-[400px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
       <div className="flex items-center justify-between border-b border-border-subtle px-lg py-md">
         <h3 className="font-sans text-[0.85rem] font-semibold text-text-primary">
           Invitation Detail
@@ -198,6 +200,7 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
         <div className="p-lg font-sans text-sm text-text-muted">Not found</div>
       )}
     </div>
+    </>
   );
 }
 

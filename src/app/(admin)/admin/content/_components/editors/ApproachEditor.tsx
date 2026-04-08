@@ -42,7 +42,7 @@ export function ApproachEditor({ state, sel, fieldPrefix, setField, dispatch, sh
         <FormField label="Description" required hint="How this approach enters the module's understanding">
           <TextArea value={approach.description} onChange={(v) => setField(f('description'), v)} rows={3} serif placeholder="Observing living creatures in their natural environment..." />
         </FormField>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Modality">
             <Select
               value={approach.modality}

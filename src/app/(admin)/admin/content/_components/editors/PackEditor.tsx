@@ -73,7 +73,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
         <FormField label="Description" required hint="2-3 sentence sell copy shown on Marketplace cards">
           <TextArea value={pack.description} onChange={(v) => setField(f('description'), v)} rows={3} serif />
         </FormField>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Availability">
             <Select
               value={pack.availability}

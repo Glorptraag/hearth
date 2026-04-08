@@ -223,7 +223,7 @@ function SkeletonLoader() {
                 <div className="h-6 w-6 rounded-full bg-surface-raised animate-pulse shrink-0" />
                 <div className="h-3 w-32 rounded-md bg-surface-raised animate-pulse" />
               </div>
-              <div className="grid grid-cols-2 gap-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                 {[...Array(2)].map((_, i) => (
                   <div
                     key={i}

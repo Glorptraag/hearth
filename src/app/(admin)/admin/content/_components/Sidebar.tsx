@@ -35,6 +35,8 @@ interface SidebarProps {
   onDeleteDraft: () => void;
   saveStatus: 'saved' | 'saving' | 'dirty' | 'idle';
   lastSaved: Date | null;
+  open: boolean;
+  onClose: () => void;
 }
 
 function TreeItem({
@@ -112,6 +114,8 @@ export function Sidebar({
   onDeleteDraft,
   saveStatus,
   lastSaved,
+  open,
+  onClose,
 }: SidebarProps) {
   const { packs, standaloneModules, standaloneActivities } = state;
 
@@ -147,7 +151,9 @@ export function Sidebar({
   const hasContent = packs.length > 0 || standaloneModules.length > 0 || standaloneActivities.length > 0;
 
   return (
-    <aside className="w-[280px] min-w-[280px] bg-surface-panel border-r border-border-subtle flex flex-col">
+    <>
+    {open && <div className="fixed inset-0 z-40 bg-overlay-backdrop lg:hidden" onClick={onClose} />}
+    <aside className={`${open ? 'fixed inset-y-0 left-0 z-50 flex' : 'hidden lg:flex'} w-[280px] min-w-[280px] bg-surface-panel border-r border-border-subtle flex-col`}>
       {/* Header */}
       <div className="px-md py-3.5 border-b border-border-subtle">
         <h1 className="inline-flex items-center gap-xs font-serif text-lg font-semibold">
@@ -415,5 +421,6 @@ export function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }

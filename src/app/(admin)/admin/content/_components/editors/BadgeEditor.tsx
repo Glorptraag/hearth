@@ -33,7 +33,7 @@ export function BadgeEditor({ fieldPrefix, setField, toggleArrayItem, doc, capab
         <FormField label="Criteria Summary" required hint="Single text summarising what the learner must demonstrate">
           <TextArea value={badge.criteriaSummary} onChange={(v) => setField(f('criteriaSummary'), v)} rows={3} />
         </FormField>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Observation Threshold" hint="Number of observations needed">
             <Input type="number" value={badge.observationThreshold} onChange={(v) => setField(f('observationThreshold'), v)} />
           </FormField>

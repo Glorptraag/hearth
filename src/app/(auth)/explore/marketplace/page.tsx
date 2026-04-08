@@ -453,7 +453,7 @@ export default function MarketplacePage() {
               </div>
 
               {/* Age range & duration */}
-              <div className="grid grid-cols-2 gap-md">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
                 {detailPack.ageRange && (
                   <div>
                     <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">

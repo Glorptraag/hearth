@@ -214,7 +214,7 @@ export default function OurStoryHubClient() {
     <div className="mx-auto max-w-[900px] px-md py-xl lg:px-2xl lg:py-2xl">
       {/* Child selector — grid, only shown when 2+ children */}
       {showSelector && (
-        <div className="mb-xl grid grid-cols-2 gap-sm">
+        <div className="mb-xl grid grid-cols-1 sm:grid-cols-2 gap-sm">
           {learners.map((l) => {
             const c = CHILD_COLORS[l.colourToken ?? ''] ?? DEFAULT_COLORS;
             const active = l.id === selectedId;
@@ -316,7 +316,7 @@ export default function OurStoryHubClient() {
       </section>
 
       {/* Nav cards */}
-      <div className="mb-2xl grid grid-cols-2 gap-lg">
+      <div className="mb-2xl grid grid-cols-1 sm:grid-cols-2 gap-lg">
         <NavCard
           href="/our-story/portfolio"
           Icon={FolderOpen}

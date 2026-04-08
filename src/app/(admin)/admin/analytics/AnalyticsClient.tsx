@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PackAdoptionFunnel from './_components/PackAdoptionFunnel';
 import ActivityHeatMap from './_components/ActivityHeatMap';
 import ThreadCoverageChart from './_components/ThreadCoverageChart';
@@ -215,13 +215,20 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
   >(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/admin/analytics/abandonment?moduleId=${encodeURIComponent(moduleId)}`)
-      .then((r) => r.json())
-      .then((d) => { setData(d.stages ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+  const fetchData = useCallback(async () => {
+    setData(null);
+    try {
+      const r = await fetch(`/api/admin/analytics/abandonment?moduleId=${encodeURIComponent(moduleId)}`);
+      const d = await r.json();
+      setData(d.stages ?? []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
   }, [moduleId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) return <div className="py-xl text-center font-sans text-sm text-text-muted">Loading...</div>;
   if (!data || data.length === 0) {

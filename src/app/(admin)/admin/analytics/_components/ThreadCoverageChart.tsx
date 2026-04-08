@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -27,22 +27,24 @@ export default function ThreadCoverageChart({ dateFrom, dateTo }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (dateFrom) params.set('dateFrom', dateFrom);
-    if (dateTo) params.set('dateTo', dateTo);
-    fetch(`/api/admin/analytics/thread-coverage?${params}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setThreads(d.threads ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load');
-        setLoading(false);
-      });
+  const fetchData = useCallback(async () => {
+    setThreads(null);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+      const r = await fetch(`/api/admin/analytics/thread-coverage?${params}`);
+      const d = await r.json();
+      setThreads(d.threads ?? []);
+    } catch {
+      setError('Failed to load');
+    } finally {
+      setLoading(false);
+    }
   }, [dateFrom, dateTo]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) {
     return <div className="py-xl text-center font-sans text-sm text-text-muted">Loading...</div>;

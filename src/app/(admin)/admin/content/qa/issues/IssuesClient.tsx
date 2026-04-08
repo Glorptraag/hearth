@@ -8,16 +8,20 @@ import type { QAIssueFlat } from '@/lib/content-qa/run';
 
 export default function IssuesClient() {
   const searchParams = useSearchParams();
-  const initialPackId = searchParams.get('packId') ?? '';
+  const urlPackId = searchParams.get('packId') ?? '';
 
   const [issues, setIssues] = useState<QAIssueFlat[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: '',
     docType: '',
-    packId: initialPackId,
+    packId: urlPackId,
     severity: '',
   });
+
+  useEffect(() => {
+    setFilters((prev) => (prev.packId !== urlPackId ? { ...prev, packId: urlPackId } : prev));
+  }, [urlPackId]);
 
   const fetchIssues = useCallback(async () => {
     setLoading(true);

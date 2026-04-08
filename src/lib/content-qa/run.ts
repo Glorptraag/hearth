@@ -3,7 +3,13 @@ import { fetchPackTree, mergeWithDrafts } from './tree';
 import { checkDocument } from './rules';
 import { checkBrokenRefs, checkOrphans, checkDuplicateSlugs, checkCountDrift } from './integrity';
 import { getCached, setCached } from './cache';
-import type { DocType, QAIssue, PackTree } from './types';
+import type { DocType, QAIssue, PackTree, SanityDoc } from './types';
+
+function refValue(v: unknown): string | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const ref = (v as Record<string, unknown>)._ref;
+  return typeof ref === 'string' ? ref : undefined;
+}
 
 // ─── Types returned by QA runs ───
 
@@ -74,11 +80,11 @@ export async function fetchAllPackSummaries(): Promise<PackSummary[]> {
     const merged = await mergeWithDrafts(tree);
     const result = runFullCheck(merged);
 
-    const activityCount = (pack.modules ?? []).reduce(
-      (sum: number, m: any) =>
+    const activityCount = ((pack.modules ?? []) as SanityDoc[]).reduce(
+      (sum: number, m: SanityDoc) =>
         sum +
-        (m.approaches ?? []).reduce(
-          (s: number, a: any) => s + (a.activities?.length ?? 0),
+        ((m.approaches ?? []) as SanityDoc[]).reduce(
+          (s: number, a: SanityDoc) => s + ((a.activities as unknown[] | undefined)?.length ?? 0),
           0
         ),
       0
@@ -117,14 +123,15 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
   const allIssues = runFullCheck(merged);
 
   // Build tree structure
-  const packCheck = checkDocument(merged.pack, 'pack');
+  const packCheck = checkDocument(merged.pack!, 'pack');
   const treeNodes: TreeNode[] = [];
 
-  // Pack-level fields node
+  const pack = merged.pack!;
+
   treeNodes.push({
     docType: 'pack',
-    docId: merged.pack._id,
-    title: merged.pack.title ?? 'Untitled Pack',
+    docId: pack._id,
+    title: pack.title ?? 'Untitled Pack',
     completeness: packCheck.completeness,
     errors: packCheck.errors,
     warnings: packCheck.warnings,
@@ -146,7 +153,7 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
 
     // Approaches under this module
     const modApproaches = merged.approaches.filter(
-      (a: any) => a.module?._ref === mod._id
+      (a) => refValue(a.module) === mod._id
     );
 
     for (const approach of modApproaches) {
@@ -163,7 +170,7 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
 
       // Activities under this approach
       const approachActivities = merged.activities.filter(
-        (act: any) => act.approach?._ref === approach._id
+        (act) => refValue(act.approach) === approach._id
       );
 
       for (const activity of approachActivities) {
@@ -200,12 +207,12 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
   }
 
   // Aggregate completeness across all docs
-  const allDocs = [
-    { doc: merged.pack, type: 'pack' as DocType },
-    ...merged.modules.map((m: any) => ({ doc: m, type: 'module' as DocType })),
-    ...merged.approaches.map((a: any) => ({ doc: a, type: 'approach' as DocType })),
-    ...merged.activities.map((a: any) => ({ doc: a, type: 'activity' as DocType })),
-    ...merged.badges.map((b: any) => ({ doc: b, type: 'badge' as DocType })),
+  const allDocs: Array<{ doc: SanityDoc; type: DocType }> = [
+    ...(merged.pack ? [{ doc: merged.pack, type: 'pack' as DocType }] : []),
+    ...merged.modules.map((m) => ({ doc: m, type: 'module' as DocType })),
+    ...merged.approaches.map((a) => ({ doc: a, type: 'approach' as DocType })),
+    ...merged.activities.map((a) => ({ doc: a, type: 'activity' as DocType })),
+    ...merged.badges.map((b) => ({ doc: b, type: 'badge' as DocType })),
   ];
 
   let totalCompleteness = 0;
@@ -223,16 +230,16 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
 
   const detail: PackDetail = {
     pack: {
-      id: merged.pack._id,
-      title: merged.pack.title ?? 'Untitled',
-      slug: merged.pack.slug?.current ?? '',
-      status: merged.pack.status ?? 'draft',
+      id: pack._id,
+      title: pack.title ?? 'Untitled',
+      slug: pack.slug?.current ?? '',
+      status: (pack.status as string) ?? 'draft',
       moduleCount: merged.modules.length,
       activityCount: merged.activities.length,
       completeness: avgCompleteness,
       errorCount: allIssues.errors.length,
       warningCount: allIssues.warnings.length,
-      updatedAt: merged.pack._updatedAt ?? null,
+      updatedAt: pack._updatedAt ?? null,
     },
     tree: treeNodes,
     issues: [...allIssues.errors, ...allIssues.warnings],
@@ -281,12 +288,12 @@ function runFullCheck(tree: PackTree): { completeness: number; errors: QAIssue[]
   const warnings: QAIssue[] = [];
 
   // Field completeness checks
-  const allDocs: Array<{ doc: any; type: DocType }> = [
-    { doc: tree.pack, type: 'pack' },
-    ...tree.modules.map((m: any) => ({ doc: m, type: 'module' as DocType })),
-    ...tree.approaches.map((a: any) => ({ doc: a, type: 'approach' as DocType })),
-    ...tree.activities.map((a: any) => ({ doc: a, type: 'activity' as DocType })),
-    ...tree.badges.map((b: any) => ({ doc: b, type: 'badge' as DocType })),
+  const allDocs: Array<{ doc: SanityDoc; type: DocType }> = [
+    ...(tree.pack ? [{ doc: tree.pack, type: 'pack' as DocType }] : []),
+    ...tree.modules.map((m) => ({ doc: m, type: 'module' as DocType })),
+    ...tree.approaches.map((a) => ({ doc: a, type: 'approach' as DocType })),
+    ...tree.activities.map((a) => ({ doc: a, type: 'activity' as DocType })),
+    ...tree.badges.map((b) => ({ doc: b, type: 'badge' as DocType })),
   ];
 
   let totalCompleteness = 0;

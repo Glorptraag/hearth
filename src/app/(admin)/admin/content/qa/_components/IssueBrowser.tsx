@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import type { QAIssueFlat } from '@/lib/content-qa/run';
-import type { DocType } from '@/lib/content-qa/types';
 
 interface Props {
   issues: QAIssueFlat[];

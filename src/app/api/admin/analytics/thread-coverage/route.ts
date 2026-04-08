@@ -21,15 +21,15 @@ export async function GET(req: NextRequest) {
 
   const rows = await db.execute(sql`
     SELECT
-      t.thread_id,
-      COUNT(*)::int           AS entry_count,
+      t->>'thread_id'                   AS thread_id,
+      COUNT(*)::int                     AS entry_count,
       COUNT(DISTINCT le.family_id)::int AS family_count
     FROM learning_entries le,
-      jsonb_array_elements(le.ai_enrichment->'capability_threads') AS t(thread)
+      jsonb_array_elements(le.ai_enrichment->'capability_threads') AS t
     WHERE le.ai_enrichment IS NOT NULL
       AND le.ai_enrichment ? 'capability_threads'
       ${sql.raw(whereClause)}
-    GROUP BY t.thread_id
+    GROUP BY t->>'thread_id'
     HAVING COUNT(DISTINCT le.family_id) >= ${K_THRESHOLD}
     ORDER BY entry_count DESC
     LIMIT 50

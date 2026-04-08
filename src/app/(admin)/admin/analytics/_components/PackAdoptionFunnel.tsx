@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -27,19 +27,21 @@ export default function PackAdoptionFunnel({ packId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/admin/analytics/pack-adoption?packId=${encodeURIComponent(packId)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setData(d.funnel ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load');
-        setLoading(false);
-      });
+  const fetchData = useCallback(async () => {
+    setData(null);
+    setError(null);
+    try {
+      const r = await fetch(`/api/admin/analytics/pack-adoption?packId=${encodeURIComponent(packId)}`);
+      const d = await r.json();
+      setData(d.funnel ?? []);
+    } catch {
+      setError('Failed to load');
+    } finally {
+      setLoading(false);
+    }
   }, [packId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) {
     return <div className="py-xl text-center font-sans text-sm text-text-muted">Loading...</div>;

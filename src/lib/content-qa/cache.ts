@@ -24,7 +24,7 @@ export function setCached<T>(key: string, data: T): void {
 export function bustCache(packId?: string): void {
   if (packId) {
     for (const key of store.keys()) {
-      if (key.includes(packId) || key === 'qa:packs') {
+      if (key.includes(packId) || key === 'qa:packs' || key === 'qa:issues') {
         store.delete(key);
       }
     }

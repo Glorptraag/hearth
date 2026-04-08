@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface Cell {
   stageNumber: number | null;
@@ -24,19 +24,21 @@ export default function ActivityHeatMap({ moduleId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/admin/analytics/activity-heat?moduleId=${encodeURIComponent(moduleId)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setCells(d.cells ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load');
-        setLoading(false);
-      });
+  const fetchData = useCallback(async () => {
+    setCells(null);
+    setError(null);
+    try {
+      const r = await fetch(`/api/admin/analytics/activity-heat?moduleId=${encodeURIComponent(moduleId)}`);
+      const d = await r.json();
+      setCells(d.cells ?? []);
+    } catch {
+      setError('Failed to load');
+    } finally {
+      setLoading(false);
+    }
   }, [moduleId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) {
     return <div className="py-xl text-center font-sans text-sm text-text-muted">Loading...</div>;

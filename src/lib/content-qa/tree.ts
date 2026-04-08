@@ -1,8 +1,8 @@
 import { sanityWriteClient } from '@/lib/sanity/client';
 import { db } from '@/lib/db';
 import { contentStudioDrafts } from '@/lib/db/schema';
-import { eq, ne } from 'drizzle-orm';
-import type { PackTree } from './types';
+import { eq } from 'drizzle-orm';
+import type { PackTree, SanityDoc } from './types';
 
 // ─── GROQ query for full pack hierarchy ───
 
@@ -82,7 +82,7 @@ export async function fetchPackTree(packId: string): Promise<PackTree> {
 // should be refactored to use doc_id based matching instead.
 
 export async function mergeWithDrafts(tree: PackTree): Promise<PackTree> {
-  const packId: string = tree.pack?._id;
+  const packId = tree.pack?._id;
   if (!packId) return tree;
 
   const rows = await db
@@ -99,52 +99,49 @@ export async function mergeWithDrafts(tree: PackTree): Promise<PackTree> {
     (b.updatedAt ?? new Date(0)) > (a.updatedAt ?? new Date(0)) ? b : a
   );
 
-  const draftData = latestDraft.draftData as any;
+  const draftData = latestDraft.draftData as Record<string, unknown> | null;
   if (!draftData) return tree;
 
-  // Find the matching pack draft (by sanityPackId or first pack in state)
-  const packDraft = Array.isArray(draftData.packs)
-    ? draftData.packs[0]
-    : null;
+  const packs = draftData.packs as Record<string, unknown>[] | undefined;
+  const packDraft = Array.isArray(packs) ? packs[0] : null;
 
   if (!packDraft) return tree;
 
   // Merge pack-level fields (draft wins over published)
-  const mergedPack = mergeDraftIntoDoc(tree.pack, packDraft);
+  const mergedPack = mergeDraftIntoDoc(tree.pack!, packDraft);
 
   // Merge modules by title (best-effort without per-doc IDs in current schema)
-  const mergedModules = tree.modules.map((sanityModule: any) => {
-    const draftModule = findByTitle(packDraft.modules ?? [], sanityModule.title);
+  const draftModules = (packDraft.modules ?? []) as Record<string, unknown>[];
+  const mergedModules = tree.modules.map((sanityModule) => {
+    const draftModule = findByTitle(draftModules, sanityModule.title);
     if (!draftModule) return sanityModule;
     return mergeDraftIntoDoc(sanityModule, draftModule);
   });
 
-  // Merge approaches by title within matched modules
-  const draftApproachByTitle = new Map<string, any>();
-  for (const draftMod of packDraft.modules ?? []) {
-    for (const draftApproach of draftMod.approaches ?? []) {
-      if (draftApproach.title) draftApproachByTitle.set(draftApproach.title, draftApproach);
+  const draftApproachByTitle = new Map<string, Record<string, unknown>>();
+  for (const draftMod of draftModules) {
+    for (const draftApproach of (draftMod.approaches ?? []) as Record<string, unknown>[]) {
+      if (draftApproach.title) draftApproachByTitle.set(draftApproach.title as string, draftApproach);
     }
   }
 
-  const mergedApproaches = tree.approaches.map((sanityApproach: any) => {
-    const draftApproach = draftApproachByTitle.get(sanityApproach.title);
+  const mergedApproaches = tree.approaches.map((sanityApproach) => {
+    const draftApproach = draftApproachByTitle.get(sanityApproach.title ?? '');
     if (!draftApproach) return sanityApproach;
     return mergeDraftIntoDoc(sanityApproach, draftApproach);
   });
 
-  // Merge activities by title within matched approaches
-  const draftActivityByTitle = new Map<string, any>();
-  for (const draftMod of packDraft.modules ?? []) {
-    for (const draftApproach of draftMod.approaches ?? []) {
-      for (const draftActivity of draftApproach.activities ?? []) {
-        if (draftActivity.title) draftActivityByTitle.set(draftActivity.title, draftActivity);
+  const draftActivityByTitle = new Map<string, Record<string, unknown>>();
+  for (const draftMod of draftModules) {
+    for (const draftApproach of (draftMod.approaches ?? []) as Record<string, unknown>[]) {
+      for (const draftActivity of (draftApproach.activities ?? []) as Record<string, unknown>[]) {
+        if (draftActivity.title) draftActivityByTitle.set(draftActivity.title as string, draftActivity);
       }
     }
   }
 
-  const mergedActivities = tree.activities.map((sanityActivity: any) => {
-    const draftActivity = draftActivityByTitle.get(sanityActivity.title);
+  const mergedActivities = tree.activities.map((sanityActivity) => {
+    const draftActivity = draftActivityByTitle.get(sanityActivity.title ?? '');
     if (!draftActivity) return sanityActivity;
     return mergeDraftIntoDoc(sanityActivity, draftActivity);
   });
@@ -160,7 +157,7 @@ export async function mergeWithDrafts(tree: PackTree): Promise<PackTree> {
 
 // ─── Merge helpers ───
 
-function mergeDraftIntoDoc(sanityDoc: any, draft: any): any {
+function mergeDraftIntoDoc(sanityDoc: SanityDoc, draft: Record<string, unknown>): SanityDoc {
   if (!draft) return sanityDoc;
   const merged: Record<string, unknown> = { ...sanityDoc };
 
@@ -179,10 +176,10 @@ function mergeDraftIntoDoc(sanityDoc: any, draft: any): any {
     }
   }
 
-  return merged;
+  return merged as SanityDoc;
 }
 
-function findByTitle(arr: any[], title: string): any | null {
+function findByTitle(arr: Record<string, unknown>[], title: string | undefined): Record<string, unknown> | null {
   if (!title) return null;
   return arr.find((item) => item?.title === title) ?? null;
 }

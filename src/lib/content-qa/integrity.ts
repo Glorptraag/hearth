@@ -1,4 +1,4 @@
-import type { DocType, QAIssue, PackTree } from './types';
+import type { DocType, QAIssue, PackTree, SanityDoc } from './types';
 
 // ─── Helpers ───
 
@@ -31,7 +31,7 @@ function collectRefs(obj: unknown, refs: Array<{ ref: string; path: string }>, c
 
 function refOf(v: unknown): string | null {
   if (!v || typeof v !== 'object') return null;
-  const r = (v as any)._ref;
+  const r = (v as Record<string, unknown>)._ref;
   return typeof r === 'string' ? r : null;
 }
 
@@ -51,7 +51,7 @@ export function checkBrokenRefs(tree: PackTree): QAIssue[] {
   const knownIds = allDocIds(tree);
   const issues: QAIssue[] = [];
 
-  function scanDoc(doc: any, docType: DocType): void {
+  function scanDoc(doc: SanityDoc, docType: DocType): void {
     if (!doc) return;
     const docId: string = doc._id ?? doc._key ?? 'unknown';
     const refs: Array<{ ref: string; path: string }> = [];
@@ -63,7 +63,7 @@ export function checkBrokenRefs(tree: PackTree): QAIssue[] {
     }
   }
 
-  scanDoc(tree.pack, 'pack');
+  if (tree.pack) scanDoc(tree.pack, 'pack');
   for (const m of tree.modules) scanDoc(m, 'module');
   for (const a of tree.approaches) scanDoc(a, 'approach');
   for (const act of tree.activities) scanDoc(act, 'activity');
@@ -76,9 +76,9 @@ export function checkBrokenRefs(tree: PackTree): QAIssue[] {
 
 export function checkOrphans(tree: PackTree): QAIssue[] {
   const issues: QAIssue[] = [];
-  const packId: string = tree.pack?._id;
-  const moduleIds = new Set(tree.modules.map((m: any) => m._id).filter(Boolean));
-  const approachIds = new Set(tree.approaches.map((a: any) => a._id).filter(Boolean));
+  const packId = tree.pack?._id ?? '';
+  const moduleIds = new Set(tree.modules.map((m) => m._id).filter(Boolean));
+  const approachIds = new Set(tree.approaches.map((a) => a._id).filter(Boolean));
 
   for (const approach of tree.approaches) {
     const docId: string = approach._id ?? 'unknown';
@@ -112,7 +112,7 @@ export function checkOrphans(tree: PackTree): QAIssue[] {
 export function checkDuplicateSlugs(tree: PackTree): QAIssue[] {
   const issues: QAIssue[] = [];
 
-  function findDuplicates(docs: any[], docType: DocType): void {
+  function findDuplicates(docs: SanityDoc[], docType: DocType): void {
     const seen = new Map<string, string>();
     for (const doc of docs) {
       const slug: string | undefined = doc?.slug?.current;

@@ -1,4 +1,4 @@
-import type { DocType, FieldRule, QAIssue, CompletenessResult } from './types';
+import type { DocType, FieldRule, QAIssue, CompletenessResult, SanityDoc } from './types';
 
 // ─── Known value sets (sourced from content-studio types) ───
 
@@ -10,15 +10,18 @@ const KNOWN_STATUSES = ['draft', 'published'];
 // ─── Helpers ───
 
 function get(obj: unknown, path: string): unknown {
-  return path.split('.').reduce((o: any, k) => o?.[k], obj);
+  return path.split('.').reduce((o: Record<string, unknown> | undefined, k) => {
+    if (o && typeof o === 'object' && k in o) return o[k] as Record<string, unknown> | undefined;
+    return undefined;
+  }, obj as Record<string, unknown> | undefined);
 }
 
 function portableTextLength(value: unknown): number {
   if (!value || !Array.isArray(value)) return 0;
   return value
-    .filter((b: any) => b._type === 'block' && Array.isArray(b.children))
-    .flatMap((b: any) => b.children)
-    .map((c: any) => (typeof c.text === 'string' ? c.text : ''))
+    .filter((b: Record<string, unknown>) => b._type === 'block' && Array.isArray(b.children))
+    .flatMap((b: Record<string, unknown>) => b.children as Record<string, unknown>[])
+    .map((c: Record<string, unknown>) => (typeof c.text === 'string' ? c.text : ''))
     .join('').length;
 }
 
@@ -117,7 +120,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'understandingIndicators',
       required: true,
       weakIf: (v) => {
-        const obj = v as any;
+        const obj = v as Record<string, unknown> | null | undefined;
         return !obj?.emerging || !obj?.developing || !obj?.demonstrating;
       },
       description: 'Module must have all three understanding indicators: emerging, developing, demonstrating',
@@ -138,7 +141,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'pack',
       required: true,
       weakIf: (v) => {
-        const ref = v as any;
+        const ref = v as Record<string, unknown> | null | undefined;
         return !ref?._ref && !ref?.current;
       },
       description: 'Module must reference a pack (unless standalone)',
@@ -179,7 +182,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'module',
       required: true,
       weakIf: (v) => {
-        const ref = v as any;
+        const ref = v as Record<string, unknown> | null | undefined;
         return !ref?._ref && !ref?.current;
       },
       description: 'Approach must reference a module',
@@ -261,7 +264,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'approach',
       required: true,
       weakIf: (v) => {
-        const ref = v as any;
+        const ref = v as Record<string, unknown> | null | undefined;
         return !ref?._ref && !ref?.current;
       },
       description: 'Activity must reference an approach',
@@ -302,7 +305,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'pack',
       required: true,
       weakIf: (v) => {
-        const ref = v as any;
+        const ref = v as Record<string, unknown> | null | undefined;
         return !ref?._ref && !ref?.current;
       },
       description: 'Badge must reference a pack',
@@ -312,36 +315,34 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
 
 // ─── Document checker ───
 
-function resolveActivityField(doc: any, field: string): unknown {
+function resolveActivityField(doc: SanityDoc, field: string): unknown {
   // Activity fields can be nested under sessionMetadata OR at top level.
   // Sanity: sessionMetadata.duration/setting/energyLevel
   // Draft format: duration/setting/energyLevel directly
   if (field.startsWith('sessionMetadata.')) {
     const subField = field.slice('sessionMetadata.'.length);
-    const fromMeta = doc?.sessionMetadata?.[subField];
+    const meta = doc.sessionMetadata as Record<string, unknown> | undefined;
+    const fromMeta = meta?.[subField];
     if (fromMeta !== undefined) return fromMeta;
-    return doc?.[subField]; // fallback to top-level
+    return doc[subField];
   }
-  // Pack pricingId: check both pricingId and stripePriceId
   if (field === 'pricingId') {
-    return doc?.pricingId ?? doc?.stripePriceId;
+    return doc.pricingId ?? doc.stripePriceId;
   }
-  // Activity subjects: check both subjects and subjectAreas
   if (field === 'subjects') {
-    const s = doc?.subjects;
+    const s = doc.subjects;
     if (!isEmptyArray(s)) return s;
-    return doc?.subjectAreas;
+    return doc.subjectAreas;
   }
-  // Activity instructions: check both instructions (portable text) and instructionsText (draft string)
   if (field === 'instructions') {
-    const inst = doc?.instructions;
+    const inst = doc.instructions;
     if (inst !== undefined) return inst;
-    return doc?.instructionsText;
+    return doc.instructionsText;
   }
   return get(doc, field);
 }
 
-export function checkDocument(doc: any, docType: DocType): CompletenessResult {
+export function checkDocument(doc: SanityDoc, docType: DocType): CompletenessResult {
   const rules = completenessRules[docType];
   const docId: string = doc?._id ?? doc?._key ?? 'unknown';
   const errors: QAIssue[] = [];

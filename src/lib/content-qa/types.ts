@@ -22,10 +22,21 @@ export interface CompletenessResult {
   warnings: QAIssue[];
 }
 
+export interface SanityDoc {
+  _id: string;
+  _type?: string;
+  _rev?: string;
+  _updatedAt?: string;
+  _key?: string;
+  title?: string;
+  slug?: { current?: string };
+  [key: string]: unknown;
+}
+
 export interface PackTree {
-  pack: any;
-  modules: any[];
-  approaches: any[];
-  activities: any[];
-  badges: any[];
+  pack: SanityDoc | null;
+  modules: SanityDoc[];
+  approaches: SanityDoc[];
+  activities: SanityDoc[];
+  badges: SanityDoc[];
 }

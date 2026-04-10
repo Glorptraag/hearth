@@ -12,7 +12,11 @@ export default function ClerkThemeProvider({
   const { theme } = useTheme();
 
   return (
-    <ClerkProvider appearance={getClerkAppearance(theme)}>
+    <ClerkProvider
+      appearance={getClerkAppearance(theme)}
+      signInFallbackRedirectUrl="/welcome"
+      signUpFallbackRedirectUrl="/welcome"
+    >
       {children}
     </ClerkProvider>
   );

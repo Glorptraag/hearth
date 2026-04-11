@@ -15,6 +15,7 @@ interface ModuleCardProps {
   };
   learners: Learner[];
   isReadOnly?: boolean;
+  hasMaterials?: boolean;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
   onDragStart?: (id: string) => void;
@@ -55,6 +56,7 @@ export default function ModuleCard({
   entry,
   learners,
   isReadOnly = false,
+  hasMaterials = false,
   onToggle,
   onDelete,
   onDragStart,
@@ -87,12 +89,19 @@ export default function ModuleCard({
       )}
 
       <div className="p-sm pt-[6px]">
-        {/* Subject chip */}
-        {primarySubject && (
-          <span className={`inline-block rounded-full px-[5px] py-[1px] font-sans text-[9px] font-semibold mb-[3px] ${SUBJECT_CHIP[primarySubject] ?? 'bg-surface-hover text-text-muted'}`}>
-            {SUBJECT_LABELS[primarySubject] ?? primarySubject}
-          </span>
-        )}
+        {/* Subject chip + material indicator */}
+        <div className="flex items-center gap-[3px] mb-[3px]">
+          {primarySubject && (
+            <span className={`inline-block rounded-full px-[5px] py-[1px] font-sans text-[9px] font-semibold ${SUBJECT_CHIP[primarySubject] ?? 'bg-surface-hover text-text-muted'}`}>
+              {SUBJECT_LABELS[primarySubject] ?? primarySubject}
+            </span>
+          )}
+          {hasMaterials && (
+            <span className="inline-block font-sans text-[9px] text-text-muted" title="Has printable materials">
+              📄
+            </span>
+          )}
+        </div>
 
         {/* Delete button */}
         {!isReadOnly && (

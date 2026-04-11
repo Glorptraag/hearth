@@ -13,6 +13,10 @@ import LogMode from './_components/LogMode';
 import ApproachPickMode from './_components/ApproachPicker';
 import ModuleSidebar from './_components/ModuleSidebar';
 import ProgressBar from './_components/ProgressBar';
+import { CommonsReader } from '@/components/content/CommonsReader';
+import { PrintSheet } from '@/components/content/PrintSheet';
+import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
+import { isPrintableAssetKind, fetchPrintBundle, type AssetKind } from '@/components/content/types';
 
 export default function ModuleDetailPage() {
   const params = useParams();
@@ -32,6 +36,8 @@ export default function ModuleDetailPage() {
   const [sessionElapsed, setSessionElapsed] = useState<number | undefined>(undefined);
   const [quickCaptures, setQuickCaptures] = useState<QuickCaptureItem[]>([]);
   const facilitateStartRef = useRef<number | null>(null);
+  const [readerTextId, setReaderTextId] = useState<string | null>(null);
+  const [showPrintSheet, setShowPrintSheet] = useState(false);
 
   const handleAddCapture = useCallback((item: QuickCaptureItem) => {
     setQuickCaptures((prev) => [...prev, item]);
@@ -154,6 +160,94 @@ export default function ModuleDetailPage() {
     } catch { /* ignore */ }
   }, [fetchModule, id]);
 
+  // ─── Material counts and helpers ───────────────────────────────────────────────
+
+  const materialCount = (() => {
+    if (!module) return 0;
+    const approach = module.approaches?.[selectedApproachIdx];
+    const seenIds = new Set<string>();
+    for (const act of approach?.activities ?? []) {
+      for (const ref of act.assets ?? []) {
+        if (ref.asset) seenIds.add(ref.asset._id);
+      }
+      for (const ref of act.commonsTexts ?? []) {
+        if (ref.text) seenIds.add(ref.text._id);
+      }
+    }
+    return seenIds.size;
+  })();
+
+  const readerText = (() => {
+    if (!readerTextId || !module) return null;
+    for (const approach of module.approaches ?? []) {
+      for (const act of approach.activities ?? []) {
+        for (const ref of act.commonsTexts ?? []) {
+          if (ref.text?._id === readerTextId) return ref.text;
+        }
+      }
+    }
+    return null;
+  })();
+
+  const printSheetGroups = (() => {
+    if (!module) return [];
+    const approach = module.approaches?.[selectedApproachIdx];
+    const items: PrintableItem[] = [];
+    const seenIds = new Set<string>();
+
+    for (const act of approach?.activities ?? []) {
+      for (const ref of act.assets ?? []) {
+        if (!ref.asset || seenIds.has(ref.asset._id)) continue;
+        seenIds.add(ref.asset._id);
+        items.push({
+          id: ref.asset._id,
+          kind: 'asset',
+          assetKind: ref.asset.kind as AssetKind,
+          title: ref.asset.title,
+          thumbnailUrl: ref.asset.thumbnailUrl ?? null,
+          pageCount: ref.asset.pageCount ?? 0,
+          description: ref.asset.description,
+          role: ref.role as PrintableItem['role'],
+          isPrintable: isPrintableAssetKind(ref.asset.kind as AssetKind),
+        });
+      }
+      for (const ref of act.commonsTexts ?? []) {
+        if (!ref.text || seenIds.has(ref.text._id)) continue;
+        seenIds.add(ref.text._id);
+        items.push({
+          id: ref.text._id,
+          kind: 'commonsText',
+          commonsKind: ref.text.kind as PrintableItem['commonsKind'],
+          title: ref.text.title,
+          thumbnailUrl: null,
+          pageCount: ref.text.estimatedReadAloudMinutes ?? 0,
+          role: ref.role as PrintableItem['role'],
+          isPrintable: true,
+        });
+      }
+    }
+
+    return [{ label: module.title, items }];
+  })();
+
+  async function handlePrintGenerate(selection: PrintSelection): Promise<PrintBundleResponse> {
+    const allItems = printSheetGroups.flatMap((g) => g.items);
+    const items = selection.itemIds
+      .map((id) => allItems.find((i) => i.id === id))
+      .filter(Boolean)
+      .map((i) => ({ id: i!.id, kind: i!.kind }));
+
+    return fetchPrintBundle(items, {
+      copies: selection.copies,
+      combine: selection.combine,
+      coverTitle: module?.title,
+    });
+  }
+
+  function handleDownloadAsset(assetId: string) {
+    window.open(`/api/assets/download?id=${assetId}`, '_blank');
+  }
+
   // ─── Loading / error / access states ──────────────────────────────────────────
 
   if (loading) {
@@ -219,7 +313,7 @@ export default function ModuleDetailPage() {
       <div className="min-w-0">
         {/* Mobile mode tabs */}
         {mode !== 'approach-pick' && (
-          <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex gap-lg lg:hidden">
+          <div className="sticky top-0 z-10 bg-surface-body/95 border-b border-border-subtle px-md py-sm flex items-center gap-lg lg:hidden">
             {(['prep', 'facilitate', 'log'] as const).map((m) => {
               const activities = module.approaches?.[selectedApproachIdx]?.activities ?? [];
               const label =
@@ -240,6 +334,15 @@ export default function ModuleDetailPage() {
                 </button>
               );
             })}
+            {materialCount > 0 && (
+              <button
+                onClick={() => setShowPrintSheet(true)}
+                className="ml-auto shrink-0 font-sans text-sm text-text-muted hover:text-ember transition-colors duration-200"
+                aria-label={`${materialCount} materials — print`}
+              >
+                📄 {materialCount}
+              </button>
+            )}
           </div>
         )}
 
@@ -252,6 +355,7 @@ export default function ModuleDetailPage() {
             approachIdx={selectedApproachIdx}
             overlays={overlays}
             pedagogy={pedagogy}
+            onPrintMaterials={materialCount > 0 ? () => setShowPrintSheet(true) : undefined}
             onStart={() => {
               clearSession();
               const now = Date.now();
@@ -310,6 +414,8 @@ export default function ModuleDetailPage() {
             onAddCapture={handleAddCapture}
             onRemoveCapture={handleRemoveCapture}
             currentActivityIdx={currentActivityIdx}
+            onOpenReader={setReaderTextId}
+            onDownloadAsset={handleDownloadAsset}
           />
           </div>
         )}
@@ -322,6 +428,35 @@ export default function ModuleDetailPage() {
           />
         )}
       </div>
+
+      {/* Commons Reader overlay */}
+      {readerText && (
+        <CommonsReader
+          isOpen={!!readerText}
+          title={readerText.title}
+          kind={readerText.kind}
+          tradition={readerText.tradition}
+          body={readerText.body}
+          shortBody={readerText.shortBody}
+          readAloudVersion={readerText.readAloudVersion}
+          estimatedReadAloudMinutes={readerText.estimatedReadAloudMinutes}
+          source={readerText.source}
+          onClose={() => setReaderTextId(null)}
+          returnLabel="Back to module"
+        />
+      )}
+
+      {/* Print Sheet */}
+      {showPrintSheet && (
+        <PrintSheet
+          isOpen={showPrintSheet}
+          title={`Print — ${module.title}`}
+          groups={printSheetGroups}
+          defaultCopies={1}
+          onClose={() => setShowPrintSheet(false)}
+          onGenerate={handlePrintGenerate}
+        />
+      )}
     </div>
   );
 }

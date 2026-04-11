@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Module, ActivityOverlay, QuickCaptureItem } from './types';
 import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
+import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
 import { HearthPortableText } from './PortableTextRenderer';
 import SessionTimer from './SessionTimer';
 import QuickCapture from './QuickCapture';
@@ -21,6 +22,8 @@ export default function FacilitateMode({
   onAddCapture,
   onRemoveCapture,
   currentActivityIdx: externalActivityIdx,
+  onOpenReader,
+  onDownloadAsset,
 }: {
   module: Module;
   approachIdx: number;
@@ -35,6 +38,8 @@ export default function FacilitateMode({
   onAddCapture?: (item: QuickCaptureItem) => void;
   onRemoveCapture?: (timestamp: number) => void;
   currentActivityIdx?: number;
+  onOpenReader?: (textId: string) => void;
+  onDownloadAsset?: (assetId: string) => void;
 }) {
   const activities = module.approaches?.[approachIdx]?.activities ?? [];
   const [currentIdx, setCurrentIdx] = useState(initialChunkIdx);
@@ -155,6 +160,83 @@ export default function FacilitateMode({
                   {mat.name}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hearth materials — inline embeds for current activity */}
+        {((current.assets && current.assets.length > 0) || (current.commonsTexts && current.commonsTexts.length > 0)) && (
+          <div className="mb-lg">
+            <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
+              Hearth Materials
+            </p>
+            <div className="space-y-sm">
+              {current.assets?.map((ref) => {
+                if (!ref.asset) return null;
+                const emoji = ASSET_KIND_EMOJI[ref.asset.kind as keyof typeof ASSET_KIND_EMOJI] ?? '📄';
+                const isAudio = ref.asset.kind === 'audio';
+                return (
+                  <div
+                    key={ref._key}
+                    className="flex items-center gap-md p-sm rounded-[10px] border border-border-subtle bg-surface-raised"
+                  >
+                    {ref.asset.thumbnailUrl ? (
+                      <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
+                        <img src={ref.asset.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">
+                        {emoji}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-serif text-sm text-text-primary truncate">{ref.asset.title}</p>
+                      <p className="font-sans text-[0.68rem] text-text-muted">
+                        {ref.asset.kind?.replace(/_/g, ' ')}{ref.asset.pageCount ? ` · ${ref.asset.pageCount} pg` : ''}
+                        {ref.asset.printGuidance ? ` · ${ref.asset.printGuidance}` : ''}
+                      </p>
+                    </div>
+                    {isAudio ? (
+                      <span className="font-sans text-[0.68rem] text-text-muted">Coming soon</span>
+                    ) : onDownloadAsset ? (
+                      <button
+                        onClick={() => onDownloadAsset(ref.asset._id)}
+                        className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                      >
+                        Download
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+              {current.commonsTexts?.map((ref) => {
+                if (!ref.text) return null;
+                return (
+                  <div
+                    key={ref._key}
+                    className="flex items-center gap-md p-sm rounded-[10px] border border-border-subtle bg-surface-raised"
+                  >
+                    <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">
+                      {COMMONS_KIND_EMOJI}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-serif text-sm text-text-primary truncate">{ref.text.title}</p>
+                      <p className="font-sans text-[0.68rem] text-text-muted">
+                        {ref.text.kind?.replace(/_/g, ' ')}{ref.text.estimatedReadAloudMinutes ? ` · ${ref.text.estimatedReadAloudMinutes} min` : ''}
+                        {ref.presentationMode ? ` · ${ref.presentationMode.replace(/_/g, ' ')}` : ''}
+                      </p>
+                    </div>
+                    {onOpenReader ? (
+                      <button
+                        onClick={() => onOpenReader(ref.text._id)}
+                        className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                      >
+                        Open reader →
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

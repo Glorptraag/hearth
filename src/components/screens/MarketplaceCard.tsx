@@ -12,6 +12,17 @@ export type Subject =
 
 export type CreatorType = 'content-team' | 'educator' | 'parent' | string;
 
+export interface AssetCounts {
+  total?: number;
+  template?: number;
+  worksheet?: number;
+  reference?: number;
+  card_set?: number;
+  handout?: number;
+  audio?: number;
+  manipulative?: number;
+}
+
 export interface SanityPack {
   _id: string;
   title: string;
@@ -24,6 +35,8 @@ export interface SanityPack {
   availability?: 'included' | 'premium';
   stripePriceId?: string;
   description?: string;
+  assetCounts?: AssetCounts;
+  commonsTextCount?: number;
 }
 
 function getCreatorEmoji(type?: CreatorType): string {

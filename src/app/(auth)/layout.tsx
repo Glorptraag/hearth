@@ -28,8 +28,9 @@ const NAV_SECTIONS = [
   {
     label: "Discover",
     items: [
+      { href: "/library", label: "Library", emoji: "📚" },
       { href: "/explore/activities", label: "Explore", emoji: "🔍" },
-      { href: "/explore/marketplace", label: "Marketplace", emoji: "📚" },
+      { href: "/explore/marketplace", label: "Marketplace", emoji: "🏪" },
     ],
   },
 ];
@@ -49,6 +50,7 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/our-story/portfolio") return pathname.startsWith("/our-story/portfolio");
   if (href === "/log") return pathname === "/log";
   if (href === "/planner") return pathname.startsWith("/planner");
+  if (href === "/library") return pathname.startsWith("/library");
   if (href === "/explore/activities") return pathname === "/explore/activities";
   if (href === "/explore/marketplace") return pathname.startsWith("/explore/marketplace");
   if (href === "/settings") return pathname === "/settings";

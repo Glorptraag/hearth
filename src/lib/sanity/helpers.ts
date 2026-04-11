@@ -64,3 +64,20 @@ export function keyedRefs(ids: string[]) {
 export function range(min: number, max: number) {
   return { min, max };
 }
+
+export function assetRef(id: string, role: 'core' | 'optional' | 'extension' = 'core', notes?: string) {
+  const item: Record<string, unknown> = { _key: key('aref'), asset: ref(id), role };
+  if (notes) item.notes = notes;
+  return item;
+}
+
+export function commonsTextRef(
+  id: string,
+  role: 'core' | 'optional' | 'extension' = 'core',
+  presentationMode: 'read_aloud' | 'child_reads' | 'reference_only' | 'memorisation' = 'read_aloud',
+  notes?: string,
+) {
+  const item: Record<string, unknown> = { _key: key('ctref'), text: ref(id), role, presentationMode };
+  if (notes) item.notes = notes;
+  return item;
+}

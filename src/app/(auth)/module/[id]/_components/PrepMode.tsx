@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import type { Module, ActivityOverlay } from './types';
+import type { Module, ActivityOverlay, Activity } from './types';
 import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
+import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
 
 export default function PrepMode({
   module,
@@ -12,6 +13,7 @@ export default function PrepMode({
   onResume,
   overlays,
   pedagogy,
+  onPrintMaterials,
 }: {
   module: Module;
   approachIdx: number;
@@ -20,6 +22,7 @@ export default function PrepMode({
   onResume?: () => void;
   overlays?: ActivityOverlay[];
   pedagogy?: string | null;
+  onPrintMaterials?: () => void;
 }) {
   const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
@@ -170,6 +173,86 @@ export default function PrepMode({
           </div>
         </div>
       )}
+
+      {/* Hearth Provides — assets and commons texts across this module */}
+      {(() => {
+        const allAssets: { activity: Activity; ref: NonNullable<Activity['assets']>[0] }[] = [];
+        const allTexts: { activity: Activity; ref: NonNullable<Activity['commonsTexts']>[0] }[] = [];
+        const seenAssetIds = new Set<string>();
+        const seenTextIds = new Set<string>();
+
+        for (const act of activities) {
+          for (const ref of act.assets ?? []) {
+            if (ref.asset && !seenAssetIds.has(ref.asset._id)) {
+              seenAssetIds.add(ref.asset._id);
+              allAssets.push({ activity: act, ref });
+            }
+          }
+          for (const ref of act.commonsTexts ?? []) {
+            if (ref.text && !seenTextIds.has(ref.text._id)) {
+              seenTextIds.add(ref.text._id);
+              allTexts.push({ activity: act, ref });
+            }
+          }
+        }
+
+        if (allAssets.length === 0 && allTexts.length === 0) return null;
+
+        const printableCount = allAssets.filter((a) => a.ref.asset.kind !== 'audio').length;
+
+        return (
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+            <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+              Hearth Provides
+            </h2>
+            <div className="space-y-xs">
+              {allAssets.map(({ activity, ref }) => {
+                const emoji = ASSET_KIND_EMOJI[ref.asset.kind as keyof typeof ASSET_KIND_EMOJI] ?? '📄';
+                return (
+                  <div key={ref.asset._id} className="flex items-center gap-sm py-xs">
+                    <span className="shrink-0 text-sm" aria-hidden="true">{emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-serif text-sm text-text-primary truncate">{ref.asset.title}</p>
+                      <p className="font-sans text-[0.68rem] text-text-muted">
+                        {ref.asset.kind?.replace(/_/g, ' ')}{ref.asset.pageCount ? ` · ${ref.asset.pageCount} pg` : ''} · {activity.title}
+                      </p>
+                    </div>
+                    {ref.role !== 'core' && (
+                      <span className="font-sans text-[10px] text-text-muted bg-surface-raised rounded-full px-1.5 py-[1px] border border-border-subtle">
+                        {ref.role === 'optional' ? 'Optional' : 'Extension'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {allTexts.map(({ activity, ref }) => (
+                <div key={ref.text._id} className="flex items-center gap-sm py-xs">
+                  <span className="shrink-0 text-sm" aria-hidden="true">{COMMONS_KIND_EMOJI}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-serif text-sm text-text-primary truncate">{ref.text.title}</p>
+                    <p className="font-sans text-[0.68rem] text-text-muted">
+                      {ref.text.kind?.replace(/_/g, ' ')}{ref.text.estimatedReadAloudMinutes ? ` · ${ref.text.estimatedReadAloudMinutes} min` : ''} · {activity.title}
+                    </p>
+                  </div>
+                  {ref.role !== 'core' && (
+                    <span className="font-sans text-[10px] text-text-muted bg-surface-raised rounded-full px-1.5 py-[1px] border border-border-subtle">
+                      {ref.role === 'optional' ? 'Optional' : 'Extension'}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {onPrintMaterials && printableCount > 0 && (
+              <button
+                onClick={onPrintMaterials}
+                className="mt-md w-full bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-200"
+              >
+                📄 Print materials for this module
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Why This Matters */}
       <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">

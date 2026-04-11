@@ -26,6 +26,7 @@ interface PlannerGridProps {
   learners: Learner[];
   today: string;
   isCurrentOrFutureWeek: boolean;
+  moduleIdsWithMaterials?: Set<string>;
   onAdd: (date: string, session: string) => void;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
@@ -55,6 +56,7 @@ export default function PlannerGrid({
   learners,
   today,
   isCurrentOrFutureWeek,
+  moduleIdsWithMaterials,
   onAdd,
   onToggle,
   onDelete,
@@ -171,6 +173,7 @@ export default function PlannerGrid({
                   entry={entry}
                   learners={learners}
                   isReadOnly={isReadOnly}
+                  hasMaterials={!!(entry.moduleId && moduleIdsWithMaterials?.has(entry.moduleId))}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onDragStart={setDraggingId}
@@ -222,6 +225,7 @@ export default function PlannerGrid({
                   entry={entry}
                   learners={learners}
                   isReadOnly={isReadOnly}
+                  hasMaterials={!!(entry.moduleId && moduleIdsWithMaterials?.has(entry.moduleId))}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onDragStart={setDraggingId}

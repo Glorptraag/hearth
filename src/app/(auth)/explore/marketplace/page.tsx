@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
 import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
+import { PackMaterialsList } from '@/components/content/PackMaterialsList';
 import { useToast } from '@/hooks/use-toast';
 
 function getCreatorEmoji(type?: CreatorType): string {
@@ -55,6 +56,7 @@ export default function MarketplacePage() {
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
   const [detailPack, setDetailPack] = useState<SanityPack | null>(null);
+  const [showMaterials, setShowMaterials] = useState(false);
   const [gapSubjects, setGapSubjects] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -362,7 +364,7 @@ export default function MarketplacePage() {
       {detailPack && (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop backdrop-blur-sm p-0 sm:p-lg"
-          onClick={() => setDetailPack(null)}
+          onClick={() => { setDetailPack(null); setShowMaterials(false); }}
         >
           <div
             role="dialog"
@@ -371,7 +373,7 @@ export default function MarketplacePage() {
             tabIndex={-1}
             className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === 'Escape') setDetailPack(null); }}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setDetailPack(null); setShowMaterials(false); } }}
           >
             {/* Drag handle — mobile only */}
             <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
@@ -391,7 +393,7 @@ export default function MarketplacePage() {
                   </h2>
                 </div>
                 <button
-                  onClick={() => setDetailPack(null)}
+                  onClick={() => { setDetailPack(null); setShowMaterials(false); }}
                   className="shrink-0 rounded-full border border-border-subtle p-xs font-sans text-text-muted hover:text-text-primary transition-colors duration-200"
                 >
                   ✕
@@ -447,6 +449,37 @@ export default function MarketplacePage() {
                 )}
               </div>
 
+              {/* Included Materials */}
+              {(() => {
+                const printCount = (detailPack.assetCounts?.total ?? 0) - (detailPack.assetCounts?.audio ?? 0);
+                const readCount = detailPack.commonsTextCount ?? 0;
+                const audioCount = detailPack.assetCounts?.audio ?? 0;
+                const hasMaterials = printCount > 0 || readCount > 0 || audioCount > 0;
+                if (!hasMaterials) return null;
+
+                const parts: string[] = [];
+                if (printCount > 0) parts.push(`${printCount} printable${printCount !== 1 ? 's' : ''}`);
+                if (readCount > 0) parts.push(`${readCount} reading${readCount !== 1 ? 's' : ''}`);
+                if (audioCount > 0) parts.push(`${audioCount} audio`);
+
+                return (
+                  <div>
+                    <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                      Included Materials
+                    </p>
+                    <p className="font-serif text-sm text-text-secondary mb-sm">
+                      {parts.join(' · ')}
+                    </p>
+                    <button
+                      onClick={() => setShowMaterials(true)}
+                      className="font-sans text-[0.8rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                    >
+                      View all materials →
+                    </button>
+                  </div>
+                );
+              })()}
+
               {/* Action */}
               <div className="pt-sm border-t border-border-subtle">
                 {libraryIds.has(detailPack._id) ? (
@@ -469,6 +502,18 @@ export default function MarketplacePage() {
                 )}
               </div>
             </div>
+
+            {/* Materials push-over view */}
+            {showMaterials && (
+              <div className="absolute inset-0 bg-surface-panel rounded-t-[24px] sm:rounded-[16px] z-10 flex flex-col overflow-hidden">
+                <PackMaterialsList
+                  packId={detailPack._id}
+                  packTitle={detailPack.title}
+                  inLibrary={libraryIds.has(detailPack._id)}
+                  onBack={() => setShowMaterials(false)}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -20,6 +20,46 @@ export interface Badge {
   criteriaSummary?: string;
 }
 
+export interface ActivityAsset {
+  _key: string;
+  role: string;
+  notes?: string;
+  asset: {
+    _id: string;
+    title: string;
+    slug?: { current: string };
+    kind: string;
+    pageCount?: number;
+    description?: string;
+    printGuidance?: string;
+    ageBand?: string;
+    status: string;
+    fileUrl?: string;
+    thumbnailUrl?: string;
+  };
+}
+
+export interface ActivityCommonsText {
+  _key: string;
+  role: string;
+  presentationMode?: string;
+  notes?: string;
+  text: {
+    _id: string;
+    title: string;
+    slug?: { current: string };
+    kind: string;
+    tradition?: string;
+    body?: unknown[];
+    shortBody?: unknown[];
+    readAloudVersion?: unknown[];
+    estimatedReadAloudMinutes?: number;
+    length?: string;
+    source?: string;
+    status: string;
+  };
+}
+
 export interface Activity {
   _id: string;
   title: string;
@@ -27,6 +67,8 @@ export interface Activity {
   instructions?: unknown[];
   facilitatorGuidance?: { before?: string; during?: string; challenges?: string };
   materials?: Material[];
+  assets?: ActivityAsset[];
+  commonsTexts?: ActivityCommonsText[];
   duration?: { min: number; max: number };
   setting?: string;
   energyLevel?: string;

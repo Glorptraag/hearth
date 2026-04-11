@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { addDays, startOfWeek, format, isSameWeek } from 'date-fns';
 import PlannerGrid from '@/components/planner/PlannerGrid';
 import BottomSheet from '@/components/planner/BottomSheet';
+import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import { sanityClient } from '@/lib/sanity/client';
+import { MODULES_MATERIALS_BATCH_QUERY } from '@/lib/sanity/queries';
+import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
+import { fetchPrintBundle } from '@/components/content/types';
+import { isPrintableAssetKind, type AssetKind } from '@/components/content/types';
 
 interface Learner {
   id: string;
@@ -66,6 +72,15 @@ export default function PlannerClient({
   const [sheetDate, setSheetDate] = useState<string | null>(null);
   const [sheetSession, setSheetSession] = useState<string>('morning');
   const [loading, setLoading] = useState(false);
+  const [showPrintSheet, setShowPrintSheet] = useState(false);
+
+  // Module materials data for indicators and print
+  interface ModuleMaterials {
+    moduleId: string;
+    moduleTitle: string;
+    items: PrintableItem[];
+  }
+  const [moduleMaterials, setModuleMaterials] = useState<ModuleMaterials[]>([]);
 
   const weekDates = getWeekDates(weekStart);
   const todayDate = new Date(today + 'T12:00:00');
@@ -173,6 +188,164 @@ export default function PlannerClient({
 
   const isCurrentWeek = isSameWeek(weekStart, todayDate, { weekStartsOn: 1 });
 
+  // Fetch materials for all modules in current week's entries
+  useEffect(() => {
+    const moduleIds = [...new Set(entries.map((e) => e.moduleId).filter(Boolean))] as string[];
+    if (moduleIds.length === 0) {
+      setModuleMaterials([]);
+      return;
+    }
+
+    let cancelled = false;
+    async function fetchMaterials() {
+      try {
+        const modules = await sanityClient.fetch<Array<{
+          _id: string;
+          title: string;
+          approaches?: Array<{
+            activities?: Array<{
+              _id: string;
+              title: string;
+              assets?: Array<{
+                _key: string;
+                role: string;
+                asset: {
+                  _id: string;
+                  title: string;
+                  slug?: { current: string };
+                  kind: string;
+                  pageCount?: number;
+                  description?: string;
+                  printGuidance?: string;
+                  status: string;
+                  fileUrl?: string;
+                  thumbnailUrl?: string;
+                };
+              }>;
+              commonsTexts?: Array<{
+                _key: string;
+                role: string;
+                presentationMode?: string;
+                text: {
+                  _id: string;
+                  title: string;
+                  slug?: { current: string };
+                  kind: string;
+                  tradition?: string;
+                  estimatedReadAloudMinutes?: number;
+                  length?: string;
+                  source?: string;
+                  status: string;
+                };
+              }>;
+            }>;
+          }>;
+        }>>(MODULES_MATERIALS_BATCH_QUERY, { ids: moduleIds });
+
+        if (cancelled) return;
+
+        const result: ModuleMaterials[] = [];
+        for (const mod of modules) {
+          const items: PrintableItem[] = [];
+          const seenIds = new Set<string>();
+          for (const approach of mod.approaches ?? []) {
+            for (const activity of approach.activities ?? []) {
+              for (const ref of activity.assets ?? []) {
+                if (!ref.asset || seenIds.has(ref.asset._id)) continue;
+                seenIds.add(ref.asset._id);
+                items.push({
+                  id: ref.asset._id,
+                  kind: 'asset',
+                  assetKind: ref.asset.kind as AssetKind,
+                  title: ref.asset.title,
+                  thumbnailUrl: ref.asset.thumbnailUrl ?? null,
+                  pageCount: ref.asset.pageCount ?? 0,
+                  description: ref.asset.description,
+                  role: ref.role as PrintableItem['role'],
+                  isPrintable: isPrintableAssetKind(ref.asset.kind as AssetKind),
+                });
+              }
+              for (const ref of activity.commonsTexts ?? []) {
+                if (!ref.text || seenIds.has(ref.text._id)) continue;
+                seenIds.add(ref.text._id);
+                items.push({
+                  id: ref.text._id,
+                  kind: 'commonsText',
+                  commonsKind: ref.text.kind as PrintableItem['commonsKind'],
+                  title: ref.text.title,
+                  thumbnailUrl: null,
+                  pageCount: ref.text.estimatedReadAloudMinutes ?? 0,
+                  role: ref.role as PrintableItem['role'],
+                  isPrintable: true,
+                });
+              }
+            }
+          }
+          if (items.length > 0) {
+            result.push({ moduleId: mod._id, moduleTitle: mod.title, items });
+          }
+        }
+        setModuleMaterials(result);
+      } catch {
+        setModuleMaterials([]);
+      }
+    }
+    fetchMaterials();
+    return () => { cancelled = true; };
+  }, [entries]);
+
+  // Set of moduleIds that have materials (for card indicators)
+  const moduleIdsWithMaterials = useMemo(
+    () => new Set(moduleMaterials.map((m) => m.moduleId)),
+    [moduleMaterials],
+  );
+
+  // Build print sheet groups — deduplicate across modules, group by day
+  const printSheetGroups = useMemo(() => {
+    const seenIds = new Set<string>();
+    const dayGroups = new Map<string, PrintableItem[]>();
+
+    for (const entry of entries) {
+      if (!entry.moduleId) continue;
+      const modMat = moduleMaterials.find((m) => m.moduleId === entry.moduleId);
+      if (!modMat) continue;
+
+      const dayLabel = (() => {
+        try {
+          const d = new Date(entry.date + 'T12:00:00');
+          return format(d, 'EEEE');
+        } catch {
+          return entry.date;
+        }
+      })();
+
+      for (const item of modMat.items) {
+        if (seenIds.has(item.id)) continue;
+        seenIds.add(item.id);
+        if (!dayGroups.has(dayLabel)) dayGroups.set(dayLabel, []);
+        dayGroups.get(dayLabel)!.push(item);
+      }
+    }
+
+    return Array.from(dayGroups.entries()).map(([label, items]) => ({ label, items }));
+  }, [entries, moduleMaterials]);
+
+  const totalMaterialCount = printSheetGroups.reduce((sum, g) => sum + g.items.length, 0);
+
+  async function handlePrintGenerate(selection: PrintSelection): Promise<PrintBundleResponse> {
+    const allItems = printSheetGroups.flatMap((g) => g.items);
+    const items = selection.itemIds
+      .map((id) => allItems.find((i) => i.id === id))
+      .filter(Boolean)
+      .map((i) => ({ id: i!.id, kind: i!.kind }));
+
+    return fetchPrintBundle(items, {
+      copies: selection.copies,
+      combine: selection.combine,
+      coverTitle: `Week of ${format(weekStart, 'yyyy-MM-dd')}`,
+    });
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-md py-xl lg:px-xl">
       {/* Week navigation */}
@@ -204,7 +377,7 @@ export default function PlannerClient({
         </button>
       </div>
 
-      {/* Week label */}
+      {/* Week label + print action */}
       <div className="mb-lg flex items-center gap-sm">
         <span className="font-sans text-[0.75rem] text-text-muted">
           {formatWeekLabel(weekStart)}
@@ -219,6 +392,15 @@ export default function PlannerClient({
         )}
         {loading && (
           <span className="font-sans text-xs text-text-muted animate-pulse">Loading...</span>
+        )}
+        {totalMaterialCount > 0 && (
+          <button
+            onClick={() => setShowPrintSheet(true)}
+            className="ml-auto flex items-center gap-xs rounded-md border border-border-subtle bg-surface-panel px-sm py-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:border-border-medium hover:text-ember transition-all duration-200"
+            title="Print materials for this week"
+          >
+            📄 Print ({totalMaterialCount})
+          </button>
         )}
       </div>
 
@@ -262,6 +444,7 @@ export default function PlannerClient({
         learners={learners}
         today={today}
         isCurrentOrFutureWeek={isCurrentOrFutureWeek}
+        moduleIdsWithMaterials={moduleIdsWithMaterials}
         onAdd={handleOpenSheet}
         onToggle={handleToggle}
         onDelete={handleDelete}
@@ -278,6 +461,19 @@ export default function PlannerClient({
         onClose={() => setSheetOpen(false)}
         onAdd={handleAddEntry}
       />
+
+      {/* Print Sheet */}
+      {showPrintSheet && (
+        <PrintSheet
+          isOpen={showPrintSheet}
+          title={`Print — Week of ${format(weekStart, 'd MMM')}`}
+          subtitle={`${totalMaterialCount} material${totalMaterialCount !== 1 ? 's' : ''} across ${entries.length} planned activit${entries.length !== 1 ? 'ies' : 'y'}`}
+          groups={printSheetGroups}
+          defaultCopies={learners.length || 1}
+          onClose={() => setShowPrintSheet(false)}
+          onGenerate={handlePrintGenerate}
+        />
+      )}
     </div>
   );
 }

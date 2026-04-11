@@ -1,5 +1,5 @@
 import { sanityWriteClient, sanityClient } from './client';
-import { autoSlug, ref, keyedRefs, key, blockText } from './helpers';
+import { autoSlug, ref, keyedRefs, key, blockText, assetRef, commonsTextRef } from './helpers';
 
 type SanityDoc = Record<string, unknown> & { _id?: string; _type: string };
 
@@ -155,10 +155,115 @@ export async function createBadge(input: CreateBadge) {
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
+// ── Asset ────────────────────────────────────────────────────────────────────
+
+type AssetKind = 'template' | 'worksheet' | 'reference' | 'card_set' | 'handout' | 'audio' | 'manipulative';
+type AssetLicense = 'hearth_proprietary' | 'cc_by' | 'cc_by_sa' | 'public_domain' | 'commissioned' | 'fair_use_reference';
+
+interface CreateAsset {
+  _id?: string;
+  title: string;
+  slug?: string;
+  kind: AssetKind;
+  pageCount?: number;
+  description?: string;
+  printGuidance?: string;
+  ageBand?: string;
+  license?: AssetLicense;
+  source?: string;
+  sourceUrl?: string;
+  tags?: string[];
+  commonsTextIds?: string[];
+  status?: Status;
+}
+
+export async function createAsset(input: CreateAsset) {
+  const doc: SanityDoc = {
+    _type: 'asset',
+    title: input.title,
+    slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
+    kind: input.kind,
+    status: input.status ?? 'draft',
+  };
+  if (input._id) doc._id = input._id;
+  if (input.pageCount != null) doc.pageCount = input.pageCount;
+  if (input.description) doc.description = input.description;
+  if (input.printGuidance) doc.printGuidance = input.printGuidance;
+  if (input.ageBand) doc.ageBand = input.ageBand;
+  if (input.license) doc.license = input.license;
+  if (input.source) doc.source = input.source;
+  if (input.sourceUrl) doc.sourceUrl = input.sourceUrl;
+  if (input.tags) doc.tags = input.tags;
+  if (input.commonsTextIds) doc.relatedCommonsTexts = keyedRefs(input.commonsTextIds);
+  return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
+}
+
+// ── Commons Text ────────────────────────────────────────────────────────────
+
+type CommonsKind = 'fable' | 'fairy_tale' | 'folk_tale' | 'scripture' | 'parable' | 'psalm' | 'proverb' | 'poem' | 'nursery_rhyme' | 'myth' | 'primary_source' | 'story';
+type CommonsLicense = 'public_domain' | 'cc_by' | 'cc_by_sa';
+type CommonsLength = 'micro' | 'short' | 'medium' | 'long';
+
+interface CreateCommonsText {
+  _id?: string;
+  title: string;
+  slug?: string;
+  kind: CommonsKind;
+  tradition?: string;
+  body: string | ReturnType<typeof blockText>;
+  shortBody?: string | ReturnType<typeof blockText>;
+  readAloudVersion?: string | ReturnType<typeof blockText>;
+  estimatedReadAloudMinutes?: number;
+  length?: CommonsLength;
+  readingLevel?: string;
+  themes?: string[];
+  moralOrLesson?: string;
+  source: string;
+  sourceUrl?: string;
+  license?: CommonsLicense;
+  assetIds?: string[];
+  relatedTextIds?: string[];
+  tags?: string[];
+  status?: Status;
+}
+
+export async function createCommonsText(input: CreateCommonsText) {
+  const doc: SanityDoc = {
+    _type: 'commonsText',
+    title: input.title,
+    slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
+    kind: input.kind,
+    body: typeof input.body === 'string' ? blockText(input.body) : input.body,
+    source: input.source,
+    license: input.license ?? 'public_domain',
+    status: input.status ?? 'draft',
+  };
+  if (input._id) doc._id = input._id;
+  if (input.tradition) doc.tradition = input.tradition;
+  if (input.shortBody) {
+    doc.shortBody = typeof input.shortBody === 'string' ? blockText(input.shortBody) : input.shortBody;
+  }
+  if (input.readAloudVersion) {
+    doc.readAloudVersion = typeof input.readAloudVersion === 'string' ? blockText(input.readAloudVersion) : input.readAloudVersion;
+  }
+  if (input.estimatedReadAloudMinutes != null) doc.estimatedReadAloudMinutes = input.estimatedReadAloudMinutes;
+  if (input.length) doc.length = input.length;
+  if (input.readingLevel) doc.readingLevel = input.readingLevel;
+  if (input.themes) doc.themes = input.themes;
+  if (input.moralOrLesson) doc.moralOrLesson = input.moralOrLesson;
+  if (input.sourceUrl) doc.sourceUrl = input.sourceUrl;
+  if (input.assetIds) doc.relatedAssets = keyedRefs(input.assetIds);
+  if (input.relatedTextIds) doc.relatedTexts = keyedRefs(input.relatedTextIds);
+  if (input.tags) doc.tags = input.tags;
+  return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
+}
+
 // ── Activity ─────────────────────────────────────────────────────────────────
 
 interface MaterialInput { name: string; required?: boolean; alternative?: string }
 interface FacilitatorGuidance { before?: string; during?: string; challenges?: string }
+interface AssetRefInput { assetId: string; role?: 'core' | 'optional' | 'extension'; notes?: string }
+interface CommonsTextRefInput { textId: string; role?: 'core' | 'optional' | 'extension'; presentationMode?: 'read_aloud' | 'child_reads' | 'reference_only' | 'memorisation'; notes?: string }
 
 interface CreateActivity {
   _id?: string;
@@ -169,6 +274,8 @@ interface CreateActivity {
   instructions: string | ReturnType<typeof blockText>;
   facilitatorGuidance?: FacilitatorGuidance;
   materials?: MaterialInput[];
+  assetRefs?: AssetRefInput[];
+  commonsTextRefs?: CommonsTextRefInput[];
   duration?: { min: number; max: number };
   setting?: Setting;
   energyLevel?: EnergyLevel;
@@ -198,6 +305,12 @@ export async function createActivity(input: CreateActivity) {
       if (m.alternative) o.alternative = m.alternative;
       return o;
     });
+  }
+  if (input.assetRefs) {
+    doc.assets = input.assetRefs.map((a) => assetRef(a.assetId, a.role ?? 'core', a.notes));
+  }
+  if (input.commonsTextRefs) {
+    doc.commonsTexts = input.commonsTextRefs.map((c) => commonsTextRef(c.textId, c.role ?? 'core', c.presentationMode ?? 'read_aloud', c.notes));
   }
   if (input.duration) doc.duration = input.duration;
   if (input.setting) doc.setting = input.setting;
@@ -276,6 +389,17 @@ export async function createModule(input: CreateModule) {
 
 // ── Pack ─────────────────────────────────────────────────────────────────────
 
+interface AssetCounts {
+  total: number;
+  template?: number;
+  worksheet?: number;
+  reference?: number;
+  card_set?: number;
+  handout?: number;
+  audio?: number;
+  manipulative?: number;
+}
+
 interface CreatePack {
   _id?: string;
   title: string;
@@ -289,6 +413,8 @@ interface CreatePack {
   termWeeks?: number;
   moduleCount?: number;
   totalActivities?: number;
+  assetCounts?: AssetCounts;
+  commonsTextCount?: number;
   worldview?: 'christian-classical' | 'secular' | 'neutral';
   availability?: 'included' | 'premium';
   creator?: string;
@@ -315,6 +441,8 @@ export async function createPack(input: CreatePack) {
   if (input.termWeeks) doc.termWeeks = input.termWeeks;
   if (input.moduleCount != null) doc.moduleCount = input.moduleCount;
   if (input.totalActivities != null) doc.totalActivities = input.totalActivities;
+  if (input.assetCounts) doc.assetCounts = input.assetCounts;
+  if (input.commonsTextCount != null) doc.commonsTextCount = input.commonsTextCount;
   if (input.worldview) doc.worldview = input.worldview;
   if (input.creator) doc.creator = input.creator;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);

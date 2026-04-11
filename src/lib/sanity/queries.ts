@@ -1,18 +1,23 @@
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
-  availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges)
+  availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges),
+  assetCounts, commonsTextCount
 }`;
 
 // Single pack with full module tree
 export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]{
   ...,
+  assetCounts,
+  commonsTextCount,
   modules[]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
     approaches[]->{
       _id, title, slug, modality,
       activities[]->{
-        _id, title, slug, summary, duration, setting, energyLevel
+        _id, title, slug, summary, duration, setting, energyLevel,
+        "assetCount": count(assets),
+        "commonsTextCount": count(commonsTexts)
       }
     }
   },
@@ -20,6 +25,8 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]
 }`;
 
 // Single module with approaches and activities
+// NOTE: fileUrl intentionally excluded — this query runs client-side.
+// Downloads go through /api/assets/download which checks entitlements.
 export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
   ...,
   approaches[]->{
@@ -27,7 +34,19 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
     activities[]->{
       ...,
       capabilityThreads[]->{ _id, title, domain },
-      enabledBadges[]->{ _id, title, emoji }
+      enabledBadges[]->{ _id, title, emoji },
+      assets[]{
+        _key, role, notes,
+        asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
+          "thumbnailUrl": thumbnail.asset->url
+        }
+      },
+      commonsTexts[]{
+        _key, role, presentationMode, notes,
+        text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
+          estimatedReadAloudMinutes, length, source, status
+        }
+      }
     }
   },
   capabilityThreads[]->{ _id, title, domain, description },
@@ -35,10 +54,23 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
 }`;
 
 // Single activity with full content
+// NOTE: fileUrl intentionally excluded — this query runs client-side.
 export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id][0]{
   ...,
   capabilityThreads[]->{ _id, title, domain },
-  enabledBadges[]->{ _id, title, emoji }
+  enabledBadges[]->{ _id, title, emoji },
+  assets[]{
+    _key, role, notes,
+    asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
+      "thumbnailUrl": thumbnail.asset->url
+    }
+  },
+  commonsTexts[]{
+    _key, role, presentationMode, notes,
+    text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
+      estimatedReadAloudMinutes, length, source, status
+    }
+  }
 }`;
 
 // Pedagogy overlay for an activity + framework
@@ -99,6 +131,89 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
     approaches[]->{
       _id, title, modality,
       "activityCount": count(activities)
+    }
+  }
+}`;
+
+// Single asset with full metadata
+export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id][0]{
+  ...,
+  "fileUrl": file.asset->url,
+  "thumbnailUrl": thumbnail.asset->url,
+  relatedCommonsTexts[]->{ _id, title, slug, kind }
+}`;
+
+// Single commons text with full content
+export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id][0]{
+  ...,
+  relatedAssets[]->{ _id, title, slug, kind },
+  relatedTexts[]->{ _id, title, slug, kind }
+}`;
+
+// All assets and commons texts for a set of activities (batch fetch for planner/module)
+// NOTE: fileUrl intentionally excluded — this query runs client-side.
+export const ACTIVITIES_MATERIALS_QUERY = `*[_type == "activity" && _id in $ids]{
+  _id, title,
+  assets[]{
+    _key, role, notes,
+    asset->{ _id, title, slug, kind, pageCount, description, printGuidance, status,
+      "thumbnailUrl": thumbnail.asset->url
+    }
+  },
+  commonsTexts[]{
+    _key, role, presentationMode, notes,
+    text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
+  }
+}`;
+
+// Reverse lookup: which packs contain a given asset (for entitlement check)
+export const ASSET_ENTITLEMENT_QUERY = `*[_type == "pack" && references($assetId)]{ _id }`;
+
+// Reverse lookup: which packs contain a given commons text (for entitlement check)
+export const COMMONS_TEXT_ENTITLEMENT_QUERY = `*[_type == "pack" && references($textId)]{ _id }`;
+
+// Batch fetch materials for multiple modules (used by weekly planner print)
+// NOTE: fileUrl intentionally excluded — this query runs client-side.
+export const MODULES_MATERIALS_BATCH_QUERY = `*[_type == "module" && _id in $ids]{
+  _id, title,
+  approaches[]->{
+    activities[]->{
+      _id, title,
+      assets[]{
+        _key, role,
+        asset->{ _id, title, slug, kind, pageCount, description, printGuidance, status,
+          "thumbnailUrl": thumbnail.asset->url
+        }
+      },
+      commonsTexts[]{
+        _key, role, presentationMode,
+        text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
+      }
+    }
+  }
+}`;
+
+// Pack materials for marketplace preview and library view
+// NOTE: fileUrl intentionally excluded — this query runs client-side.
+// Downloads go through /api/assets/download which checks entitlements.
+export const PACK_MATERIALS_QUERY = `*[_type == "pack" && _id == $packId][0]{
+  _id, title,
+  modules[]->{
+    _id, title,
+    approaches[]->{
+      activities[]->{
+        _id, title,
+        assets[]{
+          _key, role, notes,
+          asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
+            "thumbnailUrl": thumbnail.asset->url
+          }
+        },
+        commonsTexts[]{
+          _key, role, presentationMode, notes,
+          text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
+        }
+      }
     }
   }
 }`;

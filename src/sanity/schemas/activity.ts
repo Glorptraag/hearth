@@ -57,6 +57,94 @@ export const activity = defineType({
       ],
     }),
     defineField({
+      name: 'assets',
+      title: 'Assets (Hearth-supplied)',
+      type: 'array',
+      description: 'Printables, references, and media that Hearth provides for this activity',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'asset',
+              title: 'Asset',
+              type: 'reference',
+              to: [{ type: 'asset' }],
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'role',
+              title: 'Role',
+              type: 'string',
+              initialValue: 'core',
+              options: {
+                list: [
+                  { title: 'Core', value: 'core' },
+                  { title: 'Optional', value: 'optional' },
+                  { title: 'Extension', value: 'extension' },
+                ],
+              },
+            }),
+            defineField({ name: 'notes', title: 'Usage Notes', type: 'string' }),
+          ],
+          preview: {
+            select: { title: 'asset.title', subtitle: 'role' },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: 'commonsTexts',
+      title: 'Commons Texts (Hearth-supplied)',
+      type: 'array',
+      description: 'Public-domain text content for reading, memorisation, or reference',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'text',
+              title: 'Commons Text',
+              type: 'reference',
+              to: [{ type: 'commonsText' }],
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'role',
+              title: 'Role',
+              type: 'string',
+              initialValue: 'core',
+              options: {
+                list: [
+                  { title: 'Core', value: 'core' },
+                  { title: 'Optional', value: 'optional' },
+                  { title: 'Extension', value: 'extension' },
+                ],
+              },
+            }),
+            defineField({
+              name: 'presentationMode',
+              title: 'Presentation Mode',
+              type: 'string',
+              initialValue: 'read_aloud',
+              options: {
+                list: [
+                  { title: 'Read Aloud', value: 'read_aloud' },
+                  { title: 'Child Reads', value: 'child_reads' },
+                  { title: 'Reference Only', value: 'reference_only' },
+                  { title: 'Memorisation', value: 'memorisation' },
+                ],
+              },
+            }),
+            defineField({ name: 'notes', title: 'Usage Notes', type: 'string' }),
+          ],
+          preview: {
+            select: { title: 'text.title', subtitle: 'role' },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: 'duration',
       title: 'Duration (minutes)',
       type: 'object',

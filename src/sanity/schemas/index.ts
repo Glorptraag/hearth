@@ -15,6 +15,8 @@ import { pedagogyFacilitationVocabulary } from './pedagogyFacilitationVocabulary
 import { pedagogyContraindication } from './pedagogyContraindication';
 import { pedagogyWorkedExample } from './pedagogyWorkedExample';
 import { moduleSkeleton } from './moduleSkeleton';
+import { asset } from './asset';
+import { commonsText } from './commonsText';
 
 export const schemaTypes = [
   // Pedagogical Knowledge Base
@@ -28,6 +30,8 @@ export const schemaTypes = [
   // Curriculum content
   capabilityThread,
   badge,
+  asset,
+  commonsText,
   activity,
   approach,
   moduleSchema,

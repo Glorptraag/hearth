@@ -68,6 +68,7 @@ type Entry = {
   status: string;
   createdAt: string;
   source: string;
+  sourceModuleId: string | null;
 };
 
 type BadgeAward = {
@@ -833,9 +834,19 @@ export default function PortfolioPage() {
                             </div>
                           </div>
                         )}
-                        <button className="mt-xs font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
-                          ✓ Mark as work sample
-                        </button>
+                        <div className="flex items-center gap-md mt-xs">
+                          <button className="font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
+                            ✓ Mark as work sample
+                          </button>
+                          {entry.sourceModuleId && (
+                            <a
+                              href={`/module/${entry.sourceModuleId}`}
+                              className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                            >
+                              📄 View activity materials
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

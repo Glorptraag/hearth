@@ -179,13 +179,27 @@ export const hashChunk = computeContentHash;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolvePedagogyKey(doc: SanityPKBDocument): string {
+  // Expanded framework reference (batch script path): framework->{ slug }
+  const fw = doc.framework;
+  if (fw) {
+    if (typeof fw === 'object' && typeof fw.slug === 'string' && fw.slug) {
+      return fw.slug;
+    }
+    if (typeof fw === 'object' && typeof fw._ref === 'string' && fw._ref) {
+      const ref = fw._ref as string;
+      const dotIdx = ref.indexOf('.');
+      return dotIdx >= 0 ? ref.slice(dotIdx + 1) : ref;
+    }
+  }
+
+  // Legacy fallback: pedagogyKey field (older documents)
   const pk = doc.pedagogyKey;
-  if (!pk) return 'unknown';
-  if (typeof pk === 'string') return pk;
-  if (typeof pk === 'object' && pk._ref) {
+  if (typeof pk === 'string' && pk) return pk;
+  if (typeof pk === 'object' && pk?._ref) {
     const ref = pk._ref as string;
     const dotIdx = ref.indexOf('.');
     return dotIdx >= 0 ? ref.slice(dotIdx + 1) : ref;
   }
+
   return 'unknown';
 }

@@ -13,9 +13,15 @@ import {
 
 export async function POST(request: NextRequest) {
   // 1. Verify auth
+  const secret = process.env.SANITY_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { error: 'Server misconfiguration: missing auth secret' },
+      { status: 500 }
+    );
+  }
   const authHeader = request.headers.get('authorization');
-  const expectedToken = `Bearer ${process.env.SANITY_WEBHOOK_SECRET}`;
-  if (!authHeader || authHeader !== expectedToken) {
+  if (!authHeader || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -13,9 +13,15 @@ const retrievalSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const secret = process.env.PEDAGOGY_RETRIEVAL_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { error: 'Server misconfiguration: missing auth secret' },
+      { status: 500 }
+    );
+  }
   const authHeader = request.headers.get('authorization');
-  const expectedToken = `Bearer ${process.env.PEDAGOGY_RETRIEVAL_SECRET}`;
-  if (!authHeader || authHeader !== expectedToken) {
+  if (!authHeader || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

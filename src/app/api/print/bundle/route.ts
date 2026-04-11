@@ -83,8 +83,11 @@ export async function POST(request: NextRequest) {
         try {
           const loaded = await PDFDocument.load(buffer, { ignoreEncryption: true });
           totalPages += loaded.getPageCount();
-        } catch { /* count will be approximate */ }
-        pdfBuffers.push(buffer);
+          pdfBuffers.push(buffer);
+        } catch {
+          warnings.push({ itemId: item.id, reason: `Non-PDF asset (${asset.kind || 'unknown'}) cannot be included in print bundles` });
+          continue;
+        }
       } else {
         // commonsText — render to PDF
         const text = await sanityClient.fetch<{
@@ -141,10 +144,8 @@ export async function POST(request: NextRequest) {
     pdfBuffers.unshift(coverBytes);
   }
 
-  // Merge all PDFs
-  const mergedBytes = combine
-    ? await mergePdfs(pdfBuffers, copies)
-    : await mergePdfs(pdfBuffers, copies); // Even non-combine still merges for now (separate files is v1.1)
+  // Merge all PDFs into a single document
+  const mergedBytes = await mergePdfs(pdfBuffers, copies);
 
   // Generate filename
   const filename = coverTitle

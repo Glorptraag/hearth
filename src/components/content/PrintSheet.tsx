@@ -257,14 +257,14 @@ export function PrintSheet({
                 />
                 <span className="font-sans text-sm text-text-primary">Combine printables into single PDF</span>
               </label>
-              <label className="flex items-center gap-sm cursor-pointer">
+              <label className="flex items-center gap-sm cursor-not-allowed opacity-50">
                 <input
                   type="radio"
                   checked={!combine}
-                  onChange={() => setCombine(false)}
+                  disabled
                   className="accent-ember"
                 />
-                <span className="font-sans text-sm text-text-primary">Download as separate files</span>
+                <span className="font-sans text-sm text-text-muted">Download as separate files (coming soon)</span>
               </label>
             </div>
           </div>

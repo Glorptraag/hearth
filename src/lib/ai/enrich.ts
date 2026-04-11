@@ -7,6 +7,7 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { aiPipelineLogs } from '@/lib/db/schema';
+import { buildPedagogyContext } from './pedagogy-context';
 
 const VALID_THREAD_IDS = new Set([
   'L1','L2','L3','L4','L5','L6','L7','L8','L9',
@@ -78,7 +79,7 @@ RULES:
 - Only use thread IDs from the taxonomy above. Never invent IDs.
 - Only use real AC V9 descriptor codes (format: AC9[Subject][Year][Strand][Number]). If unsure, omit.
 - Per-child signals are required if multiple children participated.
-- insight_suggestions: 1-3 short sentences a parent would find encouraging and specific. Use family's pedagogical philosophy if provided.
+- insight_suggestions: 1-3 short sentences a parent would find encouraging and specific. When pedagogy reference material is provided, ground suggestions in that material and cite sources naturally (e.g. "This aligns with Charlotte Mason's principle of..."). When contraindications are present, avoid suggesting flagged practices.
 - If entry text is very thin (<20 words), return minimal mappings with low confidence.
 - journey_observation: Include ONLY when you detect a genuinely meaningful pattern — cross-domain connection (learning from one area applied to another), independence marker (child self-directed, initiated, or persisted without adult prompting), metacognition (child reflecting on their own learning process), or transfer of learning (applying prior knowledge to a new context). Aim for roughly 1 per 5 entries — do NOT include for every entry. When included: 1-2 warm, interpretive sentences written from the facilitator's perspective. Set to null when not warranted.`;
 
@@ -153,7 +154,7 @@ async function assembleContext(entryId: string, familyId: string) {
   return { entry, settings, childRecords, activeThreads, recentEntries: recent };
 }
 
-function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): string {
+async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): Promise<string> {
   const { entry, settings, childRecords, activeThreads, recentEntries } = ctx;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 
@@ -165,9 +166,18 @@ function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): stri
     })
     .join(', ');
 
+  const childAges = childRecords
+    .map((c) => {
+      const dob = c.dateOfBirth ? new Date(c.dateOfBirth) : null;
+      return dob ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+    })
+    .filter((a): a is number => a !== null);
+
   const threadsLine = childRecords
     .map((c) => `${c.name}: ${(activeThreads[c.name] ?? []).join(', ') || 'none yet'}`)
     .join('\n');
+
+  const activeThreadList = childRecords.flatMap((c) => activeThreads[c.name] ?? []);
 
   const recentLine = recentEntries
     .map((e) => `- ${e.title}: ${(e.description ?? '').slice(0, 80)}`)
@@ -193,11 +203,21 @@ function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): stri
         .join(', ')
     : '';
 
+  // Build pedagogy context (retrieval + formatting, gated by PEDAGOGY_KB_ENABLED)
+  const pedagogySection = await buildPedagogyContext({
+    entryTitle: entry.title ?? '',
+    entryDescription: entry.description ?? '',
+    framework: pedagogy,
+    childAges,
+    capabilityThreads: activeThreadList,
+  });
+
   return `FAMILY CONTEXT:
-Philosophy: ${pedagogy}
 Children on this entry: ${childrenLine}
 Active threads:
 ${threadsLine}
+
+${pedagogySection}
 
 RECENT ENTRIES (context):
 ${recentLine || '(none yet)'}
@@ -255,7 +275,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
   try {
     const ctx = await assembleContext(entryId, familyId);
-    const userPrompt = buildUserPrompt(ctx);
+    const userPrompt = await buildUserPrompt(ctx);
     const childNames = ctx.childRecords.map((c) => c.name);
 
     const client = new Anthropic();

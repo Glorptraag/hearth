@@ -1,3 +1,7 @@
+// Chunk text composition rules for the Pedagogy Knowledge Base.
+// Each layer composes its embedding text differently to optimise retrieval quality.
+// SHA-256 hash is used for change detection — re-embed only when hash changes.
+
 import { createHash } from 'crypto';
 
 export const PEDAGOGY_LAYER_TYPES = [
@@ -11,7 +15,15 @@ export const PEDAGOGY_LAYER_TYPES = [
 
 export type PedagogyLayerType = (typeof PEDAGOGY_LAYER_TYPES)[number];
 
-const TYPE_TO_LAYER: Record<PedagogyLayerType, string> = {
+export type PkbLayer =
+  | 'source_excerpt'
+  | 'practice_pattern'
+  | 'observational_marker'
+  | 'facilitation_vocabulary'
+  | 'contraindication'
+  | 'worked_example';
+
+const TYPE_TO_LAYER: Record<PedagogyLayerType, PkbLayer> = {
   pedagogySourceExcerpt: 'source_excerpt',
   pedagogyPracticePattern: 'practice_pattern',
   pedagogyObservationalMarker: 'observational_marker',
@@ -31,53 +43,73 @@ export function isPedagogyType(type: string): type is PedagogyLayerType {
   return PEDAGOGY_LAYER_TYPES.includes(type as PedagogyLayerType);
 }
 
-export function getLayerKey(type: PedagogyLayerType): string {
+export function getLayerKey(type: PedagogyLayerType): PkbLayer {
   return TYPE_TO_LAYER[type];
 }
 
-export function buildChunkText(doc: SanityPKBDocument): string {
-  switch (doc._type) {
-    case 'pedagogySourceExcerpt':
-      return doc.text ?? '';
+/** Map a Sanity document type name to its PKB layer identifier. */
+export function sanityTypeToPkbLayer(sanityType: string): PkbLayer | null {
+  return TYPE_TO_LAYER[sanityType as PedagogyLayerType] ?? null;
+}
 
-    case 'pedagogyPracticePattern':
-      return [
-        doc.triggerTitle,
-        doc.triggerContext,
-        doc.traditionResponse,
-      ]
+// ─── Composition rules ────────────────────────────────────────────────────────
+
+/**
+ * Compose the embedding text for a PKB document.
+ * Accepts either a full SanityPKBDocument (uses _type to dispatch)
+ * or a layer key + raw doc fields.
+ */
+export function buildChunkText(docOrLayer: SanityPKBDocument | PkbLayer, rawDoc?: Record<string, unknown>): string {
+  if (typeof docOrLayer === 'string' && rawDoc) {
+    return buildByLayer(docOrLayer as PkbLayer, rawDoc);
+  }
+  const doc = docOrLayer as SanityPKBDocument;
+  return buildByLayer(getLayerKey(doc._type), doc);
+}
+
+function buildByLayer(layer: PkbLayer, doc: Record<string, unknown>): string {
+  switch (layer) {
+    case 'source_excerpt':
+      return str(doc.text);
+
+    case 'practice_pattern':
+      return [str(doc.triggerTitle), str(doc.triggerContext), str(doc.traditionResponse)]
         .filter(Boolean)
         .join('\n\n');
 
-    case 'pedagogyObservationalMarker':
-      return [
-        doc.markerName,
-        doc.whatItIndicates,
-        ...(Array.isArray(doc.markersToLookFor) ? doc.markersToLookFor : []),
-      ]
+    case 'observational_marker': {
+      const markers = Array.isArray(doc.markersToLookFor)
+        ? (doc.markersToLookFor as string[]).map((m) => `Look for: ${m.trim()}`)
+        : [];
+      return [str(doc.markerName), str(doc.whatItIndicates), ...markers]
         .filter(Boolean)
         .join('\n\n');
-
-    case 'pedagogyFacilitationVocabulary': {
-      const verbs = Array.isArray(doc.verbs)
-        ? doc.verbs.map((v: { verb: string; meaning: string }) => `${v.verb}: ${v.meaning}`).join('\n')
-        : '';
-      const restraints = Array.isArray(doc.characteristicRestraints)
-        ? doc.characteristicRestraints.join('\n')
-        : '';
-      const scripts = Array.isArray(doc.microScripts)
-        ? doc.microScripts.map((s: { situation: string; script: string }) => `${s.situation}: ${s.script}`).join('\n')
-        : '';
-      return [verbs, restraints, scripts].filter(Boolean).join('\n\n');
     }
 
-    case 'pedagogyContraindication':
-      return [doc.warnedAgainst, doc.traditionReasoning]
+    case 'facilitation_vocabulary': {
+      const parts: string[] = [];
+      const verbs = doc.verbs as Array<{ verb: string; meaning: string }> | undefined;
+      if (verbs?.length) {
+        parts.push(verbs.map(({ verb, meaning }) => `${verb}: ${meaning}`).join('\n'));
+      }
+      const restraints = doc.characteristicRestraints as string[] | undefined;
+      if (restraints?.length) {
+        parts.push(restraints.map((r) => `Do NOT: ${r}`).join('\n'));
+      }
+      const scripts = doc.microScripts as Array<{ situation: string; script: string }> | undefined;
+      if (scripts?.length) {
+        parts.push(scripts.map(({ situation, script }) => `Situation — ${situation}: ${script}`).join('\n'));
+      }
+      return parts.join('\n\n');
+    }
+
+    case 'contraindication':
+      return [str(doc.warnedAgainst), str(doc.traditionReasoning)]
         .filter(Boolean)
         .join('\n\n');
 
-    case 'pedagogyWorkedExample':
-      return [doc.scenario, doc.interpretationInTraditionVoice]
+    case 'worked_example':
+      return [str(doc.scenario), str(doc.interpretationInTraditionVoice)]
         .filter(Boolean)
         .join('\n\n');
 
@@ -86,13 +118,18 @@ export function buildChunkText(doc: SanityPKBDocument): string {
   }
 }
 
+function str(val: unknown): string {
+  return typeof val === 'string' ? val.trim() : '';
+}
+
+// ─── Metadata ─────────────────────────────────────────────────────────────────
+
 export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unknown> {
   const meta: Record<string, unknown> = {
     layer: getLayerKey(doc._type),
     pedagogyKey: resolvePedagogyKey(doc),
   };
 
-  // Common optional fields
   if (doc.themes) meta.themes = doc.themes;
   if (doc.capabilityThreadRelevance) meta.capabilityThreadRelevance = doc.capabilityThreadRelevance;
   if (doc.capabilityThreadMapping) meta.capabilityThreadMapping = doc.capabilityThreadMapping;
@@ -102,7 +139,6 @@ export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unkno
   if (doc.ageRange) meta.ageRange = doc.ageRange;
   if (doc.authoredBy) meta.authoredBy = doc.authoredBy;
 
-  // Layer-specific
   switch (doc._type) {
     case 'pedagogySourceExcerpt':
       if (doc.excerptId) meta.excerptId = doc.excerptId;
@@ -130,18 +166,23 @@ export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unkno
   return meta;
 }
 
+// ─── Hashing ──────────────────────────────────────────────────────────────────
+
+/** SHA-256 of the composed text — used to skip re-embedding unchanged docs. */
 export function computeContentHash(text: string): string {
-  return createHash('sha256').update(text).digest('hex');
+  return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
+/** Alias used by the batch re-embed script. */
+export const hashChunk = computeContentHash;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function resolvePedagogyKey(doc: SanityPKBDocument): string {
-  // pedagogyKey can be a Sanity reference object { _ref: 'pedagogicalFramework.charlotte_mason' }
-  // or a resolved string. Handle both.
   const pk = doc.pedagogyKey;
   if (!pk) return 'unknown';
   if (typeof pk === 'string') return pk;
   if (typeof pk === 'object' && pk._ref) {
-    // Extract key from ref ID: 'pedagogicalFramework.charlotte_mason' → 'charlotte_mason'
     const ref = pk._ref as string;
     const dotIdx = ref.indexOf('.');
     return dotIdx >= 0 ? ref.slice(dotIdx + 1) : ref;

@@ -1,57 +1,67 @@
-const EMBEDDING_MODEL = 'voyage-3';
-const EMBEDDING_DIMENSIONS = 1024;
+// Voyage AI embedding service — write-time enrichment only.
+// voyage-3 produces 1024-dimensional vectors; batch limit is 128 inputs per call.
+
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';
-const MAX_BATCH_SIZE = 128;
+const MODEL = 'voyage-3';
+export const EMBEDDING_DIMENSIONS = 1024;
+const BATCH_LIMIT = 128;
 
 export const EMBEDDING_CONFIG = {
-  model: EMBEDDING_MODEL,
+  model: MODEL,
   dimensions: EMBEDDING_DIMENSIONS,
 } as const;
 
-async function callVoyageAPI(input: string | string[]): Promise<number[][]> {
-  const apiKey = process.env.VOYAGE_API_KEY;
-  if (!apiKey) throw new Error('VOYAGE_API_KEY is not set');
+interface VoyageResponse {
+  data: Array<{ embedding: number[]; index: number }>;
+  usage: { total_tokens: number };
+}
 
-  const response = await fetch(VOYAGE_API_URL, {
+async function callVoyage(inputs: string[]): Promise<number[][]> {
+  const key = process.env.VOYAGE_API_KEY;
+  if (!key) throw new Error('VOYAGE_API_KEY is not set');
+
+  const res = await fetch(VOYAGE_API_URL, {
     method: 'POST',
     headers: {
+      Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: Array.isArray(input) ? input : [input],
-    }),
+    body: JSON.stringify({ model: MODEL, input: inputs }),
   });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Voyage API error ${response.status}: ${body}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Voyage AI error ${res.status}: ${body}`);
   }
 
-  const data = (await response.json()) as {
-    data: Array<{ embedding: number[]; index: number }>;
-  };
-
-  return data.data
+  const json = (await res.json()) as VoyageResponse;
+  return json.data
+    .slice()
     .sort((a, b) => a.index - b.index)
     .map((d) => d.embedding);
 }
 
 export async function embedText(text: string): Promise<number[]> {
   const truncated = text.slice(0, 30000);
-  const results = await callVoyageAPI(truncated);
-  return results[0];
+  const [embedding] = await callVoyage([truncated]);
+  return embedding;
 }
 
+/**
+ * Embed multiple texts. Automatically batches to stay within the 128-input limit.
+ * Returns embeddings in the same order as the input array.
+ */
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
-  if (texts.length > MAX_BATCH_SIZE) {
-    throw new Error(
-      `Batch size ${texts.length} exceeds Voyage limit of ${MAX_BATCH_SIZE}; split into multiple calls`
-    );
-  }
 
   const truncated = texts.map((t) => t.slice(0, 30000));
-  return callVoyageAPI(truncated);
+  const results: number[][] = new Array(truncated.length);
+  for (let i = 0; i < truncated.length; i += BATCH_LIMIT) {
+    const batch = truncated.slice(i, i + BATCH_LIMIT);
+    const embeddings = await callVoyage(batch);
+    for (let j = 0; j < embeddings.length; j++) {
+      results[i + j] = embeddings[j];
+    }
+  }
+  return results;
 }

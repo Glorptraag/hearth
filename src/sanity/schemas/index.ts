@@ -7,9 +7,25 @@ import { projectStage } from './projectStage';
 import { badge } from './badge';
 import { capabilityThread } from './capabilityThread';
 import { pedagogyOverlay } from './pedagogyOverlay';
+import { pedagogicalFramework } from './pedagogicalFramework';
+import { pedagogySourceExcerpt } from './pedagogySourceExcerpt';
+import { pedagogyPracticePattern } from './pedagogyPracticePattern';
+import { pedagogyObservationalMarker } from './pedagogyObservationalMarker';
+import { pedagogyFacilitationVocabulary } from './pedagogyFacilitationVocabulary';
+import { pedagogyContraindication } from './pedagogyContraindication';
+import { pedagogyWorkedExample } from './pedagogyWorkedExample';
 import { moduleSkeleton } from './moduleSkeleton';
 
 export const schemaTypes = [
+  // Pedagogical Knowledge Base
+  pedagogicalFramework,
+  pedagogySourceExcerpt,
+  pedagogyPracticePattern,
+  pedagogyObservationalMarker,
+  pedagogyFacilitationVocabulary,
+  pedagogyContraindication,
+  pedagogyWorkedExample,
+  // Curriculum content
   capabilityThread,
   badge,
   activity,

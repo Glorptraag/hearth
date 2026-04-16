@@ -10,11 +10,23 @@ interface PedagogyContextOpts {
   capabilityThreads?: string[];
 }
 
-export async function buildPedagogyContext(
+export interface PedagogySource {
+  id: string;
+  layer: string;
+  pedagogyKey: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface PedagogyContextWithSources {
+  prompt: string;
+  sources: PedagogySource[];
+}
+
+export async function buildPedagogyContextWithSources(
   opts: PedagogyContextOpts
-): Promise<string> {
+): Promise<PedagogyContextWithSources> {
   if (process.env.PEDAGOGY_KB_ENABLED !== 'true') {
-    return fallbackContext(opts.framework);
+    return { prompt: fallbackContext(opts.framework), sources: [] };
   }
 
   try {
@@ -34,7 +46,7 @@ export async function buildPedagogyContext(
     });
 
     if (result.fallbackUsed || result.chunks.length === 0) {
-      return fallbackContext(opts.framework);
+      return { prompt: fallbackContext(opts.framework), sources: [] };
     }
 
     // Enforce token budget — estimate tokens as text.length / 4
@@ -48,7 +60,7 @@ export async function buildPedagogyContext(
     }
 
     if (budgetChunks.length === 0) {
-      return fallbackContext(opts.framework);
+      return { prompt: fallbackContext(opts.framework), sources: [] };
     }
 
     const refs = budgetChunks
@@ -58,16 +70,32 @@ export async function buildPedagogyContext(
       )
       .join('\n\n');
 
-    return `<pedagogy_reference_material>
+    const prompt = `<pedagogy_reference_material>
 The family follows the ${opts.framework} pedagogical approach. The following reference material has been retrieved as relevant to this entry. Use it to inform interpretation and suggestions, attributing specific guidance back to its source where appropriate.
 
 ${refs}
 
 </pedagogy_reference_material>`;
+
+    const sources: PedagogySource[] = budgetChunks.map((c) => ({
+      id: c.id,
+      layer: c.layer,
+      pedagogyKey: c.pedagogyKey,
+      metadata: c.metadata,
+    }));
+
+    return { prompt, sources };
   } catch (error) {
     console.error('[pedagogy-context] Retrieval failed, using fallback:', error);
-    return fallbackContext(opts.framework);
+    return { prompt: fallbackContext(opts.framework), sources: [] };
   }
+}
+
+export async function buildPedagogyContext(
+  opts: PedagogyContextOpts
+): Promise<string> {
+  const { prompt } = await buildPedagogyContextWithSources(opts);
+  return prompt;
 }
 
 function fallbackContext(framework: string): string {

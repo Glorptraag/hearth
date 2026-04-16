@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(entries);
 }
 
+const observationDetailSchema = z.object({
+  detail: z.string(),
+  durationMin: z.number().int().positive().optional(),
+});
+
 const createEntrySchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -68,6 +73,8 @@ const createEntrySchema = z.object({
   sourceStageNumber: z.number().optional(),
   sourceSessionId: z.string().uuid().optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
+  observationDetails: z.record(z.string(), observationDetailSchema).optional(),
+  mode: z.enum(['guided', 'quick']).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -93,11 +100,18 @@ export async function POST(request: NextRequest) {
   if ('error' in result) return result.error;
   const parsed = result;
 
+  const { mode, ...entryData } = parsed.data;
+
+  // Log mode for telemetry (informational only — not gated server-side)
+  if (mode) {
+    console.log(JSON.stringify({ event: 'entry_save', mode, familyId: family.id }));
+  }
+
   const [entry] = await db
     .insert(learningEntries)
     .values({
       familyId: family.id,
-      ...parsed.data,
+      ...entryData,
     })
     .returning();
 

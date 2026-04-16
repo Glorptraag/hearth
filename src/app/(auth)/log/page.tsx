@@ -3,12 +3,19 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
-import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
+import { matchKeywords, generateReflectionPrompts, type KeywordMatchResult, type ReflectionPrompt, type SnapshotSignals } from '@/lib/ai/keyword-matcher';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
+import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
+import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
+import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
+import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/components/logger/ObservationChipDetail';
+import type { CoachHint } from '@/lib/logger/coaching/types';
+import type { SnapshotData } from '@/types/snapshot';
+import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 
 type ScaffoldData = {
   session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
@@ -323,6 +330,59 @@ export default function LogPage() {
   const [observations, setObservations] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
+  // ─── Guided Mode state ───
+  type LoggerMode = 'guided' | 'quick';
+  const [loggerMode, setLoggerMode] = useState<LoggerMode>('quick');
+  const [observationDetails, setObservationDetails] = useState<Record<string, ChipDetailValue>>({});
+  const [coachHints, setCoachHints] = useState<CoachHint[]>([]);
+  const [snapshotData, setSnapshotData] = useState<SnapshotData | null>(null);
+  const [snapshotSignals, setSnapshotSignals] = useState<SnapshotSignals | null>(null);
+  const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
+
+  // (a) Resolve logger mode on mount: fetch family entry count + loggerDefaultMode.
+  // Default to Guided if count < 20 and no manual override.
+  useEffect(() => {
+    (async () => {
+      try {
+        const [famRes, snapRes] = await Promise.all([
+          fetch('/api/family'),
+          fetch('/api/snapshot'),
+        ]);
+        if (famRes.ok) {
+          const fam = await famRes.json() as {
+            loggerDefaultMode?: string | null;
+            entryCount?: number;
+          };
+          if (fam.loggerDefaultMode === 'guided' || fam.loggerDefaultMode === 'quick') {
+            setLoggerMode(fam.loggerDefaultMode);
+          } else {
+            // No override — default Guided for families with fewer than 20 entries
+            setLoggerMode((fam.entryCount ?? 0) < 20 ? 'guided' : 'quick');
+          }
+        }
+        if (snapRes.ok) {
+          // /api/snapshot returns the DB row wrapper { snapshotData, snapshotVersion, ... },
+          // not the raw SnapshotData. Unwrap before use.
+          const wrapper = await snapRes.json() as { snapshotData: SnapshotData | null } | null;
+          const snap = wrapper?.snapshotData ?? null;
+          setSnapshotData(snap);
+          if (snap?.children) {
+            const perChild: SnapshotSignals['perChild'] = {};
+            for (const [id, child] of Object.entries(snap.children)) {
+              const active = (child.active_threads ?? []).map((t) => t.thread_id);
+              const quiet = child.gap_analysis?.suggested_focus_threads ?? [];
+              perChild[id] = { active, quiet };
+            }
+            setSnapshotSignals({
+              perChild,
+              onboarding: (snap.family?.total_entries ?? 0) < 20,
+            });
+          }
+        }
+      } catch { /* non-critical — mode stays quick, no snapshot */ }
+    })();
+  }, []);
+
   // Fetch scaffold data when navigating from a hearth session
   useEffect(() => {
     if (!scaffoldSessionId) return;
@@ -418,38 +478,89 @@ export default function LogPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [description, selectedLearners, learners]);
 
+  // Clear post-save insights when parent starts a new entry
+  useEffect(() => {
+    if (description.length > 0) setPostSaveInsights([]);
+  }, [description]);
+
+  // ─── Reflection prompts (Socratic coaching questions) ───
+  const reflectionPrompts = useMemo((): ReflectionPrompt[] => {
+    if (description.length < 10) return [];
+    const engagementByName: Record<string, number> = {};
+    const discoveryByName: Record<string, string> = {};
+    const learnerNamesById: Record<string, string> = {};
+    for (const id of selectedLearners) {
+      const learner = learners.find((l) => l.id === id);
+      if (!learner) continue;
+      learnerNamesById[id] = learner.name;
+      if (engagement[id]) engagementByName[learner.name] = engagement[id];
+      if (discoveries[id]) discoveryByName[learner.name] = discoveries[id];
+    }
+    return generateReflectionPrompts({
+      match: keywordMatch,
+      descriptionLength: description.length,
+      observations,
+      activityType,
+      engagementByName,
+      discoveryByName,
+      snapshotSignals,
+      learnerNamesById,
+    });
+  }, [keywordMatch, description, selectedLearners, learners, engagement, discoveries, observations, activityType, snapshotSignals]);
+
+  // ─── Coach hints (debounced fetch) ───
+  const coachHintsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
+    if (description.length < 20 || selectedLearners.length === 0) {
+      setCoachHints([]);
+      return;
+    }
+    coachHintsDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/logger/coach-hints', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            learnerIds: selectedLearners,
+            activityType,
+            description,
+            observations,
+          }),
+        });
+        if (res.ok) {
+          const hints = await res.json() as CoachHint[];
+          setCoachHints(hints);
+        }
+      } catch { /* non-critical */ }
+    }, 1200);
+    return () => { if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current); };
+  }, [description, activityType, selectedLearners, observations]);
+
   // ─── UI state ───
   const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'badge'; message: string; action?: { label: string; href: string } } | null>(null);
   const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
+  const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
+  const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
   const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
   // ─── Completeness ───
-  const completeness = useMemo(() => {
-    let score = 0;
-    if (selectedLearners.length > 0) score += 20;
-    if (description.length > 20) score += 15;
-    else if (description.length > 0) score += 5;
-    if (selectedLearners.length > 0) {
-      const withDisc = selectedLearners.filter((id) => (discoveries[id] || '').length > 10).length;
-      score += Math.round((withDisc / selectedLearners.length) * 10);
-    }
-    if (activityType) score += 5;
-    if (selectedLearners.length > 0) {
-      const rated = selectedLearners.filter((id) => engagement[id]).length;
-      score += Math.round((rated / selectedLearners.length) * 15);
-    }
-    score += 3; // when always pre-selected
-    if (duration) score += 3;
-    if (location) score += 4;
-    if (observations.length >= 3) score += 15;
-    else score += Math.min(observations.length * 5, 15);
-    if (evidence.length >= 2) score += 10;
-    else if (evidence.length === 1) score += 5;
-    return Math.min(score, 100);
-  }, [selectedLearners, description, discoveries, activityType, engagement, duration, location, observations, evidence]);
+  const completeness = useMemo(() => scoreCompleteness({
+    selectedLearners,
+    description,
+    activityType,
+    engagement,
+    discoveries,
+    observations,
+    observationDetails,
+    duration,
+    location,
+    evidence,
+    mode: loggerMode,
+  }), [selectedLearners, description, discoveries, activityType, engagement, duration, location, observations, evidence, loggerMode, observationDetails]);
 
   const sectionDone = useMemo(
     () => ({
@@ -481,7 +592,7 @@ export default function LogPage() {
     return 'Select who was learning';
   }, [completeness]);
 
-  const canSave = completeness >= 50;
+  const canSave = canSaveEntry(completeness, loggerMode);
 
   // ─── Handlers ───
   const toggleLearner = (id: string) => {
@@ -563,6 +674,8 @@ export default function LogPage() {
           engagementPerLearner: engagement,
           discoveriesPerLearner: discoveries,
           evidenceUrls,
+          observationDetails: loggerMode === 'guided' ? observationDetails : undefined,
+          mode: loggerMode,
           source: scaffoldData ? 'hearth_session' : projectContext.source,
           sourceSessionId: scaffoldData?.session.id,
           projectId: projectContext.projectId,
@@ -572,6 +685,9 @@ export default function LogPage() {
       });
 
       if (!res.ok) throw new Error('Save failed');
+
+      const savedEntry = await res.json() as { id?: string; aiEnrichment?: { pedagogy_sources?: PedagogyAttributionSource[] } };
+      const savedEntryId = savedEntry?.id;
 
       clearDraft();
 
@@ -594,9 +710,46 @@ export default function LogPage() {
       setLocation(null);
       setObservations([]);
       setEvidence([]);
+      setObservationDetails({});
+      setCoachHints([]);
+      setProfileNudge(null);
+      setPedagogySources([]);
 
       // Check badge thresholds after pipeline settles (~3s for enrichment + snapshot rebuild)
       setTimeout(async () => {
+        try {
+          // Fetch enriched entry to display pedagogy attribution + insight suggestions
+          if (savedEntryId) {
+            const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
+            if (enrichedRes.ok) {
+              const enrichedEntry = await enrichedRes.json() as {
+                aiEnrichment?: {
+                  pedagogy_sources?: PedagogyAttributionSource[];
+                  insight_suggestions?: string[];
+                  profile_nudge?: { text: string; thread_id: string } | null;
+                };
+              };
+              const sources = enrichedEntry?.aiEnrichment?.pedagogy_sources ?? [];
+              if (sources.length > 0) {
+                setPedagogySources(sources);
+                setInsightsExpanded(true);
+              }
+              const suggestions = enrichedEntry?.aiEnrichment?.insight_suggestions ?? [];
+              if (suggestions.length > 0) {
+                setPostSaveInsights(suggestions);
+                setInsightsExpanded(true);
+              }
+              const nudge = enrichedEntry?.aiEnrichment?.profile_nudge;
+              if (nudge) {
+                setProfileNudge(nudge);
+                setInsightsExpanded(true);
+              }
+            }
+          }
+        } catch {
+          // non-critical — silently ignore
+        }
+
         try {
           const badgeResults = await Promise.all(
             learnersToCheck.map(async (learnerId) => {
@@ -698,6 +851,7 @@ export default function LogPage() {
             Import from CSV
           </button>
         </div>
+        <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />
         <div className="flex items-center gap-sm">
           <CompletenessRing score={completeness} />
           <div className="hidden sm:block text-left">
@@ -780,6 +934,17 @@ export default function LogPage() {
                 Learning together
               </label>
             )}
+            {/* (b) WatchForTodayStrip — shown below children when selected */}
+            {selectedLearners.length > 0 && (
+              <div className="mt-md">
+                <WatchForTodayStrip
+                  learners={learners
+                    .filter((l) => selectedLearners.includes(l.id))
+                    .map((l) => ({ id: l.id, name: l.name, colourToken: l.colourToken }))}
+                  snapshotData={snapshotData}
+                />
+              </div>
+            )}
           </section>
 
           {/* Section 2: What Happened? */}
@@ -846,6 +1011,22 @@ export default function LogPage() {
                         rows={2}
                         className="w-full min-h-[70px] rounded-md border border-border-subtle bg-surface-body p-sm font-serif text-[0.9375rem] text-text-primary leading-[1.6] placeholder:text-text-muted focus:outline-none focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] resize-y"
                       />
+                      {(() => {
+                        const engLevel = engagement[id];
+                        const discLen = (discoveries[id] ?? '').length;
+                        if (!engLevel || discLen > 20) return null;
+                        const hints: Record<number, string> = {
+                          4: `What specifically delighted ${learner.name}? Something they said or did?`,
+                          3: `What stood out about how ${learner.name} engaged?`,
+                          2: `Was anything unclear or uninteresting to ${learner.name}?`,
+                          1: `What made this hard for ${learner.name}? Did they push through or step away?`,
+                        };
+                        return (
+                          <p className="mt-xs font-sans text-[11px] text-ember/60 italic">
+                            💭 {hints[engLevel]}
+                          </p>
+                        );
+                      })()}
                     </div>
                   );
                 })}
@@ -1042,17 +1223,36 @@ export default function LogPage() {
                       {cat.chips.map((chip) => {
                         const sel = observations.includes(chip);
                         return (
-                          <button
-                            key={chip}
-                            onClick={() => toggleObservation(chip)}
-                            className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
-                              sel
-                                ? `${colorClasses.selectedBg} border ${colorClasses.selectedBorder} text-text-primary`
-                                : 'border border-border-subtle text-text-secondary hover:border-border-medium'
-                            }`}
-                          >
-                            {chip}
-                          </button>
+                          <div key={chip}>
+                            <button
+                              onClick={() => {
+                                toggleObservation(chip);
+                                if (sel) {
+                                  setObservationDetails((prev) => {
+                                    const next = { ...prev };
+                                    delete next[chip];
+                                    return next;
+                                  });
+                                }
+                              }}
+                              className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
+                                sel
+                                  ? `${colorClasses.selectedBg} border ${colorClasses.selectedBorder} text-text-primary`
+                                  : 'border border-border-subtle text-text-secondary hover:border-border-medium'
+                              }`}
+                            >
+                              {chip}
+                            </button>
+                            {loggerMode === 'guided' && sel && DETAIL_CHIPS.has(chip) && (
+                              <ObservationChipDetail
+                                chip={chip}
+                                value={observationDetails[chip] ?? { detail: '' }}
+                                onChange={(val) =>
+                                  setObservationDetails((prev) => ({ ...prev, [chip]: val }))
+                                }
+                              />
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -1131,7 +1331,8 @@ export default function LogPage() {
             </div>
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
-          <InsightsContent match={keywordMatch} />
+          <InsightsContent match={keywordMatch} reflectionPrompts={reflectionPrompts} postSaveInsights={postSaveInsights} coachHints={coachHints} profileNudge={profileNudge} />
+          <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
         </aside>
       </div>}
 
@@ -1152,7 +1353,8 @@ export default function LogPage() {
               <span className="text-ember text-lg" aria-hidden="true">✨</span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
-            <InsightsContent match={keywordMatch} />
+            <InsightsContent match={keywordMatch} reflectionPrompts={reflectionPrompts} postSaveInsights={postSaveInsights} coachHints={coachHints} profileNudge={profileNudge} />
+            <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
           </div>
         )}
       </div>
@@ -1232,94 +1434,172 @@ const THREAD_LABELS: Record<string, string> = {
   EF7: 'Metacognition', EF8: 'Transfer',
 };
 
-function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
-  if (!match) {
-    return (
-      <div className="flex flex-col items-center justify-center py-xl text-center">
-        <span className="text-4xl mb-md opacity-30" aria-hidden="true">🙂</span>
-        <p className="font-serif text-sm text-text-muted italic leading-relaxed">
-          Start describing the activity and I&apos;ll begin finding the learning within it.
-        </p>
-      </div>
-    );
-  }
+function InsightsContent({
+  match,
+  reflectionPrompts,
+  postSaveInsights,
+  coachHints,
+  profileNudge,
+}: {
+  match: KeywordMatchResult | null;
+  reflectionPrompts: ReflectionPrompt[];
+  coachHints: CoachHint[];
+  profileNudge: { text: string; thread_id: string } | null;
+  postSaveInsights: string[];
+}) {
+  const hasDetections = match && (match.subjects.length > 0 || match.threads.length > 0 || match.engagement || match.mentionedChildren.length > 0);
 
-  const hasResults = match.subjects.length > 0 || match.threads.length > 0 || match.engagement || match.mentionedChildren.length > 0;
-
-  if (!hasResults) {
+  // Blank state — no description typed yet
+  if (!match && postSaveInsights.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-xl text-center">
-        <span className="text-4xl mb-md opacity-30" aria-hidden="true">🔍</span>
-        <p className="font-serif text-sm text-text-muted italic leading-relaxed">
-          Keep writing — I&apos;m looking for learning signals...
-        </p>
+      <div className="flex flex-col gap-md">
+        <div className="flex flex-col items-center justify-center py-xl text-center">
+          <span className="text-4xl mb-md opacity-30" aria-hidden="true">🙂</span>
+          <p className="font-serif text-sm text-text-muted italic leading-relaxed">
+            Start describing the activity and I&apos;ll begin finding the learning within it.
+          </p>
+        </div>
+        <div className="rounded-md bg-surface-raised border border-border-subtle p-md">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted mb-xs">Good descriptions include</p>
+          <ul className="space-y-xs">
+            {[
+              'What they were doing and thinking',
+              'A specific moment that surprised you',
+              'Something they said or asked',
+              'How they responded to a challenge',
+            ].map((hint) => (
+              <li key={hint} className="font-serif text-[0.8125rem] text-text-muted leading-snug">· {hint}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-md">
-      <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted">
-        Preliminary — confirmed after save
-      </p>
-
-      {match.subjects.length > 0 && (
-        <div>
-          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Subjects detected</p>
-          <div className="flex flex-wrap gap-xs">
-            {match.subjects.map((s) => (
-              <span key={s} className="rounded-full bg-ember-glow border border-ember/20 px-sm py-xs font-sans text-xs text-text-primary">
-                📐 Looks like {s}
-              </span>
+      {/* Post-save insights from Haiku enrichment */}
+      {postSaveInsights.length > 0 && (
+        <div className="rounded-md bg-ember/[0.07] border border-ember/20 p-md">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-ember mb-sm font-semibold">
+            ✨ Hearth noticed
+          </p>
+          <div className="space-y-sm">
+            {postSaveInsights.map((s, i) => (
+              <p key={i} className="font-serif text-sm text-text-secondary leading-relaxed">
+                {s}
+              </p>
             ))}
           </div>
         </div>
       )}
 
-      {match.threads.length > 0 && (
-        <div>
-          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Capability threads</p>
-          <div className="flex flex-wrap gap-xs">
-            {match.threads.slice(0, 6).map((t) => (
-              <span key={t} className="rounded-full bg-sage/10 border border-sage/20 px-sm py-xs font-sans text-xs text-text-primary">
-                🌱 Possible: {THREAD_LABELS[t] ?? t}
-              </span>
-            ))}
-            {match.threads.length > 6 && (
-              <span className="font-sans text-xs text-text-muted">+{match.threads.length - 6} more</span>
-            )}
-          </div>
+      {/* Post-save profile nudge */}
+      {profileNudge && (
+        <div className="rounded-md bg-sage/[0.07] border border-sage/20 p-md">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-sage mb-sm font-semibold">
+            🌱 Next time, try noticing...
+          </p>
+          <p className="font-serif text-sm text-text-secondary leading-relaxed">
+            {profileNudge.text}
+          </p>
         </div>
       )}
 
-      {match.engagement && (
-        <div>
-          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Engagement</p>
-          <span className={`rounded-full px-sm py-xs font-sans text-xs ${
-            match.engagement === 'positive'
-              ? 'bg-sage/10 border border-sage/20 text-sage'
-              : match.engagement === 'challenging'
-                ? 'bg-red-900/10 border border-red-900/20 text-red-400'
-                : 'bg-surface-raised border border-border-subtle text-text-secondary'
-          }`}>
-            {match.engagement === 'positive' ? '✨ Sounds like deep engagement' :
-             match.engagement === 'challenging' ? '💪 Sounds like a growth moment' :
-             '📝 Neutral engagement noted'}
-          </span>
+      {/* In-flight coach hints from PKB retrieval */}
+      {coachHints.length > 0 && (
+        <div className="space-y-sm">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
+            📖 From your pedagogy notes
+          </p>
+          {coachHints.map((hint) => (
+            <div key={hint.id} className="rounded-md border border-border-subtle bg-surface-raised p-sm">
+              <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">{hint.title}</p>
+              <p className="font-serif text-[0.8125rem] text-text-secondary leading-relaxed">{hint.body}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {match.mentionedChildren.length > 0 && (
-        <div>
-          <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Children mentioned</p>
-          <div className="flex flex-wrap gap-xs">
-            {match.mentionedChildren.map((name) => (
-              <span key={name} className="rounded-full bg-surface-raised border border-border-subtle px-sm py-xs font-sans text-xs text-text-primary">
-                👦 {name} mentioned
-              </span>
-            ))}
-          </div>
+      {/* Reflection prompts — shown when description is in progress */}
+      {reflectionPrompts.length > 0 && (
+        <div className="space-y-sm">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
+            💭 Go deeper
+          </p>
+          {reflectionPrompts.map((prompt) => (
+            <div key={prompt.id} className="rounded-md border border-border-subtle bg-surface-raised p-sm">
+              <p className="font-serif text-[0.8125rem] text-text-secondary leading-relaxed italic">
+                {prompt.question}
+              </p>
+            </div>
+          ))}
         </div>
+      )}
+
+      {/* Description written but no learning signals found */}
+      {match && !hasDetections && reflectionPrompts.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-xl text-center">
+          <span className="text-4xl mb-md opacity-30" aria-hidden="true">🔍</span>
+          <p className="font-serif text-sm text-text-muted italic leading-relaxed">
+            Keep going — try adding what they were thinking about or working out.
+          </p>
+        </div>
+      )}
+
+      {/* Learning signal detections */}
+      {hasDetections && (
+        <>
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted">
+            Preliminary — confirmed after save
+          </p>
+
+          {match.subjects.length > 0 && (
+            <div>
+              <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Subjects detected</p>
+              <div className="flex flex-wrap gap-xs">
+                {match.subjects.map((s) => (
+                  <span key={s} className="rounded-full bg-ember-glow border border-ember/20 px-sm py-xs font-sans text-xs text-text-primary">
+                    📐 {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {match.threads.length > 0 && (
+            <div>
+              <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Capability threads</p>
+              <div className="flex flex-wrap gap-xs">
+                {match.threads.slice(0, 6).map((t) => (
+                  <span key={t} className="rounded-full bg-sage/10 border border-sage/20 px-sm py-xs font-sans text-xs text-text-primary">
+                    🌱 {THREAD_LABELS[t] ?? t}
+                  </span>
+                ))}
+                {match.threads.length > 6 && (
+                  <span className="font-sans text-xs text-text-muted">+{match.threads.length - 6} more</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {match.engagement && (
+            <div>
+              <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Engagement tone</p>
+              <span className={`rounded-full px-sm py-xs font-sans text-xs ${
+                match.engagement === 'positive'
+                  ? 'bg-sage/10 border border-sage/20 text-sage'
+                  : match.engagement === 'challenging'
+                    ? 'bg-red-900/10 border border-red-900/20 text-red-400'
+                    : 'bg-surface-raised border border-border-subtle text-text-secondary'
+              }`}>
+                {match.engagement === 'positive' ? '✨ Deep engagement' :
+                 match.engagement === 'challenging' ? '💪 Growth moment' :
+                 '📝 Steady participation'}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

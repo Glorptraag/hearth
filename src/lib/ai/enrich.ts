@@ -7,7 +7,11 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { aiPipelineLogs } from '@/lib/db/schema';
-import { buildPedagogyContext } from './pedagogy-context';
+import { buildPedagogyContextWithSources, type PedagogySource } from './pedagogy-context';
+import { rebuildSnapshot } from './snapshot-rebuild';
+import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
+import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
+import { familyIntelligenceSnapshots } from '@/lib/db/schema';
 
 const VALID_THREAD_IDS = new Set([
   'L1','L2','L3','L4','L5','L6','L7','L8','L9',
@@ -103,6 +107,10 @@ export type EnrichmentResult = {
     text: string;
     trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
   } | null;
+  pedagogy_sources?: PedagogySource[];
+  // Post-save profile nudge, surfaced by the client after enrichment completes.
+  // Explicit null means "nudge provider ran but no quiet thread qualified."
+  profile_nudge?: ProfileNudge | null;
 };
 
 interface EnrichmentContext {
@@ -154,7 +162,7 @@ async function assembleContext(entryId: string, familyId: string) {
   return { entry, settings, childRecords, activeThreads, recentEntries: recent };
 }
 
-async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): Promise<string> {
+async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): Promise<{ prompt: string; pedagogySources: PedagogySource[] }> {
   const { entry, settings, childRecords, activeThreads, recentEntries } = ctx;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 
@@ -193,6 +201,24 @@ async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>)
         .join('\n')
     : '';
 
+  // Structured observation details from Guided Mode — chipId → { detail, durationMin? }.
+  // Format as a readable block so Haiku can cite specifics. Missing/empty on old
+  // (Quick Mode) entries, in which case we omit the block entirely.
+  const observationDetailsRaw = entry.observationDetails as
+    | Record<string, { detail?: string; durationMin?: number }>
+    | null
+    | undefined;
+  const observationDetailsBlock = observationDetailsRaw && Object.keys(observationDetailsRaw).length > 0
+    ? `\nObservation details (from Guided Mode chip unfolds):\n${Object.entries(observationDetailsRaw)
+        .map(([chip, v]) => {
+          const detail = (v?.detail ?? '').trim();
+          const duration = v?.durationMin ? ` (${v.durationMin} min)` : '';
+          return detail ? `- ${chip}${duration}: ${detail}` : null;
+        })
+        .filter(Boolean)
+        .join('\n')}\n`
+    : '';
+
   const engagementData = entry.engagementPerLearner as Record<string, number> | null;
   const engagementLine = engagementData
     ? Object.entries(engagementData)
@@ -204,7 +230,7 @@ async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>)
     : '';
 
   // Build pedagogy context (retrieval + formatting, gated by PEDAGOGY_KB_ENABLED)
-  const pedagogySection = await buildPedagogyContext({
+  const { prompt: pedagogySection, sources: pedagogySources } = await buildPedagogyContextWithSources({
     entryTitle: entry.title ?? '',
     entryDescription: entry.description ?? '',
     framework: pedagogy,
@@ -212,7 +238,7 @@ async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>)
     capabilityThreads: activeThreadList,
   });
 
-  return `FAMILY CONTEXT:
+  const prompt = `FAMILY CONTEXT:
 Children on this entry: ${childrenLine}
 Active threads:
 ${threadsLine}
@@ -228,8 +254,72 @@ Description: ${entry.description ?? '(none)'}
 
 Per-child observations:
 ${discoveriesLine || '(none)'}
-
+${observationDetailsBlock}
 Engagement selections: ${engagementLine || '(none)'}`;
+
+  return { prompt, pedagogySources };
+}
+
+const nudgeProvider = new TemplateNudgeProvider();
+
+// Load the family's current snapshot and project it into the SnapshotSignals
+// shape the nudge provider expects (perChild keyed by learner_id). Returns null
+// if no snapshot exists yet (new family) — callers should treat that as "no
+// nudge this entry."
+async function loadSnapshotSignals(familyId: string): Promise<SnapshotSignals | null> {
+  const snap = await db.query.familyIntelligenceSnapshots.findFirst({
+    where: eq(familyIntelligenceSnapshots.familyId, familyId),
+  });
+  const data = snap?.snapshotData as { children?: Record<string, unknown> } | null;
+  const children = data?.children;
+  if (!children || typeof children !== 'object') return null;
+
+  const perChild: Record<string, { quiet: string[]; active: string[] }> = {};
+  for (const [learnerId, raw] of Object.entries(children)) {
+    const c = raw as {
+      active_threads?: Array<{ thread_id?: string } | string>;
+      gap_analysis?: { suggested_focus_threads?: Array<{ thread_id?: string } | string> };
+    };
+    const active = (c.active_threads ?? [])
+      .map((t) => (typeof t === 'string' ? t : t?.thread_id))
+      .filter((t): t is string => !!t);
+    const quiet = (c.gap_analysis?.suggested_focus_threads ?? [])
+      .map((t) => (typeof t === 'string' ? t : t?.thread_id))
+      .filter((t): t is string => !!t);
+    perChild[learnerId] = { quiet, active };
+  }
+  return { perChild };
+}
+
+// Attach a profile_nudge to the enrichment result in-place. Never throws —
+// any failure degrades to null so enrichment persists normally.
+async function attachProfileNudge(
+  validated: EnrichmentResult,
+  familyId: string,
+  childRecords: { id: string; name: string }[],
+): Promise<void> {
+  try {
+    if (childRecords.length === 0) {
+      validated.profile_nudge = null;
+      return;
+    }
+    const signals = await loadSnapshotSignals(familyId);
+    if (!signals) {
+      validated.profile_nudge = null;
+      return;
+    }
+    const primary = childRecords[0];
+    const nudge = await nudgeProvider.getNudge({
+      familyId,
+      primaryLearnerId: primary.id,
+      primaryLearnerName: primary.name,
+      snapshotSignals: signals,
+    });
+    validated.profile_nudge = nudge;
+  } catch (err) {
+    console.error('[enrichEntry] profile_nudge failed:', err);
+    validated.profile_nudge = null;
+  }
 }
 
 const VALID_JOURNEY_TRIGGERS = new Set(['cross_domain', 'independence', 'metacognition', 'transfer']);
@@ -275,7 +365,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
   try {
     const ctx = await assembleContext(entryId, familyId);
-    const userPrompt = await buildUserPrompt(ctx);
+    const { prompt: userPrompt, pedagogySources } = await buildUserPrompt(ctx);
     const childNames = ctx.childRecords.map((c) => c.name);
 
     const client = new Anthropic();
@@ -320,6 +410,10 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     }
 
     const validated = validateEnrichment(result, childNames);
+    if (pedagogySources.length > 0) {
+      validated.pedagogy_sources = pedagogySources;
+    }
+    await attachProfileNudge(validated, familyId, ctx.childRecords);
 
     await db
       .update(learningEntries)
@@ -328,8 +422,78 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         updatedAt: new Date(),
       })
       .where(eq(learningEntries.id, entryId));
+
+    // If low confidence, queue async Sonnet re-enrichment
+    if (validated.confidence < 0.5) {
+      sonnetFallback(entryId, familyId, userPrompt, childNames)
+        .catch((err) => console.error('[enrichEntry] Sonnet fallback failed:', err));
+    }
   } catch (error) {
     console.error('[enrichEntry] Failed:', error);
     // Entry already saved — enrichment failure is non-blocking
   }
+}
+
+// ─── Sonnet Fallback ───
+
+async function sonnetFallback(
+  entryId: string,
+  familyId: string,
+  userPrompt: string,
+  childNames: string[],
+): Promise<void> {
+  const startTime = Date.now();
+  const client = new Anthropic();
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  const text = response.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('');
+
+  const parsed = JSON.parse(text) as EnrichmentResult;
+  const validated = validateEnrichment(parsed, childNames);
+
+  // Preserve pedagogy_sources from the Haiku pass — retrieval happens once upstream.
+  const existing = await db
+    .select({ aiEnrichment: learningEntries.aiEnrichment })
+    .from(learningEntries)
+    .where(eq(learningEntries.id, entryId))
+    .limit(1);
+  const prior = existing[0]?.aiEnrichment as EnrichmentResult | null;
+  const priorSources = prior?.pedagogy_sources;
+  if (priorSources && priorSources.length > 0) {
+    validated.pedagogy_sources = priorSources;
+  }
+  // Preserve profile_nudge from the Haiku pass — nudge derivation happens once upstream.
+  if (prior && 'profile_nudge' in prior) {
+    validated.profile_nudge = prior.profile_nudge ?? null;
+  }
+
+  await db.insert(aiPipelineLogs).values({
+    familyId,
+    entryId,
+    modelUsed: 'claude-sonnet-4-20250514',
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    latencyMs: Date.now() - startTime,
+    confidence: String(validated.confidence ?? 0),
+    retryTriggered: false,
+  });
+
+  await db
+    .update(learningEntries)
+    .set({ aiEnrichment: validated, updatedAt: new Date() })
+    .where(eq(learningEntries.id, entryId));
+
+  // Rebuild snapshot since Sonnet may produce different thread mappings
+  await rebuildSnapshot(familyId, 'entry_saved');
+
+  console.log(`[sonnetFallback] entry=${entryId} confidence=${validated.confidence} latency=${Date.now() - startTime}ms`);
 }

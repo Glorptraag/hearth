@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { families } from '@/lib/db/schema';
+import { families, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { parseBody } from '@/lib/api-helpers';
 
 export async function GET() {
@@ -14,11 +14,18 @@ export async function GET() {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  return NextResponse.json(family);
+  // Completed-entry count drives logger mode tapering (Guided → Quick at 20)
+  const [entryCountRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(learningEntries)
+    .where(and(eq(learningEntries.familyId, family.id), eq(learningEntries.status, 'complete')));
+
+  return NextResponse.json({ ...family, entryCount: entryCountRow?.count ?? 0 });
 }
 
 const updateFamilySchema = z.object({
-  familyName: z.string().min(1).max(80),
+  familyName: z.string().min(1).max(80).optional(),
+  loggerDefaultMode: z.enum(['guided', 'quick']).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest) {

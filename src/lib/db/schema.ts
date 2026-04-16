@@ -20,6 +20,7 @@ export const families = pgTable('families', {
   familyName: text('family_name').notNull(),
   onboardingComplete: boolean('onboarding_complete').default(false).notNull(),
   welcomeCompletedAt: timestamp('welcome_completed_at'),
+  loggerDefaultMode: text('logger_default_mode'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -93,6 +94,7 @@ export const learningEntries = pgTable(
     sourceStageNumber: integer('source_stage_number'),
     sourceSessionId: uuid('source_session_id'),
     status: text('status').notNull().default('draft'),
+    observationDetails: jsonb('observation_details').default({}),
     aiEnrichment: jsonb('ai_enrichment'),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
     createdAt: timestamp('created_at').defaultNow(),

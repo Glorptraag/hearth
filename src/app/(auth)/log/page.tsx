@@ -16,6 +16,7 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
+import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 
 type ScaffoldData = {
   session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
@@ -338,6 +339,7 @@ export default function LogPage() {
   const [snapshotData, setSnapshotData] = useState<SnapshotData | null>(null);
   const [snapshotSignals, setSnapshotSignals] = useState<SnapshotSignals | null>(null);
   const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
+  const [pedagogyFramework, setPedagogyFramework] = useState<string>('Eclectic');
 
   // (a) Resolve logger mode on mount: fetch family entry count + loggerDefaultMode.
   // Default to Guided if count < 20 and no manual override.
@@ -352,6 +354,7 @@ export default function LogPage() {
           const fam = await famRes.json() as {
             loggerDefaultMode?: string | null;
             entryCount?: number;
+            pedagogyPreference?: string | null;
           };
           if (fam.loggerDefaultMode === 'guided' || fam.loggerDefaultMode === 'quick') {
             setLoggerMode(fam.loggerDefaultMode);
@@ -359,6 +362,7 @@ export default function LogPage() {
             // No override — default Guided for families with fewer than 20 entries
             setLoggerMode((fam.entryCount ?? 0) < 20 ? 'guided' : 'quick');
           }
+          setPedagogyFramework(frameworkLabel(fam.pedagogyPreference));
         }
         if (snapRes.ok) {
           // /api/snapshot returns the DB row wrapper { snapshotData, snapshotVersion, ... },
@@ -1332,7 +1336,7 @@ export default function LogPage() {
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
           <InsightsContent match={keywordMatch} reflectionPrompts={reflectionPrompts} postSaveInsights={postSaveInsights} coachHints={coachHints} profileNudge={profileNudge} />
-          <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
+          <PedagogyAttribution sources={pedagogySources} frameworkTitle={pedagogyFramework} />
         </aside>
       </div>}
 
@@ -1354,7 +1358,7 @@ export default function LogPage() {
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
             <InsightsContent match={keywordMatch} reflectionPrompts={reflectionPrompts} postSaveInsights={postSaveInsights} coachHints={coachHints} profileNudge={profileNudge} />
-            <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
+            <PedagogyAttribution sources={pedagogySources} frameworkTitle={pedagogyFramework} />
           </div>
         )}
       </div>

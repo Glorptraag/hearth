@@ -44,17 +44,27 @@ export async function POST(request: NextRequest) {
   const snapshotData = snapshot?.snapshotData as SnapshotData | null;
   const snapshotSignals = deriveSnapshotSignals(learnerIds, snapshotData);
 
-  const provider = await resolveCoachHintProvider();
-  const hints = await provider.getHints({
-    familyId: family.id,
-    learnerIds,
-    activityType: activityType ?? null,
-    description,
-    observations,
-    snapshotSignals,
-  });
-
-  return NextResponse.json(hints);
+  // Provider throws are handled softly: the UI degrades gracefully on empty
+  // hints, and an operator flipping LOGGER_COACH_PROVIDER to an unimplemented
+  // scaffold (haiku / hybrid) should see a warning in logs rather than a 500
+  // in the parent's face. The warning is intentionally loud so misconfig is
+  // visible; the response stays 200 so the logger keeps working.
+  try {
+    const provider = await resolveCoachHintProvider();
+    const hints = await provider.getHints({
+      familyId: family.id,
+      learnerIds,
+      activityType: activityType ?? null,
+      description,
+      observations,
+      snapshotSignals,
+    });
+    return NextResponse.json(hints);
+  } catch (err) {
+    const providerKey = process.env.LOGGER_COACH_PROVIDER ?? 'retrieval';
+    console.warn(`[coach-hints] provider '${providerKey}' failed:`, err);
+    return NextResponse.json([]);
+  }
 }
 
 function deriveSnapshotSignals(

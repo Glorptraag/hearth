@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
@@ -140,7 +140,7 @@ function FamilyAccessPanel() {
     }
   }
 
-  useState(() => { loadMembers(); });
+  useEffect(() => { loadMembers(); }, []);
 
   async function handleInvite() {
     if (!inviteEmail.trim()) return;

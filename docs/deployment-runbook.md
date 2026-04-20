@@ -1,0 +1,141 @@
+<!-- Version: 1 | Date: 2026-04-20 | Changes: Initial deploy runbook for Vercel + Neon + Sanity + Clerk + Anthropic. Pilot-scale (10-20 families). Secrets stay in Vercel UI; migrations are manual per this runbook. -->
+
+# Hearth — Deployment Runbook
+
+> Target: alpha pilot (10–20 families) on Vercel + Neon + Sanity. Solo operator.
+> Scope: first production deploy + recurring deploy checklist.
+> Pair with: [`docs/incident-runbook.md`](./incident-runbook.md) for post-deploy issues.
+
+## Decisions this runbook assumes
+
+- **Secrets live in the Vercel project UI** (not Doppler/1Password). If this changes later, update the Environment Variables section.
+- **Migrations run manually from the operator's laptop** before Vercel deploys the code that depends on them. CI does NOT run migrations.
+- **One production branch: `main`.** Feature branches get Vercel preview deploys; PRs into main trigger the production pipeline.
+- **Single Vercel region.** The in-memory rate limiter (`src/lib/rate-limit.ts` fallback) is single-instance until Redis lands.
+
+---
+
+## 1. First-deploy checklist
+
+Walk this top-to-bottom for a brand-new project. For recurring deploys, jump to §3.
+
+### 1.1 Accounts & projects
+
+- [ ] **Vercel Pro** — Pro tier is required for the two scheduled crons in `vercel.json`. Confirm billing is on Pro *before* linking the repo.
+- [ ] **Neon project** — one project with at least a `main` branch. Copy the pooled connection string.
+- [ ] **Sanity project** — `production` dataset, API CDN enabled. From the "API" tab copy the project ID.
+- [ ] **Clerk application** — two Clerk instances recommended: `hearth-dev` (test keys) and `hearth-prod` (live keys). Configure sign-in / sign-up URLs to match `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. in `.env.example`.
+- [ ] **Anthropic API key** — workspace with usage caps set. Haiku spend is the lever; see §4.
+- [ ] **Sentry project** — free tier is fine. Platform = Next.js.
+- [ ] **PostHog** — self-hosted instance stood up (per Decision E in the alpha-readiness pickup notes). Create a project, copy the project key.
+- [ ] **GitHub** — `main` branch protection enabled (see [`docs/branch-hygiene.md`](./branch-hygiene.md)).
+
+### 1.2 Environment variables
+
+Copy each key below into Vercel → Project → Settings → Environment Variables. Use the authoritative list in [`.env.example`](../.env.example) — this table just marks which environments each belongs to.
+
+| Variable | Prod | Preview | Dev | Notes |
+|---|---|---|---|---|
+| `DATABASE_URL` | ✅ | ✅ (branch DB) | — | Neon main branch in prod; ephemeral branch in preview. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ✅ | ✅ | — | Live key in prod, test key elsewhere. |
+| `CLERK_SECRET_KEY` | ✅ | ✅ | — | Matches the publishable key. |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. | ✅ | ✅ | — | Keep defaults unless routing changes. |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | ✅ | ✅ | — | Same value across envs. |
+| `NEXT_PUBLIC_SANITY_DATASET` | ✅ | ✅ | — | `production`. |
+| `SANITY_API_TOKEN` | ✅ | ✅ | — | Only for server writes (seeding, publish API). |
+| `ANTHROPIC_API_KEY` | ✅ | ✅ | — | Scoped to workspace with spend cap. |
+| `DRAFT_INSIGHTS_ENABLED` | ✅ | ✅ | — | Default `true`. Flip to `false` as emergency kill switch. |
+| `BLOB_READ_WRITE_TOKEN` | ✅ | — | — | Prod only; preview/dev without it cleanly returns 503 from `/api/evidence/upload`. |
+| `CRON_SECRET` | ✅ | — | — | Vercel injects this as the Bearer token for scheduled invocations. |
+| `ADMIN_CLERK_IDS` | ✅ | ✅ | — | Comma-sep Clerk user IDs. Also set `ADMIN_USER_IDS` to the same list until that inconsistency is resolved in code. |
+| `ADMIN_USER_IDS` | ✅ | ✅ | — | See note above. |
+| `NEXT_PUBLIC_SENTRY_DSN` | ✅ | ✅ | — | DSN is safe to expose; it's write-only. |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ✅ | — | — | Enables source-map upload on deploy. |
+| `NEXT_PUBLIC_POSTHOG_KEY` | ✅ | ✅ | — | |
+| `NEXT_PUBLIC_POSTHOG_HOST` | ✅ | ✅ | — | Self-hosted URL. |
+| `STRIPE_*` | ⛔ | ⛔ | ⛔ | Stripe is stubbed until Phase 3+. Leave unset. |
+
+After populating, click **Redeploy** on the latest production deployment so it picks up the new values (env changes don't hot-swap into running functions).
+
+### 1.3 Sanity studio
+
+- [ ] Visit `https://your-sanity-project.sanity.studio/` and confirm you can sign in with the project's auth.
+- [ ] If the dataset is empty, run the seed scripts locally with `SANITY_API_TOKEN` set: `npx tsx src/scripts/seed-capability-threads.ts` (and any other seed scripts present). The `publish` API (`/api/modules/publish`) can also be driven manually for ad-hoc content.
+- [ ] **Rotate `SANITY_API_TOKEN` quarterly** (or immediately after a laptop loss). In Sanity Manage → API → Tokens → create new → revoke old. Update the Vercel env var.
+
+### 1.4 Database migrations (manual)
+
+Drizzle migrations live in `./drizzle/*.sql`. `drizzle.config.ts` reads `DATABASE_URL` from `.env.local`.
+
+```
+# From the operator's laptop, with .env.local pointing at the prod DB:
+npx drizzle-kit migrate
+```
+
+**Rules:**
+
+1. Run migrations **before** merging the PR that depends on them. Migrations are forward-compatible against the previous code, so there's no window where prod code crashes on missing columns.
+2. If a migration is risky (drops / NOT NULL on populated tables / type changes), copy it to a staging Neon branch first: `npx drizzle-kit migrate` with `DATABASE_URL` pointed at the branch, smoke-test the app against that branch, then run it on main.
+3. **Rollback** — `drizzle-kit` does not generate down-migrations. Roll back by writing a new forward migration that inverts the change, or by restoring from a Neon point-in-time snapshot (Neon dashboard → Branches → Restore).
+
+The `src/lib/db/migrations/*.sql` folder contains ad-hoc historical one-offs (e.g. `add_pedagogy_values_practices.sql`). New migrations should go through `drizzle-kit generate` + `migrate`, not that folder.
+
+### 1.5 First Vercel deploy
+
+- [ ] Link the repo to the Vercel project (Import Git Repository).
+- [ ] Confirm the branch-to-env mapping in `vercel.json`: `main` deploys to prod, other branches are preview-only. (Already in the repo — don't edit.)
+- [ ] Trigger a deploy from `main` and watch the build log for:
+  - No missing env var warnings.
+  - Sentry source-map upload succeeded if `SENTRY_AUTH_TOKEN` is set.
+  - Cron routes registered: Vercel → Project → Settings → Crons should show two entries (`/api/admin/retention` Sun 02:00 UTC, `/api/admin/invitations/expire` daily 20:00 UTC).
+
+### 1.6 Smoke test (every first deploy, every release with migrations)
+
+Run through this in order — each step gates the next.
+
+1. **Landing loads.** Visit the prod URL; landing renders, theme auto-switches by local time, no console errors.
+2. **Sign in.** Sign up a disposable test user via Clerk, land on `/onboarding`.
+3. **Onboarding.** Complete family + children + the 4-step pedagogy wizard. Confirm family, learners, and `family_settings` rows exist in Neon (pooler → SQL editor).
+4. **One entry end-to-end.** From `/log` submit a real entry (≥60 chars so Haiku trips). Confirm:
+   - Entry row appears in `learning_entries`.
+   - Within ~10s, `ai_pipeline_logs` gains a row with `model_used` starting with `claude-haiku-...` and `status = 'ok'`.
+   - `family_intelligence_snapshots` row for the family has `updated_at` within the last minute.
+5. **Sentry event captured.** From the browser console on the prod URL: `window.Sentry?.captureMessage('deploy-smoke-test')`. Confirm the event appears in Sentry. Delete / resolve it afterwards.
+6. **PostHog event captured.** After step 4, the `entry_created` event should show up in the PostHog live-events panel, identified by the hashed user ID.
+7. **Cron reachability.** Call `curl -H "Authorization: Bearer $CRON_SECRET" https://<prod-domain>/api/admin/retention` and `.../api/admin/invitations/expire`. Both should return 200 with a summary payload. Without the Bearer they should return 401.
+8. **Delete the test user.** Clerk dashboard → remove; the `/api/account/delete` path is the in-app version used during real pilots.
+
+If anything fails, jump to [`docs/incident-runbook.md`](./incident-runbook.md).
+
+---
+
+## 2. Recurring deploy checklist (every PR to main)
+
+Short version — see §1.6 for the full smoke test, only run it after risky changes.
+
+- [ ] PR green on CI (typecheck + unit tests required; lint is non-blocking until the 22 pre-existing errors are cleared — see `.github/workflows/test.yml`).
+- [ ] If the PR adds a Drizzle migration, run `npx drizzle-kit migrate` against prod **before** merging.
+- [ ] If the PR touches `/api/admin/retention` or `/api/admin/invitations/expire`, manually trigger both after deploy (step 1.6 #7) to make sure nothing regresses silently until the next cron tick.
+- [ ] If the PR touches AI enrichment (`src/lib/ai/*`), run step 1.6 #4 and then check `ai_pipeline_logs` for a fresh row.
+- [ ] Delete merged feature branches (or rely on GitHub auto-delete, per `docs/branch-hygiene.md`).
+
+---
+
+## 3. Cost + quota watch (weekly during pilot)
+
+| Signal | Where | Action if tripped |
+|---|---|---|
+| Haiku spend | Anthropic dashboard + `SELECT sum(input_tokens), sum(output_tokens), count(*) FROM ai_pipeline_logs WHERE created_at > now() - interval '7 days'` | At 50% of monthly cap, investigate call volume per family. At 80%, flip `DRAFT_INSIGHTS_ENABLED=false`. |
+| Draft-insight spend specifically | `... WHERE model_used LIKE '%-draft'` | Flip `DRAFT_INSIGHTS_ENABLED=false` in Vercel; it's a runtime read. |
+| Sentry quota (5k events/mo free) | Sentry → Stats | Triage noisy issues; sample `beforeSend` if a specific pipeline is spamming. |
+| Vercel function invocations / bandwidth | Vercel → Usage | If approaching Pro limits, triage longest routes in the Analytics tab. |
+| Neon compute hours | Neon → Usage | Pilot should stay well under free-tier compute; investigate any query above 500ms in the slow-query log. |
+
+---
+
+## 4. Known gotchas
+
+- **Cron secret rotation.** Changing `CRON_SECRET` in Vercel does not retroactively authorise past cron invocations — only new ones. Expect a brief window where the next cron run succeeds with the new token; old curl commands must use the new value.
+- **Clerk v7 Sign-in contrast** has a theme regression — see commits `c590d41` / `06bfee1`. If sign-in text reads low-contrast on either theme, re-check `src/app/clerk-theme.ts`.
+- **`DRAFT_INSIGHTS_ENABLED` is read at runtime**, so flipping the Vercel env var takes effect on the next cold-start. Force it sooner by redeploying (no code change required — just click Redeploy).
+- **Stripe routes return 503 by design.** `/api/stripe/*` is stubbed; do not set `STRIPE_*` keys in alpha.

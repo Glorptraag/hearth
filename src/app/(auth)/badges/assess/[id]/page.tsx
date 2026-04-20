@@ -33,7 +33,9 @@ export default function BadgeAssessPage() {
   const learnerName = searchParams.get('name') ?? 'your child';
 
   // Queue support: parent may arrive with multiple ready badges.
-  // Format: ?queue=badgeId:learnerId,badgeId:learnerId
+  // Format: ?queue=badgeId:learnerId,badgeId:learnerId&qn=<1-based position>&qt=<total>
+  // `queueItems` is the rest of the walk after the current badge. `qn` and `qt`
+  // carry position state through the URL so we can render "Badge 2 of 3" etc.
   const queueParam = searchParams.get('queue') ?? '';
   const queueItems = queueParam
     ? queueParam
@@ -44,14 +46,15 @@ export default function BadgeAssessPage() {
         })
         .filter((x): x is { badgeId: string; learnerId: string } => x !== null)
     : [];
-  const hasQueue = queueItems.length > 0;
-  const queueTotal = queueItems.length + 1; // +1 for the current badge
-  const queuePosition = 1; // this badge is always position 1 within the remaining walk
+  const hasQueue = queueItems.length > 0 || searchParams.has('qt');
+  const queuePositionRaw = parseInt(searchParams.get('qn') ?? '1', 10);
+  const queueTotalRaw = parseInt(searchParams.get('qt') ?? String(queueItems.length + 1), 10);
+  const queuePosition = Number.isFinite(queuePositionRaw) ? queuePositionRaw : 1;
+  const queueTotal = Number.isFinite(queueTotalRaw) ? queueTotalRaw : queueItems.length + 1;
 
   const goToNextInQueue = useCallback(async () => {
-    if (!hasQueue) return;
+    if (queueItems.length === 0) return;
     const [next, ...rest] = queueItems;
-    // Fetch learner name for next badge (may be a different child)
     let nextName = '';
     try {
       const res = await fetch('/api/learners');
@@ -66,9 +69,9 @@ export default function BadgeAssessPage() {
       ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
       : '';
     router.push(
-      `/badges/assess/${next.badgeId}?learner=${next.learnerId}&name=${encodeURIComponent(nextName)}${restParam}`
+      `/badges/assess/${next.badgeId}?learner=${next.learnerId}&name=${encodeURIComponent(nextName)}${restParam}&qn=${queuePosition + 1}&qt=${queueTotal}`
     );
-  }, [hasQueue, queueItems, router]);
+  }, [queueItems, queuePosition, queueTotal, router]);
 
   const [step, setStep] = useState<Step>('intro');
   const [badge, setBadge] = useState<BadgeData | null>(null);

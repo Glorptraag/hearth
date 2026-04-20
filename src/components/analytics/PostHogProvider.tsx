@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { initAnalytics, identifyFamily, resetIdentity } from '@/lib/analytics/posthog';
+import { initAnalytics, identifyUser, resetIdentity } from '@/lib/analytics/posthog';
 
 /**
  * Wraps authenticated routes only. We never identify anonymous visitors or
@@ -18,10 +18,10 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!isLoaded) return;
     if (isSignedIn && user) {
-      // We identify on Clerk user ID, not family ID, because family is looked
-      // up server-side from the Clerk ID and we don't want two round-trips
-      // here. The hashing in posthog.ts ensures the raw ID never transits.
-      identifyFamily(user.id);
+      // Passing Clerk user ID; it is hashed inside posthog.ts before transit.
+      // Co-facilitators on a shared family will appear as distinct PostHog
+      // identities until we wire server-side family-level aggregation.
+      identifyUser(user.id);
     } else {
       resetIdentity();
     }

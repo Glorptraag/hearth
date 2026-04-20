@@ -53,8 +53,11 @@ function scrubEvent<T extends SentryEventLike>(event: T): T {
     delete event.user.username;
     delete event.user.ip_address;
   }
-  if (event.request?.data) {
-    event.request.data = scrubObject(event.request.data);
+  if (event.request?.data !== undefined) {
+    // Never send request bodies to Sentry. They are the likeliest carrier
+    // of PII (entry text, child names, free-form descriptions) and scrubbing
+    // a stringified JSON body field-by-field is fragile.
+    event.request.data = '[redacted]';
   }
   if (event.extra) {
     event.extra = scrubObject(event.extra) as Record<string, unknown>;

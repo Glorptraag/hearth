@@ -36,10 +36,17 @@ export function initAnalytics() {
   initialised = true;
 }
 
-export async function identifyFamily(familyId: string) {
+/**
+ * Identify the signed-in user to PostHog by a SHA-256 hash of their ID.
+ * Accepts any stable string identifier; we currently pass the Clerk user
+ * ID because the family ID requires a server round-trip. Multiple Clerk
+ * users per family (co-facilitators) will appear as separate PostHog
+ * identities — address once we add family-level aggregation.
+ */
+export async function identifyUser(id: string) {
   if (!enabled || !initialised) return;
   try {
-    const hashed = await hashId(familyId);
+    const hashed = await hashId(id);
     posthog.identify(hashed);
   } catch {
     // identification failure is non-fatal

@@ -12,11 +12,13 @@ import { aiPipelineLogs } from '@/lib/db/schema';
  *  - ephemeral prompt cache on the leaner system prompt
  *
  * Cost posture (decision B): firm caps, monitored against a $3/month ceiling.
- *  - Per-family rate limit: 20 draft calls / minute (enforced at the API
- *    route), well above normal debounced typing rate.
- *  - Per-call cost ceiling: max_tokens=256 output, ~500 input tokens amortised
- *    via cache. At Haiku list prices that's ~$0.004/call uncached, <$0.001
- *    cached. Even a heavy pilot (20 families × 200 calls/month) stays <$2.
+ *  - Per-call: ~500 input tokens + ≤256 output. Roughly $0.0015 uncached,
+ *    ~$0.001 with ephemeral prompt caching on the system prompt.
+ *  - Client hard cap: 20 calls per Logger session (useDraftInsight hook).
+ *  - Server rate limit: 20 calls / minute / family.
+ *  - Realistic pilot load: 20 families × ~100 calls/month ≈ $2/month.
+ *  - If spend trends past $3/month (query aiPipelineLogs WHERE model_used
+ *    LIKE '%-draft'), flip DRAFT_INSIGHTS_ENABLED=false to kill instantly.
  */
 
 const VALID_THREAD_IDS = new Set([

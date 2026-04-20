@@ -646,7 +646,8 @@ export default function LogPage() {
               rest.length > 0
                 ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
                 : '';
-            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}`;
+            const positionParam = ready.length > 1 ? `&qn=1&qt=${ready.length}` : '';
+            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}${positionParam}`;
             setToast({
               type: 'badge',
               message:

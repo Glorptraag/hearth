@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { track } from '@/lib/analytics/posthog';
 
 type AssessmentQuestion = { id: string; question: string };
 type BadgeData = {
@@ -132,6 +133,7 @@ export default function BadgeAssessPage() {
         body: JSON.stringify({ badgeId, learnerId, responses }),
       });
       if (!res.ok) throw new Error();
+      track('badge_awarded', { from_queue: hasQueue, queue_remaining: queueItems.length });
       setStep('celebration');
     } catch {
       setError('Failed to award badge');
@@ -149,6 +151,7 @@ export default function BadgeAssessPage() {
         body: JSON.stringify({ badgeId, learnerId, responses }),
       });
       if (!res.ok) throw new Error();
+      track('badge_deferred', { from_queue: hasQueue, queue_remaining: queueItems.length });
       setStep('deferred');
     } catch {
       setError('Failed to defer badge');

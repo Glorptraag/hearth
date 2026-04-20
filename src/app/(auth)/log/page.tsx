@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
+import { track } from '@/lib/analytics/posthog';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
@@ -572,6 +573,13 @@ export default function LogPage() {
       });
 
       if (!res.ok) throw new Error('Save failed');
+
+      track('entry_created', {
+        source: scaffoldData ? 'hearth_session' : projectContext.source ?? 'retro',
+        learner_count: selectedLearners.length,
+        has_evidence: evidenceUrls.length > 0,
+        activity_type: activityType ?? 'none',
+      });
 
       clearDraft();
 

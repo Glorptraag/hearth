@@ -251,6 +251,11 @@ export async function generateTermNarrative(hearthId: string): Promise<string | 
     return narrative;
   } catch (error) {
     console.error('[hearth-narrative] Generation failed:', error);
+    const Sentry = await import('@sentry/nextjs');
+    Sentry.captureException(error, {
+      tags: { pipeline: 'hearth-narrative' },
+      extra: { hearthId },
+    });
     return null;
   }
 }

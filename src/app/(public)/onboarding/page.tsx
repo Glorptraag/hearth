@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { LEARNER_COLOURS, type Pedagogy } from '@/types';
 import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
+import { track } from '@/lib/analytics/posthog';
 
 const SHAPE_OPTIONS = ['🌟', '🦋', '🌿', '🔥', '🌊', '🎨'];
 
@@ -118,6 +119,12 @@ export default function OnboardingPage() {
           pedagogyValues: result.values,
           pedagogyPractices: result.practices,
         }),
+      });
+      track('pedagogy_set', {
+        philosophy,
+        value_count: result.values.length,
+        practice_count: result.practices.length,
+        source: 'onboarding',
       });
       setStep(4);
     } catch {

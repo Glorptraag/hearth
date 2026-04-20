@@ -11,6 +11,7 @@ import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
 import { rateLimit } from '@/lib/rate-limit';
 import { parseBody } from '@/lib/api-helpers';
+import { trackServer } from '@/lib/analytics/posthog-server';
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
@@ -103,9 +104,22 @@ export async function POST(request: NextRequest) {
 
   // Async AI enrichment — does not block the response
   if (parsed.data.status === 'complete') {
+    const enrichStart = Date.now();
     enrichEntry({ entryId: entry.id, familyId: family.id })
-      .then(() => rebuildSnapshot(family.id, 'entry_saved'))
-      .catch((err) => console.error('[entries/POST] AI pipeline error:', err));
+      .then(() => {
+        rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
+        trackServer('entry_enriched', family.id, {
+          duration_ms: Date.now() - enrichStart,
+          status: 'ok',
+        });
+      })
+      .catch((err) => {
+        console.error('[entries/POST] AI pipeline error:', err);
+        trackServer('entry_enriched', family.id, {
+          duration_ms: Date.now() - enrichStart,
+          status: 'error',
+        });
+      });
   } else {
     // Draft saved — schedule a gentle resume nudge (frequency-capped)
     triggerDraftResume(family.id, { title: entry.title })

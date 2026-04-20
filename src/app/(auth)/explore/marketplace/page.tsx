@@ -6,6 +6,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
 import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
 import { useToast } from '@/hooks/use-toast';
+import { track } from '@/lib/analytics/posthog';
 
 function getCreatorEmoji(type?: CreatorType): string {
   switch (type) {
@@ -129,6 +130,7 @@ export default function MarketplacePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sanityPackId: id }),
       });
+      track('module_added_to_library');
     } catch {
       setLibraryIds((prev) => {
         const next = new Set(prev);

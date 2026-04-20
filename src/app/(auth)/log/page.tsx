@@ -500,6 +500,20 @@ export default function LogPage() {
 
   const canSave = completeness >= 50;
 
+  // Fire `logger_completed_50pct` exactly once per Logger session, the
+  // moment completeness first crosses the save threshold. Useful for
+  // measuring funnel drop-off between started-typing and saved.
+  const fired50Ref = useRef(false);
+  useEffect(() => {
+    if (!fired50Ref.current && completeness >= 50) {
+      fired50Ref.current = true;
+      track('logger_completed_50pct', {
+        learner_count: selectedLearners.length,
+        has_evidence: evidence.length > 0,
+      });
+    }
+  }, [completeness, selectedLearners.length, evidence.length]);
+
   // ─── Handlers ───
   const toggleLearner = (id: string) => {
     setSelectedLearners((prev) =>

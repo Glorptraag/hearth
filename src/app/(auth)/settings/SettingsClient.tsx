@@ -10,6 +10,7 @@ import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 import EmptyState from '@/components/ui/EmptyState';
 import { PEDAGOGIES, type Pedagogy } from '@/types';
+import { track } from '@/lib/analytics/posthog';
 
 function AccountSecurityPanel() {
   const [showDelete, setShowDelete] = useState(false);
@@ -347,6 +348,12 @@ export default function SettingsClient({
       values: result.values,
       practices: result.practices,
     });
+    track('pedagogy_set', {
+      philosophy,
+      value_count: result.values.length,
+      practice_count: result.practices.length,
+      source: 'settings_wizard',
+    });
     setWizardOpen(false);
   }
 
@@ -627,6 +634,14 @@ export default function SettingsClient({
             onChange={(value) => {
               setSettings((s) => ({ ...s, pedagogyPreference: value }));
               saveSettings({ pedagogyPreference: value });
+              if ((PEDAGOGIES as readonly string[]).includes(value)) {
+                track('pedagogy_set', {
+                  philosophy: value,
+                  value_count: settings.values.length,
+                  practice_count: settings.practices.length,
+                  source: 'settings_inline',
+                });
+              }
             }}
           />
           <p className="font-sans text-xs text-text-muted mt-sm">

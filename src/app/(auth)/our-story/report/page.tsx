@@ -8,6 +8,7 @@ import { usePedagogy } from '@/hooks/use-pedagogy';
 import EmptyState from '@/components/ui/EmptyState';
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 import { getJurisdiction } from '@/config/jurisdictions';
+import { track } from '@/lib/analytics/posthog';
 
 type Learner = {
   id: string;
@@ -742,6 +743,11 @@ export default function ReportPage() {
             if (!selectedLearnerId) return;
             const reportId = report?.id ?? '';
             window.open(`/api/report/export?learnerId=${selectedLearnerId}&reportId=${reportId}`, '_blank');
+            track('report_exported', {
+              format: isCdLevel ? 'pdf' : 'learning_report',
+              entry_count: entries.length,
+              has_existing_report: Boolean(reportId),
+            });
             if (reportId) {
               fetch(`/api/report/${reportId}`, {
                 method: 'PATCH',

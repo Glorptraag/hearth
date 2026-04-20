@@ -4,14 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import PackAdoptionFunnel from './_components/PackAdoptionFunnel';
 import ActivityHeatMap from './_components/ActivityHeatMap';
 import ThreadCoverageChart from './_components/ThreadCoverageChart';
+import AiCostPanel from './_components/AiCostPanel';
 
-type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage';
+type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage' | 'ai-cost';
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'pack-adoption', label: 'Pack Adoption', emoji: '📦' },
   { id: 'activity-heat', label: 'Activity Heat', emoji: '🔥' },
   { id: 'abandonment', label: 'Abandonment', emoji: '📉' },
   { id: 'thread-coverage', label: 'Thread Coverage', emoji: '🧵' },
+  { id: 'ai-cost', label: 'AI Cost', emoji: '💰' },
 ];
 
 export default function AnalyticsClient() {
@@ -73,6 +75,15 @@ export default function AnalyticsClient() {
             dateTo={dateTo}
             setDateTo={setDateTo}
           />
+        )}
+        {activeTab === 'ai-cost' && (
+          <>
+            <SectionHeader
+              title="AI Pipeline Cost"
+              description="Haiku spend split by write-time enrichment vs live draft insights. Refreshes on window change; no caching."
+            />
+            <AiCostPanel />
+          </>
         )}
       </div>
     </div>

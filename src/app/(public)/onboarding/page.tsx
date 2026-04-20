@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { LEARNER_COLOURS } from '@/types';
+import { LEARNER_COLOURS, type Pedagogy } from '@/types';
+import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
 
 const SHAPE_OPTIONS = ['🌟', '🦋', '🌿', '🔥', '🌊', '🎨'];
 
@@ -13,15 +14,6 @@ const COLOUR_CONFIG: Record<string, { label: string; bg: string; ring: string }>
   sage: { label: 'Sage', bg: 'bg-child-sage', ring: 'ring-child-sage' },
   amber: { label: 'Amber', bg: 'bg-child-amber', ring: 'ring-child-amber' },
 };
-
-const PEDAGOGY_OPTIONS = [
-  { value: 'charlotte_mason', label: 'Charlotte Mason' },
-  { value: 'classical', label: 'Classical' },
-  { value: 'montessori', label: 'Montessori' },
-  { value: 'waldorf_steiner', label: 'Waldorf / Steiner' },
-  { value: 'unschooling', label: 'Unschooling' },
-  { value: 'eclectic', label: 'Eclectic' },
-];
 
 type ChildDraft = {
   name: string;
@@ -52,7 +44,6 @@ export default function OnboardingPage() {
     : '';
   const [familyName, setFamilyName] = useState(defaultFamilyName);
   const [children, setChildren] = useState<ChildDraft[]>([emptyChild(0)]);
-  const [pedagogy, setPedagogy] = useState('eclectic');
 
   function addChild() {
     if (children.length >= 6) return;
@@ -107,13 +98,6 @@ export default function OnboardingPage() {
         });
       }
 
-      // Save pedagogy preference
-      await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pedagogyPreference: pedagogy }),
-      });
-
       setStep(3);
     } catch {
       setError('Something went wrong. Please try again.');
@@ -122,10 +106,49 @@ export default function OnboardingPage() {
     }
   }
 
+  async function handleWizardSave(result: PedagogyWizardResult) {
+    setSaving(true);
+    try {
+      const philosophy: Pedagogy = result.philosophy ?? 'eclectic';
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pedagogyPreference: philosophy,
+          pedagogyValues: result.values,
+          pedagogyPractices: result.practices,
+        }),
+      });
+      setStep(4);
+    } catch {
+      setError('Something went wrong saving your approach. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSkipWizard() {
+    // Skipping keeps defaults (eclectic with empty values/practices).
+    // Settings already default to eclectic server-side on first insert.
+    setStep(4);
+  }
+
   async function handleComplete(destination: '/log' | '/dashboard') {
     setSaving(true);
     await fetch('/api/onboarding/complete', { method: 'POST' });
     router.push(destination);
+  }
+
+  // Step 3 renders the pedagogy wizard full-screen outside the narrow
+  // onboarding shell, so bail out before the shell wraps other steps.
+  if (step === 3) {
+    return (
+      <PedagogyWizard
+        onComplete={handleWizardSave}
+        onSkip={handleSkipWizard}
+        saving={saving}
+      />
+    );
   }
 
   return (
@@ -133,7 +156,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-md">
         {/* Progress dots */}
         <div className="mb-xl flex items-center justify-center gap-sm">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               className={`h-[8px] w-[8px] rounded-full transition-all duration-200 ${
@@ -269,37 +292,10 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* Pedagogy preference */}
-            <div>
-              <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm block">
-                Learning Approach
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-                {PEDAGOGY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setPedagogy(opt.value)}
-                    className={`rounded-[6px] border px-md py-sm font-sans text-sm text-left transition-all duration-200 ${
-                      pedagogy === opt.value
-                        ? 'border-ember bg-ember-glow text-text-primary'
-                        : 'border-border-subtle text-text-secondary hover:border-border-medium'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-xs font-sans text-xs text-text-muted">
-                Not sure? Eclectic is a great starting point.
-              </p>
-              <button
-                type="button"
-                onClick={handleSaveFamily}
-                className="mt-xs font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors duration-200"
-              >
-                Skip for now — I&rsquo;ll set this up later
-              </button>
-            </div>
+            <p className="font-sans text-xs text-text-muted">
+              Next, we&rsquo;ll ask a few questions about your educational approach so
+              Hearth can personalise your insights. Takes about 3 minutes.
+            </p>
 
             {error && (
               <p className="font-sans text-sm text-red-400">{error}</p>
@@ -315,8 +311,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3: First log prompt */}
-        {step === 3 && (
+        {/* Step 4: First log prompt */}
+        {step === 4 && (
           <div className="flex flex-col items-center gap-lg text-center">
             <span className="text-4xl" aria-hidden="true">🌱</span>
             <h1 className="font-serif text-2xl font-semibold text-text-primary">

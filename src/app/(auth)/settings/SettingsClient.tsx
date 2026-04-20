@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
+import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 import EmptyState from '@/components/ui/EmptyState';
+import { PEDAGOGIES, type Pedagogy } from '@/types';
 
 function AccountSecurityPanel() {
   const [showDelete, setShowDelete] = useState(false);
@@ -336,6 +338,23 @@ export default function SettingsClient({
   const [newChildName, setNewChildName] = useState('');
   const [newChildColour, setNewChildColour] = useState('rose');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  async function handleWizardComplete(result: PedagogyWizardResult) {
+    const philosophy: Pedagogy = result.philosophy ?? 'eclectic';
+    await saveSettings({
+      pedagogyPreference: philosophy,
+      values: result.values,
+      practices: result.practices,
+    });
+    setWizardOpen(false);
+  }
+
+  const currentPhilosophy: Pedagogy | null = (PEDAGOGIES as readonly string[]).includes(
+    settings.pedagogyPreference,
+  )
+    ? (settings.pedagogyPreference as Pedagogy)
+    : null;
 
   async function saveSettings(patch: Partial<SettingsData>) {
     setSaving(true);
@@ -586,9 +605,18 @@ export default function SettingsClient({
       {/* ─── Pedagogy ─── */}
       {activeTab === 'pedagogy' && (
         <div className="flex flex-col gap-lg">
-          <div>
-            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Philosophy</p>
-            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Learning Approach</h2>
+          <div className="flex items-start justify-between gap-md">
+            <div>
+              <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Philosophy</p>
+              <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Learning Approach</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWizardOpen(true)}
+              className="flex-shrink-0 rounded-[6px] border border-border-subtle px-md py-xs font-sans text-xs font-semibold text-text-secondary hover:border-ember hover:text-ember transition-colors duration-200"
+            >
+              Re-run wizard
+            </button>
           </div>
           <p className="font-sans text-sm text-text-secondary">
             Your pedagogy preference shapes how Hearth frames your family&rsquo;s learning insights.
@@ -714,6 +742,31 @@ export default function SettingsClient({
       )}
         </div>{/* end content panel */}
       </div>{/* end grid */}
+
+      {wizardOpen && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-surface-body">
+          <div className="sticky top-0 z-10 flex justify-end border-b border-border-subtle bg-surface-panel/95 px-md py-sm backdrop-blur">
+            <button
+              type="button"
+              onClick={() => setWizardOpen(false)}
+              className="rounded-[6px] px-sm py-xs font-sans text-xs text-text-secondary hover:text-text-primary"
+              aria-label="Close wizard"
+            >
+              Close ×
+            </button>
+          </div>
+          <PedagogyWizard
+            initial={{
+              philosophy: currentPhilosophy,
+              values: settings.values,
+              practices: settings.practices,
+            }}
+            onComplete={handleWizardComplete}
+            saving={saving}
+            completeLabel="Save Approach"
+          />
+        </div>
+      )}
     </div>
   );
 }

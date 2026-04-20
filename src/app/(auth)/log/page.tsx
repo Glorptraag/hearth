@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, type KeywordMatchResult } from '@/lib/ai/keyword-matcher';
 import { track } from '@/lib/analytics/posthog';
+import { useDraftInsight } from '@/hooks/use-draft-insight';
+import type { DraftInsight } from '@/lib/ai/draft-insight';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
@@ -400,9 +402,21 @@ export default function LogPage() {
     setDraftRestored(false);
   }, []);
 
-  // ─── AI Insights (keyword matcher) ───
+  // ─── AI Insights ───
+  // Two tiers: instant keyword matcher for fast feedback, debounced Haiku
+  // draft-insight for warmer reflective copy + better thread detection.
+  // The Haiku call only fires when description length ≥ 50 chars; the hook
+  // enforces a 20-call-per-session client cap (decision B — firm caps).
   const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const selectedChildNames = useMemo(
+    () =>
+      learners
+        .filter((l) => selectedLearners.includes(l.id))
+        .map((l) => l.name),
+    [learners, selectedLearners]
+  );
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -411,13 +425,15 @@ export default function LogPage() {
       return;
     }
     debounceRef.current = setTimeout(() => {
-      const childNames = learners
-        .filter((l) => selectedLearners.includes(l.id))
-        .map((l) => l.name);
-      setKeywordMatch(matchKeywords(description, childNames));
+      setKeywordMatch(matchKeywords(description, selectedChildNames));
     }, 1500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [description, selectedLearners, learners]);
+  }, [description, selectedChildNames]);
+
+  const { insight: aiInsight, loading: aiLoading } = useDraftInsight(
+    description,
+    selectedChildNames
+  );
 
   // ─── UI state ───
   const [isRecording, setIsRecording] = useState(false);
@@ -1153,7 +1169,7 @@ export default function LogPage() {
             </div>
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
-          <InsightsContent match={keywordMatch} />
+          <InsightsContent match={keywordMatch} aiInsight={aiInsight} aiLoading={aiLoading} />
         </aside>
       </div>}
 
@@ -1174,7 +1190,7 @@ export default function LogPage() {
               <span className="text-ember text-lg" aria-hidden="true">✨</span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
-            <InsightsContent match={keywordMatch} />
+            <InsightsContent match={keywordMatch} aiInsight={aiInsight} aiLoading={aiLoading} />
           </div>
         )}
       </div>
@@ -1254,8 +1270,16 @@ const THREAD_LABELS: Record<string, string> = {
   EF7: 'Metacognition', EF8: 'Transfer',
 };
 
-function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
-  if (!match) {
+function InsightsContent({
+  match,
+  aiInsight,
+  aiLoading,
+}: {
+  match: KeywordMatchResult | null;
+  aiInsight: DraftInsight | null;
+  aiLoading: boolean;
+}) {
+  if (!match && !aiInsight) {
     return (
       <div className="flex flex-col items-center justify-center py-xl text-center">
         <span className="text-4xl mb-md opacity-30" aria-hidden="true">🙂</span>
@@ -1266,7 +1290,13 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
     );
   }
 
-  const hasResults = match.subjects.length > 0 || match.threads.length > 0 || match.engagement || match.mentionedChildren.length > 0;
+  const matchHasResults =
+    !!match &&
+    (match.subjects.length > 0 ||
+      match.threads.length > 0 ||
+      match.engagement ||
+      match.mentionedChildren.length > 0);
+  const hasResults = matchHasResults || !!aiInsight;
 
   if (!hasResults) {
     return (
@@ -1285,7 +1315,26 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
         Preliminary — confirmed after save
       </p>
 
-      {match.subjects.length > 0 && (
+      {/* AI reflection — one warm sentence from Haiku */}
+      {aiInsight?.reflection && (
+        <div className="rounded-[10px] border border-ember/20 bg-ember-glow p-md">
+          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-ember mb-xs">
+            Hearth is noticing
+          </p>
+          <p className="font-serif text-sm italic leading-relaxed text-text-primary">
+            {aiInsight.reflection}
+          </p>
+        </div>
+      )}
+      {!aiInsight?.reflection && aiLoading && (
+        <div className="rounded-[10px] border border-border-subtle bg-surface-raised p-md">
+          <p className="font-sans text-xs text-text-muted italic">
+            Reading what you&apos;re writing…
+          </p>
+        </div>
+      )}
+
+      {match && match.subjects.length > 0 && (
         <div>
           <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Subjects detected</p>
           <div className="flex flex-wrap gap-xs">
@@ -1298,7 +1347,7 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
         </div>
       )}
 
-      {match.threads.length > 0 && (
+      {match && match.threads.length > 0 && (
         <div>
           <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Capability threads</p>
           <div className="flex flex-wrap gap-xs">
@@ -1314,7 +1363,7 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
         </div>
       )}
 
-      {match.engagement && (
+      {match && match.engagement && (
         <div>
           <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Engagement</p>
           <span className={`rounded-full px-sm py-xs font-sans text-xs ${
@@ -1331,7 +1380,7 @@ function InsightsContent({ match }: { match: KeywordMatchResult | null }) {
         </div>
       )}
 
-      {match.mentionedChildren.length > 0 && (
+      {match && match.mentionedChildren.length > 0 && (
         <div>
           <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Children mentioned</p>
           <div className="flex flex-wrap gap-xs">

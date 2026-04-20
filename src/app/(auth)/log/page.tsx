@@ -595,7 +595,9 @@ export default function LogPage() {
       setObservations([]);
       setEvidence([]);
 
-      // Check badge thresholds after pipeline settles (~3s for enrichment + snapshot rebuild)
+      // Check badge thresholds after pipeline settles (~3s for enrichment + snapshot rebuild).
+      // Note: snapshot-rebuild also enqueues a `badge_ready` notification for each ready badge,
+      // so if the parent ignores this toast the Notification Centre will still surface it.
       setTimeout(async () => {
         try {
           const badgeResults = await Promise.all(
@@ -607,17 +609,29 @@ export default function LogPage() {
               });
               if (!r.ok) return [];
               const d = await r.json();
-              return (d.badgeIds ?? []) as string[];
+              return ((d.badgeIds ?? []) as string[]).map((badgeId) => ({ badgeId, learnerId }));
             })
           );
-          const readyIds = badgeResults.flat();
-          if (readyIds.length > 0) {
+          const ready = badgeResults.flat();
+          if (ready.length > 0) {
+            const learnerNameById = new Map(learners.map((l) => [l.id, l.name]));
+            const first = ready[0];
+            const rest = ready.slice(1);
+            const firstName = learnerNameById.get(first.learnerId) ?? '';
+            const queueParam =
+              rest.length > 0
+                ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
+                : '';
+            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}`;
             setToast({
               type: 'badge',
-              message: `${readyIds.length} badge${readyIds.length > 1 ? 's' : ''} ready to assess`,
-              action: { label: 'Review →', href: `/badges/assess/${readyIds[0]}` },
+              message:
+                ready.length > 1
+                  ? `Hearth noticed something new — ${ready.length} quick checks ready.`
+                  : 'Hearth noticed something new. Quick check?',
+              action: { label: ready.length > 1 ? `Start (${ready.length})` : 'Now (2 min)', href },
             });
-            setTimeout(() => setToast(null), 8000);
+            setTimeout(() => setToast(null), 10000);
           }
         } catch {
           // badge check is non-critical — silently ignore

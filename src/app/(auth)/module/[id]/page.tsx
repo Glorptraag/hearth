@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY } from '@/lib/sanity/queries';
+import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
 import PrepMode from './_components/PrepMode';
@@ -30,6 +30,7 @@ export default function ModuleDetailPage() {
   const [selectedApproachIdx, setSelectedApproachIdx] = useState(0);
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
   const [pedagogy, setPedagogy] = useState<string | null>(null);
+  const [practicePatterns, setPracticePatterns] = useState<Array<{_id: string; triggerTitle: string; triggerContext?: string; traditionResponse?: string; antiPattern?: string; tags?: string[]}>>([]);
   const [savedChunkIdx, setSavedChunkIdx] = useState<number>(0);
   const [currentActivityIdx, setCurrentActivityIdx] = useState<number>(0);
   const [completedActivityIdxs, setCompletedActivityIdxs] = useState<number[]>([]);
@@ -110,6 +111,13 @@ export default function ModuleDetailPage() {
         const settings = await settingsRes.json();
         resolvedPedagogy = settings.pedagogyPreference ?? 'eclectic';
         setPedagogy(resolvedPedagogy);
+      }
+
+      // Fetch practice patterns for the resolved pedagogy
+      const framework = await sanityClient.fetch(FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, { pedagogyKey: resolvedPedagogy });
+      if (framework?._id) {
+        const patterns = await sanityClient.fetch(PRACTICE_PATTERNS_QUERY, { frameworkId: framework._id });
+        setPracticePatterns(patterns ?? []);
       }
 
       if ((mod?.approaches?.length ?? 0) <= 1) {
@@ -388,6 +396,7 @@ export default function ModuleDetailPage() {
             approachIdx={selectedApproachIdx}
             overlays={overlays}
             pedagogy={pedagogy}
+            practicePatterns={practicePatterns}
             onFinish={() => {
               clearSession();
               if (facilitateStartRef.current) {

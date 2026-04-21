@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { families, learningEntries } from '@/lib/db/schema';
+import { families, familySettings, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, sql } from 'drizzle-orm';
 import { parseBody } from '@/lib/api-helpers';
@@ -14,13 +14,22 @@ export async function GET() {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Completed-entry count drives logger mode tapering (Guided → Quick at 20)
-  const [entryCountRow] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(learningEntries)
-    .where(and(eq(learningEntries.familyId, family.id), eq(learningEntries.status, 'complete')));
+  // Completed-entry count drives logger mode tapering (Guided -> Quick at 20).
+  const [entryCountRow, settings] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(learningEntries)
+      .where(and(eq(learningEntries.familyId, family.id), eq(learningEntries.status, 'complete'))),
+    db.query.familySettings.findFirst({
+      where: eq(familySettings.familyId, family.id),
+    }),
+  ]);
 
-  return NextResponse.json({ ...family, entryCount: entryCountRow?.count ?? 0 });
+  return NextResponse.json({
+    ...family,
+    entryCount: entryCountRow[0]?.count ?? 0,
+    pedagogyPreference: settings?.pedagogyPreference ?? 'eclectic',
+  });
 }
 
 const updateFamilySchema = z.object({

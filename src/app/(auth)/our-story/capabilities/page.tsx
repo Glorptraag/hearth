@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName, THREAD_NAMES, THREAD_DOMAINS, getThreadDomain, THREAD_CONNECTIONS, type ThreadDomain } from '@/lib/capability-threads';
+import { usePedagogy } from '@/hooks/use-pedagogy';
+import { getMarkersForThread, type ObservationalMarker } from '@/lib/pedagogy/observational-markers';
 
 type Learner = {
   id: string;
@@ -15,9 +17,17 @@ type Learner = {
 
 type ActiveThread = {
   thread_id: string;
+  thread_name: string;
   observation_count: number;
   suggested_tier: string;
   last_evidence_date: string;
+  current_badge_level: string | null;
+  next_badge: string | null;
+  next_badge_progress: number;
+  dlos_confirmed: number;
+  dlos_total: number;
+  trajectory: 'steady_growth' | 'accelerating' | 'plateau' | 'new';
+  recent_evidence_quality: 'weak' | 'adequate' | 'strong';
 };
 
 type CapabilityThread = { thread_id: string; confidence: number };
@@ -100,14 +110,31 @@ function ThreadDetailPanel({
   onClose,
   onTierOverride,
 }: {
-  thread: { id: string; tier: string; obsCount: number; name: string; lastDate?: string };
+  thread: {
+    id: string; tier: string; obsCount: number; name: string; lastDate?: string;
+    dlosConfirmed?: number; dlosTotal?: number;
+    currentBadge?: string | null; nextBadge?: string | null; nextBadgeProgress?: number;
+    trajectory?: 'steady_growth' | 'accelerating' | 'plateau' | 'new';
+    evidenceQuality?: 'weak' | 'adequate' | 'strong';
+  };
   learnerId: string | null;
   onClose: () => void;
   onTierOverride?: (threadId: string, tier: string | null) => void;
 }) {
   const [showAdjust, setShowAdjust] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
+  const [threadMarkers, setThreadMarkers] = useState<ObservationalMarker[]>([]);
+  const { pedagogy } = usePedagogy();
   const tierCfg = TIER_CONFIG[thread.tier] ?? TIER_CONFIG.unobserved;
+
+  useEffect(() => {
+    let cancelled = false;
+    setThreadMarkers([]);
+    getMarkersForThread(pedagogy, thread.id).then((markers) => {
+      if (!cancelled) setThreadMarkers(markers);
+    });
+    return () => { cancelled = true; };
+  }, [pedagogy, thread.id]);
   const progressWidth = thread.tier === 'emerging' ? '25%' : thread.tier === 'developing' ? '60%' : thread.tier === 'demonstrating' ? '90%' : '0%';
 
   const lowerTiers = (['emerging', 'developing', 'demonstrating'] as const).filter(
@@ -170,6 +197,119 @@ function ThreadDetailPanel({
               ? 'Solid evidence building. A few more observations to reach demonstrating.'
               : 'Strong evidence of capability. Well documented.'}
       </p>
+
+      {/* DLO progress + trajectory + badge (enhanced data) */}
+      {thread.tier !== 'unobserved' && (thread.dlosTotal ?? 0) > 0 && (
+        <div className="mt-md pt-md border-t border-border-subtle space-y-md">
+          {/* DLO progress */}
+          <div>
+            <div className="flex items-center justify-between mb-xs">
+              <span className="font-sans text-[11px] font-semibold text-text-secondary">
+                Learning outcomes
+              </span>
+              <span className="font-sans text-[10px] text-text-muted">
+                {thread.dlosConfirmed ?? 0}/{thread.dlosTotal ?? 3} confirmed
+              </span>
+            </div>
+            <div className="flex gap-xs">
+              {Array.from({ length: thread.dlosTotal ?? 3 }, (_, i) => (
+                <div
+                  key={i}
+                  className={`h-[4px] flex-1 rounded-full transition-all duration-[400ms] ${
+                    i < (thread.dlosConfirmed ?? 0) ? tierCfg.bar : 'bg-surface-hover'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Trajectory indicator */}
+          {thread.trajectory && (
+            <div className="flex items-center gap-sm">
+              <span className="font-sans text-[10px] text-text-muted">Trajectory:</span>
+              <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${
+                thread.trajectory === 'accelerating' ? 'bg-sage/15 text-sage' :
+                thread.trajectory === 'plateau' ? 'bg-amber-400/15 text-amber-400' :
+                thread.trajectory === 'new' ? 'bg-surface-hover text-text-muted' :
+                'bg-domain-science/15 text-domain-science'
+              }`}>
+                {thread.trajectory === 'accelerating' ? '↑ Accelerating' :
+                 thread.trajectory === 'plateau' ? '— Plateau' :
+                 thread.trajectory === 'new' ? '✦ New' :
+                 '↗ Steady growth'}
+              </span>
+              {thread.evidenceQuality && (
+                <span className={`font-sans text-[10px] ${
+                  thread.evidenceQuality === 'strong' ? 'text-sage' :
+                  thread.evidenceQuality === 'weak' ? 'text-amber-400' :
+                  'text-text-muted'
+                }`}>
+                  {thread.evidenceQuality === 'strong' ? 'Rich evidence' :
+                   thread.evidenceQuality === 'weak' ? 'Thin evidence' :
+                   'Adequate evidence'}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Badge progression */}
+          {(thread.currentBadge || thread.nextBadge) && (
+            <div>
+              {thread.currentBadge && (
+                <p className="font-sans text-[10px] text-text-muted mb-xs">
+                  Badge earned: <span className="text-sage font-semibold">{thread.currentBadge}</span>
+                </p>
+              )}
+              {thread.nextBadge && (
+                <div>
+                  <div className="flex items-center justify-between mb-xs">
+                    <span className="font-sans text-[10px] text-text-muted">
+                      Next: {thread.nextBadge}
+                    </span>
+                    <span className="font-sans text-[10px] text-text-muted">
+                      {Math.round((thread.nextBadgeProgress ?? 0) * 100)}%
+                    </span>
+                  </div>
+                  <div
+                    className="h-[4px] w-full rounded-full bg-surface-hover overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={Math.round((thread.nextBadgeProgress ?? 0) * 100)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Progress toward ${thread.nextBadge}`}
+                  >
+                    <div
+                      className="h-full rounded-full bg-ember transition-all duration-[400ms]"
+                      style={{ width: `${Math.round((thread.nextBadgeProgress ?? 0) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {threadMarkers.length > 0 && (
+        <div className="mt-md">
+          <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-sm">
+            What to Watch For
+          </p>
+          <ul className="space-y-xs">
+            {threadMarkers.flatMap((m) => m.markersToLookFor).map((marker, i) => (
+              <li key={i} className="font-serif text-sm text-text-secondary flex gap-xs">
+                <span className="text-text-muted">•</span>
+                <span>{marker}</span>
+              </li>
+            ))}
+          </ul>
+          {threadMarkers[0]?.whatItIndicates && (
+            <p className="font-serif text-xs text-text-muted italic mt-sm leading-relaxed">
+              {threadMarkers[0].whatItIndicates}
+            </p>
+          )}
+        </div>
+      )}
 
       {thread.tier !== 'unobserved' && learnerId && (
         <div className="mt-md pt-md border-t border-border-subtle">
@@ -686,10 +826,17 @@ export default function CapabilitiesPage() {
     const active = activeThreads.find((t) => t.thread_id === selectedThreadId);
     return {
       id: selectedThreadId,
-      name: getThreadName(selectedThreadId),
+      name: active?.thread_name ?? getThreadName(selectedThreadId),
       tier: active?.suggested_tier ?? 'unobserved',
       obsCount: active?.observation_count ?? 0,
       lastDate: active?.last_evidence_date,
+      dlosConfirmed: active?.dlos_confirmed,
+      dlosTotal: active?.dlos_total,
+      currentBadge: active?.current_badge_level,
+      nextBadge: active?.next_badge,
+      nextBadgeProgress: active?.next_badge_progress,
+      trajectory: active?.trajectory,
+      evidenceQuality: active?.recent_evidence_quality,
     };
   }, [selectedThreadId, activeThreads]);
 

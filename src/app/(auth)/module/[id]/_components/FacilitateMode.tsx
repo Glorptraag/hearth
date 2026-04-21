@@ -1,12 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Module, ActivityOverlay, QuickCaptureItem } from './types';
 import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
 import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
 import { HearthPortableText } from './PortableTextRenderer';
 import SessionTimer from './SessionTimer';
 import QuickCapture from './QuickCapture';
+
+type PracticePattern = {
+  _id: string;
+  triggerTitle: string;
+  triggerContext?: string;
+  traditionResponse?: string;
+  antiPattern?: string;
+  tags?: string[];
+};
 
 export default function FacilitateMode({
   module,
@@ -29,6 +38,7 @@ export default function FacilitateMode({
   approachIdx: number;
   overlays: ActivityOverlay[];
   pedagogy: string | null;
+  practicePatterns?: PracticePattern[];
   onFinish: () => void;
   onPause?: () => void;
   initialChunkIdx?: number;
@@ -42,17 +52,12 @@ export default function FacilitateMode({
   onDownloadAsset?: (assetId: string) => void;
 }) {
   const activities = module.approaches?.[approachIdx]?.activities ?? [];
-  const [currentIdx, setCurrentIdx] = useState(initialChunkIdx);
+  const [localCurrentIdx, setLocalCurrentIdx] = useState(initialChunkIdx);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
 
-  // Sync internal index when parent navigates (sidebar click)
-  useEffect(() => {
-    setCurrentIdx(initialChunkIdx);
-    setGuidanceOpen(false);
-    setOverlayOpen(false);
-  }, [initialChunkIdx]);
   const [mobileCapture, setMobileCapture] = useState(false);
+  const currentIdx = externalActivityIdx ?? localCurrentIdx;
   const current = activities[currentIdx];
   const currentOverlay = overlays.find((o) => o.activityId === current?._id) ?? null;
   const isLast = currentIdx === activities.length - 1;
@@ -406,7 +411,7 @@ export default function FacilitateMode({
               <button
                 onClick={() => {
                   const next = currentIdx + 1;
-                  setCurrentIdx(next);
+                  setLocalCurrentIdx(next);
                   setGuidanceOpen(false);
                   setOverlayOpen(false);
                   onChunkChange?.(next);

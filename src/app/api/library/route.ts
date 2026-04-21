@@ -7,6 +7,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { parseBody } from '@/lib/api-helpers';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
 export async function GET() {
   const { userId } = await auth();
@@ -64,6 +65,13 @@ export async function POST(request: NextRequest) {
     .values({ familyId: family.id, sanityPackId: result.data.sanityPackId })
     .onConflictDoNothing()
     .returning();
+
+  // Rebuild snapshot so recommendations update with new library content
+  if (record) {
+    rebuildSnapshot(family.id, 'library_change').catch((err) =>
+      console.error('[library POST] Snapshot rebuild failed:', err)
+    );
+  }
 
   return NextResponse.json(record ?? { message: 'Already in library' }, { status: 201 });
 }

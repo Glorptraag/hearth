@@ -53,33 +53,46 @@ export default async function PlannerPage() {
       .limit(1),
   ]);
 
-  // Derive recommendations from snapshot gap analysis
-  type ChildSnapshot = {
+  // Read structured recommendations from snapshot (populated by scoring engine)
+  type SnapshotRec = { module_title: string; primary_reason: string; reason_text: string };
+  type ChildSnap = {
     name?: string;
-    gap_analysis?: { underserved_subjects?: string[]; suggested_focus_threads?: string[] };
+    gap_analysis?: { underserved_subjects?: string[] };
     recent_activity?: { subjects_this_week?: string[] };
   };
 
   const snapshotData = (snapshot?.snapshotData ?? {}) as {
-    children?: Record<string, ChildSnapshot>;
+    children?: Record<string, ChildSnap>;
     family?: { dashboard_summary?: { nudge_message?: string | null } };
+    recommendations?: { suggested_next?: SnapshotRec[]; subject_balance?: Record<string, string> };
   };
 
   const recommendations: Array<{ title: string; subject?: string; reason?: string }> = [];
-  const childMap = snapshotData.children ?? {};
 
-  for (const [, child] of Object.entries(childMap)) {
-    const gaps = child.gap_analysis?.underserved_subjects ?? [];
-    const recentSubjects = new Set(child.recent_activity?.subjects_this_week ?? []);
-
-    for (const subject of gaps) {
-      if (!recentSubjects.has(subject) && !recommendations.some((r) => r.subject === subject)) {
-        const label = subject.charAt(0).toUpperCase() + subject.slice(1);
-        recommendations.push({
-          title: `${label} activity${child.name ? ` for ${child.name}` : ''}`,
-          subject,
-          reason: 'gap',
-        });
+  const scored = snapshotData.recommendations?.suggested_next ?? [];
+  if (scored.length > 0) {
+    // Use structured recommendations from scoring engine
+    for (const rec of scored.slice(0, 6)) {
+      recommendations.push({
+        title: rec.reason_text || rec.module_title,
+        reason: rec.primary_reason,
+      });
+    }
+  } else {
+    // Fallback: derive from gap analysis (pre-scoring-engine behavior)
+    const childMap = snapshotData.children ?? {};
+    for (const [, child] of Object.entries(childMap)) {
+      const gaps = child.gap_analysis?.underserved_subjects ?? [];
+      const recentSubjects = new Set(child.recent_activity?.subjects_this_week ?? []);
+      for (const subject of gaps) {
+        if (!recentSubjects.has(subject) && !recommendations.some((r) => r.subject === subject)) {
+          const label = subject.charAt(0).toUpperCase() + subject.slice(1);
+          recommendations.push({
+            title: `${label} activity${child.name ? ` for ${child.name}` : ''}`,
+            subject,
+            reason: 'gap',
+          });
+        }
       }
     }
   }

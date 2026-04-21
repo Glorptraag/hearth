@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
+import { PedagogyLearnMore } from '@/components/settings/PedagogyLearnMore';
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
@@ -623,6 +624,7 @@ export default function SettingsClient({
               }}
             />
           </div>
+          <PedagogyLearnMore pedagogyKey={settings.pedagogyPreference} />
           {saved && (
             <p className="font-sans text-xs text-sage">Saved ✓</p>
           )}

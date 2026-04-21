@@ -300,6 +300,7 @@ export default function ExploreActivitiesPage() {
   const [previewModule, setPreviewModule] = useState<Module | null>(null);
   const [, setPlannerSaving] = useState(false);
   const [plannerSuccess, setPlannerSuccess] = useState<string | null>(null);
+  const [relevanceScores, setRelevanceScores] = useState<Map<string, { score: number; reason: string }>>(new Map());
 
   const loadModules = useCallback(async () => {
     try {
@@ -334,6 +335,25 @@ export default function ExploreActivitiesPage() {
 
   useEffect(() => { loadModules(); }, [loadModules]);
 
+  // Fetch snapshot recommendations for "Most relevant" sort
+  useEffect(() => {
+    fetch('/api/snapshot')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const recs = data?.snapshotData?.recommendations?.suggested_next;
+        if (Array.isArray(recs)) {
+          const map = new Map<string, { score: number; reason: string }>();
+          for (const rec of recs) {
+            if (rec.module_id) {
+              map.set(rec.module_id, { score: rec.priority_score ?? 0, reason: rec.reason_text ?? '' });
+            }
+          }
+          setRelevanceScores(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const filtered = useMemo(() => {
     let result = modules;
 
@@ -349,10 +369,21 @@ export default function ExploreActivitiesPage() {
       result = [...result].sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === 'newest') {
       result = [...result].reverse();
+    } else if (sortBy === 'relevant') {
+      result = [...result].sort((a, b) => {
+        const sa = relevanceScores.get(a._id)?.score ?? -1;
+        const sb = relevanceScores.get(b._id)?.score ?? -1;
+        if (sb !== sa) return sb - sa;
+        // Library modules sort above non-library for equal scores
+        const aLib = packIds.includes(a.packId ?? '') ? 1 : 0;
+        const bLib = packIds.includes(b.packId ?? '') ? 1 : 0;
+        if (bLib !== aLib) return bLib - aLib;
+        return a.title.localeCompare(b.title);
+      });
     }
 
     return result;
-  }, [modules, packIds, libraryOnly, subjectFilter, sortBy]);
+  }, [modules, packIds, libraryOnly, subjectFilter, sortBy, relevanceScores]);
 
   const filteredPacks = useMemo(() => {
     return packs
@@ -361,10 +392,17 @@ export default function ExploreActivitiesPage() {
         if (libraryOnly) mods = mods.filter((m) => packIds.includes(m.packId ?? ''));
         if (subjectFilter !== 'all') mods = mods.filter((m) => m.subjects?.includes(subjectFilter));
         if (sortBy === 'name') mods = [...mods].sort((a, b) => a.title.localeCompare(b.title));
+        else if (sortBy === 'relevant') {
+          mods = [...mods].sort((a, b) => {
+            const sa = relevanceScores.get(a._id)?.score ?? -1;
+            const sb = relevanceScores.get(b._id)?.score ?? -1;
+            return sb - sa || a.title.localeCompare(b.title);
+          });
+        }
         return { ...pack, modules: mods };
       })
       .filter((p) => p.modules.length > 0);
-  }, [packs, packIds, libraryOnly, subjectFilter, sortBy]);
+  }, [packs, packIds, libraryOnly, subjectFilter, sortBy, relevanceScores]);
 
   const handleAddToPlanner = async (module: Module) => {
     setPlannerSaving(true);

@@ -2,13 +2,13 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v1.md` for design values.
-> **Last updated:** 2 April 2026
+> **Last updated:** 12 April 2026
 
 ---
 
 ## Current Phase: Pre-Launch Hardening
 
-**Build progress:** Next.js 16 app fully implemented — 25+ auth-protected routes, 67 API route files (85+ handlers), 27 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational. Community (Hearth) feature complete.
+**Build progress:** Next.js 16 app fully implemented — 25+ auth-protected routes, 107 API route files (~130 handlers), 30 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, and audit logging.
 **Design system:** Conformance pass complete — all screens revised to canonical tokens (2026-03-20).
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities).
 **Launch target:** 10-20 test families in Queensland, Australia.
@@ -54,7 +54,7 @@
 
 ---
 
-## API Surface (67 route files, 85+ handlers)
+## API Surface (107 route files, ~130 handlers)
 
 | Domain | Endpoints |
 |--------|-----------|
@@ -73,9 +73,18 @@
 | Report | `GET\|POST /api/report`, `PATCH /api/report/[reportId]`, `GET\|PATCH /api/report/[reportId]/samples`, `PATCH /api/report/[reportId]/samples/[sampleId]`, `GET /api/report/export` |
 | Stripe | `POST /api/stripe/checkout`, `POST /api/stripe/webhook` *(stubbed — returns 503)* |
 | Account | `GET /api/account/export`, `POST /api/account/delete` |
-| Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention` |
+| Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention`, `GET /api/admin/audit-log`, `GET /api/admin/ops/summary` |
+| Admin Analytics | `GET /api/admin/analytics/thread-coverage\|abandonment\|activity-heat\|pack-adoption` |
+| Admin Content | `GET\|POST /api/admin/content/drafts`, `GET\|PUT\|DELETE /api/admin/content/drafts/[id]`, `POST /api/admin/content/publish` |
+| Admin Snapshots | `GET /api/admin/snapshots/stale\|health`, `POST /api/admin/snapshots/rebuild` |
+| Admin Families | `GET /api/admin/families/search`, `GET /api/admin/families/[familyId]/view`, `POST /api/admin/families/[familyId]/snapshot/rebuild` |
+| Admin Invitations | `GET\|POST /api/admin/invitations`, `GET /api/admin/invitations/[id]`, `POST /api/admin/invitations/[id]/revoke`, `GET /api/admin/invitations/expire` |
+| Admin QA | `GET /api/admin/qa/packs`, `GET /api/admin/qa/packs/[packId]`, `POST /api/admin/qa/packs/[packId]/recheck`, `GET /api/admin/qa/issues` |
 | Onboarding | `POST /api/onboarding/complete`, `POST /api/welcome/complete` |
-| Seed | `POST /api/seed/capability-threads`, `POST /api/provider-code/validate`, `GET /api/skeletons` |
+| Invitations | `GET /api/invitations/validate`, `POST /api/invitations/redeem` |
+| Pedagogy | `POST /api/pedagogy/retrieve` *(Bearer token auth)*, `POST /api/pedagogy/sanity-webhook` |
+| Print/Assets | `POST /api/print/bundle`, `GET /api/assets/download`, `GET /api/commons/render` |
+| Seed | `POST /api/seed/capability-threads`, `POST /api/seed/content-assets`, `POST /api/provider-code/validate`, `GET /api/skeletons` |
 | Hearths | `GET\|POST /api/hearths`, `GET\|PATCH /api/hearths/[id]`, `GET /api/hearths/[id]/members`, `DELETE /api/hearths/[id]/members/[familyId]`, `POST /api/hearths/[id]/members/[familyId]/promote`, `POST /api/hearths/[id]/leave`, `POST /api/hearths/[id]/invite`, `POST /api/hearths/[id]/join`, `GET\|POST /api/hearths/[id]/sessions`, `GET\|PATCH /api/hearths/[id]/sessions/[sessionId]`, `POST /api/hearths/[id]/sessions/[sessionId]/rsvp`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/evidence`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/observations`, `POST\|GET /api/hearths/[id]/sessions/[sessionId]/reflections`, `GET /api/hearths/[id]/our-story` |
 | Scaffolds | `GET /api/scaffolds`, `GET /api/scaffolds/[sessionId]`, `POST /api/scaffolds/[sessionId]/dismiss` |
 | Observations | `POST /api/observations/[id]/accept`, `POST /api/observations/[id]/dismiss` |
@@ -84,7 +93,7 @@
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 27 tables
+### PostgreSQL (Neon + Drizzle) — 30 tables
 - **Identity:** `families`, `learners`, `familySettings`, `familyMembers`
 - **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance)
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
@@ -97,6 +106,7 @@
 - **Compliance:** `complianceReports`, `workSamples`, `workSampleAnnotations`
 - **Provider codes:** `providerCodes`
 - **Community:** `hearths`, `hearthMemberships`, `hearthSessions`, `sessionAttendance`, `sessionEvidence`, `suggestedObservations`, `sessionReflections`, `hearthInvites`
+- **Admin:** `adminAuditLog`, `invitations`, `contentStudioDrafts`
 
 ### Sanity CMS — 10 schemas
 `capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`, `moduleSkeleton`
@@ -231,4 +241,4 @@
 
 ---
 
-*Updated 3 April 2026. Update this file when priorities shift or major decisions are made.*
+*Updated 12 April 2026. Update this file when priorities shift or major decisions are made.*

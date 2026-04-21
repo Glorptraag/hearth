@@ -85,7 +85,7 @@ LEARNING ENTRY (core fields)
 ├── per_child_data{}           ← keyed by learner_id
 │   ├── [learner_id].engagement  ← emoji rating (colour-coded to child)
 │   └── [learner_id].discoveries ← per-child observation text
-├── source                     ← 'module' | 'retrospective'
+├── source                     ← 'module_log' | 'logger' | 'hearth_session' | 'project' | 'import'
 ├── source_module_id           ← null for retrospective entries
 ├── source_project_id          ← null unless part of a project
 ├── source_chunk_ids[]         ← which chunks were completed (modules only)
@@ -320,7 +320,7 @@ BADGE AWARD FLOW (System Badges)
 - Draft state → auto-saved incomplete entries
 
 **Produces:**
-- Learning Entries (source: 'retrospective')
+- Learning Entries (source: 'logger')
 - Draft entries (auto-saved)
 - Capability thread evidence
 - Curriculum descriptor mappings (backend)
@@ -361,7 +361,7 @@ BADGE AWARD FLOW (System Badges)
 - Planned activity context → which module, which children, prep notification state
 
 **Produces:**
-- Learning Entries (source: 'module', with module_id and chunk completion data)
+- Learning Entries (source: 'module_log', with module_id and chunk completion data)
 - In-session capture (photos, voice, notes during facilitation)
 - Badge assessment triggers
 - Planner status update → "completed"
@@ -951,9 +951,11 @@ This is the sequence of interactions that constitutes Hearth's primary value del
 
 | Item | Why Shelved | Revisit When |
 |------|-------------|-------------|
-| Facilitator Pedagogical Dashboard (`Facilitator_Pedagogical_Dashboard.tsx`) | No distinct facilitator role yet. Parent IS the facilitator in home education context. | Community hubs / "hearths" feature set, Phase 2+ |
+| Facilitator Pedagogical Dashboard (`Facilitator_Pedagogical_Dashboard.tsx`) | No distinct facilitator role yet. Parent IS the facilitator in home education context. | Phase 2+ when external facilitators / co-ops are a real user type |
 | Learner-facing experience | MVP serves parent-facilitators only. Children don't interact with the device as primary users. | Phase 2+ when children are old enough / families request it |
-| Community features | No social, sharing, or peer features in MVP | Phase 2 (50–100 families) |
+| ~~Community features~~ | ~~No social, sharing, or peer features in MVP~~ | **SHIPPED** (April 2026) — Hearth community feature complete: multi-family groups, sessions, scaffold logging, Our Story narrative, invites, cross-family observations. See `COMPONENT_REGISTRY.md` Nav Group: Community. |
+| Facilitator capture UI | API routes exist for observations, session completion, attendance. Quick-capture UI during sessions deferred | Phase 2 — when coordinator workflow validated with test families |
+| Planner hearth sessions | Hearth sessions as distinct card type in weekly planner | Phase 2 — API ready, UI integration deferred |
 
 ---
 

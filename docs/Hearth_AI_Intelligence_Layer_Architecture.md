@@ -259,19 +259,21 @@ The system prompt is static and cached (Anthropic prompt caching reduces cost fo
 
 ### 3.4 Model Selection Strategy
 
-Not every entry needs the same model. The pipeline routes based on complexity:
+> **Implementation note (April 2026):** All entries currently use a single Haiku pipeline. Haiku handles all cases well; the per-source routing below is a future optimization, not a current gap.
+
+The pipeline is designed to route based on complexity:
 
 ```
 ENTRY ARRIVES
      │
-     ├── Source: "module"?
+     ├── Source: "module_log"?
      │      │
      │      └── YES → Module metadata pre-populates 80% of fields
      │                LLM fills: per_child_signals, novel discoveries
      │                Model: Haiku (fast, cheap, structured extraction)
      │                Token budget: 600
      │
-     └── Source: "retrospective"?
+     └── Source: "logger" / "hearth_session"?
             │
             ├── Description < 50 words?
             │      │
@@ -282,15 +284,13 @@ ENTRY ARRIVES
             └── Description >= 50 words?
                    │
                    └── RICH ENTRY → Full NLP pipeline
-                                    Model: Haiku (still — Sonnet reserved for
-                                      edge cases where Haiku confidence < 0.5
-                                      on first pass, triggering a retry)
+                                    Model: Haiku
                                     Token budget: 2,000
 ```
 
-**Why Haiku for everything:** The task is structured extraction with a well-defined output schema and a constrained taxonomy. This is exactly what smaller models excel at. Sonnet is only invoked as a fallback when Haiku reports low confidence on its own output (a self-reported confidence field in the JSON schema).
+**Why Haiku for everything:** The task is structured extraction with a well-defined output schema and a constrained taxonomy. This is exactly what smaller models excel at.
 
-**Fallback retry logic:** If Haiku returns `confidence < 0.5`, the entry is queued for a Sonnet pass (async, not blocking the user). The user sees the Haiku results immediately; Sonnet results replace them silently if they arrive within the session. If the parent has already left, the improved mappings appear next time they view the entry.
+**Retry logic:** Retry is triggered on JSON parse errors — the pipeline retries once with the same model. If the final result has confidence < 0.5, an async Sonnet re-enrichment fires (fire-and-forget) and overwrites the entry if successful, triggering a snapshot rebuild.
 
 ### 3.5 The Live Insights Panel (Retrospective Logger)
 
@@ -379,14 +379,14 @@ family_intelligence_snapshot = {
             thread_id: "M1",
             thread_name: "Number Sense & Place Value",
             observation_count: 14,
-            last_observation: "2026-02-28",
+            last_evidence_date: "2026-02-28",
+            suggested_tier: "demonstrating",
             current_badge_level: "number_explorer",
             next_badge: "number_navigator",
-            next_badge_progress: 0.72,     // 72% of DLOs confirmed
-            dlos_confirmed: 9,
-            dlos_total: 12,
-            dlos_pending_confirmation: ["M1-DLO-10", "M1-DLO-11"],
-            trajectory: "steady_growth",   // steady_growth | accelerating | plateau | new
+            next_badge_progress: 0.72,
+            dlos_confirmed: 2,
+            dlos_total: 3,
+            trajectory: "steady_growth",
             recent_evidence_quality: "strong"
           }
           // ... more threads

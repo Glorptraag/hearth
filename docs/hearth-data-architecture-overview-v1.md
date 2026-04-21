@@ -18,11 +18,9 @@ erDiagram
     families ||--o{ notifications : "receives"
     families ||--o{ family_library : "saves content to"
 
-    learners ||--o{ capability_observations : "demonstrates"
     learners ||--o{ badge_awards : "earns"
     learners ||--o{ facilitator_notes : "private notes about"
 
-    learning_entries ||--o{ capability_observations : "generates"
     learning_entries }o--|| badge_assessment_logs : "may trigger"
 
     badge_definitions ||--o{ badge_awards : "template for"
@@ -36,9 +34,8 @@ erDiagram
 | **families** | Family account — linked to login | System on sign-up |
 | **learners** | Each child — name, age, colour code | Parent in Settings |
 | **family_settings** | Pedagogy choice, HEU dates, notification prefs | Parent in Settings |
-| **learning_entries** | Every logged learning moment — the core of Hearth | Parent via Logger or Module log |
-| **capability_observations** | Evidence that a child has demonstrated a skill | AI enrichment + parent confirmation |
-| **badge_definitions** | What a badge means and what's required to earn it | Content team (may also live in Sanity) |
+| **learning_entries** | Every logged learning moment — the core of Hearth. Each entry's `aiEnrichment` JSONB contains capability thread mappings, curriculum descriptors, and per-child signals | Parent via Logger or Module log |
+| **badge_definitions** | What a badge means and what's required to earn it. Dual storage: Sanity for platform badges, Postgres for family-created badges (`familyId` NULL = platform) | Content team + Parent via Badge Creator |
 | **badge_awards** | Record of a badge earned by a specific child | Parent via Badge Assessment |
 | **badge_assessment_logs** | Responses to assessment questions during badge check | Parent via Badge Assessment |
 | **planner_entries** | Planned activities for a given day | Parent via Weekly Planner |
@@ -53,13 +50,15 @@ erDiagram
 flowchart LR
     A[Parent logs\na learning moment] --> B[learning_entries]
     B --> C[AI enriches\nthe entry]
-    C --> D[capability_observations\nupdated]
+    C --> D[aiEnrichment JSONB\nupdated on entry]
     C --> E[family_intelligence_snapshots\nrebuilt]
     E --> F[Portfolio\nHEU Report\nDashboard\nNotifications]
-    D --> G{Badge threshold\ncrossed?}
+    E --> G{Badge threshold\ncrossed?}
     G -->|Yes| H[badge_assessment_logs\nthen badge_awards]
     G -->|No| I[No action]
 ```
+
+> **Note:** Capability observations are **not** a separate table. They are computed during snapshot rebuild by aggregating `aiEnrichment.capability_threads` across all entries per learner. Thread tiers (emerging/developing/demonstrating) are calculated from observation counts, with optional parent overrides stored in `learners.profileData.tierOverrides`.
 
 ## What lives in Sanity CMS vs PostgreSQL
 

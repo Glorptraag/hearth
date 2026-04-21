@@ -3,9 +3,9 @@
  * ORM: Drizzle (drizzle-orm/pg-core)
  * Host: Neon serverless Postgres
  * Schema source: src/lib/db/schema.ts
- * Tables: 19
+ * Tables: 30
  *
- * Updated: 2 April 2026
+ * Updated: 12 April 2026
  */
 
 // ─── Identity & Auth ───
@@ -55,9 +55,9 @@ const familySettings = {
   pedagogyPreference: "text DEFAULT 'eclectic'",  // charlotte_mason | classical | montessori | waldorf | unschooling | eclectic
   pedagogyValues: 'text[] DEFAULT {}',
   pedagogyPractices: 'text[] DEFAULT {}',
-  heuRegistrationNumber: 'text',
-  heuNextReportDate: 'date',
-  state: "text DEFAULT 'QLD'",
+  registrationNumber: 'text',              // Renamed from heuRegistrationNumber (April 2026)
+  nextReportDate: 'date',                  // Renamed from heuNextReportDate (April 2026)
+  state: 'text',                           // No default — was previously DEFAULT 'QLD'
   notificationPrefs: 'jsonb DEFAULT {}',
   createdAt: 'timestamp DEFAULT now()',
   updatedAt: 'timestamp DEFAULT now()',
@@ -91,10 +91,11 @@ const learningEntries = {
   engagementPerLearner: 'jsonb DEFAULT {}',   // { [learnerId]: engagement data }
   discoveriesPerLearner: 'jsonb DEFAULT {}',  // { [learnerId]: discovery data }
   evidenceUrls: 'text[] DEFAULT {}',   // Vercel Blob URLs for photos/files
-  source: "text NOT NULL DEFAULT 'logger'",   // 'logger' | 'module' | 'project' | 'import'
+  source: "text NOT NULL DEFAULT 'logger'",   // 'logger' | 'module_log' | 'project' | 'import' | 'hearth_session'
   sourceModuleId: 'text',             // Sanity module ID if from module experience
   sourceProjectId: 'text',            // Sanity project ID if from project experience
   sourceStageNumber: 'integer',       // Project stage number
+  sourceSessionId: 'uuid',            // Hearth session ID if from community session
   status: "text NOT NULL DEFAULT 'draft'",    // 'draft' | 'complete'
   aiEnrichment: 'jsonb',              // AI-generated enrichment data (see below)
   workSampleCandidate: 'boolean DEFAULT false',
@@ -107,7 +108,10 @@ const learningEntries = {
 //   capability_threads?: Array<{ thread_id: string; confidence: number }>,
 //   curriculum_descriptors?: Array<{ code: string; confidence: number }>,
 //   subjects_detected?: string[],
-//   engagement_score?: number,
+//   per_child_signals?: Record<string, { engagement?: string; discovery?: string; strengths?: string[] }>,
+//   journey_observations?: Array<{ trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer'; text: string }>,
+//   quality?: { richness: 'thin' | 'adequate' | 'rich'; evidence_present: boolean; multi_subject: boolean },
+//   confidence?: number,
 //   insight_suggestions?: string[],
 // }
 
@@ -301,4 +305,163 @@ const providerCodes = {
   redeemedByFamilyId: 'uuid REFERENCES families(id)',
   redeemedAt: 'timestamp',
   createdAt: 'timestamp DEFAULT now()',
+};
+
+// ─── Community (Hearths) ───
+
+const hearths = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  name: 'text NOT NULL',
+  description: 'text',
+  location: 'text',
+  createdByFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  status: "text NOT NULL DEFAULT 'active'",
+  settings: 'jsonb DEFAULT {}',
+  createdAt: 'timestamp DEFAULT now()',
+  updatedAt: 'timestamp DEFAULT now()',
+};
+
+const hearthMemberships = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  hearthId: 'uuid NOT NULL REFERENCES hearths(id)',
+  familyId: 'uuid NOT NULL REFERENCES families(id)',
+  role: "text NOT NULL DEFAULT 'member'",      // 'creator' | 'member'
+  status: "text NOT NULL DEFAULT 'active'",    // 'active' | 'left'
+  joinedAt: 'timestamp DEFAULT now()',
+  invitedByFamilyId: 'uuid REFERENCES families(id)',
+  consentCrossObservation: 'boolean NOT NULL DEFAULT false',
+  consentEvidenceSharing: 'boolean NOT NULL DEFAULT false',
+  leftAt: 'timestamp',
+  // Unique: hm_hearth_family_uniq(hearthId, familyId)
+  // Indexes: hm_family_status_idx(familyId, status)
+};
+
+const hearthSessions = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  hearthId: 'uuid NOT NULL REFERENCES hearths(id)',
+  title: 'text NOT NULL',
+  description: 'text',
+  date: 'date NOT NULL',
+  timeStart: 'text',
+  timeEnd: 'text',
+  location: 'text',
+  facilitatorFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  facilitatorUserId: 'text',
+  status: "text NOT NULL DEFAULT 'upcoming'",  // 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
+  moduleReference: 'text',           // Sanity module ID
+  activityReference: 'text',         // Sanity activity ID
+  prepNotes: 'text',
+  sharedRecord: 'text',
+  createdAt: 'timestamp DEFAULT now()',
+  completedAt: 'timestamp',
+  // Indexes: hs_hearth_date_idx(hearthId, date)
+};
+
+const sessionAttendance = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  sessionId: 'uuid NOT NULL REFERENCES hearth_sessions(id)',
+  familyId: 'uuid NOT NULL REFERENCES families(id)',
+  rsvpStatus: "text NOT NULL DEFAULT 'pending'",  // 'pending' | 'going' | 'not_going'
+  actuallyAttended: 'boolean',
+  learnerIds: 'uuid[]',             // Which learners from this family attended
+  // Unique: sa_session_family_uniq(sessionId, familyId)
+};
+
+const sessionEvidence = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  sessionId: 'uuid NOT NULL REFERENCES hearth_sessions(id)',
+  uploadedByFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  uploadedByUserId: 'text',
+  fileUrl: 'text NOT NULL',
+  fileType: 'text',
+  caption: 'text',
+  uploadedAt: 'timestamp DEFAULT now()',
+};
+
+const suggestedObservations = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  sessionId: 'uuid NOT NULL REFERENCES hearth_sessions(id)',
+  observerFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  observerUserId: 'text',
+  targetFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  targetLearnerId: 'uuid NOT NULL REFERENCES learners(id)',
+  observationText: 'text NOT NULL',
+  evidenceIds: 'uuid[] DEFAULT {}',
+  status: "text NOT NULL DEFAULT 'pending'",  // 'pending' | 'accepted' | 'dismissed'
+  createdAt: 'timestamp DEFAULT now()',
+  reviewedAt: 'timestamp',
+  familyEntryId: 'uuid REFERENCES learning_entries(id)',  // Entry created when accepted
+  // Indexes: so_target_status_idx(targetFamilyId, status)
+};
+
+const sessionReflections = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  sessionId: 'uuid NOT NULL REFERENCES hearth_sessions(id)',
+  familyId: 'uuid NOT NULL REFERENCES families(id)',
+  userId: 'text',
+  reflectionText: 'text NOT NULL',
+  createdAt: 'timestamp DEFAULT now()',
+};
+
+const hearthInvites = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  hearthId: 'uuid NOT NULL REFERENCES hearths(id)',
+  invitedByFamilyId: 'uuid NOT NULL REFERENCES families(id)',
+  code: 'text UNIQUE NOT NULL',
+  expiresAt: 'timestamp NOT NULL',
+  usedByFamilyId: 'uuid REFERENCES families(id)',
+  usedAt: 'timestamp',
+  createdAt: 'timestamp DEFAULT now()',
+};
+
+// ─── Admin ───
+
+const adminAuditLog = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  adminUserId: 'text NOT NULL',
+  adminEmail: 'text NOT NULL',
+  action: 'text NOT NULL',
+  targetResource: 'text',
+  targetId: 'text',
+  reason: 'text',
+  metadata: 'jsonb',
+  ipAddress: 'text',
+  userAgent: 'text',
+  mfaSatisfied: 'boolean DEFAULT false',
+  createdAt: 'timestamp DEFAULT now()',
+  // Indexes: audit_admin_user_idx(adminUserId, createdAt),
+  //          audit_target_idx(targetResource, targetId, createdAt),
+  //          audit_action_idx(action, createdAt)
+};
+
+const invitations = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  code: 'text UNIQUE NOT NULL',
+  intendedFamilyName: 'text NOT NULL',
+  intendedPrimaryEmail: 'text',
+  intendedLocationState: 'text',
+  sourceLabel: 'text',
+  notes: 'text',
+  status: "text NOT NULL DEFAULT 'pending'",  // 'pending' | 'redeemed' | 'revoked' | 'expired'
+  expiresAt: 'timestamp',
+  redeemedAt: 'timestamp',
+  redeemedByFamilyId: 'uuid REFERENCES families(id)',
+  revokedAt: 'timestamp',
+  revokedReason: 'text',
+  createdByAdminId: 'text NOT NULL',
+  createdAt: 'timestamp DEFAULT now()',
+  // Indexes: invitations_status_idx(status, createdAt), invitations_code_idx(code)
+};
+
+const contentStudioDrafts = {
+  id: 'uuid PRIMARY KEY DEFAULT gen_random_uuid()',
+  clerkUserId: 'text NOT NULL',
+  title: 'text NOT NULL',
+  draftType: "text NOT NULL DEFAULT 'pack'",
+  draftData: 'jsonb NOT NULL DEFAULT {}',
+  status: "text NOT NULL DEFAULT 'draft'",   // 'draft' | 'published'
+  sanityPackId: 'text',                      // Set after publishing to Sanity
+  createdAt: 'timestamp DEFAULT now()',
+  updatedAt: 'timestamp DEFAULT now()',
+  // Indexes: csd_user_status_idx(clerkUserId, status)
 };

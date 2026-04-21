@@ -3,7 +3,7 @@
 > **Purpose:** Single source of truth for every UI screen, its canonical file, status, and role.
 > **Rule:** Before proposing new work, check this file. Before creating a new screen, update this file.
 > **Cross-screen coherence:** `Hearth_System_Interaction_Map.md` is the canonical document for navigation flows, data relationships, and inter-screen dependencies.
-> **Last verified:** 2 April 2026
+> **Last verified:** 12 April 2026
 
 ---
 
@@ -20,7 +20,7 @@
 `hearth-dashboard-dark-v2.html` — source of truth for all visual patterns. When in doubt, the Dashboard is right.
 
 ### Conformance Status
-**22 / 22 screens confirmed conformant** as of 2026-03-20.
+**22 / 22 parent-facing screens confirmed conformant** as of 2026-03-20. Admin panel (8 screens) added post-conformance — uses admin-density spacing tokens, not fully audited.
 
 All prototype screens use canonical token names (`--surface-body/panel/raised/hover`, `--ember`, `--sage`, `--border-subtle` as `rgba(217,123,58,0.1)`), canonical radius scale (6/10/16/24px), canonical transitions (`cubic-bezier(0.4,0,0.2,1)`), and correct font-weight rules (700 display/brand only, 600 section titles).
 
@@ -112,6 +112,21 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 - Logger: scaffold mode via `?scaffold=sessionId` (pre-fills form, evidence toggles, reflection modal)
 - Notifications: 5 new trigger types (hearth_invite, session_created/completed, observation_received, scaffold_expiring)
 - Entry provenance: "From community" pills on entries with `source: 'hearth_session'`
+
+#### Nav Group: Admin Panel — Built April 2026
+
+| # | Screen | Canonical File | Role | Key Features |
+|---|--------|---------------|------|--------------|
+| 24 | **Admin Dashboard** | `src/app/(admin)/admin/page.tsx` | Ops summary, quick links to all admin tools | System health, family count, active invitations |
+| 25 | **Analytics** | `src/app/(admin)/admin/analytics/page.tsx` | Thread coverage, abandonment, activity heat, pack adoption | 4 analytics panels |
+| 26 | **Content Management** | `src/app/(admin)/admin/content/page.tsx` | Content studio draft CRUD, publish to Sanity | Draft list, create/edit/delete, publish workflow |
+| 27 | **Content QA** | `src/app/(admin)/admin/content/qa/page.tsx` | Pack quality assurance | Pack-level QA checks, issue list, recheck |
+| 28 | **Families** | `src/app/(admin)/admin/families/page.tsx` | Family search, view, snapshot management | Search, admin view, per-family snapshot rebuild |
+| 29 | **Invitations** | `src/app/(admin)/admin/invitations/page.tsx` | Beta invitation code management | Create, revoke, expire, status tracking |
+| 30 | **Snapshots** | `src/app/(admin)/admin/snapshots/page.tsx` | Snapshot health monitoring | Stale detection, health check, bulk rebuild |
+| 31 | **Audit Log** | `src/app/(admin)/admin/audit-log/page.tsx` | Admin action audit trail | Filterable log of all admin actions |
+
+**Note:** Admin screens use `requireAdmin()` guard. Design system conformance not yet audited — admin section uses functional UI with admin-density spacing tokens.
 
 ### Shelved — MVP Scope Reduction
 

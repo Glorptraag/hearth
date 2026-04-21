@@ -37,9 +37,11 @@ The content hierarchy is Pack → Module → Approach → Activity, with Project
 
 A pack author creates new instances of: `pack`, `module`, `approach`, `activity`, `badge`, `pedagogyOverlay`.
 
-A pack author references existing instances of: `capabilityThread`, `pedagogicalFramework`.
+A pack author references existing instances of: `capabilityThread`.
 
-A pack author never creates: `capabilityThread` (platform data), `pedagogicalFramework` (platform data), `educator` (account data), `assessment` (deferred to post-MVP).
+A pack author never creates: `capabilityThread` (platform data), `educator` (account data), `assessment` (deferred to post-MVP).
+
+> **Note:** `pedagogicalFramework` is a string enum (`charlotte_mason | classical | montessori | waldorf_steiner | unschooling | eclectic`), not a reference to a separate Sanity document type. The overlay's `framework` field is a plain string, not a `_ref`.
 
 ### The Activity Document — Canonical Schema
 
@@ -453,12 +455,12 @@ This convention means: references between documents within the pack are predicta
   "_type": "pedagogyOverlay",
   "_id": "overlay.jumpstart-classical.a1-ra-aesop-fox.charlotte-mason",
   "activity": { "_ref": "activity.jumpstart-classical.a1-ra-aesop-fox" },
-  "framework": { "_ref": "pedagogicalFramework.charlotte-mason" },
+  "framework": "charlotte_mason",
   "lens": {
-    "insight": "Charlotte Mason believed fables train the moral imagination. This story exercises the child's ability to recognise self-deception — a cornerstone of character formation.",
-    "facilitation": "Read the fable once through without interruption (Mason's 'single reading' principle). Then ask for a full narration. Resist the urge to correct — let the child's narration reveal their understanding.",
-    "observation": "In narration, listen for whether the child captures the fox's shift in attitude. Mason called this 'moral discernment' — recognising vice in a character before being able to name it.",
-    "nextSteps": "Follow with copywork of the moral ('It is easy to despise what you cannot get') for Module A2. The fable and the copywork reinforce each other."
+    "perspective": "Charlotte Mason believed fables train the moral imagination. This story exercises the child's ability to recognise self-deception — a cornerstone of character formation.",
+    "facilitatorTips": "Read the fable once through without interruption (Mason's 'single reading' principle). Then ask for a full narration. Resist the urge to correct — let the child's narration reveal their understanding.",
+    "languageFrame": "Narration reveals moral discernment — the child processes the story before the parent probes.",
+    "watchFor": "In narration, listen for whether the child captures the fox's shift in attitude. Mason called this 'moral discernment' — recognising vice in a character before being able to name it."
   },
   "valuesAlignment": "Living books and oral narration are central to Mason's method. This activity is pure Mason territory.",
   "practiceSuggestions": "Keep to a single reading. Narration first, discussion second. Mason's sequence matters — the child processes before the parent probes.",
@@ -509,7 +511,7 @@ Using Jumpstart Classical as the reference (~845 documents):
 | Module | 12 | Title, target understanding, understanding indicators (3 tiers × ~3 indicators each), capability thread refs, badge refs |
 | Approach | ~48 | Title, angle description, modality tag |
 | Activity | ~192 | Title, instructions (richText), facilitator guidance (3 fields), materials, duration, setting, energy, modality, observation prompts, reflection prompts, capability thread refs, badge refs |
-| Overlay | ~576 | Lens (4 fields: insight, facilitation, observation, nextSteps), values alignment, practice suggestions |
+| Overlay | ~576 | Lens (4 fields: perspective, facilitatorTips, languageFrame, watchFor), values alignment, practice suggestions |
 | Badge | ~14 | Title, description, criteria, skills represented, capability thread refs |
 
 ### What Can Be Removed — Derived at Runtime
@@ -524,7 +526,7 @@ Using Jumpstart Classical as the reference (~845 documents):
 | `activity.reflectionPrompts` | Activity doc | Same as above | **Keep authored.** Same reasoning. |
 | `approach.angle` | Approach doc | Could be derived from its activities' modalities | **Keep authored.** The angle is a pedagogical framing decision ("Explore fractions through cooking"), not a mechanical derivation. 1-2 sentences per approach. |
 | `module.indicators` | Module doc (embedded) | Could be AI-generated from target understanding | **Arguably derivable, but keep authored.** Indicators define what "emerging/developing/demonstrating" looks like for THIS specific understanding. They drive badge assessment, Constellation tier classification, and HEU evidence quality. AI can draft them, but they need editorial review — they're the module's assessment backbone. |
-| `overlay.lens.insight` | Overlay doc | Could be AI-generated from activity + framework definition | **Candidate for runtime generation — but keep pre-authored for v1.** Pre-authored overlays are zero-cost at read time, consistent, and hallucination-free. Runtime AI generation would require an LLM call per overlay per render, which violates the "AI at write-time only" principle (A9). |
+| `overlay.lens.perspective` | Overlay doc | Could be AI-generated from activity + framework definition | **Candidate for runtime generation — but keep pre-authored for v1.** Pre-authored overlays are zero-cost at read time, consistent, and hallucination-free. Runtime AI generation would require an LLM call per overlay per render, which violates the "AI at write-time only" principle (A9). |
 | `overlay.valuesAlignment` | Overlay doc | Same as above | **Same verdict.** |
 | `overlay.practiceSuggestions` | Overlay doc | Same as above | **Same verdict.** |
 

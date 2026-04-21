@@ -3,9 +3,9 @@
  * Base URL: /api
  * Auth: Clerk (@clerk/nextjs/server)
  * RBAC: checkWritePermission(clerkUserId, familyId) gates all write endpoints to owner/editor roles
- * Route count: 48 route files, 65 handlers
+ * Route count: 107 route files, ~130 handlers
  *
- * Updated: 2 April 2026
+ * Updated: 12 April 2026
  */
 
 // ═══════════════════════════════════════
@@ -14,11 +14,11 @@
 
 // List entries for authenticated family
 // GET /api/entries
-// Query: learnerId, from, to, status
+// Query: learnerId, startDate, endDate, status, limit, offset
 
 // Create a new learning entry
 // POST /api/entries
-// Body: { title, description, dateOccurred, subjects[], learnerIds[], engagementPerLearner, discoveriesPerLearner, evidenceUrls[], source, sourceModuleId?, sourceProjectId?, sourceStageNumber? }
+// Body: { title, description, dateOccurred, subjects[], learnerIds[], engagementPerLearner, discoveriesPerLearner, evidenceUrls[], source, sourceModuleId?, sourceProjectId?, sourceStageNumber?, sourceSessionId? }
 // RBAC: checkWritePermission required
 // Side effect: triggers AI enrichment (enrich.ts → Haiku)
 
@@ -30,7 +30,7 @@
 // Body: partial entry fields
 // RBAC: checkWritePermission required
 
-// Delete an entry
+// Delete an entry (draft status only — returns 400 if entry is complete)
 // DELETE /api/entries/[id]
 // RBAC: checkWritePermission required
 
@@ -83,9 +83,9 @@
 // PATCH /api/badges/[id]/retract
 // Body: { learnerId }
 
-// Award a badge to a learner
+// Award a badge to a learner via assessment responses
 // POST /api/badges/award
-// Body: { badgeDefinitionId, learnerId, evidenceEntryIds[], notes? }
+// Body: { badgeId, learnerId, responses: [{ questionId, response, note? }] }
 
 // List all badge awards (optionally filtered by learner)
 // GET /api/badges/awards
@@ -121,7 +121,7 @@
 
 // List planner entries for a date range
 // GET /api/planner
-// Query: from, to
+// Query: startDate, endDate
 
 // Create a planner entry
 // POST /api/planner
@@ -197,7 +197,7 @@
 
 // Update family settings
 // PATCH /api/settings
-// Body: { pedagogyPreference?, pedagogyValues?, pedagogyPractices?, heuRegistrationNumber?, heuNextReportDate?, state?, notificationPrefs? }
+// Body: { pedagogyPreference?, pedagogyValues?, pedagogyPractices?, registrationNumber?, nextReportDate?, state?, notificationPrefs? }
 
 // ═══════════════════════════════════════
 // MODULES (Builder + Publishing)
@@ -334,3 +334,289 @@
 // Fetch module skeletons for builder suggestions
 // GET /api/skeletons
 // Query: domain?, tier?
+
+// ═══════════════════════════════════════
+// HEARTHS (Community Hub)
+// ═══════════════════════════════════════
+
+// List hearths for authenticated family
+// GET /api/hearths
+
+// Create a new hearth
+// POST /api/hearths
+// Body: { name, description?, location? }
+
+// Get hearth details
+// GET /api/hearths/[id]
+
+// Update a hearth
+// PATCH /api/hearths/[id]
+// Body: { name?, description?, location?, settings? }
+
+// Invite to a hearth (generates invite code)
+// POST /api/hearths/[id]/invite
+
+// Join a hearth via invite code
+// POST /api/hearths/[id]/join
+// Body: { code, consentCrossObservation?, consentEvidenceSharing? }
+
+// Leave a hearth
+// POST /api/hearths/[id]/leave
+
+// List hearth members
+// GET /api/hearths/[id]/members
+
+// Remove a member from hearth
+// DELETE /api/hearths/[id]/members/[familyId]
+
+// Promote a member (e.g. to co-facilitator)
+// POST /api/hearths/[id]/members/[familyId]/promote
+
+// Get hearth's "our story" narrative
+// GET /api/hearths/[id]/our-story
+
+// List sessions for a hearth
+// GET /api/hearths/[id]/sessions
+
+// Create a session in a hearth
+// POST /api/hearths/[id]/sessions
+// Body: { title, description?, date, timeStart?, timeEnd?, location?, moduleReference?, activityReference?, prepNotes? }
+
+// Get session details
+// GET /api/hearths/[id]/sessions/[sessionId]
+
+// Update a session
+// PATCH /api/hearths/[id]/sessions/[sessionId]
+// Body: partial session fields
+
+// RSVP to a session
+// POST /api/hearths/[id]/sessions/[sessionId]/rsvp
+// Body: { rsvpStatus, learnerIds? }
+
+// List/add observations for a session
+// GET/POST /api/hearths/[id]/sessions/[sessionId]/observations
+// POST Body: { targetFamilyId, targetLearnerId, observationText, evidenceIds? }
+
+// List/add evidence for a session
+// GET/POST /api/hearths/[id]/sessions/[sessionId]/evidence
+// POST Body: FormData with file, caption?
+
+// List/add reflections for a session
+// GET/POST /api/hearths/[id]/sessions/[sessionId]/reflections
+// POST Body: { reflectionText }
+// Side effect: triggers hearth narrative rebuild
+
+// ═══════════════════════════════════════
+// OBSERVATIONS (Cross-family)
+// ═══════════════════════════════════════
+
+// Accept a suggested observation (creates learning entry)
+// POST /api/observations/[id]/accept
+
+// Dismiss a suggested observation
+// POST /api/observations/[id]/dismiss
+
+// ═══════════════════════════════════════
+// SCAFFOLDS (Session Helpers)
+// ═══════════════════════════════════════
+
+// List available scaffolds
+// GET /api/scaffolds
+
+// Get scaffold for a specific session
+// GET /api/scaffolds/[sessionId]
+
+// Dismiss a scaffold
+// POST /api/scaffolds/[sessionId]/dismiss
+
+// ═══════════════════════════════════════
+// PEDAGOGY (Knowledge Base & Webhooks)
+// ═══════════════════════════════════════
+
+// Retrieve pedagogy knowledge chunks (Bearer token auth, NOT Clerk)
+// POST /api/pedagogy/retrieve
+// Auth: Bearer PEDAGOGY_RETRIEVAL_SECRET
+// Body: { query, framework?, limit? }
+
+// Sanity webhook handler for pedagogy content updates
+// POST /api/pedagogy/sanity-webhook
+// Auth: Sanity webhook signature
+
+// ═══════════════════════════════════════
+// INVITATIONS (Beta Access)
+// ═══════════════════════════════════════
+
+// Validate an invitation code
+// GET /api/invitations/validate
+// Query: code
+
+// Redeem an invitation code
+// POST /api/invitations/redeem
+// Body: { code }
+
+// ═══════════════════════════════════════
+// LIBRARY (Extended)
+// ═══════════════════════════════════════
+
+// Get materials list for library packs
+// GET /api/library/materials
+
+// ═══════════════════════════════════════
+// ASSETS
+// ═══════════════════════════════════════
+
+// Download a content asset
+// GET /api/assets/download
+// Query: key
+
+// ═══════════════════════════════════════
+// PRINT
+// ═══════════════════════════════════════
+
+// Generate a print bundle (PDF)
+// POST /api/print/bundle
+// Body: { moduleId?, activityIds?, format? }
+
+// ═══════════════════════════════════════
+// COMMONS
+// ═══════════════════════════════════════
+
+// Render commons content to PDF
+// GET /api/commons/render
+// Query: id
+
+// ═══════════════════════════════════════
+// ADMIN (Extended)
+// ═══════════════════════════════════════
+
+// --- Analytics ---
+
+// Get thread coverage analytics
+// GET /api/admin/analytics/thread-coverage
+// Auth: requireAdmin
+
+// Get abandonment analytics
+// GET /api/admin/analytics/abandonment
+// Auth: requireAdmin
+
+// Get activity heat analytics
+// GET /api/admin/analytics/activity-heat
+// Auth: requireAdmin
+
+// Get pack adoption analytics
+// GET /api/admin/analytics/pack-adoption
+// Auth: requireAdmin
+
+// --- Content Management ---
+
+// List content studio drafts
+// GET /api/admin/content/drafts
+// Auth: requireAdmin
+
+// Create a content studio draft
+// POST /api/admin/content/drafts
+// Body: { title, draftType?, draftData }
+// Auth: requireAdmin
+
+// Get a single draft
+// GET /api/admin/content/drafts/[id]
+// Auth: requireAdmin
+
+// Update a draft
+// PUT /api/admin/content/drafts/[id]
+// Body: { title?, draftData?, status? }
+// Auth: requireAdmin
+
+// Delete a draft
+// DELETE /api/admin/content/drafts/[id]
+// Auth: requireAdmin
+
+// Publish a content studio draft to Sanity
+// POST /api/admin/content/publish
+// Body: { draftId }
+// Auth: requireAdmin
+
+// --- Snapshot Management ---
+
+// List stale snapshots
+// GET /api/admin/snapshots/stale
+// Auth: requireAdmin
+
+// Get snapshot health status
+// GET /api/admin/snapshots/health
+// Auth: requireAdmin
+
+// Rebuild all snapshots
+// POST /api/admin/snapshots/rebuild
+// Auth: requireAdmin
+
+// --- Family Management ---
+
+// Search families
+// GET /api/admin/families/search
+// Query: q
+// Auth: requireAdmin
+
+// View a specific family (admin view)
+// GET /api/admin/families/[familyId]/view
+// Auth: requireAdmin
+
+// Rebuild snapshot for a specific family
+// POST /api/admin/families/[familyId]/snapshot/rebuild
+// Auth: requireAdmin
+
+// --- Invitation Management ---
+
+// List all invitations
+// GET /api/admin/invitations
+// Auth: requireAdmin
+
+// Create a new invitation
+// POST /api/admin/invitations
+// Body: { intendedFamilyName, intendedPrimaryEmail?, intendedLocationState?, sourceLabel?, notes?, expiresAt? }
+// Auth: requireAdmin
+
+// Get invitation details
+// GET /api/admin/invitations/[id]
+// Auth: requireAdmin
+
+// Revoke an invitation
+// POST /api/admin/invitations/[id]/revoke
+// Body: { reason? }
+// Auth: requireAdmin
+
+// Expire old invitations (batch)
+// GET /api/admin/invitations/expire
+// Auth: requireAdmin
+
+// --- QA Tools ---
+
+// List packs for QA review
+// GET /api/admin/qa/packs
+// Auth: requireAdmin
+
+// Get QA details for a pack
+// GET /api/admin/qa/packs/[packId]
+// Auth: requireAdmin
+
+// Recheck a pack's QA status
+// POST /api/admin/qa/packs/[packId]/recheck
+// Auth: requireAdmin
+
+// List QA issues across all packs
+// GET /api/admin/qa/issues
+// Auth: requireAdmin
+
+// --- Other Admin ---
+
+// Get audit log
+// GET /api/admin/audit-log
+// Query: adminUserId?, action?, targetResource?, from?, to?, limit?, offset?
+// Auth: requireAdmin
+
+// Get ops summary (system health)
+// GET /api/admin/ops/summary
+// Auth: requireAdmin
+
+// Seed content assets from Sanity
+// POST /api/seed/content-assets

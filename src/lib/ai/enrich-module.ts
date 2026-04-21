@@ -223,6 +223,8 @@ Only return values for fields marked "NEEDS INFERENCE". Return null for fields a
     return result;
   } catch (error) {
     console.error('[enrichModule] Failed:', error);
+    const Sentry = await import('@sentry/nextjs');
+    Sentry.captureException(error, { tags: { pipeline: 'enrich-module' } });
     return null;
   }
 }

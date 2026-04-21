@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { track } from '@/lib/analytics/posthog';
 
 type AssessmentQuestion = { id: string; question: string };
 type BadgeData = {
@@ -30,6 +31,47 @@ export default function BadgeAssessPage() {
   const badgeId = params.id as string;
   const learnerId = searchParams.get('learner') ?? '';
   const learnerName = searchParams.get('name') ?? 'your child';
+
+  // Queue support: parent may arrive with multiple ready badges.
+  // Format: ?queue=badgeId:learnerId,badgeId:learnerId&qn=<1-based position>&qt=<total>
+  // `queueItems` is the rest of the walk after the current badge. `qn` and `qt`
+  // carry position state through the URL so we can render "Badge 2 of 3" etc.
+  const queueParam = searchParams.get('queue') ?? '';
+  const queueItems = queueParam
+    ? queueParam
+        .split(',')
+        .map((s) => {
+          const [bid, lid] = s.split(':');
+          return bid && lid ? { badgeId: bid, learnerId: lid } : null;
+        })
+        .filter((x): x is { badgeId: string; learnerId: string } => x !== null)
+    : [];
+  const hasQueue = queueItems.length > 0 || searchParams.has('qt');
+  const queuePositionRaw = parseInt(searchParams.get('qn') ?? '1', 10);
+  const queueTotalRaw = parseInt(searchParams.get('qt') ?? String(queueItems.length + 1), 10);
+  const queuePosition = Number.isFinite(queuePositionRaw) ? queuePositionRaw : 1;
+  const queueTotal = Number.isFinite(queueTotalRaw) ? queueTotalRaw : queueItems.length + 1;
+
+  const goToNextInQueue = useCallback(async () => {
+    if (queueItems.length === 0) return;
+    const [next, ...rest] = queueItems;
+    let nextName = '';
+    try {
+      const res = await fetch('/api/learners');
+      if (res.ok) {
+        const all: Array<{ id: string; name: string }> = await res.json();
+        nextName = all.find((l) => l.id === next.learnerId)?.name ?? '';
+      }
+    } catch {
+      // fall through — url still works without name
+    }
+    const restParam = rest.length > 0
+      ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
+      : '';
+    router.push(
+      `/badges/assess/${next.badgeId}?learner=${next.learnerId}&name=${encodeURIComponent(nextName)}${restParam}&qn=${queuePosition + 1}&qt=${queueTotal}`
+    );
+  }, [queueItems, queuePosition, queueTotal, router]);
 
   const [step, setStep] = useState<Step>('intro');
   const [badge, setBadge] = useState<BadgeData | null>(null);
@@ -94,6 +136,7 @@ export default function BadgeAssessPage() {
         body: JSON.stringify({ badgeId, learnerId, responses }),
       });
       if (!res.ok) throw new Error();
+      track('badge_awarded', { from_queue: hasQueue, queue_remaining: queueItems.length });
       setStep('celebration');
     } catch {
       setError('Failed to award badge');
@@ -111,6 +154,7 @@ export default function BadgeAssessPage() {
         body: JSON.stringify({ badgeId, learnerId, responses }),
       });
       if (!res.ok) throw new Error();
+      track('badge_deferred', { from_queue: hasQueue, queue_remaining: queueItems.length });
       setStep('deferred');
     } catch {
       setError('Failed to defer badge');
@@ -194,7 +238,13 @@ export default function BadgeAssessPage() {
               </div>
             )}
 
-            <div className="w-12" />
+            {hasQueue ? (
+              <span className="font-sans text-xs text-text-muted">
+                Badge {queuePosition} of {queueTotal}
+              </span>
+            ) : (
+              <div className="w-12" />
+            )}
           </header>
         )}
 
@@ -472,18 +522,37 @@ export default function BadgeAssessPage() {
             </p>
 
             <div className="space-y-sm">
-              <button
-                onClick={() => router.push('/our-story/portfolio')}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
-              >
-                View in Portfolio
-              </button>
-              <button
-                onClick={() => router.push('/')}
-                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-              >
-                Back to Dashboard
-              </button>
+              {hasQueue ? (
+                <>
+                  <button
+                    onClick={goToNextInQueue}
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    Next badge ({queueItems.length} remaining) →
+                  </button>
+                  <button
+                    onClick={() => router.push('/our-story/portfolio')}
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    Stop here · View in Portfolio
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => router.push('/our-story/portfolio')}
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    View in Portfolio
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    Back to Dashboard
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -500,12 +569,31 @@ export default function BadgeAssessPage() {
               feels right.
             </p>
 
-            <button
-              onClick={() => router.push('/')}
-              className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-            >
-              Back to Dashboard
-            </button>
+            <div className="space-y-sm">
+              {hasQueue ? (
+                <>
+                  <button
+                    onClick={goToNextInQueue}
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    Next badge ({queueItems.length} remaining) →
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  >
+                    Stop here · Back to Dashboard
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

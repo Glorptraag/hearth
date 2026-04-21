@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
 import { PedagogyLearnMore } from '@/components/settings/PedagogyLearnMore';
+import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 import EmptyState from '@/components/ui/EmptyState';
+import { PEDAGOGIES, type Pedagogy } from '@/types';
+import { track } from '@/lib/analytics/posthog';
 
 function AccountSecurityPanel() {
   const [showDelete, setShowDelete] = useState(false);
@@ -141,7 +144,7 @@ function FamilyAccessPanel() {
     }
   }
 
-  useState(() => { loadMembers(); });
+  useEffect(() => { loadMembers(); }, []);
 
   async function handleInvite() {
     if (!inviteEmail.trim()) return;
@@ -337,6 +340,29 @@ export default function SettingsClient({
   const [newChildName, setNewChildName] = useState('');
   const [newChildColour, setNewChildColour] = useState('rose');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  async function handleWizardComplete(result: PedagogyWizardResult) {
+    const philosophy: Pedagogy = result.philosophy ?? 'eclectic';
+    await saveSettings({
+      pedagogyPreference: philosophy,
+      values: result.values,
+      practices: result.practices,
+    });
+    track('pedagogy_set', {
+      philosophy,
+      value_count: result.values.length,
+      practice_count: result.practices.length,
+      source: 'settings_wizard',
+    });
+    setWizardOpen(false);
+  }
+
+  const currentPhilosophy: Pedagogy | null = (PEDAGOGIES as readonly string[]).includes(
+    settings.pedagogyPreference,
+  )
+    ? (settings.pedagogyPreference as Pedagogy)
+    : null;
 
   async function saveSettings(patch: Partial<SettingsData>) {
     setSaving(true);
@@ -587,9 +613,18 @@ export default function SettingsClient({
       {/* ─── Pedagogy ─── */}
       {activeTab === 'pedagogy' && (
         <div className="flex flex-col gap-lg">
-          <div>
-            <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Philosophy</p>
-            <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Learning Approach</h2>
+          <div className="flex items-start justify-between gap-md">
+            <div>
+              <p className="mb-xs font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">Philosophy</p>
+              <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Learning Approach</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWizardOpen(true)}
+              className="flex-shrink-0 rounded-[6px] border border-border-subtle px-md py-xs font-sans text-xs font-semibold text-text-secondary hover:border-ember hover:text-ember transition-colors duration-200"
+            >
+              Re-run wizard
+            </button>
           </div>
           <p className="font-sans text-sm text-text-secondary">
             Your pedagogy preference shapes how Hearth frames your family&rsquo;s learning insights.
@@ -600,6 +635,14 @@ export default function SettingsClient({
             onChange={(value) => {
               setSettings((s) => ({ ...s, pedagogyPreference: value }));
               saveSettings({ pedagogyPreference: value });
+              if ((PEDAGOGIES as readonly string[]).includes(value)) {
+                track('pedagogy_set', {
+                  philosophy: value,
+                  value_count: settings.values.length,
+                  practice_count: settings.practices.length,
+                  source: 'settings_inline',
+                });
+              }
             }}
           />
           <p className="font-sans text-xs text-text-muted mt-sm">
@@ -716,6 +759,22 @@ export default function SettingsClient({
       )}
         </div>{/* end content panel */}
       </div>{/* end grid */}
+
+      {wizardOpen && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-surface-body">
+          <PedagogyWizard
+            initial={{
+              philosophy: currentPhilosophy,
+              values: settings.values,
+              practices: settings.practices,
+            }}
+            onComplete={handleWizardComplete}
+            onClose={() => setWizardOpen(false)}
+            saving={saving}
+            completeLabel="Save Approach"
+          />
+        </div>
+      )}
     </div>
   );
 }

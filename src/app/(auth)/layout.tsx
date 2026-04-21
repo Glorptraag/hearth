@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { ToastProvider } from "@/components/ui/Toast";
 import { useTheme } from "@/hooks/use-theme";
+import PostHogProvider from "@/components/analytics/PostHogProvider";
 
 const NAV_SECTIONS = [
   {
@@ -123,6 +124,7 @@ export default function AuthLayout({
   const initials = `${(user?.firstName ?? "H")[0]}${(user?.lastName ?? "")[0] ?? ""}`;
 
   return (
+    <PostHogProvider>
     <div className="flex min-h-dvh bg-surface-body">
       {/* Desktop sidebar — hidden below lg */}
       <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel p-xl">
@@ -335,5 +337,6 @@ export default function AuthLayout({
         })}
       </nav>
     </div>
+    </PostHogProvider>
   );
 }

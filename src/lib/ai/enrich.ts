@@ -430,7 +430,14 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     }
   } catch (error) {
     console.error('[enrichEntry] Failed:', error);
-    // Entry already saved — enrichment failure is non-blocking
+    // Entry already saved — enrichment failure is non-blocking, but we do
+    // want to see it in Sentry so silent degradation doesn't hide behind
+    // a healthy response.
+    const Sentry = await import('@sentry/nextjs');
+    Sentry.captureException(error, {
+      tags: { pipeline: 'enrich-entry' },
+      extra: { entryId, familyId },
+    });
   }
 }
 

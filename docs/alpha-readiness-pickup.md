@@ -1,143 +1,201 @@
-# Alpha-Readiness — Handover for Next Session
+<!-- Version: 2 | Date: 2026-04-21 | Changes: Rewrote as living status doc reflecting the wizard / analytics / cost-dashboard sprint; consolidated honest caveats + known limitations; original 19 Apr handover preserved in History section. -->
 
-> Generated 19 Apr 2026 after a focused sprint on the 8-item critical path.
-> Branch: `claude/alpha-readiness-report-0RXUg`.
-> Read `docs/alpha-readiness-report-2026-04.md` for the full audit context,
-> or refer to the report delivered in the chat transcript that produced this file.
+# Alpha-Readiness — Status
+
+> Living status of the alpha-readiness workstream. Updated whenever a
+> session closes out items.
+> Branch of record for the current sprint: `claude/fix-alpha-readiness-report-O9TNh`.
 
 ---
 
-## What shipped this session (5 commits on this branch)
+## Latest update — 21 April 2026
+
+The full 8-item critical path from the original 2026-04 audit is now
+shipped, plus the decision-free follow-ups (remaining pilot events,
+admin cost dashboard, runbooks).
+
+### What shipped this sprint (branch `claude/fix-alpha-readiness-report-O9TNh`)
+
+| Area | Commit | What landed |
+|---|---|---|
+| Pedagogy wizard | `e580ef4` | Full 4-step wizard (Philosophy / Values / Practices / Review with demo activity); onboarding Step 3; "Re-run wizard" modal in Settings; 9 new adapter-contract tests. |
+| Runbooks + branch hygiene | `f2bf51c` | `docs/deployment-runbook.md`, `docs/incident-runbook.md`, `docs/branch-hygiene.md`, `scripts/audit-stale-branches.mjs`. |
+| PostHog events | `b69145f` | Remaining 5 events (`entry_enriched`, `module_added_to_library`, `report_exported`, `logger_completed_50pct`, `pedagogy_set`) + server-side capture helper. |
+| AI cost dashboard | `5783437` | Admin "AI Cost" tab over `ai_pipeline_logs`, window selector, draft-vs-full split, top-20 families by spend. |
+| Critical-review fixes | `229b62d` | Bug fixes (PostHog distinct-ID mismatch, onboarding-skip regression) + a11y fixes (focus trap, ARIA tabs, dialog semantics, duplicate header). |
+
+Also carried forward from `claude/alpha-readiness-report-0RXUg` via
+fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
+`ba24f65` (draft insights, Sentry + PostHog baseline, badge queue,
+`.env.example`, CI workflow, Our Story tab fix, FamilyAccessPanel bug).
+
+### Decisions resolved this sprint
+
+| # | Decision | Resolution |
+|---|---|---|
+| I | Pedagogy wizard: build or defer? | **Build.** Full 4-step wizard shipped. |
+| J | Demo activity for Step 4 | Hardcoded "Bug Observation Under Rocks" (matches spec Section 6). |
+| K | Secret management | Stay on Vercel UI. Documented in deploy runbook §1.2. |
+| L | Migration gating | Manual `drizzle-kit migrate` + runbook step. Documented in deploy runbook §1.4. |
+| M | E2E in CI | Skip. Rely on Vercel preview manual QA. |
+| N | Branch protection + trim process | Protection rules matrix + GitHub auto-delete + `scripts/audit-stale-branches.mjs`. Documented in `docs/branch-hygiene.md`. |
+
+---
+
+## Honest caveats / known limitations
+
+> What we haven't actually verified, or what we know isn't complete. Be
+> honest with yourself when you're about to promise these to a family.
+
+### Didn't verify in this environment
+
+1. **`next build` was not run.** This sandbox has no `DATABASE_URL`, so
+   `npm run build` collects-page-data and fails during static analysis
+   of API routes. We relied on `npx tsc --noEmit`, `eslint`, and
+   `vitest run` (36/36 green). Before production deploy, do a local
+   `npm run build` with env vars set.
+2. **No browser QA of the pedagogy wizard.** Type-checked and linted,
+   but no human has actually clicked through the 4 steps or the
+   Settings re-run flow. First-deploy smoke test (deploy runbook §1.6
+   #3) exercises this path — do not skip it.
+3. **Cron endpoints assume Vercel injects the `CRON_SECRET` Bearer
+   token.** The runbook suggests curl-ing them with the secret after
+   deploy; if the route handlers expect the bearer in a specific
+   header shape, this may not be exactly right. Worth verifying
+   against the actual route code on first deploy.
+
+### Known code-level limitations
+
+4. **Co-facilitator double-counting in PostHog.** Both the client
+   wrapper and the server helper identify on `hash(clerkUserId)`,
+   which means one family with two Clerk users will appear as two
+   PostHog persons. Client and server events for the same Clerk user
+   DO join correctly (this was a bug, now fixed). The family-level
+   aggregation fix still wants to happen — see
+   `src/components/analytics/PostHogProvider.tsx`.
+5. **22 pre-existing ESLint errors** (mostly `@typescript-eslint/no-explicit-any`
+   plus one `@next/next/no-html-link-for-pages` and two setState-in-effect
+   warnings). None in files touched this sprint. While they exist, the
+   CI workflow keeps `lint` as `continue-on-error: true`. Clearing them
+   is the gating task before lint becomes a required check.
+6. **Pedagogy wizard prioritisation uses ↑↓ buttons, not drag.** The
+   spec allows either; arrows are more accessible and have no dep
+   cost. If real users ask for drag, revisit.
+7. **Review-step demo insights are hardcoded per-philosophy.** Matches
+   spec (template synthesis acceptable for MVP, Haiku-generated
+   synthesis is a Phase-2 polish item).
+8. **Wizard does not persist partial progress.** Closing the Settings
+   wizard mid-flow discards unsaved selections; re-opening pre-fills
+   from the last saved state.
+9. **Review-step tab keyboard navigation is partial.** Structure is
+   ARIA-correct (tablist / tab / tabpanel / roving tabIndex), but
+   arrow-key cycling between tabs isn't implemented — users must Tab
+   to each tab and press Enter. Polish item.
+10. **Admin AI-cost pricing is hardcoded** to Haiku 4.5 rates ($0.80 /
+    Mtok input, $4.00 / Mtok output) in `PRICING_PER_MTOK` inside
+    `/api/admin/analytics/ai-cost/route.ts`. If the wired model
+    changes, the dashboard USD figures will be wrong until the
+    constant is updated.
+11. **Cost dashboard family IDs are truncated to 8 characters.** Real
+    UUIDs collide at that prefix with probability ≈ `1 in 2^32` — fine
+    for pilot scale but verify by cross-checking admin → Families if
+    you need to identify a specific family.
+12. **`handleSkipWizard` in onboarding advances to Step 4 even if the
+    settings PATCH fails.** The comment says lazy-create in
+    `/api/settings` GET will fix it; true only if the server is up.
+    If the whole settings API is down, the user hits an error later.
+    Acceptable trade-off for a skip flow.
+13. **`scripts/audit-stale-branches.mjs` assumes `origin/main` as
+    base.** `BASE=origin/develop` works as an escape hatch, but the
+    script has no auto-detect for differently-named default branches.
+14. **In-memory rate limiter is single-region only.** When/if Hearth
+    goes multi-region before Redis-backed limiting is added, the
+    limiter becomes effectively permissive (each region counts
+    separately). Flagged in `docs/incident-runbook.md §3`.
+
+### Conscious omissions from this sprint
+
+15. **No PR opened.** User hadn't asked for one.
+16. **Phase-2 items from the original audit are untouched:** Hub term
+    summary AI narrative, Portfolio Journey/Milestone distinct card
+    rendering, Constellation L3 DLO panel, offline support (#16 on
+    the Interaction Map).
+
+---
+
+## Still open (for future sessions)
+
+### Gated on decisions (none of these have them yet)
+
+- Hub term summary: static template today, spec wants AI-generated
+  monthly growth copy.
+- Portfolio Journey/Milestone distinct card rendering — architectural
+  change.
+- Constellation L3 DLO panel — architectural change.
+- Offline support — out of MVP per the original spec.
+
+### Decision-free, ready to pick up
+
+- Clear the 22 pre-existing ESLint errors → flip `continue-on-error` on
+  the lint job to `false` in `.github/workflows/test.yml`.
+- Arrow-key cycling between the Review-step insight tabs (caveat 9).
+- Family-level PostHog identification (caveat 4).
+- Drag-and-drop reordering for values/practices if user feedback asks.
+- Model-aware pricing in the cost dashboard: accept a `model_used` →
+  price map (caveat 10).
+
+---
+
+## Post-deploy observability checklist
+
+After the first prod deploy:
+
+- [ ] Sentry DSN wired; test event captured via
+      `window.Sentry?.captureMessage('deploy-smoke-test')`.
+- [ ] PostHog key + host wired; `entry_created` + `entry_enriched`
+      appear as events on the same person (confirms client/server
+      distinct-ID join works end-to-end).
+- [ ] Admin → Analytics → AI Cost tab returns data for a recent
+      window (requires at least one enrichment call).
+- [ ] GitHub Settings → General → "Automatically delete head branches"
+      is on.
+- [ ] `node scripts/audit-stale-branches.mjs` runs cleanly from the
+      operator's laptop.
+- [ ] Cron secret rotated, value in Vercel env vars, both cron routes
+      respond 200 to a manual curl with the bearer.
+
+---
+
+## History — original handover (19 April 2026)
+
+> Content below preserved from the first alpha-readiness session on
+> branch `claude/alpha-readiness-report-0RXUg`. Left in place for
+> historical traceability — all open items from this section have
+> since been closed.
+
+### What shipped that session (5 commits)
 
 | Plan | Commit | Status |
 |---|---|---|
-| 8. `useState`→`useEffect` bug in FamilyAccessPanel | `ba24f65` | ✅ Done |
-| 7. Our Story Hub redundant tab strip removed | `ba24f65` | ✅ Done |
-| 5a. `.env.example` with all 16 env vars | `ba24f65` | ✅ Done |
-| 6a. GitHub Actions CI (typecheck + unit tests required, lint non-blocking) | `ba24f65` | ✅ Done |
-| 3. Badge assessment queue + warmer toast copy | `0ecd263` | ✅ Done |
-| 2. Sentry + self-hosted PostHog with hashed family IDs | `1d7f92e` | ✅ Done |
-| 1. Debounced Haiku draft insights with cost caps | `1c28145` | ✅ Done |
+| 8. `useState`→`useEffect` bug in FamilyAccessPanel | `ba24f65` | Done |
+| 7. Our Story Hub redundant tab strip removed | `ba24f65` | Done |
+| 5a. `.env.example` with all 16 env vars | `ba24f65` | Done |
+| 6a. GitHub Actions CI (typecheck + unit tests required, lint non-blocking) | `ba24f65` | Done |
+| 3. Badge assessment queue + warmer toast copy | `0ecd263` | Done |
+| 2. Sentry + self-hosted PostHog with hashed family IDs | `1d7f92e` | Done |
+| 1. Debounced Haiku draft insights with cost caps | `1c28145` | Done |
+| 1–3 (self-review) | `3025c40` | Done |
 
-All shipped commits pass `npx tsc --noEmit` and `npm test` (27/27).
+### Decisions that were open at handover (all now resolved — see §Decisions above)
 
----
+- I/J — Pedagogy wizard build vs defer → **build** (shipped this sprint).
+- K — Secret management → **Vercel UI** (runbook §1.2).
+- L — Migration gating → **manual + runbook** (runbook §1.4).
+- M — E2E in CI → **skip** (CI workflow unchanged).
+- N — Branch protection → **on** (branch-hygiene doc).
 
-## Still TODO — decisions required before work can start
+### Observability events that were outstanding (all now wired)
 
-### Plan 4 — Pedagogy Engine 4-step wizard (or formally drop)
-
-**Why it matters.** Hearth's thesis is pedagogy-neutral content with runtime overlays. Values/Practices currently only surface in Settings — first-time families never see them, so every downstream screen's tone adaptation runs on an empty profile. Big thesis-fidelity gap.
-
-**Decisions open**
-
-- **I — Big call: wizard or defer?**
-  - (a) **Build the wizard** (~1.5–2 days). Full 4 steps: Philosophy → Values (multi-select, max 5, drag-to-prioritise) → Practices (chips by category) → Review (demo activity preview + Eclectic caveat).
-  - (b) **Defer and simplify spec** (~30 min). Update `docs/hearth-pedagogy-engine-spec-v1.md` to say "v1 ships with Philosophy-only onboarding + Values/Practices in Settings; full wizard is Phase 2." Add a Dashboard right-panel callout nudging week-1 families to Settings.
-- **J — If (a), which seeded activity is the Step 4 demo preview?** Ideally the highest-engagement activity in the Starter Pack.
-
-**Reference material**
-- Spec: `docs/hearth-pedagogy-engine-spec-v1.md`
-- Prototype: `prototypes/hearth-pedagogy-engine-v2.jsx`
-- Current adapter: `src/lib/pedagogy/adapter.ts` + `adapter.test.ts`
-- Current simplified selector: `src/components/settings/PedagogySelector.tsx`
-- Current values/practices panel: `src/components/settings/PedagogyProfilePanel.tsx`
-- Onboarding entry point: `src/app/(public)/onboarding/page.tsx` (Step 2)
-
-**Execution outline if (a)**
-1. Extend `PedagogyProfilePanel` into a step-oriented `<PedagogyWizard step={1..4} />`.
-2. Wire drag-to-prioritise (HTML5 or `@dnd-kit`) for values.
-3. Add a Review step that fetches one seeded activity and reframes it with the live adapter.
-4. Replace Onboarding Step 2's pedagogy buttons with the wizard.
-5. Add "Re-run wizard" link in Settings → Pedagogy that pre-fills prior selections.
-6. Persist to `familySettings.pedagogyProfile` JSONB (already in schema).
-7. Extend `adapter.test.ts` with wizard-output → adapter-input contract tests.
-
----
-
-### Plan 5b — Deploy runbook
-
-**Status.** `.env.example` is committed. The runbook itself is not.
-
-**Decisions open**
-
-- **K — Secret management.** Stay on Vercel UI, or move to Doppler/1Password? Recommended for solo-dev pilot: stay on Vercel UI.
-- **L — Migration gating.** Auto-run `drizzle-kit migrate` as a Vercel build step, or keep manual with a documented runbook step? Recommended for pilot: manual + runbook.
-
-**Pages to create**
-- `docs/deployment-runbook.md`
-  - First-deploy checklist (env vars, Vercel project settings, Pro-tier cron confirmation, Neon branch setup)
-  - Migration sequence + rollback
-  - Sanity dataset config + write-token rotation
-  - Cron verification (`/api/admin/retention` Sun 02:00 UTC; `/api/admin/invitations/expire` daily 20:00 UTC)
-  - Smoke test: health → sign in → one entry → enrichment fires → snapshot row appears → Sentry event captured → PostHog event captured
-- `docs/incident-runbook.md`
-  - Enrichment failing → check Sentry issues tagged `pipeline:enrich-entry` → check `aiPipelineLogs.modelUsed` ratios → flip `DRAFT_INSIGHTS_ENABLED=false` if cost spike
-  - Rate limits tripping → check in-memory limiter (pre-Redis) is a single-instance fact; confirm only one Vercel region
-  - Anthropic outage → keyword matcher remains the fallback for the Logger
-
-**Estimate.** ~2 hours once K and L are answered.
-
----
-
-### Plan 6b — CI extensions
-
-**Status.** `.github/workflows/test.yml` has typecheck (required), unit tests (required), lint (`continue-on-error: true` until pre-existing 22 errors are cleared).
-
-**Decisions open**
-
-- **M — E2E secrets in CI.** Options:
-  - (a) Dedicated Neon dev branch, rotated weekly, used by Playwright in CI.
-  - (b) Ephemeral postgres container spun up in the GH Actions runner.
-  - (c) Skip e2e in CI; rely on Vercel preview manual QA.
-  Recommended for week 1: (c). Upgrade to (a) once Plan 1 is battle-tested.
-- **N — Branch protection.** Fine being unable to `git push main` directly once protection is on? Required-status-checks: `typecheck`, `unit-tests`.
-
-**Additional cleanup that will unblock lint gating**
-- 22 pre-existing ESLint errors (mostly `@typescript-eslint/no-explicit-any` + one `@next/next/no-html-link-for-pages` + two `Calling setState synchronously within an effect`). Not in files this sprint touched; fix them in a separate PR, then remove `continue-on-error: true` from the workflow.
-
-**Estimate.**
-- (c) + branch protection: 15 min.
-- (a) + lint cleanup: half-day.
-
----
-
-## Observability plumbing — next steps after deploy
-
-1. **Point `NEXT_PUBLIC_SENTRY_DSN`** at a Sentry project (free tier).
-2. **Stand up a self-hosted PostHog** (per decision E) and set `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST`.
-3. **Instrument the remaining pilot events** — only 3 of the 8 planned events are wired so far:
-   - ✅ `entry_created`
-   - ✅ `badge_awarded`
-   - ✅ `badge_deferred`
-   - ⬜ `entry_enriched` — fire after `enrichEntry()` resolves in `/api/entries` POST
-   - ⬜ `module_added_to_library` — fire in Marketplace "Add to Library" click
-   - ⬜ `report_exported` — fire in HEU Report export click
-   - ⬜ `logger_completed_50pct` — fire once when completeness crosses 50%
-   - ⬜ `pedagogy_set` — fire when pedagogy profile saves
-   Each is a 2-line change in the relevant component. Event allowlist lives in `src/lib/analytics/posthog.ts` — keep adding to it.
-4. **Build an admin cost dashboard** querying `aiPipelineLogs` grouped by `modelUsed` (filter for `-draft` suffix to separate draft-insight spend).
-
----
-
-## Things to watch during the first week of the pilot
-
-- **Haiku draft-insight spend.** Check `SELECT sum(input_tokens), sum(output_tokens), count(*) FROM ai_pipeline_logs WHERE model_used LIKE '%-draft' AND created_at > now() - interval '7 days'` weekly. Flip `DRAFT_INSIGHTS_ENABLED=false` if approaching $3/month.
-- **Badge queue UX.** If parents routinely reach 3+ badges in one save, consider surfacing the list up front instead of walking sequentially. (Decision H said sequential — revisit if data says otherwise.)
-- **Sentry noise.** The three pipeline catches will report every JSON parse or Haiku 5xx. If Haiku has a bad hour and Sentry spams, add a sampled capture rate.
-- **PostHog identifies on Clerk user ID, not family ID.** If co-facilitators join (multiple Clerk users per family), events will be double-counted per family. Adjust `PostHogProvider.tsx` to identify on `family.id` via a server-fetched value when that happens.
-
----
-
-## Branch and merge
-
-Branch: `claude/alpha-readiness-report-0RXUg` (pushed). No PR opened — user had not requested one at time of handover. When ready to merge, create a PR with the alpha-readiness report as the description.
-
-## Open questions I did not touch
-
-These were listed in the original audit as pre-existing open design questions (not decision-free fixes, not in the 8-item critical path):
-
-- Hub term summary narrative (static today, spec wants AI-generated monthly growth copy) — needs AI pipeline extension.
-- Portfolio Journey/Milestone distinct card rendering — architectural change.
-- Constellation L3 DLO panel — architectural change.
-- Offline support (#16 on Interaction Map) — open, out of MVP.
+- ✅ `entry_created`, `badge_awarded`, `badge_deferred` — prior session
+- ✅ `entry_enriched`, `module_added_to_library`, `report_exported`,
+     `logger_completed_50pct`, `pedagogy_set` — this sprint

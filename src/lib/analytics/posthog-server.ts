@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { HearthEvent } from './posthog';
 
 /**
  * Server-side PostHog capture for events that originate in API routes
@@ -9,7 +10,9 @@ import { createHash } from 'node:crypto';
  *   - No-op unless both NEXT_PUBLIC_POSTHOG_KEY and NEXT_PUBLIC_POSTHOG_HOST
  *     are set.
  *   - Distinct ID is a SHA-256 hash (truncated to 128 bits) of whatever ID
- *     the caller passes; we typically pass the family ID.
+ *     the caller passes. Pass the SAME ID the client wrapper uses
+ *     (currently the Clerk user ID) so client + server events join in
+ *     PostHog as one person.
  *   - Properties are sanitised the same way as the client: no free-form
  *     text, only enum-like strings, numbers, or booleans.
  *
@@ -19,8 +22,6 @@ import { createHash } from 'node:crypto';
 const PH_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const PH_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 const enabled = Boolean(PH_KEY && PH_HOST);
-
-import type { HearthEvent } from './posthog';
 
 export async function trackServer(
   event: HearthEvent,

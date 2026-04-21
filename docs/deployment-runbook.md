@@ -123,19 +123,41 @@ Short version — see §1.6 for the full smoke test, only run it after risky cha
 
 ## 3. Cost + quota watch (weekly during pilot)
 
+**First stop:** `/admin/analytics` → **AI Cost** tab. Gives you window totals, daily stacked bar (full vs draft), and top-20 families by spend in one view. Pricing is hardcoded to Haiku 4.5 in `/api/admin/analytics/ai-cost/route.ts` — update `PRICING_PER_MTOK` if the model wired into `src/lib/ai/*` changes.
+
 | Signal | Where | Action if tripped |
 |---|---|---|
-| Haiku spend | Anthropic dashboard + `SELECT sum(input_tokens), sum(output_tokens), count(*) FROM ai_pipeline_logs WHERE created_at > now() - interval '7 days'` | At 50% of monthly cap, investigate call volume per family. At 80%, flip `DRAFT_INSIGHTS_ENABLED=false`. |
-| Draft-insight spend specifically | `... WHERE model_used LIKE '%-draft'` | Flip `DRAFT_INSIGHTS_ENABLED=false` in Vercel; it's a runtime read. |
+| Haiku spend | `/admin/analytics` → AI Cost tab (primary) or `SELECT sum(input_tokens), sum(output_tokens), count(*) FROM ai_pipeline_logs WHERE created_at > now() - interval '7 days'` | At 50% of monthly cap, investigate call volume per family. At 80%, flip `DRAFT_INSIGHTS_ENABLED=false`. |
+| Draft-insight spend specifically | AI Cost tab → "Draft insights" totals card; or SQL `... WHERE model_used LIKE '%-draft'` | Flip `DRAFT_INSIGHTS_ENABLED=false` in Vercel; it's a runtime read. Soft threshold: $3/family/month. |
+| Noisy single family | AI Cost tab → "Top families by spend" table | Cross-reference the truncated family ID via `/admin/families`. Tighten that route's `rateLimit()` if abuse pattern. |
 | Sentry quota (5k events/mo free) | Sentry → Stats | Triage noisy issues; sample `beforeSend` if a specific pipeline is spamming. |
 | Vercel function invocations / bandwidth | Vercel → Usage | If approaching Pro limits, triage longest routes in the Analytics tab. |
 | Neon compute hours | Neon → Usage | Pilot should stay well under free-tier compute; investigate any query above 500ms in the slow-query log. |
 
 ---
 
-## 4. Known gotchas
+## 4. Product analytics — pilot event list
+
+All events are opt-in (only fire when `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` are set). Schema is enforced by the `HearthEvent` union in `src/lib/analytics/posthog.ts`; add there first when extending. Every event is identified by SHA-256-hashed Clerk user ID (same for client + server events so they join per person).
+
+| Event | Source | Where it fires |
+|---|---|---|
+| `entry_created` | client | Logger save handler (`src/app/(auth)/log/page.tsx`) |
+| `entry_enriched` | server | `/api/entries` POST, after `enrichEntry()` resolves or throws |
+| `logger_completed_50pct` | client | Logger, once per session when completeness first ≥ 50 |
+| `module_added_to_library` | client | Marketplace "Add to Library" click (`src/app/(auth)/explore/marketplace/page.tsx`) |
+| `badge_awarded`, `badge_deferred` | client | Badge assessment page |
+| `report_exported` | client | HEU report Export button (`src/app/(auth)/our-story/report/page.tsx`) |
+| `pedagogy_set` | client | Onboarding wizard save, Settings wizard save, Settings inline philosophy selector (each tagged with `source`) |
+
+Privacy posture: no entry text, no learner names, no email, no free-form strings (the `sanitise()` helpers on both client and server drop anything >40 chars or with 2+ consecutive spaces).
+
+---
+
+## 5. Known gotchas
 
 - **Cron secret rotation.** Changing `CRON_SECRET` in Vercel does not retroactively authorise past cron invocations — only new ones. Expect a brief window where the next cron run succeeds with the new token; old curl commands must use the new value.
 - **Clerk v7 Sign-in contrast** has a theme regression — see commits `c590d41` / `06bfee1`. If sign-in text reads low-contrast on either theme, re-check `src/app/clerk-theme.ts`.
 - **`DRAFT_INSIGHTS_ENABLED` is read at runtime**, so flipping the Vercel env var takes effect on the next cold-start. Force it sooner by redeploying (no code change required — just click Redeploy).
 - **Stripe routes return 503 by design.** `/api/stripe/*` is stubbed; do not set `STRIPE_*` keys in alpha.
+- **Open caveats for pilot launch** are tracked in `docs/alpha-readiness-pickup.md` → "Honest caveats / known limitations". Skim it before the first deploy and before the weekly cost watch.

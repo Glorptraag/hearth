@@ -50,6 +50,10 @@ docs/                # Architecture specs, design system docs
 | `docs/lms-database-schema.js` | PostgreSQL table definitions |
 | `docs/lms-api-endpoints.js` | API route reference |
 | `docs/Hearth_AI_Intelligence_Layer_Architecture.md` | AI enrichment pipeline (Phase 6) |
+| `docs/alpha-readiness-pickup.md` | Current alpha-readiness status + honest caveats. Read first on any pilot-ops task. |
+| `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |
+| `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
+| `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
 
 When building a specific screen, also read its spec doc (e.g., `docs/hearth-logger-spec-v1.md`) and look at its prototype in `prototypes/`.
 
@@ -163,6 +167,19 @@ See `docs/hearth-canonical-design-tokens-v1.md` Appendix A for details.
 7. **No freemium language.** Membership-included content has zero transactional UI.
 8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types.
 9. **Sanity = reusable content. Postgres = user/transactional data.** Never store user data in Sanity. Never store portable content in Postgres.
+
+## Key implementation surfaces
+
+Non-obvious locations for features that come up often:
+
+| Feature | Code |
+|---|---|
+| Pedagogy wizard (onboarding Step 3 + Settings re-run modal) | `src/components/pedagogy/PedagogyWizard.tsx` (component) + `src/components/pedagogy/data.ts` (catalogs + demo insights). Specs in `docs/hearth-pedagogy-engine-spec-v1.md`. |
+| Pedagogy language adapter (overlay vocabulary at runtime) | `src/lib/pedagogy/adapter.ts`; tests `adapter.test.ts` (also enforces wizard↔adapter contract). |
+| Client analytics (PostHog) | `src/lib/analytics/posthog.ts`. Add new events to the `HearthEvent` union. |
+| Server analytics (fires from API routes) | `src/lib/analytics/posthog-server.ts`. Identify on the SAME id as the client (Clerk userId) so funnels join. |
+| Admin AI cost dashboard | `/api/admin/analytics/ai-cost/route.ts` + `src/app/(admin)/admin/analytics/_components/AiCostPanel.tsx`. Pricing constants live in the route. |
+| Stale-branch audit | `scripts/audit-stale-branches.mjs`. Configurable via `STALE_DAYS`, `PROTECTED`, `BASE` env vars. |
 
 ## Writing Sanity Content Programmatically
 

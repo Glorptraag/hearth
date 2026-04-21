@@ -1,9 +1,10 @@
-<!-- Version: 1 | Date: 2026-04-20 | Changes: Initial incident runbook for pilot operations. Pairs with deployment-runbook.md. -->
+<!-- Version: 2 | Date: 2026-04-21 | Changes: Added cross-link to alpha-readiness caveats; noted cost dashboard as the first-stop for §2 investigations. -->
 
 # Hearth — Incident Runbook
 
 > Target: alpha pilot operator (solo). Bring any novel incident back into this doc so the next occurrence is fast.
 > Pair with: [`docs/deployment-runbook.md`](./deployment-runbook.md) for env/deploy context.
+> Background reading: [`docs/alpha-readiness-pickup.md`](./alpha-readiness-pickup.md) → "Honest caveats / known limitations". Several incidents are expected consequences of known limitations — check there before treating a symptom as novel.
 
 ## How to use this doc
 
@@ -67,7 +68,10 @@
 
 ### Detect
 
+**First stop:** `/admin/analytics` → **AI Cost** tab. Set window to 30d. The "Draft insights" totals card + daily stacked bar show the trend, and the "Top families by spend" table flags a single noisy family instantly. Only fall back to SQL when the dashboard doesn't answer the question.
+
 ```sql
+-- Fallback query — same thing the dashboard runs
 SELECT
   date_trunc('day', created_at) AS day,
   count(*) AS calls,
@@ -80,6 +84,8 @@ GROUP BY 1 ORDER BY 1;
 ```
 
 Baseline (from the debounced draft-insight design): ~100 calls/family/month ≈ $2/family/month. A jump past $3/family/month on a rolling 7-day window is the soft alert.
+
+> **Pricing note.** Dashboard USD figures use the hardcoded Haiku 4.5 rates in `PRICING_PER_MTOK` inside `/api/admin/analytics/ai-cost/route.ts`. If the model wired into `src/lib/ai/*` changes, update that constant — see caveat 10 in `docs/alpha-readiness-pickup.md`.
 
 ### Investigate
 

@@ -81,10 +81,10 @@ async function fetchPkbDocs(frameworkKey: string | null): Promise<SanityPkbDoc[]
       && suggestedDraft == false
       ${frameworkFilter}
     ] {
+      ...,
       _id,
       _type,
-      framework->{ slug },
-      ...
+      "framework": framework->{ slug }
     }
   `;
 
@@ -123,7 +123,7 @@ async function upsertChunks(chunks: ChunkRow[]): Promise<void> {
         ${c.pedagogy_key},
         ${c.layer},
         ${c.text},
-        ${embeddingLiteral}::vector(${EMBEDDING_DIMENSIONS}),
+        ${embeddingLiteral}::vector(1024),
         ${JSON.stringify(c.metadata)},
         ${c.content_hash},
         ${c.sanity_doc_id},

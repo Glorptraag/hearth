@@ -122,6 +122,19 @@ function str(val: unknown): string {
   return typeof val === 'string' ? val.trim() : '';
 }
 
+/** Flatten a sourceAttribution object into a human-readable string for display. */
+function formatAttribution(val: unknown): string {
+  if (typeof val === 'string') return val;
+  if (!val || typeof val !== 'object') return '';
+  const a = val as Record<string, unknown>;
+  const parts: string[] = [];
+  if (typeof a.author === 'string' && a.author) parts.push(a.author);
+  if (typeof a.title === 'string' && a.title) parts.push(a.title);
+  const loc = [a.pageOrChapter, a.year].filter((x) => typeof x === 'string' && x) as string[];
+  if (loc.length) parts.push(loc.join(', '));
+  return parts.join(', ');
+}
+
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unknown> {
@@ -142,11 +155,18 @@ export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unkno
   switch (doc._type) {
     case 'pedagogySourceExcerpt':
       if (doc.excerptId) meta.excerptId = doc.excerptId;
-      if (doc.sourceAttribution) meta.sourceAttribution = doc.sourceAttribution;
+      if (typeof doc.text === 'string') meta.text = doc.text;
+      if (doc.sourceAttribution) {
+        meta.sourceAttributionRaw = doc.sourceAttribution;
+        meta.sourceAttribution = formatAttribution(doc.sourceAttribution);
+      }
       if (doc.isParaphrase != null) meta.isParaphrase = doc.isParaphrase;
       break;
     case 'pedagogyPracticePattern':
       if (doc.patternId) meta.patternId = doc.patternId;
+      if (typeof doc.triggerTitle === 'string') meta.triggerTitle = doc.triggerTitle;
+      if (typeof doc.triggerContext === 'string') meta.triggerContext = doc.triggerContext;
+      if (typeof doc.traditionResponse === 'string') meta.traditionResponse = doc.traditionResponse;
       if (doc.antiPattern) meta.antiPattern = doc.antiPattern;
       break;
     case 'pedagogyObservationalMarker':

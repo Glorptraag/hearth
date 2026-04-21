@@ -120,6 +120,15 @@ export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
   }
 }`;
 
+// Scoring-ready modules for recommendation engine (includes capability thread slugs + energy levels)
+export const SCORING_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
+  modules[]->{
+    _id, title, subjects,
+    "capabilityThreadTitles": capabilityThreads[]->title,
+    "averageEnergyLevel": approaches[0].activities[0]->energyLevel
+  }
+}`;
+
 // All published modules with pack back-reference for explore/browse
 export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
   _id,
@@ -216,6 +225,21 @@ export const PACK_MATERIALS_QUERY = `*[_type == "pack" && _id == $packId][0]{
       }
     }
   }
+}`;
+
+// Pedagogical framework by pedagogy key (slug field)
+export const FRAMEWORK_BY_PEDAGOGY_KEY_QUERY = `*[_type == "pedagogicalFramework" && slug == $pedagogyKey][0]{
+  _id, slug
+}`;
+
+// PKB: Practice patterns for a given framework
+export const PRACTICE_PATTERNS_QUERY = `*[_type == "pedagogyPracticePattern" && references($frameworkId)]{
+  _id, triggerTitle, triggerContext, traditionResponse, antiPattern, tags
+}`;
+
+// PKB: Observational markers for a given framework
+export const OBSERVATIONAL_MARKERS_QUERY = `*[_type == "pedagogyObservationalMarker" && references($frameworkId)]{
+  _id, markerName, whatItIndicates, markersToLookFor, tags
 }`;
 
 export interface SkeletonRecord {

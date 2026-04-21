@@ -139,6 +139,33 @@ export async function retrievePedagogyChunks(
         }
       }
 
+      // Tags-based match (covers chunks with only tags metadata)
+      const docTags = meta.tags as string[] | undefined;
+      if (docTags && docTags.length > 0) {
+        // Match situational signals against tags
+        const tagSignalMatches = opts.situationalSignals.filter((s) =>
+          docTags.some((t) => t === s || t.includes(s) || s.includes(t))
+        );
+        if (tagSignalMatches.length > 0) {
+          boost += Math.min(tagSignalMatches.length * 0.05, 0.15);
+          reasons.push(`tags matched signals: ${tagSignalMatches.join(', ')}`);
+        }
+
+        // Match capability threads against tags
+        const tagThreadMatches = opts.capabilityThreads.filter((thread) =>
+          docTags.some((t) => t === thread || t.includes(thread) || thread.includes(t))
+        );
+        if (tagThreadMatches.length > 0) {
+          boost += Math.min(tagThreadMatches.length * 0.03, 0.09);
+          reasons.push(`tags matched threads: ${tagThreadMatches.join(', ')}`);
+        }
+
+        // Semantic label for all chunks: summarise tags as reason
+        if (reasons.length === 0 && docTags.length > 0) {
+          reasons.push(`semantic match (tags: ${docTags.slice(0, 3).join(', ')})`);
+        }
+      }
+
       // Activity type match
       if (opts.activityType && meta.activityType === opts.activityType) {
         boost += 0.05;

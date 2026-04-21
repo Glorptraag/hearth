@@ -2,17 +2,29 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v1.md` for design values.
-> **Last updated:** 12 April 2026
+> **Last updated:** 21 April 2026
 
 ---
 
-## Current Phase: Pre-Launch Hardening
+## Current Phase: Alpha Readiness
 
 **Build progress:** Next.js 16 app fully implemented — 25+ auth-protected routes, 107 API route files (~130 handlers), 30 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, and audit logging.
 **Design system:** Conformance pass complete — all screens revised to canonical tokens (2026-03-20).
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities).
 **Launch target:** 10-20 test families in Queensland, Australia.
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (April 2026)
+
+- **Logger Depth Coaching** (shipped 16 Apr) — Guided/Quick mode, observation chip detail fields, coach hints API behind pluggable provider interface (retrieval default, Haiku/hybrid scaffolded), snapshot-aware reflection prompts, template-driven post-save profile nudge. Plan: `.claude/plans/PLAN-logger-depth-coaching.md`.
+- **Pedagogy Knowledge Base** (shipped 21 Apr) — Vector-search retrieval over pedagogy corpus (Charlotte Mason, Montessori, Unschooling), Voyage AI embeddings with batch rate-limit handling, richer chunk metadata, enrichment integration. Corpus docs and tooling scripts.
+- **Snapshot & Recommendations** (shipped 21 Apr) — Richer active thread trajectories, badge progress, evidence quality, curriculum coverage. Module recommendation engine scored against child snapshot signals.
+- **UI Surfaces** (shipped 21 Apr) — Capabilities thread detail panels, planner recommendations, explore relevance sorting, facilitate-mode practice patterns, pedagogy learn-more in settings.
+- **Alpha Readiness Sprint** (merged 21 Apr from cloud session) — Sentry + PostHog observability, debounced Haiku draft insights, badge assessment queue, pedagogy onboarding wizard, AI cost dashboard, deploy/incident runbooks. See `docs/alpha-readiness-pickup.md`.
+
+### Known Merge Issue
+
+`src/app/(auth)/log/page.tsx` took the cloud branch version during the alpha-readiness merge (7 conflict blocks). Logger depth coaching features (guided mode, coach hints, observation details, WatchForTodayStrip, completeness gate) need re-integration. This is the top priority for the next session.
 
 ---
 
@@ -122,11 +134,13 @@
 
 ## Immediate Priorities (ordered)
 
-1. **End-to-end testing with real family data** — validate the full loop: onboarding → log entry → AI enrichment → snapshot rebuild → dashboard/portfolio/report
-2. **Content production** — Starter Pack seeded; additional packs needed for launch diversity
-3. **Resolve remaining open design questions** — 5 still fully open from System Interaction Map (regression handling #7 affects data integrity)
-4. **Production deployment hardening** — error handling, rate limiting, edge cases
-5. **Test family onboarding** — documentation and support flow for first 10-20 families
+1. **Re-integrate logger depth coaching into merged log/page.tsx** — guided mode, coach hints, observation details, WatchForTodayStrip, completeness gate lost in alpha-readiness merge. Source: commit d9a66f1.
+2. **End-to-end testing with real family data** — validate the full loop: onboarding → log entry → AI enrichment → snapshot rebuild → dashboard/portfolio/report
+3. **npm install + tsc --noEmit + test + lint** — post-merge validation not yet run (alpha-readiness merge was fast-tracked)
+4. **Content production** — Starter Pack seeded; additional packs needed for launch diversity
+5. **Resolve remaining open design questions** — 5 still fully open from System Interaction Map (regression handling #7 affects data integrity)
+6. **Production deployment hardening** — error handling, rate limiting, edge cases
+7. **Test family onboarding** — documentation and support flow for first 10-20 families
 
 ---
 

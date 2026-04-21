@@ -158,7 +158,7 @@ T1 takes the judgment-heavy work (retrieval tuning, enrichment prompt surgery, k
 
 ## Status
 
-_Last updated: 2026-04-16. 14/15 tasks done; only 4.2 (integration + manual QA) remains._
+_Last updated: 2026-04-21. All 15 tasks done. Feature shipped in commit d9a66f1 + polish in 9b0bdde._
 
 | Task | Status | Completed By | Completed At |
 |------|--------|--------------|--------------|
@@ -176,9 +176,9 @@ _Last updated: 2026-04-16. 14/15 tasks done; only 4.2 (integration + manual QA) 
 | 3.4  | ✅ done    | T1 | 2026-04-15 |
 | 3.5  | ✅ done    | T1 | 2026-04-16 |
 | 4.1  | ✅ done    | T2 | 2026-04-16 |
-| 4.2  | ⬜ pending | —  | —          |
+| 4.2  | ✅ done    | T1 | 2026-04-16 |
 
-**Next action:** T1 picks up 4.2 — all blockers (4.1, 3.5, 2.1, 2.2, 2.3) are `done`. Run the local integration + regression checklist from Section Verification of `~/.claude/plans/eager-foraging-mountain.md`.
+**Post-ship notes:** Alpha-readiness cloud branch merged in cf60ff4. log/page.tsx took `--theirs` during merge, so logger depth coaching features (guided mode, coach hints, observation details, WatchForTodayStrip, completeness gate) need re-integration into the merged file. See `docs/alpha-readiness-pickup.md`.
 
 ---
 

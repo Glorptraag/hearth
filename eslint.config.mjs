@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Archival reference files — not part of the running app
     "prototypes/**",
     "docs/**",
+    ".claude/**",
   ]),
 ]);
 

@@ -29,6 +29,7 @@ export default async function TokensDashboardPage() {
       ? Math.round(logs.reduce((s, l) => s + (l.latencyMs ?? 0), 0) / totalCalls)
       : 0;
   const retries = logs.filter((l) => l.retryTriggered).length;
+  const sonnetFallbacks = logs.filter((l) => l.modelUsed?.includes('sonnet')).length;
 
   const byModel: Record<string, { calls: number; input: number; output: number }> = {};
   for (const log of logs) {
@@ -109,7 +110,7 @@ export default async function TokensDashboardPage() {
         <div className="bg-ember-glow/20 rounded-lg border border-ember/20 p-md mb-xl">
           <p className="font-sans text-sm text-text-secondary">
             <span className="text-ember font-semibold">⚠ {retries} retries</span> in the last 30
-            days — low-confidence responses that triggered Sonnet fallback.
+            days.{sonnetFallbacks > 0 && ` ${sonnetFallbacks} confidence &lt; 0.5 triggered Sonnet re-enrichment.`}
           </p>
         </div>
       )}

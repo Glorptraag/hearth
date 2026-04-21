@@ -32,7 +32,7 @@ interface KindTotals {
 
 interface CostResponse {
   days: number;
-  days_: DayRow[];
+  daily: DayRow[];
   families: FamilyRow[];
   totals: { draft: KindTotals; full: KindTotals };
   pricing: { input: number; output: number };
@@ -123,7 +123,7 @@ export default function AiCostPanel() {
           <h3 className="mb-md font-serif text-base font-semibold text-text-primary">
             Daily spend (last {data.days} days)
           </h3>
-          <DailyChart rows={data.days_} />
+          <DailyChart rows={data.daily} />
 
           {/* Top families */}
           <h3 className="mb-md mt-xl font-serif text-base font-semibold text-text-primary">

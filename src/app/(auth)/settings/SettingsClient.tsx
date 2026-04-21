@@ -760,16 +760,6 @@ export default function SettingsClient({
 
       {wizardOpen && (
         <div className="fixed inset-0 z-50 overflow-auto bg-surface-body">
-          <div className="sticky top-0 z-10 flex justify-end border-b border-border-subtle bg-surface-panel/95 px-md py-sm backdrop-blur">
-            <button
-              type="button"
-              onClick={() => setWizardOpen(false)}
-              className="rounded-[6px] px-sm py-xs font-sans text-xs text-text-secondary hover:text-text-primary"
-              aria-label="Close wizard"
-            >
-              Close ×
-            </button>
-          </div>
           <PedagogyWizard
             initial={{
               philosophy: currentPhilosophy,
@@ -777,6 +767,7 @@ export default function SettingsClient({
               practices: settings.practices,
             }}
             onComplete={handleWizardComplete}
+            onClose={() => setWizardOpen(false)}
             saving={saving}
             completeLabel="Save Approach"
           />

@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     ORDER BY 1 DESC, 2 DESC, 3 DESC
   `);
 
-  const days_ = (dailyRows.rows as Array<{
+  const daily = (dailyRows.rows as Array<{
     day: string;
     kind: 'draft' | 'full';
     model: string;
@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Period totals.
-  const totals = days_.reduce(
+  const totals = daily.reduce(
     (acc, row) => {
       const bucket = row.kind === 'draft' ? acc.draft : acc.full;
       bucket.calls += row.calls;
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     days,
-    days_,
+    daily,
     families,
     totals,
     pricing: PRICING_PER_MTOK.default,

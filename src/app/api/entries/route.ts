@@ -108,14 +108,16 @@ export async function POST(request: NextRequest) {
     enrichEntry({ entryId: entry.id, familyId: family.id })
       .then(() => {
         rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
-        trackServer('entry_enriched', family.id, {
+        // Identify on Clerk userId so the event joins with client-side
+        // events (entry_created, etc.) which identify the same way.
+        trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'ok',
         });
       })
       .catch((err) => {
         console.error('[entries/POST] AI pipeline error:', err);
-        trackServer('entry_enriched', family.id, {
+        trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'error',
         });

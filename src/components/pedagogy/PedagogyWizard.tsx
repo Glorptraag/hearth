@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Pedagogy } from '@/types';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import {
   PHILOSOPHIES,
   VALUES,
@@ -32,6 +33,13 @@ export interface PedagogyWizardProps {
   onComplete: (result: PedagogyWizardResult) => void | Promise<void>;
   /** Fired when the user taps "Skip for now". Absent = no skip option. */
   onSkip?: () => void | Promise<void>;
+  /**
+   * Fired when the user dismisses the wizard without saving or skipping.
+   * When present, the wizard opts into modal semantics: role="dialog",
+   * aria-modal, focus trap, Escape to close, and a Close button in the
+   * header. Omit this prop when the wizard IS the page (onboarding).
+   */
+  onClose?: () => void;
   /** Saving flag — disables Continue / Light the Hearth buttons. */
   saving?: boolean;
   /** Overrides the final CTA label; defaults to "Light the Hearth". */
@@ -45,6 +53,7 @@ export function PedagogyWizard({
   initial,
   onComplete,
   onSkip,
+  onClose,
   saving = false,
   completeLabel = 'Light the Hearth',
 }: PedagogyWizardProps) {
@@ -54,11 +63,21 @@ export function PedagogyWizard({
   const [practices, setPractices] = useState<string[]>(initial?.practices ?? []);
   const [insightTab, setInsightTab] = useState<'philosophy' | 'values' | 'practices'>('philosophy');
 
+  const isModal = Boolean(onClose);
+  const focusTrapRef = useFocusTrap(isModal);
+
   const canProceed = useMemo(() => {
     if (step === 0) return philosophy !== null;
     if (step === 1) return values.length > 0;
     if (step === 2) return practices.length > 0;
     return true;
+  }, [step, philosophy, values.length, practices.length]);
+
+  const disabledHint = useMemo(() => {
+    if (step === 0 && philosophy === null) return 'Pick a philosophy to continue';
+    if (step === 1 && values.length === 0) return 'Pick at least one value to continue';
+    if (step === 2 && practices.length === 0) return 'Pick at least one practice to continue';
+    return null;
   }, [step, philosophy, values.length, practices.length]);
 
   const goNext = useCallback(() => {
@@ -70,11 +89,34 @@ export function PedagogyWizard({
     if (step > 0) setStep(step - 1);
   }, [step]);
 
+  // Modal-only side effects: Escape to close, and body scroll lock so the
+  // underlying Settings page can't scroll behind the overlay.
+  useEffect(() => {
+    if (!isModal) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && onClose) onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isModal, onClose]);
+
+  const rootProps = isModal
+    ? {
+        role: 'dialog' as const,
+        'aria-modal': true,
+        'aria-labelledby': 'pedagogy-wizard-title',
+      }
+    : { 'aria-labelledby': 'pedagogy-wizard-title' };
+
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pedagogy-wizard-title"
+      ref={focusTrapRef}
+      {...rootProps}
       className="flex min-h-dvh flex-col bg-surface-body text-text-primary"
     >
       {/* Header */}
@@ -83,16 +125,28 @@ export function PedagogyWizard({
           <p className="font-serif text-lg font-bold text-text-primary tracking-[-0.02em] md:text-2xl">
             Hearth
           </p>
-          {onSkip && (
-            <button
-              type="button"
-              onClick={() => onSkip()}
-              disabled={saving}
-              className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-200 disabled:opacity-50"
-            >
-              Skip for now →
-            </button>
-          )}
+          <div className="flex items-center gap-sm">
+            {onSkip && (
+              <button
+                type="button"
+                onClick={() => onSkip()}
+                disabled={saving}
+                className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-200 disabled:opacity-50"
+              >
+                Skip for now →
+              </button>
+            )}
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close wizard"
+                className="rounded-[6px] border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-200"
+              >
+                Close
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -201,14 +255,27 @@ export function PedagogyWizard({
               placeholder
             </span>
           )}
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={!canProceed || saving}
-            className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
-          >
-            {step < 3 ? 'Continue' : saving ? 'Saving…' : `🔥 ${completeLabel}`}
-          </button>
+          <div className="flex items-center gap-md">
+            {disabledHint && !saving && (
+              <span className="font-sans text-xs text-text-muted">
+                {disabledHint}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!canProceed || saving}
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
+            >
+              {step < 3
+                ? 'Continue'
+                : saving
+                  ? 'Saving…'
+                  : completeLabel === 'Light the Hearth'
+                    ? `🔥 ${completeLabel}`
+                    : completeLabel}
+            </button>
+          </div>
         </div>
       </footer>
     </div>
@@ -647,24 +714,35 @@ function ReviewStep({
           </div>
 
           {/* Insight tabs */}
-          <div className="flex gap-xs border-b border-border-subtle">
+          <div role="tablist" aria-label="Sample activity insights" className="flex gap-xs border-b border-border-subtle">
             <InsightTab
+              id="insight-tab-philosophy"
+              controls="insight-panel-philosophy"
               label="Philosophy Lens"
               active={insightTab === 'philosophy'}
               onClick={() => onChangeInsightTab('philosophy')}
             />
             <InsightTab
+              id="insight-tab-values"
+              controls="insight-panel-values"
               label="Values"
               active={insightTab === 'values'}
               onClick={() => onChangeInsightTab('values')}
             />
             <InsightTab
+              id="insight-tab-practices"
+              controls="insight-panel-practices"
               label="Next Steps"
               active={insightTab === 'practices'}
               onClick={() => onChangeInsightTab('practices')}
             />
           </div>
-          <div className="pt-md">
+          <div
+            role="tabpanel"
+            id={`insight-panel-${insightTab}`}
+            aria-labelledby={`insight-tab-${insightTab}`}
+            className="pt-md"
+          >
             <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember">
               {activeInsight.title}
             </p>
@@ -721,10 +799,14 @@ function SummaryPills({
 }
 
 function InsightTab({
+  id,
+  controls,
   label,
   active,
   onClick,
 }: {
+  id: string;
+  controls: string;
   label: string;
   active: boolean;
   onClick: () => void;
@@ -732,6 +814,11 @@ function InsightTab({
   return (
     <button
       type="button"
+      id={id}
+      aria-controls={controls}
+      aria-selected={active}
+      role="tab"
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={[
         'relative -mb-[1px] border-b-2 px-sm py-xs font-sans text-xs font-semibold transition-colors duration-200',
@@ -739,8 +826,6 @@ function InsightTab({
           ? 'border-ember text-ember'
           : 'border-transparent text-text-muted hover:text-text-secondary',
       ].join(' ')}
-      aria-selected={active}
-      role="tab"
     >
       {label}
     </button>

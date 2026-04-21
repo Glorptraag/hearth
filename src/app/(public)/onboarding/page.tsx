@@ -135,9 +135,28 @@ export default function OnboardingPage() {
   }
 
   async function handleSkipWizard() {
-    // Skipping keeps defaults (eclectic with empty values/practices).
-    // Settings already default to eclectic server-side on first insert.
-    setStep(4);
+    // Write the eclectic defaults so the family_settings row exists with
+    // an explicit preference. Previously the inline pedagogy buttons did
+    // this on every save; skipping here would leave the row uncreated
+    // until the first /api/settings GET happens to trigger lazy insert.
+    setSaving(true);
+    try {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pedagogyPreference: 'eclectic' satisfies Pedagogy,
+          pedagogyValues: [],
+          pedagogyPractices: [],
+        }),
+      });
+    } catch {
+      // Non-fatal — the lazy-create path in /api/settings GET will still
+      // produce a row if this PATCH fails.
+    } finally {
+      setSaving(false);
+      setStep(4);
+    }
   }
 
   async function handleComplete(destination: '/log' | '/dashboard') {

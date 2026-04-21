@@ -7,9 +7,10 @@ import {
   badgeDefinitions,
   badgeAwards,
   familyLibrary,
+  plannerEntries,
 } from '@/lib/db/schema';
-import { eq, and, desc, count } from 'drizzle-orm';
-import { subDays, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
+import { eq, and, desc, gte, lte, count } from 'drizzle-orm';
+import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import {
   triggerBadgeReady,
@@ -19,6 +20,14 @@ import {
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
+import { getCachedThreads } from './sanity-thread-cache';
+import { scoreModules, type ScoringModule } from './recommend';
+import { sanityClient } from '@/lib/sanity/client';
+import { SCORING_MODULES_QUERY } from '@/lib/sanity/queries';
+import type {
+  SnapshotActiveThread, SnapshotPlannerSuggestion, ChildSnapshot,
+  ThreadTrajectory, EvidenceQuality, SubjectBalance,
+} from '@/types/snapshot';
 
 type RebuildTrigger = 'entry_saved' | 'library_change' | 'settings_change' | 'manual';
 
@@ -29,7 +38,13 @@ export async function rebuildSnapshot(
   const startTime = Date.now();
 
   try {
-    const [familyLearners, settings, allEntries, badges] = await Promise.all([
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 6);
+    const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+    const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
+
+    const [familyLearners, settings, allEntries, badges, libraryPackIds, weekPlanned] = await Promise.all([
       db.select().from(learners).where(eq(learners.familyId, familyId)),
       db.query.familySettings.findFirst({ where: eq(familySettings.familyId, familyId) }),
       db
@@ -38,9 +53,22 @@ export async function rebuildSnapshot(
         .where(and(eq(learningEntries.familyId, familyId), eq(learningEntries.status, 'complete')))
         .orderBy(desc(learningEntries.dateOccurred)),
       db.select().from(badgeDefinitions).where(eq(badgeDefinitions.familyId, familyId)),
+      db
+        .select({ sanityPackId: familyLibrary.sanityPackId })
+        .from(familyLibrary)
+        .where(eq(familyLibrary.familyId, familyId)),
+      db
+        .select({ moduleId: plannerEntries.moduleId, date: plannerEntries.date, subjects: plannerEntries.subjects })
+        .from(plannerEntries)
+        .where(
+          and(
+            eq(plannerEntries.familyId, familyId),
+            gte(plannerEntries.date, weekStartStr),
+            lte(plannerEntries.date, weekEndStr)
+          )
+        ),
     ]);
 
-    const now = new Date();
     const sevenDaysAgo = format(subDays(now, 7), 'yyyy-MM-dd');
     const thirtyDaysAgo = format(subDays(now, 30), 'yyyy-MM-dd');
 
@@ -144,19 +172,18 @@ export async function rebuildSnapshot(
         };
       }
 
-      // Active threads
-      const activeThreads = Object.entries(threadCounts)
-        .map(([threadId, data]) => ({
-          thread_id: threadId,
-          observation_count: data.count,
-          suggested_tier: data.tier,
-          last_evidence_date: data.lastDate,
-        }))
-        .sort((a, b) => b.observation_count - a.observation_count);
-
-      // Badge threshold detection
+      // Badge threshold detection + per-thread badge mapping
       const badgeReady: unknown[] = [];
       const badgeApproaching: unknown[] = [];
+      // Track per-thread: highest awarded badge + next badge progress
+      const threadBadgeMap: Record<string, { current: string | null; next: string | null; nextProgress: number }> = {};
+
+      // Fetch awarded badges for this child
+      const childAwards = await db
+        .select({ badgeDefinitionId: badgeAwards.badgeDefinitionId })
+        .from(badgeAwards)
+        .where(eq(badgeAwards.learnerId, child.id));
+      const awardedBadgeIds = new Set(childAwards.map((a) => a.badgeDefinitionId));
 
       for (const badge of badges) {
         const threadIds = badge.capabilityThreadIds ?? [];
@@ -167,13 +194,34 @@ export async function rebuildSnapshot(
           totalObs += threadCounts[tid]?.count ?? 0;
         }
 
-        const existing = await db.query.badgeAwards.findFirst({
-          where: and(
-            eq(badgeAwards.badgeDefinitionId, badge.id),
-            eq(badgeAwards.learnerId, child.id)
-          ),
-        });
-        if (existing) continue;
+        const isAwarded = awardedBadgeIds.has(badge.id);
+
+        // Build per-thread badge progression
+        for (const tid of threadIds) {
+          const existing = threadBadgeMap[tid];
+          if (isAwarded) {
+            // Track highest awarded badge for this thread
+            if (!existing || existing.current === null) {
+              threadBadgeMap[tid] = {
+                current: badge.title,
+                next: existing?.next ?? null,
+                nextProgress: existing?.nextProgress ?? 0,
+              };
+            }
+          } else {
+            // Track next unearned badge and progress toward it
+            const progress = Math.min(1, totalObs / threshold);
+            if (!existing || (existing.next === null && progress > 0)) {
+              threadBadgeMap[tid] = {
+                current: existing?.current ?? null,
+                next: badge.title,
+                nextProgress: progress,
+              };
+            }
+          }
+        }
+
+        if (isAwarded) continue;
 
         if (totalObs >= threshold) {
           badgeReady.push({
@@ -201,6 +249,102 @@ export async function rebuildSnapshot(
           });
         }
       }
+
+      // Trajectory: 4-week window split into two 14-day halves
+      const fourteenDaysAgo = format(subDays(now, 14), 'yyyy-MM-dd');
+      const twentyEightDaysAgo = format(subDays(now, 28), 'yyyy-MM-dd');
+      const recentWindow = childEntries.filter((e) => e.dateOccurred >= fourteenDaysAgo);
+      const priorWindow = childEntries.filter(
+        (e) => e.dateOccurred >= twentyEightDaysAgo && e.dateOccurred < fourteenDaysAgo
+      );
+
+      function computeTrajectory(threadId: string): ThreadTrajectory {
+        const total = threadCounts[threadId]?.count ?? 0;
+        if (total < 3) return 'new';
+
+        let recentCount = 0;
+        for (const entry of recentWindow) {
+          const enrichment = entry.aiEnrichment as EnrichmentResult | null;
+          if (enrichment?.capability_threads?.some((t) => t.thread_id === threadId)) {
+            recentCount++;
+          }
+        }
+
+        let priorCount = 0;
+        for (const entry of priorWindow) {
+          const enrichment = entry.aiEnrichment as EnrichmentResult | null;
+          if (enrichment?.capability_threads?.some((t) => t.thread_id === threadId)) {
+            priorCount++;
+          }
+        }
+
+        if (recentCount === 0) return 'plateau';
+        if (priorCount > 0 && recentCount >= priorCount * 1.5) return 'accelerating';
+        return 'steady_growth';
+      }
+
+      // Evidence quality: average description_richness across last 5 entries for each thread
+      function computeEvidenceQuality(threadId: string): EvidenceQuality {
+        const threadEntries = childEntries
+          .filter((e) => {
+            const enrichment = e.aiEnrichment as EnrichmentResult | null;
+            return enrichment?.capability_threads?.some((t) => t.thread_id === threadId);
+          })
+          .slice(0, 5);
+
+        if (threadEntries.length === 0) return 'weak';
+
+        const richnessCounts = { thin: 0, adequate: 0, rich: 0 };
+        for (const entry of threadEntries) {
+          const enrichment = entry.aiEnrichment as EnrichmentResult | null;
+          const richness = enrichment?.quality_indicators?.description_richness ?? 'thin';
+          richnessCounts[richness]++;
+        }
+
+        if (richnessCounts.rich >= threadEntries.length * 0.5) return 'strong';
+        if (richnessCounts.thin >= threadEntries.length * 0.5) return 'weak';
+        return 'adequate';
+      }
+
+      // Build enhanced active threads with DLO data from cache
+      const threadMetaMap = await getCachedThreads();
+      const tierRankMap = { emerging: 0, developing: 1, demonstrating: 2 };
+
+      const activeThreads: SnapshotActiveThread[] = Object.entries(threadCounts)
+        .map(([threadId, data]) => {
+          const meta = threadMetaMap.get(threadId);
+          const badgeInfo = threadBadgeMap[threadId];
+          const childTierRank = tierRankMap[data.tier as keyof typeof tierRankMap] ?? 0;
+
+          // DLOs confirmed = count of DLOs at or below the child's tier
+          let dlosConfirmed = 0;
+          const dlosTotal = meta?.dlos_total ?? 3;
+          if (meta?.dlos?.length) {
+            for (const dlo of meta.dlos) {
+              const dloRank = tierRankMap[dlo.tier as keyof typeof tierRankMap] ?? 0;
+              if (dloRank <= childTierRank) dlosConfirmed++;
+            }
+          } else {
+            // No Sanity DLO data — estimate from tier
+            dlosConfirmed = childTierRank + 1;
+          }
+
+          return {
+            thread_id: threadId,
+            thread_name: meta?.title ?? threadId,
+            observation_count: data.count,
+            last_evidence_date: data.lastDate,
+            suggested_tier: data.tier as SnapshotActiveThread['suggested_tier'],
+            current_badge_level: badgeInfo?.current ?? null,
+            next_badge: badgeInfo?.next ?? null,
+            next_badge_progress: badgeInfo?.nextProgress ?? 0,
+            dlos_confirmed: dlosConfirmed,
+            dlos_total: dlosTotal,
+            trajectory: computeTrajectory(threadId),
+            recent_evidence_quality: computeEvidenceQuality(threadId),
+          };
+        })
+        .sort((a, b) => b.observation_count - a.observation_count);
 
       // Recent activity
       const entriesLast7 = childEntries.filter((e) => e.dateOccurred >= sevenDaysAgo).length;
@@ -241,7 +385,7 @@ export async function rebuildSnapshot(
       const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
       const monthEntries = childEntries.filter((e) => e.dateOccurred >= monthStart);
       let monthlyNarrative = '';
-      if (monthEntries.length > 0) {
+      if (monthEntries.length > 0 && (trigger === 'entry_saved' || trigger === 'manual')) {
         const monthSubjects = [...new Set(monthEntries.flatMap((e) => e.subjects ?? []))];
         const monthThreadNames = Object.entries(threadCounts)
           .filter(([, d]) => d.lastDate >= monthStart)
@@ -278,6 +422,111 @@ export async function rebuildSnapshot(
         },
         monthly_narrative: monthlyNarrative,
       };
+    }
+
+    // ─── Recommendations + Planner Suggestions ───
+    let recommendations: { suggested_next: import('@/types/snapshot').SnapshotRecommendation[]; subject_balance: Record<string, SubjectBalance> } | undefined;
+    let plannerSuggestions: SnapshotPlannerSuggestion[] | undefined;
+
+    const packIds = libraryPackIds.map((r) => r.sanityPackId);
+    if (packIds.length > 0) {
+      try {
+        type RawScoringModule = Omit<ScoringModule, 'capabilityThreadIds'> & { capabilityThreadTitles?: string[] };
+        const sanityPacks: { modules: RawScoringModule[] }[] = await sanityClient.fetch(
+          SCORING_MODULES_QUERY,
+          { packIds }
+        );
+        // Build title → code lookup from the cached taxonomy so module thread refs
+        // (which resolve to Sanity titles) match snapshot thread_id codes (L1, S5, etc.).
+        const threadCache = await getCachedThreads();
+        const titleToCode = new Map<string, string>();
+        for (const [code, meta] of threadCache.entries()) {
+          titleToCode.set(meta.title.toLowerCase(), code);
+        }
+        const scoringModules: ScoringModule[] = sanityPacks
+          .flatMap((p) => p.modules ?? [])
+          .filter((m) => m._id && m.title)
+          .map((m) => ({
+            _id: m._id,
+            title: m.title,
+            subjects: m.subjects ?? [],
+            averageEnergyLevel: m.averageEnergyLevel ?? null,
+            capabilityThreadIds: (m.capabilityThreadTitles ?? [])
+              .map((t) => titleToCode.get((t ?? '').toLowerCase()))
+              .filter((c): c is string => !!c),
+          }));
+
+        if (scoringModules.length > 0) {
+          const plannedModuleIds = weekPlanned
+            .map((p) => p.moduleId)
+            .filter((id): id is string => id != null);
+
+          // Count completed modules from entries
+          const completedModuleCounts: Record<string, number> = {};
+          for (const e of allEntries) {
+            const modId = (e as Record<string, unknown>).sourceModuleId as string | null;
+            if (modId) completedModuleCounts[modId] = (completedModuleCounts[modId] ?? 0) + 1;
+          }
+
+          // Subjects already planned this week
+          const weekSubjects = new Set(weekPlanned.flatMap((p) => p.subjects ?? []));
+
+          const scored = scoreModules(
+            scoringModules,
+            childSnapshots as Record<string, ChildSnapshot>,
+            plannedModuleIds,
+            completedModuleCounts,
+            weekSubjects,
+          );
+
+          // Subject balance: count planned subjects per day vs target of 2 per core subject
+          const coreSubjects = ['english', 'mathematics', 'science', 'hass'];
+          const subjectPlannedCount: Record<string, number> = {};
+          for (const p of weekPlanned) {
+            for (const s of p.subjects ?? []) {
+              subjectPlannedCount[s] = (subjectPlannedCount[s] ?? 0) + 1;
+            }
+          }
+          const subjectBalance: Record<string, SubjectBalance> = {};
+          for (const s of coreSubjects) {
+            const count = subjectPlannedCount[s] ?? 0;
+            subjectBalance[s] = count >= 2 ? (count > 4 ? 'over' : 'balanced') : 'under';
+          }
+
+          recommendations = { suggested_next: scored, subject_balance: subjectBalance };
+
+          // Planner suggestions: top recommendations not already planned, assigned to under-represented days
+          const weekDays = Array.from({ length: 5 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
+          const daySubjectCounts: Record<string, Record<string, number>> = {};
+          for (const day of weekDays) daySubjectCounts[day] = {};
+          for (const p of weekPlanned) {
+            if (!daySubjectCounts[p.date]) continue;
+            for (const s of p.subjects ?? []) {
+              daySubjectCounts[p.date][s] = (daySubjectCounts[p.date][s] ?? 0) + 1;
+            }
+          }
+
+          plannerSuggestions = scored.slice(0, 5).map((rec) => {
+            // Assign to the day with fewest entries in this module's primary subject
+            const primarySubject = scoringModules.find((m) => m._id === rec.module_id)?.subjects[0];
+            let bestDay = weekDays[0];
+            let minCount = Infinity;
+            for (const day of weekDays) {
+              const cnt = primarySubject ? (daySubjectCounts[day][primarySubject] ?? 0) : Object.values(daySubjectCounts[day]).reduce((s, c) => s + c, 0);
+              if (cnt < minCount) { minCount = cnt; bestDay = day; }
+            }
+            return {
+              module_id: rec.module_id,
+              module_title: rec.module_title,
+              suggested_day: bestDay,
+              reason: rec.primary_reason,
+              reason_text: rec.reason_text,
+            };
+          });
+        }
+      } catch (err) {
+        console.warn('[snapshotRebuild] Recommendation scoring failed, skipping:', err);
+      }
     }
 
     // Family-wide intelligence
@@ -361,6 +610,8 @@ export async function rebuildSnapshot(
           coverage_sufficient: coverageSufficient,
         },
       },
+      recommendations,
+      planner_suggestions: plannerSuggestions,
       pending_notifications: pendingNotifications,
       // Flat fields for dashboard summary card compatibility
       activityStreak: streakCount,
@@ -455,7 +706,11 @@ export async function rebuildSnapshot(
       });
     }
 
-    console.log(`[snapshotRebuild] family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);
+    if (rebuildDuration > 500) {
+      console.warn(`[snapshotRebuild] SLOW family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);
+    } else {
+      console.log(`[snapshotRebuild] family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);
+    }
   } catch (error) {
     console.error('[snapshotRebuild] Failed:', error);
   }

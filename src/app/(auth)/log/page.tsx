@@ -19,6 +19,7 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
+import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 
 type ScaffoldData = {
   session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
@@ -294,7 +295,7 @@ function CompletenessRing({ score }: { score: number }) {
 }
 
 export default function LogPage() {
-  const { vocab } = usePedagogy();
+  const { vocab, pedagogy } = usePedagogy();
   const searchParams = useSearchParams();
   const projectContext = {
     source: searchParams.get('source') ?? 'logger',
@@ -343,6 +344,11 @@ export default function LogPage() {
   const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
   const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
   const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
+
+  // Guard so an in-flight enrichment poll can't write post-save UI state into
+  // a new entry. Holds the entryId being polled; cleared when the parent
+  // starts typing again (see the new-entry clearing effect below).
+  const activeEnrichmentEntryIdRef = useRef<string | null>(null);
 
   // (a) Resolve logger mode on mount: fetch family entry count + loggerDefaultMode.
   // Default to Guided if count < 20 and no manual override.
@@ -494,9 +500,15 @@ export default function LogPage() {
     selectedChildNames
   );
 
-  // Clear post-save insights when parent starts a new entry
+  // Clear post-save insights when parent starts a new entry. Also invalidates
+  // any in-flight enrichment poll so its setState calls become no-ops.
   useEffect(() => {
-    if (description.length > 0) setPostSaveInsights([]);
+    if (description.length > 0) {
+      activeEnrichmentEntryIdRef.current = null;
+      setPostSaveInsights([]);
+      setProfileNudge(null);
+      setPedagogySources([]);
+    }
   }, [description]);
 
   // ─── Reflection prompts (Socratic coaching questions) ───
@@ -532,6 +544,7 @@ export default function LogPage() {
       setCoachHints([]);
       return;
     }
+    const controller = new AbortController();
     coachHintsDebounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch('/api/logger/coach-hints', {
@@ -543,14 +556,18 @@ export default function LogPage() {
             description,
             observations,
           }),
+          signal: controller.signal,
         });
-        if (res.ok) {
+        if (!controller.signal.aborted && res.ok) {
           const hints = await res.json() as CoachHint[];
-          setCoachHints(hints);
+          if (!controller.signal.aborted) setCoachHints(hints);
         }
-      } catch { /* non-critical */ }
+      } catch { /* aborted or non-critical */ }
     }, 1200);
-    return () => { if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current); };
+    return () => {
+      if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
+      controller.abort();
+    };
   }, [description, activityType, selectedLearners, observations]);
 
   // ─── UI state ───
@@ -750,40 +767,58 @@ export default function LogPage() {
       setProfileNudge(null);
       setPedagogySources([]);
 
-      // Check badge thresholds after pipeline settles (~3s for enrichment + snapshot rebuild).
-      // Note: snapshot-rebuild also enqueues a `badge_ready` notification for each ready badge,
-      // so if the parent ignores this toast the Notification Centre will still surface it.
-      setTimeout(async () => {
-        try {
-          if (savedEntryId) {
-            const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
-            if (enrichedRes.ok) {
+      // Poll for enrichment to complete (server runs it async after save).
+      // Snapshot-rebuild also enqueues `badge_ready` notifications, so if the
+      // parent misses this toast the Notification Centre will still surface it.
+      if (savedEntryId) activeEnrichmentEntryIdRef.current = savedEntryId;
+      (async () => {
+        if (savedEntryId) {
+          const POLL_INTERVAL_MS = 1500;
+          const POLL_TIMEOUT_MS = 15000;
+          const start = Date.now();
+          while (Date.now() - start < POLL_TIMEOUT_MS) {
+            // First check after 1.5s; enrichment is rarely ready sooner.
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+            if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
+            try {
+              const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
+              if (!enrichedRes.ok) continue;
               const enrichedEntry = await enrichedRes.json() as {
                 aiEnrichment?: {
                   pedagogy_sources?: PedagogyAttributionSource[];
                   insight_suggestions?: string[];
                   profile_nudge?: { text: string; thread_id: string } | null;
-                };
+                } | null;
               };
-              const sources = enrichedEntry?.aiEnrichment?.pedagogy_sources ?? [];
+              const enrichment = enrichedEntry?.aiEnrichment;
+              if (!enrichment) continue;
+              // Re-check the guard — the parent may have started a new entry
+              // while the fetch was in flight.
+              if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
+              const sources = enrichment.pedagogy_sources ?? [];
               if (sources.length > 0) {
                 setPedagogySources(sources);
                 setInsightsExpanded(true);
               }
-              const suggestions = enrichedEntry?.aiEnrichment?.insight_suggestions ?? [];
+              const suggestions = enrichment.insight_suggestions ?? [];
               if (suggestions.length > 0) {
                 setPostSaveInsights(suggestions);
                 setInsightsExpanded(true);
               }
-              const nudge = enrichedEntry?.aiEnrichment?.profile_nudge;
+              const nudge = enrichment.profile_nudge;
               if (nudge) {
                 setProfileNudge(nudge);
                 setInsightsExpanded(true);
               }
+              activeEnrichmentEntryIdRef.current = null;
+              break;
+            } catch {
+              // transient — keep polling
             }
           }
-        } catch {
-          // non-critical — silently ignore
+          if (activeEnrichmentEntryIdRef.current === savedEntryId) {
+            activeEnrichmentEntryIdRef.current = null;
+          }
         }
 
         try {
@@ -824,7 +859,7 @@ export default function LogPage() {
         } catch {
           // badge check is non-critical — silently ignore
         }
-      }, 3000);
+      })();
     } catch {
       setToast({ type: 'error', message: 'Failed to save. Please try again.' });
     } finally {
@@ -1389,7 +1424,7 @@ export default function LogPage() {
             profileNudge={profileNudge}
             postSaveInsights={postSaveInsights}
           />
-          <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
+          <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
         </aside>
       </div>}
 
@@ -1419,7 +1454,7 @@ export default function LogPage() {
               profileNudge={profileNudge}
               postSaveInsights={postSaveInsights}
             />
-            <PedagogyAttribution sources={pedagogySources} frameworkTitle="Charlotte Mason" />
+            <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
           </div>
         )}
       </div>

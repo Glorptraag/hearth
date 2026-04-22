@@ -5,13 +5,26 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 
+// Minimal shapes returned by /api/family/members and /api/entries. Only the
+// fields these tests read are enumerated — keeps the tests honest about what
+// the server guarantees without forcing a full API-type import here.
+type FamilyMember = {
+  id?: string;
+  email: string;
+  status?: string;
+  role?: string;
+};
+
+type EntrySummary = {
+  id: string;
+};
+
 // Helper to create unique emails for test isolation
 function generateTestEmail(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}@test.local`;
 }
 
 test.describe('Co-facilitator invite flow', () => {
-  let inviteToken: string;
   let editorEmail: string;
 
   test('owner can invite a co-facilitator with editor role', async ({ request }) => {
@@ -30,9 +43,6 @@ test.describe('Co-facilitator invite flow', () => {
     const data = await response.json();
     expect(data.invited).toBe(true);
     expect(data.token).toBeTruthy();
-
-    // Store token for later tests
-    inviteToken = data.token;
   });
 
   test('owner can invite with viewer role', async ({ request }) => {
@@ -60,7 +70,7 @@ test.describe('Co-facilitator invite flow', () => {
     expect(data.members.length).toBeGreaterThan(0);
 
     // Should include both active and invited members
-    const statuses = data.members.map((m: any) => m.status);
+    const statuses = data.members.map((m: FamilyMember) => m.status);
     expect(statuses.some((s: string) => s === 'active' || s === 'invited')).toBe(true);
   });
 
@@ -80,7 +90,7 @@ test.describe('Co-facilitator invite flow', () => {
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
 
-    const invited = members.members.find((m: any) => m.email === newEditorEmail);
+    const invited = members.members.find((m: FamilyMember) => m.email === newEditorEmail);
     expect(invited).toBeDefined();
     expect(invited.status).toBe('invited');
     expect(invited.role).toBe('editor');
@@ -88,12 +98,6 @@ test.describe('Co-facilitator invite flow', () => {
 });
 
 test.describe('Co-facilitator invite validation', () => {
-  let ownerEmail: string;
-
-  test.beforeEach(async () => {
-    ownerEmail = generateTestEmail('owner-validation');
-  });
-
   test('cannot invite same email twice', async ({ request }) => {
     const testEmail = generateTestEmail('duplicate-invite');
 
@@ -243,7 +247,7 @@ test.describe('Co-facilitator acceptance flow', () => {
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
 
-    const member = members.members.find((m: any) => m.email === editorEmail);
+    const member = members.members.find((m: FamilyMember) => m.email === editorEmail);
     expect(member).toBeDefined();
     expect(member.status).toBe('active');
   });
@@ -290,8 +294,6 @@ test.describe('Co-facilitator acceptance flow', () => {
 });
 
 test.describe('Co-facilitator dashboard access', () => {
-  let ownerToken: string;
-  let editorToken: string;
   let inviteToken: string;
   let editorEmail: string;
 
@@ -363,7 +365,7 @@ test.describe('Co-facilitator dashboard access', () => {
     expect(listResponse.status()).toBe(200);
 
     const entries = await listResponse.json();
-    const found = entries.find((e: any) => e.id === entryId);
+    const found = entries.find((e: EntrySummary) => e.id === entryId);
     expect(found).toBeDefined();
     expect(found.title).toBe('Test shared entry');
   });
@@ -481,8 +483,8 @@ test.describe('Co-facilitator shared logging', () => {
     expect(listResponse.status()).toBe(200);
 
     const entries = await listResponse.json();
-    expect(entries.some((e: any) => e.id === ownerEntry.id)).toBe(true);
-    expect(entries.some((e: any) => e.id === editorEntry.id)).toBe(true);
+    expect(entries.some((e: EntrySummary) => e.id === ownerEntry.id)).toBe(true);
+    expect(entries.some((e: EntrySummary) => e.id === editorEntry.id)).toBe(true);
   });
 
   test('editor can update their own entry', async ({ request }) => {
@@ -562,7 +564,7 @@ test.describe('Co-facilitator removal', () => {
     // Get member ID
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
-    const member = members.members.find((m: any) => m.email === editorEmail);
+    const member = members.members.find((m: FamilyMember) => m.email === editorEmail);
     memberId = member.id;
   });
 
@@ -593,7 +595,7 @@ test.describe('Co-facilitator removal', () => {
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
 
-    const removed = members.members.find((m: any) => m.email === editorEmail);
+    const removed = members.members.find((m: FamilyMember) => m.email === editorEmail);
     // Should not appear in active members
     expect(removed).toBeUndefined();
   });
@@ -684,7 +686,7 @@ test.describe('Co-facilitator deep-link invite', () => {
 
   test('token parameter is preserved through authentication flow', async ({ page }) => {
     const deepLink = `${BASE_URL}/onboarding/join?token=${inviteToken}`;
-    const response = await page.goto(deepLink);
+    await page.goto(deepLink);
 
     // Token should be available to the page
     const currentUrl = page.url();
@@ -736,8 +738,8 @@ test.describe('Co-facilitator role-based access', () => {
     const response = await request.get(`${BASE_URL}/api/family/members`);
     const members = await response.json();
 
-    const editor = members.members.find((m: any) => m.email === editorEmail);
-    const viewer = members.members.find((m: any) => m.email === viewerEmail);
+    const editor = members.members.find((m: FamilyMember) => m.email === editorEmail);
+    const viewer = members.members.find((m: FamilyMember) => m.email === viewerEmail);
 
     expect(editor.role).toBe('editor');
     expect(viewer.role).toBe('viewer');
@@ -748,7 +750,7 @@ test.describe('Co-facilitator role-based access', () => {
     expect(response.status()).toBe(200);
 
     const members = await response.json();
-    const roles = members.members.map((m: any) => m.role);
+    const roles = members.members.map((m: FamilyMember) => m.role);
 
     expect(roles).toContain('editor');
     expect(roles).toContain('viewer');
@@ -760,7 +762,7 @@ test.describe('Co-facilitator role-based access', () => {
     const response = await request.get(`${BASE_URL}/api/family/members`);
     const members = await response.json();
 
-    const editor = members.members.find((m: any) => m.email === editorEmail);
+    const editor = members.members.find((m: FamilyMember) => m.email === editorEmail);
     expect(editor.role).toBe('editor');
   });
 
@@ -779,7 +781,7 @@ test.describe('Co-facilitator role-based access', () => {
     // Remove
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
-    const member = members.members.find((m: any) => m.email === testEmail);
+    const member = members.members.find((m: FamilyMember) => m.email === testEmail);
 
     const deleteResponse = await request.delete(`${BASE_URL}/api/family/members`, {
       data: { memberId: member.id },
@@ -901,12 +903,12 @@ test.describe('Co-facilitator integration scenarios', () => {
     // 4. Verify entry is visible
     const listResponse = await request.get(`${BASE_URL}/api/entries`);
     const entries = await listResponse.json();
-    expect(entries.some((e: any) => e.id === entryId)).toBe(true);
+    expect(entries.some((e: EntrySummary) => e.id === entryId)).toBe(true);
 
     // 5. Remove member
     const membersResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await membersResponse.json();
-    const member = members.members.find((m: any) => m.email === editorEmail);
+    const member = members.members.find((m: FamilyMember) => m.email === editorEmail);
 
     const deleteResponse = await request.delete(`${BASE_URL}/api/family/members`, {
       data: { memberId: member.id },
@@ -917,7 +919,7 @@ test.describe('Co-facilitator integration scenarios', () => {
     const finalListResponse = await request.get(`${BASE_URL}/api/family/members`);
     const finalMembers = await finalListResponse.json();
     const removedMember = finalMembers.members.find(
-      (m: any) => m.email === editorEmail
+      (m: FamilyMember) => m.email === editorEmail
     );
     expect(removedMember).toBeUndefined();
   });
@@ -966,8 +968,8 @@ test.describe('Co-facilitator integration scenarios', () => {
     const id1 = (await entry1Response.json()).id;
     const id2 = (await entry2Response.json()).id;
 
-    expect(entries.some((e: any) => e.id === id1)).toBe(true);
-    expect(entries.some((e: any) => e.id === id2)).toBe(true);
+    expect(entries.some((e: EntrySummary) => e.id === id1)).toBe(true);
+    expect(entries.some((e: EntrySummary) => e.id === id2)).toBe(true);
   });
 
   test('invite list is consistent across all members', async ({ request }) => {
@@ -983,7 +985,7 @@ test.describe('Co-facilitator integration scenarios', () => {
     const listResponse = await request.get(`${BASE_URL}/api/family/members`);
     const members = await listResponse.json();
 
-    const invited = members.members.find((m: any) => m.email === email);
+    const invited = members.members.find((m: FamilyMember) => m.email === email);
     expect(invited).toBeDefined();
     expect(invited.status).toBe('invited');
   });

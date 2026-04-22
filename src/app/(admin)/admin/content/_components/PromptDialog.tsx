@@ -10,18 +10,23 @@ interface PromptDialogProps {
   onCancel: () => void;
 }
 
-export function PromptDialog({ open, title, placeholder, onSubmit, onCancel }: PromptDialogProps) {
+export function PromptDialog({ open, ...props }: PromptDialogProps) {
+  // Unmount on close so state (input value) resets naturally on reopen —
+  // avoids calling setState synchronously inside an effect.
+  if (!open) return null;
+  return <PromptDialogBody {...props} />;
+}
+
+type PromptDialogBodyProps = Omit<PromptDialogProps, 'open'>;
+
+function PromptDialogBody({ title, placeholder, onSubmit, onCancel }: PromptDialogBodyProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) {
-      setValue('');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
-
-  if (!open) return null;
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   function handleSubmit() {
     const trimmed = value.trim();

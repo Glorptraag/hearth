@@ -2,6 +2,7 @@
 
 import { useUser, SignOutButton } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/admin': 'Dashboard',
@@ -37,12 +38,12 @@ export default function AdminTopbar() {
       </div>
 
       <div className="flex items-center gap-lg">
-        <a
+        <Link
           href="/"
           className="font-sans text-[0.75rem] font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
         >
           Exit to family view
-        </a>
+        </Link>
 
         <span className="font-sans text-[0.75rem] text-text-muted">
           {email}

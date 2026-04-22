@@ -1,12 +1,14 @@
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
+  assetCounts, commonsTextCount,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges)
 }`;
 
 // Single pack with full module tree
 export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]{
   ...,
+  assetCounts, commonsTextCount,
   modules[]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
     approaches[]->{
@@ -27,7 +29,15 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
     activities[]->{
       ...,
       capabilityThreads[]->{ _id, title, domain },
-      enabledBadges[]->{ _id, title, emoji }
+      enabledBadges[]->{ _id, title, emoji },
+      assets[]{
+        role, notes,
+        asset->{ _id, title, slug, kind, "thumbnailUrl": thumbnail.asset->url, "fileUrl": file.asset->url, pageCount, printGuidance, description }
+      },
+      commonsTexts[]{
+        role, presentationMode, notes,
+        text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, readingLevel }
+      }
     }
   },
   capabilityThreads[]->{ _id, title, domain, description },
@@ -38,7 +48,15 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
 export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id][0]{
   ...,
   capabilityThreads[]->{ _id, title, domain },
-  enabledBadges[]->{ _id, title, emoji }
+  enabledBadges[]->{ _id, title, emoji },
+  assets[]{
+    role, notes,
+    asset->{ _id, title, slug, kind, "thumbnailUrl": thumbnail.asset->url, "fileUrl": file.asset->url, pageCount }
+  },
+  commonsTexts[]{
+    role, presentationMode, notes,
+    text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes }
+  }
 }`;
 
 // Pedagogy overlay for an activity + framework
@@ -101,6 +119,35 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
       "activityCount": count(activities)
     }
   }
+}`;
+
+// All assets for library browsing
+export const ASSETS_QUERY = `*[_type == "asset"] | order(kind, title){
+  _id, title, slug, kind, description, ageBand, license, tags, status, version,
+  "thumbnailUrl": thumbnail.asset->url,
+  "fileUrl": file.asset->url,
+  pageCount
+}`;
+
+// Single asset by ID with resolved cross-references
+export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id][0]{
+  ...,
+  relatedCommonsTexts[]->{ _id, title, slug, kind, tradition },
+  "thumbnailUrl": thumbnail.asset->url,
+  "fileUrl": file.asset->url
+}`;
+
+// All commons texts for library browsing
+export const COMMONS_TEXTS_QUERY = `*[_type == "commonsText"] | order(tradition, title){
+  _id, title, slug, kind, tradition, themes, tags, readingLevel, length, license, status,
+  estimatedReadAloudMinutes
+}`;
+
+// Single commons text by ID with resolved cross-references
+export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id][0]{
+  ...,
+  relatedAssets[]->{ _id, title, slug, kind },
+  relatedTexts[]->{ _id, title, slug, kind, tradition }
 }`;
 
 export interface SkeletonRecord {

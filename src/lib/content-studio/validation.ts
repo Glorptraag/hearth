@@ -7,6 +7,21 @@ const materialSchema = z.object({
   alternative: z.string().optional(),
 });
 
+const activityAssetRefSchema = z.object({
+  _key: z.string(),
+  assetId: z.string(),
+  role: z.enum(['core', 'optional', 'extension']),
+  notes: z.string(),
+});
+
+const activityCommonsTextRefSchema = z.object({
+  _key: z.string(),
+  commonsTextId: z.string(),
+  role: z.enum(['core', 'optional', 'extension']),
+  presentationMode: z.enum(['read_aloud', 'child_reads', 'reference_only', 'memorisation']),
+  notes: z.string(),
+});
+
 const activitySchema = z.object({
   _key: z.string(),
   title: z.string().min(1, 'Activity title required'),
@@ -18,6 +33,8 @@ const activitySchema = z.object({
     challenges: z.string().optional(),
   }),
   materials: z.array(materialSchema),
+  assetRefs: z.array(activityAssetRefSchema),
+  commonsTextRefs: z.array(activityCommonsTextRefSchema),
   duration: z.object({ min: z.number(), max: z.number() }),
   ageRange: z.object({ min: z.number(), max: z.number() }),
   setting: z.enum(['indoor', 'outdoor', 'either']),
@@ -94,5 +111,24 @@ export const packPublishSchema = z.object({
 
 export const standaloneModulePublishSchema = moduleSchema;
 export const standaloneActivityPublishSchema = activitySchema;
+
+export const assetPublishSchema = z.object({
+  _key: z.string(),
+  title: z.string().min(1, 'Asset title required'),
+  kind: z.enum(['template', 'worksheet', 'reference', 'card_set', 'handout', 'audio', 'manipulative']),
+  file: z.object({ assetId: z.string().min(1), filename: z.string() }).nullable(),
+  license: z.enum(['hearth_proprietary', 'cc_by', 'cc_by_sa', 'public_domain', 'commissioned', 'fair_use_reference']),
+  status: z.enum(['draft', 'published']),
+});
+
+export const commonsTextPublishSchema = z.object({
+  _key: z.string(),
+  title: z.string().min(1, 'Commons text title required'),
+  kind: z.enum(['fable', 'fairy_tale', 'folk_tale', 'scripture', 'parable', 'psalm', 'proverb', 'poem', 'nursery_rhyme', 'myth', 'primary_source', 'story']),
+  tradition: z.string().min(1, 'Tradition required'),
+  bodyText: z.string().min(1, 'Body text required'),
+  license: z.enum(['public_domain', 'cc_by', 'cc_by_sa']),
+  status: z.enum(['draft', 'published']),
+});
 
 export type PackValidationError = z.ZodError;

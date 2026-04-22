@@ -57,6 +57,73 @@ export const activity = defineType({
       ],
     }),
     defineField({
+      name: 'assets',
+      title: 'Hearth Assets',
+      description: 'Hearth-supplied printables, references, and media',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({ name: 'asset', title: 'Asset', type: 'reference', to: [{ type: 'asset' }], validation: (r) => r.required() }),
+            defineField({
+              name: 'role',
+              title: 'Role',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Core', value: 'core' },
+                  { title: 'Optional', value: 'optional' },
+                  { title: 'Extension', value: 'extension' },
+                ],
+              },
+            }),
+            defineField({ name: 'notes', title: 'Notes', type: 'string' }),
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: 'commonsTexts',
+      title: 'Commons Texts',
+      description: 'Hearth-supplied canonical text content (fables, scripture, poems, etc.)',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({ name: 'text', title: 'Text', type: 'reference', to: [{ type: 'commonsText' }], validation: (r) => r.required() }),
+            defineField({
+              name: 'role',
+              title: 'Role',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Core', value: 'core' },
+                  { title: 'Optional', value: 'optional' },
+                  { title: 'Extension', value: 'extension' },
+                ],
+              },
+            }),
+            defineField({
+              name: 'presentationMode',
+              title: 'Presentation Mode',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Read Aloud', value: 'read_aloud' },
+                  { title: 'Child Reads', value: 'child_reads' },
+                  { title: 'Reference Only', value: 'reference_only' },
+                  { title: 'Memorisation', value: 'memorisation' },
+                ],
+              },
+            }),
+            defineField({ name: 'notes', title: 'Notes', type: 'string' }),
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: 'duration',
       title: 'Duration (minutes)',
       type: 'object',

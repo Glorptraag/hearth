@@ -131,8 +131,51 @@ export function studioReducer(state: StudioState, action: StudioAction): StudioS
         standaloneActivities.splice(sel.acti, 1);
         return { ...state, standaloneActivities };
       }
+      if (sel.scope === 'asset') {
+        const assets = deepClone(state.assets);
+        assets.splice(sel.index, 1);
+        return { ...state, assets };
+      }
+      if (sel.scope === 'commonsText') {
+        const commonsTexts = deepClone(state.commonsTexts);
+        commonsTexts.splice(sel.index, 1);
+        return { ...state, commonsTexts };
+      }
       return state;
     }
+
+    case 'ADD_ASSET':
+      return { ...state, assets: [...(state.assets ?? []), action.asset] };
+
+    case 'DELETE_ASSET': {
+      const assets = deepClone(state.assets ?? []);
+      assets.splice(action.index, 1);
+      return { ...state, assets };
+    }
+
+    case 'UPDATE_ASSET': {
+      const assets = deepClone(state.assets ?? []);
+      assets[action.index] = action.asset;
+      return { ...state, assets };
+    }
+
+    case 'ADD_COMMONS_TEXT':
+      return { ...state, commonsTexts: [...(state.commonsTexts ?? []), action.text] };
+
+    case 'DELETE_COMMONS_TEXT': {
+      const commonsTexts = deepClone(state.commonsTexts ?? []);
+      commonsTexts.splice(action.index, 1);
+      return { ...state, commonsTexts };
+    }
+
+    case 'UPDATE_COMMONS_TEXT': {
+      const commonsTexts = deepClone(state.commonsTexts ?? []);
+      commonsTexts[action.index] = action.text;
+      return { ...state, commonsTexts };
+    }
+
+    case 'BULK_IMPORT_COMMONS_TEXTS':
+      return { ...state, commonsTexts: [...(state.commonsTexts ?? []), ...action.texts] };
 
     default:
       return state;
@@ -162,6 +205,14 @@ export function getSelectedDoc(state: StudioState, sel: Selection | null) {
 
   if (sel.scope === 'standalone-activity') {
     return state.standaloneActivities[sel.acti];
+  }
+
+  if (sel.scope === 'asset') {
+    return state.assets?.[sel.index] ?? null;
+  }
+
+  if (sel.scope === 'commonsText') {
+    return state.commonsTexts?.[sel.index] ?? null;
   }
 
   return null;
@@ -235,6 +286,18 @@ export function getNewSelectionAfterAdd(
         pi: action.pi,
         bi: state.packs[action.pi].badges.length - 1,
         type: 'badge',
+      };
+    case 'ADD_ASSET':
+      return {
+        scope: 'asset',
+        index: (state.assets ?? []).length - 1,
+        type: 'asset',
+      };
+    case 'ADD_COMMONS_TEXT':
+      return {
+        scope: 'commonsText',
+        index: (state.commonsTexts ?? []).length - 1,
+        type: 'commonsText',
       };
     default:
       return null;

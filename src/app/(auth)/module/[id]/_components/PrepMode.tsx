@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Module, ActivityOverlay } from './types';
 import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
+import PrepResources from './PrepResources';
 
 export default function PrepMode({
   module,
@@ -170,6 +171,9 @@ export default function PrepMode({
           </div>
         </div>
       )}
+
+      {/* Printables & Resources */}
+      <PrepResources activities={activities} />
 
       {/* Why This Matters */}
       <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">

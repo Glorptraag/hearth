@@ -1,14 +1,17 @@
 'use client';
 
 import type { ActivityDraft, CapabilityThreadOption, MaterialDraft } from '@/lib/content-studio/types';
-import { createEmptyMaterial } from '@/lib/content-studio/factories';
+import { createEmptyMaterial, createEmptyAssetRef, createEmptyCommonsTextRef } from '@/lib/content-studio/factories';
 import { SETTINGS, ENERGY_LEVELS, ACTIVITY_MODALITIES, CONTENT_STATUSES, DELIVERY_CHANNELS } from '@/lib/content-studio/types';
 import { Panel } from '../primitives/Panel';
 import { FormField, Input, TextArea, Select } from '../primitives/FormField';
 import { RangeInput } from '../primitives/RangeInput';
 import { MaterialsList } from '../primitives/MaterialsList';
+import { AssetRefList } from '../primitives/AssetRefList';
+import { CommonsTextRefList } from '../primitives/CommonsTextRefList';
 import { ThreadPicker } from '../primitives/ThreadPicker';
 import { TagInput } from '../primitives/TagInput';
+import type { SanityAssetOption, SanityCommonsTextOption } from '../../ContentStudioClient';
 
 interface ActivityEditorProps {
   fieldPrefix: (string | number)[];
@@ -16,9 +19,11 @@ interface ActivityEditorProps {
   toggleArrayItem: (path: (string | number)[], value: string) => void;
   doc: unknown;
   capabilityThreads: CapabilityThreadOption[];
+  sanityAssets?: SanityAssetOption[];
+  sanityCommonsTexts?: SanityCommonsTextOption[];
 }
 
-export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, capabilityThreads }: ActivityEditorProps) {
+export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, capabilityThreads, sanityAssets = [], sanityCommonsTexts = [] }: ActivityEditorProps) {
   const act = doc as ActivityDraft;
   const f = (field: string) => [...fieldPrefix, field];
   const ff = (...fields: string[]) => [...fieldPrefix, ...fields];
@@ -122,6 +127,36 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
             );
             setField(f('materials'), updated);
           }}
+        />
+      </Panel>
+
+      <Panel title="Hearth Assets" emoji="📎" right={<span className="text-xs text-text-muted font-sans">{(act.assetRefs ?? []).length} items</span>}>
+        <AssetRefList
+          refs={act.assetRefs ?? []}
+          onAdd={() => setField(f('assetRefs'), [...(act.assetRefs ?? []), createEmptyAssetRef()])}
+          onRemove={(i) => setField(f('assetRefs'), (act.assetRefs ?? []).filter((_, idx) => idx !== i))}
+          onUpdate={(i, field, value) => {
+            const updated = (act.assetRefs ?? []).map((r, idx) =>
+              idx === i ? { ...r, [field]: value } : r,
+            );
+            setField(f('assetRefs'), updated);
+          }}
+          availableAssets={sanityAssets.map((a) => ({ _id: a._id, title: a.title, kind: a.kind }))}
+        />
+      </Panel>
+
+      <Panel title="Commons Texts" emoji="📖" right={<span className="text-xs text-text-muted font-sans">{(act.commonsTextRefs ?? []).length} items</span>}>
+        <CommonsTextRefList
+          refs={act.commonsTextRefs ?? []}
+          onAdd={() => setField(f('commonsTextRefs'), [...(act.commonsTextRefs ?? []), createEmptyCommonsTextRef()])}
+          onRemove={(i) => setField(f('commonsTextRefs'), (act.commonsTextRefs ?? []).filter((_, idx) => idx !== i))}
+          onUpdate={(i, field, value) => {
+            const updated = (act.commonsTextRefs ?? []).map((r, idx) =>
+              idx === i ? { ...r, [field]: value } : r,
+            );
+            setField(f('commonsTextRefs'), updated);
+          }}
+          availableTexts={sanityCommonsTexts.map((t) => ({ _id: t._id, title: t.title, kind: t.kind, tradition: t.tradition }))}
         />
       </Panel>
 

@@ -1,5 +1,5 @@
 import { sanityWriteClient, sanityClient } from './client';
-import { autoSlug, ref, keyedRefs, key, blockText } from './helpers';
+import { autoSlug, ref, keyedRefs, key, blockText, assetRef as assetRefHelper, commonsTextRef as commonsTextRefHelper, slugify } from './helpers';
 
 type SanityDoc = Record<string, unknown> & { _id?: string; _type: string };
 
@@ -88,6 +88,15 @@ type Tier = 'emerging' | 'developing' | 'demonstrating';
 type Framework = 'charlotte_mason' | 'classical' | 'montessori' | 'waldorf_steiner' | 'unschooling' | 'eclectic';
 type Status = 'draft' | 'published';
 type StatusExt = Status | 'archived';
+type AssetKind = 'template' | 'worksheet' | 'reference' | 'card_set' | 'handout' | 'audio' | 'manipulative';
+type AgeBand = '5-7' | '7-9' | '9-12' | '12-15' | 'all';
+type AssetLicense = 'hearth_proprietary' | 'cc_by' | 'cc_by_sa' | 'public_domain' | 'commissioned' | 'fair_use_reference';
+type CommonsTextKind = 'fable' | 'fairy_tale' | 'folk_tale' | 'scripture' | 'parable' | 'psalm' | 'proverb' | 'poem' | 'nursery_rhyme' | 'myth' | 'primary_source' | 'story';
+type CommonsTextLicense = 'public_domain' | 'cc_by' | 'cc_by_sa';
+type TextLength = 'micro' | 'short' | 'medium' | 'long';
+type AssetRole = 'core' | 'optional' | 'extension';
+type PresentationMode = 'read_aloud' | 'child_reads' | 'reference_only' | 'memorisation';
+type ReadingLevel = '5-7' | '7-9' | '9-12' | '12-15';
 
 // ── Capability Thread ────────────────────────────────────────────────────────
 
@@ -160,6 +169,9 @@ export async function createBadge(input: CreateBadge) {
 interface MaterialInput { name: string; required?: boolean; alternative?: string }
 interface FacilitatorGuidance { before?: string; during?: string; challenges?: string }
 
+interface AssetRefInput { assetId: string; role: AssetRole; notes?: string }
+interface CommonsTextRefInput { textId: string; role: AssetRole; presentationMode: PresentationMode; notes?: string }
+
 interface CreateActivity {
   _id?: string;
   title: string;
@@ -169,6 +181,8 @@ interface CreateActivity {
   instructions: string | ReturnType<typeof blockText>;
   facilitatorGuidance?: FacilitatorGuidance;
   materials?: MaterialInput[];
+  assetRefs?: AssetRefInput[];
+  commonsTextRefs?: CommonsTextRefInput[];
   duration?: { min: number; max: number };
   setting?: Setting;
   energyLevel?: EnergyLevel;
@@ -198,6 +212,12 @@ export async function createActivity(input: CreateActivity) {
       if (m.alternative) o.alternative = m.alternative;
       return o;
     });
+  }
+  if (input.assetRefs) {
+    doc.assets = input.assetRefs.map((a) => assetRefHelper(a.assetId, a.role, a.notes));
+  }
+  if (input.commonsTextRefs) {
+    doc.commonsTexts = input.commonsTextRefs.map((t) => commonsTextRefHelper(t.textId, t.role, t.presentationMode, t.notes));
   }
   if (input.duration) doc.duration = input.duration;
   if (input.setting) doc.setting = input.setting;
@@ -276,6 +296,17 @@ export async function createModule(input: CreateModule) {
 
 // ── Pack ─────────────────────────────────────────────────────────────────────
 
+interface AssetCounts {
+  template: number;
+  worksheet: number;
+  reference: number;
+  card_set: number;
+  handout: number;
+  audio: number;
+  manipulative: number;
+  total: number;
+}
+
 interface CreatePack {
   _id?: string;
   title: string;
@@ -289,6 +320,8 @@ interface CreatePack {
   termWeeks?: number;
   moduleCount?: number;
   totalActivities?: number;
+  assetCounts?: AssetCounts;
+  commonsTextCount?: number;
   worldview?: 'christian-classical' | 'secular' | 'neutral';
   availability?: 'included' | 'premium';
   creator?: string;
@@ -315,6 +348,8 @@ export async function createPack(input: CreatePack) {
   if (input.termWeeks) doc.termWeeks = input.termWeeks;
   if (input.moduleCount != null) doc.moduleCount = input.moduleCount;
   if (input.totalActivities != null) doc.totalActivities = input.totalActivities;
+  if (input.assetCounts) doc.assetCounts = input.assetCounts;
+  if (input.commonsTextCount != null) doc.commonsTextCount = input.commonsTextCount;
   if (input.worldview) doc.worldview = input.worldview;
   if (input.creator) doc.creator = input.creator;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
@@ -423,6 +458,109 @@ export async function createProjectStage(input: CreateProjectStage) {
   if (input.artifactDescription) doc.artifactDescription = input.artifactDescription;
   if (input.dependsOn) doc.dependsOn = input.dependsOn;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
+}
+
+// ── Asset ────────────────────────────────────────────────────────────────────
+
+interface CreateAsset {
+  _id?: string;
+  title: string;
+  slug?: string;
+  kind: AssetKind;
+  fileRef?: string;
+  thumbnailRef?: string;
+  pageCount?: number;
+  description?: string;
+  printGuidance?: string;
+  ageBand?: AgeBand;
+  license: AssetLicense;
+  source?: string;
+  sourceUrl?: string;
+  tags?: string[];
+  relatedCommonsTextIds?: string[];
+  status?: Status;
+  version?: number;
+}
+
+export async function createAsset(input: CreateAsset) {
+  const s = input.slug ?? slugify(input.title);
+  const id = input._id ?? `asset.${input.kind}.${s}`;
+  const doc: SanityDoc & { _id: string } = {
+    _type: 'asset',
+    _id: id,
+    title: input.title,
+    slug: { _type: 'slug', current: s },
+    kind: input.kind,
+    license: input.license,
+    status: input.status ?? 'draft',
+    version: input.version ?? 1,
+  };
+  if (input.fileRef) doc.file = { _type: 'file', asset: { _type: 'reference', _ref: input.fileRef } };
+  if (input.thumbnailRef) doc.thumbnail = { _type: 'image', asset: { _type: 'reference', _ref: input.thumbnailRef } };
+  if (input.pageCount != null) doc.pageCount = input.pageCount;
+  if (input.description) doc.description = input.description;
+  if (input.printGuidance) doc.printGuidance = input.printGuidance;
+  if (input.ageBand) doc.ageBand = input.ageBand;
+  if (input.source) doc.source = input.source;
+  if (input.sourceUrl) doc.sourceUrl = input.sourceUrl;
+  if (input.tags) doc.tags = input.tags;
+  if (input.relatedCommonsTextIds) doc.relatedCommonsTexts = keyedRefs(input.relatedCommonsTextIds);
+  return createWithId(doc);
+}
+
+// ── Commons Text ─────────────────────────────────────────────────────────────
+
+interface CreateCommonsText {
+  _id?: string;
+  title: string;
+  slug?: string;
+  kind: CommonsTextKind;
+  tradition: string;
+  body?: string | ReturnType<typeof blockText>;
+  shortBody?: string | ReturnType<typeof blockText>;
+  readAloudVersion?: string | ReturnType<typeof blockText>;
+  estimatedReadAloudMinutes?: number;
+  length?: TextLength;
+  readingLevel?: ReadingLevel;
+  themes?: string[];
+  moralOrLesson?: string;
+  source?: string;
+  sourceUrl?: string;
+  license: CommonsTextLicense;
+  relatedAssetIds?: string[];
+  relatedTextIds?: string[];
+  tags?: string[];
+  status?: Status;
+}
+
+export async function createCommonsText(input: CreateCommonsText) {
+  const s = input.slug ?? slugify(input.title);
+  const id = input._id ?? `commons.${input.tradition}.${s}`;
+  const toBlock = (v: string | ReturnType<typeof blockText>) => typeof v === 'string' ? blockText(v) : v;
+  const doc: SanityDoc & { _id: string } = {
+    _type: 'commonsText',
+    _id: id,
+    title: input.title,
+    slug: { _type: 'slug', current: s },
+    kind: input.kind,
+    tradition: input.tradition,
+    license: input.license,
+    status: input.status ?? 'draft',
+  };
+  if (input.body) doc.body = toBlock(input.body);
+  if (input.shortBody) doc.shortBody = toBlock(input.shortBody);
+  if (input.readAloudVersion) doc.readAloudVersion = toBlock(input.readAloudVersion);
+  if (input.estimatedReadAloudMinutes != null) doc.estimatedReadAloudMinutes = input.estimatedReadAloudMinutes;
+  if (input.length) doc.length = input.length;
+  if (input.readingLevel) doc.readingLevel = input.readingLevel;
+  if (input.themes) doc.themes = input.themes;
+  if (input.moralOrLesson) doc.moralOrLesson = input.moralOrLesson;
+  if (input.source) doc.source = input.source;
+  if (input.sourceUrl) doc.sourceUrl = input.sourceUrl;
+  if (input.relatedAssetIds) doc.relatedAssets = keyedRefs(input.relatedAssetIds);
+  if (input.relatedTextIds) doc.relatedTexts = keyedRefs(input.relatedTextIds);
+  if (input.tags) doc.tags = input.tags;
+  return createWithId(doc);
 }
 
 // ─── High-level: create a full module tree ───────────────────────────────────

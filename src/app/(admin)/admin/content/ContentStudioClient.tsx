@@ -11,6 +11,8 @@ import { ActivityEditor } from './_components/editors/ActivityEditor';
 import { BadgeEditor } from './_components/editors/BadgeEditor';
 import { PromptDialog } from './_components/PromptDialog';
 import { ConfirmDialog } from './_components/ConfirmDialog';
+import { AssetLibraryTab } from './_components/AssetLibraryTab';
+import { CommonsTextTab } from './_components/CommonsTextTab';
 
 interface DraftListItem {
   id: string;
@@ -20,14 +22,34 @@ interface DraftListItem {
   updatedAt: Date | null;
 }
 
+export interface SanityAssetOption {
+  _id: string;
+  title: string;
+  kind: string;
+  status: string;
+}
+
+export interface SanityCommonsTextOption {
+  _id: string;
+  title: string;
+  kind: string;
+  tradition: string;
+  status: string;
+}
+
+type StudioTab = 'editor' | 'assets' | 'commons';
+
 interface Props {
   capabilityThreads: CapabilityThreadOption[];
   existingDrafts: DraftListItem[];
+  sanityAssets: SanityAssetOption[];
+  sanityCommonsTexts: SanityCommonsTextOption[];
 }
 
-export default function ContentStudioClient({ capabilityThreads, existingDrafts }: Props) {
+export default function ContentStudioClient({ capabilityThreads, existingDrafts, sanityAssets, sanityCommonsTexts }: Props) {
   const [state, dispatch] = useReducer(studioReducer, INITIAL_STATE);
   const [sel, setSel] = useState<Selection | null>(null);
+  const [activeTab, setActiveTab] = useState<StudioTab>('editor');
   const [draftId, setDraftId] = useState<string | null>(null);
   const [draftList, setDraftList] = useState<DraftListItem[]>(existingDrafts);
   const [jsonView, setJsonView] = useState(false);
@@ -149,7 +171,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
     const res = await fetch(`/api/admin/content/drafts/${id}`);
     if (!res.ok) return;
     const draft = await res.json();
-    dispatch({ type: 'LOAD', payload: draft.draftData || INITIAL_STATE });
+    dispatch({ type: 'LOAD', payload: { ...INITIAL_STATE, ...(draft.draftData || {}) } });
     setDraftId(id);
     setSel(null);
     setSaveStatus('saved');
@@ -286,49 +308,97 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Topbar */}
-        <div className="flex items-center justify-between px-xl py-3.5 border-b border-border-subtle bg-surface-panel gap-md shrink-0">
-          <div className="flex items-center gap-2 text-sm text-text-muted">
-            {!doc && <span className="text-text-primary font-medium">Select a document to edit</span>}
-            {doc && sel?.type && (
-              <span className="text-text-primary font-medium capitalize">{sel.type}</span>
-            )}
-          </div>
-          <div className="flex gap-2 items-center">
-            {doc && (
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[0.7rem] font-semibold uppercase tracking-[0.05em] ${
-                (doc as { status: string }).status === 'published'
-                  ? 'bg-sage/15 text-sage'
-                  : (doc as { status: string }).status === 'review'
-                    ? 'bg-blue-400/15 text-blue-400'
-                    : 'bg-text-muted/15 text-text-muted'
-              }`}>
-                ● {(doc as { status: string }).status}
-              </span>
-            )}
-            {doc && (
-              <button
-                type="button"
-                onClick={() => setJsonView(!jsonView)}
-                className="px-3 py-1.5 text-xs font-sans text-text-muted hover:text-text-primary transition-colors"
-              >
-                {jsonView ? '📝 Form' : '{ } JSON'}
-              </button>
-            )}
-            {doc && (
-              <button
-                type="button"
-                onClick={deleteSelected}
-                className="px-3 py-1.5 text-xs font-sans text-red-400 hover:text-red-300 border border-red-900/30 rounded-[8px] transition-colors"
-              >
-                Delete
-              </button>
-            )}
-          </div>
+        {/* Tab bar */}
+        <div className="flex items-center gap-0 px-xl border-b border-border-subtle bg-surface-panel shrink-0">
+          {(['editor', 'assets', 'commons'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-3 text-xs font-sans font-medium transition-colors relative ${
+                activeTab === tab
+                  ? 'text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {tab === 'editor' ? '📝 Content Editor' : tab === 'assets' ? '📎 Asset Library' : '📖 Commons Texts'}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-ember" />
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Editor area */}
-        <div className="flex-1 overflow-y-auto px-xl py-xl">
+        {/* Topbar — editor tab only */}
+        {activeTab === 'editor' && (
+          <div className="flex items-center justify-between px-xl py-3.5 border-b border-border-subtle bg-surface-panel gap-md shrink-0">
+            <div className="flex items-center gap-2 text-sm text-text-muted">
+              {!doc && <span className="text-text-primary font-medium">Select a document to edit</span>}
+              {doc && sel?.type && (
+                <span className="text-text-primary font-medium capitalize">{sel.type}</span>
+              )}
+            </div>
+            <div className="flex gap-2 items-center">
+              {doc && (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[0.7rem] font-semibold uppercase tracking-[0.05em] ${
+                  (doc as { status: string }).status === 'published'
+                    ? 'bg-sage/15 text-sage'
+                    : (doc as { status: string }).status === 'review'
+                      ? 'bg-blue-400/15 text-blue-400'
+                      : 'bg-text-muted/15 text-text-muted'
+                }`}>
+                  ● {(doc as { status: string }).status}
+                </span>
+              )}
+              {doc && (
+                <button
+                  type="button"
+                  onClick={() => setJsonView(!jsonView)}
+                  className="px-3 py-1.5 text-xs font-sans text-text-muted hover:text-text-primary transition-colors"
+                >
+                  {jsonView ? '📝 Form' : '{ } JSON'}
+                </button>
+              )}
+              {doc && (
+                <button
+                  type="button"
+                  onClick={deleteSelected}
+                  className="px-3 py-1.5 text-xs font-sans text-red-400 hover:text-red-300 border border-red-900/30 rounded-[8px] transition-colors"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Asset Library tab */}
+        {activeTab === 'assets' && (
+          <AssetLibraryTab
+            state={state}
+            dispatch={dispatch}
+            sel={sel}
+            setSel={setSel}
+            setField={setField}
+            sanityAssets={sanityAssets}
+            sanityCommonsTexts={sanityCommonsTexts}
+          />
+        )}
+
+        {/* Commons Text tab */}
+        {activeTab === 'commons' && (
+          <CommonsTextTab
+            state={state}
+            dispatch={dispatch}
+            sel={sel}
+            setSel={setSel}
+            setField={setField}
+            sanityAssets={sanityAssets}
+          />
+        )}
+
+        {/* Editor area — editor tab only */}
+        {activeTab === 'editor' && <div className="flex-1 overflow-y-auto px-xl py-xl">
           {!doc && !draftId && (
             <div className="flex flex-col items-center justify-center h-full text-center p-xl">
               <div className="text-5xl mb-md">🏔️</div>
@@ -422,6 +492,8 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
                   toggleArrayItem={toggleArrayItem}
                   doc={doc}
                   capabilityThreads={capabilityThreads}
+                  sanityAssets={sanityAssets}
+                  sanityCommonsTexts={sanityCommonsTexts}
                 />
               )}
               {sel?.type === 'badge' && (
@@ -435,7 +507,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
               )}
             </div>
           )}
-        </div>
+        </div>}
       </main>
 
       <PromptDialog

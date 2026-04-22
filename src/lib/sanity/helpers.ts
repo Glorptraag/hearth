@@ -64,3 +64,15 @@ export function keyedRefs(ids: string[]) {
 export function range(min: number, max: number) {
   return { min, max };
 }
+
+export function assetRef(assetId: string, role: string, notes?: string) {
+  const o: Record<string, unknown> = { _key: key('aref'), asset: ref(assetId), role };
+  if (notes) o.notes = notes;
+  return o;
+}
+
+export function commonsTextRef(textId: string, role: string, presentationMode: string, notes?: string) {
+  const o: Record<string, unknown> = { _key: key('tref'), text: ref(textId), role, presentationMode };
+  if (notes) o.notes = notes;
+  return o;
+}

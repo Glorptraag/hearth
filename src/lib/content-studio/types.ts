@@ -49,6 +49,66 @@ export const DELIVERY_CHANNELS = [
 ] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 
+export const ASSET_KINDS = [
+  'template',
+  'worksheet',
+  'reference',
+  'card_set',
+  'handout',
+  'audio',
+  'manipulative',
+] as const;
+export type AssetKind = (typeof ASSET_KINDS)[number];
+
+export const COMMONS_TEXT_KINDS = [
+  'fable',
+  'fairy_tale',
+  'folk_tale',
+  'scripture',
+  'parable',
+  'psalm',
+  'proverb',
+  'poem',
+  'nursery_rhyme',
+  'myth',
+  'primary_source',
+  'story',
+] as const;
+export type CommonsTextKind = (typeof COMMONS_TEXT_KINDS)[number];
+
+export const AGE_BANDS = ['5-7', '7-9', '9-12', '12-15', 'all'] as const;
+export type AgeBand = (typeof AGE_BANDS)[number];
+
+export const ASSET_LICENSES = [
+  'hearth_proprietary',
+  'cc_by',
+  'cc_by_sa',
+  'public_domain',
+  'commissioned',
+  'fair_use_reference',
+] as const;
+export type AssetLicense = (typeof ASSET_LICENSES)[number];
+
+export const COMMONS_TEXT_LICENSES = ['public_domain', 'cc_by', 'cc_by_sa'] as const;
+export type CommonsTextLicense = (typeof COMMONS_TEXT_LICENSES)[number];
+
+export const TEXT_LENGTHS = ['micro', 'short', 'medium', 'long'] as const;
+export type TextLength = (typeof TEXT_LENGTHS)[number];
+
+export const ASSET_ROLES = ['core', 'optional', 'extension'] as const;
+export type AssetRole = (typeof ASSET_ROLES)[number];
+
+export const PRESENTATION_MODES = [
+  'read_aloud',
+  'child_reads',
+  'reference_only',
+  'memorisation',
+] as const;
+export type PresentationMode = (typeof PRESENTATION_MODES)[number];
+
+export const READING_LEVELS = ['5-7', '7-9', '9-12', '12-15'] as const;
+export type ReadingLevel = (typeof READING_LEVELS)[number];
+
 // ─── Draft document shapes ───
 
 export interface MaterialDraft {
@@ -75,6 +135,21 @@ export interface BadgeDraft {
   status: ContentStatus;
 }
 
+export interface ActivityAssetRefDraft {
+  _key: string;
+  assetId: string;
+  role: AssetRole;
+  notes: string;
+}
+
+export interface ActivityCommonsTextRefDraft {
+  _key: string;
+  commonsTextId: string;
+  role: AssetRole;
+  presentationMode: PresentationMode;
+  notes: string;
+}
+
 export interface ActivityDraft {
   _key: string;
   title: string;
@@ -82,6 +157,8 @@ export interface ActivityDraft {
   instructionsText: string;
   facilitatorGuidance: FacilitatorGuidanceDraft;
   materials: MaterialDraft[];
+  assetRefs: ActivityAssetRefDraft[];
+  commonsTextRefs: ActivityCommonsTextRefDraft[];
   duration: { min: number; max: number };
   ageRange: { min: number; max: number };
   setting: Setting;
@@ -92,6 +169,52 @@ export interface ActivityDraft {
   capabilityThreadIds: string[];
   enabledBadgeKeys: string[];
   deliveryChannel: DeliveryChannel;
+  status: ContentStatus;
+}
+
+export interface SanityFileRef {
+  assetId: string;
+  filename: string;
+}
+
+export interface AssetDraft {
+  _key: string;
+  title: string;
+  kind: AssetKind;
+  file: SanityFileRef | null;
+  thumbnail: SanityFileRef | null;
+  pageCount: number;
+  description: string;
+  printGuidance: string;
+  ageBand: AgeBand;
+  license: AssetLicense;
+  source: string;
+  sourceUrl: string;
+  tags: string[];
+  relatedCommonsTextIds: string[];
+  status: ContentStatus;
+  version: number;
+}
+
+export interface CommonsTextDraft {
+  _key: string;
+  title: string;
+  kind: CommonsTextKind;
+  tradition: string;
+  bodyText: string;
+  shortBodyText: string;
+  readAloudVersionText: string;
+  estimatedReadAloudMinutes: number;
+  length: TextLength | '';
+  readingLevel: ReadingLevel | '';
+  themes: string[];
+  moralOrLesson: string;
+  source: string;
+  sourceUrl: string;
+  license: CommonsTextLicense;
+  relatedAssetIds: string[];
+  relatedTextIds: string[];
+  tags: string[];
   status: ContentStatus;
 }
 
@@ -162,6 +285,8 @@ export interface StudioState {
   packs: PackDraft[];
   standaloneModules: ModuleDraft[];
   standaloneActivities: ActivityDraft[];
+  assets: AssetDraft[];
+  commonsTexts: CommonsTextDraft[];
 }
 
 // ─── Sidebar selection ───
@@ -177,7 +302,9 @@ export type Selection =
   | { scope: 'standalone-module'; mi: number; type: 'module' }
   | { scope: 'standalone-module'; mi: number; ai: number; type: 'approach' }
   | { scope: 'standalone-module'; mi: number; ai: number; acti: number; type: 'activity' }
-  | { scope: 'standalone-activity'; acti: number; type: 'activity' };
+  | { scope: 'standalone-activity'; acti: number; type: 'activity' }
+  | { scope: 'asset'; index: number; type: 'asset' }
+  | { scope: 'commonsText'; index: number; type: 'commonsText' };
 
 // ─── Capability thread (loaded from Sanity) ───
 
@@ -218,4 +345,11 @@ export type StudioAction =
   | { type: 'ADD_ACTIVITY'; scope: SelectionScope; pi?: number; mi: number; ai: number; title: string }
   | { type: 'ADD_BADGE'; pi: number; title: string }
   | { type: 'DELETE_SELECTED'; sel: Selection }
-  | { type: 'TOGGLE_ARRAY_ITEM'; path: (string | number)[]; value: string };
+  | { type: 'TOGGLE_ARRAY_ITEM'; path: (string | number)[]; value: string }
+  | { type: 'ADD_ASSET'; asset: AssetDraft }
+  | { type: 'DELETE_ASSET'; index: number }
+  | { type: 'UPDATE_ASSET'; index: number; asset: AssetDraft }
+  | { type: 'ADD_COMMONS_TEXT'; text: CommonsTextDraft }
+  | { type: 'DELETE_COMMONS_TEXT'; index: number }
+  | { type: 'UPDATE_COMMONS_TEXT'; index: number; text: CommonsTextDraft }
+  | { type: 'BULK_IMPORT_COMMONS_TEXTS'; texts: CommonsTextDraft[] };

@@ -8,6 +8,8 @@ import { badge } from './badge';
 import { capabilityThread } from './capabilityThread';
 import { pedagogyOverlay } from './pedagogyOverlay';
 import { moduleSkeleton } from './moduleSkeleton';
+import { asset } from './asset';
+import { commonsText } from './commonsText';
 
 export const schemaTypes = [
   capabilityThread,
@@ -20,4 +22,6 @@ export const schemaTypes = [
   project,
   pedagogyOverlay,
   moduleSkeleton,
+  asset,
+  commonsText,
 ];

@@ -56,7 +56,7 @@ describe('AI Pipeline', () => {
         learnerIds: ['learner-1'],
         engagementPerLearner: { 'learner-1': 'high' },
         discoveriesPerLearner: { 'learner-1': 'Identified 3 bird species' },
-        status: 'published',
+        status: 'active',
       };
 
       expect(entry.title).toBeTruthy();

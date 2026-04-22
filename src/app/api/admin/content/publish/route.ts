@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     // 4. Update draft status
     await db
       .update(contentStudioDrafts)
-      .set({ status: 'published', sanityPackId: createdPack._id, updatedAt: new Date() })
+      .set({ status: 'active', sanityPackId: createdPack._id, updatedAt: new Date() })
       .where(eq(contentStudioDrafts.id, draftId));
 
     await logAdminAction({

@@ -84,7 +84,7 @@ export function ApproachEditor({ state, sel, fieldPrefix, setField, dispatch, sh
               </div>
             </div>
             <span
-              className={`w-2 h-2 rounded-full shrink-0 ${act.status === 'published' ? 'bg-sage' : 'bg-text-muted'}`}
+              className={`w-2 h-2 rounded-full shrink-0 ${act.status === 'active' ? 'bg-sage' : act.status === 'created' ? 'bg-ember' : 'bg-text-muted'}`}
             />
           </div>
         ))}

@@ -33,11 +33,14 @@ export type Worldview = (typeof WORLDVIEWS)[number];
 export const AVAILABILITIES = ['included', 'premium'] as const;
 export type Availability = (typeof AVAILABILITIES)[number];
 
-export const CONTENT_STATUSES = ['draft', 'published'] as const;
-export type ContentStatus = (typeof CONTENT_STATUSES)[number];
+export const WORKFLOW_STATUSES = ['planned', 'briefed', 'created', 'reviewed', 'active', 'archived'] as const;
+export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
 
-export const PACK_STATUSES = ['draft', 'published', 'archived'] as const;
-export type PackStatus = (typeof PACK_STATUSES)[number];
+export const CONTENT_STATUSES = WORKFLOW_STATUSES;
+export type ContentStatus = WorkflowStatus;
+
+export const PACK_STATUSES = WORKFLOW_STATUSES;
+export type PackStatus = WorkflowStatus;
 
 export const DELIVERY_CHANNELS = [
   'screen',

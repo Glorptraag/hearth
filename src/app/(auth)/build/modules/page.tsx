@@ -527,7 +527,7 @@ async function publishFromEditData(data: SharedEditData): Promise<boolean> {
     subjects: data.subjects.length > 0 ? data.subjects : undefined,
     ageRange: ageMin && ageMax ? { min: ageMin, max: ageMax } : undefined,
     duration: durMin && durMax ? { min: durMin, max: durMax } : undefined,
-    status: 'published' as const,
+    status: 'active' as const,
     approaches: [{
       title: 'How to explore this',
       activities: data.steps.map((step) => ({

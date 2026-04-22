@@ -30,7 +30,7 @@ const activityInputSchema = z.object({
   reflectionPrompts: z.array(z.string()).optional(),
   capabilityThreadIds: z.array(z.string()).optional(),
   badgeIds: z.array(z.string()).optional(),
-  status: z.enum(['draft', 'published']).optional(),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']).optional(),
 });
 
 const approachInputSchema = z.object({
@@ -39,7 +39,7 @@ const approachInputSchema = z.object({
   modality: z.enum(['kinesthetic', 'visual', 'auditory', 'narrative', 'social', 'exploratory']).optional(),
   description: z.string().optional(),
   activities: z.array(activityInputSchema).min(1),
-  status: z.enum(['draft', 'published']).optional(),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']).optional(),
 });
 
 const moduleInputSchema = z.object({
@@ -59,7 +59,7 @@ const moduleInputSchema = z.object({
   badgeIds: z.array(z.string()).optional(),
   capabilityThreadIds: z.array(z.string()).optional(),
   approaches: z.array(approachInputSchema).min(1),
-  status: z.enum(['draft', 'published']).optional(),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']).optional(),
 });
 
 export async function POST(request: NextRequest) {

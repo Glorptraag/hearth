@@ -28,6 +28,7 @@ export default function ThreadCoverageChart({ dateFrom, dateTo }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     setThreads(null);
     setError(null);
     try {

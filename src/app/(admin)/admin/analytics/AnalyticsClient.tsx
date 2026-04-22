@@ -216,6 +216,7 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     setData(null);
     try {
       const r = await fetch(`/api/admin/analytics/abandonment?moduleId=${encodeURIComponent(moduleId)}`);

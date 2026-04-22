@@ -25,6 +25,7 @@ export default function ActivityHeatMap({ moduleId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     setCells(null);
     setError(null);
     try {

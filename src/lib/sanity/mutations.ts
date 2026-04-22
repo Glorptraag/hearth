@@ -86,8 +86,9 @@ type Modality = 'kinesthetic' | 'visual' | 'auditory' | 'narrative' | 'social' |
 type Domain = Subject;
 type Tier = 'emerging' | 'developing' | 'demonstrating';
 type Framework = 'charlotte_mason' | 'classical' | 'montessori' | 'waldorf_steiner' | 'unschooling' | 'eclectic';
-type Status = 'draft' | 'published';
-type StatusExt = Status | 'archived';
+type WorkflowStatus = 'planned' | 'briefed' | 'created' | 'reviewed' | 'active' | 'archived';
+type Status = WorkflowStatus;
+type StatusExt = WorkflowStatus;
 
 // ── Capability Thread ────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export async function createBadge(input: CreateBadge) {
     description: input.description,
     criteriaSummary: input.criteriaSummary,
     observationThreshold: input.observationThreshold ?? 3,
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
@@ -187,7 +188,7 @@ export async function createActivity(input: CreateActivity) {
     slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
     approach: ref(input.approachId),
     instructions: typeof input.instructions === 'string' ? blockText(input.instructions) : input.instructions,
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.summary) doc.summary = input.summary;
@@ -229,7 +230,7 @@ export async function createApproach(input: CreateApproach) {
     title: input.title,
     slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
     module: ref(input.moduleId),
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.modality) doc.modality = input.modality;
@@ -261,7 +262,7 @@ export async function createModule(input: CreateModule) {
     title: input.title,
     slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
     targetUnderstanding: input.targetUnderstanding,
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.understandingIndicators) doc.understandingIndicators = input.understandingIndicators;
@@ -304,7 +305,7 @@ export async function createPack(input: CreatePack) {
     description: input.description,
     availability: input.availability ?? 'included',
     version: input.version ?? '1.0.0',
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.moduleIds) doc.modules = keyedRefs(input.moduleIds);
@@ -342,7 +343,7 @@ export async function createPedagogyOverlay(input: CreatePedagogyOverlay) {
     title: input.title ?? `${input.framework} overlay`,
     activity: ref(input.activityId),
     framework: input.framework,
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.lens) doc.lens = input.lens;
@@ -370,7 +371,7 @@ export async function createProject(input: CreateProject) {
     _type: 'project',
     title: input.title,
     slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.description) doc.description = input.description;
@@ -405,7 +406,7 @@ export async function createProjectStage(input: CreateProjectStage) {
     title: input.title,
     slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
     stageNumber: input.stageNumber,
-    status: input.status ?? 'draft',
+    status: input.status ?? 'created',
   };
   if (input._id) doc._id = input._id;
   if (input.projectId) doc.project = ref(input.projectId);

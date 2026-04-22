@@ -8,6 +8,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/invitations': 'Invitations',
   '/admin/content': 'Content Studio',
   '/admin/content/qa': 'Content QA',
+  '/admin/content/inventory': 'Content Inventory',
   '/admin/families': 'Families',
   '/admin/analytics': 'Analytics',
   '/admin/snapshots': 'Snapshots',

@@ -5,7 +5,7 @@ import type { DocType, FieldRule, QAIssue, CompletenessResult, SanityDoc } from 
 const KNOWN_MODALITIES = ['kinesthetic', 'visual', 'auditory', 'narrative', 'social', 'exploratory'];
 const KNOWN_SETTINGS = ['indoor', 'outdoor', 'either'];
 const KNOWN_ENERGY_LEVELS = ['calm', 'moderate', 'active'];
-const KNOWN_STATUSES = ['draft', 'published'];
+const KNOWN_STATUSES = ['planned', 'briefed', 'created', 'reviewed', 'active', 'archived'];
 
 // ─── Helpers ───
 
@@ -88,7 +88,7 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
       field: 'status',
       required: true,
       weakIf: (v) => !KNOWN_STATUSES.includes(v as string),
-      description: 'Pack status must be draft or published',
+      description: 'Pack status must be a valid workflow status',
     },
   ],
 

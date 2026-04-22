@@ -111,7 +111,7 @@ async function seedNatureExplorers() {
     modality: 'exploratory',
     observationPrompts: ['Does the learner use specific vocabulary to describe features?', 'Can they identify birds by sound?'],
     capabilityThreads: [ref(IDS.ct_sciObs)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_bird2,
@@ -129,7 +129,7 @@ async function seedNatureExplorers() {
     energyLevel: 'calm',
     modality: 'visual',
     capabilityThreads: [ref(IDS.ct_sciObs), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_water1,
@@ -144,7 +144,7 @@ async function seedNatureExplorers() {
     energyLevel: 'active',
     modality: 'exploratory',
     capabilityThreads: [ref(IDS.ct_sciObs)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_water2,
@@ -164,7 +164,7 @@ async function seedNatureExplorers() {
     energyLevel: 'calm',
     modality: 'kinesthetic',
     capabilityThreads: [ref(IDS.ct_sciObs)],
-    status: 'published',
+    status: 'active',
   });
 
   // Approaches
@@ -177,7 +177,7 @@ async function seedNatureExplorers() {
     modality: 'exploratory',
     description: 'Patient outdoor observation combined with detailed journaling.',
     activities: [ref(IDS.act_bird1), ref(IDS.act_bird2)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.app_waterCycle,
@@ -188,7 +188,7 @@ async function seedNatureExplorers() {
     modality: 'kinesthetic',
     description: 'Hands-on observation and modelling of water states.',
     activities: [ref(IDS.act_water1), ref(IDS.act_water2)],
-    status: 'published',
+    status: 'active',
   });
 
   // Modules
@@ -203,7 +203,7 @@ async function seedNatureExplorers() {
     duration: { min: 35, max: 55 },
     approaches: [ref(IDS.app_birdwatch)],
     capabilityThreads: [ref(IDS.ct_sciObs), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.mod_waterCycle,
@@ -216,7 +216,7 @@ async function seedNatureExplorers() {
     duration: { min: 45, max: 70 },
     approaches: [ref(IDS.app_waterCycle)],
     capabilityThreads: [ref(IDS.ct_sciObs)],
-    status: 'published',
+    status: 'active',
   });
 
   // Pack
@@ -234,7 +234,7 @@ async function seedNatureExplorers() {
     worldview: 'neutral',
     availability: 'included',
     version: '1.0.0',
-    status: 'published',
+    status: 'active',
     modules: [ref(IDS.mod_birdwatch), ref(IDS.mod_waterCycle)],
   });
 }
@@ -257,7 +257,7 @@ async function seedStoryBuilders() {
     energyLevel: 'calm',
     modality: 'narrative',
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_folk2,
@@ -272,7 +272,7 @@ async function seedStoryBuilders() {
     energyLevel: 'calm',
     modality: 'narrative',
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_poem1,
@@ -287,7 +287,7 @@ async function seedStoryBuilders() {
     energyLevel: 'moderate',
     modality: 'narrative',
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_poem2,
@@ -305,7 +305,7 @@ async function seedStoryBuilders() {
     energyLevel: 'calm',
     modality: 'visual',
     capabilityThreads: [ref(IDS.ct_narrative), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -317,7 +317,7 @@ async function seedStoryBuilders() {
     modality: 'narrative',
     description: 'Story reading, retelling, and creative rewriting.',
     activities: [ref(IDS.act_folk1), ref(IDS.act_folk2)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.app_poetry,
@@ -328,7 +328,7 @@ async function seedStoryBuilders() {
     modality: 'narrative',
     description: 'Outdoor observation turned into structured verse forms.',
     activities: [ref(IDS.act_poem1), ref(IDS.act_poem2)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -342,7 +342,7 @@ async function seedStoryBuilders() {
     duration: { min: 30, max: 50 },
     approaches: [ref(IDS.app_folktales)],
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.mod_poetry,
@@ -355,7 +355,7 @@ async function seedStoryBuilders() {
     duration: { min: 40, max: 60 },
     approaches: [ref(IDS.app_poetry)],
     capabilityThreads: [ref(IDS.ct_narrative), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -372,7 +372,7 @@ async function seedStoryBuilders() {
     worldview: 'neutral',
     availability: 'included',
     version: '1.0.0',
-    status: 'published',
+    status: 'active',
     modules: [ref(IDS.mod_folktales), ref(IDS.mod_poetry)],
   });
 }
@@ -398,7 +398,7 @@ async function seedAncientWorlds() {
     energyLevel: 'calm',
     modality: 'visual',
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.act_egypt2,
@@ -416,7 +416,7 @@ async function seedAncientWorlds() {
     energyLevel: 'calm',
     modality: 'visual',
     capabilityThreads: [ref(IDS.ct_narrative), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -428,7 +428,7 @@ async function seedAncientWorlds() {
     modality: 'visual',
     description: 'Geographical and linguistic exploration of Ancient Egypt.',
     activities: [ref(IDS.act_egypt1), ref(IDS.act_egypt2)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -442,7 +442,7 @@ async function seedAncientWorlds() {
     duration: { min: 35, max: 55 },
     approaches: [ref(IDS.app_egypt)],
     capabilityThreads: [ref(IDS.ct_narrative), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -459,7 +459,7 @@ async function seedAncientWorlds() {
     worldview: 'neutral',
     availability: 'premium',
     version: '1.0.0',
-    status: 'published',
+    status: 'active',
     modules: [ref(IDS.mod_egypt)],
   });
 }
@@ -481,7 +481,7 @@ async function seedPedagogyOverlays() {
       languageFrame: 'Use "nature study" rather than "science experiment". Emphasise the beauty and wonder of what is observed.',
       watchFor: 'Look for the habit of attention developing — can they sit quietly and observe for the full 15 minutes? This is the foundation of all Charlotte Mason learning.',
     },
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.overlay_mont_bird1,
@@ -495,7 +495,7 @@ async function seedPedagogyOverlays() {
       languageFrame: 'Use precise scientific terminology — "ornithology", "plumage", "habitat". Children absorb correct vocabulary naturally when it\'s used consistently.',
       watchFor: 'Notice the moment of deep concentration. When the child is fully absorbed in observation, step back and protect that focus.',
     },
-    status: 'published',
+    status: 'active',
   });
 }
 

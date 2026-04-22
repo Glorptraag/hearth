@@ -147,11 +147,15 @@ export const activity = defineType({
       name: 'status',
       title: 'Status',
       type: 'string',
-      initialValue: 'draft',
+      initialValue: 'planned',
       options: {
         list: [
-          { title: 'Draft', value: 'draft' },
-          { title: 'Published', value: 'published' },
+          { title: 'Planned', value: 'planned' },
+          { title: 'Briefed', value: 'briefed' },
+          { title: 'Created', value: 'created' },
+          { title: 'Reviewed', value: 'reviewed' },
+          { title: 'Active', value: 'active' },
+          { title: 'Archived', value: 'archived' },
         ],
       },
     }),

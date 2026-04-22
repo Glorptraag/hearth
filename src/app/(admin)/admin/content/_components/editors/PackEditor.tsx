@@ -220,7 +220,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, toggleArrayItem,
                 {m.approaches.length} approaches · {m.approaches.reduce((s, a) => s + a.activities.length, 0)} activities
               </div>
             </div>
-            <span className={`w-2 h-2 rounded-full shrink-0 ${m.status === 'published' ? 'bg-sage' : 'bg-text-muted'}`} />
+            <span className={`w-2 h-2 rounded-full shrink-0 ${m.status === 'active' ? 'bg-sage' : m.status === 'created' ? 'bg-ember' : 'bg-text-muted'}`} />
           </div>
         ))}
         <button
@@ -250,7 +250,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, toggleArrayItem,
             <div className="flex-1">
               <div className="text-sm font-medium text-text-primary font-sans">{b.title}</div>
             </div>
-            <span className={`w-2 h-2 rounded-full shrink-0 ${b.status === 'published' ? 'bg-sage' : 'bg-text-muted'}`} />
+            <span className={`w-2 h-2 rounded-full shrink-0 ${b.status === 'active' ? 'bg-sage' : b.status === 'created' ? 'bg-ember' : 'bg-text-muted'}`} />
           </div>
         ))}
         <button

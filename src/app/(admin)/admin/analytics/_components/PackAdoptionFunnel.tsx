@@ -28,6 +28,7 @@ export default function PackAdoptionFunnel({ packId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     setData(null);
     setError(null);
     try {

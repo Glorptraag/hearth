@@ -297,11 +297,13 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
           <div className="flex gap-2 items-center">
             {doc && (
               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[0.7rem] font-semibold uppercase tracking-[0.05em] ${
-                (doc as { status: string }).status === 'published'
+                (doc as { status: string }).status === 'active'
                   ? 'bg-sage/15 text-sage'
-                  : (doc as { status: string }).status === 'review'
-                    ? 'bg-blue-400/15 text-blue-400'
-                    : 'bg-text-muted/15 text-text-muted'
+                  : (doc as { status: string }).status === 'reviewed'
+                    ? 'bg-sage/10 text-sage/70'
+                    : (doc as { status: string }).status === 'created'
+                      ? 'bg-ember-glow text-ember'
+                      : 'bg-text-muted/15 text-text-muted'
               }`}>
                 ● {(doc as { status: string }).status}
               </span>

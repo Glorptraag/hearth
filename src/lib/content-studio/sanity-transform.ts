@@ -30,7 +30,7 @@ export function transformBadge(badge: BadgeDraft) {
     criteriaSummary: badge.criteriaSummary,
     capabilityThreadIds: badge.capabilityThreadIds.length > 0 ? badge.capabilityThreadIds : undefined,
     observationThreshold: badge.observationThreshold,
-    status: badge.status as 'draft' | 'published',
+    status: badge.status,
   };
 }
 
@@ -66,7 +66,7 @@ export function transformActivity(activity: ActivityDraft, approachId: string) {
     reflectionPrompts: activity.reflectionPrompts.length > 0 ? activity.reflectionPrompts : undefined,
     capabilityThreadIds: activity.capabilityThreadIds.length > 0 ? activity.capabilityThreadIds : undefined,
     badgeIds: activity.enabledBadgeKeys.length > 0 ? activity.enabledBadgeKeys : undefined,
-    status: activity.status as 'draft' | 'published',
+    status: activity.status,
   };
 }
 
@@ -98,7 +98,7 @@ export function transformModuleForFullCreate(mod: ModuleDraft) {
     ageRange: { min: mod.ageRange.min, max: mod.ageRange.max },
     duration: { min: mod.duration.min, max: mod.duration.max },
     capabilityThreadIds: mod.capabilityThreadIds.length > 0 ? mod.capabilityThreadIds : undefined,
-    status: mod.status as 'draft' | 'published',
+    status: mod.status,
     approaches: mod.approaches.map((a) => ({
       title: a.title,
       slug: slugify(a.title),
@@ -161,6 +161,6 @@ export function transformPack(
       (s, m) => s + m.approaches.reduce((s2, a) => s2 + a.activities.length, 0),
       0,
     ),
-    status: pack.status as 'draft' | 'published' | 'archived',
+    status: pack.status,
   };
 }

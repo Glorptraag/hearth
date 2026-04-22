@@ -91,7 +91,7 @@ export async function mergeWithDrafts(tree: PackTree): Promise<PackTree> {
     .where(eq(contentStudioDrafts.sanityPackId, packId));
 
   // Only use non-published drafts (published drafts are already reflected in Sanity)
-  const activeDrafts = rows.filter((r) => r.status !== 'published');
+  const activeDrafts = rows.filter((r) => r.status !== 'active');
   if (activeDrafts.length === 0) return tree;
 
   // Use the most recently updated draft

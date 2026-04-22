@@ -41,8 +41,12 @@ export function BadgeEditor({ fieldPrefix, setField, toggleArrayItem, doc, capab
               value={badge.status}
               onChange={(v) => setField(f('status'), v)}
               options={[
-                { value: 'draft', label: 'Draft' },
-                { value: 'published', label: 'Published' },
+                { value: 'planned', label: 'Planned' },
+                { value: 'briefed', label: 'Briefed' },
+                { value: 'created', label: 'Created' },
+                { value: 'reviewed', label: 'Reviewed' },
+                { value: 'active', label: 'Active' },
+                { value: 'archived', label: 'Archived' },
               ]}
             />
           </FormField>

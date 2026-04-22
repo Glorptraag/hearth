@@ -1,5 +1,5 @@
 // Pack list for marketplace/activity discovery
-export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
+export const PACKS_QUERY = `*[_type == "pack" && status == "active"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges)
 }`;
@@ -63,7 +63,7 @@ export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id][0]{
 }`;
 
 // All published projects for explore/browse
-export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "published"]{
+export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "active"]{
   _id, title, slug, description, subjects, ageRange, duration,
   "stageCount": count(stages),
   badges[]->{ _id, title, emoji },
@@ -78,7 +78,7 @@ export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(
 }`;
 
 // Modules in family library (by pack IDs)
-export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
+export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "active"]{
   modules[]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
     approaches[]->{
@@ -89,7 +89,7 @@ export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
 }`;
 
 // All published modules with pack back-reference for explore/browse
-export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
+export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "active"]{
   _id,
   title,
   description,
@@ -99,6 +99,37 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
     approaches[]->{
       _id, title, modality,
       "activityCount": count(activities)
+    }
+  }
+}`;
+
+// Full content inventory: all packs with nested hierarchy and status
+export const CONTENT_INVENTORY_QUERY = `*[_type == "pack"] | order(title asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  status,
+  _updatedAt,
+  "modules": modules[]->{
+    _id,
+    title,
+    "slug": slug.current,
+    status,
+    _updatedAt,
+    "approaches": approaches[]->{
+      _id,
+      title,
+      "slug": slug.current,
+      status,
+      modality,
+      _updatedAt,
+      "activities": activities[]->{
+        _id,
+        title,
+        "slug": slug.current,
+        status,
+        _updatedAt
+      }
     }
   }
 }`;

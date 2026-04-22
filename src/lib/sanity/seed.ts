@@ -176,7 +176,7 @@ async function seedBadges() {
       'Demonstrates understanding of how ingredients interact through measurement, observation, and prediction',
     capabilityThreads: [ref(IDS.ct_sciObs), ref(IDS.ct_measurement)],
     observationThreshold: 3,
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.badge_patternSpotter,
@@ -188,7 +188,7 @@ async function seedBadges() {
     criteriaSummary: 'Identifies and describes patterns in natural environments',
     capabilityThreads: [ref(IDS.ct_numberSense), ref(IDS.ct_visualArts)],
     observationThreshold: 3,
-    status: 'published',
+    status: 'active',
   });
 }
 
@@ -234,7 +234,7 @@ async function seedBreadActivities() {
     ],
     capabilityThreads: [ref(IDS.ct_measurement), ref(IDS.ct_sciObs)],
     enabledBadges: [ref(IDS.badge_kitchenSci)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -272,7 +272,7 @@ async function seedBreadActivities() {
     ],
     capabilityThreads: [ref(IDS.ct_sciObs)],
     enabledBadges: [ref(IDS.badge_kitchenSci)],
-    status: 'published',
+    status: 'active',
   });
 
   await upsert({
@@ -310,7 +310,7 @@ async function seedBreadActivities() {
     ],
     capabilityThreads: [ref(IDS.ct_sciObs), ref(IDS.ct_measurement)],
     enabledBadges: [ref(IDS.badge_kitchenSci)],
-    status: 'published',
+    status: 'active',
   });
 }
 
@@ -357,7 +357,7 @@ async function seedStarsActivities() {
       _type: 'activity',
       approach: ref(IDS.app_stargazing),
       instructions: blockText(act.description),
-      status: 'published',
+      status: 'active',
     });
   }
 }
@@ -411,7 +411,7 @@ async function seedPatternsActivities() {
       instructions: blockText(act.description),
       capabilityThreads: [ref(IDS.ct_numberSense), ref(IDS.ct_visualArts)],
       enabledBadges: [ref(IDS.badge_patternSpotter)],
-      status: 'published',
+      status: 'active',
     });
   }
 }
@@ -426,7 +426,7 @@ async function seedApproaches() {
     module: ref(IDS.mod_bread),
     modality: 'kinesthetic',
     description: 'Sequential kitchen activities that build on each other to produce real bread.',
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.app_stargazing,
@@ -436,7 +436,7 @@ async function seedApproaches() {
     module: ref(IDS.mod_stars),
     modality: 'exploratory',
     description: 'Direct observation and creative activities connecting stars to storytelling.',
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.app_natureWalk,
@@ -446,7 +446,7 @@ async function seedApproaches() {
     module: ref(IDS.mod_patterns),
     modality: 'kinesthetic',
     description: 'Outdoor exploration discovering mathematical patterns in living things.',
-    status: 'published',
+    status: 'active',
   });
 }
 
@@ -483,7 +483,7 @@ async function seedModules() {
     duration: { min: 55, max: 120 },
     badges: [ref(IDS.badge_kitchenSci)],
     capabilityThreads: [ref(IDS.ct_measurement), ref(IDS.ct_sciObs)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.mod_stars,
@@ -497,7 +497,7 @@ async function seedModules() {
     duration: { min: 55, max: 75 },
     badges: [],
     capabilityThreads: [ref(IDS.ct_narrative)],
-    status: 'published',
+    status: 'active',
   });
   await upsert({
     _id: IDS.mod_patterns,
@@ -511,7 +511,7 @@ async function seedModules() {
     duration: { min: 60, max: 85 },
     badges: [ref(IDS.badge_patternSpotter)],
     capabilityThreads: [ref(IDS.ct_numberSense), ref(IDS.ct_visualArts)],
-    status: 'published',
+    status: 'active',
   });
 }
 
@@ -545,7 +545,7 @@ async function seedPack() {
     worldview: 'neutral',
     availability: 'included',
     version: '1.0.0',
-    status: 'published',
+    status: 'active',
     modules: [ref(IDS.mod_bread), ref(IDS.mod_stars), ref(IDS.mod_patterns)],
     badges: [ref(IDS.badge_kitchenSci), ref(IDS.badge_patternSpotter)],
   });

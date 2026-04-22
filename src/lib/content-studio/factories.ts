@@ -28,7 +28,7 @@ export function createEmptyPack(title: string): PackDraft {
     version: '1.0.0',
     modules: [],
     badges: [],
-    status: 'draft',
+    status: 'planned',
   };
 }
 
@@ -45,7 +45,7 @@ export function createEmptyModule(title: string, standalone = false): ModuleDraf
     badgeKeys: [],
     approaches: [],
     standalone,
-    status: 'draft',
+    status: 'planned',
   };
 }
 
@@ -56,7 +56,7 @@ export function createEmptyApproach(title: string): ApproachDraft {
     modality: '',
     description: '',
     activities: [],
-    status: 'draft',
+    status: 'planned',
   };
 }
 
@@ -78,7 +78,7 @@ export function createEmptyActivity(title: string): ActivityDraft {
     capabilityThreadIds: [],
     enabledBadgeKeys: [],
     deliveryChannel: 'physical',
-    status: 'draft',
+    status: 'planned',
   };
 }
 
@@ -91,7 +91,7 @@ export function createEmptyBadge(title: string): BadgeDraft {
     criteriaSummary: '',
     capabilityThreadIds: [],
     observationThreshold: 3,
-    status: 'draft',
+    status: 'planned',
   };
 }
 

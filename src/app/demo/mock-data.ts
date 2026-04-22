@@ -88,7 +88,7 @@ interface Module {
   subjects: string[];
   ageRange: { min: number; max: number };
   duration: { min: number; max: number };
-  status: 'published';
+  status: 'active';
   approaches: Approach[];
 }
 
@@ -100,7 +100,7 @@ interface Pack {
   subjects: string[];
   moduleCount: number;
   ageRange: { min: number; max: number };
-  status: 'published';
+  status: 'active';
   imageEmoji: string;
 }
 
@@ -168,7 +168,7 @@ export const mockModules: Module[] = [
     subjects: ['science', 'arts'],
     ageRange: { min: 5, max: 10 },
     duration: { min: 45, max: 60 },
-    status: 'published',
+    status: 'active',
     approaches: [
       {
         id: 'app-nature-kinesthetic',
@@ -318,7 +318,7 @@ export const mockModules: Module[] = [
     subjects: ['mathematics'],
     ageRange: { min: 6, max: 10 },
     duration: { min: 30, max: 45 },
-    status: 'published',
+    status: 'active',
     approaches: [
       {
         id: 'app-kitchen-kinesthetic',
@@ -437,7 +437,7 @@ export const mockModules: Module[] = [
     subjects: ['hass', 'arts'],
     ageRange: { min: 7, max: 12 },
     duration: { min: 40, max: 60 },
-    status: 'published',
+    status: 'active',
     approaches: [
       {
         id: 'app-egypt-visual',
@@ -583,7 +583,7 @@ export const mockModules: Module[] = [
     subjects: ['english'],
     ageRange: { min: 6, max: 9 },
     duration: { min: 20, max: 30 },
-    status: 'published',
+    status: 'active',
     approaches: [
       {
         id: 'app-reading-auditory',
@@ -663,7 +663,7 @@ export const mockModules: Module[] = [
     subjects: ['arts'],
     ageRange: { min: 5, max: 12 },
     duration: { min: 30, max: 45 },
-    status: 'published',
+    status: 'active',
     approaches: [
       {
         id: 'app-art-kinesthetic',
@@ -789,7 +789,7 @@ export const mockPacks: Pack[] = [
     subjects: ['science', 'arts', 'hpe'],
     moduleCount: 8,
     ageRange: { min: 5, max: 12 },
-    status: 'published',
+    status: 'active',
     imageEmoji: '🌿',
   },
   {
@@ -801,7 +801,7 @@ export const mockPacks: Pack[] = [
     subjects: ['mathematics', 'science'],
     moduleCount: 6,
     ageRange: { min: 5, max: 10 },
-    status: 'published',
+    status: 'active',
     imageEmoji: '🍳',
   },
   {
@@ -813,7 +813,7 @@ export const mockPacks: Pack[] = [
     subjects: ['english'],
     moduleCount: 10,
     ageRange: { min: 5, max: 9 },
-    status: 'published',
+    status: 'active',
     imageEmoji: '📖',
   },
   {
@@ -825,7 +825,7 @@ export const mockPacks: Pack[] = [
     subjects: ['hass', 'arts'],
     moduleCount: 8,
     ageRange: { min: 7, max: 12 },
-    status: 'published',
+    status: 'active',
     imageEmoji: '🏺',
   },
 ];

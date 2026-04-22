@@ -79,11 +79,13 @@ function AddBtn({
 
 function StatusDot({ status }: { status: string }) {
   const color =
-    status === 'published'
+    status === 'active'
       ? 'bg-sage'
-      : status === 'review'
-        ? 'bg-blue-400'
-        : 'bg-text-muted';
+      : status === 'reviewed'
+        ? 'bg-sage/60'
+        : status === 'created'
+          ? 'bg-ember'
+          : 'bg-text-muted';
   return <span className={`w-2 h-2 rounded-full ${color} shrink-0 inline-block`} />;
 }
 

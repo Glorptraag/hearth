@@ -28,7 +28,7 @@ const activitySchema = z.object({
   capabilityThreadIds: z.array(z.string()),
   enabledBadgeKeys: z.array(z.string()),
   deliveryChannel: z.string(),
-  status: z.enum(['draft', 'published']),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']),
 });
 
 const approachSchema = z.object({
@@ -37,7 +37,7 @@ const approachSchema = z.object({
   modality: z.string(),
   description: z.string(),
   activities: z.array(activitySchema).min(1, 'At least one activity per approach'),
-  status: z.enum(['draft', 'published']),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']),
 });
 
 const moduleSchema = z.object({
@@ -56,7 +56,7 @@ const moduleSchema = z.object({
   badgeKeys: z.array(z.string()),
   approaches: z.array(approachSchema).min(1, 'At least one approach per module'),
   standalone: z.boolean(),
-  status: z.enum(['draft', 'published']),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']),
 });
 
 const badgeSchema = z.object({
@@ -67,7 +67,7 @@ const badgeSchema = z.object({
   criteriaSummary: z.string().min(1, 'Criteria summary required'),
   capabilityThreadIds: z.array(z.string()),
   observationThreshold: z.number().min(1),
-  status: z.enum(['draft', 'published']),
+  status: z.enum(['planned', 'briefed', 'created', 'reviewed', 'active', 'archived']),
 });
 
 export const packPublishSchema = z.object({

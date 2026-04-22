@@ -185,7 +185,7 @@ export function ModuleEditor({
               </div>
             </div>
             <span
-              className={`w-2 h-2 rounded-full shrink-0 ${a.status === 'published' ? 'bg-sage' : 'bg-text-muted'}`}
+              className={`w-2 h-2 rounded-full shrink-0 ${a.status === 'active' ? 'bg-sage' : a.status === 'created' ? 'bg-ember' : 'bg-text-muted'}`}
             />
           </div>
         ))}

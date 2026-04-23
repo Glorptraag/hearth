@@ -54,6 +54,7 @@ docs/                # Architecture specs, design system docs
 | `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
 | `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
+| `docs/test-pilot-runbook.md` | **Canonical testing setup.** Read before writing or running any test. |
 
 When building a specific screen, also read its spec doc (e.g., `docs/hearth-logger-spec-v1.md`) and look at its prototype in `prototypes/`.
 
@@ -180,6 +181,51 @@ Non-obvious locations for features that come up often:
 | Server analytics (fires from API routes) | `src/lib/analytics/posthog-server.ts`. Identify on the SAME id as the client (Clerk userId) so funnels join. |
 | Admin AI cost dashboard | `/api/admin/analytics/ai-cost/route.ts` + `src/app/(admin)/admin/analytics/_components/AiCostPanel.tsx`. Pricing constants live in the route. |
 | Stale-branch audit | `scripts/audit-stale-branches.mjs`. Configurable via `STALE_DAYS`, `PROTECTED`, `BASE` env vars. |
+
+## Testing
+
+**This is the canonical testing setup for the repo.** Do not improvise alternatives (Jest, Mocha, ad-hoc mocks, etc.). Full step-by-step pilot in `docs/test-pilot-runbook.md`.
+
+### Two configs, two extensions
+
+- **Unit** — `vitest.config.ts`, file pattern `*.test.{ts,tsx}`, environment jsdom, everything external mocked. Run: `npm test` (alias: `npm run test:unit`).
+- **Integration** — `vitest.integration.config.ts`, file pattern `*.integration.test.{ts,tsx}`, environment node, real Neon branch + real Drizzle, everything else still mocked. Run: `npm run test:integration` (orchestrator creates and tears down an ephemeral Neon branch per run).
+
+Never collapse these into one config. Integration tests using mocks, or unit tests hitting a real DB, would both silently defeat the point.
+
+### Mocks live in the setup files, not in individual tests
+
+- `vitest.setup.ts` registers Clerk v7 async mocks (`auth`, `currentUser`, `clerkClient`, `clerkMiddleware`, `createRouteMatcher`) plus Anthropic, Sanity, Blob, `next/headers`, `next/navigation`. Default state: signed-in owner of `TEST_FAMILY_ID`.
+- `vitest.integration.setup.ts` re-uses those mocks **and** truncates 31 user-data tables between tests. The DB itself is NOT mocked in integration — that is the whole point.
+- **Clerk v7 is async.** Always `mockResolvedValue()`, never `mockReturnValue()`. Mocking `auth()` with a sync return is the #1 cause of "userId is undefined" failures.
+
+### Per-test identity overrides — use the helpers
+
+Import from `@/test/clerk-helpers`:
+
+- `asUser({ userId?, familyId?, role?, email? })` — default owner
+- `asSignedOut()` — 401-path tests
+- `asEditor({...})` / `asViewer({...})` — role-based access tests
+- `asOtherFamily()` — cross-family isolation tests
+
+Do not hand-roll Clerk mock overrides inside a test file. Every ad-hoc override is an invitation for mock drift.
+
+### Factories
+
+- `src/test/factories.ts` — pure objects. Types come from `InferSelectModel<typeof families>` etc. Schema drift surfaces as a compile error.
+- `src/test/db-factories.ts` — `createFamily(db, {...})`, `createLearner`, `createEntry`, … — insert real rows via Drizzle and return the result. Use only in integration tests. Scenario seeders like `seedBasicFamily(db)` bundle common setups.
+
+### When the schema changes
+
+Update these three places in lockstep (CI will usually catch a mismatch, but it's cheap to do proactively):
+
+1. `src/test/factories.ts` — `InferSelectModel` drift will surface in `tsc`, but default values still need updating.
+2. `src/test/db-factories.ts` — only if you add a new seeder for the new table.
+3. `vitest.integration.setup.ts` → `TABLES_TO_TRUNCATE` — **must list every table with user data**. A missing table leaks rows between tests; a non-existent table throws at `truncateAll()`.
+
+### CI
+
+`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (auto-skips if Neon vars are unset, so it stays green locally while the secrets get wired up). All jobs pinned Node 22.
 
 ## Writing Sanity Content Programmatically
 

@@ -1,16 +1,43 @@
-name: test
+name: Test
 
+# Runs on every PR and on pushes to main. Parallel jobs finish faster and
+# isolate failures — a failed lint doesn't tell you anything about whether
+# your tests pass.
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
+# Cancel in-progress runs when a new commit is pushed to the same PR.
+# Saves CI minutes and keeps the queue moving.
 concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # -------------------------------------------------------------------------
+  # Lint — fastest job, fails loudly for style/unsafe patterns.
+  # Non-blocking until the pre-existing ESLint debt is cleared.
+  # Remove continue-on-error once the debt is down to zero.
+  # -------------------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  # -------------------------------------------------------------------------
+  # Typecheck — catches the bulk of real bugs on a TS-heavy codebase.
+  # -------------------------------------------------------------------------
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -23,22 +50,10 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    # Non-blocking until the 22 pre-existing ESLint errors are cleared.
-    # Remove continue-on-error once the debt is down to zero.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-
-  unit-tests:
+  # -------------------------------------------------------------------------
+  # Unit tests — everything mocked, fast, run in parallel with the others.
+  # -------------------------------------------------------------------------
+  unit:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
@@ -48,4 +63,54 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npm run test:unit
+      # Upload coverage if the test step produced it. Optional but useful
+      # for PR review. Remove if you don't want coverage reports in CI.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-unit
+          path: coverage/
+          if-no-files-found: ignore
+
+  # -------------------------------------------------------------------------
+  # Integration tests — ephemeral Neon branch per run.
+  #
+  # Secrets required:
+  #   NEON_API_KEY           (secret)   — API key with branch-management
+  #   NEON_PROJECT_ID        (variable) — identifier of the Neon project
+  #   NEON_PARENT_BRANCH_ID  (variable) — branch to fork from (NOT main/prod)
+  #
+  # The Neon GitHub integration auto-sets NEON_API_KEY and NEON_PROJECT_ID
+  # when installed. You'll need to set NEON_PARENT_BRANCH_ID manually —
+  # make it a dev branch, not production. If you fork from production, your
+  # test truncate statements wipe real data. Don't do that.
+  # -------------------------------------------------------------------------
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    # Only run if unit tests pass — saves CI budget and reduces noise.
+    needs: [unit, typecheck]
+    # Skip until secrets are set, so the job does not fail the workflow.
+    # Remove this condition once NEON_API_KEY is provisioned in the repo.
+    if: ${{ vars.NEON_PROJECT_ID != '' && vars.NEON_PARENT_BRANCH_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Run integration tests against ephemeral Neon branch
+        run: npm run test:integration
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_PARENT_BRANCH_ID: ${{ vars.NEON_PARENT_BRANCH_ID }}
+          # These are safe defaults; override as vars if your project differs.
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME || 'neondb' }}
+          NEON_ROLE_NAME: ${{ vars.NEON_ROLE_NAME || 'neondb_owner' }}
+          # Clerk/Anthropic/Sanity are MOCKED in integration tests — no real
+          # credentials needed. If you ever add E2E tests with real Clerk,
+          # create a separate workflow file for them.

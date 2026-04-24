@@ -61,7 +61,7 @@ export default async function LandingPage() {
               Get Started
             </Link>
             <a
-              href="#demo"
+              href="#how-it-works"
               className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               See How It Works

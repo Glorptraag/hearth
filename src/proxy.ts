@@ -14,7 +14,10 @@ const isPublicRoute = createRouteMatcher([
   "/studio(.*)",
   "/dev-preview(.*)",
   "/demo(.*)",
+  "/terms",
+  "/privacy",
   "/api/invitations/validate",
+  "/api/provider-code/validate",
 ]);
 
 const clerkHandler = clerkMiddleware(async (auth, req) => {

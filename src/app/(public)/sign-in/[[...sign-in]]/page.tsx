@@ -32,7 +32,11 @@ export default function SignInPage() {
       </nav>
 
       <div className="relative z-10 flex min-h-dvh items-center justify-center px-lg pt-[80px] pb-2xl">
-        <SignIn appearance={getClerkAppearance(theme)} />
+        <SignIn
+          appearance={getClerkAppearance(theme)}
+          fallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/welcome"
+        />
       </div>
     </>
   );

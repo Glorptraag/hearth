@@ -1,7 +1,20 @@
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import ProviderCodeInput from './provider-code-input';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    const family = await getFamilyByClerkId(userId);
+    if (!family) redirect('/welcome');
+    if (!family.welcomeCompletedAt) redirect('/welcome');
+    if (!family.onboardingComplete) redirect('/onboarding');
+    redirect('/dashboard');
+  }
+
   return (
     <>
       {/* Nav */}
@@ -48,7 +61,7 @@ export default function LandingPage() {
               Get Started
             </Link>
             <a
-              href="#demo"
+              href="#how-it-works"
               className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               See How It Works

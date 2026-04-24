@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { ASSET_ENTITLEMENT_QUERY, COMMONS_TEXT_ENTITLEMENT_QUERY } from '@/lib/sanity/queries';
 
@@ -12,8 +12,13 @@ export async function getFamilyPackIds(familyId: string): Promise<string[]> {
   const records = await db
     .select({ sanityPackId: familyLibrary.sanityPackId })
     .from(familyLibrary)
-    .where(eq(familyLibrary.familyId, familyId));
-  return records.map((r) => r.sanityPackId);
+    .where(
+      and(
+        eq(familyLibrary.familyId, familyId),
+        isNotNull(familyLibrary.sanityPackId),
+      ),
+    );
+  return records.map((r) => r.sanityPackId).filter((id): id is string => !!id);
 }
 
 /**

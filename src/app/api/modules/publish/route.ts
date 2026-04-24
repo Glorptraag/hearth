@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { createFullModule } from '@/lib/sanity/mutations';
+import { db } from '@/lib/db';
+import { familyLibrary } from '@/lib/db/schema';
+import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+
+const createdViaEnum = z.enum([
+  'material',
+  'process',
+  'inquiry',
+  'retrospective',
+  'goal',
+  'editorial',
+]);
 
 const materialSchema = z.object({
   name: z.string().min(1),
@@ -60,11 +73,15 @@ const moduleInputSchema = z.object({
   capabilityThreadIds: z.array(z.string()).optional(),
   approaches: z.array(approachInputSchema).min(1),
   status: z.enum(['draft', 'published']).optional(),
+  createdVia: createdViaEnum,
 });
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const family = await getFamilyByClerkId(userId);
+  if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
   const body = await request.json();
   const parsed = moduleInputSchema.safeParse(body);
@@ -86,6 +103,8 @@ export async function POST(request: NextRequest) {
       badgeIds: data.badgeIds,
       capabilityThreadIds: data.capabilityThreadIds,
       status: data.status,
+      authorFamilyId: family.id,
+      createdVia: data.createdVia,
       approaches: data.approaches.map((app) => ({
         title: app.title,
         slug: app.slug,
@@ -111,6 +130,15 @@ export async function POST(request: NextRequest) {
         })),
       })),
     });
+
+    await db
+      .insert(familyLibrary)
+      .values({ familyId: family.id, sanityModuleId: result.module._id })
+      .onConflictDoNothing();
+
+    rebuildSnapshot(family.id, 'library_change').catch((err) =>
+      console.error('[modules/publish] Snapshot rebuild failed:', err)
+    );
 
     return NextResponse.json({
       moduleId: result.module._id,

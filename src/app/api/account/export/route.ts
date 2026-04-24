@@ -95,6 +95,7 @@ export async function GET() {
     })),
     library: library.map((l) => ({
       sanityPackId: l.sanityPackId,
+      sanityModuleId: l.sanityModuleId,
       addedAt: l.addedAt,
     })),
   };

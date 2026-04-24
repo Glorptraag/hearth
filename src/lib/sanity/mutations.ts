@@ -353,6 +353,14 @@ export async function createApproach(input: CreateApproach) {
 
 // ── Module ───────────────────────────────────────────────────────────────────
 
+export type CreatedVia =
+  | 'material'
+  | 'process'
+  | 'inquiry'
+  | 'retrospective'
+  | 'goal'
+  | 'editorial';
+
 interface CreateModule {
   _id?: string;
   title: string;
@@ -366,6 +374,8 @@ interface CreateModule {
   badgeIds?: string[];
   capabilityThreadIds?: string[];
   status?: Status;
+  authorFamilyId?: string;
+  createdVia?: CreatedVia;
 }
 
 export async function createModule(input: CreateModule) {
@@ -384,6 +394,8 @@ export async function createModule(input: CreateModule) {
   if (input.duration) doc.duration = input.duration;
   if (input.badgeIds) doc.badges = keyedRefs(input.badgeIds);
   if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
+  if (input.authorFamilyId) doc.authorFamilyId = input.authorFamilyId;
+  if (input.createdVia) doc.createdVia = input.createdVia;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 

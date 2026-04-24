@@ -23,7 +23,7 @@ import { generateMonthlyNarrative } from './generate-monthly-narrative';
 import { getCachedThreads } from './sanity-thread-cache';
 import { scoreModules, type ScoringModule } from './recommend';
 import { sanityClient } from '@/lib/sanity/client';
-import { SCORING_MODULES_QUERY } from '@/lib/sanity/queries';
+import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import type {
   SnapshotActiveThread, SnapshotPlannerSuggestion, ChildSnapshot,
   ThreadTrajectory, EvidenceQuality, SubjectBalance,
@@ -428,14 +428,18 @@ export async function rebuildSnapshot(
     let recommendations: { suggested_next: import('@/types/snapshot').SnapshotRecommendation[]; subject_balance: Record<string, SubjectBalance> } | undefined;
     let plannerSuggestions: SnapshotPlannerSuggestion[] | undefined;
 
-    const packIds = libraryPackIds.map((r) => r.sanityPackId);
-    if (packIds.length > 0) {
+    const packIds = libraryPackIds
+      .map((r) => r.sanityPackId)
+      .filter((id): id is string => !!id);
+    {
       try {
         type RawScoringModule = Omit<ScoringModule, 'capabilityThreadIds'> & { capabilityThreadTitles?: string[] };
-        const sanityPacks: { modules: RawScoringModule[] }[] = await sanityClient.fetch(
-          SCORING_MODULES_QUERY,
-          { packIds }
-        );
+        const [sanityPacks, ownScoringModules] = await Promise.all([
+          packIds.length > 0
+            ? sanityClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
+            : Promise.resolve([] as { modules: RawScoringModule[] }[]),
+          sanityClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId }),
+        ]);
         // Build title → code lookup from the cached taxonomy so module thread refs
         // (which resolve to Sanity titles) match snapshot thread_id codes (L1, S5, etc.).
         const threadCache = await getCachedThreads();
@@ -443,18 +447,23 @@ export async function rebuildSnapshot(
         for (const [code, meta] of threadCache.entries()) {
           titleToCode.set(meta.title.toLowerCase(), code);
         }
-        const scoringModules: ScoringModule[] = sanityPacks
-          .flatMap((p) => p.modules ?? [])
+        const toScoring = (m: RawScoringModule): ScoringModule => ({
+          _id: m._id,
+          title: m.title,
+          subjects: m.subjects ?? [],
+          averageEnergyLevel: m.averageEnergyLevel ?? null,
+          capabilityThreadIds: (m.capabilityThreadTitles ?? [])
+            .map((t) => titleToCode.get((t ?? '').toLowerCase()))
+            .filter((c): c is string => !!c),
+        });
+        const seen = new Set<string>();
+        const scoringModules: ScoringModule[] = [
+          ...sanityPacks.flatMap((p) => p.modules ?? []),
+          ...(ownScoringModules ?? []),
+        ]
           .filter((m) => m._id && m.title)
-          .map((m) => ({
-            _id: m._id,
-            title: m.title,
-            subjects: m.subjects ?? [],
-            averageEnergyLevel: m.averageEnergyLevel ?? null,
-            capabilityThreadIds: (m.capabilityThreadTitles ?? [])
-              .map((t) => titleToCode.get((t ?? '').toLowerCase()))
-              .filter((c): c is string => !!c),
-          }));
+          .filter((m) => (seen.has(m._id) ? false : (seen.add(m._id), true)))
+          .map(toScoring);
 
         if (scoringModules.length > 0) {
           const plannedModuleIds = weekPlanned

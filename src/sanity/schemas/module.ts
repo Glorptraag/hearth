@@ -89,5 +89,31 @@ export const moduleSchema = defineType({
         ],
       },
     }),
+    defineField({
+      name: 'authorFamilyId',
+      title: 'Author Family Id',
+      description: 'Postgres family id when this module was built by a parent; null for Hearth editorial content.',
+      type: 'string',
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
+      name: 'createdVia',
+      title: 'Created Via',
+      description: 'Builder pathway used to create this module, or "editorial" for Hearth-authored content.',
+      type: 'string',
+      readOnly: true,
+      hidden: true,
+      options: {
+        list: [
+          { title: 'Material-Anchored', value: 'material' },
+          { title: 'Process-Anchored', value: 'process' },
+          { title: 'Inquiry-Anchored', value: 'inquiry' },
+          { title: 'Retrospective Lift', value: 'retrospective' },
+          { title: 'Goal-Forward', value: 'goal' },
+          { title: 'Editorial', value: 'editorial' },
+        ],
+      },
+    }),
   ],
 });

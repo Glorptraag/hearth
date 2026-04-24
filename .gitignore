@@ -37,6 +37,11 @@ yarn-error.log*
 # claude code worktrees
 .claude/worktrees/
 
+# claude code runtime artifacts
+.claude/scheduled_tasks.lock
+.claude/plans/status.json
+.claude/plans/*.output
+
 # vercel
 .vercel
 

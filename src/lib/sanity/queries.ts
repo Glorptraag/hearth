@@ -144,6 +144,23 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
   }
 }`;
 
+// Own-authored standalone modules for Activity Discovery + Library
+// Private-by-default: only returns modules authored by the given family.
+export const DISCOVERY_OWN_MODULES_QUERY = `*[_type == "module" && status == "published" && authorFamilyId == $familyId]{
+  _id, title, slug, targetUnderstanding, subjects, ageRange, duration, createdVia,
+  approaches[]->{
+    _id, title, modality,
+    "activityCount": count(activities)
+  }
+}`;
+
+// Scoring-ready standalone modules authored by the family (for recommendations)
+export const SCORING_OWN_MODULES_QUERY = `*[_type == "module" && status == "published" && authorFamilyId == $familyId]{
+  _id, title, subjects,
+  "capabilityThreadTitles": capabilityThreads[]->title,
+  "averageEnergyLevel": approaches[0]->activities[0]->energyLevel
+}`;
+
 // Single asset with full metadata
 export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id][0]{
   ...,

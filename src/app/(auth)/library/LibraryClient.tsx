@@ -4,10 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 
-interface LibraryPack {
-  sanityPackId: string;
+interface LibraryItem {
+  id: string;
   title: string;
   subjects?: string[];
+  kind: 'pack' | 'module';
+  isOwnBuilt: boolean;
+  sanityPackId: string | null;
+  sanityModuleId: string | null;
+  moduleId: string;
 }
 
 type Tab = 'packs' | 'materials';
@@ -35,7 +40,7 @@ const SUBJECT_LABELS: Record<string, string> = {
 };
 
 export default function LibraryClient() {
-  const [packs, setPacks] = useState<LibraryPack[]>([]);
+  const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('packs');
 
@@ -45,7 +50,7 @@ export default function LibraryClient() {
       const res = await fetch('/api/library');
       if (res.ok) {
         const data = await res.json();
-        setPacks(data);
+        setItems(data);
       }
     } finally {
       setLoading(false);
@@ -55,6 +60,8 @@ export default function LibraryClient() {
   useEffect(() => {
     fetchLibrary();
   }, [fetchLibrary]);
+
+  const packItems = items.filter((i) => i.kind === 'pack');
 
   return (
     <div className="min-h-screen bg-surface-body">
@@ -87,10 +94,10 @@ export default function LibraryClient() {
                 : 'text-text-muted border-transparent hover:text-text-secondary'
             }`}
           >
-            Packs
+            Packs & Modules
             {!loading && (
               <span className="ml-xs font-sans text-[0.72rem] text-text-muted">
-                ({packs.length})
+                ({items.length})
               </span>
             )}
           </button>
@@ -113,14 +120,14 @@ export default function LibraryClient() {
               <div className="py-20 text-center">
                 <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
               </div>
-            ) : packs.length === 0 ? (
+            ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <span className="text-5xl mb-md" aria-hidden="true">📚</span>
                 <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
                   Your library is empty
                 </h3>
                 <p className="font-sans text-sm text-text-secondary mb-lg max-w-xs">
-                  Browse the marketplace to add packs to your library and unlock activities and materials.
+                  Browse the marketplace to add packs, or build your own module from the Build screen.
                 </p>
                 <Link
                   href="/explore/marketplace"
@@ -131,28 +138,8 @@ export default function LibraryClient() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-                {packs.map((pack) => (
-                  <div
-                    key={pack.sanityPackId}
-                    className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft hover:border-border-medium hover:shadow-warm hover:-translate-y-[2px] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-                  >
-                    <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms]" />
-                    <h3 className="font-serif text-[1rem] font-semibold text-text-primary mb-sm">
-                      {pack.title}
-                    </h3>
-                    {pack.subjects && pack.subjects.length > 0 && (
-                      <div className="flex flex-wrap gap-xs">
-                        {pack.subjects.map((s) => (
-                          <span
-                            key={s}
-                            className={`font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${SUBJECT_CHIP[s] ?? 'bg-surface-raised text-text-muted'}`}
-                          >
-                            {SUBJECT_LABELS[s] ?? s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                {items.map((item) => (
+                  <LibraryCard key={item.id} item={item} />
                 ))}
               </div>
             )}
@@ -160,9 +147,53 @@ export default function LibraryClient() {
         )}
 
         {tab === 'materials' && (
-          <LibraryMaterialsTab packs={packs} />
+          <LibraryMaterialsTab
+            packs={packItems.map((p) => ({ sanityPackId: p.id, title: p.title }))}
+          />
         )}
       </div>
     </div>
   );
+}
+
+function LibraryCard({ item }: { item: LibraryItem }) {
+  const subjects = item.subjects ?? [];
+  const content = (
+    <div
+      className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft hover:border-border-medium hover:shadow-warm hover:-translate-y-[2px] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+    >
+      <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms]" />
+      <div className="flex items-start justify-between gap-sm mb-sm">
+        <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
+          {item.title}
+        </h3>
+        {item.isOwnBuilt && (
+          <span className="font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sage/15 text-sage border border-sage/30 shrink-0">
+            ✨ Created by you
+          </span>
+        )}
+      </div>
+      {subjects.length > 0 && (
+        <div className="flex flex-wrap gap-xs">
+          {subjects.map((s) => (
+            <span
+              key={s}
+              className={`font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${SUBJECT_CHIP[s] ?? 'bg-surface-raised text-text-muted'}`}
+            >
+              {SUBJECT_LABELS[s] ?? s}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (item.kind === 'module') {
+    return (
+      <Link href={`/module/${item.id}`} className="block">
+        {content}
+      </Link>
+    );
+  }
+  return content;
 }

@@ -1,7 +1,20 @@
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import ProviderCodeInput from './provider-code-input';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    const family = await getFamilyByClerkId(userId);
+    if (!family) redirect('/welcome');
+    if (!family.welcomeCompletedAt) redirect('/welcome');
+    if (!family.onboardingComplete) redirect('/onboarding');
+    redirect('/dashboard');
+  }
+
   return (
     <>
       {/* Nav */}

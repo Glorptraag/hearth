@@ -1,17 +1,13 @@
 name: Test
 
-# Runs on every PR and on pushes to main. Parallel jobs finish faster and
-# isolate failures — a failed lint doesn't tell you anything about whether
-# your tests pass.
+# Manual-only. Trigger from the Actions tab -> Test -> Run workflow.
+# Parallel jobs finish faster and isolate failures — a failed lint
+# doesn't tell you anything about whether your tests pass.
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
   workflow_dispatch:
 
-# Cancel in-progress runs when a new commit is pushed to the same PR.
-# Saves CI minutes and keeps the queue moving.
+# Cancel in-progress runs when a new manual dispatch is fired on the
+# same ref. Saves CI minutes if someone kicks it off twice by mistake.
 concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true

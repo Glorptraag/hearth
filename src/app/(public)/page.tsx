@@ -3,7 +3,7 @@ import ProviderCodeInput from './provider-code-input';
 
 export default function LandingPage() {
   return (
-    <>
+    <div data-theme="gathering" className="flex-1 bg-surface-body text-text-primary">
       {/* Nav */}
       <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]" style={{ background: 'var(--color-surface-nav-blur)' }}>
         <Link href="/" className="font-serif text-xl font-semibold tracking-[0.02em] text-text-primary">
@@ -208,7 +208,7 @@ export default function LandingPage() {
           <div className="font-sans text-xs text-text-muted">© 2026 Hearth Learning Pty Ltd</div>
         </footer>
       </div>
-    </>
+    </div>
   );
 }
 

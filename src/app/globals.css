@@ -5,7 +5,7 @@
    Source of truth: docs/hearth-canonical-design-tokens-v1.md
    ========================================================================== */
 
-@theme inline {
+@theme {
   /* Surfaces */
   --color-surface-body: #0F0D0B;
   --color-surface-panel: #1A1612;
@@ -98,7 +98,7 @@
   --max-width-7xl: 80rem;
 }
 
-/* Shadows and transitions now live in @theme inline above */
+/* Shadows and transitions now live in @theme above */
 
 /* ==========================================================================
    Gathering Mode — Warm parchment theme for family review & celebration

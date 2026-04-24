@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY } from '@/lib/sanity/queries';
+import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY, DISCOVERY_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
@@ -25,6 +25,7 @@ interface Module {
   duration?: { min: number; max: number };
   approaches?: Approach[];
   packId?: string;
+  isOwnBuilt?: boolean;
 }
 interface Pack {
   _id: string;
@@ -140,11 +141,23 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
 
         {/* Creator row */}
         <div className="mt-sm flex items-center gap-xs">
-          <div className="h-5 w-5 rounded-full bg-surface-hover border border-border-subtle flex items-center justify-center shrink-0">
-            <span className="font-sans text-[9px] text-text-muted">H</span>
-          </div>
-          <span className="font-sans text-[11px] text-text-muted truncate">Hearth</span>
-          <span className="ml-auto rounded-full bg-sage/15 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✓ Verified</span>
+          {module.isOwnBuilt ? (
+            <>
+              <div className="h-5 w-5 rounded-full bg-sage/15 border border-sage/30 flex items-center justify-center shrink-0">
+                <span className="font-sans text-[9px] text-sage">✦</span>
+              </div>
+              <span className="font-sans text-[11px] text-text-muted truncate">You</span>
+              <span className="ml-auto rounded-full bg-sage/15 border border-sage/30 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✨ Created by you</span>
+            </>
+          ) : (
+            <>
+              <div className="h-5 w-5 rounded-full bg-surface-hover border border-border-subtle flex items-center justify-center shrink-0">
+                <span className="font-sans text-[9px] text-text-muted">H</span>
+              </div>
+              <span className="font-sans text-[11px] text-text-muted truncate">Hearth</span>
+              <span className="ml-auto rounded-full bg-sage/15 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✓ Verified</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -304,15 +317,18 @@ export default function ExploreActivitiesPage() {
 
   const loadModules = useCallback(async () => {
     try {
-      const [libraryRes, rawPacks, rawProjects] = await Promise.all([
+      const [libraryRes, familyRes, rawPacks, rawProjects] = await Promise.all([
         fetch('/api/library'),
+        fetch('/api/family'),
         sanityClient.fetch<{ _id: string; title: string; description?: string; subjects?: string[]; modules: Module[] | null }[]>(ALL_MODULES_QUERY),
         sanityClient.fetch<ProjectSummary[]>(ALL_PROJECTS_QUERY),
       ]);
 
+      let libraryPackIds: string[] = [];
       if (libraryRes.ok) {
-        const library: { sanityPackId: string }[] = await libraryRes.json();
-        setPackIds(library.map((r) => r.sanityPackId));
+        const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
+        libraryPackIds = library.filter((r) => r.kind === 'pack').map((r) => r.id);
+        setPackIds(libraryPackIds);
       }
 
       setProjects(Array.isArray(rawProjects) ? rawProjects : []);
@@ -326,7 +342,25 @@ export default function ExploreActivitiesPage() {
       }));
       setPacks(enrichedPacks);
 
-      const allModules = enrichedPacks.flatMap((p) => p.modules);
+      let ownModules: Module[] = [];
+      if (familyRes.ok) {
+        const family = await familyRes.json();
+        if (family?.id) {
+          const raw = await sanityClient
+            .fetch<Module[]>(DISCOVERY_OWN_MODULES_QUERY, { familyId: family.id })
+            .catch(() => [] as Module[]);
+          ownModules = (raw ?? []).map((m) => ({ ...m, isOwnBuilt: true }));
+        }
+      }
+
+      const packNestedModules = enrichedPacks.flatMap((p) => p.modules);
+      const seen = new Set<string>();
+      const allModules: Module[] = [];
+      for (const m of [...ownModules, ...packNestedModules]) {
+        if (seen.has(m._id)) continue;
+        seen.add(m._id);
+        allModules.push(m);
+      }
       setModules(allModules);
     } finally {
       setLoading(false);
@@ -354,11 +388,16 @@ export default function ExploreActivitiesPage() {
       .catch(() => {});
   }, []);
 
+  const inLibrary = useCallback(
+    (m: Module) => m.isOwnBuilt === true || packIds.includes(m.packId ?? ''),
+    [packIds],
+  );
+
   const filtered = useMemo(() => {
     let result = modules;
 
     if (libraryOnly) {
-      result = result.filter((m) => packIds.includes(m.packId ?? ''));
+      result = result.filter(inLibrary);
     }
 
     if (subjectFilter !== 'all') {
@@ -374,16 +413,15 @@ export default function ExploreActivitiesPage() {
         const sa = relevanceScores.get(a._id)?.score ?? -1;
         const sb = relevanceScores.get(b._id)?.score ?? -1;
         if (sb !== sa) return sb - sa;
-        // Library modules sort above non-library for equal scores
-        const aLib = packIds.includes(a.packId ?? '') ? 1 : 0;
-        const bLib = packIds.includes(b.packId ?? '') ? 1 : 0;
+        const aLib = inLibrary(a) ? 1 : 0;
+        const bLib = inLibrary(b) ? 1 : 0;
         if (bLib !== aLib) return bLib - aLib;
         return a.title.localeCompare(b.title);
       });
     }
 
     return result;
-  }, [modules, packIds, libraryOnly, subjectFilter, sortBy, relevanceScores]);
+  }, [modules, libraryOnly, subjectFilter, sortBy, relevanceScores, inLibrary]);
 
   const filteredPacks = useMemo(() => {
     return packs
@@ -422,9 +460,8 @@ export default function ExploreActivitiesPage() {
   };
 
   const handleAddToLibrary = async (moduleId: string) => {
-    // Find the pack that contains this module
     const mod = modules.find((m) => m._id === moduleId);
-    if (!mod?.packId) return;
+    if (!mod || mod.isOwnBuilt || !mod.packId) return;
 
     try {
       await fetch('/api/library', {
@@ -432,11 +469,10 @@ export default function ExploreActivitiesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sanityPackId: mod.packId }),
       });
-      // Refresh library state
       const libraryRes = await fetch('/api/library');
       if (libraryRes.ok) {
-        const library: { sanityPackId: string }[] = await libraryRes.json();
-        setPackIds(library.map((r) => r.sanityPackId));
+        const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
+        setPackIds(library.filter((r) => r.kind === 'pack').map((r) => r.id));
       }
     } catch (err) {
       console.error('Failed to add to library', err);
@@ -560,13 +596,51 @@ export default function ExploreActivitiesPage() {
                 key={m._id}
                 module={m}
                 onPreview={setPreviewModule}
-                isInLibrary={packIds.includes(m.packId ?? '')}
+                isInLibrary={inLibrary(m)}
                 onAddToLibrary={handleAddToLibrary}
               />
             ))}
           </div>
         ) : (
           <div className="flex flex-col gap-xl">
+            {(() => {
+              const ownBuilt = modules.filter((m) => {
+                if (!m.isOwnBuilt) return false;
+                if (subjectFilter !== 'all' && !m.subjects?.includes(subjectFilter)) return false;
+                return true;
+              });
+              if (ownBuilt.length === 0) return null;
+              return (
+                <section>
+                  <div className="relative rounded-[16px] border border-sage/30 bg-surface-panel p-lg mb-md overflow-hidden">
+                    <div className="relative z-10 flex items-start justify-between gap-md">
+                      <div>
+                        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-sage mb-xs">
+                          Your modules — {ownBuilt.length} module{ownBuilt.length !== 1 ? 's' : ''}
+                        </p>
+                        <h2 className="font-serif text-lg font-semibold text-text-primary leading-snug">
+                          Built by you
+                        </h2>
+                        <p className="mt-xs font-serif text-sm text-text-secondary leading-relaxed">
+                          Modules you&apos;ve built from the Build screen.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md pl-0 sm:pl-md">
+                    {ownBuilt.map((m) => (
+                      <ModuleCard
+                        key={m._id}
+                        module={m}
+                        onPreview={setPreviewModule}
+                        isInLibrary={true}
+                        onAddToLibrary={handleAddToLibrary}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
             {filteredPacks.map((pack) => {
               const primarySubject = pack.subjects?.[0] ?? '';
               const isInLib = packIds.includes(pack._id);

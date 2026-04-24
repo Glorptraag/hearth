@@ -5,6 +5,7 @@ import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
+import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
 import EmptyState from '@/components/ui/EmptyState';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
 import PrepMode from './_components/PrepMode';
@@ -26,6 +27,7 @@ export default function ModuleDetailPage() {
   const [module, setModule] = useState<Module | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [runnerError, setRunnerError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('approach-pick');
   const [selectedApproachIdx, setSelectedApproachIdx] = useState(0);
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
@@ -94,16 +96,44 @@ export default function ModuleDetailPage() {
 
   const fetchModule = useCallback(async () => {
     try {
-      const [mod, libraryRes, settingsRes] = await Promise.all([
+      const [rawMod, libraryRes, settingsRes] = await Promise.all([
         sanityClient.fetch(MODULE_DETAIL_QUERY, { id }),
         fetch('/api/library'),
         fetch('/api/settings'),
       ]);
-      setModule(mod);
+      let mod: Module | null = null;
+      try {
+        mod = toRunnerFormat(rawMod);
+        setModule(mod);
+      } catch (err) {
+        if (err instanceof RunnerFormatError) {
+          setRunnerError(err.message);
+        } else {
+          setRunnerError('This module could not be loaded.');
+        }
+        return;
+      }
 
       if (libraryRes.ok) {
-        const library: { sanityPackId: string }[] = await libraryRes.json();
-        setHasAccess(library.length > 0);
+        const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
+        const ownBuiltMatch = library.some((l) => l.kind === 'module' && l.id === id);
+        if (ownBuiltMatch) {
+          setHasAccess(true);
+        } else {
+          const libraryPackIds = library.filter((l) => l.kind === 'pack').map((l) => l.id);
+          if (libraryPackIds.length === 0) {
+            setHasAccess(false);
+          } else {
+            const owningPacks = await sanityClient
+              .fetch<Array<{ _id: string }>>(
+                `*[_type == "pack" && references($moduleId)]{_id}`,
+                { moduleId: id },
+              )
+              .catch(() => [] as Array<{ _id: string }>);
+            const owningPackIds = new Set(owningPacks.map((p) => p._id));
+            setHasAccess(libraryPackIds.some((pid) => owningPackIds.has(pid)));
+          }
+        }
       }
 
       let resolvedPedagogy = 'eclectic';
@@ -266,6 +296,19 @@ export default function ModuleDetailPage() {
           <div className="h-4 bg-surface-raised rounded w-full" />
           <div className="h-4 bg-surface-raised rounded w-4/5" />
         </div>
+      </div>
+    );
+  }
+
+  if (runnerError) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-md py-xl">
+        <EmptyState
+          emoji="🔧"
+          heading="This module isn't ready to run"
+          body={runnerError}
+          cta={{ label: 'Browse activities', href: '/explore/activities' }}
+        />
       </div>
     );
   }

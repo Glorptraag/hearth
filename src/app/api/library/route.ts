@@ -9,6 +9,17 @@ import { sanityClient } from '@/lib/sanity/client';
 import { parseBody } from '@/lib/api-helpers';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
+export interface LibraryItem {
+  id: string;
+  title: string;
+  subjects: string[];
+  kind: 'pack' | 'module';
+  isOwnBuilt: boolean;
+  sanityPackId: string | null;
+  sanityModuleId: string | null;
+  moduleId: string;
+}
+
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,27 +34,64 @@ export async function GET() {
 
   if (records.length === 0) return NextResponse.json([]);
 
-  // Enrich with Sanity data (titles + subjects)
-  const packIds = records.map((r) => r.sanityPackId);
-  const modules = await sanityClient.fetch<
-    Array<{ _id: string; title: string; subjects: string[] }>
-  >(
-    `*[_type == "module" && _id in $ids]{ _id, title, subjects }`,
-    { ids: packIds }
-  ).catch(() => [] as Array<{ _id: string; title: string; subjects: string[] }>);
+  const packIds = records
+    .map((r) => r.sanityPackId)
+    .filter((v): v is string => !!v);
+  const moduleIds = records
+    .map((r) => r.sanityModuleId)
+    .filter((v): v is string => !!v);
 
+  const [packs, modules] = await Promise.all([
+    packIds.length > 0
+      ? sanityClient
+          .fetch<Array<{ _id: string; title: string; subjects: string[] }>>(
+            `*[_type == "pack" && _id in $ids]{ _id, title, subjects }`,
+            { ids: packIds },
+          )
+          .catch(() => [] as Array<{ _id: string; title: string; subjects: string[] }>)
+      : Promise.resolve([] as Array<{ _id: string; title: string; subjects: string[] }>),
+    moduleIds.length > 0
+      ? sanityClient
+          .fetch<Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>>(
+            `*[_type == "module" && _id in $ids]{ _id, title, subjects, authorFamilyId }`,
+            { ids: moduleIds },
+          )
+          .catch(() => [] as Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>)
+      : Promise.resolve([] as Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>),
+  ]);
+
+  const packMap = new Map(packs.map((p) => [p._id, p]));
   const moduleMap = new Map(modules.map((m) => [m._id, m]));
 
-  const enriched = records.map((r) => {
-    const mod = moduleMap.get(r.sanityPackId);
+  const items: LibraryItem[] = records.map((r) => {
+    if (r.sanityPackId) {
+      const meta = packMap.get(r.sanityPackId);
+      return {
+        id: r.sanityPackId,
+        title: meta?.title ?? r.sanityPackId,
+        subjects: meta?.subjects ?? [],
+        kind: 'pack' as const,
+        isOwnBuilt: false,
+        sanityPackId: r.sanityPackId,
+        sanityModuleId: null,
+        moduleId: r.sanityPackId,
+      };
+    }
+    const id = r.sanityModuleId as string;
+    const meta = moduleMap.get(id);
     return {
-      title: mod?.title ?? r.sanityPackId,
-      moduleId: r.sanityPackId,
-      subjects: mod?.subjects ?? [],
+      id,
+      title: meta?.title ?? id,
+      subjects: meta?.subjects ?? [],
+      kind: 'module' as const,
+      isOwnBuilt: meta?.authorFamilyId === family.id,
+      sanityPackId: null,
+      sanityModuleId: id,
+      moduleId: id,
     };
   });
 
-  return NextResponse.json(enriched);
+  return NextResponse.json(items);
 }
 
 const addPackSchema = z.object({
@@ -66,7 +114,6 @@ export async function POST(request: NextRequest) {
     .onConflictDoNothing()
     .returning();
 
-  // Rebuild snapshot so recommendations update with new library content
   if (record) {
     rebuildSnapshot(family.id, 'library_change').catch((err) =>
       console.error('[library POST] Snapshot rebuild failed:', err)

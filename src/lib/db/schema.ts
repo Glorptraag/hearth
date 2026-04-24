@@ -10,7 +10,10 @@ import {
   decimal,
   index,
   unique,
+  uniqueIndex,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ─── Identity & Auth ───
 
@@ -251,11 +254,21 @@ export const familyLibrary = pgTable(
     familyId: uuid('family_id')
       .references(() => families.id)
       .notNull(),
-    sanityPackId: text('sanity_pack_id').notNull(),
+    sanityPackId: text('sanity_pack_id'),
+    sanityModuleId: text('sanity_module_id'),
     addedAt: timestamp('added_at').defaultNow(),
   },
   (table) => [
-    unique('fl_family_pack_unique').on(table.familyId, table.sanityPackId),
+    uniqueIndex('fl_family_pack_unique_idx')
+      .on(table.familyId, table.sanityPackId)
+      .where(sql`${table.sanityPackId} IS NOT NULL`),
+    uniqueIndex('fl_family_module_unique_idx')
+      .on(table.familyId, table.sanityModuleId)
+      .where(sql`${table.sanityModuleId} IS NOT NULL`),
+    check(
+      'fl_pack_xor_module',
+      sql`(${table.sanityPackId} IS NOT NULL) <> (${table.sanityModuleId} IS NOT NULL)`,
+    ),
   ]
 );
 

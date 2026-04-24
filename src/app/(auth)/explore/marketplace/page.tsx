@@ -69,8 +69,8 @@ export default function MarketplacePage() {
       ]);
       setPacks(sanityPacks ?? []);
       if (libraryRes.ok) {
-        const library: { sanityPackId: string }[] = await libraryRes.json();
-        setLibraryIds(new Set(library.map((l) => l.sanityPackId)));
+        const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
+        setLibraryIds(new Set(library.filter((l) => l.kind === 'pack').map((l) => l.id)));
       }
       // Extract gap subjects from snapshot
       if (snapshotRes?.ok) {

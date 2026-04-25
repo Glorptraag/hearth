@@ -42,12 +42,10 @@ export default defineConfig({
     // Serial execution — tests share one Neon branch and truncate tables
     // between runs. Parallel writes would interleave badly. If this gets
     // painful, the fix is table-prefix isolation per test, not more workers.
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    // (Vitest 4: top-level `maxWorkers` + `isolate` replace the removed
+    // `pool` / `poolOptions` knobs — see vitest.dev/guide/migration#pool-rework.)
+    maxWorkers: 1,
+    isolate: false,
 
     // Integration tests are slower than unit tests. Default 5s timeout is
     // tight for DB round trips on a fresh branch.

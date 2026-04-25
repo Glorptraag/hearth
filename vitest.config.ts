@@ -29,8 +29,7 @@ export default defineConfig({
       'prototypes',
     ],
 
-    // Pool: threads is faster than forks for isolated unit tests.
-    pool: 'threads',
+    // Threads are the default pool in Vitest 4; no explicit config needed.
 
     coverage: {
       provider: 'v8',

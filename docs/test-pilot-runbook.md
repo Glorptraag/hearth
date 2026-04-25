@@ -140,22 +140,20 @@ Should print `ok`.
 This creates a real Neon branch, runs migrations, runs one skipped test, then deletes the branch. Even though the example test is `describe.skip`, the branch lifecycle still happens — which is what you want to validate.
 
 ```bash
-set -a
-source .env.test.local
-set +a
 npm run test:integration
 ```
+
+> ⚠️ Schema-only Neon forks copy DDL but **not row data** — including `drizzle.__drizzle_migrations`. If your `NEON_PARENT_BRANCH_ID` points at a non-empty branch, do not assume the fork inherits any of its rows. The fork starts schema-complete but data-empty; tests must seed everything they need via `src/test/db-factories.ts`.
 
 **What to watch for, in order:**
 
 1. `[neon] Creating branch "test-<timestamp>-<hex>" from br_<your parent>...` — the POST to Neon API.
 2. `[neon] Waiting for branch test-... to be ready...` — usually 3-10 seconds. Cold starts can take up to a minute.
 3. `[neon] Fetching connection URI...`
-4. `[neon] Running drizzle-kit migrations against branch...` — should apply all ten migrations from the `drizzle/` directory. This doubles as your migration smoke test.
-5. `[neon] Starting vitest against test branch...`
-6. `[integration] Using Neon branch br_<id>` and `[integration] DATABASE_URL=postgres://<role>:***@<host>/<db>?...` — the globalSetup check running.
-7. Vitest output showing `0 passed | 3 skipped` (the example file has three skipped tests).
-8. `[neon] Deleting branch br_<id>...` followed by `[neon] Branch br_<id> deleted.`
+4. `[neon] Starting vitest against test branch...` — the fork inherits parent's DDL; no per-fork migration step.
+5. `[integration] Using Neon branch br_<id>` and `[integration] DATABASE_URL=postgres://<role>:***@<host>/<db>?...` — the globalSetup check running.
+6. Vitest output showing `0 passed | 3 skipped` (the example file has three skipped tests).
+7. `[neon] Deleting branch br_<id>...` followed by `[neon] Branch br_<id> deleted.`
 
 Exit code 0. Elapsed time: 30-90 seconds, mostly waiting on Neon.
 

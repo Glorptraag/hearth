@@ -18,7 +18,9 @@ import '@testing-library/jest-dom/vitest';
 // Test identity constants — exported so tests and factories use the same IDs
 // ---------------------------------------------------------------------------
 export const TEST_USER_ID = 'user_test_default';
-export const TEST_FAMILY_ID = 'fam_test_default';
+// uuid-typed columns reject non-uuid strings; keep this as a real uuid so
+// integration tests that use TEST_FAMILY_ID as families.id work as-is.
+export const TEST_FAMILY_ID = '00000000-0000-0000-0000-00000000000a';
 export const TEST_ORG_ID = 'org_test_default';
 
 const defaultUser = {

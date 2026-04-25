@@ -12,7 +12,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:unit:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
-    "test:integration": "node scripts/neon-test-branch.mjs",
+    "test:integration": "node --env-file-if-exists=.env.test.local --env-file-if-exists=.env.local scripts/neon-test-branch.mjs",
     "test:integration:only": "vitest run --config vitest.integration.config.ts",
     "test:all": "npm run test:unit && npm run test:integration",
     "test:e2e": "playwright test"

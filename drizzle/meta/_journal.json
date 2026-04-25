@@ -57,6 +57,34 @@
       "when": 1775166486184,
       "tag": "0007_dusty_ironclad",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776938488000,
+      "tag": "0008_content_studio_drafts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776938488001,
+      "tag": "0009_admin_audit_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776938488002,
+      "tag": "0010_logger_depth_coaching",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1777026490000,
+      "tag": "0011_family_library_modules",
+      "breakpoints": true
     }
   ]
 }

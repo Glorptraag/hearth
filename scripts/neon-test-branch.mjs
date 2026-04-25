@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Creates an ephemeral Neon test branch, runs migrations against it,
- * spawns vitest with DATABASE_URL pointing at the branch, and deletes
- * the branch afterward — even if tests fail or the process is killed.
+ * Creates an ephemeral Neon test branch, spawns vitest with DATABASE_URL
+ * pointing at the branch, and deletes the branch afterward — even if tests
+ * fail or the process is killed.
  *
  * Usage:
  *   node scripts/neon-test-branch.mjs [extra vitest args...]
@@ -19,9 +19,13 @@
  * How it works:
  *   1. POST to Neon API creating a schema-only branch with an endpoint
  *   2. Poll until the endpoint is "active" and get the connection URI
- *   3. Run `drizzle-kit migrate` against the branch
- *   4. Spawn vitest with DATABASE_URL + NEON_TEST_BRANCH_ID in its env
- *   5. When vitest exits, DELETE the branch (always — via finally + signals)
+ *   3. Spawn vitest with DATABASE_URL + NEON_TEST_BRANCH_ID in its env
+ *   4. When vitest exits, DELETE the branch (always — via finally + signals)
+ *
+ * Migrations are NOT applied per fork. The schema-only fork inherits the
+ * parent branch's DDL, which is the canonical state. If you add a new
+ * drizzle migration, apply it to the parent branch (via `drizzle-kit
+ * migrate` against NEON_PARENT_BRANCH_ID) before running tests.
  */
 
 import { spawn } from 'node:child_process';
@@ -87,9 +91,10 @@ async function createBranch(suffix) {
     endpoints: [
       {
         type: 'read_write',
-        // Auto-suspend after 5 minutes of inactivity. Keeps costs near zero
-        // when tests finish and nothing uses the branch before cleanup.
-        suspend_timeout_seconds: 300,
+        // suspend_timeout_seconds intentionally omitted — Neon free tier
+        // rejects explicit values (412 "modifying the suspend interval is
+        // not permitted"). Default suspend is fine for ephemeral branches;
+        // the script deletes the branch in `finally` regardless.
       },
     ],
   });
@@ -174,14 +179,6 @@ async function main() {
 
   console.log(`[neon] Fetching connection URI...`);
   const databaseUrl = await getBranchConnectionUri(branchId);
-
-  // Run migrations against the new branch BEFORE vitest starts. This
-  // doubles as a migration smoke test — if migrations break, integration
-  // tests fail early with a clear error.
-  console.log(`[neon] Running drizzle-kit migrations against branch...`);
-  await runCommand('npx', ['drizzle-kit', 'migrate'], {
-    DATABASE_URL: databaseUrl,
-  });
 
   // Hand off to vitest. Extra args after this script's argv[2] are passed
   // through — e.g. `npm run test:integration -- entries` to filter by name.

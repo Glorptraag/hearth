@@ -20,6 +20,8 @@ export default function IssuesClient() {
   });
 
   useEffect(() => {
+    // Sync filter state with URL param when the user navigates between QA views; updater is a no-op when packId matches.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters((prev) => (prev.packId !== urlPackId ? { ...prev, packId: urlPackId } : prev));
   }, [urlPackId]);
 
@@ -40,6 +42,8 @@ export default function IssuesClient() {
     }
   }, [filters]);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchIssues are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchIssues(); }, [fetchIssues]);
 
   function handleFilterChange(key: string, value: string) {

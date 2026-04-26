@@ -92,6 +92,8 @@ export function LibraryMaterialsTab({ packs }: LibraryMaterialsTabProps) {
   }, [packFilter, sortMode]);
 
   useEffect(() => {
+    // Fetch-on-deps-change data hydration; setState calls inside fetchMaterials are gated on completion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMaterials();
   }, [fetchMaterials]);
 

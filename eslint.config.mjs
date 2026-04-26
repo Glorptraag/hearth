@@ -17,6 +17,29 @@ const eslintConfig = defineConfig([
     "docs/**",
     ".claude/**",
   ]),
+  {
+    // Demoted from error to warn so a stricter eslint-plugin-react-hooks
+    // upgrade does not block CI while we work through the cases. These
+    // surfaced after the lockfile refresh in commit e3d9817; tracked as
+    // pre-existing warnings on docs/production-readiness-tracker.md #7.
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/purity": "warn",
+      // Treat `_`-prefixed names as deliberately unused. Lets us keep
+      // shape-required params (Next route handlers, hook signatures)
+      // without lint noise.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

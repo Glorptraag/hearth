@@ -159,6 +159,10 @@ export default function LogMode({
                 <div className="flex-1 min-w-0">
                   <p className="font-sans text-[11px] text-text-muted">{cap.activityTitle}</p>
                   {cap.type === 'photo' ? (
+                    // Vercel Blob photo capture, intrinsic dimensions unknown
+                    // and the layout uses max-h flow rather than a sized box —
+                    // next/image's required width/height/fill don't fit here.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={cap.content} alt="Capture" className="mt-xs rounded max-h-20 object-cover" />
                   ) : (
                     <p className="font-serif text-sm text-text-primary">{cap.content}</p>

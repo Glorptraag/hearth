@@ -36,6 +36,8 @@ export function useDraftInsight(
   useEffect(() => {
     if (!enabled) return;
     if (description.trim().length < 50) {
+      // Reset insight when the draft becomes too short to coach on.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInsight(null);
       return;
     }

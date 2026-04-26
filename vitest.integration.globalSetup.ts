@@ -50,9 +50,7 @@ export async function setup() {
   // Log once so the test runner's output shows which branch we're on.
   // Useful for CI debugging when tests fail.
   const maskedUrl = url.replace(/:[^@]*@/, ':***@');
-  // eslint-disable-next-line no-console
   console.log(`[integration] Using Neon branch ${process.env.NEON_TEST_BRANCH_ID}`);
-  // eslint-disable-next-line no-console
   console.log(`[integration] DATABASE_URL=${maskedUrl}`);
 }
 

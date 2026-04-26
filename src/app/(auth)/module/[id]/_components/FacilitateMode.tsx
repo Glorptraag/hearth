@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import type { Module, ActivityOverlay, QuickCaptureItem } from './types';
 import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
 import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
@@ -186,8 +187,8 @@ export default function FacilitateMode({
                     className="flex items-center gap-md p-sm rounded-[10px] border border-border-subtle bg-surface-raised"
                   >
                     {ref.asset.thumbnailUrl ? (
-                      <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
-                        <img src={ref.asset.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      <div className="relative shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
+                        <Image src={ref.asset.thumbnailUrl} alt="" fill sizes="48px" className="object-cover" />
                       </div>
                     ) : (
                       <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">

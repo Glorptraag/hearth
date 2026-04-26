@@ -65,6 +65,8 @@ export default function BottomSheet({
 
   useEffect(() => {
     if (isOpen) {
+      // Reset form state on open; deliberate setState-on-deps-change for sheet lifecycle.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle('');
       setSelectedLearners([]);
       setSession(targetSession ?? 'morning');
@@ -76,6 +78,8 @@ export default function BottomSheet({
 
   useEffect(() => {
     if (tab === 'browse' && catalogItems.length === 0 && !catalogLoading) {
+      // Lazy-load catalog when the user first switches to the browse tab; loading flag is gated.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCatalogLoading(true);
       fetch('/api/library')
         .then((r) => (r.ok ? r.json() : []))

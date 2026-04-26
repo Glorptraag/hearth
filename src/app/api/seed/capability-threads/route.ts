@@ -10,7 +10,7 @@ import { seedCapabilityThreads } from '@/scripts/seed-capability-threads';
  *
  * Response: { success: boolean; created: number; failed: number; message: string }
  */
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     // Require authentication
     const { userId } = await auth();

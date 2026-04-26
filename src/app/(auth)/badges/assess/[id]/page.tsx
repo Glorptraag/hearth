@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/analytics/posthog';
 
@@ -37,15 +37,19 @@ export default function BadgeAssessPage() {
   // `queueItems` is the rest of the walk after the current badge. `qn` and `qt`
   // carry position state through the URL so we can render "Badge 2 of 3" etc.
   const queueParam = searchParams.get('queue') ?? '';
-  const queueItems = queueParam
-    ? queueParam
-        .split(',')
-        .map((s) => {
-          const [bid, lid] = s.split(':');
-          return bid && lid ? { badgeId: bid, learnerId: lid } : null;
-        })
-        .filter((x): x is { badgeId: string; learnerId: string } => x !== null)
-    : [];
+  const queueItems = useMemo(
+    () =>
+      queueParam
+        ? queueParam
+            .split(',')
+            .map((s) => {
+              const [bid, lid] = s.split(':');
+              return bid && lid ? { badgeId: bid, learnerId: lid } : null;
+            })
+            .filter((x): x is { badgeId: string; learnerId: string } => x !== null)
+        : [],
+    [queueParam],
+  );
   const hasQueue = queueItems.length > 0 || searchParams.has('qt');
   const queuePositionRaw = parseInt(searchParams.get('qn') ?? '1', 10);
   const queueTotalRaw = parseInt(searchParams.get('qt') ?? String(queueItems.length + 1), 10);

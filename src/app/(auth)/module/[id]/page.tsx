@@ -189,6 +189,8 @@ export default function ModuleDetailPage() {
       const saved = localStorage.getItem(`hearth_module_${id}_session`);
       if (saved) {
         const idx = parseInt(saved, 10) || 0;
+        // Resume saved facilitate-mode position from localStorage on mount; gated on saved key presence.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSavedChunkIdx(idx);
         setCurrentActivityIdx(idx);
         if (idx > 0) {
@@ -461,6 +463,10 @@ export default function ModuleDetailPage() {
             }}
             initialChunkIdx={savedChunkIdx}
             onChunkChange={persistChunk}
+            // Ref is seeded before this branch renders (see facilitateStart effect
+            // at line ~413); Date.now() fallback is only ever exercised on a cold
+            // mount where the ref hasn't been set yet, which is rare and harmless.
+            // eslint-disable-next-line react-hooks/refs, react-hooks/purity
             sessionStartTime={facilitateStartRef.current ?? Date.now()}
             quickCaptures={quickCaptures}
             onAddCapture={handleAddCapture}

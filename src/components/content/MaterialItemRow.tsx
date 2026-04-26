@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { type PrintableItem, getItemEmoji } from './types';
 
 interface MaterialItemRowProps {
@@ -67,8 +68,8 @@ export function MaterialItemRow({
 
       {/* Thumbnail / emoji */}
       {item.thumbnailUrl ? (
-        <div className="shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
-          <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+        <div className="relative shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
+          <Image src={item.thumbnailUrl} alt="" fill sizes="40px" className="object-cover" />
         </div>
       ) : (
         <div className="shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">

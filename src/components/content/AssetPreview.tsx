@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { type ContentAsset, ASSET_KIND_EMOJI } from './types';
 
@@ -82,10 +83,12 @@ export function AssetPreview({
         <div className="relative w-full aspect-[3/4] max-h-[400px] bg-surface-raised flex items-center justify-center overflow-hidden rounded-t-[16px]">
           {asset.thumbnailUrl ? (
             <>
-              <img
+              <Image
                 src={asset.thumbnailUrl}
                 alt={asset.title}
-                className="w-full h-full object-contain"
+                fill
+                sizes="(max-width: 768px) 100vw, 400px"
+                className="object-contain"
               />
               {!canAccess && (
                 <div className="absolute inset-0 flex items-center justify-center bg-surface-body/30">

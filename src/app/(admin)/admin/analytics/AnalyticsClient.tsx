@@ -239,6 +239,8 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
     }
   }, [moduleId]);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchData are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) return <div className="py-xl text-center font-sans text-sm text-text-muted">Loading...</div>;

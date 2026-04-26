@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActivityDraft, CapabilityThreadOption, MaterialDraft } from '@/lib/content-studio/types';
+import type { ActivityDraft, CapabilityThreadOption } from '@/lib/content-studio/types';
 import { createEmptyMaterial } from '@/lib/content-studio/factories';
 import { SETTINGS, ENERGY_LEVELS, ACTIVITY_MODALITIES, CONTENT_STATUSES, DELIVERY_CHANNELS } from '@/lib/content-studio/types';
 import { Panel } from '../primitives/Panel';

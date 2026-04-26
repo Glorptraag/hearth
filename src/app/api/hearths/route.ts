@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { hearths, hearthMemberships, hearthSessions, sessionAttendance, learningEntries } from '@/lib/db/schema';
-import { apiError, parseBody, authenticatedFamily } from '@/lib/api-helpers';
+import { parseBody, authenticatedFamily } from '@/lib/api-helpers';
 import { eq, and, gte, asc, count, inArray } from 'drizzle-orm';
 
 export async function GET() {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
@@ -180,6 +181,8 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
+    // Reset pagination when learner or filter changes so the new view starts at the first page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE);
   }, [selectedLearnerId, subjectFilter]);
 
@@ -557,8 +560,8 @@ export default function PortfolioPage() {
                               {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
                                 <div className="flex gap-xs mt-sm">
                                   {entry.evidenceUrls.slice(0, 3).map((url, i) => (
-                                    <div key={i} className="h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                                      <img src={url} alt="" className="h-full w-full object-cover" />
+                                    <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
+                                      <Image src={url} alt="" fill sizes="48px" className="object-cover" />
                                     </div>
                                   ))}
                                 </div>
@@ -754,8 +757,8 @@ export default function PortfolioPage() {
                       {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
                         <div className="flex gap-xs mt-sm">
                           {entry.evidenceUrls.slice(0, 3).map((url, i) => (
-                            <div key={i} className="h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                              <img src={url} alt="" className="h-full w-full object-cover" />
+                            <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
+                              <Image src={url} alt="" fill sizes="48px" className="object-cover" />
                             </div>
                           ))}
                         </div>

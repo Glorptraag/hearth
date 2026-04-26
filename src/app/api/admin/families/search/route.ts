@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { families } from '@/lib/db/schema';
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, ilike } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
 import { z } from 'zod';

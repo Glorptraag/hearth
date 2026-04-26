@@ -129,6 +129,8 @@ function ThreadDetailPanel({
 
   useEffect(() => {
     let cancelled = false;
+    // Reset stale markers when pedagogy or thread changes; fresh fetch resolves into the same setter.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThreadMarkers([]);
     getMarkersForThread(pedagogy, thread.id).then((markers) => {
       if (!cancelled) setThreadMarkers(markers);

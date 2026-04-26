@@ -34,6 +34,9 @@ export function useSanityFetch<T>(
   }, [query, params]);
 
   useEffect(() => {
+    // Fetch-on-mount data hydration; setState calls are inside fetchData and
+    // gate on completion, so the cascade is intentional and bounded.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

@@ -38,6 +38,7 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
   useEffect(() => {
     let cancelled = false;
     // Reset stale state whenever the pedagogy changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExcerpts([]);
     setLoaded(false);
     if (!pedagogyKey) {

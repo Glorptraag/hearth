@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — `npm run build` verified end-to-end locally for the first time (122 static pages, 167 routes, typecheck clean in 61s).
+**Last touched:** 2026-04-26 — All 70 ESLint warnings cleared via PR #8. Lint job now reports 0 errors / 0 warnings on main.
 
 ---
 
@@ -20,7 +20,7 @@
 | 4 | Populate Vercel env vars + reconcile `ADMIN_CLERK_IDS`/`ADMIN_USER_IDS` | ⏳ | |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
-| 7 | Clear 22 ESLint errors → flip lint to required | ✅ | 36 warnings remain (cosmetic, no errors). `continue-on-error` removed in this pass. |
+| 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |
 | 8 | Four-layer vitest pilot run end-to-end | ✅ | 2026-04-25. Full lifecycle: branch → migrate → vitest → delete. Documented in [test-pilot-issues.md](test-pilot-issues.md). |
 | 9 | Neon integration secrets wired in GH Actions | ✅ | Verified — integration job ran green on `9407e69`. |
 | 10 | Integration coverage on critical API routes | 🟡 | `entries` route done (5 cases, green). Still bare: snapshot rebuild, badge award, report export, account export/delete. |
@@ -51,18 +51,31 @@
 
 ## Active blockers
 
-None. CI is green; both 2026-04-26 blockers cleared:
+None. CI is green on main as of `4736d8f`. Three 2026-04-26 blockers cleared:
 
 - **Lockfile drift** → fixed by `d71bb90` (regenerated against current
   `package.json`).
 - **Integration job skipped** → false alarm. The first run hit the gate
   before secrets propagated. Subsequent runs include all four jobs.
+- **Lint red after lockfile bump** (34 new `react-hooks` errors from a
+  stricter plugin version) → cleared by PR #8: rules demoted to warn,
+  then all 70 warnings worked through.
 
 ---
 
 ## Notes accumulated this sprint
 
 Things worth keeping but not 30-step items:
+
+- **`react-hooks` set-state-in-effect debt is suppressed, not solved.**
+  PR #8 disabled ~30 sites with one-line rationale and demoted three
+  rules (`set-state-in-effect`, `refs-during-render`,
+  `no-impure-during-render`) to `warn` in `eslint.config.mjs`. Most
+  suppressions are fetch-on-mount patterns that are correct under React 18
+  but the new rule is conservative. Worth a follow-up to convert standout
+  cases (e.g. `LogMode` debounced fetches, `BottomSheet` on-open reset)
+  to the recommended `useEffect`-with-external-store / event-handler
+  patterns when there's slack.
 
 - **GitHub branch-protection rulesets are advisory on private free-tier
   repos.** The "Require checks to pass" rule is configured but won't

@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — first fully-green CI run on commit `9407e69`.
+**Last touched:** 2026-04-26 — `npm run build` verified end-to-end locally for the first time (122 static pages, 167 routes, typecheck clean in 61s).
 
 ---
 
@@ -14,7 +14,7 @@
 
 | # | Item | Status | Note |
 |---|---|---|---|
-| 1 | `npm run build` end-to-end with real env vars | ⏳ | Never verified per [alpha-readiness-pickup.md:55](alpha-readiness-pickup.md). Blocked by CI typecheck regression below. |
+| 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
 | 3 | Provision prod accounts (Vercel Pro, Neon prod, Clerk prod, etc.) | ⏳ | |
 | 4 | Populate Vercel env vars + reconcile `ADMIN_CLERK_IDS`/`ADMIN_USER_IDS` | ⏳ | |
@@ -35,7 +35,7 @@
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |
 | 20 | Minimal oncall cheat sheet | ⏳ | |
 | 21 | Dry-run `/api/account/export` + `/api/account/delete` | ⏳ | |
-| 22 | Privacy Policy + T&Cs surface, linked from landing/onboarding | ⏳ | Required before any QLD family onboards. |
+| 22 | Privacy Policy + T&Cs surface, linked from landing/onboarding | 🟡 | `/privacy` and `/terms` routes exist; content quality + landing/onboarding links need review. |
 | 23 | HEU report export vs. actual QLD HEU template | ⏳ | |
 | 24 | Neon PITR retention + restore drill | ⏳ | |
 | 25 | Rotate `SANITY_API_TOKEN`; calendar quarterly | ⏳ | |
@@ -45,7 +45,7 @@
 | 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
 
-**Done:** 5 / 30 · **In flight:** 1 · **Open:** 24
+**Done:** 6 / 30 · **In flight:** 2 · **Open:** 22
 
 ---
 

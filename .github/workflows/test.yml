@@ -17,14 +17,13 @@ concurrency:
 
 jobs:
   # -------------------------------------------------------------------------
-  # Lint — fastest job, fails loudly for style/unsafe patterns.
-  # Non-blocking until the pre-existing ESLint debt is cleared.
-  # Remove continue-on-error once the debt is down to zero.
+  # Lint — fastest job, fails loudly for style/unsafe patterns. Required.
+  # The 22 pre-existing ESLint errors flagged in the alpha-readiness pickup
+  # are gone; warnings remain but don't fail the build.
   # -------------------------------------------------------------------------
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

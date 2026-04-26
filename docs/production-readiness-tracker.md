@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26
+**Last touched:** 2026-04-26 — first fully-green CI run on commit `9407e69`.
 
 ---
 
@@ -19,10 +19,10 @@
 | 3 | Provision prod accounts (Vercel Pro, Neon prod, Clerk prod, etc.) | ⏳ | |
 | 4 | Populate Vercel env vars + reconcile `ADMIN_CLERK_IDS`/`ADMIN_USER_IDS` | ⏳ | |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
-| 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First run on 2026-04-26 surfaced unit/typecheck regressions (see Active blockers). |
-| 7 | Clear 22 ESLint errors → flip lint to required | ⏳ | Lint is `continue-on-error: true`; not blocking merges yet. |
+| 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
+| 7 | Clear 22 ESLint errors → flip lint to required | ✅ | 36 warnings remain (cosmetic, no errors). `continue-on-error` removed in this pass. |
 | 8 | Four-layer vitest pilot run end-to-end | ✅ | 2026-04-25. Full lifecycle: branch → migrate → vitest → delete. Documented in [test-pilot-issues.md](test-pilot-issues.md). |
-| 9 | Neon integration secrets wired in GH Actions | ✅ | User added `NEON_API_KEY` (secret), `NEON_PROJECT_ID` + `NEON_PARENT_BRANCH_ID` (vars). Integration job currently skipping — gate may be misfiring; needs check. |
+| 9 | Neon integration secrets wired in GH Actions | ✅ | Verified — integration job ran green on `9407e69`. |
 | 10 | Integration coverage on critical API routes | 🟡 | `entries` route done (5 cases, green). Still bare: snapshot rebuild, badge award, report export, account export/delete. |
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ⏳ | |
@@ -45,24 +45,18 @@
 | 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
 
-**Done:** 4 / 30 · **In flight:** 1 · **Open:** 25
+**Done:** 5 / 30 · **In flight:** 1 · **Open:** 24
 
 ---
 
 ## Active blockers
 
-These need to clear before further progress on the tier-0 items.
+None. CI is green; both 2026-04-26 blockers cleared:
 
-- **CI Unit + Typecheck red despite green locally** (first run on 2026-04-26).
-  Surprising regression — `npm test` was 82/82 green locally on 2026-04-25.
-  Diagnose with `gh run view --log-failed` before attempting #1 or #7.
-  Hypothesis: clean `npm ci` install in CI hits the same date-fns 4.1.0
-  packaging quirk we documented (missing `index.d.ts` in some installs).
-- **Integration job skipped despite secrets being set.** The
-  `vars.NEON_PROJECT_ID != ''` gate evaluated false. Either the variable
-  wasn't saved, was saved as a secret instead of a variable, or GitHub's
-  variable expansion in `if:` needs different syntax. Check repo
-  Settings → Secrets and variables → Actions → Variables tab.
+- **Lockfile drift** → fixed by `d71bb90` (regenerated against current
+  `package.json`).
+- **Integration job skipped** → false alarm. The first run hit the gate
+  before secrets propagated. Subsequent runs include all four jobs.
 
 ---
 

@@ -3,6 +3,7 @@
 import { SignUp } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useTheme } from '@/hooks/use-theme';
+import { Wordmark } from '@/components/ui/Wordmark';
 import { getClerkAppearance } from '../../../clerk-theme';
 
 export default function SignUpPage() {
@@ -15,11 +16,8 @@ export default function SignUpPage() {
         className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]"
         style={{ background: 'var(--color-surface-nav-blur)' }}
       >
-        <Link
-          href="/"
-          className="font-serif text-xl font-semibold tracking-[0.02em] text-text-primary"
-        >
-          Hearth
+        <Link href="/" className="inline-flex items-center" aria-label="Hearth — home">
+          <Wordmark />
         </Link>
         <div className="flex items-center gap-sm">
           <Link

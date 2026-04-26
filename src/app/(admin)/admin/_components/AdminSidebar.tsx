@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Wordmark } from '@/components/ui/Wordmark';
 
 interface NavItem {
   href: string;
@@ -35,12 +36,12 @@ export default function AdminSidebar() {
     <nav className="fixed inset-y-0 left-0 z-40 flex w-[200px] flex-col border-r border-border-subtle bg-surface-panel">
       {/* Brand */}
       <div className="flex items-center gap-sm px-lg py-md border-b border-border-subtle">
-        <div className="flex h-[28px] w-[28px] items-center justify-center rounded-md bg-ember shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
-          <span className="text-sm" aria-hidden="true">🔥</span>
-        </div>
-        <span className="font-serif text-lg font-bold text-text-primary tracking-[-0.02em]">
-          Hearth
-        </span>
+        <Link href="/admin" className="inline-flex items-center" aria-label="Hearth admin — dashboard">
+          <Wordmark
+            iconHeight={28}
+            textClassName="font-serif text-lg font-bold text-text-primary tracking-[-0.02em]"
+          />
+        </Link>
         <span className="ml-auto rounded-[6px] bg-surface-raised px-1.5 py-px font-sans text-[0.6rem] font-semibold text-text-muted uppercase tracking-wider">
           Admin
         </span>

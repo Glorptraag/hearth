@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { ToastProvider } from "@/components/ui/Toast";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { useTheme } from "@/hooks/use-theme";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
 
@@ -129,14 +130,13 @@ export default function AuthLayout({
       {/* Desktop sidebar — hidden below lg */}
       <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel p-xl">
         {/* Brand */}
-        <div className="mb-3xl flex items-center gap-md">
-          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-md bg-ember shadow-[0_2px_12px_rgba(217,123,58,0.3),var(--shadow-glow)]">
-            <span className="text-lg" aria-hidden="true">🔥</span>
-          </div>
-          <span className="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]">
-            Hearth
-          </span>
-        </div>
+        <Link href="/dashboard" className="mb-3xl inline-flex items-center" aria-label="Hearth — home">
+          <Wordmark
+            iconHeight={40}
+            textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
+            className="inline-flex items-center gap-md"
+          />
+        </Link>
 
         {/* Nav sections */}
         {NAV_SECTIONS.map((section) => (
@@ -275,9 +275,12 @@ export default function AuthLayout({
       {/* Mobile top header — hidden at lg */}
       <div className="flex flex-1 flex-col lg:ml-[240px]">
         <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
-          <span className="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]">
-            Hearth
-          </span>
+          <Link href="/dashboard" className="inline-flex items-center" aria-label="Hearth — home">
+            <Wordmark
+              iconHeight={24}
+              textClassName="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]"
+            />
+          </Link>
           <div className="flex items-center gap-md">
             <span className="font-sans text-sm text-text-secondary">
               {familyName}

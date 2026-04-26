@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Wordmark } from '@/components/ui/Wordmark';
 
 const slides = [
   {
@@ -176,10 +177,11 @@ export default function WelcomeWizard() {
         </div>
 
         {/* Brand */}
-        <div className="pb-lg text-center">
-          <span className="font-serif text-[0.8rem] font-semibold text-text-muted">
-            Hearth
-          </span>
+        <div className="flex justify-center pb-lg">
+          <Wordmark
+            iconHeight={18}
+            textClassName="font-serif text-[0.8rem] font-semibold text-text-muted"
+          />
         </div>
       </div>
     </main>

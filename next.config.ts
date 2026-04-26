@@ -4,6 +4,14 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  images: {
+    remotePatterns: [
+      // Sanity CDN — module/activity/asset thumbnails sourced from CMS.
+      { protocol: 'https', hostname: 'cdn.sanity.io' },
+      // Vercel Blob — parent-uploaded evidence photos via /api/evidence/upload.
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+    ],
+  },
 };
 
 // Sentry is wired via instrumentation.ts / instrumentation-client.ts. This

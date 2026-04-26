@@ -1831,6 +1831,9 @@ function EvidenceModal({
               {previewUrl ? '📷 Photo selected — tap to change' : '📷 Tap to select photo'}
             </button>
             {previewUrl && (
+              // Local createObjectURL blob — no remote host to whitelist, no
+              // intrinsic size; next/image's required width/height don't fit.
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={previewUrl} alt="Preview" className="w-full max-h-[200px] object-cover rounded-md" />
             )}
             <input

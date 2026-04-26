@@ -1,9 +1,12 @@
 name: Test
 
-# Manual-only. Trigger from the Actions tab -> Test -> Run workflow.
+# Runs on every push and PR; manual dispatch is kept for ad-hoc reruns.
 # Parallel jobs finish faster and isolate failures — a failed lint
 # doesn't tell you anything about whether your tests pass.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 # Cancel in-progress runs when a new manual dispatch is fired on the

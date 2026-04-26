@@ -30,6 +30,8 @@ export default function PackDetailClient({ packId }: Props) {
     }
   }, [packId]);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchDetail are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
   async function handleRecheck() {

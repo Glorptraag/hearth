@@ -404,7 +404,6 @@ export default function LogPage() {
         if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scaffoldSessionId]);
 
   // ─── Draft auto-save (10s to localStorage) ───
@@ -418,6 +417,8 @@ export default function LogPage() {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
+      // Hydrating draft state from localStorage on mount; each setter is gated on field presence.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (d.description) setDescription(d.description);
       if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
       if (d.discoveries) setDiscoveries(d.discoveries);
@@ -486,6 +487,8 @@ export default function LogPage() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (description.length < 10) {
+      // Reset stale keyword match when input shrinks below threshold; cleanup-style state reset.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setKeywordMatch(null);
       return;
     }
@@ -505,6 +508,8 @@ export default function LogPage() {
   useEffect(() => {
     if (description.length > 0) {
       activeEnrichmentEntryIdRef.current = null;
+      // Clears stale post-save insights when parent starts a new entry; gated on description.length.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPostSaveInsights([]);
       setProfileNudge(null);
       setPedagogySources([]);
@@ -541,6 +546,8 @@ export default function LogPage() {
   useEffect(() => {
     if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
     if (description.length < 20 || selectedLearners.length === 0) {
+      // Reset stale coach hints when input shrinks below threshold; cleanup-style state reset.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCoachHints([]);
       return;
     }

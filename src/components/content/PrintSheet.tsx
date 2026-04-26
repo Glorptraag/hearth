@@ -46,6 +46,8 @@ export function PrintSheet({
 
   // Reset state when groups change
   useEffect(() => {
+    // Reset selection + copy counts when the source groups change; expected setState-on-deps-change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIds(new Set(allItems.filter((i) => i.isPrintable && i.role === 'core').map((i) => i.id)));
     setCopies(defaultCopies);
   }, [allItems, defaultCopies]);

@@ -55,6 +55,8 @@ export default function InvitationsClient() {
     }
   }, [page, statusFilter, search]);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchInvitations are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchInvitations(); }, [fetchInvitations]);
 
   function handleCopyCode(code: string, id: string) {

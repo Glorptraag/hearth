@@ -44,6 +44,8 @@ export default function ThreadCoverageChart({ dateFrom, dateTo }: Props) {
     }
   }, [dateFrom, dateTo]);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchData are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) {

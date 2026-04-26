@@ -192,6 +192,8 @@ export default function PlannerClient({
   useEffect(() => {
     const moduleIds = [...new Set(entries.map((e) => e.moduleId).filter(Boolean))] as string[];
     if (moduleIds.length === 0) {
+      // Reset stale module materials when the week has no entries; fetch-on-deps-change pattern.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModuleMaterials([]);
       return;
     }

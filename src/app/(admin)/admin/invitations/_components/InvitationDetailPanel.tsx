@@ -40,6 +40,8 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
 
   useEffect(() => {
     if (!invitationId) return;
+    // Fetch-on-id-change data hydration; loading flag flips before the await and reset on completion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetch(`/api/admin/invitations/${invitationId}`)
       .then((r) => r.json())

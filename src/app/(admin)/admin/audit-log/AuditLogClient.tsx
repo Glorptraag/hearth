@@ -52,6 +52,8 @@ export default function AuditLogClient() {
   }, []);
 
   useEffect(() => {
+    // Fetch-on-mount data hydration; setState calls inside fetchEntries are gated on completion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEntries(page, filter);
   }, [fetchEntries, page, filter]);
 

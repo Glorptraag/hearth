@@ -46,6 +46,8 @@ export default function SnapshotsClient() {
     }
   }, []);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchAll are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   function openRebuild(familyId: string, familyName: string) {

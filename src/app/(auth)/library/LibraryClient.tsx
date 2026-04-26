@@ -58,6 +58,8 @@ export default function LibraryClient() {
   }, []);
 
   useEffect(() => {
+    // Fetch-on-mount data hydration; setState calls inside fetchLibrary are gated on completion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLibrary();
   }, [fetchLibrary]);
 

@@ -181,6 +181,8 @@ export default function PortfolioPage() {
   }, []);
 
   useEffect(() => {
+    // Reset pagination when learner or filter changes so the new view starts at the first page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE);
   }, [selectedLearnerId, subjectFilter]);
 

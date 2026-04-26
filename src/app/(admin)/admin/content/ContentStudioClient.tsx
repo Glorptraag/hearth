@@ -112,6 +112,8 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
   useEffect(() => {
     if (!draftId) return;
     if (saveStatus === 'idle') {
+      // Marks the draft as dirty on first edit so the save indicator advances; flag is gated on draftId presence.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSaveStatus('dirty');
       return;
     }

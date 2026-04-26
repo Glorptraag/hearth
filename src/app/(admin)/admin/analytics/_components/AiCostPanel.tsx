@@ -65,6 +65,8 @@ export default function AiCostPanel() {
   }, [days]);
 
   useEffect(() => {
+    // Fetch-on-mount data hydration; setState calls inside load are gated on completion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 

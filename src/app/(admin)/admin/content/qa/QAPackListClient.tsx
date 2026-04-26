@@ -20,6 +20,8 @@ export default function QAPackListClient() {
     }
   }, []);
 
+  // Fetch-on-mount data hydration; setState calls inside fetchPacks are gated on completion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchPacks(); }, [fetchPacks]);
 
   return (

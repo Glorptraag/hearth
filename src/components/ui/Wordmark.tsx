@@ -30,8 +30,6 @@ export function Wordmark({
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    setIndex(Math.floor(Math.random() * LOGOS.length));
-
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

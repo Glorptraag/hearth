@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { Wordmark } from '@/components/ui/Wordmark';
 import ProviderCodeInput from './provider-code-input';
 
 export default async function LandingPage() {
@@ -16,11 +17,11 @@ export default async function LandingPage() {
   }
 
   return (
-    <div data-theme="gathering" className="flex-1 bg-surface-body text-text-primary">
+    <>
       {/* Nav */}
       <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border-subtle px-lg py-md backdrop-blur-[12px]" style={{ background: 'var(--color-surface-nav-blur)' }}>
-        <Link href="/" className="font-serif text-xl font-semibold tracking-[0.02em] text-text-primary">
-          Hearth
+        <Link href="/" className="inline-flex items-center" aria-label="Hearth — home">
+          <Wordmark />
         </Link>
         <div className="flex items-center gap-sm">
           <Link
@@ -208,7 +209,10 @@ export default async function LandingPage() {
         {/* Footer */}
         <footer className="mx-auto flex max-w-[960px] flex-col items-center gap-md border-t border-border-subtle px-lg py-2xl md:flex-row md:justify-between">
           <div className="flex items-center gap-md">
-            <span className="font-serif text-base font-semibold text-text-primary">Hearth</span>
+            <Wordmark
+              iconHeight={22}
+              textClassName="font-serif text-base font-semibold text-text-primary"
+            />
             <span className="font-sans text-xs text-text-muted">
               Built in Australia · Hosted in Australia
             </span>
@@ -221,7 +225,7 @@ export default async function LandingPage() {
           <div className="font-sans text-xs text-text-muted">© 2026 Hearth Learning Pty Ltd</div>
         </footer>
       </div>
-    </div>
+    </>
   );
 }
 

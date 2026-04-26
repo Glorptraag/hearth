@@ -17,7 +17,7 @@ export async function GET(
 
   const result = await requireHearthMember(userId, id);
   if ('error' in result) return result.error;
-  const { family, membership } = result;
+  const { membership } = result;
 
   const hearth = await db.query.hearths.findFirst({
     where: eq(hearths.id, id),

@@ -17,7 +17,7 @@ import { neon } from '@neondatabase/serverless';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { buildChunkText, hashChunk, sanityTypeToPkbLayer } from '../src/lib/pedagogy/chunk-builder';
-import { embedBatch, EMBEDDING_DIMENSIONS } from '../src/lib/pedagogy/embedding';
+import { embedBatch } from '../src/lib/pedagogy/embedding';
 import type { PkbLayer } from '../src/lib/pedagogy/chunk-builder';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

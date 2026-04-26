@@ -13,7 +13,7 @@
  * picks them up. The unit config (vitest.config.ts) excludes this extension.
  */
 import { describe, it, expect } from 'vitest';
-import { asUser, asOtherFamily } from '@/test/clerk-helpers';
+import { asOtherFamily } from '@/test/clerk-helpers';
 
 // Real DB client. NOT mocked in integration config.
 // import { db } from '@/lib/db';

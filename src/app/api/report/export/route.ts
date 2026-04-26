@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { families, familySettings, learningEntries, learners, complianceReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
+import { families, familySettings, learningEntries, learners, complianceReports, workSamples } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';

@@ -123,14 +123,12 @@ function getInitials(name: string): string {
 export default function HearthHomeClient({
   hearth,
   role,
-  familyId,
   upcoming,
   recent,
   members,
   memberCount,
   totalChildrenCount,
   sessionCount,
-  familyLearners,
 }: HearthHomeProps) {
   const [activeTab, setActiveTab] = useState<TabId>('ourstory');
   const [editName, setEditName] = useState(hearth.name);

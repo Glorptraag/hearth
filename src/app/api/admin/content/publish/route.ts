@@ -7,7 +7,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { createBadge, createFullModule, createPack } from '@/lib/sanity/mutations';
 import { transformBadge, transformModuleForFullCreate, transformPack } from '@/lib/content-studio/sanity-transform';
 import { packPublishSchema } from '@/lib/content-studio/validation';
-import type { StudioState, PackDraft } from '@/lib/content-studio/types';
+import type { StudioState } from '@/lib/content-studio/types';
 
 export async function POST(req: Request) {
   const admin = await requireAdmin();

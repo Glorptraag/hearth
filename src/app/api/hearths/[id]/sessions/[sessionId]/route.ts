@@ -13,10 +13,7 @@ import {
   hearths,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import {
-  requireHearthMember,
-  requireHearthCoordinator,
-} from '@/lib/auth/hearth-helpers';
+import { requireHearthMember } from '@/lib/auth/hearth-helpers';
 import { triggerSessionCompleted } from '@/lib/notifications/triggers';
 
 export async function GET(

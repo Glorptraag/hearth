@@ -26,7 +26,7 @@ interface PackEditorProps {
   setSel: (sel: Selection) => void;
 }
 
-export function PackEditor({ state, sel, fieldPrefix, setField, toggleArrayItem, dispatch, showPrompt, setSel }: PackEditorProps) {
+export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPrompt, setSel }: PackEditorProps) {
   const doc = getSelectedDoc(state, sel);
   if (!doc || sel.type !== 'pack') return null;
   const pack = doc as {

@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import {
   families,
   learners,
-  hearths,
   hearthMemberships,
   hearthSessions,
 } from '@/lib/db/schema';

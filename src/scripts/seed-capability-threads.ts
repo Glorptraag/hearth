@@ -2385,7 +2385,7 @@ export async function seedCapabilityThreads() {
 
   for (const threadData of THREADS) {
     try {
-      const result = await createCapabilityThread({
+      await createCapabilityThread({
         _id: `capability-thread-${threadData.id}`,
         title: threadData.title,
         domain: threadData.domain,

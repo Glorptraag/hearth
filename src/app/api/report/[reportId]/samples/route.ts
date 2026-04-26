@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { complianceReports, workSamples, workSampleAnnotations, learningEntries } from '@/lib/db/schema';
+import { complianceReports, workSamples, learningEntries } from '@/lib/db/schema';
 import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';

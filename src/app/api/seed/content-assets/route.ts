@@ -11,7 +11,7 @@ import { seedContentAssets } from '@/scripts/seed-content-assets';
  *
  * Requires authentication. Production-restricted to admin users.
  */
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {

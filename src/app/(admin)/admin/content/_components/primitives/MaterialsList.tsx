@@ -1,7 +1,6 @@
 'use client';
 
 import type { MaterialDraft } from '@/lib/content-studio/types';
-import { createEmptyMaterial } from '@/lib/content-studio/factories';
 import { Input } from './FormField';
 
 interface MaterialsListProps {

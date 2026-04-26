@@ -130,7 +130,7 @@ export async function getCachedThreads(): Promise<Map<string, ThreadMeta>> {
       sanityByTitle.set(normalizeTitle(st.title), st);
     }
 
-    for (const [id, meta] of threads) {
+    for (const [, meta] of threads) {
       const match = sanityByTitle.get(normalizeTitle(meta.title));
       if (match && match.dlos?.length) {
         meta.dlos = match.dlos;

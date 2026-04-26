@@ -5,7 +5,6 @@ import {
   familySettings,
   learners,
   learningEntries,
-  badgeAwards,
   familyIntelligenceSnapshots,
   notifications,
 } from '@/lib/db/schema';

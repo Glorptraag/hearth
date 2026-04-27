@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Pedagogy } from '@/types';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import {
@@ -123,7 +123,7 @@ export function PedagogyWizard({
   const [practices, setPractices] = useState<string[]>(
     () => readDraft()?.practices ?? initial?.practices ?? []
   );
-  const [insightTab, setInsightTab] = useState<'philosophy' | 'values' | 'practices'>('philosophy');
+  const [insightTab, setInsightTab] = useState<InsightTabKey>('philosophy');
 
   // Persist on every change. Cheap — small payload, infrequent updates.
   useEffect(() => {
@@ -686,6 +686,9 @@ function CompatibilityBadge({
 
 // ─── Step 4: Review ───────────────────────────────────────────────────────
 
+const INSIGHT_TABS = ['philosophy', 'values', 'practices'] as const;
+type InsightTabKey = (typeof INSIGHT_TABS)[number];
+
 function ReviewStep({
   philosophy,
   values,
@@ -696,9 +699,41 @@ function ReviewStep({
   philosophy: Pedagogy | null;
   values: string[];
   practices: string[];
-  insightTab: 'philosophy' | 'values' | 'practices';
-  onChangeInsightTab: (tab: 'philosophy' | 'values' | 'practices') => void;
+  insightTab: InsightTabKey;
+  onChangeInsightTab: (tab: InsightTabKey) => void;
 }) {
+  // One ref per tab for roving-tabindex focus management (WAI-ARIA APG pattern).
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const handleTabKeyDown = useCallback<React.KeyboardEventHandler<HTMLButtonElement>>(
+    (e) => {
+      const idx = INSIGHT_TABS.indexOf(insightTab);
+      let next = idx;
+      switch (e.key) {
+        case 'ArrowLeft':
+          next = idx === 0 ? INSIGHT_TABS.length - 1 : idx - 1;
+          break;
+        case 'ArrowRight':
+          next = (idx + 1) % INSIGHT_TABS.length;
+          break;
+        case 'Home':
+          next = 0;
+          break;
+        case 'End':
+          next = INSIGHT_TABS.length - 1;
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+      onChangeInsightTab(INSIGHT_TABS[next]);
+      // Focus has to follow selection so the next ArrowRight on a tab
+      // (not on the body) keeps cycling. requestAnimationFrame waits
+      // for the active tab's tabIndex to flip from -1 to 0.
+      requestAnimationFrame(() => tabRefs.current[next]?.focus());
+    },
+    [insightTab, onChangeInsightTab]
+  );
+
   const philosophyObj = getPhilosophyById(philosophy);
   const synthesis = generateSynthesis(philosophy, values, practices);
   const philosophyInsight = getPhilosophyInsight(philosophy);
@@ -815,6 +850,8 @@ function ReviewStep({
               label="Philosophy Lens"
               active={insightTab === 'philosophy'}
               onClick={() => onChangeInsightTab('philosophy')}
+              buttonRef={(el) => { tabRefs.current[0] = el; }}
+              onKeyDown={handleTabKeyDown}
             />
             <InsightTab
               id="insight-tab-values"
@@ -822,6 +859,8 @@ function ReviewStep({
               label="Values"
               active={insightTab === 'values'}
               onClick={() => onChangeInsightTab('values')}
+              buttonRef={(el) => { tabRefs.current[1] = el; }}
+              onKeyDown={handleTabKeyDown}
             />
             <InsightTab
               id="insight-tab-practices"
@@ -829,6 +868,8 @@ function ReviewStep({
               label="Next Steps"
               active={insightTab === 'practices'}
               onClick={() => onChangeInsightTab('practices')}
+              buttonRef={(el) => { tabRefs.current[2] = el; }}
+              onKeyDown={handleTabKeyDown}
             />
           </div>
           <div
@@ -898,15 +939,20 @@ function InsightTab({
   label,
   active,
   onClick,
+  buttonRef,
+  onKeyDown,
 }: {
   id: string;
   controls: string;
   label: string;
   active: boolean;
   onClick: () => void;
+  buttonRef?: (el: HTMLButtonElement | null) => void;
+  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       id={id}
       aria-controls={controls}
@@ -914,6 +960,7 @@ function InsightTab({
       role="tab"
       tabIndex={active ? 0 : -1}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       className={[
         'relative -mb-[1px] border-b-2 px-sm py-xs font-sans text-xs font-semibold transition-colors duration-200',
         active

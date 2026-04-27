@@ -139,9 +139,10 @@ export default function OnboardingPage() {
     // an explicit preference. Previously the inline pedagogy buttons did
     // this on every save; skipping here would leave the row uncreated
     // until the first /api/settings GET happens to trigger lazy insert.
+    setError('');
     setSaving(true);
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,12 +151,17 @@ export default function OnboardingPage() {
           pedagogyPractices: [],
         }),
       });
+      if (!res.ok) {
+        // fetch resolves on 4xx/5xx so a thrown-only error path missed
+        // these. Surface it to the user instead of silently advancing.
+        setError("Couldn't save your defaults — please try again.");
+        return;
+      }
+      setStep(4);
     } catch {
-      // Non-fatal — the lazy-create path in /api/settings GET will still
-      // produce a row if this PATCH fails.
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setSaving(false);
-      setStep(4);
     }
   }
 
@@ -173,6 +179,7 @@ export default function OnboardingPage() {
         onComplete={handleWizardSave}
         onSkip={handleSkipWizard}
         saving={saving}
+        errorMessage={error || undefined}
       />
     );
   }

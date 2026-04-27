@@ -27,15 +27,22 @@ export async function trackServer(
   event: HearthEvent,
   distinctId: string,
   properties?: Record<string, string | number | boolean>,
+  options?: { familyId?: string },
 ) {
   if (!enabled) return;
   try {
     const hashed = hashId(distinctId);
+    // Same group concept as the client wrapper — pass familyId here
+    // so two Clerk users on the same household roll up in funnels.
+    const groups = options?.familyId
+      ? { family: hashId(options.familyId) }
+      : undefined;
     const body = {
       api_key: PH_KEY,
       event,
       distinct_id: hashed,
       properties: { ...sanitise(properties), $lib: 'hearth-server' },
+      ...(groups ? { $groups: groups } : {}),
       timestamp: new Date().toISOString(),
     };
     await fetch(`${PH_HOST!.replace(/\/$/, '')}/capture/`, {

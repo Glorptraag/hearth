@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — Account-delete integration test landed (5 cases, green in isolation). Item #10 ✅ done; all five critical routes covered.
+**Last touched:** 2026-04-26 — Cross-file mock flake fixed (#32 ✅). Integration suite now stable across all 6 files: 28/28 green, two consecutive runs.
 
 ---
 
@@ -23,7 +23,7 @@
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |
 | 8 | Four-layer vitest pilot run end-to-end | ✅ | 2026-04-25. Full lifecycle: branch → migrate → vitest → delete. Documented in [test-pilot-issues.md](test-pilot-issues.md). |
 | 9 | Neon integration secrets wired in GH Actions | ✅ | Verified — integration job ran green on `9407e69`. |
-| 10 | Integration coverage on critical API routes | ✅ | All five critical routes covered: `entries`, `admin/snapshots/rebuild`, `badges/award`, `report/export`, `account/export`, `account/delete`. 28 cases, green in isolation against a real Neon branch. Cross-file flake under `isolate: false` is tracked as #32. |
+| 10 | Integration coverage on critical API routes | ✅ | All five critical routes covered: `entries`, `admin/snapshots/rebuild`, `badges/award`, `report/export`, `account/export`, `account/delete`. 28 cases, suite-wide green against a real Neon branch (two consecutive runs). |
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ⏳ | |
 | 13 | Persist partial wizard progress on close | ⏳ | |
@@ -45,9 +45,9 @@
 | 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
-| 32 | Cross-file mock flake in integration suite under `isolate: false` | ⏳ | Each integration test passes in isolation. When ≥3 files run together, the `vi.mock('@clerk/nextjs/server', …)` in `vitest.setup.ts` intermittently fails to intercept and routes hit the real `auth()` (which throws via `server-only`). Hits ALL files including the canonical entries test. Surfaces in CI's integration job once #10 lands. Likely fix: hoist the Clerk mock into a `__mocks__` adjacent file or split the integration setup so mocks register before any route module is touched. |
+| 32 | Cross-file mock flake in integration suite | ✅ | Caused by `isolate: false` — setup files only registered `vi.mock('@clerk/nextjs/server', …)` once per worker, and the shared module cache held whichever copy of Clerk got imported first. Fixed by flipping to `isolate: true` in [vitest.integration.config.ts](../vitest.integration.config.ts). Cost: ~120s of extra startup across 6 files; well below the 30s/test timeout. Stable across two consecutive full-suite runs (28/28 green). |
 
-**Done:** 7 / 30 · **In flight:** 1 · **Open:** 22 (#31 found-and-fixed in this flow; #32 added)
+**Done:** 7 / 30 · **In flight:** 1 · **Open:** 22 (#31 + #32 found-and-fixed in this flow)
 
 ---
 

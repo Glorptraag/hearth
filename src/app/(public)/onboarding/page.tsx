@@ -108,10 +108,11 @@ export default function OnboardingPage() {
   }
 
   async function handleWizardSave(result: PedagogyWizardResult) {
+    setError('');
     setSaving(true);
     try {
       const philosophy: Pedagogy = result.philosophy ?? 'eclectic';
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,6 +121,11 @@ export default function OnboardingPage() {
           pedagogyPractices: result.practices,
         }),
       });
+      if (!res.ok) {
+        // fetch resolves on 4xx/5xx — only the throw path hit catch.
+        setError('Something went wrong saving your approach. Please try again.');
+        return;
+      }
       track('pedagogy_set', {
         philosophy,
         value_count: result.values.length,
@@ -128,7 +134,7 @@ export default function OnboardingPage() {
       });
       setStep(4);
     } catch {
-      setError('Something went wrong saving your approach. Please try again.');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setSaving(false);
     }

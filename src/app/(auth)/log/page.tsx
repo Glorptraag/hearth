@@ -9,6 +9,7 @@ import { useDraftInsight } from '@/hooks/use-draft-insight';
 import type { DraftInsight } from '@/lib/ai/draft-insight';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
@@ -410,6 +411,7 @@ export default function LogPage() {
   const DRAFT_KEY = 'hearth:logger:draft';
   const [draftRestored, setDraftRestored] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const online = useOnlineStatus();
 
   // Restore draft on mount
   useEffect(() => {
@@ -868,7 +870,16 @@ export default function LogPage() {
         }
       })();
     } catch {
-      setToast({ type: 'error', message: 'Failed to save. Please try again.' });
+      // Differentiate offline vs server-side failure. The 10s autosave
+      // means the draft has already been written to localStorage, so the
+      // entry is not lost — just unposted.
+      const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      setToast({
+        type: 'error',
+        message: isOffline
+          ? "You're offline. Your draft is saved locally — try again when you're back online."
+          : 'Failed to save. Your draft is safe — please try again.',
+      });
     } finally {
       setIsSaving(false);
       setTimeout(() => setToast(null), 3000);
@@ -890,6 +901,24 @@ export default function LogPage() {
 
   return (
     <div className="relative">
+      {/* Offline banner — sits above the draft-restored banner so it's the
+          first thing the parent sees if a network drop interrupts them.
+          The 10s autosave keeps writing to localStorage regardless of
+          connection state, so "your draft is safe locally" is literally
+          true and worth surfacing. */}
+      {!online && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-sm border-b border-border-subtle bg-surface-raised px-md py-xs"
+        >
+          <span aria-hidden="true">📴</span>
+          <p className="font-sans text-[11px] text-text-secondary">
+            Offline — your draft is being saved locally. Save will resume when you&rsquo;re back online.
+          </p>
+        </div>
+      )}
+
       {/* Draft restored banner */}
       {draftRestored && (
         <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">

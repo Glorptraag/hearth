@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — Cross-file mock flake fixed (#32 ✅). Integration suite now stable across all 6 files: 28/28 green, two consecutive runs.
+**Last touched:** 2026-04-26 — `ADMIN_USER_IDS` consolidation landed (#4 code half). Two seed routes migrated to `isAdmin()`; runbook + `.env.example` + SEED docs cleaned of dual-var ambiguity.
 
 ---
 
@@ -17,7 +17,7 @@
 | 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
 | 3 | Provision prod accounts (Vercel Pro, Neon prod, Clerk prod, etc.) | ⏳ | |
-| 4 | Populate Vercel env vars + reconcile `ADMIN_CLERK_IDS`/`ADMIN_USER_IDS` | ⏳ | |
+| 4 | Populate Vercel env vars | 🟡 | Code half done: `ADMIN_USER_IDS` removed from the codebase, two seed routes migrated to the canonical `isAdmin()` guard, runbook + `.env.example` + SEED docs all reference only `ADMIN_CLERK_IDS`. Vercel population still pending #3. |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |

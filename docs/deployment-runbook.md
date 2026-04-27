@@ -47,8 +47,7 @@ Copy each key below into Vercel → Project → Settings → Environment Variabl
 | `DRAFT_INSIGHTS_ENABLED` | ✅ | ✅ | — | Default `true`. Flip to `false` as emergency kill switch. |
 | `BLOB_READ_WRITE_TOKEN` | ✅ | — | — | Prod only; preview/dev without it cleanly returns 503 from `/api/evidence/upload`. |
 | `CRON_SECRET` | ✅ | — | — | Vercel injects this as the Bearer token for scheduled invocations. |
-| `ADMIN_CLERK_IDS` | ✅ | ✅ | — | Comma-sep Clerk user IDs. Also set `ADMIN_USER_IDS` to the same list until that inconsistency is resolved in code. |
-| `ADMIN_USER_IDS` | ✅ | ✅ | — | See note above. |
+| `ADMIN_CLERK_IDS` | ✅ | ✅ | — | Comma-separated Clerk user IDs. Gates `/admin/*` routes and the production seed endpoints. |
 | `NEXT_PUBLIC_SENTRY_DSN` | ✅ | ✅ | — | DSN is safe to expose; it's write-only. |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ✅ | — | — | Enables source-map upload on deploy. |
 | `NEXT_PUBLIC_POSTHOG_KEY` | ✅ | ✅ | — | |

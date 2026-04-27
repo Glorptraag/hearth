@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { isAdmin } from '@/lib/auth/admin';
 import { seedCapabilityThreads } from '@/scripts/seed-capability-threads';
 
 /**
@@ -19,14 +20,11 @@ export async function POST(_req: NextRequest) {
     }
 
     // Only allow in development or for specific admin users
-    if (process.env.NODE_ENV === 'production') {
-      const adminIds = process.env.ADMIN_USER_IDS?.split(',') || [];
-      if (!adminIds.includes(userId)) {
-        return NextResponse.json(
-          { error: 'Seeding not allowed in production' },
-          { status: 403 }
-        );
-      }
+    if (process.env.NODE_ENV === 'production' && !isAdmin(userId)) {
+      return NextResponse.json(
+        { error: 'Seeding not allowed in production' },
+        { status: 403 }
+      );
     }
 
     console.log(`[API] Seeding capability threads initiated by ${userId}`);

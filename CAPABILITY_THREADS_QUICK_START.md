@@ -166,7 +166,7 @@ Once seeded, these threads power:
 → Set `SANITY_API_TOKEN` in `.env.local`
 
 **"Unauthorized" (API endpoint)**
-→ Ensure authenticated with Clerk; in production add user to `ADMIN_USER_IDS`
+→ Ensure authenticated with Clerk; in production add user to `ADMIN_CLERK_IDS`
 
 **Some threads created, some failed**
 → Re-run script; it will skip existing docs and retry failures

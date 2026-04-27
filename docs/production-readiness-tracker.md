@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Logger now shows an offline banner + tailored save-failure toast; existing 10s autosave already survives network drops (#29 ✅).
+**Last touched:** 2026-04-28 — Privacy + Terms rewritten to match actual technical posture; onboarding step 1 now links them (#22 ✅).
 
 ---
 
@@ -35,7 +35,7 @@
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |
 | 20 | Minimal oncall cheat sheet | ✅ | One-page [`docs/oncall-cheatsheet.md`](oncall-cheatsheet.md): critical dashboard URLs, kill switches, symptom→first-move table, useful SQL one-liners, postmortem checklist. Cross-linked from `incident-runbook.md`. |
 | 21 | Dry-run `/api/account/export` + `/api/account/delete` | ⏳ | |
-| 22 | Privacy Policy + T&Cs surface, linked from landing/onboarding | 🟡 | `/privacy` and `/terms` routes exist; content quality + landing/onboarding links need review. |
+| 22 | Privacy Policy + T&Cs surface, linked from landing/onboarding | ✅ | Privacy rewritten to disclose actual analytics posture (PostHog allowlist, SHA-256 hashing, family grouping, Sentry, Anthropic) + retention windows + export/delete endpoint paths + OAIC contact. Terms rewritten with alpha-pilot disclosure, no-freemium framing, AU Consumer Law clause. Landing email TLD typo fixed (`.com` → `.au`). Onboarding step 1 now links Terms + Privacy under the CTA. |
 | 23 | HEU report export vs. actual QLD HEU template | ⏳ | |
 | 24 | Neon PITR retention + restore drill | ⏳ | |
 | 25 | Rotate `SANITY_API_TOKEN`; calendar quarterly | ⏳ | |

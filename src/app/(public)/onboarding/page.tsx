@@ -221,6 +221,27 @@ export default function OnboardingPage() {
             >
               Let&rsquo;s set up your family
             </button>
+            <p className="max-w-[360px] font-sans text-[11px] text-text-muted">
+              By continuing, you agree to our{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors duration-200"
+              >
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors duration-200"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
           </div>
         )}
 

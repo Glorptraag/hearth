@@ -49,11 +49,7 @@ describe('GET /api/report/export — real DB', () => {
     expect(res.status).toBe(404);
   });
 
-  // The route still calls `doc.autoTable(...)` which was removed in
-  // jspdf-autotable v5 (we run ^5.0.7). The route would 500 in production
-  // for any QLD/SA/NT family asking for a report. Tracker line follows in
-  // a separate commit that lands the route fix and un-skips this test.
-  it.skip('renders a non-empty PDF for the caller’s learner', async () => {
+  it('renders a non-empty PDF for the caller’s learner', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
     const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });

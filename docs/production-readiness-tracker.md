@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — Report-export integration test landed (4/5 green; happy path skipped, surfaced jspdf-autotable v5 breakage now tracked as #31).
+**Last touched:** 2026-04-26 — Report-export route migrated to jspdf-autotable v5 named-import API; happy-path integration test now green (#31 closed in same flow as #10).
 
 ---
 
@@ -23,7 +23,7 @@
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |
 | 8 | Four-layer vitest pilot run end-to-end | ✅ | 2026-04-25. Full lifecycle: branch → migrate → vitest → delete. Documented in [test-pilot-issues.md](test-pilot-issues.md). |
 | 9 | Neon integration secrets wired in GH Actions | ✅ | Verified — integration job ran green on `9407e69`. |
-| 10 | Integration coverage on critical API routes | 🟡 | `entries` + `admin/snapshots/rebuild` + `badges/award` done (5 cases each, green in isolation). `report/export` partial (4/5 green; happy path skipped pending #31). Still bare: account export/delete. |
+| 10 | Integration coverage on critical API routes | 🟡 | `entries` + `admin/snapshots/rebuild` + `badges/award` + `report/export` done (5 cases each, green in isolation). Still bare: account export/delete. |
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ⏳ | |
 | 13 | Persist partial wizard progress on close | ⏳ | |
@@ -44,9 +44,9 @@
 | 28 | Automated trigger for noisy-family rate-limit tightening | ⏳ | |
 | 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
-| 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ⏳ | Found while writing #10 coverage. Route still uses `doc.autoTable(...)` (removed in v5); 500s for any QLD/SA/NT report. Mechanical: 7 call sites + 1 import. |
+| 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
 
-**Done:** 6 / 30 · **In flight:** 2 · **Open:** 22 (+1 follow-up: #31)
+**Done:** 6 / 30 · **In flight:** 2 · **Open:** 22 (follow-up #31 found-and-fixed in this flow)
 
 ---
 

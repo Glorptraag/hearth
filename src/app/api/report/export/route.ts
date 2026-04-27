@@ -6,7 +6,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { format, differenceInDays, differenceInYears } from 'date-fns';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { getJurisdiction } from '@/config/jurisdictions';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
     doc.setFont('helvetica', 'bold');
     doc.text('Curriculum Coverage', 14, y); y += 3;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Subject', 'Entries', 'Coverage %', 'Curriculum Descriptors']],
       body: subjectCoverage.map((s) => [
@@ -286,7 +286,7 @@ export async function GET(request: NextRequest) {
     doc.setFont('helvetica', 'bold');
     doc.text('Required Work Samples', 14, y); y += 3;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Slot', 'Subject Area', 'Status', 'Matched Entry']],
       body: slotData.map((ws) => [
@@ -368,7 +368,7 @@ export async function GET(request: NextRequest) {
       doc.setFont('helvetica', 'bold');
       doc.text('Gap Analysis', 14, y); y += 3;
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Subject', 'Entries', 'Severity']],
         body: gaps.map((g) => [
@@ -402,7 +402,7 @@ export async function GET(request: NextRequest) {
     doc.setFont('helvetica', 'bold');
     doc.text('Learning Areas', 14, y); y += 3;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Learning Area', 'Entries', 'Coverage', 'Curriculum Links']],
       body: subjectCoverage.map((s) => [
@@ -441,7 +441,7 @@ export async function GET(request: NextRequest) {
       doc.text(area.label, 14, y); y += 6;
       doc.setTextColor(0, 0, 0);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Date', 'Entry Title', 'Evidence']],
         body: areaEntries.slice(0, 20).map((e) => [
@@ -468,7 +468,7 @@ export async function GET(request: NextRequest) {
       doc.setTextColor(0, 0, 0);
       doc.text('Areas to Explore', 14, y); y += 3;
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Learning Area', 'Entries', 'Note']],
         body: areasToExplore.map((g) => [
@@ -498,7 +498,7 @@ export async function GET(request: NextRequest) {
       (a, b) => new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime()
     );
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Date', 'Title', 'Subjects', 'Evidence']],
       body: sortedEntries.slice(0, 50).map((e) => [

@@ -89,7 +89,7 @@ Baseline (from the debounced draft-insight design): ~100 calls/family/month ≈ 
 
 ### Investigate
 
-- **One noisy family.** Add `family_id` to the group-by above. A single family hammering the draft-insight endpoint (e.g., a bot or misconfigured client) will show up immediately.
+- **One noisy family.** The daily retention cron (`/api/admin/retention` Sun 02:00 UTC) now runs an automated noisy-family check and writes an `admin_audit_log` row with `action='noisy_family_alert'` for any family above `NOISY_FAMILY_TOKEN_THRESHOLD` tokens / 24h. Look there first: `SELECT target_id, reason, created_at FROM admin_audit_log WHERE action = 'noisy_family_alert' ORDER BY created_at DESC LIMIT 10;`. Also: add `family_id` to the group-by above for live numbers between cron runs.
 - **Debounce regression.** Look at `src/hooks/use-draft-insight.ts` — the debounce is 2s; if a recent change dropped or shortened it, calls compound.
 - **Token inflation.** If call count is flat but tokens doubled, the prompt has grown. Check recent edits to `src/lib/ai/draft-insight.ts`.
 

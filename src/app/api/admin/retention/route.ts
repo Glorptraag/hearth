@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { notifications, moduleDrafts } from '@/lib/db/schema';
-import { lt, and, eq, ne } from 'drizzle-orm';
+import { adminAuditLog, notifications, moduleDrafts } from '@/lib/db/schema';
+import { lt, and, eq, ne, sql } from 'drizzle-orm';
+
+// Token budget per family per 24h that triggers a noisy-family alert.
+// Calibration: typical pilot family runs ~3-10k tokens/day at Haiku rates,
+// so 200k is ~20x normal — clearly anomalous and worth admin attention,
+// but not so high that a legit power user in their first weekend trips it.
+// Tweak via the env var; CI / preview envs default to a high number so
+// integration tests don't accidentally trigger the alert.
+const NOISY_FAMILY_TOKEN_THRESHOLD = Number(
+  process.env.NOISY_FAMILY_TOKEN_THRESHOLD ?? 200_000,
+);
 
 // Called by Vercel Cron (or manual trigger). Protected by CRON_SECRET.
 // Vercel sends: Authorization: Bearer <CRON_SECRET>
@@ -51,6 +61,13 @@ async function runCleanup() {
       )
     );
 
+  // 4. Noisy-family detection. Flag any family whose 24h token spend is
+  //    above the threshold; write an admin_audit_log row so the next admin
+  //    pageview shows it, and console.error so Sentry catches a warning
+  //    breadcrumb. Per-route rateLimit() tightening is still manual — this
+  //    just makes detection automatic. See tracker #28 + #30.
+  const noisyFamilies = await detectNoisyFamilies();
+
   return NextResponse.json({
     ok: true,
     timestamp: now.toISOString(),
@@ -58,8 +75,69 @@ async function runCleanup() {
       expiredNotificationsDismissed: 'done',
       staleSnoozedDismissed: 'done',
       staleDraftsDeleted: 'done',
+      noisyFamiliesFlagged: noisyFamilies.length,
     },
+    noisyFamilies,
   });
+}
+
+interface NoisyFamilyAlert {
+  familyId: string;
+  tokens: number;
+  calls: number;
+}
+
+async function detectNoisyFamilies(): Promise<NoisyFamilyAlert[]> {
+  const rows = await db.execute(sql`
+    SELECT
+      family_id::text                         AS family_id,
+      SUM(input_tokens + output_tokens)::bigint AS tokens,
+      COUNT(*)::int                            AS calls
+    FROM ai_pipeline_logs
+    WHERE created_at > now() - interval '24 hours'
+    GROUP BY 1
+    HAVING SUM(input_tokens + output_tokens) > ${NOISY_FAMILY_TOKEN_THRESHOLD}
+    ORDER BY tokens DESC
+  `);
+
+  const alerts: NoisyFamilyAlert[] = (rows.rows as Array<{
+    family_id: string;
+    tokens: string | number;
+    calls: number;
+  }>).map((r) => ({
+    familyId: r.family_id,
+    tokens: Number(r.tokens),
+    calls: r.calls,
+  }));
+
+  if (alerts.length === 0) return alerts;
+
+  // Persist one audit-log row per alert so /admin can list recent flags.
+  // Run as a single insert so it's one round-trip.
+  await db.insert(adminAuditLog).values(
+    alerts.map((a) => ({
+      adminUserId: 'system:cron',
+      adminEmail: 'system@hearth',
+      action: 'noisy_family_alert',
+      targetResource: 'family',
+      targetId: a.familyId,
+      reason: `${a.tokens.toLocaleString()} tokens / ${a.calls} calls in last 24h (threshold ${NOISY_FAMILY_TOKEN_THRESHOLD.toLocaleString()})`,
+      metadata: {
+        tokens: a.tokens,
+        calls: a.calls,
+        threshold: NOISY_FAMILY_TOKEN_THRESHOLD,
+      },
+    })),
+  );
+
+  // Sentry breadcrumb — server logs route to it via console.error.
+  for (const a of alerts) {
+    console.error(
+      `[noisy-family-alert] family=${a.familyId} tokens=${a.tokens} calls=${a.calls} threshold=${NOISY_FAMILY_TOKEN_THRESHOLD}`,
+    );
+  }
+
+  return alerts;
 }
 
 // Vercel Cron invokes GET — this is the primary entry point

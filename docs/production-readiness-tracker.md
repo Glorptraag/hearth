@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Oncall cheat sheet landed at `docs/oncall-cheatsheet.md` (#20 ✅).
+**Last touched:** 2026-04-28 — Noisy-family detection now runs automatically on the daily retention cron (#28 ✅).
 
 ---
 
@@ -41,7 +41,7 @@
 | 25 | Rotate `SANITY_API_TOKEN`; calendar quarterly | ⏳ | |
 | 26 | Seed 2–3 additional Sanity packs beyond Starter | ⏳ | |
 | 27 | Test-family onboarding packet | ⏳ | |
-| 28 | Automated trigger for noisy-family rate-limit tightening | ⏳ | |
+| 28 | Automated trigger for noisy-family rate-limit tightening | ✅ | Daily retention cron now runs `detectNoisyFamilies()`. Any family above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) gets an `admin_audit_log` row with `action='noisy_family_alert'` plus a console.error Sentry breadcrumb. Per-route `rateLimit()` tightening is still manual — this just makes detection automatic. |
 | 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |

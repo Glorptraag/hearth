@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — Snapshot-rebuild integration test landed (5 cases, green in isolation). Item #10 still in flight.
+**Last touched:** 2026-04-26 — Badge-award integration test landed (5 cases, green in isolation). Item #10 still in flight.
 
 ---
 
@@ -23,7 +23,7 @@
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |
 | 8 | Four-layer vitest pilot run end-to-end | ✅ | 2026-04-25. Full lifecycle: branch → migrate → vitest → delete. Documented in [test-pilot-issues.md](test-pilot-issues.md). |
 | 9 | Neon integration secrets wired in GH Actions | ✅ | Verified — integration job ran green on `9407e69`. |
-| 10 | Integration coverage on critical API routes | 🟡 | `entries` + `admin/snapshots/rebuild` done (5 cases each, green in isolation). Still bare: badge award, report export, account export/delete. |
+| 10 | Integration coverage on critical API routes | 🟡 | `entries` + `admin/snapshots/rebuild` + `badges/award` done (5 cases each, green in isolation). Still bare: report export, account export/delete. |
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ⏳ | |
 | 13 | Persist partial wizard progress on close | ⏳ | |

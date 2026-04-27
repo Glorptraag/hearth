@@ -21,14 +21,18 @@ Walk this top-to-bottom for a brand-new project. For recurring deploys, jump to 
 
 ### 1.1 Accounts & projects
 
-- [ ] **Vercel Pro** — Pro tier is required for the two scheduled crons in `vercel.json`. Confirm billing is on Pro *before* linking the repo.
-- [ ] **Neon project** — one project with at least a `main` branch. Copy the pooled connection string.
-- [ ] **Sanity project** — `production` dataset, API CDN enabled. From the "API" tab copy the project ID.
-- [ ] **Clerk application** — two Clerk instances recommended: `hearth-dev` (test keys) and `hearth-prod` (live keys). Configure sign-in / sign-up URLs to match `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. in `.env.example`.
-- [ ] **Anthropic API key** — workspace with usage caps set. Haiku spend is the lever; see §4.
-- [ ] **Sentry project** — free tier is fine. Platform = Next.js.
-- [ ] **PostHog** — self-hosted instance stood up (per Decision E in the alpha-readiness pickup notes). Create a project, copy the project key.
-- [ ] **GitHub** — `main` branch protection enabled (see [`docs/branch-hygiene.md`](./branch-hygiene.md)).
+Most of these you likely already have for dev. The audit-vs-provision call-out at the start of each line tells you which.
+
+- [ ] **Vercel** — *Hobby (free) is sufficient at pilot scale.* Two cron jobs are within Hobby's limits as of 2024; arbitrary cron expressions are also Hobby-supported now. Revisit if cron count exceeds 2, you need team membership, or sustained DB egress passes ~10 GB/mo. Earlier versions of this runbook said "Pro required" — that was true under Vercel's pre-2024 cron policy and is now out of date.
+- [ ] **Neon** — *Same project as dev; add a `prod` branch.* Copy the pooled connection string for the prod branch only. The dev branch keeps its own URL.
+- [ ] **Sanity** — *Same project, same `production` dataset.* Generate a fresh prod-scoped API token (Sanity Manage → API → Tokens) so the dev token can stay short-lived. API CDN should already be enabled.
+- [ ] **Clerk** — *New `hearth-prod` instance.* Live keys vs. test keys is the reason for two instances; reusing dev's test keys in prod is a security smell. Configure sign-in / sign-up URLs to match `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. in `.env.example`.
+- [ ] **Anthropic** — *Same key works.* The must-add is a hard monthly spend cap on the workspace. Haiku is the lever; see §4.
+- [ ] **Sentry** — *Likely new for prod.* Free tier (5k errors/mo) is fine. Platform = Next.js. Project name `hearth-prod`.
+- [ ] **PostHog** — *Likely new for prod.* Self-hosted instance per Decision E in the alpha-readiness pickup notes; create a project and copy the project key. Free tier on PostHog Cloud also works if self-host slips.
+- [ ] **GitHub** — *Same repo.* `main` branch protection enabled (see [`docs/branch-hygiene.md`](./branch-hygiene.md)).
+
+**Genuinely new accounts you'll need to create:** Sentry, PostHog, the second Clerk instance. Everything else is a new branch / token / cap on a service you already have.
 
 ### 1.2 Environment variables
 

@@ -55,6 +55,53 @@ export interface PedagogyWizardProps {
 const STEP_LABELS = ['Philosophy', 'Values', 'Practices', 'Review'] as const;
 const MAX_PRIORITIES = 5;
 
+// localStorage key for in-flight wizard state. Persists across page
+// reloads and modal closes so a parent who closes mid-flow returns to
+// the same step and selections. Cleared on successful onComplete or
+// onSkip; deliberately NOT cleared on onClose (that's the whole point).
+const WIZARD_DRAFT_KEY = 'hearth-pedagogy-wizard-draft';
+
+interface WizardDraft {
+  step: number;
+  philosophy: Pedagogy | null;
+  values: string[];
+  practices: string[];
+}
+
+function readDraft(): WizardDraft | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(WIZARD_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<WizardDraft>;
+    // Light shape check — bail if the JSON was tampered or schema drifted.
+    if (
+      typeof parsed.step !== 'number' ||
+      !Array.isArray(parsed.values) ||
+      !Array.isArray(parsed.practices)
+    ) {
+      return null;
+    }
+    return {
+      step: parsed.step,
+      philosophy: (parsed.philosophy ?? null) as Pedagogy | null,
+      values: parsed.values as string[],
+      practices: parsed.practices as string[],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(WIZARD_DRAFT_KEY);
+  } catch {
+    /* silent — quota / privacy mode shouldn't block the wizard */
+  }
+}
+
 export function PedagogyWizard({
   initial,
   onComplete,
@@ -64,11 +111,32 @@ export function PedagogyWizard({
   errorMessage,
   completeLabel = 'Light the Hearth',
 }: PedagogyWizardProps) {
-  const [step, setStep] = useState(0);
-  const [philosophy, setPhilosophy] = useState<Pedagogy | null>(initial?.philosophy ?? null);
-  const [values, setValues] = useState<string[]>(initial?.values ?? []);
-  const [practices, setPractices] = useState<string[]>(initial?.practices ?? []);
+  // Lazy initializers read the draft once on mount. Draft beats `initial`
+  // because it represents the user's most recent in-flight intent.
+  const [step, setStep] = useState<number>(() => readDraft()?.step ?? 0);
+  const [philosophy, setPhilosophy] = useState<Pedagogy | null>(
+    () => readDraft()?.philosophy ?? initial?.philosophy ?? null
+  );
+  const [values, setValues] = useState<string[]>(
+    () => readDraft()?.values ?? initial?.values ?? []
+  );
+  const [practices, setPractices] = useState<string[]>(
+    () => readDraft()?.practices ?? initial?.practices ?? []
+  );
   const [insightTab, setInsightTab] = useState<'philosophy' | 'values' | 'practices'>('philosophy');
+
+  // Persist on every change. Cheap — small payload, infrequent updates.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        WIZARD_DRAFT_KEY,
+        JSON.stringify({ step, philosophy, values, practices } satisfies WizardDraft)
+      );
+    } catch {
+      /* silent — same quota / privacy reasoning as clearDraft */
+    }
+  }, [step, philosophy, values, practices]);
 
   const isModal = Boolean(onClose);
   const focusTrapRef = useFocusTrap(isModal);
@@ -88,9 +156,22 @@ export function PedagogyWizard({
   }, [step, philosophy, values.length, practices.length]);
 
   const goNext = useCallback(() => {
-    if (step < 3) setStep(step + 1);
-    else onComplete({ philosophy, values, practices });
+    if (step < 3) {
+      setStep(step + 1);
+      return;
+    }
+    // The user has committed. Clear the draft now so a refresh after a
+    // successful save lands them in a clean state. If the parent's
+    // onComplete fails, current in-memory state remains intact for retry.
+    clearDraft();
+    onComplete({ philosophy, values, practices });
   }, [step, philosophy, values, practices, onComplete]);
+
+  const handleSkip = useCallback(() => {
+    if (!onSkip) return;
+    clearDraft();
+    onSkip();
+  }, [onSkip]);
 
   const goBack = useCallback(() => {
     if (step > 0) setStep(step - 1);
@@ -136,7 +217,7 @@ export function PedagogyWizard({
             {onSkip && (
               <button
                 type="button"
-                onClick={() => onSkip()}
+                onClick={handleSkip}
                 disabled={saving}
                 className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-200 disabled:opacity-50"
               >

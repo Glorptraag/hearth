@@ -3,6 +3,7 @@
 # Hearth — Incident Runbook
 
 > Target: alpha pilot operator (solo). Bring any novel incident back into this doc so the next occurrence is fast.
+> Mid-incident? Start with the one-page [`docs/oncall-cheatsheet.md`](./oncall-cheatsheet.md) and only come here for depth.
 > Pair with: [`docs/deployment-runbook.md`](./deployment-runbook.md) for env/deploy context.
 > Background reading: [`docs/alpha-readiness-pickup.md`](./alpha-readiness-pickup.md) → "Honest caveats / known limitations". Several incidents are expected consequences of known limitations — check there before treating a symptom as novel.
 

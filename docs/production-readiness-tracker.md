@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Admin AI-cost dashboard is now model-aware (#17 ✅). Falls back to Haiku-equivalent pricing for unknown models rather than silently underestimating.
+**Last touched:** 2026-04-28 — Oncall cheat sheet landed at `docs/oncall-cheatsheet.md` (#20 ✅).
 
 ---
 
@@ -33,7 +33,7 @@
 | 17 | Model-aware AI cost pricing in admin dashboard | ✅ | `priceFor()` resolves any `model_used` value via exact / prefix / family-only fallback. Per-family rollup grouped by `(family_id, kind, model_used)` so each row carries its accurate price. UI shows pricing table per model used in the window + a `Model` column in the family table. |
 | 18 | Hard Anthropic spend cap + weekly alert + kill-switch cheat sheet | ⏳ | |
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |
-| 20 | Minimal oncall cheat sheet | ⏳ | |
+| 20 | Minimal oncall cheat sheet | ✅ | One-page [`docs/oncall-cheatsheet.md`](oncall-cheatsheet.md): critical dashboard URLs, kill switches, symptom→first-move table, useful SQL one-liners, postmortem checklist. Cross-linked from `incident-runbook.md`. |
 | 21 | Dry-run `/api/account/export` + `/api/account/delete` | ⏳ | |
 | 22 | Privacy Policy + T&Cs surface, linked from landing/onboarding | 🟡 | `/privacy` and `/terms` routes exist; content quality + landing/onboarding links need review. |
 | 23 | HEU report export vs. actual QLD HEU template | ⏳ | |

@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — `ADMIN_USER_IDS` consolidation landed (#4 code half). Two seed routes migrated to `isAdmin()`; runbook + `.env.example` + SEED docs cleaned of dual-var ambiguity.
+**Last touched:** 2026-04-26 — Realism pass on runbook §1.1 + tracker #3: Vercel Hobby is sufficient (not Pro), most "new account" items are actually new branches/tokens/caps on services that already exist.
 
 ---
 
@@ -16,7 +16,7 @@
 |---|---|---|---|
 | 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
-| 3 | Provision prod accounts (Vercel Pro, Neon prod, Clerk prod, etc.) | ⏳ | |
+| 3 | Audit existing accounts vs. runbook §1.1; provision the genuinely-new ones | ⏳ | Most services already exist for dev. New things to actually create: Sentry `hearth-prod` project (free tier), PostHog `hearth-prod` project (self-host or free cloud), second Clerk instance `hearth-prod` (live keys vs. dev's test keys). New things to add to existing services: Neon `prod` branch, Sanity prod-scoped API token, Anthropic monthly spend cap. Vercel **Hobby is sufficient** — earlier "Pro required" line was based on Vercel's pre-2024 cron policy. |
 | 4 | Populate Vercel env vars | 🟡 | Code half done: `ADMIN_USER_IDS` removed from the codebase, two seed routes migrated to the canonical `isAdmin()` guard, runbook + `.env.example` + SEED docs all reference only `ADMIN_CLERK_IDS`. Vercel population still pending #3. |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |

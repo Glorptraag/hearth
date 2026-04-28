@@ -40,7 +40,7 @@ This will:
 
 #### Prerequisites for API usage
 - User must be authenticated via Clerk
-- In production: user must be in `ADMIN_USER_IDS` environment variable
+- In production: user must be in `ADMIN_CLERK_IDS` environment variable
 
 #### Request
 
@@ -217,7 +217,7 @@ Example: **L1 Observable Indicators**
 ### "Unauthorized" Error (API)
 
 - Ensure you're authenticated with Clerk
-- In production, add your user ID to `ADMIN_USER_IDS` env var
+- In production, add your user ID to `ADMIN_CLERK_IDS` env var
 
 ### "Failed to create thread X"
 

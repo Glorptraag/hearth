@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { isAdmin } from '@/lib/auth/admin';
 import { seedContentAssets } from '@/scripts/seed-content-assets';
 
 /**
@@ -18,14 +19,11 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      const adminIds = process.env.ADMIN_USER_IDS?.split(',') || [];
-      if (!adminIds.includes(userId)) {
-        return NextResponse.json(
-          { error: 'Seeding not allowed in production' },
-          { status: 403 }
-        );
-      }
+    if (process.env.NODE_ENV === 'production' && !isAdmin(userId)) {
+      return NextResponse.json(
+        { error: 'Seeding not allowed in production' },
+        { status: 403 }
+      );
     }
 
     const results = await seedContentAssets();

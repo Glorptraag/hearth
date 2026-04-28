@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Phase-2 Redis rate-limiter plan landed at `docs/redis-rate-limiter-plan.md` (#30 🟡 design only — gated on multi-region trigger conditions).
+**Last touched:** 2026-04-28 — Merge marathon landed PRs #10–25: 11 tracker items closed (#10, #12, #13, #14, #16, #17, #20, #22, #27, #28, #29) plus 3 partials (#3, #4, #26, #30). Main is now ahead of the pre-marathon state by 17 commits.
 
 ---
 
@@ -47,7 +47,7 @@
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
 | 32 | Cross-file mock flake in integration suite | ✅ | Caused by `isolate: false` — setup files only registered `vi.mock('@clerk/nextjs/server', …)` once per worker, and the shared module cache held whichever copy of Clerk got imported first. Fixed by flipping to `isolate: true` in [vitest.integration.config.ts](../vitest.integration.config.ts). Cost: ~120s of extra startup across 6 files; well below the 30s/test timeout. Stable across two consecutive full-suite runs (28/28 green). |
 
-**Done:** 7 / 30 · **In flight:** 1 · **Open:** 22 (#31 + #32 found-and-fixed in this flow)
+**Done:** 17 / 30 · **In flight:** 4 · **Open:** 9 (+ #31 / #32 found-and-fixed in this flow)
 
 ---
 

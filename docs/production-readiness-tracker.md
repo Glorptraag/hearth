@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Arrow keys now cycle the wizard Review step's three insight tabs (#14 ✅).
+**Last touched:** 2026-04-28 — PostHog now groups co-facilitators by family for funnels (#16 ✅).
 
 ---
 
@@ -29,7 +29,7 @@
 | 13 | Persist partial wizard progress on close | ✅ | `PedagogyWizard` reads/writes a `hearth-pedagogy-wizard-draft` localStorage entry on every state change. Restored on next mount; cleared on successful `onComplete`/`onSkip` (deliberately NOT cleared on `onClose`). Survives page reload, browser back, and modal dismissal. |
 | 14 | Arrow-key tab cycling in wizard Review step | ✅ | Review step's three insight tabs (Philosophy Lens / Values / Next Steps) handle ArrowLeft / ArrowRight / Home / End per WAI-ARIA APG. Roving tabindex was already in place (`tabIndex={active ? 0 : -1}`); just needed the keydown handler + ref forwarding to move focus. |
 | 15 | Run Playwright `e2e/` specs against preview deploy | ⏳ | |
-| 16 | PostHog family-level identification | ⏳ | Today: two Clerk users in one family = two PostHog persons. |
+| 16 | PostHog family-level identification | ✅ | New `identifyFamily()` wrapper calls `posthog.group('family', hashedFamilyId)`; PostHogProvider fetches `/api/family` after `identifyUser` and tags the person. Server-side `trackServer()` accepts an optional `{ familyId }` and emits `$groups` so server events join the same family group. Two Clerk users in one family now roll up into one analytic unit for funnels. |
 | 17 | Model-aware AI cost pricing in admin dashboard | ⏳ | Hardcoded to Haiku 4.5. |
 | 18 | Hard Anthropic spend cap + weekly alert + kill-switch cheat sheet | ⏳ | |
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |

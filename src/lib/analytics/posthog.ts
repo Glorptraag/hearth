@@ -38,10 +38,8 @@ export function initAnalytics() {
 
 /**
  * Identify the signed-in user to PostHog by a SHA-256 hash of their ID.
- * Accepts any stable string identifier; we currently pass the Clerk user
- * ID because the family ID requires a server round-trip. Multiple Clerk
- * users per family (co-facilitators) will appear as separate PostHog
- * identities — address once we add family-level aggregation.
+ * Accepts any stable string identifier; we pass the Clerk user ID so
+ * client-only and server-fired events on the same person merge.
  */
 export async function identifyUser(id: string) {
   if (!enabled || !initialised) return;
@@ -50,6 +48,22 @@ export async function identifyUser(id: string) {
     posthog.identify(hashed);
   } catch {
     // identification failure is non-fatal
+  }
+}
+
+/**
+ * Tag the current PostHog person with their family group, so two
+ * co-facilitators on the same household roll up into one analytic
+ * unit for funnels and retention. Pair with `identifyUser`; PostHog
+ * applies the group to all subsequent events from this client.
+ */
+export async function identifyFamily(familyId: string) {
+  if (!enabled || !initialised) return;
+  try {
+    const hashed = await hashId(familyId);
+    posthog.group('family', hashed);
+  } catch {
+    // grouping failure is non-fatal
   }
 }
 

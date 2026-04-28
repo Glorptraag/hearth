@@ -127,14 +127,14 @@ export async function POST(request: NextRequest) {
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'ok',
-        });
+        }, { familyId: family.id });
       })
       .catch((err) => {
         console.error('[entries/POST] AI pipeline error:', err);
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'error',
-        });
+        }, { familyId: family.id });
       });
   } else {
     // Draft saved — schedule a gentle resume nudge (frequency-capped)

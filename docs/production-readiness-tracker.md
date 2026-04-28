@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — `handleSkipWizard` no longer silently advances on PATCH failure (#12 ✅). New `errorMessage` prop on `PedagogyWizard` surfaces the error in the footer.
+**Last touched:** 2026-04-28 — Wizard now persists in-flight selections to localStorage; closing or refreshing the modal restores the same step + selections (#13 ✅).
 
 ---
 
@@ -26,7 +26,7 @@
 | 10 | Integration coverage on critical API routes | ✅ | All five critical routes covered: `entries`, `admin/snapshots/rebuild`, `badges/award`, `report/export`, `account/export`, `account/delete`. 28 cases, suite-wide green against a real Neon branch (two consecutive runs). |
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ✅ | Skip handler now checks `res.ok` (fetch resolves on 4xx/5xx so the throw-only path was missing them) and surfaces the error in a new `errorMessage` prop on `PedagogyWizard` rather than advancing. Network-error path also covered. |
-| 13 | Persist partial wizard progress on close | ⏳ | |
+| 13 | Persist partial wizard progress on close | ✅ | `PedagogyWizard` reads/writes a `hearth-pedagogy-wizard-draft` localStorage entry on every state change. Restored on next mount; cleared on successful `onComplete`/`onSkip` (deliberately NOT cleared on `onClose`). Survives page reload, browser back, and modal dismissal. |
 | 14 | Arrow-key tab cycling in wizard Review step | ⏳ | |
 | 15 | Run Playwright `e2e/` specs against preview deploy | ⏳ | |
 | 16 | PostHog family-level identification | ⏳ | Today: two Clerk users in one family = two PostHog persons. |

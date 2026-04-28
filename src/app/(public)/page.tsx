@@ -220,7 +220,7 @@ export default async function LandingPage() {
           <div className="flex gap-lg">
             <Link href="/terms" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Terms</Link>
             <Link href="/privacy" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Privacy</Link>
-            <a href="mailto:hello@hearthlearning.com" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Contact</a>
+            <a href="mailto:hello@hearthlearning.au" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Contact</a>
           </div>
           <div className="font-sans text-xs text-text-muted">© 2026 Hearth Learning Pty Ltd</div>
         </footer>

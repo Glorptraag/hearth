@@ -44,8 +44,17 @@ export default defineConfig({
     // painful, the fix is table-prefix isolation per test, not more workers.
     // (Vitest 4: top-level `maxWorkers` + `isolate` replace the removed
     // `pool` / `poolOptions` knobs — see vitest.dev/guide/migration#pool-rework.)
+    //
+    // `isolate: true` is REQUIRED here, not optional. Under `isolate: false`,
+    // setup files run once per worker and Vitest's module cache holds
+    // whichever copy of `@clerk/nextjs/server` got imported first. If a
+    // route module hits that import before the setup's `vi.mock` registers,
+    // the real Clerk loads and pulls in `server-only`, which throws. The
+    // flake hits ALL files in the suite (including the canonical entries
+    // test) once ≥3 files run together. Per-file isolation costs us a
+    // little startup time but makes mocks deterministic.
     maxWorkers: 1,
-    isolate: false,
+    isolate: true,
 
     // Integration tests are slower than unit tests. Default 5s timeout is
     // tight for DB round trips on a fresh branch.

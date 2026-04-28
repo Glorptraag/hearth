@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Privacy + Terms rewritten to match actual technical posture; onboarding step 1 now links them (#22 ✅).
+**Last touched:** 2026-04-28 — Test-family onboarding packet landed at `docs/test-family-onboarding-packet.md` (#27 ✅).
 
 ---
 
@@ -40,7 +40,7 @@
 | 24 | Neon PITR retention + restore drill | ⏳ | |
 | 25 | Rotate `SANITY_API_TOKEN`; calendar quarterly | ⏳ | |
 | 26 | Seed 2–3 additional Sanity packs beyond Starter | ⏳ | |
-| 27 | Test-family onboarding packet | ⏳ | |
+| 27 | Test-family onboarding packet | ✅ | [`docs/test-family-onboarding-packet.md`](test-family-onboarding-packet.md): family-facing welcome (alpha-pilot reality, invite redemption, first-week minimum-effective workflow, support SLA matrix, privacy summary, exit ramp) + an internal operator pre-flight checklist. Copy-paste-able into the invite email. |
 | 28 | Automated trigger for noisy-family rate-limit tightening | ✅ | Daily retention cron now runs `detectNoisyFamilies()`. Any family above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) gets an `admin_audit_log` row with `action='noisy_family_alert'` plus a console.error Sentry breadcrumb. Per-route `rateLimit()` tightening is still manual — this just makes detection automatic. |
 | 29 | Logger draft survives network drop (offline minimum) | ✅ | Verified: existing 10s autosave to `localStorage` already survives a network drop; the catch path on save preserves the draft. New `useOnlineStatus()` hook + offline banner on `/log` make the behaviour discoverable. Save-failure toast now distinguishes offline ("Your draft is saved locally — try again when you're back online") from server-side errors. Full PWA / sync queue stays a Phase 2 item. |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |

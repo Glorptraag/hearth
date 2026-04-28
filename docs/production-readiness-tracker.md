@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Wizard now persists in-flight selections to localStorage; closing or refreshing the modal restores the same step + selections (#13 ✅).
+**Last touched:** 2026-04-28 — Arrow keys now cycle the wizard Review step's three insight tabs (#14 ✅).
 
 ---
 
@@ -27,7 +27,7 @@
 | 11 | Manual QA pedagogy wizard (onboarding + Settings re-run) | ⏳ | Never clicked through. |
 | 12 | Fix `handleSkipWizard` silent advance on PATCH failure | ✅ | Skip handler now checks `res.ok` (fetch resolves on 4xx/5xx so the throw-only path was missing them) and surfaces the error in a new `errorMessage` prop on `PedagogyWizard` rather than advancing. Network-error path also covered. |
 | 13 | Persist partial wizard progress on close | ✅ | `PedagogyWizard` reads/writes a `hearth-pedagogy-wizard-draft` localStorage entry on every state change. Restored on next mount; cleared on successful `onComplete`/`onSkip` (deliberately NOT cleared on `onClose`). Survives page reload, browser back, and modal dismissal. |
-| 14 | Arrow-key tab cycling in wizard Review step | ⏳ | |
+| 14 | Arrow-key tab cycling in wizard Review step | ✅ | Review step's three insight tabs (Philosophy Lens / Values / Next Steps) handle ArrowLeft / ArrowRight / Home / End per WAI-ARIA APG. Roving tabindex was already in place (`tabIndex={active ? 0 : -1}`); just needed the keydown handler + ref forwarding to move focus. |
 | 15 | Run Playwright `e2e/` specs against preview deploy | ⏳ | |
 | 16 | PostHog family-level identification | ⏳ | Today: two Clerk users in one family = two PostHog persons. |
 | 17 | Model-aware AI cost pricing in admin dashboard | ⏳ | Hardcoded to Haiku 4.5. |

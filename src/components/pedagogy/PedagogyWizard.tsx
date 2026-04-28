@@ -42,6 +42,12 @@ export interface PedagogyWizardProps {
   onClose?: () => void;
   /** Saving flag — disables Continue / Light the Hearth buttons. */
   saving?: boolean;
+  /**
+   * Inline error to surface in the footer (e.g. when an `onSkip`/`onComplete`
+   * callback's PATCH returns a non-OK HTTP status). Setting it does not stop
+   * the wizard advancing — the parent decides whether to advance or not.
+   */
+  errorMessage?: string;
   /** Overrides the final CTA label; defaults to "Light the Hearth". */
   completeLabel?: string;
 }
@@ -55,6 +61,7 @@ export function PedagogyWizard({
   onSkip,
   onClose,
   saving = false,
+  errorMessage,
   completeLabel = 'Light the Hearth',
 }: PedagogyWizardProps) {
   const [step, setStep] = useState(0);
@@ -256,10 +263,16 @@ export function PedagogyWizard({
             </span>
           )}
           <div className="flex items-center gap-md">
-            {disabledHint && !saving && (
-              <span className="font-sans text-xs text-text-muted">
-                {disabledHint}
+            {errorMessage ? (
+              <span role="alert" className="font-sans text-xs text-red-400">
+                {errorMessage}
               </span>
+            ) : (
+              disabledHint && !saving && (
+                <span className="font-sans text-xs text-text-muted">
+                  {disabledHint}
+                </span>
+              )
             )}
             <button
               type="button"

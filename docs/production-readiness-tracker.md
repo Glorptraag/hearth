@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-26 — Realism pass on runbook §1.1 + tracker #3: Vercel Hobby is sufficient (not Pro), most "new account" items are actually new branches/tokens/caps on services that already exist.
+**Last touched:** 2026-04-28 — Realism pass: Hearth is a prod-only deployment (no separate dev env); #3 + #4 rewritten to reflect "audit existing prod, fill the gaps" rather than "stand up a second of everything".
 
 ---
 
@@ -16,8 +16,8 @@
 |---|---|---|---|
 | 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
-| 3 | Audit existing accounts vs. runbook §1.1; provision the genuinely-new ones | ⏳ | Most services already exist for dev. New things to actually create: Sentry `hearth-prod` project (free tier), PostHog `hearth-prod` project (self-host or free cloud), second Clerk instance `hearth-prod` (live keys vs. dev's test keys). New things to add to existing services: Neon `prod` branch, Sanity prod-scoped API token, Anthropic monthly spend cap. Vercel **Hobby is sufficient** — earlier "Pro required" line was based on Vercel's pre-2024 cron policy. |
-| 4 | Populate Vercel env vars | 🟡 | Code half done: `ADMIN_USER_IDS` removed from the codebase, two seed routes migrated to the canonical `isAdmin()` guard, runbook + `.env.example` + SEED docs all reference only `ADMIN_CLERK_IDS`. Vercel population still pending #3. |
+| 3 | Verify prod-only accounts are configured for production use | 🟡 | Hearth never ran a separate dev environment — went straight to prod. Audit checklist: (a) **Clerk** keys are `pk_live_…` not `pk_test_…`; (b) **Anthropic** workspace has a hard monthly spend cap (closes #18); (c) **Sentry** project exists + DSN in Vercel env (free tier); (d) **PostHog** project exists + key+host in Vercel env (free cloud or self-host); (e) **Vercel** project deployed in `syd1` to match Neon Sydney; (f) decide whether to wipe existing Neon prod test data or self-delete via the app. Neon prod branch confirmed: `hearth/production`, AWS Sydney, Postgres 17, free tier with 6h PITR (revisit at #24). |
+| 4 | Populate Vercel env vars | 🟡 | Code half done in PR #10 (`ADMIN_USER_IDS` consolidation). Vercel population: most env vars likely already set since prod-only deployment exists; the audit is "are the *missing* ones from #3 audit (probably Sentry DSN + PostHog key/host) added now". |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |

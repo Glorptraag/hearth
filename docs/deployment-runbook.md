@@ -21,18 +21,18 @@ Walk this top-to-bottom for a brand-new project. For recurring deploys, jump to 
 
 ### 1.1 Accounts & projects
 
-Most of these you likely already have for dev. The audit-vs-provision call-out at the start of each line tells you which.
+> **Hearth is a prod-only deployment.** There is no separate dev environment — the project went straight to production from day one (no users to migrate). The checklist below is shaped accordingly: verify what exists is configured for production use, and add the small handful of services that probably weren't wired up during development.
 
-- [ ] **Vercel** — *Hobby (free) is sufficient at pilot scale.* Two cron jobs are within Hobby's limits as of 2024; arbitrary cron expressions are also Hobby-supported now. Revisit if cron count exceeds 2, you need team membership, or sustained DB egress passes ~10 GB/mo. Earlier versions of this runbook said "Pro required" — that was true under Vercel's pre-2024 cron policy and is now out of date.
-- [ ] **Neon** — *Same project as dev; add a `prod` branch.* Copy the pooled connection string for the prod branch only. The dev branch keeps its own URL.
-- [ ] **Sanity** — *Same project, same `production` dataset.* Generate a fresh prod-scoped API token (Sanity Manage → API → Tokens) so the dev token can stay short-lived. API CDN should already be enabled.
-- [ ] **Clerk** — *New `hearth-prod` instance.* Live keys vs. test keys is the reason for two instances; reusing dev's test keys in prod is a security smell. Configure sign-in / sign-up URLs to match `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. in `.env.example`.
-- [ ] **Anthropic** — *Same key works.* The must-add is a hard monthly spend cap on the workspace. Haiku is the lever; see §4.
-- [ ] **Sentry** — *Likely new for prod.* Free tier (5k errors/mo) is fine. Platform = Next.js. Project name `hearth-prod`.
-- [ ] **PostHog** — *Likely new for prod.* Self-hosted instance per Decision E in the alpha-readiness pickup notes; create a project and copy the project key. Free tier on PostHog Cloud also works if self-host slips.
-- [ ] **GitHub** — *Same repo.* `main` branch protection enabled (see [`docs/branch-hygiene.md`](./branch-hygiene.md)).
+- [ ] **Vercel** — Hobby (free) is sufficient at pilot scale. Hobby supports the two crons in `vercel.json` (current Vercel cron policy as of 2024+). Project should be set to **single region `syd1`** in Settings → Functions to match Neon Sydney. Revisit if cron count exceeds 2, you need team membership, or sustained DB egress passes ~10 GB/mo.
+- [ ] **Neon** — one project with a `production` branch (already set up: `hearth/production`, AWS Asia Pacific 2 Sydney, Postgres 17). Free tier gives 6h point-in-time recovery; paid tier extends to 7 days — flagged at tracker #24. Copy the **pooled** connection string from the production branch's Connect modal for `DATABASE_URL`.
+- [ ] **Sanity** — existing project, `production` dataset. Generate a write-scoped API token if one isn't already in use (Sanity Manage → API → Tokens). Copy for `SANITY_API_TOKEN`. Rotate quarterly per #25.
+- [ ] **Clerk** — single instance, but **the keys must be live, not test**. Open Clerk dashboard → API Keys; if the publishable key starts with `pk_test_…` you're running test mode in production and email/SMS won't behave properly for real families. Promote the instance to Production (Clerk dashboard → instance dropdown → "Switch to production" or "Create production instance"). Live keys start with `pk_live_…` and `sk_live_…`. Configure sign-in / sign-up URLs to match `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. in `.env.example`.
+- [ ] **Anthropic API key** — set a hard monthly spend cap on the workspace (Anthropic console → Settings → Limits). This also closes tracker #18. Haiku is the dominant spend lever; see §4.
+- [ ] **Sentry** — free tier (5k errors/mo) is plenty. Platform = Next.js. Likely a *new* signup if Sentry wasn't wired up during pre-launch development. Copy the DSN for `NEXT_PUBLIC_SENTRY_DSN`.
+- [ ] **PostHog** — Cloud free tier (1M events/mo) covers the alpha indefinitely; self-hosted per Decision E is also valid. Likely a *new* signup. Copy project key + host URL for `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST`.
+- [ ] **GitHub** — `main` branch protection enabled (see [`docs/branch-hygiene.md`](./branch-hygiene.md)).
 
-**Genuinely new accounts you'll need to create:** Sentry, PostHog, the second Clerk instance. Everything else is a new branch / token / cap on a service you already have.
+**Genuinely new signups for most operators:** Sentry + PostHog. Everything else is already in place — the audit is whether each is on production-tier configuration.
 
 ### 1.2 Environment variables
 

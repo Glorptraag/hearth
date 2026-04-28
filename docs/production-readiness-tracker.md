@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — PostHog now groups co-facilitators by family for funnels (#16 ✅).
+**Last touched:** 2026-04-28 — Admin AI-cost dashboard is now model-aware (#17 ✅). Falls back to Haiku-equivalent pricing for unknown models rather than silently underestimating.
 
 ---
 
@@ -30,7 +30,7 @@
 | 14 | Arrow-key tab cycling in wizard Review step | ✅ | Review step's three insight tabs (Philosophy Lens / Values / Next Steps) handle ArrowLeft / ArrowRight / Home / End per WAI-ARIA APG. Roving tabindex was already in place (`tabIndex={active ? 0 : -1}`); just needed the keydown handler + ref forwarding to move focus. |
 | 15 | Run Playwright `e2e/` specs against preview deploy | ⏳ | |
 | 16 | PostHog family-level identification | ✅ | New `identifyFamily()` wrapper calls `posthog.group('family', hashedFamilyId)`; PostHogProvider fetches `/api/family` after `identifyUser` and tags the person. Server-side `trackServer()` accepts an optional `{ familyId }` and emits `$groups` so server events join the same family group. Two Clerk users in one family now roll up into one analytic unit for funnels. |
-| 17 | Model-aware AI cost pricing in admin dashboard | ⏳ | Hardcoded to Haiku 4.5. |
+| 17 | Model-aware AI cost pricing in admin dashboard | ✅ | `priceFor()` resolves any `model_used` value via exact / prefix / family-only fallback. Per-family rollup grouped by `(family_id, kind, model_used)` so each row carries its accurate price. UI shows pricing table per model used in the window + a `Model` column in the family table. |
 | 18 | Hard Anthropic spend cap + weekly alert + kill-switch cheat sheet | ⏳ | |
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |
 | 20 | Minimal oncall cheat sheet | ⏳ | |

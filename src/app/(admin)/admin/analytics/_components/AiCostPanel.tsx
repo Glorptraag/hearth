@@ -17,6 +17,7 @@ interface DayRow {
 interface FamilyRow {
   familyId: string;
   kind: 'draft' | 'full';
+  model: string;
   calls: number;
   inputTokens: number;
   outputTokens: number;
@@ -35,7 +36,7 @@ interface CostResponse {
   daily: DayRow[];
   families: FamilyRow[];
   totals: { draft: KindTotals; full: KindTotals };
-  pricing: { input: number; output: number };
+  pricing: Record<string, { input: number; output: number }>;
   generatedAt: string;
 }
 
@@ -94,12 +95,8 @@ export default function AiCostPanel() {
             ))}
           </div>
         </div>
-        {data && (
-          <p className="font-sans text-xs text-text-muted">
-            Pricing: ${data.pricing.input.toFixed(2)}/Mtok input · ${data.pricing.output.toFixed(2)}/Mtok output (Haiku 4.5).
-            Update <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">PRICING_PER_MTOK</code> in{' '}
-            <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">/api/admin/analytics/ai-cost</code> if model changes.
-          </p>
+        {data && Object.keys(data.pricing).length > 0 && (
+          <PricingFootnote pricing={data.pricing} />
         )}
       </div>
 
@@ -143,6 +140,33 @@ export default function AiCostPanel() {
           </p>
         </>
       )}
+    </div>
+  );
+}
+
+function PricingFootnote({
+  pricing,
+}: {
+  pricing: Record<string, { input: number; output: number }>;
+}) {
+  const entries = Object.entries(pricing).sort(([a], [b]) => a.localeCompare(b));
+  return (
+    <div className="font-sans text-xs text-text-muted">
+      <span className="font-semibold">Pricing per model used in this window:</span>
+      <ul className="mt-xs space-y-[2px]">
+        {entries.map(([model, p]) => (
+          <li key={model} className="flex flex-wrap gap-x-md">
+            <code className="font-mono text-[10px] text-text-secondary">{model}</code>
+            <span>
+              ${p.input.toFixed(2)} / Mtok in · ${p.output.toFixed(2)} / Mtok out
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-xs">
+        Update <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">PRICING_PER_MTOK</code>{' '}
+        in <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">/api/admin/analytics/ai-cost</code> if Anthropic publishes new rates.
+      </p>
     </div>
   );
 }
@@ -259,6 +283,7 @@ function FamilyTable({ rows }: { rows: FamilyRow[] }) {
           <tr>
             <th className="px-md py-sm font-semibold text-text-muted">Family ID</th>
             <th className="px-md py-sm font-semibold text-text-muted">Kind</th>
+            <th className="px-md py-sm font-semibold text-text-muted">Model</th>
             <th className="px-md py-sm font-semibold text-text-muted text-right">Calls</th>
             <th className="px-md py-sm font-semibold text-text-muted text-right">Tokens (in/out)</th>
             <th className="px-md py-sm font-semibold text-text-muted text-right">Spend</th>
@@ -267,7 +292,7 @@ function FamilyTable({ rows }: { rows: FamilyRow[] }) {
         <tbody>
           {rows.map((r, i) => (
             <tr
-              key={`${r.familyId}-${r.kind}-${i}`}
+              key={`${r.familyId}-${r.kind}-${r.model}-${i}`}
               className="border-t border-border-subtle"
             >
               <td className="px-md py-sm font-mono text-[11px] text-text-secondary">
@@ -283,6 +308,9 @@ function FamilyTable({ rows }: { rows: FamilyRow[] }) {
                 >
                   {r.kind}
                 </span>
+              </td>
+              <td className="px-md py-sm font-mono text-[11px] text-text-secondary">
+                {r.model.replace(/-draft$/, '')}
               </td>
               <td className="px-md py-sm text-right text-text-primary">{r.calls}</td>
               <td className="px-md py-sm text-right text-text-secondary">

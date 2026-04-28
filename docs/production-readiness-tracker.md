@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Noisy-family detection now runs automatically on the daily retention cron (#28 ✅).
+**Last touched:** 2026-04-28 — Logger now shows an offline banner + tailored save-failure toast; existing 10s autosave already survives network drops (#29 ✅).
 
 ---
 
@@ -42,7 +42,7 @@
 | 26 | Seed 2–3 additional Sanity packs beyond Starter | ⏳ | |
 | 27 | Test-family onboarding packet | ⏳ | |
 | 28 | Automated trigger for noisy-family rate-limit tightening | ✅ | Daily retention cron now runs `detectNoisyFamilies()`. Any family above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) gets an `admin_audit_log` row with `action='noisy_family_alert'` plus a console.error Sentry breadcrumb. Per-route `rateLimit()` tightening is still manual — this just makes detection automatic. |
-| 29 | Logger draft survives network drop (offline minimum) | ⏳ | |
+| 29 | Logger draft survives network drop (offline minimum) | ✅ | Verified: existing 10s autosave to `localStorage` already survives a network drop; the catch path on save preserves the draft. New `useOnlineStatus()` hook + offline banner on `/log` make the behaviour discoverable. Save-failure toast now distinguishes offline ("Your draft is saved locally — try again when you're back online") from server-side errors. Full PWA / sync queue stays a Phase 2 item. |
 | 30 | Move rate limiter to Redis / Upstash before multi-region | ⏳ | Phase 2 prep. |
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
 | 32 | Cross-file mock flake in integration suite | ✅ | Caused by `isolate: false` — setup files only registered `vi.mock('@clerk/nextjs/server', …)` once per worker, and the shared module cache held whichever copy of Clerk got imported first. Fixed by flipping to `isolate: true` in [vitest.integration.config.ts](../vitest.integration.config.ts). Cost: ~120s of extra startup across 6 files; well below the 30s/test timeout. Stable across two consecutive full-suite runs (28/28 green). |

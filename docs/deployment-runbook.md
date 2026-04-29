@@ -4,7 +4,7 @@
 
 > Target: alpha pilot (10–20 families) on Vercel + Neon + Sanity. Solo operator.
 > Scope: first production deploy + recurring deploy checklist.
-> Pair with: [`docs/incident-runbook.md`](./incident-runbook.md) for post-deploy issues.
+> Pair with: [`docs/incident-runbook.md`](./incident-runbook.md) for post-deploy issues, and [`docs/external-services-guide.md`](./external-services-guide.md) for free-tier limits + paid-tier tip points on every provider this runbook touches.
 
 ## Decisions this runbook assumes
 

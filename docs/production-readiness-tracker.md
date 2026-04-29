@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-28 — Merge marathon landed PRs #10–25: 11 tracker items closed (#10, #12, #13, #14, #16, #17, #20, #22, #27, #28, #29) plus 3 partials (#3, #4, #26, #30). Main is now ahead of the pre-marathon state by 17 commits.
+**Last touched:** 2026-04-29 — All-in-one external-services guide landed at [`docs/external-services-guide.md`](external-services-guide.md): free-tier limits, tip-points to paid plans, and per-provider mid-incident dashboards. Cross-linked from runbook + cheat sheet. `.env.example` documents `VOYAGE_API_KEY` + `PEDAGOGY_KB_ENABLED`.
 
 ---
 

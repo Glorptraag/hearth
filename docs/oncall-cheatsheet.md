@@ -2,7 +2,7 @@
 
 # Hearth — Oncall Cheat Sheet
 
-> One-page emergency reference. Solo-dev pilot scale (10–20 families). For depth on any incident, jump to [`docs/incident-runbook.md`](./incident-runbook.md). For env/deploy context, [`docs/deployment-runbook.md`](./deployment-runbook.md).
+> One-page emergency reference. Solo-dev pilot scale (10–20 families). For depth on any incident, jump to [`docs/incident-runbook.md`](./incident-runbook.md). For env/deploy context, [`docs/deployment-runbook.md`](./deployment-runbook.md). For the full free-tier matrix + tip points on every external service, [`docs/external-services-guide.md`](./external-services-guide.md).
 
 ## When to use this doc
 

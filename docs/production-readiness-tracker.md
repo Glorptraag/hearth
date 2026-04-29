@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-29 — All-in-one external-services guide landed at [`docs/external-services-guide.md`](external-services-guide.md): free-tier limits, tip-points to paid plans, and per-provider mid-incident dashboards. Cross-linked from runbook + cheat sheet. `.env.example` documents `VOYAGE_API_KEY` + `PEDAGOGY_KB_ENABLED`.
+**Last touched:** 2026-04-29 — Expanded the external-services guide with per-provider rationale: what each service is in the world, why we picked it, and why each alternative was ruled out. Plus a top-level "architecture decisions driving these choices" preamble.
 
 ---
 

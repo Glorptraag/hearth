@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-29 — Expanded the external-services guide with per-provider rationale: what each service is in the world, why we picked it, and why each alternative was ruled out. Plus a top-level "architecture decisions driving these choices" preamble.
+**Last touched:** 2026-04-30 — Reality-check pass on #3 + #4 against actual Vercel env state. Most of #3 (Clerk live keys + Sentry + PostHog + Vercel region) and #4 (13 of the required env vars) are already in place. Genuinely missing: `CRON_SECRET`, `ADMIN_CLERK_IDS`, Anthropic spend cap (#18). Three existing vars flagged "Needs Attention" in Vercel — re-save fixes them.
 
 ---
 
@@ -16,8 +16,8 @@
 |---|---|---|---|
 | 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
-| 3 | Verify prod-only accounts are configured for production use | 🟡 | Hearth never ran a separate dev environment — went straight to prod. Audit checklist: (a) **Clerk** keys are `pk_live_…` not `pk_test_…`; (b) **Anthropic** workspace has a hard monthly spend cap (closes #18); (c) **Sentry** project exists + DSN in Vercel env (free tier); (d) **PostHog** project exists + key+host in Vercel env (free cloud or self-host); (e) **Vercel** project deployed in `syd1` to match Neon Sydney; (f) decide whether to wipe existing Neon prod test data or self-delete via the app. Neon prod branch confirmed: `hearth/production`, AWS Sydney, Postgres 17, free tier with 6h PITR (revisit at #24). |
-| 4 | Populate Vercel env vars | 🟡 | Code half done in PR #10 (`ADMIN_USER_IDS` consolidation). Vercel population: most env vars likely already set since prod-only deployment exists; the audit is "are the *missing* ones from #3 audit (probably Sentry DSN + PostHog key/host) added now". |
+| 3 | Verify prod-only accounts are configured for production use | 🟡 | Confirmed 2026-04-30 from Vercel env screenshot: (a) Clerk live keys ✅, (c) Sentry DSN ✅ + SENTRY_ORG + SENTRY_PROJECT, (d) PostHog key+host ✅, (e) Vercel project linked. Still pending: (b) Anthropic monthly spend cap (also closes #18) — operator-only check in Anthropic console; (f) decide on Neon prod test-data wipe (do via app's `/api/account/delete` to also exercise #21). Neon prod branch confirmed: `hearth/production`, AWS Sydney, Postgres 17, free tier with 6h PITR (revisit at #24). |
+| 4 | Populate Vercel env vars | 🟡 | Code half done in PR #10 (`ADMIN_USER_IDS` consolidation). Vercel population confirmed 2026-04-30 (13 vars present): all required-secrets set. Real gaps remaining: **(a) `CRON_SECRET`** — without it the retention cron 500s; **(b) `ADMIN_CLERK_IDS`** — without it `/admin/*` is unreachable in prod. Optional `SENTRY_AUTH_TOKEN` recommended for un-minified stack traces. Three vars (`DATABASE_URL`, `ANTHROPIC_API_KEY`, `SANITY_API_TOKEN`) currently flagged "Needs Attention" by Vercel — re-save to clear. |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |

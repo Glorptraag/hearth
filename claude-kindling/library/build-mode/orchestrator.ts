@@ -73,6 +73,11 @@ import {
   readEvents,
   latestEventForId,
 } from '../../register/helper';
+import { checkPackGate } from './pack-gate';
+import { checkOverlap, type OverlapHit } from './overlap-check';
+import { sixTestCheckActivity, type SixTestActivityInput } from './six-test-checks';
+import { writeSessionNoteStart, appendSessionNoteCloseOut } from './session-note';
+import { regenerateDerivedArtifacts, type DerivedArtifactPaths } from './derived-artifacts';
 
 // ─── CLI parsing ─────────────────────────────────────────────────────────────
 
@@ -230,6 +235,11 @@ interface RunContext {
   hardFailures: { id: string; criteria: string[] }[];
   softWarnings: { id: string; criteria: string[] }[];
   neededFlagged: ResourceRef[];
+  // [NEW] §4.2 wiring
+  sessionNotePath: string;
+  overlapWarnings: OverlapHit[];
+  derivedArtifacts?: DerivedArtifactPaths;
+  derivedArtifactsError?: string;
 }
 
 async function main() {
@@ -259,10 +269,50 @@ async function main() {
     hardFailures: [],
     softWarnings: [],
     neededFlagged: [],
+    sessionNotePath: '',
+    overlapWarnings: [],
   };
+
+  // ── [NEW] Pack gate — parent pack must be at `specced` or beyond
+  const packGate = await checkPackGate(spec.packRef);
+  if (!packGate.ok) {
+    throw new Error(packGate.error ?? 'pack-gate: refused');
+  }
 
   // ── Gate: spec must be at `specced` per register
   await checkSpecGate(ctx);
+
+  // ── [NEW] Overlap check vs register/modules.jsonl
+  const overlap = await checkOverlap(spec);
+  if (overlap.blocking.length > 0) {
+    const hits = overlap.blocking
+      .map((h) => `${h.kindlingId} (Jaccard ${h.jaccard.toFixed(2)})`)
+      .join('; ');
+    throw new Error(
+      `overlap-check: target understanding overlaps too closely with existing module(s): ${hits}.\n` +
+        `Reword the spec's targetUnderstanding or, if intentional, file a scribe-mode note ` +
+        `before re-running build mode.`,
+    );
+  }
+  ctx.overlapWarnings = overlap.warnings;
+  for (const w of overlap.warnings) {
+    ctx.softWarnings.push({
+      id: spec.kindlingId,
+      criteria: [`overlap:near-duplicate:${w.kindlingId}`],
+    });
+  }
+
+  // ── [NEW] Session note — write the design-lock header
+  ctx.sessionNotePath = await writeSessionNoteStart({
+    session: ctx.session,
+    mode: 'build',
+    module: spec.kindlingId,
+    packRef: spec.packRef,
+    targetUnderstanding: spec.targetUnderstanding,
+    approachCount: spec.approaches.length,
+    startedAt: new Date().toISOString(),
+  });
+  console.log(`  📝 session note: ${ctx.sessionNotePath}`);
 
   // ── Module-level sparse-content check (informational; some fields aren't yet known)
   surfaceModulePreview(ctx);
@@ -292,7 +342,50 @@ async function main() {
   // ── Fire content_constructed if no hard fails
   await maybeFireContentConstructed(ctx);
 
-  // ── Close-out
+  // ── [NEW] Regenerate derived artifacts (status board, heatmap, per-module YAML)
+  // Wrapped in try/catch — a regen failure must NOT reverse content_constructed.
+  try {
+    ctx.derivedArtifacts = await regenerateDerivedArtifacts(spec, {
+      session: ctx.session,
+      spec: ctx.spec,
+      created: ctx.created,
+      hardFailures: ctx.hardFailures,
+      softWarnings: ctx.softWarnings,
+      dryRun: ctx.dryRun,
+    });
+    console.log(`\n✓ derived artifacts regenerated`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    ctx.derivedArtifactsError = message;
+    console.warn(
+      `\n⚠  derived-artifacts regen failed: ${message}\n` +
+        `   content_constructed event was NOT reversed — failure is logged but isolated.`,
+    );
+  }
+
+  // ── [NEW] Append close-out section to the session note (file-side)
+  await appendSessionNoteCloseOut(ctx.sessionNotePath, {
+    session: ctx.session,
+    spec: { kindlingId: ctx.spec.kindlingId, packRef: ctx.spec.packRef },
+    dryRun: ctx.dryRun,
+    created: ctx.created,
+    skipped: ctx.skipped,
+    hardFailures: ctx.hardFailures,
+    softWarnings: ctx.softWarnings,
+    neededFlagged: ctx.neededFlagged.map((r) => ({
+      deterministicId: r.deterministicId,
+      scope: r.scope,
+      raw: r.raw,
+    })),
+    overlapWarnings: ctx.overlapWarnings.map((o) => ({
+      kindlingId: o.kindlingId,
+      jaccard: o.jaccard,
+    })),
+    derivedArtifacts: ctx.derivedArtifacts,
+    derivedArtifactsError: ctx.derivedArtifactsError,
+  });
+
+  // ── Close-out (stdout, alongside the file write above)
   printCloseOut(ctx);
 }
 
@@ -517,8 +610,25 @@ async function runActivitySlot(
     observationPrompts: draft.observationPrompts,
     capabilityThreads: draft.capabilityThreads,
   };
-  const result = checkActivity(checkInput);
+  const sparseResult = checkActivity(checkInput);
   const id = activityIdFor(ctx.spec, approach, activityIndex, slugify(draft.title));
+
+  // [NEW] Six-test gate runs AFTER sparse-content passes — its codes are
+  // namespaced 'six-test:*' so we merge them into the same hard/soft buckets
+  // that drive content_constructed.
+  let sixTestResult = { hardFails: [] as string[], softWarnings: [] as string[] };
+  if (sparseResult.hardFails.length === 0) {
+    const sixInput: SixTestActivityInput = {
+      ...checkInput,
+      ageRange: ctx.spec.ageRange ?? null,
+      targetUnderstanding: ctx.spec.targetUnderstanding ?? null,
+    };
+    sixTestResult = sixTestCheckActivity(sixInput);
+  }
+  const result = {
+    hardFails: [...sparseResult.hardFails, ...sixTestResult.hardFails],
+    softWarnings: [...sparseResult.softWarnings, ...sixTestResult.softWarnings],
+  };
 
   if (result.hardFails.length) {
     console.log(`    ✗ hard-fail blocks creation: ${result.hardFails.join(', ')}`);
@@ -624,6 +734,8 @@ async function runActivitySlot(
     approachRef: approachRefId,
     moduleRef: ctx.spec.kindlingId,
     packRef: ctx.spec.packRef,
+    // Heatmap replay reads capabilityThreads off the created event payload.
+    capabilityThreads: draft.capabilityThreads.map((t) => ({ id: t.id, primary: t.primary })),
     session: ctx.session,
   });
 
@@ -965,8 +1077,12 @@ async function maybeFireContentConstructed(ctx: RunContext): Promise<void> {
     kindlingId: ctx.spec.kindlingId,
     approachCount,
     activityCount,
-    sixTestPassed: true,
+    // Honest value — we only reach here when ctx.hardFailures is empty, but the
+    // payload is now driven by the live counter rather than a hard-coded `true`.
+    // If a future code path lets us through with hard failures, this won't lie.
+    sixTestPassed: ctx.hardFailures.length === 0,
     softWarningCount: ctx.softWarnings.length,
+    targetUnderstanding: ctx.spec.targetUnderstanding ?? undefined,
     session: ctx.session,
   });
   console.log(`\n✓ fired content_constructed for ${ctx.spec.kindlingId}`);

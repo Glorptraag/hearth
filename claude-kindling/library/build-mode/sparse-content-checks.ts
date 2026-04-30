@@ -15,6 +15,12 @@
  * `design/sparse-content-detection.md` §5.
  */
 
+// Re-export for backwards compatibility — callers that previously imported
+// these from sparse-content-checks should still resolve. New callers should
+// import from `./text-similarity` directly.
+export { STOPWORDS, tokens, jaccard } from './text-similarity';
+import { tokens as _tokens, jaccard as _jaccard } from './text-similarity';
+
 // ─── Activity input shape ────────────────────────────────────────────────────
 
 export interface ActivityCheckInput {
@@ -265,61 +271,11 @@ function looksLikeTopicLabel(text: string): boolean {
  * any two tiers' joined indicators.
  */
 function tiersTooSimilar(emerging: string[], developing: string[], demonstrating: string[]): boolean {
-  const tokens = (arr: string[]) => {
-    const set = new Set<string>();
-    for (const s of arr) {
-      for (const w of s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)) {
-        if (w.length > 3 && !STOPWORDS.has(w)) set.add(w);
-      }
-    }
-    return set;
-  };
-  const e = tokens(emerging);
-  const d = tokens(developing);
-  const m = tokens(demonstrating);
-  return jaccard(e, d) > 0.7 || jaccard(d, m) > 0.7 || jaccard(e, m) > 0.7;
-}
-
-const STOPWORDS = new Set([
-  'with',
-  'without',
-  'when',
-  'they',
-  'this',
-  'that',
-  'their',
-  'them',
-  'from',
-  'into',
-  'have',
-  'will',
-  'about',
-  'while',
-  'some',
-  'most',
-  'over',
-  'each',
-  'than',
-  'then',
-  'these',
-  'those',
-  'where',
-  'which',
-  'what',
-  'were',
-  'been',
-  'because',
-  'help',
-  'helps',
-  'between',
-]);
-
-function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
-  let inter = 0;
-  for (const x of a) if (b.has(x)) inter++;
-  const union = a.size + b.size - inter;
-  return union === 0 ? 0 : inter / union;
+  const tok = (arr: string[]) => _tokens(arr.join(' '));
+  const e = tok(emerging);
+  const d = tok(developing);
+  const m = tok(demonstrating);
+  return _jaccard(e, d) > 0.7 || _jaccard(d, m) > 0.7 || _jaccard(e, m) > 0.7;
 }
 
 function dedupe(r: CheckResult): CheckResult {

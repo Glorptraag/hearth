@@ -36,6 +36,7 @@
     "vitest.integration.config.ts",
     "vitest.setup.ts",
     "vitest.integration.setup.ts",
-    "vitest.integration.globalSetup.ts"
+    "vitest.integration.globalSetup.ts",
+    "claude-kindling/**"
   ]
 }

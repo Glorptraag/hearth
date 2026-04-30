@@ -252,7 +252,7 @@ function parsePillar1(headings: Record<string, string>): Pillar1 {
   const body = findHeading(headings, /^Pillar 1:.*Understanding goal/i) ?? '';
   let target: string | null = null;
   const targetSection = findHeading(headings, /^Target understanding/i) ?? body;
-  const tuMatch = /^>\s+(.+?)(?:\n\n|\n##|\n###|$)/ms.exec(targetSection);
+  const tuMatch = /^>\s+([\s\S]+?)(?:\n\n|\n##|\n###|$)/m.exec(targetSection);
   if (tuMatch) {
     target = tuMatch[1].replace(/\n>\s*/g, ' ').trim();
   }

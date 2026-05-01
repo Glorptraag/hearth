@@ -50,7 +50,7 @@ export default function JoinClient({
 
   return (
     <div className="max-w-lg mx-auto px-lg py-2xl">
-      <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl shadow-soft">
+      <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl shadow-card">
         {/* Header */}
         <div className="text-center mb-xl">
           <div className="text-3xl mb-md" aria-hidden="true">🏡</div>

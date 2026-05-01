@@ -25,10 +25,10 @@ export function FormField({ label, required, hint, children }: FormFieldProps) {
 }
 
 const inputClasses =
-  'w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary font-sans text-sm outline-none transition-colors duration-150 focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)] placeholder:text-text-muted/60';
+  'w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary font-sans text-sm outline-none transition-colors duration-150 focus:border-ember focus:shadow-focus placeholder:text-text-muted/60';
 
 const textareaClasses =
-  'w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary text-sm outline-none transition-colors duration-150 resize-y leading-relaxed focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)] placeholder:text-text-muted/60';
+  'w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary text-sm outline-none transition-colors duration-150 resize-y leading-relaxed focus:border-ember focus:shadow-focus placeholder:text-text-muted/60';
 
 interface InputProps {
   value: string | number;

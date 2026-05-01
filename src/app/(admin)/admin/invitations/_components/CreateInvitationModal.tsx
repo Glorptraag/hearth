@@ -96,9 +96,9 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-medium"
+        className="w-full max-w-[480px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

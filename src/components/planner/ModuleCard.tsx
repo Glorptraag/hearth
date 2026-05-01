@@ -27,7 +27,7 @@ const COLOUR_DOT: Record<string, string> = {
   blue: 'bg-child-blue',
   sage: 'bg-child-sage',
   violet: 'bg-child-violet',
-  amber: 'bg-amber-400',
+  amber: 'bg-amber-status',
 };
 
 const SUBJECT_CHIP: Record<string, string> = {
@@ -75,12 +75,12 @@ export default function ModuleCard({
         onDragStart?.(entry.id);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-200 ease-[var(--ease-default)] ${
         !isReadOnly ? 'cursor-grab active:cursor-grabbing' : ''
       } ${
         isComplete
-          ? 'border-border-subtle bg-[linear-gradient(135deg,rgba(74,222,128,0.04),transparent)] opacity-55'
-          : 'border-border-subtle bg-surface-raised hover:border-border-medium hover:shadow-[var(--shadow-soft)] hover:-translate-y-[1px]'
+          ? 'border-border-subtle bg-[linear-gradient(135deg,rgba(123,191,138,0.04),transparent)] opacity-55'
+          : 'border-border-subtle bg-surface-raised hover:border-border-medium hover:shadow-hover hover:-translate-y-[1px]'
       }`}
     >
       {/* Ember top-line on hover */}

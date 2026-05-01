@@ -123,7 +123,7 @@ export default function NotificationCentreClient({
           <div className="flex items-center gap-sm">
             <button
               onClick={() => setQuietDay((v) => !v)}
-              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-200 ease-[var(--ease-default)] ${
                 quietDay
                   ? 'border-sage/60 bg-sage/10 text-sage'
                   : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -150,7 +150,7 @@ export default function NotificationCentreClient({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-200 ease-[var(--ease-default)] ${
                   isActive
                     ? 'border-ember bg-ember text-text-inverse'
                     : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -160,7 +160,7 @@ export default function NotificationCentreClient({
                 {tab.count !== undefined && tab.count > 0 && (
                   <span
                     className={`rounded-full px-[5px] py-[1px] font-sans text-[11px] ${
-                      isActive ? 'bg-overlay-backdrop' : 'bg-surface-raised text-text-muted'
+                      isActive ? 'backdrop-modal' : 'bg-surface-raised text-text-muted'
                     }`}
                   >
                     {tab.count}

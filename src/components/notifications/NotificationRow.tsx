@@ -75,7 +75,7 @@ export default function NotificationRow({
 
   return (
     <div
-      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:bg-surface-raised hover:shadow-medium hover:-translate-y-[2px] cursor-pointer ${accent}`}
+      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:shadow-hover hover:-translate-y-[2px] cursor-pointer ${accent}`}
       onClick={() => isUnread && onMarkRead(notification.id)}
     >
       <div className="flex items-start gap-md">

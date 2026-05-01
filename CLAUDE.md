@@ -42,8 +42,10 @@ docs/                # Architecture specs, design system docs
 
 | File | When to read |
 |------|-------------|
-| `docs/hearth-canonical-design-tokens-v1.md` | **Every UI task.** The source of truth for all design values. |
-| `docs/hearth-ui-kit-v2.md` | Component patterns, card anatomy, button variants |
+| `docs/hearth-canonical-design-tokens-v2.md` | **Every UI task.** The source of truth for all design values (v2 — 2026-04-30). Supersedes v1. |
+| `docs/hearth-design-system-v2.1-addendum.md` | Gathering theme values + new tokens (`--surface-input`, `--backdrop-modal*`, `--backdrop-success*`). Read alongside tokens v2. |
+| `docs/hearth-motion-system-v1.md` | Motion language — durations, easings, application rules per pattern, special cases. Read before adding any animation. |
+| `docs/hearth-ui-kit-v2.md` | Component patterns, card anatomy, button variants (revision to v3 pending Dashboard Dark v3) |
 | `docs/Hearth_System_Interaction_Map.md` | Cross-screen data flows, navigation |
 | `docs/hearth-data-architecture-overview-v1.md` | Sanity vs Postgres data boundaries |
 | `docs/hearth-pack-data-architecture-v1.md` | Content hierarchy: Pack → Module → Approach → Activity |
@@ -58,49 +60,57 @@ docs/                # Architecture specs, design system docs
 
 When building a specific screen, also read its spec doc (e.g., `docs/hearth-logger-spec-v1.md`) and look at its prototype in `prototypes/`.
 
-## Design System: Mont Blanc Dark Coffee
+## Design System: Mont Blanc Dark Coffee — v2 (in flight)
 
-The design system is LOCKED. Do not improvise values. When in doubt, `hearth-canonical-design-tokens-v1.md` is right and everything else is wrong.
+The v2 token system landed 2026-04-30. Source of truth is `docs/hearth-canonical-design-tokens-v2.md` + `docs/hearth-design-system-v2.1-addendum.md` + `docs/hearth-motion-system-v1.md`. v1 is superseded but retained for archival reference. Do not improvise values.
+
+**v2 conformance status:** Tokens, motion utilities, fonts, colours, shadows, modal backdrops landed. Reference Dashboard rebuild (Dashboard Dark v3) and per-screen visual review pending.
 
 ### Tailwind Config — Canonical Token Mapping
 
-**IMPORTANT:** The token names below come from the conformance pass (March 2026). If you see older names like `bg-primary`, `bg-secondary`, `coffee-mid`, `deep-coffee` in prototypes, they are DEPRECATED. Use the canonical names.
-
-Design tokens are defined in src/app/globals.css via @theme inline. No tailwind.config.ts exists.
+**IMPORTANT:** Old token names (`bg-primary`, `coffee-mid`, `deep-coffee`, `shadow-soft/medium/warm/glow`, `bg-overlay-backdrop`) are DEPRECATED. Use the v2 names. Tokens are defined in `src/app/globals.css` via `@theme`. No `tailwind.config.ts` exists.
 
 ### Design Rules — Violations Will Be Caught
 
-1. **Ember is for actions ONLY.** Buttons, active nav, progress bars, badge celebrations. Never body text, never decorative, never domain identity colors.
-2. **Sage is for growth/success ONLY.** Progress, positive states, achievements.
-3. **Font-weight 700:** Brand wordmark ("Hearth") and display greeting `<strong>` ONLY. Section titles = 600. Card titles = 600.
-4. **Serif (Crimson Text):** Content the parent READS — headings, body, card titles, section titles, descriptions, names.
-5. **Sans (Inter):** Interface the parent OPERATES — buttons, nav, labels, tags, timestamps, metadata, overlines, action links.
-6. **Radius:** 6 / 10 / 16 / 24px only. No arbitrary values.
-7. **Transitions:** `transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]` (quick) or `duration-[400ms]` (gentle).
-8. **Borders:** `border-border-subtle` (ember-tinted). Never `border-white/5` or similar white-tinted borders.
-9. **No decorative images, icons, or custom SVG shapes.** Use emoji as placeholders. Structure and logic only.
-10. **Mobile-first.** All layouts start mobile, scale up.
+1. **Ember is for actions ONLY.** Buttons, active nav, progress bars, badge celebrations, focus rings. Never body text, never decorative, never default card glow, never default border.
+2. **Default cards have no shadow.** v2 strips ember halos from cards entirely. Elevation comes from surface step + cream-tinted border. The `shadow-card` token is `none`.
+3. **Sage is for growth/success ONLY.** Progress, positive states, achievements.
+4. **Font-weight 700:** Brand wordmark ("Hearth") and display greeting `<strong>` ONLY. Section titles = 600. Card titles = 600.
+5. **Serif (Fraunces, variable with SOFT axis):** Content the parent READS — headings, body, card titles, section titles, descriptions, names. Use `.display`, `.heading`, `.body-serif` utility classes for canonical SOFT/opsz settings.
+6. **Sans (DM Sans, variable):** Interface the parent OPERATES — buttons, nav, labels, tags, timestamps, metadata, overlines, action links.
+7. **Radius:** 6 / 10 / 16 / 24px only. No arbitrary values.
+8. **Transitions:** Always consume motion tokens. Five duration tokens — `--motion-instant` (100ms), `--motion-quick` (200ms), `--motion-base` (300ms), `--motion-gentle` (400ms), `--motion-slow` (600ms). Four easings — `--ease-default`, `--ease-out`, `--ease-in`, `--ease-soft-spring`. Use Tailwind arbitrary form `duration-[var(--motion-quick)]` and `ease-[var(--ease-default)]`. **Never** inline `cubic-bezier(...)` or `duration-[NNNms]`. Prefer the `.hearth-*` utility classes from `src/app/hearth-motion-utilities.css` (e.g. `.hearth-press`, `.hearth-lift-card`, `.hearth-modal-enter`, `.hearth-thinking`, `.hearth-skeleton`).
+9. **Borders:** `border-border-subtle` (cream-tinted) is the default. `border-border-medium` for hover/elevated. `border-border-active` and `border-border-focus` are reserved as state signals (selected / focused / active). Ember on a border = something is happening.
+10. **Insets:** dark uses cream insets (`shadow-inset-highlight`); gathering is the only place pure white insets are permitted. Never `rgba(255,255,255,...)` insets in dark mode.
+11. **No decorative images, icons, or custom SVG shapes.** Use emoji as placeholders or icon library glyphs. Structure and logic only.
+12. **Mobile-first.** All layouts start mobile, scale up.
 
-### Card Pattern (canonical)
+### Card Pattern (canonical, v2)
 
 ```
-bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft
-hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm
-transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+bg-surface-panel rounded-lg p-xl border border-border-subtle
+hover:border-border-medium
+transition-[transform,border-color,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)]
+hover:-translate-y-[2px] hover:shadow-hover
 ```
 
-With ember top-line on hover via `::before` pseudo-element.
+Or apply `.hearth-lift-card` from `src/app/hearth-motion-utilities.css` to consume the canonical lift transition in one class.
 
-### Shadow Utilities
+Default cards have NO shadow. Hover lift uses `shadow-hover`. Featured/selected state uses `border-border-active`.
 
-Shadows are defined in `@theme inline` and generate Tailwind utilities:
-- `shadow-soft` — card resting state
-- `shadow-medium` — elevated panels
-- `shadow-warm` — card hover, featured elements
-- `shadow-glow` — ember ambient glow
+### Shadow Utilities (v2)
+
+Defined in `@theme` and generate Tailwind utilities:
+
+- `shadow-card` — default card (none — lift via surface step + border)
+- `shadow-hover` — clickable card hover
+- `shadow-float` — modals, FAB, bottom sheets (genuine float)
+- `shadow-ember` — Quick Log button + primary CTAs only
+- `shadow-ember-strong` — earned-badge moment, hero CTA active
+- `shadow-focus` — focus ring (3px ember at 0.4 alpha)
+- `shadow-inset-highlight` / `shadow-inset-strong` — cream rim-light
 
 Do NOT use hardcoded `shadow-[0_2px_8px_rgba(...)]` — use the token classes.
-**Exception:** Ember accent glows on primary CTAs (`shadow-[0_4px_16px_rgba(217,123,58,0.3)]`) are intentionally inline.
 
 ### Button Variants
 
@@ -140,13 +150,21 @@ Clerk components cannot read CSS custom properties. `src/app/clerk-theme.ts` exp
 
 A single centralized map lives in `src/components/ui/LearnerAvatar.tsx` (`LEARNER_COLOUR_MAP`). It exports Tailwind classes (`bg`, `border`, `text`, `pill`) and `cssVar` references for each child color. **Do not create duplicate color maps** — import from LearnerAvatar.
 
+### Theme default convention (deliberate divergence from v2.1)
+
+The v2.1 addendum specifies gathering as the default theme (`[data-theme="dark"]` opt-in). This implementation **keeps dark as default** (`data-theme=""` or absent → dark; `data-theme="gathering"` → light) for production stability. Auto time-of-day switching (gathering 6am–6pm, dark 6pm–6am) covers the addendum's daytime intent. Do not flip the inline flash-prevention script or the `useTheme()` default value without explicit decision.
+
 ### Token value exceptions (WCAG AA)
 
 Two token values deviate from the original design spec for accessibility:
-- Dark `--text-muted`: `#726458` (was `#6B5D52`) — 3.15:1 on panel
-- Gathering `--text-inverse`: `#FFFFFF` (was `#F5F5F0`) — 4.57:1 on ember
+- Dark `--text-muted`: `#726458` (v2 spec is `#6B5D52`) — 3.15:1 on panel
+- Gathering `--text-inverse`: `#FFFFFF` (v2 spec is `#FDF6F0`) — keeps WCAG AA on ember backgrounds
 
 See `docs/hearth-canonical-design-tokens-v1.md` Appendix A for details.
+
+### Icon library
+
+Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** instead (`@phosphor-icons/react` to be installed when icon work begins). Single-color stroke aesthetic and 24px grid match the system. No emoji-as-icon usage exists in `src/` (prototypes only). When introducing icons, import from the chosen library — do not generate decorative SVGs or AI-generated icons.
 
 ## Accessibility
 
@@ -299,11 +317,17 @@ Do not span multiple phases in one session.
 - Setting font-weight 700 on anything other than brand/greeting
 - Using sans-serif for content headings (should be serif)
 - Using serif for buttons/labels (should be sans)
-- Generating decorative SVGs or custom icons (use emoji)
+- Generating decorative SVGs or custom icons (use emoji or chosen icon library)
 - Making runtime API calls to Anthropic (write-time only)
 - Building philosophy-specific content (always philosophy-neutral)
-- Using hardcoded `shadow-[...]` instead of `shadow-soft`/`shadow-warm`/`shadow-medium`/`shadow-glow` token classes
-- Using `bg-black/50` for modal backdrops instead of `bg-overlay-backdrop`
+- Using v1 shadow tokens (`shadow-soft`/`medium`/`warm`/`glow`) — DELETED; use v2 set (`shadow-card`/`hover`/`float`/`ember`/`ember-strong`/`focus`)
+- Putting an ember halo on a default card — v2 strips ember from default surfaces; ember = action signal only
+- Using hardcoded `shadow-[...]` for canonical patterns instead of v2 token classes
+- Using `bg-black/50` or `bg-overlay-backdrop` for modal backdrops — use `backdrop-modal` (v2.1 token-driven, theme-aware blur)
+- Inline `cubic-bezier(...)` or `duration-[NNNms]` arbitrary values — use `var(--motion-*)` and `var(--ease-*)` tokens or `.hearth-*` motion utility classes
+- White-tinted insets (`rgba(255,255,255,...)`) in dark mode — use `shadow-inset-highlight`/`shadow-inset-strong` (cream); pure white insets are only valid in gathering theme
+- Using v1 status hex (`#4ADE80`, `#FBBF24`, `#FB7185`, `#60A5FA`, `#A78BFA`) — replaced by v2 dusty palette (`#7BBF8A`, `#E0B569`, `#D88894`, `#7BA3C9`, `#9E8FB8`)
+- Loading Crimson Text or Inter — DELETED; v2 uses Fraunces (variable, SOFT axis) + DM Sans (variable)
 - Using hardcoded `rgba(15,13,11,0.85)` for nav blur instead of `var(--color-surface-nav-blur)`
 - Creating duplicate child color maps instead of importing `LEARNER_COLOUR_MAP` from `LearnerAvatar.tsx`
 - Using `text-white` on colored backgrounds instead of `text-surface-body` or `text-text-inverse` (exception: danger confirm buttons)

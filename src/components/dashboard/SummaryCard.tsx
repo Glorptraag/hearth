@@ -15,7 +15,7 @@ export default function SummaryCard({
 }: SummaryCardProps) {
   return (
     <div
-      className={`flex flex-col gap-xs rounded-[10px] border p-md transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`flex flex-col gap-xs rounded-[10px] border p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
         highlight
           ? 'border-border-medium bg-ember-glow'
           : 'border-border-subtle bg-surface-panel'

@@ -28,7 +28,7 @@ export default function OurStoryLayout({
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative px-md py-sm font-sans text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`relative px-md py-sm font-sans text-sm font-medium transition-all duration-200 ease-[var(--ease-default)] ${
                 active ? "text-ember" : "text-text-muted hover:text-text-secondary"
               }`}
             >

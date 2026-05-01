@@ -272,7 +272,7 @@ export function PedagogyWizard({
                 {idx < STEP_LABELS.length - 1 && (
                   <div
                     className={[
-                      'mb-[20px] h-[2px] w-8 transition-colors duration-[400ms] md:w-[60px]',
+                      'mb-[20px] h-[2px] w-8 transition-colors duration-[var(--motion-gentle)] md:w-[60px]',
                       idx < step ? 'bg-ember' : 'bg-surface-hover',
                     ].join(' ')}
                   />
@@ -359,7 +359,7 @@ export function PedagogyWizard({
               type="button"
               onClick={goNext}
               disabled={!canProceed || saving}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
             >
               {step < 3
                 ? 'Continue'
@@ -414,11 +414,11 @@ function PhilosophyStep({
               onClick={() => onSelect(p.id)}
               aria-pressed={isSelected}
               className={[
-                'group relative overflow-hidden rounded-lg p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] md:p-xl',
-                'border shadow-soft',
+                'group relative overflow-hidden rounded-lg p-md text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] md:p-xl',
+                'border shadow-card',
                 isSelected
-                  ? 'border-border-medium bg-surface-raised shadow-warm -translate-y-[2px]'
-                  : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:shadow-warm hover:-translate-y-[2px]',
+                  ? 'border-border-medium bg-surface-raised shadow-float -translate-y-[2px]'
+                  : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px]',
               ].join(' ')}
             >
               <div className="mb-sm flex items-start justify-between gap-sm">
@@ -763,7 +763,7 @@ function ReviewStep({
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-2 lg:gap-xl">
         {/* Summary card */}
-        <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft">
+        <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card">
           <h2 className="mb-md font-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-text-muted">
             Your Approach
           </h2>
@@ -815,7 +815,7 @@ function ReviewStep({
         </div>
 
         {/* Demo activity card */}
-        <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft">
+        <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card">
           <h2 className="mb-md font-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-text-muted">
             Sample Activity · See the Overlay
           </h2>

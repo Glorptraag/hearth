@@ -67,7 +67,7 @@ export default function DevPreviewLayout({
           </span>
           <Link
             href="/dev-preview/notifications"
-            className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
+            className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
             aria-label="Notifications"
           >
             <span className="text-lg" aria-hidden="true">🔔</span>
@@ -89,7 +89,7 @@ export default function DevPreviewLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[var(--ease-default)] ${
                 item.primary
                   ? active
                     ? 'text-ember'
@@ -102,7 +102,7 @@ export default function DevPreviewLayout({
               <span
                 className={`text-xl ${
                   item.primary
-                    ? 'flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)]'
+                    ? 'flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-ember'
                     : ''
                 }`}
                 aria-hidden="true"

@@ -365,7 +365,7 @@ export default function MarketplacePage() {
       {/* Pack detail modal */}
       {detailPack && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop backdrop-blur-sm p-0 sm:p-lg"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
           onClick={() => { setDetailPack(null); setShowMaterials(false); }}
         >
           <div

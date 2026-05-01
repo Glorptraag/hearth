@@ -41,7 +41,7 @@ export function MaterialItemRow({
 
   return (
     <div
-      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition-all duration-200 ease-[var(--ease-default)] ${
         disabled ? 'opacity-50' : 'bg-surface-raised hover:bg-surface-hover cursor-pointer'
       } ${selected ? 'border-ember/30 bg-ember/5' : ''} ${compact ? 'p-sm gap-sm' : ''}`}
       onClick={() => {

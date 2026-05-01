@@ -129,7 +129,7 @@ export default function ModuleExperiencePage() {
                   setCheckedObservations(new Set());
                   setMode('prep');
                 }}
-                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
               >
                 <div className="flex items-start gap-md">
                   <div className="text-2xl">

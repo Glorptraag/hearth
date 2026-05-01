@@ -53,7 +53,7 @@ export default function PedagogySelector({ selected, onChange }: PedagogySelecto
           <button
             key={p.value}
             onClick={() => onChange(p.value)}
-            className={`flex items-start gap-md rounded-[10px] border p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            className={`flex items-start gap-md rounded-[10px] border p-md text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
               isSelected
                 ? 'border-ember bg-ember-glow'
                 : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-raised'

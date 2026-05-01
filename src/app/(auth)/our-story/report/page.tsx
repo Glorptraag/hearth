@@ -144,8 +144,8 @@ const WORK_SAMPLE_SLOTS: WorkSampleSlot[] = [
 ];
 
 const SLOT_STATUS = {
-  complete: { dot: 'bg-sage shadow-[0_0_6px_rgba(74,222,128,0.5)]',        badge: 'bg-sage/15 text-sage',            label: 'Complete', action: 'Review sample', href: '/our-story/portfolio' },
-  partial:  { dot: 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]',   badge: 'bg-amber-400/15 text-amber-400',  label: 'Partial',  action: 'Add evidence',   href: '/log' },
+  complete: { dot: 'bg-sage shadow-[0_0_6px_rgba(123,191,138,0.50)]',        badge: 'bg-sage/15 text-sage',            label: 'Complete', action: 'Review sample', href: '/our-story/portfolio' },
+  partial:  { dot: 'bg-amber-status shadow-[0_0_6px_rgba(224,181,105,0.50)]',   badge: 'bg-amber-status/15 text-amber-status',  label: 'Partial',  action: 'Add evidence',   href: '/log' },
   empty:    { dot: 'bg-surface-hover',                                       badge: 'bg-surface-hover text-text-muted', label: 'Empty',    action: 'Find activity',  href: '' },
 };
 
@@ -383,7 +383,7 @@ export default function ReportPage() {
       )}
 
       {/* Timeline Hero */}
-      <div className="mt-lg rounded-lg border border-border-subtle bg-surface-raised p-xl shadow-[var(--shadow-soft)]">
+      <div className="mt-lg rounded-lg border border-border-subtle bg-surface-raised p-xl shadow-card">
         <div className="flex items-center justify-between mb-md">
           <span className="font-sans text-xs text-text-muted">
             Registered {format(registrationDate, 'd MMM yyyy')}
@@ -404,11 +404,11 @@ export default function ReportPage() {
           aria-label="Report timeline progress"
         >
           <div
-            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[1200ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[1200ms] ease-[var(--ease-default)]"
             style={{ width: `${timelineProgress}%` }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-[var(--shadow-glow)] border-2 border-surface-raised transition-all duration-[1200ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-ember border-2 border-surface-raised transition-all duration-[1200ms] ease-[var(--ease-default)]"
             style={{ left: `${timelineProgress}%`, marginLeft: '-7px' }}
           />
         </div>
@@ -426,7 +426,7 @@ export default function ReportPage() {
       </div>
 
       {/* Overall Posture */}
-      <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+      <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
         <div className="flex items-center gap-md mb-md">
           <div>
             <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Compliance Status</p>
@@ -469,7 +469,7 @@ export default function ReportPage() {
                   <button
                     key={slot.id}
                     onClick={() => setCurationSlot(slot)}
-                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
                   >
                     <div className="flex items-center justify-between mb-sm">
                       <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
@@ -520,7 +520,7 @@ export default function ReportPage() {
                       aria-label={`${s.label} coverage: ${s.count} entries`}
                     >
                       <div
-                        className={`h-full rounded-full transition-all duration-[600ms] ${domain?.bar ?? 'bg-text-muted'}`}
+                        className={`h-full rounded-full transition-all duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
                         style={{ width: `${Math.min(s.pct, 100)}%` }}
                       />
                     </div>
@@ -539,7 +539,7 @@ export default function ReportPage() {
 
           {/* Gap Analysis */}
           {gaps.length > 0 && (
-            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
               <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">{vocab.coverageFrame}</p>
               <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
               <div className="space-y-xs">
@@ -551,11 +551,11 @@ export default function ReportPage() {
                       className={`flex items-center gap-md rounded-lg border px-md py-sm ${
                         isCritical
                           ? 'border-child-rose/30 bg-child-rose/5'
-                          : 'border-amber-400/20 bg-amber-400/5'
+                          : 'border-amber-status/20 bg-amber-status/5'
                       }`}
                     >
                       <span className={`font-sans text-[10px] font-semibold uppercase tracking-wide shrink-0 ${
-                        isCritical ? 'text-child-rose' : 'text-amber-400'
+                        isCritical ? 'text-child-rose' : 'text-amber-status'
                       }`}>
                         {isCritical ? 'Critical' : 'Moderate'}
                       </span>
@@ -633,7 +633,7 @@ export default function ReportPage() {
                 return (
                   <div
                     key={s.key}
-                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium ${domain?.border ?? 'border-t-border-medium'}`}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover ${domain?.border ?? 'border-t-border-medium'}`}
                   >
                     <div className="flex items-center justify-between mb-sm">
                       <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
@@ -651,7 +651,7 @@ export default function ReportPage() {
                       aria-label={`${s.label} coverage: ${s.count} entries`}
                     >
                       <div
-                        className={`h-full rounded-full transition-all duration-[600ms] ${domain?.bar ?? 'bg-text-muted'}`}
+                        className={`h-full rounded-full transition-all duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
                         style={{ width: `${Math.min(s.pct, 100)}%` }}
                       />
                     </div>
@@ -664,7 +664,7 @@ export default function ReportPage() {
 
           {/* Areas to Explore */}
           {gaps.length > 0 && (
-            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-soft)]">
+            <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
               <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Opportunities</p>
               <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">Areas to Explore</h2>
               <p className="font-serif text-sm text-text-secondary mb-md leading-relaxed">
@@ -759,7 +759,7 @@ export default function ReportPage() {
           disabled={!selectedLearnerId || entries.length === 0}
           className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-200 ${
             selectedLearnerId && entries.length > 0
-              ? 'bg-ember text-text-inverse hover:bg-ember-hover shadow-[0_4px_16px_rgba(217,123,58,0.3)]'
+              ? 'bg-ember text-text-inverse hover:bg-ember-hover shadow-ember'
               : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'
           }`}
         >

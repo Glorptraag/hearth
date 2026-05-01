@@ -104,12 +104,12 @@ export default function BuildBadgesPage() {
     setError(null);
   };
 
-  const inputCls = 'w-full bg-surface-raised border border-border-subtle rounded-[6px] px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]';
+  const inputCls = 'w-full bg-surface-raised border border-border-subtle rounded-[6px] px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus';
 
   if (saved) {
     return (
       <div className="px-md py-lg max-w-xl mx-auto">
-        <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col items-center gap-lg text-center shadow-[var(--shadow-soft)]">
+        <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col items-center gap-lg text-center shadow-card">
           <span className="text-4xl">{form.emoji || '🏅'}</span>
           <div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
@@ -145,7 +145,7 @@ export default function BuildBadgesPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col gap-xl shadow-[var(--shadow-soft)]"
+        className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col gap-xl shadow-card"
       >
         {/* ─── Identity ─── */}
         <section className="flex flex-col gap-md">
@@ -162,7 +162,7 @@ export default function BuildBadgesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
                 placeholder="🏅"
                 maxLength={2}
-                className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+                className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
               />
             </div>
             {/* Name */}
@@ -190,7 +190,7 @@ export default function BuildBadgesPage() {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Read independently for 20+ minutes and discuss what they've understood..."
               rows={3}
-              className="w-full resize-y rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm leading-relaxed text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+              className="w-full resize-y rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm leading-relaxed text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
             />
           </div>
         </section>
@@ -249,10 +249,10 @@ export default function BuildBadgesPage() {
               value={threadSearch}
               onChange={(e) => setThreadSearch(e.target.value)}
               placeholder="Search capability threads..."
-              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] transition-all duration-200"
+              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-200"
             />
             {threadSearch && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-medium">
+              <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-float">
                 {CAPABILITY_THREADS.filter((t) =>
                   t.toLowerCase().includes(threadSearch.toLowerCase())
                 ).map((t) => (
@@ -318,7 +318,7 @@ export default function BuildBadgesPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 hover:bg-ember-hover disabled:opacity-50"
+            className="rounded-md bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition-all duration-200 hover:bg-ember-hover disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Create badge'}
           </button>

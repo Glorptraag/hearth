@@ -1,0 +1,247 @@
+/* ==========================================================================
+   Hearth Motion Utilities — v1
+   Source of truth: docs/hearth-motion-system-v1.md
+                    docs/hearth-canonical-design-tokens-v2.md (motion tokens)
+                    docs/hearth-design-system-v2.1-addendum.md (theme-aware vars)
+
+   Reusable motion classes. Components apply the class names rather than
+   re-declaring transitions inline. All animations use transform / opacity
+   only (GPU compositor). prefers-reduced-motion is handled at the bottom
+   of this file as the canonical zero-out.
+
+   Mental model: "ceramic cup set down, not plastic button tap." Slow-side
+   of normal, soft-eased, almost no spring, almost no looping.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Fade in / out — generic entrance and exit
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes hearth-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.hearth-fade-in {
+  animation: hearth-fade-in var(--motion-base) var(--ease-out) both;
+}
+
+.hearth-fade-out {
+  animation: hearth-fade-out var(--motion-base) var(--ease-in) both;
+}
+
+/* --------------------------------------------------------------------------
+   2. Lift card — clickable cards on hover
+   transform + box-shadow only; no scale, no glow
+   -------------------------------------------------------------------------- */
+
+.hearth-lift-card {
+  transition:
+    transform   var(--motion-quick) var(--ease-default),
+    border-color var(--motion-quick) var(--ease-default),
+    box-shadow  var(--motion-quick) var(--ease-default);
+}
+
+.hearth-lift-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-medium);
+  box-shadow: var(--shadow-hover);
+}
+
+/* --------------------------------------------------------------------------
+   3. Press — tap feedback on every interactive element
+   The ONLY snappy moment in the system; physical feedback should be instant
+   -------------------------------------------------------------------------- */
+
+.hearth-press {
+  transition: transform var(--motion-instant) var(--ease-default);
+}
+
+.hearth-press:active {
+  transform: scale(0.98);
+}
+
+/* --------------------------------------------------------------------------
+   4. Expand / collapse — accordions, "show more", AI insight panels
+   Modern grid-rows technique: container opens, content fades in 100ms after
+   -------------------------------------------------------------------------- */
+
+.hearth-expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-gentle) var(--ease-default);
+}
+
+.hearth-expand.is-open {
+  grid-template-rows: 1fr;
+}
+
+.hearth-expand > .hearth-expand-content {
+  overflow: hidden;
+}
+
+.hearth-expand > .hearth-expand-content > * {
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-default) 100ms;
+}
+
+.hearth-expand.is-open > .hearth-expand-content > * {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   5. Modal entrance / exit
+   Backdrop fade + content lift. Closing is faster (250ms) — dismissals
+   feel decisive, not lingering.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-modal-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hearth-modal-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(4px); }
+}
+
+.hearth-modal-enter {
+  animation: hearth-modal-enter var(--motion-gentle) var(--ease-out) both;
+}
+
+.hearth-modal-exit {
+  animation: hearth-modal-exit 250ms var(--ease-in) both;
+}
+
+/* --------------------------------------------------------------------------
+   6. Page entrance — Next.js route changes
+   Fade + 4px lift, no slide-from-right (too iOS), no scale (too Material).
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hearth-page-enter {
+  animation: hearth-page-enter var(--motion-base) var(--ease-out) both;
+}
+
+/* --------------------------------------------------------------------------
+   7. Skeleton — gentle cream/dark shimmer for loading states
+   Theme-aware via --skeleton-low / --skeleton-high (set in globals.css).
+   NEVER use spinners.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-skeleton-shimmer {
+  0%, 100% { background-color: var(--skeleton-low); }
+  50%      { background-color: var(--skeleton-high); }
+}
+
+.hearth-skeleton {
+  animation: hearth-skeleton-shimmer 1.5s var(--ease-default) infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* --------------------------------------------------------------------------
+   8. Thinking — Voice from the Hearth working on an insight
+   Theme-aware via --thinking-pulse-low / --thinking-pulse-high.
+   Slow contemplative pulse — not anxious.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-thinking-pulse {
+  0%, 100% { box-shadow: 0 0 12px var(--thinking-pulse-low); }
+  50%      { box-shadow: 0 0 20px var(--thinking-pulse-high); }
+}
+
+.hearth-thinking {
+  animation: hearth-thinking-pulse 2.5s var(--ease-default) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   9. Engagement select — Logger emoji selection
+   Rare moment of micro-delight: parent committed a small judgement.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-engagement-select {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.hearth-engagement-select {
+  animation: hearth-engagement-select var(--motion-base) var(--ease-soft-spring);
+}
+
+.hearth-engagement-not-selected {
+  opacity: 0.4;
+  transition: opacity var(--motion-quick) var(--ease-default);
+}
+
+/* --------------------------------------------------------------------------
+   10. Badge arrival — earned-badge moment
+   Single dignified pulse. No confetti, no sparkle, no sound.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-badge-arrive {
+  0%   { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes hearth-badge-glow-once {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 123, 58, 0); }
+  40%  { box-shadow: 0 0 24px 4px rgba(217, 123, 58, 0.5); }
+  100% { box-shadow: 0 0 12px 0 rgba(217, 123, 58, 0.15); }
+}
+
+.hearth-badge-arrive {
+  animation:
+    hearth-badge-arrive 500ms var(--ease-out),
+    hearth-badge-glow-once 1200ms var(--ease-default) 200ms;
+}
+
+/* --------------------------------------------------------------------------
+   11. Glow pulse — Dashboard hero ambient drift
+   The ONLY looping decorative animation in the system, locked to the
+   Dashboard greeting area. Theme-aware via two named keyframes.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-glow-pulse-dark {
+  0%, 100% { background-position: 20% 80%, 80% 20%, 40% 40%; }
+  50%      { background-position: 23% 76%, 77% 23%, 43% 37%; }
+}
+
+@keyframes hearth-glow-pulse-gathering {
+  0%, 100% { background-position: 20% 80%, 80% 20%; }
+  50%      { background-position: 23% 76%, 77% 23%; }
+}
+
+.hearth-glow-pulse {
+  animation: hearth-glow-pulse-dark 30s var(--ease-default) infinite;
+}
+
+[data-theme="gathering"] .hearth-glow-pulse {
+  animation: hearth-glow-pulse-gathering 30s var(--ease-default) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — canonical zero-out
+   Every animation and transition stripped to ~0ms. The UI must function
+   perfectly without motion; motion is enhancement, never information.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

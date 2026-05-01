@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
-import { Crimson_Text, Inter } from "next/font/google";
+import { Fraunces, DM_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkThemeProvider from "@/components/ClerkThemeProvider";
 import "./globals.css";
 
-const crimsonText = Crimson_Text({
-  variable: "--font-crimson",
+// Hearth Design System v2: Fraunces (variable, with SOFT axis) replaces Crimson Text.
+// Variable axes — SOFT (warmth, 0–100) and opsz (optical size, 9–144) — are tuned
+// per element via the .display / .heading / .body-serif utility classes in globals.css.
+const fraunces = Fraunces({
+  variable: "--font-serif",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  display: "swap",
+  axes: ["SOFT", "opsz"],
   style: ["normal", "italic"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+// DM Sans (variable) replaces Inter — warmer round-o, friendlier r, pairs with Fraunces.
+const dmSans = DM_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +40,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${crimsonText.variable} ${inter.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>
         <script

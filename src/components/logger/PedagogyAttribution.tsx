@@ -20,13 +20,13 @@ export function PedagogyAttribution({ sources, frameworkTitle = 'Charlotte Mason
   if (!sources || sources.length === 0) return null;
 
   return (
-    <div className="bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft mt-md">
+    <div className="bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card mt-md">
       <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-sm">
         Pedagogy grounding
       </p>
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className="font-sans text-xs text-text-secondary hover:text-text-primary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="font-sans text-xs text-text-secondary hover:text-text-primary transition-all duration-200 ease-[var(--ease-default)]"
         aria-expanded={expanded}
       >
         {expanded

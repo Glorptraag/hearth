@@ -54,10 +54,10 @@ export default function ReflectionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-overlay-backdrop z-[200] flex items-center justify-center"
+      className="fixed inset-0 backdrop-modal z-[200] flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) handleSkip(); }}
     >
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-warm" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
         {/* Success header */}
         <div className="text-center text-3xl mb-md" aria-hidden="true">✓</div>
         <h2 id="reflection-modal-title" className="font-serif text-xl font-semibold text-center mb-md">
@@ -77,7 +77,7 @@ export default function ReflectionModal({
             What are you grateful for? This is visible to all members.
           </p>
           <textarea
-            className="w-full p-3 px-md bg-surface-body border border-border-subtle rounded-[10px] text-text-primary font-serif text-[0.95rem] focus:outline-none focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)] min-h-[80px] resize-y leading-relaxed placeholder:text-text-muted"
+            className="w-full p-3 px-md bg-surface-body border border-border-subtle rounded-[10px] text-text-primary font-serif text-[0.95rem] focus:outline-none focus:border-ember focus:shadow-focus min-h-[80px] resize-y leading-relaxed placeholder:text-text-muted"
             placeholder="e.g. 'Emma couldn't stop talking about the tadpoles on the drive home...'"
             value={reflectionText}
             onChange={(e) => setReflectionText(e.target.value)}

@@ -61,7 +61,7 @@ export function TagInput({ values, onChange, placeholder, allowedValues }: TagIn
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 p-2 bg-surface-raised border border-border-subtle rounded-[8px] min-h-[42px] focus-within:border-ember focus-within:shadow-[0_0_0_3px_rgba(217,123,58,0.15)] transition-colors duration-150">
+    <div className="flex flex-wrap gap-1.5 p-2 bg-surface-raised border border-border-subtle rounded-[8px] min-h-[42px] focus-within:border-ember focus-within:shadow-focus transition-colors duration-150">
       {values.map((tag, i) => (
         <span
           key={i}

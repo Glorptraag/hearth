@@ -135,12 +135,12 @@ export default function SnapshotsClient() {
       {/* Rebuild reason modal */}
       {modal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
           role="dialog"
           aria-modal="true"
           aria-labelledby="rebuild-modal-title"
         >
-          <div className="w-full max-w-[400px] rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-medium mx-md">
+          <div className="w-full max-w-[400px] rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-float mx-md">
             <h3
               id="rebuild-modal-title"
               className="font-serif text-base font-semibold text-text-primary mb-xs"

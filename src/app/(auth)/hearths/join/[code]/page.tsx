@@ -29,7 +29,7 @@ export default async function JoinPage({
   if (!invite) {
     return (
       <div className="max-w-lg mx-auto px-lg py-2xl">
-        <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl text-center shadow-soft">
+        <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl text-center shadow-card">
           <div className="text-3xl mb-md">⏳</div>
           <h1 className="font-serif text-xl font-semibold text-text-primary mb-md">
             Invite expired or invalid

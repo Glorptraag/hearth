@@ -23,11 +23,11 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
       onClick={onCancel}
     >
       <div
-        className="bg-surface-panel border border-border-subtle rounded-lg shadow-medium p-xl w-full max-w-sm"
+        className="bg-surface-panel border border-border-subtle rounded-lg shadow-float p-xl w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

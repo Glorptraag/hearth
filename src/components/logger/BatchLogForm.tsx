@@ -146,7 +146,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
                 value={entry.title}
                 onChange={(e) => updateEntry(entry.id, 'title', e.target.value)}
                 placeholder="What did you learn?"
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
               />
 
               <div className="flex gap-sm">
@@ -222,7 +222,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Saving…' : `Save ${validCount} session${validCount !== 1 ? 's' : ''}`}
         </button>

@@ -37,7 +37,7 @@ export default function InvitePage() {
 
   return (
     <div className="mx-auto max-w-md px-md py-2xl">
-      <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-soft">
+      <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-card">
         {status === 'loading' && (
           <>
             <span className="text-3xl" aria-hidden="true">🔑</span>

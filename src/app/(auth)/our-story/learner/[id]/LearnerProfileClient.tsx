@@ -362,7 +362,7 @@ export default function LearnerProfileClient({
           (!learner.profileData.workingStyle || learner.profileData.workingStyle.length === 0) &&
           (!learner.profileData.interests || learner.profileData.interests.length === 0) &&
           (!learner.profileData.strengths || learner.profileData.strengths.length === 0) && (
-          <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-soft">
+          <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-card">
             <span className="text-3xl" aria-hidden="true">🌟</span>
             <h2 className="font-serif text-lg font-semibold text-text-primary">
               {learner.name}&rsquo;s profile is ready to grow
@@ -506,7 +506,7 @@ export default function LearnerProfileClient({
               onChange={(e) => setAbout(e.target.value)}
               placeholder={`What makes ${learner.name} unique as a learner?`}
               rows={4}
-              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] transition-all duration-200"
+              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-200"
             />
           ) : about ? (
             <p className="font-serif text-base leading-relaxed text-text-secondary">
@@ -631,7 +631,7 @@ export default function LearnerProfileClient({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anything else worth knowing — sensory needs, what helps on hard days, transition strategies…"
               rows={4}
-              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] transition-all duration-200"
+              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-200"
             />
           ) : notes ? (
             <p className="font-serif text-base leading-relaxed text-text-secondary">

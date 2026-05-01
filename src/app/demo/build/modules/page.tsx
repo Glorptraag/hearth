@@ -19,7 +19,7 @@ export default function ModuleBuilderPage() {
       </h1>
 
       {/* Info card */}
-      <div className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft">
+      <div className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card">
         <div className="flex gap-lg items-start">
           <div className="text-4xl flex-shrink-0" aria-hidden="true">🔨</div>
           <div className="space-y-md">

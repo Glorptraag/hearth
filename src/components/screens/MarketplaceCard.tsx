@@ -103,10 +103,10 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
     <article
       role="article"
       aria-label={`${pack.title} — ${moduleCount} modules${ageStr ? `, ${ageStr}` : ''}`}
-      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-soft overflow-hidden transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-warm ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
+      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-card overflow-hidden transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-hover ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
     >
       {/* Ember top-line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-ember to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms] z-10" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-ember to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-gentle)] z-10" />
 
       {/* Hero */}
       <div
@@ -199,7 +199,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
                 onAddToLibrary(pack._id);
               }}
               aria-label={`Add ${pack.title} to your library`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer whitespace-nowrap"
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
             >
               Add to Library
             </button>
@@ -210,7 +210,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
                 onPurchase?.(pack._id);
               }}
               aria-label={`Purchase ${pack.title}`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember text-text-inverse hover:bg-ember-hover transition-all duration-200 cursor-pointer whitespace-nowrap shadow-[0_2px_8px_rgba(217,123,58,0.25)]"
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember text-text-inverse hover:bg-ember-hover transition-all duration-200 cursor-pointer whitespace-nowrap shadow-ember"
             >
               Get Pack
             </button>

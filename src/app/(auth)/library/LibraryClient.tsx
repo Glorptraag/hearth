@@ -162,9 +162,9 @@ function LibraryCard({ item }: { item: LibraryItem }) {
   const subjects = item.subjects ?? [];
   const content = (
     <div
-      className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft hover:border-border-medium hover:shadow-warm hover:-translate-y-[2px] transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+      className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
     >
-      <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms]" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-gentle)]" />
       <div className="flex items-start justify-between gap-sm mb-sm">
         <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
           {item.title}

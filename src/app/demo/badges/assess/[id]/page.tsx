@@ -159,7 +159,7 @@ export default function BadgeAssessmentPage() {
         <div className="flex flex-col gap-md mt-lg pt-lg border-t border-border-subtle">
           <button
             onClick={() => handleResponse('yes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
             <p className="font-sans font-semibold text-sage mb-xs">
               Yes — consistently
@@ -171,9 +171,9 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('sometimes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-amber-900/30 hover:bg-amber-900/20 hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-amber-status/30 hover:bg-amber-status/20 hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
-            <p className="font-sans font-semibold text-amber-400 mb-xs">
+            <p className="font-sans font-semibold text-amber-status mb-xs">
               Sometimes
             </p>
             <p className="font-serif text-sm text-text-secondary">
@@ -183,7 +183,7 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('not_yet')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
             <p className="font-sans font-semibold text-text-secondary mb-xs">
               Not yet
@@ -221,7 +221,7 @@ export default function BadgeAssessmentPage() {
                 <span className="text-text-muted"> consistently</span>
               </p>
               <p className="font-sans text-sm">
-                <span className="font-semibold text-amber-400">{sometimesCount}</span>
+                <span className="font-semibold text-amber-status">{sometimesCount}</span>
                 <span className="text-text-muted"> sometimes</span>
               </p>
               <p className="font-sans text-sm">
@@ -253,7 +253,7 @@ export default function BadgeAssessmentPage() {
         ) : (
           <div className="text-center space-y-lg">
             <div className="text-6xl">⏳</div>
-            <h1 className="font-serif text-xl font-semibold text-amber-400">
+            <h1 className="font-serif text-xl font-semibold text-amber-status">
               Almost there
             </h1>
             <p className="font-serif text-text-secondary">
@@ -267,7 +267,7 @@ export default function BadgeAssessmentPage() {
                 <span className="text-text-muted"> consistently (needs {badge.threshold})</span>
               </p>
               <p className="font-sans text-sm">
-                <span className="font-semibold text-amber-400">{sometimesCount}</span>
+                <span className="font-semibold text-amber-status">{sometimesCount}</span>
                 <span className="text-text-muted"> sometimes</span>
               </p>
               <p className="font-sans text-sm">

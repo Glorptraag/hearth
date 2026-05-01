@@ -58,7 +58,7 @@ export default function AnalyticsClient() {
       </div>
 
       {/* Content */}
-      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-soft p-lg">
+      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-card p-lg">
         {activeTab === 'pack-adoption' && (
           <PackAdoptionTab packId={packId} setPackId={setPackId} />
         )}
@@ -271,7 +271,7 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
                 </div>
               ) : (
                 <div
-                  className="h-full rounded-sm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-full rounded-sm transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   style={{ width: `${pct}%`, background: 'rgba(217,123,58,0.7)' }}
                 />
               )}

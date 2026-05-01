@@ -21,7 +21,7 @@ interface DashboardData {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex-1 rounded-lg border border-border-subtle bg-surface-raised p-md shadow-soft">
+    <div className="flex-1 rounded-lg border border-border-subtle bg-surface-raised p-md shadow-card">
       <div className="font-serif text-2xl font-bold text-text-primary">{value}</div>
       <div className="font-sans text-[0.7rem] font-medium text-text-muted uppercase tracking-wider mt-xs">
         {label}

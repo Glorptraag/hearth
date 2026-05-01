@@ -182,7 +182,7 @@ export default function HearthHomeClient({
         {/* Back nav */}
         <Link
           href="/dashboard"
-          className="mb-lg inline-flex items-center gap-xs font-sans text-sm text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:text-text-secondary"
+          className="mb-lg inline-flex items-center gap-xs font-sans text-sm text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:text-text-secondary"
         >
           <span>←</span>
           <span>Back to Dashboard</span>
@@ -219,7 +219,7 @@ export default function HearthHomeClient({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
                   activeTab === tab.id
                     ? 'border-b-2 border-ember text-ember'
                     : 'text-text-muted hover:text-text-secondary'
@@ -325,7 +325,7 @@ function OurStoryTab({
         ))}
       </div>
 
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
         <p className="font-serif text-sm italic text-text-muted">
           Your group&apos;s collective story will grow as sessions are completed and reflections are shared.
         </p>
@@ -355,7 +355,7 @@ function SessionsTab({
         <div className="mb-xl">
           <button
             onClick={onCreateSession}
-            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
+            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
           >
             + New Session
           </button>
@@ -416,7 +416,7 @@ function SessionCard({
   return (
     <Link
       href={`/hearths/${hearthId}/sessions/${session.id}`}
-      className="block rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
+      className="block rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
     >
       <div className="mb-sm flex items-center gap-sm">
         <span
@@ -463,7 +463,7 @@ function MembersTab({
         <div className="mb-xl">
           <button
             onClick={onInvite}
-            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
+            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
           >
             + Invite Family
           </button>
@@ -483,7 +483,7 @@ function MemberCard({ member }: { member: MemberData }) {
   const initials = getInitials(member.familyName);
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium">
+    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover">
       <div className="mb-md flex items-center gap-md">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember/15 font-sans text-sm font-semibold text-ember">
           {initials}
@@ -547,7 +547,7 @@ function SettingsTab({
   return (
     <div className="flex flex-col gap-xl">
       {/* Name & Description */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
         <h2 className="mb-lg font-serif text-xl font-semibold text-text-primary">
           Hearth Details
         </h2>
@@ -561,7 +561,7 @@ function SettingsTab({
               type="text"
               value={editName}
               onChange={(e) => onNameChange(e.target.value)}
-              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-ember"
+              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[var(--ease-default)] focus:border-ember"
             />
           ) : (
             <p className="font-serif text-base text-text-primary">{hearth.name}</p>
@@ -577,7 +577,7 @@ function SettingsTab({
               value={editDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
               rows={3}
-              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-ember"
+              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[var(--ease-default)] focus:border-ember"
             />
           ) : (
             <p className="font-serif text-base text-text-secondary">
@@ -590,7 +590,7 @@ function SettingsTab({
           <button
             onClick={onSave}
             disabled={saving}
-            className="rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110 disabled:opacity-50"
+            className="rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -598,7 +598,7 @@ function SettingsTab({
       </div>
 
       {/* Consent */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
         <h2 className="mb-lg font-serif text-xl font-semibold text-text-primary">
           Consent Settings
         </h2>
@@ -607,20 +607,20 @@ function SettingsTab({
         </p>
         <Link
           href="/settings"
-          className="font-sans text-sm font-semibold text-ember transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:brightness-110"
+          className="font-sans text-sm font-semibold text-ember transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
         >
           Manage in Family Settings →
         </Link>
       </div>
 
       {/* Leave */}
-      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-soft">
+      <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
         <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">
           Danger Zone
         </h2>
         <button
           onClick={onLeave}
-          className="rounded-[10px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-red-900/30"
+          className="rounded-[10px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all duration-200 ease-[var(--ease-default)] hover:bg-red-900/30"
         >
           Leave this Hearth
         </button>

@@ -445,7 +445,7 @@ export default function SettingsClient({
     { token: 'rose', bg: 'bg-child-rose' },
     { token: 'blue', bg: 'bg-child-blue' },
     { token: 'sage', bg: 'bg-child-sage' },
-    { token: 'amber', bg: 'bg-amber-400' },
+    { token: 'amber', bg: 'bg-amber-status' },
   ];
 
   return (
@@ -472,7 +472,7 @@ export default function SettingsClient({
       {/* Mobile sidebar toggle button */}
       <button
         onClick={() => setSidebarOpen((v) => !v)}
-        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary"
+        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         {sidebarOpen ? '← Hide menu' : '☰ Settings menu'}
       </button>
@@ -487,9 +487,9 @@ export default function SettingsClient({
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
                 activeTab === tab.id
-                  ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'
+                  ? 'border-border-medium bg-surface-raised text-ember shadow-card'
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
               }`}
             >

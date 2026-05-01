@@ -19,7 +19,7 @@ export default function SessionTimer({ suggestedMax, startTime }: { suggestedMax
 
   return (
     <div className={`flex items-center gap-xs font-sans text-xs tabular-nums transition-colors duration-200 ${
-      exceeding ? 'text-amber-400' : approaching ? 'text-text-secondary' : 'text-text-muted'
+      exceeding ? 'text-amber-status' : approaching ? 'text-text-secondary' : 'text-text-muted'
     }`}>
       <span>⏱</span>
       <span>{mins}:{secs.toString().padStart(2, '0')}</span>

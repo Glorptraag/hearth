@@ -47,7 +47,7 @@ export default function DemoComplianceReport() {
 
   const getStatusColor = (count: number): { bg: string; text: string } => {
     if (count >= 5) return { bg: 'bg-sage/20', text: 'text-sage' };
-    if (count >= 3) return { bg: 'bg-amber-900/20', text: 'text-amber-400' };
+    if (count >= 3) return { bg: 'bg-amber-status/20', text: 'text-amber-status' };
     return { bg: 'bg-red-900/20', text: 'text-red-400' };
   };
 
@@ -152,7 +152,7 @@ export default function DemoComplianceReport() {
                   <p className="font-sans text-sm text-text-secondary">
                     Consider logging more{' '}
                     <span className="font-semibold text-text-primary">{DOMAIN_LABELS[subject]}</span>{' '}
-                    activities — you need <span className="font-semibold text-amber-400">{remaining} more</span>{' '}
+                    activities — you need <span className="font-semibold text-amber-status">{remaining} more</span>{' '}
                     entries for comfortable coverage.
                   </p>
                 </div>

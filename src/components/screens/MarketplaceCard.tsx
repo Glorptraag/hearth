@@ -1,5 +1,24 @@
 'use client';
 
+import { createElement, type ComponentType } from 'react';
+import {
+  FlowerLotus,
+  GraduationCap,
+  Heart,
+  Sparkle,
+  BookOpenText,
+  MathOperations,
+  Atom,
+  Globe,
+  Palette,
+  Cpu,
+  PersonSimpleRun,
+  ChatsCircle,
+  Books,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+
 export type Subject =
   | 'english'
   | 'mathematics'
@@ -39,12 +58,12 @@ export interface SanityPack {
   commonsTextCount?: number;
 }
 
-function getCreatorEmoji(type?: CreatorType): string {
+function getCreatorIcon(type?: CreatorType): IconC {
   switch (type) {
-    case 'content-team': return '🌿';
-    case 'educator':     return '🎓';
-    case 'parent':       return '💛';
-    default:             return '✨';
+    case 'content-team': return FlowerLotus;
+    case 'educator':     return GraduationCap;
+    case 'parent':       return Heart;
+    default:             return Sparkle;
   }
 }
 
@@ -57,15 +76,15 @@ function getCreatorLabel(type?: CreatorType): string {
   }
 }
 
-const SUBJECT_META: Record<Subject, { label: string; hex: string; emoji: string }> = {
-  english:      { label: 'English',      hex: '#6B8E9B', emoji: '📖' },
-  mathematics:  { label: 'Mathematics',  hex: '#9B7B6B', emoji: '🔢' },
-  science:      { label: 'Science',      hex: '#7B9B6B', emoji: '🔬' },
-  hass:         { label: 'HASS',         hex: '#9B8B6B', emoji: '🌍' },
-  arts:         { label: 'Arts',         hex: '#8B6B9B', emoji: '🎨' },
-  technologies: { label: 'Technologies', hex: '#6B7B9B', emoji: '💻' },
-  hpe:          { label: 'HPE',          hex: '#9B6B7B', emoji: '🏃' },
-  languages:    { label: 'Languages',    hex: '#6B9B8B', emoji: '🗣️' },
+const SUBJECT_META: Record<Subject, { label: string; hex: string; Icon: IconC }> = {
+  english:      { label: 'English',      hex: '#6B8E9B', Icon: BookOpenText },
+  mathematics:  { label: 'Mathematics',  hex: '#9B7B6B', Icon: MathOperations },
+  science:      { label: 'Science',      hex: '#7B9B6B', Icon: Atom },
+  hass:         { label: 'HASS',         hex: '#9B8B6B', Icon: Globe },
+  arts:         { label: 'Arts',         hex: '#8B6B9B', Icon: Palette },
+  technologies: { label: 'Technologies', hex: '#6B7B9B', Icon: Cpu },
+  hpe:          { label: 'HPE',          hex: '#9B6B7B', Icon: PersonSimpleRun },
+  languages:    { label: 'Languages',    hex: '#6B9B8B', Icon: ChatsCircle },
 };
 
 function hexToRgb(hex: string): string {
@@ -92,7 +111,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
   const primary = subjects[0];
   const primaryMeta = primary ? SUBJECT_META[primary] : null;
   const primaryHex = primaryMeta?.hex ?? '#D97B3A';
-  const emoji = primaryMeta?.emoji ?? '📚';
+  const HeroIcon: IconC = primaryMeta?.Icon ?? Books;
   const rgb = hexToRgb(primaryHex);
   const heroGradient = `linear-gradient(135deg, rgba(${rgb},0.14) 0%, transparent 100%)`;
   const isMembership = pack.availability !== 'premium';
@@ -110,13 +129,13 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
 
       {/* Hero */}
       <div
-        className="h-[80px] flex items-center justify-center text-3xl relative"
-        style={{ background: heroGradient }}
+        className="h-[80px] flex items-center justify-center relative"
+        style={{ background: heroGradient, color: primaryHex }}
       >
         <span className="absolute top-2 left-3 font-sans text-[0.65rem] font-semibold uppercase tracking-wider text-text-muted select-none">
           Pack
         </span>
-        <span role="img" aria-hidden="true">{emoji}</span>
+        <span aria-hidden="true"><HeroIcon size={32} /></span>
       </div>
 
       {/* Body */}
@@ -144,8 +163,8 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
 
         {/* Creator */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs" aria-hidden="true">
-            {getCreatorEmoji(pack.creatorType)}
+          <span className="inline-flex text-text-secondary" aria-hidden="true">
+            {createElement(getCreatorIcon(pack.creatorType), { size: 14 })}
           </span>
           <span className="font-sans text-xs text-text-muted">
             {pack.creator ?? 'Hearth Team'}

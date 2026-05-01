@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import RecommendationChip from './RecommendationChip';
+import { Sun, SunHorizon } from '@/components/icons';
 
 interface Learner {
   id: string;
@@ -170,23 +171,23 @@ export default function BottomSheet({
         <div className="flex gap-xs px-md pb-sm">
           <button
             onClick={() => setSession('morning')}
-            className={`rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
               session === 'morning'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
             }`}
           >
-            ☀️ Morning
+            <Sun size={14} aria-hidden="true" /> Morning
           </button>
           <button
             onClick={() => setSession('afternoon')}
-            className={`rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
               session === 'afternoon'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
             }`}
           >
-            🌆 Afternoon
+            <SunHorizon size={14} aria-hidden="true" /> Afternoon
           </button>
         </div>
 

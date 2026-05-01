@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { Check } from '@/components/icons';
 
 interface ReflectionModalProps {
   isOpen: boolean;
@@ -59,7 +60,9 @@ export default function ReflectionModal({
     >
       <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
         {/* Success header */}
-        <div className="text-center text-3xl mb-md" aria-hidden="true">✓</div>
+        <div className="mb-md flex justify-center text-sage" aria-hidden="true">
+          <Check size={32} />
+        </div>
         <h2 id="reflection-modal-title" className="font-serif text-xl font-semibold text-center mb-md">
           Entry saved
         </h2>

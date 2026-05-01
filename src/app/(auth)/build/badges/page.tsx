@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { Medal, X } from '@/components/icons';
 
 const CAPABILITY_THREADS = [
   'Literacy & Communication', 'Numeracy & Logic', 'Scientific Inquiry',
@@ -110,7 +111,11 @@ export default function BuildBadgesPage() {
     return (
       <div className="px-md py-lg max-w-xl mx-auto">
         <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl flex flex-col items-center gap-lg text-center shadow-card">
-          <span className="text-4xl">{form.emoji || '🏅'}</span>
+          {form.emoji ? (
+            <span className="text-4xl" aria-hidden="true">{form.emoji}</span>
+          ) : (
+            <span className="inline-flex text-ember" aria-hidden="true"><Medal size={32} /></span>
+          )}
           <div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
               Badge created
@@ -160,7 +165,7 @@ export default function BuildBadgesPage() {
                 type="text"
                 value={form.emoji}
                 onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
-                placeholder="🏅"
+                placeholder=""
                 maxLength={2}
                 className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
               />
@@ -220,10 +225,10 @@ export default function BuildBadgesPage() {
                   <button
                     type="button"
                     onClick={() => removeIndicator(i)}
-                    className="shrink-0 font-sans text-sm text-text-muted transition-colors duration-200 hover:text-red-400"
+                    className="shrink-0 text-text-muted transition-colors duration-200 hover:text-red-400"
                     aria-label="Remove indicator"
                   >
-                    ✕
+                    <X size={14} aria-hidden="true" />
                   </button>
                 )}
               </div>

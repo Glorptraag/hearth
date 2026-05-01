@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { X } from '@/components/icons';
 
 interface InviteModalProps {
   hearthId: string;
@@ -73,9 +74,10 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
           <button
             type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary font-sans text-sm transition-all duration-200 ml-md"
+            className="text-text-muted hover:text-text-primary transition-all duration-200 ml-md"
+            aria-label="Close"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 

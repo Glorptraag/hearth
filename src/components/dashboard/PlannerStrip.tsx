@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CalendarBlank } from '@/components/icons';
 
 interface PlannerItem {
   id: string;
@@ -28,7 +29,9 @@ export default function PlannerStrip({ items }: PlannerStripProps) {
 
       {items.length === 0 ? (
         <div className="flex items-center gap-sm rounded-[10px] border border-border-subtle bg-surface-panel px-md py-sm">
-          <span className="text-lg" aria-hidden="true">📅</span>
+          <span className="inline-flex text-text-secondary" aria-hidden="true">
+            <CalendarBlank size={18} />
+          </span>
           <p className="font-sans text-sm text-text-muted">Nothing planned for today.</p>
           <Link
             href="/planner"

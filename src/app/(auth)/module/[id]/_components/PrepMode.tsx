@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import type { Module, ActivityOverlay, Activity } from './types';
-import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
-import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
+import { SETTING_ICON, ENERGY_ICON, PEDAGOGY_LABELS } from './constants';
+import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components/content/types';
+import { Check, Printer, Asterisk } from '@/components/icons';
 
 export default function PrepMode({
   module,
@@ -110,16 +111,25 @@ export default function PrepMode({
                     </span>
                   )}
                   <div className="flex gap-xs mt-xs">
-                    {act.setting && (
-                      <span className="font-sans text-xs text-text-muted">
-                        {SETTING_EMOJI[act.setting]} {act.setting}
-                      </span>
-                    )}
-                    {act.energyLevel && (
-                      <span className="font-sans text-xs text-text-muted">
-                        · {ENERGY_EMOJI[act.energyLevel]} {act.energyLevel}
-                      </span>
-                    )}
+                    {act.setting && (() => {
+                      const SettingIcon = SETTING_ICON[act.setting];
+                      return (
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                          {SettingIcon && <SettingIcon size={14} aria-hidden="true" />}
+                          {act.setting}
+                        </span>
+                      );
+                    })()}
+                    {act.energyLevel && (() => {
+                      const EnergyIcon = ENERGY_ICON[act.energyLevel];
+                      return (
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                          ·
+                          {EnergyIcon && <EnergyIcon size={14} aria-hidden="true" />}
+                          {act.energyLevel}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -150,7 +160,7 @@ export default function PrepMode({
                         : 'border-border-medium bg-transparent'
                     }`}
                   >
-                    {checked[key] && <span className="text-xs">✓</span>}
+                    {checked[key] && <Check size={12} aria-hidden="true" />}
                   </span>
                   <span
                     className={`font-serif text-sm transition-colors duration-200 ${
@@ -207,10 +217,12 @@ export default function PrepMode({
             </h2>
             <div className="space-y-xs">
               {allAssets.map(({ activity, ref }) => {
-                const emoji = ASSET_KIND_EMOJI[ref.asset.kind as keyof typeof ASSET_KIND_EMOJI] ?? '📄';
+                const KindIcon = ASSET_KIND_ICON[ref.asset.kind as AssetKind] ?? ASSET_KIND_ICON.template;
                 return (
                   <div key={ref.asset._id} className="flex items-center gap-sm py-xs">
-                    <span className="shrink-0 text-sm" aria-hidden="true">{emoji}</span>
+                    <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true">
+                      <KindIcon size={16} />
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-serif text-sm text-text-primary truncate">{ref.asset.title}</p>
                       <p className="font-sans text-[0.68rem] text-text-muted">
@@ -227,7 +239,9 @@ export default function PrepMode({
               })}
               {allTexts.map(({ activity, ref }) => (
                 <div key={ref.text._id} className="flex items-center gap-sm py-xs">
-                  <span className="shrink-0 text-sm" aria-hidden="true">{COMMONS_KIND_EMOJI}</span>
+                  <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true">
+                    <COMMONS_KIND_ICON size={16} />
+                  </span>
                   <div className="flex-1 min-w-0">
                     <p className="font-serif text-sm text-text-primary truncate">{ref.text.title}</p>
                     <p className="font-sans text-[0.68rem] text-text-muted">
@@ -245,9 +259,10 @@ export default function PrepMode({
             {onPrintMaterials && printableCount > 0 && (
               <button
                 onClick={onPrintMaterials}
-                className="mt-md w-full bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-200"
+                className="mt-md inline-flex w-full items-center justify-center gap-xs bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-200"
               >
-                📄 Print materials for this module
+                <Printer size={16} aria-hidden="true" />
+                Print materials for this module
               </button>
             )}
           </div>
@@ -290,8 +305,8 @@ export default function PrepMode({
         const label = pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Your Lens';
         return (
           <div className="mb-xl rounded-lg border border-border-medium bg-ember-glow p-lg">
-            <h2 className="font-sans text-sm font-semibold text-ember uppercase tracking-widest mb-md">
-              ✦ {label}
+            <h2 className="inline-flex items-center gap-xs font-sans text-sm font-semibold text-ember uppercase tracking-widest mb-md">
+              <Asterisk size={14} aria-hidden="true" /> {label}
             </h2>
             <div className="space-y-md">
               {lensItems.map((item, i) => (

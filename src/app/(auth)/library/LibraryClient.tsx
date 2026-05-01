@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
+import { Books, Sparkle } from '@/components/icons';
 
 interface LibraryItem {
   id: string;
@@ -124,7 +125,9 @@ export default function LibraryClient() {
               </div>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <span className="text-5xl mb-md" aria-hidden="true">📚</span>
+                <span className="mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <Books size={32} />
+                </span>
                 <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
                   Your library is empty
                 </h3>
@@ -170,8 +173,8 @@ function LibraryCard({ item }: { item: LibraryItem }) {
           {item.title}
         </h3>
         {item.isOwnBuilt && (
-          <span className="font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sage/15 text-sage border border-sage/30 shrink-0">
-            ✨ Created by you
+          <span className="inline-flex items-center gap-xs font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sage/15 text-sage border border-sage/30 shrink-0">
+            <Sparkle size={10} aria-hidden="true" /> Created by you
           </span>
         )}
       </div>

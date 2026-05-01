@@ -1,7 +1,8 @@
 'use client';
 
 import type { Module, Mode } from './types';
-import { MODALITY_EMOJI } from './constants';
+import { MODALITY_ICON, FALLBACK_PIN_ICON } from './constants';
+import { Check, ClipboardText, PencilSimple } from '@/components/icons';
 
 interface ModuleSidebarProps {
   module: Module;
@@ -64,7 +65,12 @@ export default function ModuleSidebar({
                   : 'border-l-transparent hover:bg-ember-glow'
               }`}
             >
-              <span className="text-lg">{MODALITY_EMOJI[appr.modality ?? ''] ?? '📌'}</span>
+              <span className="inline-flex text-text-secondary" aria-hidden="true">
+                {(() => {
+                  const Icon = MODALITY_ICON[appr.modality ?? ''] ?? FALLBACK_PIN_ICON;
+                  return <Icon size={18} />;
+                })()}
+              </span>
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-sans text-sm font-medium text-text-primary truncate">{appr.title}</p>
                 {appr.modality && (
@@ -92,8 +98,8 @@ export default function ModuleSidebar({
                 : 'border-l-transparent hover:bg-ember-glow'
             }`}
           >
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-sans font-semibold shrink-0 bg-sage text-text-inverse">
-              {isPrepDone ? '✓' : '📋'}
+            <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-sage text-text-inverse" aria-hidden="true">
+              {isPrepDone ? <Check size={14} /> : <ClipboardText size={14} />}
             </span>
             <span className={`font-sans text-sm font-medium ${
               mode === 'prep' ? 'text-ember' : 'text-text-primary'
@@ -127,7 +133,7 @@ export default function ModuleSidebar({
                         : 'bg-surface-raised text-text-muted'
                     }`}
                   >
-                    {isCompleted ? '✓' : idx + 1}
+                    {isCompleted ? <Check size={14} aria-hidden="true" /> : idx + 1}
                   </span>
                   <div className="flex-1 min-w-0 text-left">
                     <p className={`font-sans text-sm font-medium truncate ${
@@ -166,8 +172,8 @@ export default function ModuleSidebar({
                 : 'border-l-transparent hover:bg-ember-glow'
             }`}
           >
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-sans font-semibold shrink-0 bg-surface-raised text-text-muted">
-              ✏️
+            <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-surface-raised text-text-muted" aria-hidden="true">
+              <PencilSimple size={14} />
             </span>
             <span className={`font-sans text-sm font-medium ${
               mode === 'log' ? 'text-ember' : 'text-text-primary'

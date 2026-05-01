@@ -7,6 +7,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
 import EmptyState from '@/components/ui/EmptyState';
+import { Wrench, Lock, ClipboardText, PencilSimple, Play, FilePdf } from '@/components/icons';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
 import PrepMode from './_components/PrepMode';
 import FacilitateMode from './_components/FacilitateMode';
@@ -306,7 +307,7 @@ export default function ModuleDetailPage() {
     return (
       <div className="flex min-h-[40vh] items-center justify-center px-md py-xl">
         <EmptyState
-          emoji="🔧"
+          icon={Wrench}
           heading="This module isn't ready to run"
           body={runnerError}
           cta={{ label: 'Browse activities', href: '/explore/activities' }}
@@ -319,7 +320,7 @@ export default function ModuleDetailPage() {
     return (
       <div className="flex min-h-[40vh] items-center justify-center px-md py-xl">
         <EmptyState
-          emoji="🔧"
+          icon={Wrench}
           heading="Module not available"
           body="This module may have been removed or is temporarily unavailable. Your learning data is safe."
           cta={{ label: 'Browse activities', href: '/explore/activities' }}
@@ -331,7 +332,12 @@ export default function ModuleDetailPage() {
   if (!hasAccess) {
     return (
       <div className="px-md py-xl max-w-2xl mx-auto text-center">
-        <p className="text-4xl mb-md" aria-hidden="true">🔒</p>
+        <span
+          className="mx-auto mb-md inline-flex h-12 w-12 items-center justify-center text-text-secondary"
+          aria-hidden="true"
+        >
+          <Lock size={32} />
+        </span>
         <h1 className="font-serif text-xl font-semibold text-text-primary mb-sm">
           Not in your library yet
         </h1>
@@ -371,10 +377,10 @@ export default function ModuleDetailPage() {
               const activities = module.approaches?.[selectedApproachIdx]?.activities ?? [];
               const label =
                 m === 'prep'
-                  ? '📋 Prep'
+                  ? <span className="inline-flex items-center gap-xs"><ClipboardText size={14} aria-hidden="true" /> Prep</span>
                   : m === 'facilitate'
-                  ? `▶ Go (${currentActivityIdx + 1}/${activities.length})`
-                  : '✏️ Log';
+                  ? <span className="inline-flex items-center gap-xs"><Play size={14} weight="fill" aria-hidden="true" /> Go ({currentActivityIdx + 1}/{activities.length})</span>
+                  : <span className="inline-flex items-center gap-xs"><PencilSimple size={14} aria-hidden="true" /> Log</span>;
               return (
                 <button
                   key={m}
@@ -393,7 +399,7 @@ export default function ModuleDetailPage() {
                 className="ml-auto shrink-0 font-sans text-sm text-text-muted hover:text-ember transition-colors duration-200"
                 aria-label={`${materialCount} materials — print`}
               >
-                📄 {materialCount}
+                <span className="inline-flex items-center gap-xs"><FilePdf size={14} aria-hidden="true" /> {materialCount}</span>
               </button>
             )}
           </div>

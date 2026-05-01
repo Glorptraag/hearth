@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Check } from '@/components/icons';
 
 interface CsvImportFormProps {
   onComplete: () => void;
@@ -55,8 +56,9 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
     return (
       <div className="flex flex-col gap-lg">
         <div className="rounded-lg border border-sage/20 bg-sage/10 p-md">
-          <p className="font-serif text-base font-semibold text-sage mb-xs">
-            ✓ {result.imported} session{result.imported !== 1 ? 's' : ''} imported
+          <p className="inline-flex items-center gap-xs font-serif text-base font-semibold text-sage mb-xs">
+            <Check size={16} aria-hidden="true" />
+            {result.imported} session{result.imported !== 1 ? 's' : ''} imported
           </p>
           {result.errors && result.errors.length > 0 && (
             <div className="mt-sm">

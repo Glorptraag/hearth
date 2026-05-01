@@ -1,7 +1,9 @@
 'use client';
 
+import { createElement } from 'react';
 import Image from 'next/image';
-import { type PrintableItem, getItemEmoji } from './types';
+import { type PrintableItem, getItemIcon } from './types';
+import { Printer } from '@/components/icons';
 
 interface MaterialItemRowProps {
   item: PrintableItem;
@@ -34,7 +36,7 @@ export function MaterialItemRow({
   compact,
   disabled,
 }: MaterialItemRowProps) {
-  const emoji = getItemEmoji(item);
+  const itemIcon = getItemIcon(item);
   const isAudio = item.assetKind === 'audio';
   const isCommons = item.kind === 'commonsText';
   const roleLabel = ROLE_LABELS[item.role];
@@ -66,14 +68,14 @@ export function MaterialItemRow({
         />
       )}
 
-      {/* Thumbnail / emoji */}
+      {/* Thumbnail / icon */}
       {item.thumbnailUrl ? (
         <div className="relative shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle overflow-hidden">
           <Image src={item.thumbnailUrl} alt="" fill sizes="40px" className="object-cover" />
         </div>
       ) : (
-        <div className="shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">
-          {emoji}
+        <div className="shrink-0 w-10 h-10 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-text-secondary" aria-hidden="true">
+          {createElement(itemIcon, { size: 22 })}
         </div>
       )}
 
@@ -124,7 +126,7 @@ export function MaterialItemRow({
               className="p-1.5 text-text-muted hover:text-text-primary transition-colors duration-200"
               aria-label={`Print ${item.title}`}
             >
-              🖨
+              <Printer size={16} aria-hidden="true" />
             </button>
           )}
           {isAudio && (

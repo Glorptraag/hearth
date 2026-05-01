@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Medal } from '@/components/icons';
 
 interface BadgeChipProps {
   badge: {
@@ -14,9 +15,19 @@ export default function BadgeChip({ badge }: BadgeChipProps) {
     ? formatDistanceToNow(new Date(badge.awardedAt), { addSuffix: true })
     : null;
 
+  // badgeEmoji is data-driven content (e.g. illustrator-bespoke emoji per badge);
+  // when present we render it directly. When absent we fall back to a Phosphor Medal.
+  const badgeEmoji = badge.badgeEmoji;
+
   return (
-    <div className="flex flex-col gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition-all duration-[var(--motion-gentle)] hover:border-border-medium hover:bg-surface-raised">
-      <span className="text-2xl">{badge.badgeEmoji ?? '🏅'}</span>
+    <div className="flex flex-col items-center gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition-all duration-[var(--motion-gentle)] hover:border-border-medium hover:bg-surface-raised">
+      {badgeEmoji ? (
+        <span className="text-2xl" aria-hidden="true">{badgeEmoji}</span>
+      ) : (
+        <span className="inline-flex text-ember" aria-hidden="true">
+          <Medal size={22} />
+        </span>
+      )}
       <p className="font-serif text-sm font-semibold leading-tight text-text-primary">
         {badge.badgeTitle}
       </p>

@@ -1,25 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import type { TreeNode } from '@/lib/content-qa/run';
+import {
+  Package, Books, Target, Note, Medal,
+  XCircle, WarningCircle, CheckCircle, CaretDown,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 interface Props {
   tree: TreeNode[];
   onSelectNode: (node: TreeNode) => void;
 }
 
-const DOC_EMOJI: Record<string, string> = {
-  pack: '\uD83D\uDCE6',     // 📦
-  module: '\uD83D\uDCDA',   // 📚
-  approach: '\uD83C\uDFAF', // 🎯
-  activity: '\uD83D\uDCDD', // 📝
-  badge: '\uD83C\uDFC5',    // 🏅
+const DOC_ICON: Record<string, IconC> = {
+  pack:     Package,
+  module:   Books,
+  approach: Target,
+  activity: Note,
+  badge:    Medal,
 };
 
-function statusIcon(node: TreeNode): string {
-  if (node.errors.length > 0) return '\u274C'; // ❌
-  if (node.warnings.length > 0) return '\u26A0\uFE0F'; // ⚠️
-  return '\u2705'; // ✅
+function statusMeta(node: TreeNode): { Icon: IconC; colour: string } {
+  if (node.errors.length > 0)   return { Icon: XCircle,      colour: 'text-red-400' };
+  if (node.warnings.length > 0) return { Icon: WarningCircle, colour: 'text-amber-400' };
+  return { Icon: CheckCircle, colour: 'text-sage' };
 }
 
 function completenessColor(pct: number): string {
@@ -74,19 +80,26 @@ function TreeRow({
               e.stopPropagation();
               setExpanded(!expanded);
             }}
-            className="font-sans text-xs text-text-muted hover:text-text-primary w-4 text-center flex-shrink-0"
+            className="text-text-muted hover:text-text-primary w-4 flex justify-center flex-shrink-0"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
           >
-            {expanded ? '\u25BE' : '\u25B8'}
+            <CaretDown size={12} className={`transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`} aria-hidden="true" />
           </button>
         )}
         {!hasChildren && <span className="w-4 flex-shrink-0" />}
 
-        <span className="text-sm flex-shrink-0">
-          {DOC_EMOJI[node.docType] ?? ''}
+        <span className="flex-shrink-0 inline-flex text-text-secondary" aria-hidden="true">
+          {(() => {
+            const Icon = DOC_ICON[node.docType] ?? Note;
+            return <Icon size={14} />;
+          })()}
         </span>
 
-        <span className="text-xs flex-shrink-0">
-          {statusIcon(node)}
+        <span className="flex-shrink-0 inline-flex" aria-hidden="true">
+          {(() => {
+            const { Icon, colour } = statusMeta(node);
+            return <span className={colour}><Icon size={14} /></span>;
+          })()}
         </span>
 
         <span className="font-serif text-sm text-text-primary truncate flex-1">

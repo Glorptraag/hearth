@@ -9,6 +9,7 @@ import { FormField, Input, TextArea, Select } from '../primitives/FormField';
 import { RangeInput } from '../primitives/RangeInput';
 import { TagInput } from '../primitives/TagInput';
 import { ThreadPicker } from '../primitives/ThreadPicker';
+import { BookOpen, Ruler, Compass, Shuffle } from '@/components/icons';
 
 const SUBJECT_OPTIONS = SUBJECTS.map((s) => ({
   value: s,
@@ -68,7 +69,7 @@ export function ModuleEditor({
 
   return (
     <>
-      <Panel title="Module Identity" emoji="📖">
+      <Panel title="Module Identity" Icon={BookOpen}>
         <FormField label="Title" required>
           <Input value={mod.title} onChange={(v) => setField(f('title'), v)} placeholder="e.g., What Lives Outside" />
         </FormField>
@@ -115,7 +116,7 @@ export function ModuleEditor({
         </FormField>
       </Panel>
 
-      <Panel title="Understanding Indicators" emoji="📏">
+      <Panel title="Understanding Indicators" Icon={Ruler}>
         <div className="text-xs text-text-secondary italic mb-md font-sans">
           Observable behaviours at each tier. Required for badge assessment and Constellation.
         </div>
@@ -146,7 +147,7 @@ export function ModuleEditor({
 
       <Panel
         title="Capability Threads"
-        emoji="🧭"
+        Icon={Compass}
         right={<span className="text-xs text-text-muted font-sans">{mod.capabilityThreadIds.length} selected</span>}
       >
         <ThreadPicker
@@ -158,7 +159,7 @@ export function ModuleEditor({
 
       <Panel
         title="Approaches"
-        emoji="🔀"
+        Icon={Shuffle}
         right={<span className="text-xs text-text-muted font-sans">{mod.approaches.length} approaches · {totalActivities} activities</span>}
       >
         {mod.approaches.length === 0 && (
@@ -177,7 +178,7 @@ export function ModuleEditor({
             }}
             className="flex items-center gap-3 px-3.5 py-3 bg-surface-body border border-border-subtle rounded-[8px] mb-2 cursor-pointer hover:border-border-medium transition-colors duration-150"
           >
-            <span className="text-lg">🔀</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true"><Shuffle size={18} /></span>
             <div className="flex-1">
               <div className="text-sm font-medium text-text-primary font-serif">{a.title}</div>
               <div className="text-[0.7rem] text-text-muted mt-0.5 font-sans">

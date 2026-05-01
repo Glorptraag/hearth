@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import CreateSessionModal from '@/components/hearth/CreateSessionModal';
 import InviteModal from '@/components/hearth/InviteModal';
+import { House, UsersThree, BabyCarriage, MapPin } from '@/components/icons';
 
 // ─── Types ───
 
@@ -190,8 +191,10 @@ export default function HearthHomeClient({
 
         {/* Header */}
         <div className="mb-xl">
-          <h1 className="font-serif text-3xl font-semibold text-text-primary">
-            <span className="mr-sm" aria-hidden="true">🏠</span>
+          <h1 className="flex items-center gap-sm font-serif text-3xl font-semibold text-text-primary">
+            <span className="text-text-secondary" aria-hidden="true">
+              <House size={32} />
+            </span>
             {hearth.name}
           </h1>
           {hearth.description && (
@@ -200,13 +203,22 @@ export default function HearthHomeClient({
             </p>
           )}
           <div className="mt-sm flex flex-wrap items-center gap-md font-sans text-sm text-text-muted">
-            <span>👨‍👩‍👧‍👦 {memberCount} {memberCount === 1 ? 'family' : 'families'}</span>
+            <span className="inline-flex items-center gap-xs">
+              <UsersThree size={14} aria-hidden="true" />
+              {memberCount} {memberCount === 1 ? 'family' : 'families'}
+            </span>
             <span>·</span>
-            <span>👶 {totalChildrenCount} {totalChildrenCount === 1 ? 'child' : 'children'}</span>
+            <span className="inline-flex items-center gap-xs">
+              <BabyCarriage size={14} aria-hidden="true" />
+              {totalChildrenCount} {totalChildrenCount === 1 ? 'child' : 'children'}
+            </span>
             {hearth.location && (
               <>
                 <span>·</span>
-                <span>📍 {hearth.location}</span>
+                <span className="inline-flex items-center gap-xs">
+                  <MapPin size={14} aria-hidden="true" />
+                  {hearth.location}
+                </span>
               </>
             )}
           </div>
@@ -438,8 +450,9 @@ function SessionCard({
         </p>
       )}
       {session.location && (
-        <div className="mt-sm font-sans text-xs text-text-muted">
-          📍 {session.location}
+        <div className="mt-sm flex items-center gap-xs font-sans text-xs text-text-muted">
+          <MapPin size={14} aria-hidden="true" />
+          {session.location}
         </div>
       )}
     </Link>

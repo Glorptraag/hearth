@@ -131,6 +131,13 @@
   --ease-in:          cubic-bezier(0.7, 0, 0.84, 0);
   --ease-soft-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 
+  /* ---------- Icon sizes (Phosphor regular weight — see docs/hearth-icon-system-v1.md) ---------- */
+  --icon-xs: 14px;
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 22px;
+  --icon-xl: 32px;
+
   /* ---------- Container max-widths (prevent spacing scale hijack) ---------- */
   --max-width-xs:  20rem;
   --max-width-sm:  24rem;

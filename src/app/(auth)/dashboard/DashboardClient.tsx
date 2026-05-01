@@ -7,6 +7,14 @@ import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
+import {
+  HandWaving,
+  Plant,
+  Sun,
+  PencilSimpleLine,
+  Flame,
+  UsersThree,
+} from '@/components/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -251,7 +259,7 @@ export default function DashboardClient({
         {dashboardState === 'no-children' && (
           <div className="mb-3xl">
             <EmptyState
-              emoji="👋"
+              icon={HandWaving}
               heading="Welcome to Hearth"
               body="Let's set up your family. Who's learning at your hearth?"
               cta={{ label: 'Add your first learner', href: `${basePath}/settings` }}
@@ -261,7 +269,7 @@ export default function DashboardClient({
         {dashboardState === 'no-entries' && (
           <div className="mb-3xl">
             <EmptyState
-              emoji="🌱"
+              icon={Plant}
               heading="Your hearth is ready"
               body="Start by logging something that happened today — even five minutes of play counts."
               cta={{ label: 'Log a moment', href: `${basePath}/log` }}
@@ -271,7 +279,9 @@ export default function DashboardClient({
         {dashboardState === 'returning-inactive' && (
           <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-card">
             <div className="flex items-center gap-md">
-              <span className="text-2xl" aria-hidden="true">🌅</span>
+              <span className="inline-flex text-text-secondary" aria-hidden="true">
+                <Sun size={32} />
+              </span>
               <div>
                 <p className="font-serif text-sm text-text-secondary">
                   It&rsquo;s been a few days. Learning has been happening &mdash; let&rsquo;s capture some of it.
@@ -471,7 +481,7 @@ export default function DashboardClient({
           href={`${basePath}/log`}
           className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
         >
-          <span className="text-lg" aria-hidden="true">✏️</span>
+          <PencilSimpleLine size={18} aria-hidden="true" />
           Log a Moment
         </Link>
 
@@ -480,7 +490,9 @@ export default function DashboardClient({
           <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-inset-highlight">
             <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember-glow mb-md shadow-[0_0_12px_rgba(217,123,58,0.2)]">
-              <span className="text-sm text-ember" aria-hidden="true">🔥</span>
+              <span className="text-ember" aria-hidden="true">
+                <Flame size={16} />
+              </span>
             </div>
             <p className="font-serif text-[0.95rem] italic leading-[1.65] text-text-secondary">
               &ldquo;{snapshot.hearthVoice}&rdquo;
@@ -597,8 +609,8 @@ function MomentCard({
       {/* Meta: child avatar + time */}
       <div className="flex items-center gap-sm mb-md">
         {isTogether ? (
-          <div className="flex h-[24px] w-[24px] items-center justify-center rounded-full bg-ember-glow text-[10px] text-ember">
-            👥
+          <div className="flex h-[24px] w-[24px] items-center justify-center rounded-full bg-ember-glow text-ember">
+            <UsersThree size={14} />
           </div>
         ) : entryLearners.length === 1 ? (
           <div

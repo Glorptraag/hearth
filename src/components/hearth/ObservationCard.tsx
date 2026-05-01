@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
+import { Check, PencilSimple } from '@/components/icons';
 
 interface ObservationCardProps {
   id: string;
@@ -61,12 +62,12 @@ export default function ObservationCard({
       {/* Actions */}
       {status === 'pending' ? (
         <div className="flex gap-sm">
-          <button onClick={handleAccept} className="px-3.5 py-1.5 bg-sage/10 text-sage border border-sage/20 rounded-[6px] font-sans text-sm font-semibold cursor-pointer hover:bg-sage/20 transition-all duration-200">
-            ✓ Accept
+          <button onClick={handleAccept} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-sage/10 text-sage border border-sage/20 rounded-[6px] font-sans text-sm font-semibold cursor-pointer hover:bg-sage/20 transition-all duration-200">
+            <Check size={14} aria-hidden="true" /> Accept
           </button>
           {onEdit && (
-            <button onClick={() => onEdit(id)} className="px-3.5 py-1.5 bg-transparent text-text-secondary border border-border-subtle rounded-[6px] font-sans text-sm cursor-pointer hover:bg-surface-hover transition-all duration-200">
-              ✏️ Edit &amp; Accept
+            <button onClick={() => onEdit(id)} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-transparent text-text-secondary border border-border-subtle rounded-[6px] font-sans text-sm cursor-pointer hover:bg-surface-hover transition-all duration-200">
+              <PencilSimple size={14} aria-hidden="true" /> Edit &amp; Accept
             </button>
           )}
           <button onClick={handleDismiss} className="px-3.5 py-1.5 bg-transparent text-text-muted border-none font-sans text-sm cursor-pointer hover:text-text-secondary transition-all duration-200">
@@ -75,7 +76,7 @@ export default function ObservationCard({
         </div>
       ) : (
         <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-sage/10 text-sage border border-sage/20 rounded-[6px] font-sans text-sm font-semibold">
-          ✓ Accepted — will appear in your entry
+          <Check size={14} aria-hidden="true" /> Accepted — will appear in your entry
         </span>
       )}
     </div>

@@ -1,8 +1,10 @@
+import type { ComponentType } from 'react';
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { Wordmark } from '@/components/ui/Wordmark';
+import { NotePencil, Stack, ShieldCheck, Plant, Flame, MonitorPlay } from '@/components/icons';
 import ProviderCodeInput from './provider-code-input';
 
 export default async function LandingPage() {
@@ -83,17 +85,17 @@ export default async function LandingPage() {
         <section className="mx-auto max-w-[960px] px-lg py-4xl">
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
             <PillarCard
-              emoji="📝"
+              Icon={NotePencil}
               title="Capture what's already happening"
               body="Log learning after it happens — describe your morning, and Hearth's AI maps the literacy, numeracy, and science evidence for you. Under two minutes."
             />
             <PillarCard
-              emoji="📚"
+              Icon={Stack}
               title="Content shaped by your approach"
               body="Structured packs designed by educators, filtered through your family's philosophy. Charlotte Mason, Classical, Montessori — same content, your lens."
             />
             <PillarCard
-              emoji="📋"
+              Icon={ShieldCheck}
               title="Compliance without the stress"
               body="Home education documentation that builds itself. Capability tracking, portfolio evidence, work sample curation. Export when you need it."
             />
@@ -129,7 +131,7 @@ export default async function LandingPage() {
           </p>
           <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
             <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
-              <div className="mb-md text-2xl" aria-hidden="true">🌱</div>
+              <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><Plant size={32} /></div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 New to homeschooling?
               </h3>
@@ -138,7 +140,7 @@ export default async function LandingPage() {
               </p>
             </div>
             <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
-              <div className="mb-md text-2xl" aria-hidden="true">🔥</div>
+              <div className="mb-md inline-flex text-ember" aria-hidden="true"><Flame size={32} /></div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 Already homeschooling?
               </h3>
@@ -190,7 +192,7 @@ export default async function LandingPage() {
         {/* Demo */}
         <section id="demo" className="mx-auto max-w-[960px] px-lg py-4xl text-center">
           <div className="mx-auto max-w-[560px] rounded-[16px] border border-border-subtle bg-surface-raised p-2xl">
-            <div className="mb-md text-[2rem]" aria-hidden="true">🏠</div>
+            <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><MonitorPlay size={32} /></div>
             <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
               Want to explore first?
             </h3>
@@ -239,11 +241,11 @@ function Divider() {
   );
 }
 
-function PillarCard({ emoji, title, body }: { emoji: string; title: string; body: string }) {
+function PillarCard({ Icon, title, body }: { Icon: ComponentType<{ size?: number }>; title: string; body: string }) {
   return (
     <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
       <div className="absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" style={{ background: 'linear-gradient(90deg, var(--color-ember), transparent)' }} />
-      <div className="mb-md text-[2rem]">{emoji}</div>
+      <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><Icon size={32} /></div>
       <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">{title}</h3>
       <p className="font-serif text-[0.95rem] leading-relaxed text-text-secondary">{body}</p>
     </div>

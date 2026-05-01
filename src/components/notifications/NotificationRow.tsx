@@ -1,5 +1,22 @@
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import type { ComponentType } from 'react';
+import {
+  NotePencil,
+  MedalMilitary,
+  ShieldCheck,
+  Lightbulb,
+  CalendarBlank,
+  ChatCircleDots,
+  Confetti,
+  ChartBar,
+  Plant,
+  Bell,
+  MoonStars,
+  X,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 interface NotificationRowProps {
   notification: {
@@ -26,18 +43,19 @@ const TIER_LEFT_ACCENT: Record<string, string> = {
   chime:   'border-l-[3px] border-l-text-muted/40',
 };
 
-// Per-type emoji following spec: 📝 Resume, 🔔 Respond, 💭 Reconnect
-const TYPE_EMOJI: Record<string, string> = {
-  draft_resume:      '📝',
-  pause_ack:         '📝',
-  badge_ready:       '🏅',
-  compliance_nudge:  '📋',
-  log_invitation:    '💡',
-  prep_reminder:     '📅',
-  streak_prompt:     '💭',
-  streak_celebration:'🎉',
-  weekly_digest:     '📊',
-  capability_growth: '🌱',
+// Per-type icon following spec semantics (NotePencil = Resume,
+// Bell = Respond, ChatCircleDots = Reconnect, etc.)
+const TYPE_ICON: Record<string, IconC> = {
+  draft_resume:       NotePencil,
+  pause_ack:          NotePencil,
+  badge_ready:        MedalMilitary,
+  compliance_nudge:   ShieldCheck,
+  log_invitation:     Lightbulb,
+  prep_reminder:      CalendarBlank,
+  streak_prompt:      ChatCircleDots,
+  streak_celebration: Confetti,
+  weekly_digest:      ChartBar,
+  capability_growth:  Plant,
 };
 
 // Default action labels per type (overridden by bodyData.actionLabel)
@@ -63,7 +81,7 @@ export default function NotificationRow({
 }: NotificationRowProps) {
   const isUnread = notification.state === 'visible';
   const accent = TIER_LEFT_ACCENT[notification.tier] ?? TIER_LEFT_ACCENT.chime;
-  const emoji = TYPE_EMOJI[notification.type] ?? '🔔';
+  const Icon = TYPE_ICON[notification.type] ?? Bell;
   const actionLabel =
     notification.bodyData?.actionLabel ??
     TYPE_ACTION_LABEL[notification.type] ??
@@ -79,8 +97,13 @@ export default function NotificationRow({
       onClick={() => isUnread && onMarkRead(notification.id)}
     >
       <div className="flex items-start gap-md">
-        {/* Tier emoji */}
-        <span className="mt-[2px] shrink-0 text-xl leading-none">{emoji}</span>
+        {/* Tier icon */}
+        <span
+          className="mt-[2px] shrink-0 inline-flex h-5 w-5 items-center justify-center text-text-secondary"
+          aria-hidden="true"
+        >
+          <Icon size={22} />
+        </span>
 
         {/* Body */}
         <div className="flex flex-1 flex-col gap-xs min-w-0">
@@ -133,11 +156,11 @@ export default function NotificationRow({
                 e.stopPropagation();
                 onSnooze(notification.id);
               }}
-              className="flex h-[28px] w-[28px] items-center justify-center rounded-md font-sans text-[13px] text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+              className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
               aria-label="Snooze for 4 hours"
               title="Snooze"
             >
-              💤
+              <MoonStars size={14} aria-hidden="true" />
             </button>
           )}
           <button
@@ -145,10 +168,10 @@ export default function NotificationRow({
               e.stopPropagation();
               onDismiss(notification.id);
             }}
-            className="flex h-[28px] w-[28px] items-center justify-center rounded-md font-sans text-[13px] text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+            className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
             aria-label="Dismiss"
           >
-            ✕
+            <X size={14} aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Module } from './types';
-import { MODALITY_EMOJI } from './constants';
+import { MODALITY_ICON, FALLBACK_PIN_ICON } from './constants';
 
 export default function ApproachPickMode({
   module,
@@ -38,8 +38,11 @@ export default function ApproachPickMode({
                 onClick={() => onSelect(idx)}
                 className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-card transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
               >
-                <span className="mt-[2px] text-lg">
-                  {MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}
+                <span className="mt-[2px] inline-flex text-text-secondary" aria-hidden="true">
+                  {(() => {
+                    const Icon = MODALITY_ICON[approach.modality ?? ''] ?? FALLBACK_PIN_ICON;
+                    return <Icon size={22} />;
+                  })()}
                 </span>
                 <div className="flex-1">
                   <p className="font-serif text-base font-semibold text-text-primary">

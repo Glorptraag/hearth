@@ -21,6 +21,18 @@ import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
+import type { ComponentType } from 'react';
+import {
+  Leaf, CookingPot, BookOpen, Palette, SoccerBall, UsersThree, Note, Sparkle,
+  BookOpenText, MathOperations, Atom, Globe, Cpu, PersonSimpleRun, ChatsCircle,
+  HouseLine, Tree, Bank, Monitor,
+  Check, WifiSlash, NotePencil, ClipboardText, Microphone, ChatCircleDots,
+  Camera, ChatCircle, LinkSimple, X, Lightbulb,
+  Ruler, Plant, BookOpenUser, ChatCircleText, MagnifyingGlass,
+  TrendUp, User,
+} from '@/components/icons';
+
+type LogIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 type ScaffoldData = {
   session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
@@ -45,16 +57,16 @@ type EvidenceItem = {
   name?: string;
 };
 
-const ACTIVITY_TYPES = [
-  { key: 'nature', label: 'Nature Study', emoji: '🌿' },
-  { key: 'cooking', label: 'Kitchen Science', emoji: '🍳' },
-  { key: 'reading', label: 'Reading', emoji: '📖' },
-  { key: 'art', label: 'Creative Arts', emoji: '🎨' },
-  { key: 'physical', label: 'Physical', emoji: '⚽' },
-  { key: 'social', label: 'Social', emoji: '🤝' },
-  { key: 'structured', label: 'Lesson', emoji: '📝' },
-  { key: 'freeplay', label: 'Free Play', emoji: '✨' },
-] as const;
+const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
+  { key: 'nature',     label: 'Nature Study',    Icon: Leaf },
+  { key: 'cooking',    label: 'Kitchen Science', Icon: CookingPot },
+  { key: 'reading',    label: 'Reading',         Icon: BookOpen },
+  { key: 'art',        label: 'Creative Arts',   Icon: Palette },
+  { key: 'physical',   label: 'Physical',        Icon: SoccerBall },
+  { key: 'social',     label: 'Social',          Icon: UsersThree },
+  { key: 'structured', label: 'Lesson',          Icon: Note },
+  { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
+];
 
 const ACTIVITY_SUBJECT_MAP: Record<string, string[]> = {
   nature: ['science'],
@@ -67,15 +79,15 @@ const ACTIVITY_SUBJECT_MAP: Record<string, string[]> = {
   freeplay: [],
 };
 
-const SUBJECTS = [
-  { key: 'english', label: 'English', emoji: '📚' },
-  { key: 'mathematics', label: 'Maths', emoji: '🔢' },
-  { key: 'science', label: 'Science', emoji: '🔬' },
-  { key: 'hass', label: 'HASS', emoji: '🌏' },
-  { key: 'arts', label: 'Arts', emoji: '🎨' },
-  { key: 'technologies', label: 'Technologies', emoji: '⚙️' },
-  { key: 'hpe', label: 'HPE', emoji: '🏃' },
-  { key: 'languages', label: 'Languages', emoji: '🗣️' },
+const SUBJECTS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
+  { key: 'english',      label: 'English',      Icon: BookOpenText },
+  { key: 'mathematics',  label: 'Maths',        Icon: MathOperations },
+  { key: 'science',      label: 'Science',      Icon: Atom },
+  { key: 'hass',         label: 'HASS',         Icon: Globe },
+  { key: 'arts',         label: 'Arts',         Icon: Palette },
+  { key: 'technologies', label: 'Technologies', Icon: Cpu },
+  { key: 'hpe',          label: 'HPE',          Icon: PersonSimpleRun },
+  { key: 'languages',    label: 'Languages',    Icon: ChatsCircle },
 ];
 
 const ENGAGEMENT_LEVELS = [
@@ -86,11 +98,11 @@ const ENGAGEMENT_LEVELS = [
 ];
 
 const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
-const WHERE_OPTIONS = [
-  { key: 'home', label: 'Home', emoji: '🏠' },
-  { key: 'outdoors', label: 'Outdoors', emoji: '🌳' },
-  { key: 'community', label: 'Community', emoji: '🏛' },
-  { key: 'online', label: 'Online', emoji: '💻' },
+const WHERE_OPTIONS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
+  { key: 'home',      label: 'Home',      Icon: HouseLine },
+  { key: 'outdoors',  label: 'Outdoors',  Icon: Tree },
+  { key: 'community', label: 'Community', Icon: Bank },
+  { key: 'online',    label: 'Online',    Icon: Monitor },
 ];
 
 const OBSERVATION_CATEGORIES = [
@@ -238,7 +250,7 @@ function SectionIndicator({ number, done }: { number: number; done: boolean }) {
         done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
       }`}
     >
-      {done ? '✓' : number}
+      {done ? <Check size={14} aria-hidden="true" /> : number}
     </div>
   );
 }
@@ -912,7 +924,7 @@ export default function LogPage() {
           aria-live="polite"
           className="flex items-center gap-sm border-b border-border-subtle bg-surface-raised px-md py-xs"
         >
-          <span aria-hidden="true">📴</span>
+          <span className="text-text-muted" aria-hidden="true"><WifiSlash size={14} /></span>
           <p className="font-sans text-[11px] text-text-secondary">
             Offline — your draft is being saved locally. Save will resume when you&rsquo;re back online.
           </p>
@@ -922,7 +934,7 @@ export default function LogPage() {
       {/* Draft restored banner */}
       {draftRestored && (
         <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">
-          <p className="font-sans text-[11px] text-text-secondary">📝 Draft restored from your last session</p>
+          <p className="inline-flex items-center gap-xs font-sans text-[11px] text-text-secondary"><NotePencil size={14} aria-hidden="true" /> Draft restored from your last session</p>
           <button
             onClick={() => setDraftRestored(false)}
             className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-200"
@@ -935,7 +947,7 @@ export default function LogPage() {
       {/* Scaffold banner (from Hearth session) */}
       {scaffoldData && (
         <div className="flex items-center gap-md p-md px-lg bg-ember/[0.08] border border-ember/15 rounded-[10px] mx-md mt-md mb-sm">
-          <span className="text-xl shrink-0" aria-hidden="true">📋</span>
+          <span className="shrink-0 inline-flex text-ember" aria-hidden="true"><ClipboardText size={22} /></span>
           <div className="min-w-0">
             <div className="font-sans text-sm text-ember font-medium">
               Logging from: {scaffoldData.session.hearthName ?? 'Hearth'}
@@ -988,7 +1000,11 @@ export default function LogPage() {
               : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
           }`}
         >
-          {isSaving ? 'Saving...' : canSave ? '✓ Save' : 'Save'}
+          {isSaving
+            ? 'Saving…'
+            : canSave
+              ? <span className="inline-flex items-center gap-xs"><Check size={14} aria-hidden="true" /> Save</span>
+              : 'Save'}
         </button>
       </div>
 
@@ -1089,7 +1105,7 @@ export default function LogPage() {
                       : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                   }`}
                 >
-                  🎤 {isRecording ? 'Recording...' : 'Voice'}
+                  <span className="inline-flex items-center gap-xs"><Microphone size={14} aria-hidden="true" /> {isRecording ? 'Recording…' : 'Voice'}</span>
                 </button>
                 <span className="ml-auto font-sans text-[0.6875rem] text-text-muted">
                   {description.length > 0 ? `${description.length}` : ''}
@@ -1142,8 +1158,8 @@ export default function LogPage() {
                           1: `What made this hard for ${learner.name}? Did they push through or step away?`,
                         };
                         return (
-                          <p className="mt-xs font-sans text-[11px] text-ember/60 italic">
-                            💭 {hints[engLevel]}
+                          <p className="mt-xs inline-flex items-start gap-xs font-sans text-[11px] text-ember/60 italic">
+                            <ChatCircleDots size={12} className="mt-[2px] shrink-0" aria-hidden="true" /> {hints[engLevel]}
                           </p>
                         );
                       })()}
@@ -1172,7 +1188,7 @@ export default function LogPage() {
                           : 'border-border-subtle bg-surface-body text-text-secondary hover:border-border-medium hover:bg-surface-raised'
                       }`}
                     >
-                      <span className="text-[1.375rem] leading-none">{type.emoji}</span>
+                      <span className="inline-flex" aria-hidden="true"><type.Icon size={22} /></span>
                       <span className="text-center leading-tight">{type.label}</span>
                     </button>
                   );
@@ -1203,7 +1219,7 @@ export default function LogPage() {
                             : 'border border-border-subtle text-text-secondary hover:border-border-medium'
                         }`}
                       >
-                        {s.emoji} {s.label}
+                        <span className="inline-flex items-center gap-xs"><s.Icon size={14} aria-hidden="true" /> {s.label}</span>
                       </button>
                     );
                   })}
@@ -1317,7 +1333,7 @@ export default function LogPage() {
                           : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
                       }`}
                     >
-                      {w.emoji} {w.label}
+                      <span className="inline-flex items-center gap-xs"><w.Icon size={14} aria-hidden="true" /> {w.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1387,12 +1403,12 @@ export default function LogPage() {
             <SectionHeader number={6} done={sectionDone[6]} label="Evidence" optional="Optional" />
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
-              {[
-                { key: 'photo', emoji: '📷', label: 'Add Photo' },
-                { key: 'quote', emoji: '💬', label: "Child's Words" },
-                { key: 'note', emoji: '📝', label: 'Add Note' },
-                { key: 'link', emoji: '🔗', label: 'Link Resource' },
-              ].map((tool) => {
+              {([
+                { key: 'photo', Icon: Camera,     label: 'Add Photo' },
+                { key: 'quote', Icon: ChatCircle, label: "Child's Words" },
+                { key: 'note',  Icon: Note,       label: 'Add Note' },
+                { key: 'link',  Icon: LinkSimple, label: 'Link Resource' },
+              ] as ReadonlyArray<{ key: string; Icon: LogIconC; label: string }>).map((tool) => {
                 const hasItems = evidence.some((e) => e.type === tool.key);
                 return (
                   <button
@@ -1404,7 +1420,7 @@ export default function LogPage() {
                         : 'border-dashed border-border-medium text-text-secondary hover:border-ember hover:text-text-primary'
                     }`}
                   >
-                    <span className="text-xl">{tool.emoji}</span>
+                    <span className="inline-flex" aria-hidden="true"><tool.Icon size={22} /></span>
                     <span className="text-xs">{tool.label}</span>
                   </button>
                 );
@@ -1431,9 +1447,10 @@ export default function LogPage() {
                     </span>
                     <button
                       onClick={() => setEvidence((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-text-muted hover:text-text-primary text-sm min-h-[32px] min-w-[32px] flex items-center justify-center"
+                      className="text-text-muted hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
+                      aria-label="Remove evidence item"
                     >
-                      ✕
+                      <X size={14} aria-hidden="true" />
                     </button>
                   </div>
                 ))}
@@ -1446,8 +1463,8 @@ export default function LogPage() {
         {/* ─── Right: AI Insights Panel (desktop) ─── */}
         <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
           <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
-            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-ember">
-              <span className="text-sm" aria-hidden="true">💡</span>
+            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-ember text-text-inverse">
+              <Lightbulb size={16} aria-hidden="true" />
             </div>
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
           </div>
@@ -1478,7 +1495,7 @@ export default function LogPage() {
         {insightsExpanded && (
           <div className="max-h-[60vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
             <div className="flex items-center gap-sm mb-md">
-              <span className="text-ember text-lg" aria-hidden="true">✨</span>
+              <span className="text-ember" aria-hidden="true"><Sparkle size={18} /></span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
             </div>
             <InsightsContent
@@ -1645,8 +1662,8 @@ function InsightsContent({
       {/* Post-save insights from Haiku enrichment */}
       {postSaveInsights.length > 0 && (
         <div className="rounded-md bg-ember/[0.07] border border-ember/20 p-md">
-          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-ember mb-sm font-semibold">
-            ✨ Hearth noticed
+          <p className="inline-flex items-center gap-xs font-sans text-[10px] uppercase tracking-[0.1em] text-ember mb-sm font-semibold">
+            <Sparkle size={12} aria-hidden="true" /> Hearth noticed
           </p>
           <div className="space-y-sm">
             {postSaveInsights.map((s, i) => (
@@ -1661,8 +1678,8 @@ function InsightsContent({
       {/* Post-save profile nudge */}
       {profileNudge && (
         <div className="rounded-md bg-sage/[0.07] border border-sage/20 p-md">
-          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-sage mb-sm font-semibold">
-            🌱 Next time, try noticing...
+          <p className="inline-flex items-center gap-xs font-sans text-[10px] uppercase tracking-[0.1em] text-sage mb-sm font-semibold">
+            <Plant size={12} aria-hidden="true" /> Next time, try noticing…
           </p>
           <p className="font-serif text-sm text-text-secondary leading-relaxed">
             {profileNudge.text}
@@ -1673,8 +1690,8 @@ function InsightsContent({
       {/* In-flight coach hints from PKB retrieval */}
       {coachHints.length > 0 && (
         <div className="space-y-sm">
-          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
-            📖 From your pedagogy notes
+          <p className="inline-flex items-center gap-xs font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
+            <BookOpenUser size={12} aria-hidden="true" /> From your pedagogy notes
           </p>
           {coachHints.map((hint) => (
             <div key={hint.id} className="rounded-md border border-border-subtle bg-surface-raised p-sm">
@@ -1688,8 +1705,8 @@ function InsightsContent({
       {/* Reflection prompts — shown when description is in progress */}
       {reflectionPrompts.length > 0 && (
         <div className="space-y-sm">
-          <p className="font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
-            💭 Go deeper
+          <p className="inline-flex items-center gap-xs font-sans text-[10px] uppercase tracking-[0.1em] text-text-muted font-semibold">
+            <ChatCircleDots size={12} aria-hidden="true" /> Go deeper
           </p>
           {reflectionPrompts.map((prompt) => (
             <div key={prompt.id} className="rounded-md border border-border-subtle bg-surface-raised p-sm">
@@ -1704,7 +1721,7 @@ function InsightsContent({
       {/* Description written but no learning signals found */}
       {match && !hasDetections && reflectionPrompts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-xl text-center">
-          <span className="text-4xl mb-md opacity-30" aria-hidden="true">🔍</span>
+          <span className="mb-md inline-flex opacity-30 text-text-secondary" aria-hidden="true"><MagnifyingGlass size={32} /></span>
           <p className="font-serif text-sm text-text-muted italic leading-relaxed">
             Keep going — try adding what they were thinking about or working out.
           </p>
@@ -1723,8 +1740,8 @@ function InsightsContent({
               <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Subjects detected</p>
               <div className="flex flex-wrap gap-xs">
                 {match.subjects.map((s) => (
-                  <span key={s} className="rounded-full bg-ember-glow border border-ember/20 px-sm py-xs font-sans text-xs text-text-primary">
-                    📐 {s}
+                  <span key={s} className="inline-flex items-center gap-xs rounded-full bg-ember-glow border border-ember/20 px-sm py-xs font-sans text-xs text-text-primary">
+                    <Ruler size={12} aria-hidden="true" /> {s}
                   </span>
                 ))}
               </div>
@@ -1736,8 +1753,8 @@ function InsightsContent({
               <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Capability threads</p>
               <div className="flex flex-wrap gap-xs">
                 {match.threads.slice(0, 6).map((t) => (
-                  <span key={t} className="rounded-full bg-sage/10 border border-sage/20 px-sm py-xs font-sans text-xs text-text-primary">
-                    🌱 {THREAD_LABELS[t] ?? t}
+                  <span key={t} className="inline-flex items-center gap-xs rounded-full bg-sage/10 border border-sage/20 px-sm py-xs font-sans text-xs text-text-primary">
+                    <Plant size={12} aria-hidden="true" /> {THREAD_LABELS[t] ?? t}
                   </span>
                 ))}
                 {match.threads.length > 6 && (
@@ -1757,9 +1774,11 @@ function InsightsContent({
                     ? 'bg-red-900/10 border border-red-900/20 text-red-400'
                     : 'bg-surface-raised border border-border-subtle text-text-secondary'
               }`}>
-                {match.engagement === 'positive' ? '✨ Deep engagement' :
-                 match.engagement === 'challenging' ? '💪 Growth moment' :
-                 '📝 Steady participation'}
+                {match.engagement === 'positive'
+                  ? <span className="inline-flex items-center gap-xs"><Sparkle size={12} aria-hidden="true" /> Deep engagement</span>
+                  : match.engagement === 'challenging'
+                  ? <span className="inline-flex items-center gap-xs"><TrendUp size={12} aria-hidden="true" /> Growth moment</span>
+                  : <span className="inline-flex items-center gap-xs"><Note size={12} aria-hidden="true" /> Steady participation</span>}
               </span>
             </div>
           )}
@@ -1769,8 +1788,8 @@ function InsightsContent({
               <p className="font-sans text-xs font-semibold text-text-secondary mb-xs">Children mentioned</p>
               <div className="flex flex-wrap gap-xs">
                 {match.mentionedChildren.map((name) => (
-                  <span key={name} className="rounded-full bg-surface-raised border border-border-subtle px-sm py-xs font-sans text-xs text-text-primary">
-                    👦 {name} mentioned
+                  <span key={name} className="inline-flex items-center gap-xs rounded-full bg-surface-raised border border-border-subtle px-sm py-xs font-sans text-xs text-text-primary">
+                    <User size={12} aria-hidden="true" /> {name} mentioned
                   </span>
                 ))}
               </div>
@@ -1852,8 +1871,8 @@ function EvidenceModal({
       <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         <div className="flex items-center justify-between mb-lg">
           <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text-primary text-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
-            ✕
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Close">
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -1864,7 +1883,7 @@ function EvidenceModal({
               onClick={() => fileRef.current?.click()}
               className="w-full rounded-md border-2 border-dashed border-border-medium p-xl text-center font-sans text-sm text-text-secondary hover:border-ember transition-all duration-200"
             >
-              {previewUrl ? '📷 Photo selected — tap to change' : '📷 Tap to select photo'}
+              <span className="inline-flex items-center gap-xs"><Camera size={16} aria-hidden="true" /> {previewUrl ? 'Photo selected — tap to change' : 'Tap to select photo'}</span>
             </button>
             {previewUrl && (
               // Local createObjectURL blob — no remote host to whitelist, no

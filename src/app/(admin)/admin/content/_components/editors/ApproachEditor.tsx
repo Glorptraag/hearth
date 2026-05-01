@@ -5,6 +5,7 @@ import { getSelectedDoc } from '@/lib/content-studio/reducer';
 import { MODALITIES, CONTENT_STATUSES } from '@/lib/content-studio/types';
 import { Panel } from '../primitives/Panel';
 import { FormField, Input, TextArea, Select } from '../primitives/FormField';
+import { Shuffle, ClipboardText, Note, Timer } from '@/components/icons';
 
 interface ApproachEditorProps {
   state: StudioState;
@@ -34,7 +35,7 @@ export function ApproachEditor({ state, sel, fieldPrefix, setField, dispatch, sh
 
   return (
     <>
-      <Panel title="Approach Identity" emoji="🔀">
+      <Panel title="Approach Identity" Icon={Shuffle}>
         <FormField label="Title" required>
           <Input value={approach.title} onChange={(v) => setField(f('title'), v)} placeholder="e.g., Creature Watch" />
         </FormField>
@@ -59,7 +60,7 @@ export function ApproachEditor({ state, sel, fieldPrefix, setField, dispatch, sh
         </div>
       </Panel>
 
-      <Panel title="Activities" emoji="📋" right={<span className="text-xs text-text-muted font-sans">{approach.activities.length} activities</span>}>
+      <Panel title="Activities" Icon={ClipboardText} right={<span className="text-xs text-text-muted font-sans">{approach.activities.length} activities</span>}>
         {approach.activities.length === 0 && (
           <div className="py-5 text-center text-text-muted text-sm font-sans">
             No activities yet. Add the first one.
@@ -76,11 +77,11 @@ export function ApproachEditor({ state, sel, fieldPrefix, setField, dispatch, sh
             }}
             className="flex items-center gap-3 px-3.5 py-3 bg-surface-body border border-border-subtle rounded-[8px] mb-2 cursor-pointer hover:border-border-medium transition-colors duration-150"
           >
-            <span className="text-lg">📝</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true"><Note size={18} /></span>
             <div className="flex-1">
               <div className="text-sm font-medium text-text-primary font-serif">{act.title}</div>
-              <div className="text-[0.7rem] text-text-muted mt-0.5 font-sans">
-                ⏱ {act.duration.min}–{act.duration.max} min · {act.setting} · {act.energyLevel}
+              <div className="text-[0.7rem] text-text-muted mt-0.5 font-sans inline-flex items-center gap-xs">
+                <Timer size={12} aria-hidden="true" /> {act.duration.min}–{act.duration.max} min · {act.setting} · {act.energyLevel}
               </div>
             </div>
             <span

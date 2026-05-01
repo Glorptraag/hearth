@@ -6,15 +6,22 @@ import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
 import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
 import { PackMaterialsList } from '@/components/content/PackMaterialsList';
+import {
+  Binoculars, Target, Books, MagnifyingGlass, Confetti, X,
+  FlowerLotus, GraduationCap, Heart, Sparkle,
+} from '@/components/icons';
+import type { ComponentType as MpComponentType } from 'react';
+
+type MpIconC = MpComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
 
-function getCreatorEmoji(type?: CreatorType): string {
+function getCreatorIcon(type?: CreatorType): MpIconC {
   switch (type) {
-    case 'content-team': return '🌿';
-    case 'educator':     return '🎓';
-    case 'parent':       return '💛';
-    default:             return '✨';
+    case 'content-team': return FlowerLotus;
+    case 'educator':     return GraduationCap;
+    case 'parent':       return Heart;
+    default:             return Sparkle;
   }
 }
 
@@ -157,7 +164,7 @@ export default function MarketplacePage() {
             ← Dashboard
           </Link>
           <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200 cursor-pointer">
-            <span aria-hidden="true">📚</span>
+            <Books size={16} aria-hidden="true" />
             <span>My Library</span>
             {libraryCount > 0 && (
               <span className="bg-ember text-text-inverse font-sans text-[0.65rem] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center">
@@ -179,8 +186,8 @@ export default function MarketplacePage() {
 
         {/* ── Search bar ── */}
         <div className="relative mb-lg">
-          <span className="absolute left-sm top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
-            🔍
+          <span className="absolute left-sm top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" aria-hidden="true">
+            <MagnifyingGlass size={16} />
           </span>
           <input
             type="search"
@@ -267,7 +274,9 @@ export default function MarketplacePage() {
               <div className="mb-xl rounded-[16px] border border-ember/20 bg-ember-glow/20 p-lg overflow-hidden relative">
                 <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
                 <div className="flex items-start gap-md">
-                  <span className="text-2xl shrink-0" aria-hidden="true">🎯</span>
+                  <span className="shrink-0 inline-flex text-ember" aria-hidden="true">
+                    <Target size={22} />
+                  </span>
                   <div className="flex-1 min-w-0">
                     <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">
                       Family Fit
@@ -301,8 +310,9 @@ export default function MarketplacePage() {
             {/* ── All-in-library banner ── */}
             {packs.length > 0 && filtered.length > 0 && filtered.every((p) => libraryIds.has(p._id)) && (
               <div className="mb-lg rounded-[10px] border border-sage/20 bg-sage/5 px-lg py-sm">
-                <p className="font-serif text-sm text-sage">
-                  🎉 You&rsquo;ve added everything here — nice curation!
+                <p className="inline-flex items-center gap-xs font-serif text-sm text-sage">
+                  <Confetti size={16} aria-hidden="true" />
+                  You&rsquo;ve added everything here — nice curation!
                 </p>
               </div>
             )}
@@ -337,7 +347,9 @@ export default function MarketplacePage() {
             ) : (
               /* ── Empty state ── */
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <span className="text-5xl mb-4" aria-hidden="true">🔭</span>
+                <span className="mb-4 inline-flex text-text-secondary" aria-hidden="true">
+                  <Binoculars size={32} />
+                </span>
                 <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
                   {packs.length === 0
                     ? 'No packs published yet'
@@ -396,9 +408,10 @@ export default function MarketplacePage() {
                 </div>
                 <button
                   onClick={() => { setDetailPack(null); setShowMaterials(false); }}
-                  className="shrink-0 rounded-full border border-border-subtle p-xs font-sans text-text-muted hover:text-text-primary transition-colors duration-200"
+                  className="shrink-0 rounded-full border border-border-subtle p-xs text-text-muted hover:text-text-primary transition-colors duration-200"
+                  aria-label="Close"
                 >
-                  ✕
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -417,8 +430,11 @@ export default function MarketplacePage() {
                   Creator
                 </p>
                 <div className="flex items-center gap-xs">
-                  <span className="text-sm" aria-hidden="true">
-                    {getCreatorEmoji(detailPack.creatorType)}
+                  <span className="inline-flex text-text-secondary" aria-hidden="true">
+                    {(() => {
+                      const CreatorIcon = getCreatorIcon(detailPack.creatorType);
+                      return <CreatorIcon size={14} />;
+                    })()}
                   </span>
                   <span className="font-serif text-sm text-text-primary">
                     {detailPack.creator ?? 'Hearth Team'}

@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY, DISCOVERY_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
+import {
+  Books, MagnifyingGlass,
+  HandsClapping, Eye, Ear, Quotes, UsersThree, Binoculars,
+  BabyCarriage, Timer, Asterisk, Sparkle, Check, CalendarBlank, Medal, Note,
+} from '@/components/icons';
+import type { ComponentType as EAComponentType } from 'react';
+
+type EAIconC = EAComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 
@@ -71,13 +79,13 @@ const SUBJECT_GRADIENT: Record<string, string> = {
 };
 
 
-const MODALITY_EMOJI: Record<string, string> = {
-  kinesthetic: '🤲',
-  visual: '👁',
-  auditory: '👂',
-  narrative: '📖',
-  social: '🤝',
-  exploratory: '🔍',
+const MODALITY_ICON: Record<string, EAIconC> = {
+  kinesthetic: HandsClapping,
+  visual:      Eye,
+  auditory:    Ear,
+  narrative:   Quotes,
+  social:      UsersThree,
+  exploratory: Binoculars,
 };
 
 // ─── Module Card ──────────────────────────────────────────────────────────────
@@ -122,13 +130,13 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
           {/* Meta row */}
           <div className="flex items-center gap-md flex-wrap mt-auto mb-md">
             {module.ageRange && (
-              <span className="font-sans text-xs text-text-muted">
-                👶 {module.ageRange.min}–{module.ageRange.max} yrs
+              <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                <BabyCarriage size={12} aria-hidden="true" /> {module.ageRange.min}–{module.ageRange.max} yrs
               </span>
             )}
             {module.duration && (
-              <span className="font-sans text-xs text-text-muted">
-                ⏱ {module.duration.min}–{module.duration.max} min
+              <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                <Timer size={12} aria-hidden="true" /> {module.duration.min}–{module.duration.max} min
               </span>
             )}
             {module.approaches && (
@@ -144,10 +152,10 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
           {module.isOwnBuilt ? (
             <>
               <div className="h-5 w-5 rounded-full bg-sage/15 border border-sage/30 flex items-center justify-center shrink-0">
-                <span className="font-sans text-[9px] text-sage">✦</span>
+                <span className="text-sage" aria-hidden="true"><Asterisk size={10} /></span>
               </div>
               <span className="font-sans text-[11px] text-text-muted truncate">You</span>
-              <span className="ml-auto rounded-full bg-sage/15 border border-sage/30 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✨ Created by you</span>
+              <span className="inline-flex items-center gap-xs ml-auto rounded-full bg-sage/15 border border-sage/30 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage"><Sparkle size={10} aria-hidden="true" /> Created by you</span>
             </>
           ) : (
             <>
@@ -155,7 +163,7 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
                 <span className="font-sans text-[9px] text-text-muted">H</span>
               </div>
               <span className="font-sans text-[11px] text-text-muted truncate">Hearth</span>
-              <span className="ml-auto rounded-full bg-sage/15 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage">✓ Verified</span>
+              <span className="inline-flex items-center gap-xs ml-auto rounded-full bg-sage/15 px-xs py-[1px] font-sans text-[9px] font-semibold text-sage"><Check size={10} aria-hidden="true" /> Verified</span>
             </>
           )}
         </div>
@@ -245,11 +253,14 @@ function PreviewModal({
                 >
                   <span className="font-serif text-sm text-text-primary">{app.title}</span>
                   <div className="flex items-center gap-sm">
-                    {app.modality && (
-                      <span className="font-sans text-xs text-text-muted">
-                        {MODALITY_EMOJI[app.modality] ?? ''} {app.modality}
-                      </span>
-                    )}
+                    {app.modality && (() => {
+                      const ModalityIcon = MODALITY_ICON[app.modality] ?? Note;
+                      return (
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                          <ModalityIcon size={12} aria-hidden="true" /> {app.modality}
+                        </span>
+                      );
+                    })()}
                     {app.activityCount !== undefined && (
                       <span className="font-sans text-xs text-text-muted">
                         {app.activityCount} acts
@@ -265,13 +276,13 @@ function PreviewModal({
         {/* Meta */}
         <div className="flex gap-md flex-wrap mb-xl">
           {module.ageRange && (
-            <span className="font-sans text-xs text-text-muted">
-              👶 Ages {module.ageRange.min}–{module.ageRange.max}
+            <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+              <BabyCarriage size={12} aria-hidden="true" /> Ages {module.ageRange.min}–{module.ageRange.max}
             </span>
           )}
           {module.duration && (
-            <span className="font-sans text-xs text-text-muted">
-              ⏱ {module.duration.min}–{module.duration.max} min total
+            <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+              <Timer size={12} aria-hidden="true" /> {module.duration.min}–{module.duration.max} min total
             </span>
           )}
         </div>
@@ -503,7 +514,9 @@ export default function ExploreActivitiesPage() {
                 : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
             }`}
           >
-            {libraryOnly ? '✓ My Library' : 'My Library'}
+            {libraryOnly
+              ? <span className="inline-flex items-center gap-xs"><Check size={12} aria-hidden="true" /> My Library</span>
+              : 'My Library'}
           </button>
 
           {/* Subject filter pills */}
@@ -575,14 +588,14 @@ export default function ExploreActivitiesPage() {
           <div className="py-3xl">
             {modules.length === 0 ? (
               <EmptyState
-                emoji="📚"
+                icon={Books}
                 heading="No modules available yet"
                 body="Browse the Marketplace to add packs with modules and activities."
                 cta={{ label: 'Browse Marketplace', onClick: () => router.push('/explore/marketplace') }}
               />
             ) : (
               <EmptyState
-                emoji="🔍"
+                icon={MagnifyingGlass}
                 heading="No activities found"
                 body="Try a different subject or clear the filter."
                 cta={{ label: 'Clear filter', onClick: () => setSubjectFilter('all') }}
@@ -740,10 +753,10 @@ export default function ExploreActivitiesPage() {
 
                       <div className="flex items-center gap-md flex-wrap">
                         {project.duration && (
-                          <span className="font-sans text-xs text-text-muted">📅 {project.duration}</span>
+                          <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><CalendarBlank size={12} aria-hidden="true" /> {project.duration}</span>
                         )}
                         {project.ageRange && (
-                          <span className="font-sans text-xs text-text-muted">👶 {project.ageRange.min}–{project.ageRange.max} yrs</span>
+                          <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><BabyCarriage size={12} aria-hidden="true" /> {project.ageRange.min}–{project.ageRange.max} yrs</span>
                         )}
                       </div>
 
@@ -762,7 +775,7 @@ export default function ExploreActivitiesPage() {
 
                       {project.badges && project.badges.length > 0 && (
                         <div className="mt-sm flex items-center gap-xs">
-                          <span className="font-sans text-[10px] text-text-muted">🏅 {project.badges.length} badge{project.badges.length !== 1 ? 's' : ''}</span>
+                          <span className="inline-flex items-center gap-xs font-sans text-[10px] text-text-muted"><Medal size={10} aria-hidden="true" /> {project.badges.length} badge{project.badges.length !== 1 ? 's' : ''}</span>
                         </div>
                       )}
                     </div>
@@ -776,8 +789,8 @@ export default function ExploreActivitiesPage() {
 
       {/* Planner success toast */}
       {plannerSuccess && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-sage/20 border border-sage/30 text-sage font-sans text-sm rounded-full px-lg py-sm shadow-lg">
-          ✓ Added to today&apos;s planner
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 inline-flex items-center gap-xs bg-sage/20 border border-sage/30 text-sage font-sans text-sm rounded-full px-lg py-sm shadow-lg">
+          <Check size={14} aria-hidden="true" /> Added to today&apos;s planner
         </div>
       )}
 

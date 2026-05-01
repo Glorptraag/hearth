@@ -1,3 +1,5 @@
+import { FilePdf, X } from '@/components/icons';
+
 interface Learner {
   id: string;
   name: string;
@@ -97,8 +99,8 @@ export default function ModuleCard({
             </span>
           )}
           {hasMaterials && (
-            <span className="inline-block font-sans text-[9px] text-text-muted" title="Has printable materials">
-              📄
+            <span className="inline-flex text-text-muted" title="Has printable materials" aria-label="Has printable materials">
+              <FilePdf size={14} aria-hidden="true" />
             </span>
           )}
         </div>
@@ -107,10 +109,10 @@ export default function ModuleCard({
         {!isReadOnly && (
           <button
             onClick={() => onDelete(entry.id)}
-            className="absolute right-xs top-xs hidden h-4 w-4 items-center justify-center rounded font-sans text-[10px] text-text-muted transition-colors hover:text-red-400 group-hover:flex"
+            className="absolute right-xs top-xs hidden h-4 w-4 items-center justify-center rounded text-text-muted transition-colors hover:text-red-400 group-hover:flex"
             aria-label="Remove"
           >
-            ✕
+            <X size={10} aria-hidden="true" />
           </button>
         )}
 

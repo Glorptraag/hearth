@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MaterialItemRow } from './MaterialItemRow';
 import { PrintSheet } from './PrintSheet';
+import { Package } from '@/components/icons';
 import type { PrintableItem, PrintSelection, PrintBundleResponse, AssetKind } from './types';
 import { isPrintableAssetKind, fetchPrintBundle } from './types';
 
@@ -213,7 +214,9 @@ export function LibraryMaterialsTab({ packs }: LibraryMaterialsTabProps) {
   if (filteredItems.length === 0 && allItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <span className="text-4xl mb-md" aria-hidden="true">📦</span>
+        <span className="mb-md inline-flex text-text-secondary" aria-hidden="true">
+          <Package size={32} />
+        </span>
         <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
           No materials yet
         </h3>

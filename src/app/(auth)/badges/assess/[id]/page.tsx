@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ComponentType } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/analytics/posthog';
+import {
+  CheckCircle,
+  CircleHalf,
+  Circle,
+  Check,
+  TrendUp,
+  TrendDown,
+  Equals,
+  Plant,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 type AssessmentQuestion = { id: string; question: string };
 type BadgeData = {
@@ -348,10 +360,11 @@ export default function BadgeAssessPage() {
               <div className="space-y-sm">
                 {badge.assessmentQuestions.map((q) => {
                   const r = responses.find((r) => r.questionId === q.id);
-                  const icon = r?.response === 'yes' ? '✅' : r?.response === 'sometimes' ? '🟡' : '⬜';
+                  const Icon: IconC = r?.response === 'yes' ? CheckCircle : r?.response === 'sometimes' ? CircleHalf : Circle;
+                  const colour = r?.response === 'yes' ? 'text-sage' : r?.response === 'sometimes' ? 'text-amber-400' : 'text-text-muted';
                   return (
                     <div key={q.id} className="flex items-start gap-sm">
-                      <span className="text-sm mt-0.5">{icon}</span>
+                      <span className={`mt-0.5 inline-flex ${colour}`} aria-hidden="true"><Icon size={14} /></span>
                       <p className="font-serif text-sm text-text-secondary">
                         {personalize(q.question)}
                       </p>
@@ -364,7 +377,7 @@ export default function BadgeAssessPage() {
             {mostlyYes ? (
               <>
                 <div className="inline-flex items-center gap-xs rounded-full border border-sage/30 bg-sage/10 px-md py-xs font-sans text-xs font-semibold text-sage mb-md">
-                  ✓ Looking good
+                  <Check size={14} aria-hidden="true" /> Looking good
                 </div>
                 <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
                   It looks like {learnerName} has earned {badge.title}!
@@ -429,10 +442,10 @@ export default function BadgeAssessPage() {
           const prev = previousAssessments[0];
           if (!prev) return null;
           const prevResponses = prev.responses as Response[];
-          const RESPONSE_LABELS: Record<string, { icon: string; label: string; rank: number }> = {
-            yes: { icon: '✅', label: 'Yes', rank: 2 },
-            sometimes: { icon: '🟡', label: 'Sometimes', rank: 1 },
-            not_yet: { icon: '⬜', label: 'Not yet', rank: 0 },
+          const RESPONSE_LABELS: Record<string, { Icon: IconC; label: string; rank: number; colour: string }> = {
+            yes:       { Icon: CheckCircle, label: 'Yes',       rank: 2, colour: 'text-sage' },
+            sometimes: { Icon: CircleHalf,  label: 'Sometimes', rank: 1, colour: 'text-amber-400' },
+            not_yet:   { Icon: Circle,      label: 'Not yet',   rank: 0, colour: 'text-text-muted' },
           };
 
           return (
@@ -462,7 +475,7 @@ export default function BadgeAssessPage() {
                   const prevMeta = RESPONSE_LABELS[prevR?.response ?? 'not_yet'];
                   const currMeta = RESPONSE_LABELS[currR?.response ?? 'not_yet'];
                   const delta = currMeta.rank - prevMeta.rank;
-                  const deltaIcon = delta > 0 ? '📈' : delta < 0 ? '📉' : '—';
+                  const DeltaIcon: IconC = delta > 0 ? TrendUp : delta < 0 ? TrendDown : Equals;
                   const deltaColor = delta > 0 ? 'text-sage' : delta < 0 ? 'text-amber-status' : 'text-text-muted';
 
                   return (
@@ -471,13 +484,13 @@ export default function BadgeAssessPage() {
                         {personalize(q.question)}
                       </p>
                       <div className="flex items-center justify-center">
-                        <span className="text-sm">{prevMeta.icon}</span>
+                        <span className={`inline-flex ${prevMeta.colour}`} aria-hidden="true"><prevMeta.Icon size={14} /></span>
                       </div>
                       <div className="flex items-center justify-center">
-                        <span className="text-sm">{currMeta.icon}</span>
+                        <span className={`inline-flex ${currMeta.colour}`} aria-hidden="true"><currMeta.Icon size={14} /></span>
                       </div>
                       <div className="flex items-center justify-center">
-                        <span className={`text-sm ${deltaColor}`}>{deltaIcon}</span>
+                        <span className={`inline-flex ${deltaColor}`} aria-hidden="true"><DeltaIcon size={14} /></span>
                       </div>
                     </div>
                   );
@@ -564,7 +577,9 @@ export default function BadgeAssessPage() {
         {/* ── DEFERRED ── */}
         {step === 'deferred' && (
           <div className="pt-2xl text-center">
-            <div className="text-6xl mb-lg" aria-hidden="true">🌱</div>
+            <div className="mb-lg flex justify-center text-ember" aria-hidden="true">
+              <Plant size={32} />
+            </div>
             <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
               Still growing
             </h1>

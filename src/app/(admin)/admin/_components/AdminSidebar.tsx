@@ -70,7 +70,7 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`mb-xs flex items-center gap-sm rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${indent ? 'ml-lg' : ''} ${
+              className={`mb-xs flex items-center gap-sm rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${indent ? 'ml-lg' : ''} ${
                 active
                   ? 'border-border-medium bg-surface-raised text-ember'
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'

@@ -17,7 +17,7 @@ const COLOURS = [
   { token: 'rose', label: 'Rose', bg: 'bg-child-rose', ring: 'ring-child-rose' },
   { token: 'blue', label: 'Blue', bg: 'bg-child-blue', ring: 'ring-child-blue' },
   { token: 'sage', label: 'Sage', bg: 'bg-child-sage', ring: 'ring-child-sage' },
-  { token: 'amber', label: 'Amber', bg: 'bg-amber-400', ring: 'ring-amber-400' },
+  { token: 'amber', label: 'Amber', bg: 'bg-amber-status', ring: 'ring-amber-status' },
 ] as const;
 
 function ageFromDob(dob: string | null): string {
@@ -107,7 +107,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
   }
 
   return (
-    <div className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[400ms] hover:border-border-medium">
+    <div className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] hover:border-border-medium">
       {/* Colour swatch */}
       <div className={`h-9 w-9 flex-shrink-0 rounded-full ${currentColour.bg} flex items-center justify-center`}>
         <span className="font-sans text-sm font-semibold text-text-inverse">

@@ -222,16 +222,16 @@ function DailyChart({ rows }: { rows: DayRow[] }) {
             </span>
             <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-surface-raised">
               <div
-                className="absolute inset-y-0 left-0 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="absolute inset-y-0 left-0 transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 style={{ width: `${fullPct}%`, background: 'rgba(217,123,58,0.7)' }}
                 title={`Full enrichment: $${d.full.toFixed(4)}`}
               />
               <div
-                className="absolute inset-y-0 transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="absolute inset-y-0 transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 style={{
                   width: `${draftPct}%`,
                   left: `${fullPct}%`,
-                  background: 'rgba(74,222,128,0.6)',
+                  background: 'rgba(123,191,138,0.6)',
                 }}
                 title={`Draft insights: $${d.draft.toFixed(4)}`}
               />
@@ -257,7 +257,7 @@ function DailyChart({ rows }: { rows: DayRow[] }) {
         <span className="flex items-center gap-xs">
           <span
             className="inline-block h-[10px] w-[10px] rounded-sm"
-            style={{ background: 'rgba(74,222,128,0.6)' }}
+            style={{ background: 'rgba(123,191,138,0.6)' }}
             aria-hidden="true"
           />
           Draft insights

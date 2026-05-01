@@ -29,7 +29,7 @@ export default function DemoCapabilities() {
 
   const getTierBadge = (tier: string) => {
     const tiers: Record<string, { bg: string; text: string }> = {
-      emerging: { bg: 'bg-amber-900/20', text: 'text-amber-400' },
+      emerging: { bg: 'bg-amber-status/20', text: 'text-amber-status' },
       developing: { bg: 'bg-blue-900/20', text: 'text-blue-400' },
       demonstrating: { bg: 'bg-sage/20', text: 'text-sage' },
     };
@@ -85,7 +85,7 @@ export default function DemoCapabilities() {
                   return (
                     <div
                       key={thread.threadId}
-                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                     >
                       <div className="mb-md flex items-start justify-between">
                         <h4 className="font-serif font-semibold text-text-primary flex-1">{thread.threadName}</h4>

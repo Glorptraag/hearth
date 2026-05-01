@@ -49,14 +49,14 @@ export default function PrepMode({
 
       {/* Understanding indicators */}
       {module.understandingIndicators && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             What to Look For
           </h2>
           <div className="space-y-sm">
             {module.understandingIndicators.emerging && (
               <div className="flex items-start gap-sm">
-                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-amber-400/15 text-amber-400 mt-[2px]">
+                <span className="shrink-0 rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold bg-amber-status/15 text-amber-status mt-[2px]">
                   Emerging
                 </span>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
@@ -90,7 +90,7 @@ export default function PrepMode({
 
       {/* Session overview */}
       {activities.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             Session Flow
           </h2>
@@ -130,7 +130,7 @@ export default function PrepMode({
 
       {/* Materials checklist */}
       {firstActivityMaterials.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             Gather First — Materials for Activity 1
           </h2>
@@ -201,7 +201,7 @@ export default function PrepMode({
         const printableCount = allAssets.filter((a) => a.ref.asset.kind !== 'audio').length;
 
         return (
-          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
             <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
               Hearth Provides
             </h2>
@@ -255,7 +255,7 @@ export default function PrepMode({
       })()}
 
       {/* Why This Matters */}
-      <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+      <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
         <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
           Why This Matters
         </h2>
@@ -326,7 +326,7 @@ export default function PrepMode({
           }
         });
         return sayBlocks.length > 0 ? (
-          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
             <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
               Key Phrases — Read through these now so they feel natural
             </h2>
@@ -351,7 +351,7 @@ export default function PrepMode({
           });
         });
         return prompts.length > 0 ? (
-          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
             <h2 className="font-sans text-sm font-semibold text-sage uppercase tracking-widest mb-md">
               What to Watch For
             </h2>
@@ -392,7 +392,7 @@ export default function PrepMode({
       {/* Start button */}
       <button
         onClick={onStart}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
       >
         {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session →'}
       </button>

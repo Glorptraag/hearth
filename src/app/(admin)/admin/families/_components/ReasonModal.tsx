@@ -40,7 +40,7 @@ export default function ReasonModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
       onClick={handleCancel}
     >
       <div
@@ -49,7 +49,7 @@ export default function ReasonModal({
         aria-modal="true"
         aria-labelledby="reason-modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[440px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-medium"
+        className="w-full max-w-[440px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
       >
         <h2
           id="reason-modal-title"

@@ -120,7 +120,7 @@ const CHILD_COLORS: Record<string, { border: string; bg: string; text: string; r
   rose: { border: 'border-child-rose', bg: 'bg-child-rose/10', text: 'text-child-rose', ring: 'focus-within:ring-child-rose/30' },
   blue: { border: 'border-child-blue', bg: 'bg-child-blue/10', text: 'text-child-blue', ring: 'focus-within:ring-child-blue/30' },
   sage: { border: 'border-child-sage', bg: 'bg-child-sage/10', text: 'text-child-sage', ring: 'focus-within:ring-child-sage/30' },
-  amber: { border: 'border-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-400', ring: 'focus-within:ring-amber-400/30' },
+  amber: { border: 'border-amber-status', bg: 'bg-amber-status/10', text: 'text-amber-status', ring: 'focus-within:ring-amber-status/30' },
 };
 
 // ─── Skeleton Loader Component ───
@@ -234,7 +234,7 @@ const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selec
 function SectionIndicator({ number, done }: { number: number; done: boolean }) {
   return (
     <div
-      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
         done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
       }`}
     >
@@ -277,7 +277,7 @@ function CompletenessRing({ score }: { score: number }) {
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform="rotate(-90 20 20)"
-        className="transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
       />
       <text
         x="20"
@@ -982,9 +982,9 @@ export default function LogPage() {
         <button
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className={`flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          className={`flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
             canSave
-              ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-[var(--shadow-glow)]'
+              ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
               : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
           }`}
         >
@@ -1031,7 +1031,7 @@ export default function LogPage() {
                   <button
                     key={learner.id}
                     onClick={() => toggleLearner(learner.id)}
-                    className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] select-none ${
+                    className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[var(--ease-default)] select-none ${
                       selected
                         ? `${colors.border} bg-ember-glow text-text-primary`
                         : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -1078,7 +1078,7 @@ export default function LogPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={vocab.logWhatPlaceholder}
                 rows={4}
-                className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-[0_0_0_2px_rgba(217,123,58,0.3)] transition-all duration-200 resize-y"
+                className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-200 resize-y"
               />
               <div className="mt-sm flex items-center gap-xs">
                 <button
@@ -1129,7 +1129,7 @@ export default function LogPage() {
                         }
                         placeholder="Something they said, wondered about, or figured out..."
                         rows={2}
-                        className="w-full min-h-[70px] rounded-md border border-border-subtle bg-surface-body p-sm font-serif text-[0.9375rem] text-text-primary leading-[1.6] placeholder:text-text-muted focus:outline-none focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] resize-y"
+                        className="w-full min-h-[70px] rounded-md border border-border-subtle bg-surface-body p-sm font-serif text-[0.9375rem] text-text-primary leading-[1.6] placeholder:text-text-muted focus:outline-none focus:border-ember focus:shadow-focus resize-y"
                       />
                       {(() => {
                         const engLevel = engagement[id];
@@ -1166,7 +1166,7 @@ export default function LogPage() {
                     <button
                       key={type.key}
                       onClick={() => setActivityType(selected ? null : type.key)}
-                      className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
                         selected
                           ? 'border-ember bg-ember-glow text-text-primary'
                           : 'border-border-subtle bg-surface-body text-text-secondary hover:border-border-medium hover:bg-surface-raised'
@@ -1241,7 +1241,7 @@ export default function LogPage() {
                                 setEngagement((prev) => ({ ...prev, [id]: level.value }))
                               }
                               title={level.label}
-                              className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                              className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[var(--ease-default)] ${
                                 selected
                                   ? `${colors.bg} ${colors.border} scale-110 opacity-100`
                                   : 'bg-surface-body border-border-subtle opacity-60 hover:opacity-100 hover:border-border-medium hover:scale-105'
@@ -1446,7 +1446,7 @@ export default function LogPage() {
         {/* ─── Right: AI Insights Panel (desktop) ─── */}
         <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
           <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
-            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-[var(--shadow-glow)]">
+            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-ember">
               <span className="text-sm" aria-hidden="true">💡</span>
             </div>
             <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
@@ -1510,7 +1510,7 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-[var(--shadow-medium)] transition-all duration-200 ${
+          className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
             toast.type === 'badge'
               ? 'bg-ember/20 text-ember border border-ember/30'
               : toast.type === 'success'
@@ -1848,8 +1848,8 @@ function EvidenceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
-      <div className="absolute inset-0 bg-overlay-backdrop" onClick={onClose} />
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-[var(--shadow-warm)]" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+      <div className="absolute inset-0 backdrop-modal" onClick={onClose} />
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         <div className="flex items-center justify-between mb-lg">
           <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary text-lg min-h-[44px] min-w-[44px] flex items-center justify-center">

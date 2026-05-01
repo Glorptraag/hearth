@@ -57,7 +57,7 @@ export function AssetPreview({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-overlay-backdrop transition-opacity duration-200"
+        className="absolute inset-0 backdrop-modal transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -68,7 +68,7 @@ export function AssetPreview({
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-preview-title"
-        className="relative z-10 w-full max-w-md max-h-[90dvh] mx-md rounded-[16px] bg-surface-panel border border-border-subtle shadow-warm overflow-y-auto transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="relative z-10 w-full max-w-md max-h-[90dvh] mx-md rounded-[16px] bg-surface-panel border border-border-subtle shadow-float overflow-y-auto transition-all duration-200 ease-[var(--ease-default)]"
       >
         {/* Close button */}
         <button

@@ -68,7 +68,7 @@ export default function DemoMarketplace() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
+            className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
           >
             <div className="flex items-start gap-lg">
               <span className="text-4xl">{p.imageEmoji}</span>
@@ -100,7 +100,7 @@ export default function DemoMarketplace() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="mt-xl bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft text-center">
+      <div className="mt-xl bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card text-center">
         <p className="font-serif text-base text-text-primary mb-sm">
           More packs coming soon
         </p>

@@ -148,7 +148,7 @@ export default function LogMode({
 
       {/* Session captures review */}
       {quickCaptures && quickCaptures.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
             Session Captures
           </h2>
@@ -208,7 +208,7 @@ export default function LogMode({
 
       {/* Per-child engagement */}
       {selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
             Engagement
           </p>
@@ -240,7 +240,7 @@ export default function LogMode({
 
       {/* Understanding level — per-child */}
       {module.understandingIndicators && selectedLearnerIds.length > 0 && (
-        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+        <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-md">
             Understanding Level
           </p>
@@ -251,7 +251,7 @@ export default function LogMode({
                 <p className="font-serif text-sm text-text-primary mb-sm">{learner?.name}</p>
                 <div className="flex gap-xs flex-wrap">
                   {([
-                    { key: 'emerging', label: 'Emerging', badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30', desc: module.understandingIndicators!.emerging },
+                    { key: 'emerging', label: 'Emerging', badge: 'bg-amber-status/15 text-amber-status border-amber-status/30', desc: module.understandingIndicators!.emerging },
                     { key: 'developing', label: 'Developing', badge: 'bg-domain-science/15 text-domain-science border-domain-science/30', desc: module.understandingIndicators!.developing },
                     { key: 'demonstrating', label: 'Demonstrating', badge: 'bg-sage/15 text-sage border-sage/30', desc: module.understandingIndicators!.demonstrating },
                   ] as const).map(({ key, label, badge }) => (
@@ -350,7 +350,7 @@ export default function LogMode({
       <button
         onClick={handleSave}
         disabled={saving || selectedLearnerIds.length === 0}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving ? 'Saving...' : 'Save to Portfolio →'}
       </button>

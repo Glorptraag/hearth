@@ -91,7 +91,7 @@ function ProjectOverview({
         className="relative px-xl py-2xl max-w-3xl mx-auto border-b border-border-subtle"
         style={{
           background:
-            'radial-gradient(ellipse at 30% 20%, rgba(167,139,250,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(217,123,58,0.06) 0%, transparent 50%)',
+            'radial-gradient(ellipse at 30% 20%, rgba(158,143,184,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(217,123,58,0.06) 0%, transparent 50%)',
         }}
       >
         <a
@@ -176,7 +176,7 @@ function ProjectOverview({
                 <button
                   onClick={() => { if (!isLocked) onStageSelect(idx); }}
                   disabled={isLocked}
-                  className={`w-full flex items-start gap-md rounded-lg border p-lg text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  className={`w-full flex items-start gap-md rounded-lg border p-lg text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
                     isCompleted
                       ? 'border-sage/20 bg-sage/5 hover:border-sage/30'
                       : isActive

@@ -161,7 +161,7 @@ export function PrintSheet({
     <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-overlay-backdrop transition-opacity duration-200"
+        className="absolute inset-0 backdrop-modal transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -172,7 +172,7 @@ export function PrintSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="print-sheet-title"
-        className="relative z-10 w-full max-h-[85dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-warm flex flex-col transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="relative z-10 w-full max-h-[85dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-float flex flex-col transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
       >
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-sm lg:hidden">
@@ -343,7 +343,7 @@ export function PrintSheet({
 
           {/* Large bundle warning */}
           {totalPages * copies > 100 && (
-            <p className="font-sans text-[0.75rem] text-amber-400 mb-sm">
+            <p className="font-sans text-[0.75rem] text-amber-status mb-sm">
               ⚠ Large bundle ({totalPages * copies} pages). Generation may take a moment.
             </p>
           )}

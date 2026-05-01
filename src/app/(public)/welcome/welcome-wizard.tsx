@@ -113,7 +113,7 @@ export default function WelcomeWizard() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-[480px] overflow-hidden rounded-[24px] border border-border-subtle bg-surface-panel shadow-warm">
+      <div className="relative z-10 w-full max-w-[480px] overflow-hidden rounded-[24px] border border-border-subtle bg-surface-panel shadow-float">
         {/* Skip */}
         <button
           onClick={complete}
@@ -128,11 +128,11 @@ export default function WelcomeWizard() {
           {slides.map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-2 rounded-full transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`h-2 w-2 rounded-full transition-all duration-200 ease-[var(--ease-default)] ${
                 i === current
                   ? 'bg-ember shadow-[0_0_8px_rgba(217,123,58,0.4)]'
                   : i < current
-                    ? 'bg-sage shadow-[0_0_6px_rgba(74,222,128,0.3)]'
+                    ? 'bg-sage shadow-[0_0_6px_rgba(123,191,138,0.30)]'
                     : 'bg-surface-raised'
               }`}
             />
@@ -143,7 +143,7 @@ export default function WelcomeWizard() {
         <div className="flex min-h-[320px] flex-col items-center justify-center px-xl py-2xl text-center max-[520px]:min-h-[280px] max-[520px]:px-lg max-[520px]:py-xl">
           <div
             key={animKey}
-            className="flex flex-col items-center animate-[slideIn_400ms_cubic-bezier(0.4,0,0.2,1)]"
+            className="flex flex-col items-center animate-[slideIn_var(--motion-gentle)_var(--ease-default)]"
           >
             <div className="mb-lg text-5xl leading-none max-[520px]:text-4xl">
               {slide.emoji}
@@ -162,7 +162,7 @@ export default function WelcomeWizard() {
           {!isFirst && (
             <button
               onClick={prev}
-              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:text-text-primary"
+              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
             >
               Back
             </button>
@@ -170,7 +170,7 @@ export default function WelcomeWizard() {
           <button
             onClick={isLast ? complete : next}
             disabled={isCompleting}
-            className="flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3),0_0_20px_rgba(217,123,58,0.15)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(217,123,58,0.35),0_0_30px_rgba(217,123,58,0.2)] disabled:opacity-60"
+            className="flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
           >
             {isCompleting ? 'Loading…' : isLast ? 'Set up my family →' : 'Next'}
           </button>

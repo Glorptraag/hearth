@@ -24,7 +24,7 @@ const COLOUR_CHIP: Record<string, string> = {
   blue: 'bg-child-blue/20 text-child-blue',
   sage: 'bg-child-sage/20 text-child-sage',
   violet: 'bg-child-violet/20 text-child-violet',
-  amber: 'bg-amber-400/20 text-amber-400',
+  amber: 'bg-amber-status/20 text-amber-status',
 };
 
 const SUBJECT_CHIP: Record<string, string> = {
@@ -50,7 +50,7 @@ export default function RecentEntryCard({ entry, learners }: RecentEntryCardProp
   })();
 
   return (
-    <div className="flex flex-col gap-sm rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:bg-surface-raised">
+    <div className="flex flex-col gap-sm rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised">
       {/* Learner chips + timestamp */}
       <div className="flex items-center justify-between gap-sm">
         <div className="flex flex-wrap gap-xs">

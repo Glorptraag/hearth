@@ -314,7 +314,7 @@ function PillButton({
       type="button"
       onClick={onClick}
       className={[
-        'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]',
+        'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-200 ease-[var(--ease-default)]',
         active
           ? 'bg-ember text-text-inverse border-ember'
           : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium',
@@ -407,7 +407,7 @@ function AiCompanionPanel({ hints }: { hints: string[] }) {
 
 function ModulePreviewCard({ title, subjects, approaches }: { title: string; subjects: string[]; approaches: { title: string; activities: { title: string }[] }[] }) {
   return (
-    <div className="relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+    <div className="relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-70" />
       <div className="mb-sm flex flex-wrap gap-xs">
         {subjects.slice(0, 3).map((s) => (
@@ -456,7 +456,7 @@ function SavedView({ onBack, preview }: { onBack: () => void; preview?: { title:
 
       <button
         onClick={onBack}
-        className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition-all duration-200 ease-[var(--ease-default)]"
       >
         Back to pathways
       </button>
@@ -489,7 +489,7 @@ function FormActions({
         type="button"
         onClick={onContinue}
         disabled={saving}
-        className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
+        className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-200 disabled:opacity-50"
       >
         {saving ? 'Saving…' : (continueLabel ?? 'Continue →')}
       </button>
@@ -639,7 +639,7 @@ function ModulePreview({
       </div>
 
       {/* Module card preview */}
-      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-soft p-xl">
+      <div className="bg-surface-panel rounded-lg border border-border-subtle shadow-card p-xl">
         <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
           {data.title || 'Untitled module'}
         </h3>
@@ -767,7 +767,7 @@ function ModulePreview({
           type="button"
           onClick={onPublish}
           disabled={saving}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save module'}
         </button>
@@ -1054,7 +1054,7 @@ function SharedEditView({
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder="Give this module a name"
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1068,7 +1068,7 @@ function SharedEditView({
             onChange={(e) => setForm((f) => ({ ...f, targetUnderstanding: e.target.value }))}
             placeholder="The key understanding this module develops — required for publishing."
             rows={2}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1304,7 +1304,7 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
             value={form.resourceName}
             onChange={(e) => setForm((f) => ({ ...f, resourceName: e.target.value }))}
             placeholder="e.g. The Secret Garden, Planet Earth II, LEGO Mindstorms..."
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1315,7 +1315,7 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
             onChange={(e) => setForm((f) => ({ ...f, excitement: e.target.value }))}
             placeholder="What drew you to this resource? What do you hope your learner will get from it?"
             rows={3}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1446,7 +1446,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             value={form.activityName}
             onChange={(e) => setForm((f) => ({ ...f, activityName: e.target.value }))}
             placeholder="e.g. Building a birdhouse, Sourdough bread, Nature journalling..."
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1457,7 +1457,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             onChange={(e) => setForm((f) => ({ ...f, whatHappens: e.target.value }))}
             placeholder="Describe what you do, step by step or in broad strokes. The learning spine will emerge from this."
             rows={4}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1616,7 +1616,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             value={form.question}
             onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
             placeholder="e.g. Why do leaves change colour in autumn?"
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
           <p className="font-sans text-[11px] text-text-muted mt-xs">Use their exact words if you remember them</p>
         </div>
@@ -1630,7 +1630,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             onChange={(e) => setForm((f) => ({ ...f, priorKnowledge: e.target.value }))}
             placeholder="Starting from what you know helps shape the exploration — even guesses count."
             rows={3}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -2004,7 +2004,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                   editData.materials = skeleton.suggestedMaterials.map((m) => m.name);
                   setEditing(editData);
                 }}
-                className="bg-surface-panel rounded-lg border border-border-subtle p-lg text-left transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:translate-y-[-1px]"
+                className="bg-surface-panel rounded-lg border border-border-subtle p-lg text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:translate-y-[-1px]"
               >
                 <div className="flex items-start justify-between gap-sm mb-sm">
                   <h3 className="font-serif text-base font-semibold text-text-primary">{skeleton.title}</h3>
@@ -2076,7 +2076,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 onChange={(e) => setForm((f) => ({ ...f, goal: e.target.value }))}
                 placeholder="e.g. I want them to get more confident with fractions, or understand how ecosystems work…"
                 rows={3}
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-200 focus:border-ember focus:shadow-focus"
               />
             </div>
 
@@ -2236,7 +2236,7 @@ export default function BuildModulesPage() {
             key={pathway.id}
             onClick={() => setSelected(pathway.id)}
             className={[
-              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
+              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
               pathway.id === 'retrospective' ? 'border-ember/25' : 'border-border-subtle',
             ].join(' ')}
           >
@@ -2269,7 +2269,7 @@ export default function BuildModulesPage() {
 
       <button
         onClick={() => setSelected(GOAL_PATHWAY.id)}
-        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
+        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
       >
         <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
           {GOAL_PATHWAY.emoji}

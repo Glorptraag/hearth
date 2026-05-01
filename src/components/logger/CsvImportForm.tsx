@@ -109,7 +109,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
           onChange={(e) => { setCsvText(e.target.value); setError(null); }}
           rows={8}
           placeholder={'title,dateOccurred,subjects,description\n"Session title",2026-03-15,"mathematics","Description..."'}
-          className="w-full rounded-md border border-border-subtle bg-surface-raised font-mono text-xs text-text-secondary placeholder:text-text-muted outline-none p-md resize-none transition-all duration-200 focus:border-ember focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)]"
+          className="w-full rounded-md border border-border-subtle bg-surface-raised font-mono text-xs text-text-secondary placeholder:text-text-muted outline-none p-md resize-none transition-all duration-200 focus:border-ember focus:shadow-focus"
         />
       </div>
 
@@ -127,7 +127,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
           type="button"
           onClick={handleImport}
           disabled={importing || !csvText.trim()}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-200 disabled:opacity-50"
         >
           {importing ? 'Importing…' : 'Import Sessions'}
         </button>

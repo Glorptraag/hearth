@@ -430,7 +430,7 @@ export default function PlannerClient({
               </p>
               <a
                 href={`${basePath}/explore/marketplace`}
-                className="inline-block rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+                className="inline-block rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
               >
                 Explore the marketplace
               </a>

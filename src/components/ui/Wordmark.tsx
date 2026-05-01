@@ -52,7 +52,7 @@ export function Wordmark({
         width={width}
         height={iconHeight}
         priority
-        className="object-contain transition-opacity duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="object-contain transition-opacity duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
       />
       {showText && <span className={textClassName}>Hearth</span>}
     </span>

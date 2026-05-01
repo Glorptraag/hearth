@@ -87,11 +87,11 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
 
   return (
     <div
-      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-soft overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full flex flex-col h-full relative"
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] w-full flex flex-col h-full relative"
     >
       <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
 
-      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 
       <div className="relative z-10">
         <button
@@ -193,7 +193,7 @@ function PreviewModal({
   const trapRef = useFocusTrap(true);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-overlay-backdrop px-0 sm:px-md"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal px-0 sm:px-md"
       onClick={onClose}
     >
       <div
@@ -201,7 +201,7 @@ function PreviewModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="preview-modal-title"
-        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-warm p-xl max-h-[85vh] overflow-y-auto"
+        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-float p-xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
@@ -717,10 +717,10 @@ export default function ExploreActivitiesPage() {
                   <button
                     key={project._id}
                     onClick={() => router.push(`/project/${project._id}`)}
-                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-soft overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
-                    <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(167,139,250,0.6),var(--color-ember),transparent)] opacity-60" />
+                    <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(158,143,184,0.6),var(--color-ember),transparent)] opacity-60" />
 
                     <div className="relative z-10">
                       <div className="inline-flex items-center gap-xs px-sm py-[2px] rounded-full font-sans text-[10px] font-semibold uppercase tracking-wider mb-sm bg-child-violet/12 text-child-violet border border-child-violet/20"

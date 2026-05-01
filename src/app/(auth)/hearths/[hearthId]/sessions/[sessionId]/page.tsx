@@ -170,7 +170,7 @@ export default async function SessionDetailPage({
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">
               Shared Record
             </h2>
-            <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-soft">
+            <div className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-card">
               <p className="font-serif text-[0.95rem] text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {session.sharedRecord ?? session.description}
               </p>
@@ -225,7 +225,7 @@ export default async function SessionDetailPage({
                 return (
                   <div
                     key={obs.id}
-                    className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-soft"
+                    className="bg-surface-panel border border-border-subtle rounded-lg p-xl shadow-card"
                   >
                     {/* Observer + learner row */}
                     <div className="flex items-center justify-between mb-md">

@@ -45,9 +45,9 @@ type EvidenceEntry = {
 };
 
 const TIER_CONFIG: Record<string, { label: string; badge: string; bar: string; glow: string; radius: number; opacity: number }> = {
-  emerging:      { label: 'Emerging',      badge: 'bg-amber-400/15 text-amber-400',               bar: 'bg-amber-400',       glow: 'rgba(251,191,36,0.6)',  radius: 3,  opacity: 0.5 },
+  emerging:      { label: 'Emerging',      badge: 'bg-amber-status/15 text-amber-status',               bar: 'bg-amber-status',       glow: 'rgba(224,181,105,0.6)',  radius: 3,  opacity: 0.5 },
   developing:    { label: 'Developing',    badge: 'bg-domain-science/15 text-domain-science',     bar: 'bg-domain-science',   glow: 'rgba(107,142,107,0.7)', radius: 5,  opacity: 0.75 },
-  demonstrating: { label: 'Demonstrating', badge: 'bg-sage/15 text-sage',                         bar: 'bg-sage',             glow: 'rgba(74,222,128,0.8)',  radius: 7,  opacity: 1.0 },
+  demonstrating: { label: 'Demonstrating', badge: 'bg-sage/15 text-sage',                         bar: 'bg-sage',             glow: 'rgba(123,191,138,0.8)',  radius: 7,  opacity: 1.0 },
   unobserved:    { label: 'Not observed',  badge: 'bg-surface-hover text-text-muted',             bar: 'bg-surface-hover',    glow: 'rgba(128,128,128,0.15)', radius: 2, opacity: 0.2 },
 };
 
@@ -163,7 +163,7 @@ function ThreadDetailPanel({
   };
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-float animate-in fade-in slide-in-from-bottom-2 duration-200">
       <div className="flex items-center justify-between mb-sm">
         <h3 className="font-serif text-base font-semibold text-text-primary">{thread.name}</h3>
         <button onClick={onClose} className="font-sans text-xs text-text-muted hover:text-text-secondary">Close</button>
@@ -186,7 +186,7 @@ function ThreadDetailPanel({
         aria-label={`${thread.name} capability: ${tierCfg.label}`}
       >
         <div
-          className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`}
+          className={`h-full rounded-full transition-all duration-[var(--motion-gentle)] ${tierCfg.bar}`}
           style={{ width: progressWidth }}
         />
       </div>
@@ -217,7 +217,7 @@ function ThreadDetailPanel({
               {Array.from({ length: thread.dlosTotal ?? 3 }, (_, i) => (
                 <div
                   key={i}
-                  className={`h-[4px] flex-1 rounded-full transition-all duration-[400ms] ${
+                  className={`h-[4px] flex-1 rounded-full transition-all duration-[var(--motion-gentle)] ${
                     i < (thread.dlosConfirmed ?? 0) ? tierCfg.bar : 'bg-surface-hover'
                   }`}
                 />
@@ -231,7 +231,7 @@ function ThreadDetailPanel({
               <span className="font-sans text-[10px] text-text-muted">Trajectory:</span>
               <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${
                 thread.trajectory === 'accelerating' ? 'bg-sage/15 text-sage' :
-                thread.trajectory === 'plateau' ? 'bg-amber-400/15 text-amber-400' :
+                thread.trajectory === 'plateau' ? 'bg-amber-status/15 text-amber-status' :
                 thread.trajectory === 'new' ? 'bg-surface-hover text-text-muted' :
                 'bg-domain-science/15 text-domain-science'
               }`}>
@@ -243,7 +243,7 @@ function ThreadDetailPanel({
               {thread.evidenceQuality && (
                 <span className={`font-sans text-[10px] ${
                   thread.evidenceQuality === 'strong' ? 'text-sage' :
-                  thread.evidenceQuality === 'weak' ? 'text-amber-400' :
+                  thread.evidenceQuality === 'weak' ? 'text-amber-status' :
                   'text-text-muted'
                 }`}>
                   {thread.evidenceQuality === 'strong' ? 'Rich evidence' :
@@ -281,7 +281,7 @@ function ThreadDetailPanel({
                     aria-label={`Progress toward ${thread.nextBadge}`}
                   >
                     <div
-                      className="h-full rounded-full bg-ember transition-all duration-[400ms]"
+                      className="h-full rounded-full bg-ember transition-all duration-[var(--motion-gentle)]"
                       style={{ width: `${Math.round((thread.nextBadgeProgress ?? 0) * 100)}%` }}
                     />
                   </div>
@@ -440,7 +440,7 @@ function ThreadEvidencePanel({
   }, [threadId, learnerId]);
 
   return (
-    <div className="mt-md rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="mt-md rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card animate-in fade-in slide-in-from-bottom-2 duration-200">
       <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md">
         Evidence for {threadName}
       </p>
@@ -897,11 +897,11 @@ export default function CapabilitiesPage() {
 
       {/* Stats row */}
       <div className="mt-lg flex gap-md">
-        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-soft">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-card">
           <p className="font-sans text-2xl font-semibold text-ember">{totalObservations}</p>
           <p className="font-sans text-xs text-text-muted">Observations</p>
         </div>
-        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-soft">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-panel px-xl py-md shadow-card">
           <p className="font-sans text-2xl font-semibold text-text-primary">{totalThreads}</p>
           <p className="font-sans text-xs text-text-muted">Threads</p>
         </div>
@@ -923,7 +923,7 @@ export default function CapabilitiesPage() {
 
       {/* First-use empty state */}
       {totalObservations === 0 && (
-        <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-soft">
+        <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-card">
           <span className="text-3xl block mb-md" aria-hidden="true">✦</span>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">
             Capabilities emerge from logging
@@ -951,7 +951,7 @@ export default function CapabilitiesPage() {
       {viewMode === 'constellation' ? (
         <>
           {/* Constellation visualization */}
-          <div className="mt-lg rounded-[16px] border border-border-subtle bg-surface-body overflow-hidden shadow-soft">
+          <div className="mt-lg rounded-[16px] border border-border-subtle bg-surface-body overflow-hidden shadow-card">
             <ConstellationView
               activeThreads={activeThreads}
               focusDomain={focusDomain}
@@ -996,9 +996,9 @@ export default function CapabilitiesPage() {
               <button
                 key={domain.key}
                 onClick={() => handleFocusDomain(focusDomain === domain.key ? null : domain.key)}
-                className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-left w-full"
+                className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left w-full"
               >
-                <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+                <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
                 <span className="text-2xl">{domain.emoji}</span>
                 <h3 className="font-serif text-sm font-semibold text-text-primary mt-sm">{domain.label}</h3>
                 <div className="flex gap-md mt-sm">
@@ -1041,7 +1041,7 @@ export default function CapabilitiesPage() {
                             <div key={thread.thread_id}>
                               <button
                                 onClick={() => setSelectedThreadId(isSelected ? null : thread.thread_id)}
-                                className={`w-full text-left rounded-[10px] border bg-surface-panel p-md shadow-soft hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ${
+                                className={`w-full text-left rounded-[10px] border bg-surface-panel p-md shadow-card hover:border-border-medium hover:translate-y-[-1px] transition-all duration-200 ${
                                   isSelected ? 'border-ember' : 'border-border-subtle'
                                 }`}
                               >
@@ -1067,7 +1067,7 @@ export default function CapabilitiesPage() {
                                   aria-valuemax={100}
                                   aria-label={`${getThreadName(thread.thread_id)} capability: ${tierCfg.label}`}
                                 >
-                                  <div className={`h-full rounded-full transition-all duration-[400ms] ${tierCfg.bar}`} style={{ width: progressWidth }} />
+                                  <div className={`h-full rounded-full transition-all duration-[var(--motion-gentle)] ${tierCfg.bar}`} style={{ width: progressWidth }} />
                                 </div>
                               </button>
                               {isSelected && selectedLearnerId && (

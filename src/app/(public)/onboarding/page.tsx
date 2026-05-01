@@ -217,7 +217,7 @@ export default function OnboardingPage() {
             </p>
             <button
               onClick={() => setStep(2)}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Let&rsquo;s set up your family
             </button>
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleSaveFamily}
               disabled={saving}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover disabled:opacity-50"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Continue'}
             </button>
@@ -385,7 +385,7 @@ export default function OnboardingPage() {
               <button
                 onClick={() => handleComplete('/log')}
                 disabled={saving}
-                className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover disabled:opacity-50"
+                className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
               >
                 Log something now
               </button>

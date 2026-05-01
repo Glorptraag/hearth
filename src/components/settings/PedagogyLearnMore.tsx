@@ -107,7 +107,7 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary"
+        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
           Explore {frameworkLabel}
@@ -125,7 +125,7 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
           {excerpts.map((excerpt, i) => (
             <div
               key={i}
-              className="bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-soft"
+              className="bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card"
             >
               <p className="font-serif text-sm text-text-secondary italic leading-relaxed">
                 &ldquo;{excerpt.text}&rdquo;

@@ -24,7 +24,7 @@ export default function DevPreviewActivities() {
       </div>
 
       {/* Empty state */}
-      <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-soft">
+      <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-card">
         <span className="text-4xl" aria-hidden="true">📚</span>
         <div>
           <h2 className="font-serif text-xl font-semibold text-text-primary">
@@ -36,7 +36,7 @@ export default function DevPreviewActivities() {
         </div>
         <Link
           href="/dev-preview/explore/marketplace"
-          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
         >
           Browse Marketplace
         </Link>

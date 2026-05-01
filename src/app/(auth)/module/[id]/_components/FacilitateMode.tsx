@@ -120,7 +120,7 @@ export default function FacilitateMode({
 
         {/* Instructions */}
         {current.instructions && current.instructions.length > 0 && (
-          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-soft">
+          <div className="mb-lg bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
             <HearthPortableText value={current.instructions as Parameters<typeof HearthPortableText>[0]['value']} />
           </div>
         )}
@@ -404,7 +404,7 @@ export default function FacilitateMode({
             {isLast ? (
               <button
                 onClick={onFinish}
-                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-glow"
+                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
               >
                 Finish & Log →
               </button>
@@ -622,7 +622,7 @@ export default function FacilitateMode({
           )}
           <button
             onClick={() => setMobileCapture((v) => !v)}
-            className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-glow flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
+            className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
             aria-label="Quick capture"
           >
             {mobileCapture ? '✕' : '📸'}

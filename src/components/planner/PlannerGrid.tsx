@@ -87,7 +87,7 @@ export default function PlannerGrid({
   }, [onMove]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-panel shadow-[var(--shadow-soft)]">
+    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-panel shadow-card">
       <div
         className="grid min-w-[620px]"
         style={{ gridTemplateColumns: `56px repeat(${weekDates.length}, minmax(100px, 1fr))` }}

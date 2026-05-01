@@ -150,9 +150,9 @@ export default function AuthLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+                  className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
                     active
-                      ? "border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft),inset_0_1px_0_rgba(255,255,255,0.03)]"
+                      ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                       : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
                   }`}
                 >
@@ -176,7 +176,7 @@ export default function AuthLayout({
                 <Link
                   key={h.id}
                   href={`/hearths/${h.id}`}
-                  className={`mb-xs flex items-center gap-sm rounded-md px-md py-[10px] font-sans text-[0.85rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+                  className={`mb-xs flex items-center gap-sm rounded-md px-md py-[10px] font-sans text-[0.85rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
                     active
                       ? 'border-border-medium bg-surface-raised text-ember'
                       : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -203,9 +203,9 @@ export default function AuthLayout({
           {/* Gathering mode toggle */}
           <button
             onClick={toggleTheme}
-            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
               gathering
-                ? 'border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft)]'
+                ? 'border-border-medium bg-surface-raised text-ember shadow-card'
                 : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
             }`}
             aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
@@ -224,9 +224,9 @@ export default function AuthLayout({
           )}
           <Link
             href="/notifications"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
               isActive(pathname, "/notifications")
-                ? "border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft),inset_0_1px_0_rgba(255,255,255,0.03)]"
+                ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
@@ -242,9 +242,9 @@ export default function AuthLayout({
           </Link>
           <Link
             href="/settings"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] border ${
+            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
               isActive(pathname, "/settings")
-                ? "border-border-medium bg-surface-raised text-ember shadow-[var(--shadow-soft),inset_0_1px_0_rgba(255,255,255,0.03)]"
+                ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
@@ -257,7 +257,7 @@ export default function AuthLayout({
         <div className="flex-1" />
 
         {/* User badge */}
-        <div className="flex items-center gap-md rounded-md border border-border-subtle bg-surface-raised p-md shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-md rounded-md border border-border-subtle bg-surface-raised p-md shadow-card">
           <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-gradient-to-br from-ember to-ember-hover font-serif text-[0.9rem] font-semibold text-surface-body shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
             {initials}
           </div>
@@ -287,7 +287,7 @@ export default function AuthLayout({
             </span>
             <Link
               href="/notifications"
-              className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-glow hover:text-text-primary"
+              className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
               <span className="text-lg" aria-hidden="true">🔔</span>
@@ -314,7 +314,7 @@ export default function AuthLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[var(--ease-default)] ${
                 item.primary
                   ? active
                     ? "text-ember"
@@ -327,7 +327,7 @@ export default function AuthLayout({
               <span
                 className={`text-xl ${
                   item.primary
-                    ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)]"
+                    ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-ember"
                     : ""
                 }`}
                 aria-hidden="true"

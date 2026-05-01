@@ -36,7 +36,7 @@ export default function ApproachPickMode({
               <button
                 key={approach._id}
                 onClick={() => onSelect(idx)}
-                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-soft transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
+                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-card transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
               >
                 <span className="mt-[2px] text-lg">
                   {MODALITY_EMOJI[approach.modality ?? ''] ?? '📌'}

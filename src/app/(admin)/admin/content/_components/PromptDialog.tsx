@@ -37,11 +37,11 @@ function PromptDialogBody({ title, placeholder, onSubmit, onCancel }: PromptDial
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
       onClick={onCancel}
     >
       <div
-        className="bg-surface-panel border border-border-subtle rounded-lg shadow-medium p-xl w-full max-w-md"
+        className="bg-surface-panel border border-border-subtle rounded-lg shadow-float p-xl w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -54,7 +54,7 @@ function PromptDialogBody({ title, placeholder, onSubmit, onCancel }: PromptDial
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder={placeholder}
-          className="w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary font-sans text-sm outline-none focus:border-ember focus:shadow-[0_0_0_3px_rgba(217,123,58,0.15)] mb-lg"
+          className="w-full px-3.5 py-2.5 bg-surface-raised border border-border-subtle rounded-[8px] text-text-primary font-sans text-sm outline-none focus:border-ember focus:shadow-focus mb-lg"
         />
         <div className="flex justify-end gap-2">
           <button

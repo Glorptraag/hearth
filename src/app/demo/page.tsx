@@ -8,7 +8,7 @@ export default function DemoLanding() {
       {/* Welcome */}
       <div className="mb-3xl text-center">
         <div className="mb-lg flex justify-center">
-          <div className="flex h-[64px] w-[64px] items-center justify-center rounded-lg bg-ember shadow-[0_4px_24px_rgba(217,123,58,0.4),var(--shadow-glow)]">
+          <div className="flex h-[64px] w-[64px] items-center justify-center rounded-lg bg-ember shadow-ember-strong">
             <span className="text-3xl" aria-hidden="true">🔥</span>
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function DemoLanding() {
       <div className="mb-3xl flex justify-center">
         <Link
           href="/demo/dashboard"
-          className="inline-flex items-center gap-sm rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover hover:shadow-[0_8px_32px_rgba(217,123,58,0.4)] hover:translate-y-[-2px]"
+          className="inline-flex items-center gap-sm rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]"
         >
           Start exploring
         </Link>
@@ -43,7 +43,7 @@ export default function DemoLanding() {
           <Link
             key={card.href}
             href={card.href}
-            className="flex flex-col items-center gap-sm rounded-lg bg-surface-panel p-lg border border-border-subtle shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium"
+            className="flex flex-col items-center gap-sm rounded-lg bg-surface-panel p-lg border border-border-subtle shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
           >
             <span className="text-2xl">{card.emoji}</span>
             <span className="font-serif text-sm font-semibold text-text-primary">{card.title}</span>

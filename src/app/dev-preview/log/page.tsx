@@ -14,7 +14,7 @@ export default function DevPreviewLog() {
         </p>
       </div>
 
-      <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-soft">
+      <div className="flex flex-col items-center gap-md rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-xl text-center shadow-card">
         <span className="text-4xl" aria-hidden="true">✏️</span>
         <p className="font-serif text-base text-text-secondary">
           Logger preview coming soon — this route is a placeholder.

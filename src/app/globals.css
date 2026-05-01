@@ -1,95 +1,142 @@
 @import "tailwindcss";
+@import "./hearth-motion-utilities.css";
 
 /* ==========================================================================
-   Hearth LMS — Mont Blanc Dark Coffee Design Tokens (Tailwind v4)
-   Source of truth: docs/hearth-canonical-design-tokens-v1.md
+   Hearth LMS — Design Tokens v2 (Tailwind v4)
+   Source of truth: docs/hearth-canonical-design-tokens-v2.md
+                    docs/hearth-design-system-v2.1-addendum.md (gathering)
+                    docs/hearth-motion-system-v1.md (motion)
+
+   Default theme (:root) is dark (Mont Blanc Dark Coffee). The v2.1 addendum
+   states gathering should be the default; this implementation deliberately
+   keeps dark as default for production stability — auto time-of-day
+   switching (gathering 6am–6pm, dark 6pm–6am) covers the addendum's
+   daytime intent. See plan: reviewing-the-new-style-drifting-robin.md
    ========================================================================== */
 
 @theme {
-  /* Surfaces */
-  --color-surface-body: #0F0D0B;
-  --color-surface-panel: #1A1612;
+  /* ---------- Surfaces (warmed body per v2 S12) ---------- */
+  --color-surface-body:   #15110D;
+  --color-surface-panel:  #1A1612;
   --color-surface-raised: #252117;
-  --color-surface-hover: #2D2621;
+  --color-surface-hover:  #2D2621;
+  --color-surface-input:  #1E1A16;   /* v2.1: explicit input affordance */
 
-  /* Text */
-  --color-text-primary: #E8DFD4;
+  /* ---------- Text ---------- */
+  --color-text-primary:   #E8DFD4;
   --color-text-secondary: #9B8B7E;
-  --color-text-muted: #726458;
-  --color-text-inverse: #0F0D0B;
+  /* v2 spec value is #6B5D52 — we deliberately keep #726458 (3.15:1 on panel)
+     as a documented WCAG override. See hearth-canonical-design-tokens-v1.md
+     Appendix A and CLAUDE.md. */
+  --color-text-muted:     #726458;
+  --color-text-inverse:   #15110D;
 
-  /* Ember — actions only */
-  --color-ember: #D97B3A;
-  --color-ember-hover: #E88F4E;
-  --color-ember-glow: rgba(217, 123, 58, 0.15);
-  --color-ember-strong: rgba(217, 123, 58, 0.25);
+  /* ---------- Ember (action only — S11/S13) ---------- */
+  --color-ember:          #D97B3A;
+  --color-ember-hover:    #E88F4E;
+  --color-ember-glow:     rgba(217, 123, 58, 0.15);
+  --color-ember-strong:   rgba(217, 123, 58, 0.25);
 
-  /* Sage — growth/success only */
-  --color-sage: #4ADE80;
-  --color-sage-muted: #22C55E;
+  /* ---------- Status palette (desaturated dusty per S9) ---------- */
+  --color-sage:           #7BBF8A;
+  --color-sage-muted:     rgba(123, 191, 138, 0.12);
+  --color-sage-text:      #9BD4A8;
 
-  /* Borders — ember-tinted, never white-tinted */
-  --color-border-subtle: rgba(217, 123, 58, 0.1);
-  --color-border-medium: rgba(217, 123, 58, 0.2);
+  --color-amber-status:   #E0B569;
+  --color-amber-muted:    rgba(224, 181, 105, 0.12);
+  --color-amber-text:     #ECC889;
 
-  /* Child identity */
-  --color-child-rose: #F9A8D4;
-  --color-child-blue: #60A5FA;
-  --color-child-sage: #4ADE80;
-  --color-child-violet: #A78BFA;
-  --color-child-amber: #FBBF24;
+  --color-rose:           #D88894;
+  --color-rose-muted:     rgba(216, 136, 148, 0.12);
+  --color-rose-text:      #E5A5AE;
 
-  /* Learning domain colors */
-  --color-domain-english: #6B8E9B;
-  --color-domain-mathematics: #9B7B6B;
-  --color-domain-science: #7B9B6B;
-  --color-domain-hass: #9B8B6B;
-  --color-domain-arts: #8B6B9B;
+  --color-blue:           #7BA3C9;
+  --color-blue-muted:     rgba(123, 163, 201, 0.12);
+
+  --color-violet:         #9E8FB8;
+  --color-violet-muted:   rgba(158, 143, 184, 0.12);
+
+  /* ---------- Per-child identity (v2 painterly hex) ---------- */
+  --color-child-rose:     #D4A0A0;
+  --color-child-blue:     #7BA3C9;   /* equals --color-blue per S9 */
+  --color-child-sage:     #8BAA7B;
+  --color-child-amber:    #C9A86B;
+  --color-child-violet:   #9E8FB8;   /* retained for legacy consumers */
+
+  /* ---------- Learning domain colours (unchanged from v1 — not in v2 spec) ---------- */
+  --color-domain-english:      #6B8E9B;
+  --color-domain-mathematics:  #9B7B6B;
+  --color-domain-science:      #7B9B6B;
+  --color-domain-hass:         #9B8B6B;
+  --color-domain-arts:         #8B6B9B;
   --color-domain-technologies: #6B7B9B;
-  --color-domain-hpe: #9B6B7B;
-  --color-domain-languages: #6B9B8B;
+  --color-domain-hpe:          #9B6B7B;
+  --color-domain-languages:    #6B9B8B;
 
-  /* Typography */
-  --font-serif: 'Crimson Text', Georgia, serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* ---------- Borders (default cream-tinted per S11) ---------- */
+  --color-border-subtle: rgba(232, 223, 212, 0.06);
+  --color-border-medium: rgba(232, 223, 212, 0.10);
+  --color-border-active: rgba(217, 123, 58, 0.30);   /* ember = signal */
+  --color-border-focus:  rgba(217, 123, 58, 0.50);
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 64px;
-  --spacing-4xl: 96px;
-
-  /* Overlay & nav blur */
-  --color-overlay-backdrop: rgba(0, 0, 0, 0.6);
+  /* ---------- Backdrops (v2.1 NEW) ---------- */
+  --color-backdrop-modal:   rgba(0, 0, 0, 0.70);
+  --color-backdrop-success: rgba(21, 17, 13, 0.92);
+  --color-overlay-backdrop: rgba(0, 0, 0, 0.6);   /* legacy alias — kept for unmigrated sites */
   --color-surface-nav-blur: rgba(15, 13, 11, 0.85);
 
-  /* Shadows (in @theme so Tailwind generates utility classes) */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-warm: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(217, 123, 58, 0.08);
-  --shadow-glow: 0 0 20px rgba(217, 123, 58, 0.15);
+  /* ---------- Typography (v2: Fraunces + DM Sans) ---------- */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans:  'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:  'JetBrains Mono', 'SF Mono', monospace;
 
-  /* Transitions */
-  --transition-quick: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-gentle: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* ---------- Border radius (unchanged from v1) ---------- */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
 
-  /* Container max-widths (prevent spacing scale from hijacking max-w-*) */
-  --max-width-xs: 20rem;
-  --max-width-sm: 24rem;
-  --max-width-md: 28rem;
-  --max-width-lg: 32rem;
-  --max-width-xl: 36rem;
+  /* ---------- Spacing (unchanged) ---------- */
+  --spacing-xs:   4px;
+  --spacing-sm:   8px;
+  --spacing-md:   16px;
+  --spacing-lg:   24px;
+  --spacing-xl:   32px;
+  --spacing-2xl:  48px;
+  --spacing-3xl:  64px;
+  --spacing-4xl:  96px;
+
+  /* ---------- Shadows (v2 — ember halo removed from defaults per S13) ---------- */
+  --shadow-card:         0 0 #0000;                                   /* none — lift via surface step + border */
+  --shadow-hover:        0 4px 16px rgba(0, 0, 0, 0.30);
+  --shadow-float:        0 12px 40px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-ember:        0 4px 16px rgba(217, 123, 58, 0.30), 0 0 24px rgba(217, 123, 58, 0.15);
+  --shadow-ember-strong: 0 0 0 3px rgba(217, 123, 58, 0.40), 0 0 24px rgba(217, 123, 58, 0.50);
+  --shadow-focus:        0 0 0 3px rgba(217, 123, 58, 0.40);
+
+  /* ---------- Inset highlights (cream — S13) ---------- */
+  --shadow-inset-highlight: inset 0 1px 0 rgba(232, 223, 212, 0.05);
+  --shadow-inset-strong:    inset 0 1px 0 rgba(232, 223, 212, 0.08);
+
+  /* ---------- Motion tokens (v2 NEW) ---------- */
+  --motion-instant:   100ms;
+  --motion-quick:     200ms;
+  --motion-base:      300ms;
+  --motion-gentle:    400ms;
+  --motion-slow:      600ms;
+
+  --ease-default:     cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:         cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:          cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-soft-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+
+  /* ---------- Container max-widths (prevent spacing scale hijack) ---------- */
+  --max-width-xs:  20rem;
+  --max-width-sm:  24rem;
+  --max-width-md:  28rem;
+  --max-width-lg:  32rem;
+  --max-width-xl:  36rem;
   --max-width-2xl: 42rem;
   --max-width-3xl: 48rem;
   --max-width-4xl: 56rem;
@@ -98,11 +145,24 @@
   --max-width-7xl: 80rem;
 }
 
-/* Shadows and transitions now live in @theme above */
+/* Non-Tailwind theme vars (used by inline styles + utility CSS, not as Tailwind utilities). */
+:root {
+  /* v2.1 backdrop blur — paired with --color-backdrop-* */
+  --backdrop-modal-blur:   0px;
+  --backdrop-success-blur: 0px;
+
+  /* Theme-aware motion tints (consumed by .hearth-thinking and .hearth-skeleton) */
+  --thinking-pulse-low:  rgba(217, 123, 58, 0.15);
+  --thinking-pulse-high: rgba(217, 123, 58, 0.30);
+  --skeleton-low:        rgba(232, 223, 212, 0.04);
+  --skeleton-high:       rgba(232, 223, 212, 0.08);
+}
 
 /* ==========================================================================
-   Gathering Mode — Warm parchment theme for family review & celebration
-   Activate by setting data-theme="gathering" on <html>
+   Gathering Theme — Warm parchment (daytime / family review).
+   Activated by data-theme="gathering" on <html>.
+   v2.1 addendum values applied; theme-default convention unchanged
+   (dark = no attribute; gathering = explicit attribute).
    ========================================================================== */
 
 [data-theme="gathering"] {
@@ -110,66 +170,149 @@
   --color-surface-body:   #FDF6F0;
   --color-surface-panel:  #FAF8F5;
   --color-surface-raised: #F5F5F0;
-  --color-surface-hover:  #E2E8F0;
+  --color-surface-hover:  #ECE8E2;   /* warmed (was #E2E8F0 — cool)*/
+  --color-surface-input:  #FFFFFF;   /* v2.1: pure white only permitted in gathering */
 
-  /* Text — #FFFFFF for inverse fixes WCAG AA on ember buttons */
+  /* Text — #FFFFFF for inverse on ember keeps WCAG AA */
   --color-text-primary:   #2C2418;
   --color-text-secondary: #4A5568;
   --color-text-muted:     #718096;
   --color-text-inverse:   #FFFFFF;
 
-  /* Ember — richer, darker in gathering mode */
+  /* Ember — deepened for cream contrast */
   --color-ember:          #C05621;
   --color-ember-hover:    #92400E;
-  --color-ember-glow:     rgba(192, 86, 33, 0.12);
+  --color-ember-glow:     rgba(192, 86, 33, 0.10);
   --color-ember-strong:   rgba(192, 86, 33, 0.20);
 
-  /* Sage — emerald in gathering mode */
-  --color-sage:           #059669;
-  --color-sage-muted:     #047857;
+  /* Status palette — desaturated for cream */
+  --color-sage:           #5A9168;
+  --color-sage-muted:     rgba(90, 145, 104, 0.10);
+  --color-sage-text:      #2D5C3D;
 
-  /* Child identity — muted for light backgrounds */
+  --color-amber-status:   #B8853F;
+  --color-amber-muted:    rgba(184, 133, 63, 0.10);
+  --color-amber-text:     #6B4D1F;
+
+  --color-rose:           #B5838D;
+  --color-rose-muted:     rgba(181, 131, 141, 0.10);
+  --color-rose-text:      #8B5C66;
+
+  --color-blue:           #4D7AA0;
+  --color-blue-muted:     rgba(77, 122, 160, 0.10);
+
+  --color-violet:         #7C6A8D;
+  --color-violet-muted:   rgba(124, 106, 141, 0.10);
+
+  /* Per-child identity — gathering hex */
   --color-child-rose:     #B5838D;
-  --color-child-blue:     #3182CE;
-  --color-child-sage:     #2D8659;
+  --color-child-blue:     #4D7AA0;
+  --color-child-sage:     #5A9168;
+  --color-child-amber:    #B8853F;
   --color-child-violet:   #7C6A8D;
-  --color-child-amber:    #B77F1A;
 
-  /* Borders — warm brown-tinted */
-  --color-border-subtle:  rgba(44, 36, 24, 0.08);
-  --color-border-medium:  rgba(44, 36, 24, 0.12);
+  /* Borders — warm-dark-tinted defaults; ember signal */
+  --color-border-subtle:  rgba(44, 36, 24, 0.06);
+  --color-border-medium:  rgba(44, 36, 24, 0.10);
+  --color-border-active:  rgba(192, 86, 33, 0.30);
+  --color-border-focus:   rgba(192, 86, 33, 0.50);
 
-  /* Overlay & nav blur */
-  --color-overlay-backdrop: rgba(44, 36, 24, 0.4);
+  /* Backdrops — theme-aware veil + blur */
+  --color-backdrop-modal:   rgba(44, 36, 24, 0.40);
+  --color-backdrop-success: rgba(253, 246, 240, 0.94);
+  --color-overlay-backdrop: rgba(44, 36, 24, 0.40);
   --color-surface-nav-blur: rgba(253, 246, 240, 0.85);
 
   /* Shadows — lighter, warm-tinted */
-  --shadow-soft:   0 2px 8px rgba(44, 36, 24, 0.06);
-  --shadow-medium: 0 4px 16px rgba(44, 36, 24, 0.08);
-  --shadow-warm:   0 8px 32px rgba(192, 86, 33, 0.08);
-  --shadow-glow:   0 0 20px rgba(192, 86, 33, 0.12);
+  --shadow-card:         0 0 #0000;
+  --shadow-hover:        0 4px 16px rgba(44, 36, 24, 0.08);
+  --shadow-float:        0 12px 40px rgba(44, 36, 24, 0.15), 0 2px 8px rgba(44, 36, 24, 0.10);
+  --shadow-ember:        0 4px 16px rgba(192, 86, 33, 0.25), 0 0 24px rgba(192, 86, 33, 0.10);
+  --shadow-ember-strong: 0 0 0 3px rgba(192, 86, 33, 0.40), 0 0 24px rgba(192, 86, 33, 0.40);
+  --shadow-focus:        0 0 0 3px rgba(192, 86, 33, 0.40);
+
+  /* Inset highlights — gathering is the only place pure white is permitted */
+  --shadow-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.50);
+  --shadow-inset-strong:    inset 0 1px 0 rgba(255, 255, 255, 0.70);
 }
 
-/* Adapt ambient atmospheric glow for gathering mode */
+/* Non-@theme vars (theme-aware; inherit-style override) */
+[data-theme="gathering"] {
+  --backdrop-modal-blur:   2px;
+  --backdrop-success-blur: 4px;
+  --thinking-pulse-low:    rgba(192, 86, 33, 0.20);
+  --thinking-pulse-high:   rgba(192, 86, 33, 0.40);
+  --skeleton-low:          rgba(44, 36, 24, 0.04);
+  --skeleton-high:         rgba(44, 36, 24, 0.08);
+}
+
+/* Adapt ambient atmospheric glow for gathering mode (subtler — cream surface
+   already feels like home; ember halo unnecessary) */
 [data-theme="gathering"] body::before {
   background:
-    radial-gradient(ellipse at 20% 80%, rgba(192, 86, 33, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(192, 86, 33, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(192, 86, 33, 0.02) 0%, transparent 70%);
+    radial-gradient(ellipse at 20% 80%, rgba(192, 86, 33, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(192, 86, 33, 0.04) 0%, transparent 50%);
 }
 
-/* Entrance animations */
+/* ==========================================================================
+   Typography utilities — Fraunces variable axes (v2)
+   Three named classes apply the canonical SOFT/opsz settings from the v2
+   type-scale table. Other serif text inherits the default `font-serif`.
+   ========================================================================== */
+
+.display {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 80, "opsz" 144;
+  font-weight: 600;
+}
+
+.heading {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 50, "opsz" 24;
+  font-weight: 600;
+}
+
+.body-serif {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 50, "opsz" 14;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   Backdrop utilities — v2.1 modal & save-success overlays
+   Replaces inline `bg-overlay-backdrop` for new code. Both consume the
+   theme-aware --color-backdrop-* tokens + paired blur amount.
+   ========================================================================== */
+
+.backdrop-modal {
+  background-color: var(--color-backdrop-modal);
+  backdrop-filter: blur(var(--backdrop-modal-blur));
+  -webkit-backdrop-filter: blur(var(--backdrop-modal-blur));
+}
+
+.backdrop-success {
+  background-color: var(--color-backdrop-success);
+  backdrop-filter: blur(var(--backdrop-success-blur));
+  -webkit-backdrop-filter: blur(var(--backdrop-success-blur));
+}
+
+/* ==========================================================================
+   Legacy entrance animations — retained for `.animate-in` / `.delay-*`
+   consumers. New code should use motion utility classes from
+   hearth-motion-utilities.css (.hearth-fade-in, etc.).
+   ========================================================================== */
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in { animation: fadeInUp 0.6s ease-out forwards; }
+.animate-in { animation: fadeInUp 0.6s var(--ease-out) forwards; }
 .delay-1 { animation-delay: 0.1s; opacity: 0; }
 .delay-2 { animation-delay: 0.2s; opacity: 0; }
 .delay-3 { animation-delay: 0.3s; opacity: 0; }
@@ -183,15 +326,18 @@ body {
   position: relative;
 }
 
-/* Ambient ember glow — matches prototype atmospheric layer */
+/* Ambient ember glow — Dashboard hero atmospheric layer. Per v2 spec the
+   triple-radial gradient should be reserved for the Dashboard hero only;
+   for now the body::before is retained app-wide and the per-screen scoping
+   is future work. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse at 20% 80%, rgba(217, 123, 58, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(217, 123, 58, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(217, 123, 58, 0.02) 0%, transparent 70%);
+    radial-gradient(ellipse at 20% 80%, rgba(217, 123, 58, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(217, 123, 58, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 40%, rgba(217, 123, 58, 0.04) 0%, transparent 30%);
   pointer-events: none;
   z-index: 0;
 }

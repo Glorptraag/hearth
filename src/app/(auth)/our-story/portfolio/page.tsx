@@ -295,7 +295,7 @@ export default function PortfolioPage() {
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 
       {/* Monthly summary */}
-      <div className="relative mt-lg overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+      <div className="relative mt-lg overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm">{currentMonthName} Summary</p>
         {monthlySummary.count === 0 ? (
@@ -350,7 +350,7 @@ export default function PortfolioPage() {
                   type="month"
                   value={customMonth}
                   onChange={(e) => { setCustomMonth(e.target.value); setVisibleCount(PAGE_SIZE); }}
-                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-200 focus:shadow-[0_0_0_2px_rgba(217,123,58,0.15)] min-h-[32px]"
+                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-200 focus:shadow-focus min-h-[32px]"
                 />
               )}
             </div>
@@ -474,7 +474,7 @@ export default function PortfolioPage() {
                         return (
                           <div
                             key={entry.id}
-                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                           >
                             {/* Type-specific top line */}
                             <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -678,7 +678,7 @@ export default function PortfolioPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-soft hover:border-border-medium hover:translate-y-[-2px] hover:shadow-warm transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     {/* Type-specific top line */}
                     <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -886,7 +886,7 @@ export default function PortfolioPage() {
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className={`rounded-[16px] border bg-surface-panel p-md shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
+                    className={`rounded-[16px] border bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
                   >
                     <span className={`text-2xl ${badge.retractedAt ? 'grayscale' : ''}`}>{badge.badgeEmoji}</span>
                     <h3 className="font-serif text-sm font-semibold text-text-primary mt-xs">
@@ -943,7 +943,7 @@ export default function PortfolioPage() {
                 {sortedThreads.map((t) => (
                   <div
                     key={t.thread_id}
-                    className="rounded-[10px] border border-border-subtle bg-surface-panel p-md hover:border-border-medium transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="rounded-[10px] border border-border-subtle bg-surface-panel p-md hover:border-border-medium transition-all duration-200 ease-[var(--ease-default)]"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-serif text-sm font-semibold text-text-primary">

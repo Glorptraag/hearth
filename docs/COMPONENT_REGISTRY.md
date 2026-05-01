@@ -3,21 +3,49 @@
 > **Purpose:** Single source of truth for every UI screen, its canonical file, status, and role.
 > **Rule:** Before proposing new work, check this file. Before creating a new screen, update this file.
 > **Cross-screen coherence:** `Hearth_System_Interaction_Map.md` is the canonical document for navigation flows, data relationships, and inter-screen dependencies.
-> **Last verified:** 12 April 2026
+> **Last verified:** 30 April 2026
 
 ---
 
 ## Design System
 
-### Reference Documents
+### Design System v2 — Applied to codebase (landed 2026-04-30 / 2026-05-01)
 | Document | Purpose | Status |
 |---|---|---|
-| `hearth-canonical-design-tokens-v1.md` | Full token spec (colors, spacing, radius, shadows, transitions, typography) | Active |
-| `hearth-ui-kit-v2.md` | Canonical component reference (buttons, cards, inputs, modals, nav) — replaces dead `Hearth_LMS_UI_Kit.html` | Active |
+| `hearth-canonical-design-tokens-v2.md` | **Source of truth.** Supersedes v1. Typography swap (Crimson Text→Fraunces, Inter→DM Sans), desaturated status palette, cream-tinted default borders, warmed body surface, ember reserved for action, motion tokens added | Active — **applied in `src/app/globals.css`** |
+| `hearth-motion-system-v1.md` | First canonical motion language — five durations, four easings, application rules per pattern, special cases (engagement emoji, badge earned, constellation, dashboard ambient), don't-animate list | Active — **applied in `src/app/hearth-motion-utilities.css`** |
+| `hearth-design-system-v2-decisions-addendum.md` | Decisions S7–S13 covering typography, icon library, status palette, motion, borders, body warmth, shadow application. To be merged into `hearth-decisions-log-v1.md` | Active |
+| `hearth-v2-claude-code-prompts.md` | Claude Code rollout prompts — Prompt A (setup + motion utilities CSS) and Prompt B (Dashboard Dark v3 reference build) | Active (process doc) |
+| `hearth-design-system-v2.1-addendum.md` | **v2.1 addendum** — canonicalises gathering (light/daytime) as second theme. Adds `[data-theme]` scoping pattern, gathering-mode values for every theme-dependent v2 token, three new tokens (`--surface-input`, `--backdrop-modal`, `--backdrop-success`), theme-aware motion adjustments for `hearth-thinking-pulse` / `hearth-skeleton` / `hearth-glow-pulse`, per-child JS lookup. Adds **S14** to decisions log. Does NOT supersede v2 — additive | Active — **applied in `src/app/globals.css` + motion utilities** |
+
+**Implementation files (live in `src/app/`):**
+- `src/app/globals.css` — v2 dark + v2.1 gathering tokens, all status/surface/border/shadow/motion tokens. Imports the motion utilities CSS.
+- `src/app/hearth-motion-utilities.css` — 13 `.hearth-*` motion utility classes consuming `--motion-*` and `--ease-*` tokens. `hearth-thinking-pulse` / `hearth-skeleton` / `hearth-glow-pulse` are theme-aware.
+- `src/app/layout.tsx` — Fraunces (with SOFT + opsz axes) + DM Sans loaded via `next/font/google`.
+- `src/app/clerk-theme.ts` — palette objects updated to v2 hex for both themes.
+
+**Implementation deviations from spec:**
+- **Theme default convention:** v2.1 says gathering is default; this implementation keeps **dark as default** (`data-theme=""` or absent → dark; `data-theme="gathering"` → light) for production stability. Auto time-of-day switching covers the addendum's daytime intent. Documented in `CLAUDE.md`.
+- **Icon library:** S8 specifies Lucide; the implementation will use **Phosphor Icons** (`@phosphor-icons/react`) per Drew's call. Same single-color stroke aesthetic and 24px grid.
+- **`--text-muted` value:** v2 spec is `#6B5D52`; implementation keeps WCAG-override `#726458` (3.15:1 on panel) per `hearth-canonical-design-tokens-v1.md` Appendix A.
+
+**Pending v2 / v2.1 deliverables (not yet produced):**
+- `hearth-dashboard-dark-v3.html` — dark-mode reference HTML prototype (Prompt B output)
+- `hearth-dashboard-gathering-v1.html` — daytime/light reference HTML prototype, structural twin of dark v3, replaces `hearth-dashboard-evening-v2.html`
+- In-place markdown updates to `hearth-canonical-design-tokens-v2.md` (gathering blocks under each theme-dependent section + new tokens) — no version bump per addendum migration order
+- S14 entry to be appended to `hearth-decisions-log-v1.md`
+- `hearth-ui-kit-v2.md` → revised to v3 once Dashboard Dark v3 is locked
+- Per-screen visual review across the 22 prototypes / built screens to catch any leftover drift
+
+### Reference Documents (v1 — superseded by v2 above; retained until v3 reference build lands)
+| Document | Purpose | Status |
+|---|---|---|
+| `hearth-canonical-design-tokens-v1.md` | Full token spec (colors, spacing, radius, shadows, transitions, typography) | **Superseded by v2** — retained per versioning rules |
+| `hearth-ui-kit-v2.md` | Canonical component reference (buttons, cards, inputs, modals, nav) — replaces dead `Hearth_LMS_UI_Kit.html` | Active (will be revised to v3 after Dashboard Dark v3 lands) |
 | `hearth-ui-token-deep-audit-v1.md` | Per-screen drift audit documenting every fix applied | Active (reference) |
 
 ### Reference Implementation
-`hearth-dashboard-dark-v2.html` — source of truth for all visual patterns. When in doubt, the Dashboard is right.
+`hearth-dashboard-dark-v2.html` — current source of truth for all visual patterns. **Will be superseded by `hearth-dashboard-dark-v3.html` once v2 token system is applied (per Prompt B in `hearth-v2-claude-code-prompts.md`).** Until v3 lands, v2 remains canonical.
 
 ### Conformance Status
 **22 / 22 parent-facing screens confirmed conformant** as of 2026-03-20. Admin panel (8 screens) added post-conformance — uses admin-density spacing tokens, not fully audited.
@@ -38,7 +66,7 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 |---|--------|---------------|------|------|-----------------|
 | 1 | **Onboarding Demo** | `hearth-complete-demo-v2.html` | — | First-run experience with 5 branching paths: Log, Plan, Progress, Explore, Account Creation | Smart triage, path selection, account creation |
 | 2 | **Dashboard (Dark)** | `hearth-dashboard-dark-v2.html` | `hearth_dashboard_design_decisions.md`, `Hearth_Dashboard_Our_Story_Content_Spec.md` | Primary family hub — Mont Blanc dark coffee theme. **Design system reference implementation.** | Nav to all branches: Our Story, Explore, Log, Settings, Build |
-| 3 | **Dashboard (Evening)** | `hearth-dashboard-evening-v2.html` | (shares Dashboard spec) | Adaptive time-of-day variant of dashboard | Same nav structure, warmer palette |
+| 3 | **Dashboard (Evening)** | `hearth-dashboard-evening-v2.html` | (shares Dashboard spec) | Adaptive time-of-day variant of dashboard. **Pending supersession by `hearth-dashboard-gathering-v1.html`** per v2.1 addendum — current file uses pre-v2 tokens (Crimson Text/Inter, ember-tinted defaults) and will be replaced by the structural twin of Dashboard Dark v3 with `[data-theme]` scoping | Same nav structure, warmer palette |
 
 **Additional Dashboard prototypes:** `hearth-dashboard-mobile-v2.html` (Option C glanceable mobile layout)
 
@@ -290,6 +318,8 @@ These files have been superseded. Candidates for removal to reduce project file 
 | `04_Quick_Reference_Guide.md` | `hearth-hcms-strategy-v1.md` | Per HCMS strategy header |
 | `05_Visual_Architecture_Guide.md` | `hearth-hcms-strategy-v1.md` | Per HCMS strategy header |
 | `hearth-complete-user-flow.md` | `Hearth_System_Interaction_Map.md` | Deprecated flow doc |
+| `hearth-canonical-design-tokens-v1.md` | `hearth-canonical-design-tokens-v2.md` | Design System v2 rollout 2026-04-30 — typography swap, status palette desaturation, cream-tinted borders, warmed body, ember reserved for action, motion tokens added. v1 retained per versioning rules |
+| `hearth-dashboard-evening-v2.html` | `hearth-dashboard-gathering-v1.html` (pending) | v2.1 addendum 2026-04-30 — evening dashboard uses pre-v2 tokens; will be replaced by gathering v1 (structural twin of Dashboard Dark v3 with `[data-theme]` scoping). Evening file remains canonical until gathering v1 lands |
 
 ---
 
@@ -303,5 +333,9 @@ These files have been superseded. Candidates for removal to reduce project file 
 | Phase 3 Scale | Planned | 500+ families |
 
 ---
+
+*Registry updated 30 April 2026 — v2.1 addendum landed: gathering (light/daytime) canonicalised as second theme via `[data-theme]` scoping. Adds S14 to decisions log; introduces three new tokens (`--surface-input`, `--backdrop-modal`, `--backdrop-success`). `hearth-dashboard-evening-v2.html` flagged as pending supersession by `hearth-dashboard-gathering-v1.html`. Pending: motion utilities CSS, in-place gathering blocks in tokens v2 doc, Dashboard Dark v3 + Dashboard Gathering v1 reference builds.*
+
+*Registry updated 30 April 2026 — Design System v2 landed: tokens v2, motion v1, decisions addendum (S7–S13), and Claude Code rollout prompts added under new "Design System v2" group. v1 tokens marked superseded but retained per versioning rules. Pending: motion utilities CSS + Dashboard Dark v3 reference build.*
 
 *Registry updated 3 April 2026 — Community (Hearth) feature added: 3 screens, 5 components, 19 API routes, 8 tables. Update when adding or modifying screens.*

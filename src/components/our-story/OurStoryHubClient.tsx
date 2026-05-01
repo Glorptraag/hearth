@@ -55,21 +55,21 @@ const CHILD_COLORS: Record<string, ChildColorConfig> = {
   },
   blue: {
     text: 'text-child-blue',
-    activeBorder: 'border-[rgba(96,165,250,0.4)]',
-    avatarBg: 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.08))',
-    avatarBorder: 'rgba(96,165,250,0.3)',
+    activeBorder: 'border-[rgba(123,163,201,0.4)]',
+    avatarBg: 'linear-gradient(135deg, rgba(123,163,201,0.15), rgba(123,163,201,0.08))',
+    avatarBorder: 'rgba(123,163,201,0.3)',
   },
   sage: {
     text: 'text-child-sage',
-    activeBorder: 'border-[rgba(74,222,128,0.4)]',
-    avatarBg: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(74,222,128,0.08))',
-    avatarBorder: 'rgba(74,222,128,0.3)',
+    activeBorder: 'border-[rgba(123,191,138,0.4)]',
+    avatarBg: 'linear-gradient(135deg, rgba(123,191,138,0.15), rgba(123,191,138,0.08))',
+    avatarBorder: 'rgba(123,191,138,0.3)',
   },
   amber: {
-    text: 'text-amber-400',
-    activeBorder: 'border-[rgba(251,191,36,0.4)]',
-    avatarBg: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.08))',
-    avatarBorder: 'rgba(251,191,36,0.3)',
+    text: 'text-amber-status',
+    activeBorder: 'border-[rgba(224,181,105,0.4)]',
+    avatarBg: 'linear-gradient(135deg, rgba(224,181,105,0.15), rgba(224,181,105,0.08))',
+    avatarBorder: 'rgba(224,181,105,0.3)',
   },
 };
 
@@ -203,9 +203,9 @@ export default function OurStoryHubClient() {
               <button
                 key={l.id}
                 onClick={() => handleChildSelect(l.id)}
-                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-200 ease-[var(--ease-default)] ${
                   active
-                    ? `bg-surface-raised shadow-soft ${c.activeBorder}`
+                    ? `bg-surface-raised shadow-card ${c.activeBorder}`
                     : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-raised'
                 }`}
               >
@@ -251,7 +251,7 @@ export default function OurStoryHubClient() {
       </header>
 
       {/* Term summary — empty state for new learners */}
-      <section className="relative mb-2xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <section className="relative mb-2xl overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-inset-highlight">
         <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
         <h2 className="mb-md font-serif text-base font-semibold text-text-primary">
           {learner.name}&rsquo;s Learning Story
@@ -276,14 +276,14 @@ export default function OurStoryHubClient() {
           </p>
         )}
         {stats && stats.portfolioTotal === 0 && stats.capabilityThreadsActive === 0 && (
-          <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-soft">
+          <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-card">
             <span className="text-3xl" aria-hidden="true">✨</span>
             <p className="font-serif text-sm text-text-secondary leading-relaxed">
               Log your first learning moment and watch {learner.name}&rsquo;s story come to life.
             </p>
             <a
               href="/log"
-              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Log a moment
             </a>
@@ -341,7 +341,7 @@ export default function OurStoryHubClient() {
           <h2 className="font-serif text-base font-semibold text-text-primary">Recent Evidence</h2>
           <Link
             href="/our-story/portfolio"
-            className="font-sans text-xs font-medium text-ember transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:text-ember-hover"
+            className="font-sans text-xs font-medium text-ember transition-colors duration-200 ease-[var(--ease-default)] hover:text-ember-hover"
           >
             See all →
           </Link>
@@ -355,7 +355,7 @@ export default function OurStoryHubClient() {
             {stats!.recentEvidence.map((url, i) => (
               <div
                 key={i}
-                className="flex h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] hover:border-border-medium"
+                className="flex h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-200 ease-[var(--ease-default)] hover:scale-[1.02] hover:border-border-medium"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />
@@ -390,9 +390,9 @@ function NavCard({
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm"
+      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
     >
-      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] ease-[var(--ease-default)] group-hover:opacity-100" />
       <div className="mb-md text-[2rem] opacity-90">{icon}</div>
       <h2 className="mb-sm font-serif text-[1.05rem] font-semibold text-text-primary">{title}</h2>
       <p className={`font-sans text-sm ${stat1Highlight ? 'text-sage' : 'text-text-secondary'}`}>

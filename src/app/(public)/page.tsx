@@ -57,13 +57,13 @@ export default async function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-md">
             <Link
               href="/sign-up"
-              className="inline-flex items-center gap-sm rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3),0_0_20px_rgba(217,123,58,0.15)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(217,123,58,0.35),0_0_30px_rgba(217,123,58,0.2)]"
+              className="inline-flex items-center gap-sm rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
               Get Started
             </Link>
             <a
               href="#how-it-works"
-              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
+              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               See How It Works
             </a>
@@ -128,7 +128,7 @@ export default async function LandingPage() {
             Hearth meets you where you are and grows with you.
           </p>
           <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
-            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
               <div className="mb-md text-2xl" aria-hidden="true">🌱</div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 New to homeschooling?
@@ -137,7 +137,7 @@ export default async function LandingPage() {
                 You don&apos;t need a teaching degree. Hearth puts real pedagogical frameworks in your hands and walks you through them. Start by logging what you&apos;re already doing &mdash; you&apos;ll be surprised how much learning is already happening.
               </p>
             </div>
-            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft">
+            <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
               <div className="mb-md text-2xl" aria-hidden="true">🔥</div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
                 Already homeschooling?
@@ -159,7 +159,7 @@ export default async function LandingPage() {
           <p className="mb-2xl font-serif text-base text-text-secondary">
             No feature tiers. No content gates. Full access from day one.
           </p>
-          <div className="relative mx-auto max-w-[480px] overflow-hidden rounded-[24px] border border-border-medium bg-surface-panel p-2xl shadow-warm">
+          <div className="relative mx-auto max-w-[480px] overflow-hidden rounded-[24px] border border-border-medium bg-surface-panel p-2xl shadow-float">
             {/* Ember top-line */}
             <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, var(--color-ember), transparent)' }} />
 
@@ -177,7 +177,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/sign-up"
-              className="inline-flex w-full items-center justify-center rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3),0_0_20px_rgba(217,123,58,0.15)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(217,123,58,0.35),0_0_30px_rgba(217,123,58,0.2)]"
+              className="inline-flex w-full items-center justify-center rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
               Get Started
             </Link>
@@ -199,7 +199,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/demo"
-              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
+              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               Try the Interactive Demo
             </Link>
@@ -241,8 +241,8 @@ function Divider() {
 
 function PillarCard({ emoji, title, body }: { emoji: string; title: string; body: string }) {
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm">
-      <div className="absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" style={{ background: 'linear-gradient(90deg, var(--color-ember), transparent)' }} />
+    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
+      <div className="absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" style={{ background: 'linear-gradient(90deg, var(--color-ember), transparent)' }} />
       <div className="mb-md text-[2rem]">{emoji}</div>
       <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">{title}</h3>
       <p className="font-serif text-[0.95rem] leading-relaxed text-text-secondary">{body}</p>

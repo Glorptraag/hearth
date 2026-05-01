@@ -35,7 +35,7 @@ export default function DemoOurStoryHub() {
       </div>
 
       {/* Term Summary */}
-      <div className="mb-3xl rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft">
+      <div className="mb-3xl rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card">
         <p className="font-serif text-text-secondary">{selectedProfile.termSummary}</p>
       </div>
 
@@ -43,7 +43,7 @@ export default function DemoOurStoryHub() {
       <div className="mb-3xl grid grid-cols-1 gap-lg sm:grid-cols-2">
         <Link
           href={`/demo/our-story/portfolio?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">📷</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}&apos;s Portfolio</h3>
@@ -55,7 +55,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/report?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">📄</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">Learning Report</h3>
@@ -67,7 +67,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/capabilities?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">🌟</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">Capabilities</h3>
@@ -79,7 +79,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/learner/${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">💡</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">About {selected.name}</h3>
@@ -99,7 +99,7 @@ export default function DemoOurStoryHub() {
           {selectedProfile.evidenceThumbs.map((emoji, idx) => (
             <div
               key={idx}
-              className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-2xl shadow-soft"
+              className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-2xl shadow-card"
             >
               {emoji}
             </div>

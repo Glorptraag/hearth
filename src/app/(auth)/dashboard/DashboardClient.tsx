@@ -269,7 +269,7 @@ export default function DashboardClient({
           </div>
         )}
         {dashboardState === 'returning-inactive' && (
-          <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-soft">
+          <div className="mb-3xl rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg shadow-card">
             <div className="flex items-center gap-md">
               <span className="text-2xl" aria-hidden="true">🌅</span>
               <div>
@@ -279,7 +279,7 @@ export default function DashboardClient({
               </div>
               <Link
                 href={`${basePath}/log`}
-                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-ember-hover"
+                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
               >
                 Log a moment
               </Link>
@@ -314,10 +314,10 @@ export default function DashboardClient({
                   <Link
                     key={l.id}
                     href={`${basePath}/our-story/learner/${l.id}`}
-                    className="flex flex-col items-center transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[4px]"
+                    className="flex flex-col items-center transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[4px]"
                   >
                     <div
-                      className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[400ms] ${colours.bg} ${colours.border} ${colours.text}`}
+                      className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[var(--motion-gentle)] ${colours.bg} ${colours.border} ${colours.text}`}
                     >
                       {l.shapeIcon ?? '🌟'}
                     </div>
@@ -382,7 +382,7 @@ export default function DashboardClient({
                   {todayPlanner.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                     >
                       <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
                         {item.title}
@@ -445,7 +445,7 @@ export default function DashboardClient({
                     {/* Add card */}
                     <Link
                       href={`${basePath}/log`}
-                      className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-ember hover:bg-ember-glow"
+                      className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-ember hover:bg-ember-glow"
                     >
                       <span className="font-sans text-[0.75rem] text-text-muted mb-md">
                         Something we haven&rsquo;t captured?
@@ -469,7 +469,7 @@ export default function DashboardClient({
         {/* Quick Log */}
         <Link
           href={`${basePath}/log`}
-          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[0_4px_16px_rgba(217,123,58,0.3),var(--shadow-glow)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(217,123,58,0.4),0_0_32px_rgba(217,123,58,0.2)] mb-2xl"
+          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
         >
           <span className="text-lg" aria-hidden="true">✏️</span>
           Log a Moment
@@ -477,7 +477,7 @@ export default function DashboardClient({
 
         {/* Hearth Voice */}
         {snapshot.hearthVoice && (
-          <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+          <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-inset-highlight">
             <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember-glow mb-md shadow-[0_0_12px_rgba(217,123,58,0.2)]">
               <span className="text-sm text-ember" aria-hidden="true">🔥</span>
@@ -497,7 +497,7 @@ export default function DashboardClient({
             <h3 className="font-serif text-base font-semibold text-text-primary mb-lg">
               This Week
             </h3>
-            <div className="rounded-[16px] border border-border-subtle bg-surface-raised p-xl shadow-soft">
+            <div className="rounded-[16px] border border-border-subtle bg-surface-raised p-xl shadow-card">
               <WeekStat label="Moments logged" value={weekStats.momentsLogged ?? 0} />
               <WeekStat
                 label="Collaborative activities"
@@ -516,7 +516,7 @@ export default function DashboardClient({
 
         {/* Gentle Prompt */}
         {snapshot.recommendations && snapshot.recommendations.length > 0 && (
-          <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(74,222,128,0.08)] p-lg mb-2xl">
+          <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(123,191,138,0.08)] p-lg mb-2xl">
             <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
               {snapshot.recommendations[0].title}
             </p>
@@ -590,9 +590,9 @@ function MomentCard({
   const isTogether = entryLearners.length > 1;
 
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-soft transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-warm">
+    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
       {/* Ember top-line on hover */}
-      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 
       {/* Meta: child avatar + time */}
       <div className="flex items-center gap-sm mb-md">

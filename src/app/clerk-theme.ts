@@ -1,8 +1,11 @@
 type Theme = 'dark' | 'gathering';
 
+// Hearth Design System v2 + v2.1: Clerk components can't read CSS custom
+// properties, so the palette objects are duplicated here. Kept in lockstep
+// with src/app/globals.css.
 const DARK = {
   surface: {
-    body: '#0F0D0B',
+    body: '#15110D',         // v2: warmed from #0F0D0B
     panel: '#1A1612',
     raised: '#252117',
     hover: '#2D2621',
@@ -10,8 +13,8 @@ const DARK = {
   text: {
     primary: '#E8DFD4',
     secondary: '#9B8B7E',
-    muted: '#726458',
-    inverse: '#0F0D0B',
+    muted: '#726458',        // WCAG override (v2 spec is #6B5D52)
+    inverse: '#15110D',      // tracks surface-body
   },
   ember: {
     base: '#D97B3A',
@@ -19,8 +22,8 @@ const DARK = {
     glow: 'rgba(217,123,58,0.15)',
   },
   border: {
-    subtle: 'rgba(217,123,58,0.1)',
-    medium: 'rgba(217,123,58,0.2)',
+    subtle: 'rgba(232,223,212,0.06)',  // v2 S11: cream-tinted default
+    medium: 'rgba(232,223,212,0.10)',
   },
 };
 
@@ -29,27 +32,31 @@ const GATHERING = {
     body: '#FDF6F0',
     panel: '#FAF8F5',
     raised: '#F5F5F0',
-    hover: '#E2E8F0',
+    hover: '#ECE8E2',        // v2.1: warmed from cool #E2E8F0
   },
   text: {
     primary: '#2C2418',
     secondary: '#4A5568',
     muted: '#718096',
-    inverse: '#FFFFFF',
+    inverse: '#FFFFFF',      // WCAG override on ember-button background
   },
   ember: {
     base: '#C05621',
     hover: '#92400E',
-    glow: 'rgba(192,86,33,0.12)',
+    glow: 'rgba(192,86,33,0.10)',  // v2.1: 0.12 → 0.10
   },
   border: {
-    subtle: 'rgba(44,36,24,0.08)',
-    medium: 'rgba(44,36,24,0.12)',
+    subtle: 'rgba(44,36,24,0.06)',  // v2.1: warm-dark-tinted, S11 light equivalent
+    medium: 'rgba(44,36,24,0.10)',
   },
 };
 
-const fontSans = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const fontSerif = "'Crimson Text', Georgia, serif";
+// Hearth Design System v2: Fraunces (variable, SOFT axis) + DM Sans (variable).
+// Clerk components can't read CSS custom properties, so the font-family strings
+// are duplicated here. Family names are matched by next/font's @font-face injection
+// in src/app/layout.tsx.
+const fontSans = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+const fontSerif = "'Fraunces', Georgia, serif";
 
 export function getClerkAppearance(theme: Theme = 'dark') {
   const t = theme === 'gathering' ? GATHERING : DARK;
@@ -64,10 +71,12 @@ export function getClerkAppearance(theme: Theme = 'dark') {
         backgroundColor: t.surface.panel,
         border: `1px solid ${t.border.subtle}`,
         borderRadius: '16px',
+        // v2 S13: default surfaces lift via surface step + border, not ember halo.
+        // The Clerk card was a default-shadow site — strip the 60px ember glow.
         boxShadow:
           theme === 'gathering'
-            ? '0 8px 32px rgba(192,86,33,0.08)'
-            : '0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(217,123,58,0.08)',
+            ? '0 4px 16px rgba(44,36,24,0.08)'
+            : '0 4px 16px rgba(0,0,0,0.30)',
         padding: '48px',
       },
       headerTitle: {

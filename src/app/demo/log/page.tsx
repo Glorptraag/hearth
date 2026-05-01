@@ -85,7 +85,7 @@ export default function DemoLog() {
                   <button
                     key={t.key}
                     onClick={() => setActivityType(t.key)}
-                    className={`rounded-md px-md py-sm font-sans text-sm border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] text-left ${
+                    className={`rounded-md px-md py-sm font-sans text-sm border transition-all duration-200 ease-[var(--ease-default)] text-left ${
                       activityType === t.key
                         ? 'border-ember text-ember bg-ember/10'
                         : 'border-border-subtle text-text-secondary bg-surface-raised hover:border-border-medium'
@@ -150,7 +150,7 @@ export default function DemoLog() {
                     <button
                       key={l.id}
                       onClick={() => toggleLearner(l.id)}
-                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition-all duration-200 ease-[var(--ease-default)] ${
                         selected
                           ? `${LEARNER_BORDER[l.colourToken] ?? 'border-ember'} text-text-primary bg-surface-raised`
                           : 'border-border-subtle text-text-muted hover:border-border-medium'
@@ -190,9 +190,9 @@ export default function DemoLog() {
             <button
               onClick={handleSave}
               disabled={!title.trim()}
-              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-[0_4px_16px_rgba(217,123,58,0.3)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] ${
                 title.trim()
-                  ? 'hover:bg-ember-hover hover:shadow-[0_8px_32px_rgba(217,123,58,0.4)] hover:translate-y-[-2px]'
+                  ? 'hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]'
                   : 'opacity-50 cursor-not-allowed'
               }`}
             >
@@ -202,7 +202,7 @@ export default function DemoLog() {
 
           {/* Right column — AI insight placeholder (desktop only) */}
           <div className="hidden lg:block w-[320px]">
-            <div className="sticky top-[80px] bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-soft">
+            <div className="sticky top-[80px] bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card">
               <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
                 Hearth Voice
               </div>
@@ -221,8 +221,8 @@ export default function DemoLog() {
 
       {/* Success overlay */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-backdrop backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" className="bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-medium text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" className="bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-float text-center">
             <div className="text-5xl mb-lg" aria-hidden="true">✨</div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
               Moment captured!

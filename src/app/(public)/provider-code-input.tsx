@@ -51,7 +51,7 @@ export default function ProviderCodeInput() {
           style={{
             borderColor:
               status === 'valid'
-                ? 'rgba(74,222,128,0.3)'
+                ? 'rgba(123,191,138,0.3)'
                 : 'var(--color-border-subtle)',
           }}
         />

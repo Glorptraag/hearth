@@ -15,7 +15,7 @@ export default function BadgeChip({ badge }: BadgeChipProps) {
     : null;
 
   return (
-    <div className="flex flex-col gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition-all duration-[400ms] hover:border-border-medium hover:bg-surface-raised">
+    <div className="flex flex-col gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition-all duration-[var(--motion-gentle)] hover:border-border-medium hover:bg-surface-raised">
       <span className="text-2xl">{badge.badgeEmoji ?? '🏅'}</span>
       <p className="font-serif text-sm font-semibold leading-tight text-text-primary">
         {badge.badgeTitle}

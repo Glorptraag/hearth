@@ -42,9 +42,9 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
   const hasOverlay = overlay && (overlay.perspective || overlay.facilitatorTips || overlay.watchFor);
 
   return (
-    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-md sm:p-lg lg:p-xl shadow-soft hover:translate-y-[-2px] hover:border-border-medium hover:shadow-medium transition-all duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]">
+    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-md sm:p-lg lg:p-xl shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]">
       {/* Ember top-line */}
-      <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100" />
+      <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-md mb-md">
@@ -198,7 +198,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
         {onStart && (
           <button
             onClick={onStart}
-            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
           >
             Start {vocab.sessionNoun}
           </button>

@@ -11,6 +11,7 @@ import { MODULES_MATERIALS_BATCH_QUERY } from '@/lib/sanity/queries';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
 import { fetchPrintBundle } from '@/components/content/types';
 import { isPrintableAssetKind, type AssetKind } from '@/components/content/types';
+import { NotePencil, Books, Printer } from '@/components/icons';
 
 interface Learner {
   id: string;
@@ -401,7 +402,7 @@ export default function PlannerClient({
             className="ml-auto flex items-center gap-xs rounded-md border border-border-subtle bg-surface-panel px-sm py-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:border-border-medium hover:text-ember transition-all duration-200"
             title="Print materials for this week"
           >
-            📄 Print ({totalMaterialCount})
+            <Printer size={14} aria-hidden="true" /> Print ({totalMaterialCount})
           </button>
         )}
       </div>
@@ -409,7 +410,9 @@ export default function PlannerClient({
       {/* Empty week nudge */}
       {!loading && entries.length === 0 && isCurrentWeek && (
         <div className="mb-lg rounded-lg border border-border-subtle bg-surface-panel p-lg text-center">
-          <span className="text-3xl mb-sm block">{hasLibraryModules ? '📝' : '📚'}</span>
+          <span className="mx-auto mb-sm inline-flex text-text-secondary" aria-hidden="true">
+            {hasLibraryModules ? <NotePencil size={32} /> : <Books size={32} />}
+          </span>
           {hasLibraryModules ? (
             <>
               <p className="font-serif text-sm text-text-secondary mb-xs">

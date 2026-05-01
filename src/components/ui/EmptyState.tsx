@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ComponentType } from 'react';
 
 interface EmptyStateCta {
   label: string;
@@ -8,8 +9,13 @@ interface EmptyStateCta {
   onClick?: () => void;
 }
 
+type IconComponent = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+
 interface EmptyStateProps {
-  emoji: string;
+  /** Phosphor icon component from `@/components/icons`. Preferred. */
+  icon?: IconComponent;
+  /** @deprecated Use `icon` (Phosphor) instead. Emoji kept only for incremental migration. */
+  emoji?: string;
   heading: string;
   body: string;
   cta?: EmptyStateCta;
@@ -17,15 +23,27 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({
+  icon: Icon,
   emoji,
   heading,
   body,
   cta,
   variant = 'card',
 }: EmptyStateProps) {
+  const visual = Icon ? (
+    <span
+      className="inline-flex h-12 w-12 items-center justify-center text-text-secondary"
+      aria-hidden="true"
+    >
+      <Icon size={32} />
+    </span>
+  ) : emoji ? (
+    <span className="text-4xl" aria-hidden="true">{emoji}</span>
+  ) : null;
+
   const content = (
     <>
-      <span className="text-4xl">{emoji}</span>
+      {visual}
       <div>
         <h2 className="font-serif text-xl font-semibold text-text-primary">
           {heading}

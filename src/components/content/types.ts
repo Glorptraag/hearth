@@ -130,7 +130,8 @@ export async function fetchPrintBundle(
   return { status: 'ready', url, filename, pageCount, warnings };
 }
 
-// Emoji indicators by asset kind
+// Emoji indicators by asset kind — kept for backward compatibility with any
+// remaining demo/print-export consumers. New UI code should use ASSET_KIND_ICON.
 export const ASSET_KIND_EMOJI: Record<AssetKind, string> = {
   template: '📄',
   worksheet: '📄',
@@ -143,9 +144,41 @@ export const ASSET_KIND_EMOJI: Record<AssetKind, string> = {
 
 export const COMMONS_KIND_EMOJI = '📖';
 
+import type { ComponentType } from 'react';
+import {
+  FilePdf,
+  Image as ImageIcon,
+  Cards,
+  ClipboardText,
+  SpeakerHigh,
+  Scissors,
+  BookOpen,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+
+/** Phosphor icon by asset kind. Preferred over ASSET_KIND_EMOJI for UI. */
+export const ASSET_KIND_ICON: Record<AssetKind, IconC> = {
+  template:     FilePdf,
+  worksheet:    FilePdf,
+  reference:    ImageIcon,
+  card_set:     Cards,
+  handout:      ClipboardText,
+  audio:        SpeakerHigh,
+  manipulative: Scissors,
+};
+
+export const COMMONS_KIND_ICON: IconC = BookOpen;
+
 export function getItemEmoji(item: PrintableItem): string {
   if (item.kind === 'commonsText') return COMMONS_KIND_EMOJI;
   return ASSET_KIND_EMOJI[item.assetKind ?? 'template'];
+}
+
+/** Pick the right Phosphor icon component for a printable item. */
+export function getItemIcon(item: PrintableItem): IconC {
+  if (item.kind === 'commonsText') return COMMONS_KIND_ICON;
+  return ASSET_KIND_ICON[item.assetKind ?? 'template'];
 }
 
 export function isPrintableAssetKind(kind: AssetKind): boolean {

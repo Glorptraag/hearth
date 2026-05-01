@@ -3,7 +3,8 @@
 import { useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { type ContentAsset, ASSET_KIND_EMOJI } from './types';
+import { type ContentAsset, ASSET_KIND_ICON } from './types';
+import { X } from '@/components/icons';
 
 interface AssetPreviewProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export function AssetPreview({
 
   if (!isOpen || !asset) return null;
 
-  const emoji = ASSET_KIND_EMOJI[asset.kind] ?? '📄';
+  const KindIcon = ASSET_KIND_ICON[asset.kind] ?? ASSET_KIND_ICON.template;
   const kindLabel = asset.kind.replace(/_/g, ' ');
   const metaParts = [
     kindLabel,
@@ -76,7 +77,7 @@ export function AssetPreview({
           className="absolute top-md right-md z-10 p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
           aria-label="Close preview"
         >
-          ✕
+          <X size={18} aria-hidden="true" />
         </button>
 
         {/* Thumbnail */}
@@ -99,7 +100,7 @@ export function AssetPreview({
               )}
             </>
           ) : (
-            <span className="text-6xl opacity-40">{emoji}</span>
+            <span className="opacity-40 text-text-secondary"><KindIcon size={32} aria-hidden="true" /></span>
           )}
         </div>
 

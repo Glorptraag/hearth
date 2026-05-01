@@ -679,3 +679,51 @@ Shadow tokens are now defined inside `@theme inline` in `globals.css` (not `:roo
 | `shadow-glow` | `--shadow-glow` |
 
 **Exception:** Seven ember-tinted accent shadows on primary CTA buttons remain as inline `shadow-[...]` values. These are decorative ember glow effects (`rgba(217,123,58,...)`) that are intentionally theme-invariant — ember glows the same in both modes.
+
+---
+
+## APPENDIX B: ICON SIZING TOKENS (April 2026)
+
+Hearth's production icon library is **Phosphor (regular weight)**. Icon sizing is constrained to five tokens — anything else is a smell. Full rules: `docs/hearth-icon-system-v1.md`. Decision record: `docs/hearth-decisions-log-v1.md` (S14).
+
+### Token table
+
+| Token | Value | Use |
+|---|---|---|
+| `--icon-xs` | `14px` | Inline with metadata text, action arrows in text links |
+| `--icon-sm` | `16px` | Inside form chips, button icons next to short labels |
+| `--icon-md` | `18px` | Nav items, section headers, modal close buttons (default) |
+| `--icon-lg` | `22px` | Card icons, page header icons, activity-type cards |
+| `--icon-xl` | `32px` | Empty state illustrations, hero moments |
+
+### Implementation
+
+Tokens live in `@theme` in `globals.css`. Icons are passed pixel values via the `size` prop (Phosphor's API), not Tailwind classes:
+
+```tsx
+import { Compass } from '@/components/icons';
+
+<Compass size={18} />          // --icon-md
+<Compass size={22} />          // --icon-lg
+
+// Wrong — arbitrary sizes
+<Compass size={20} />
+<Compass size={24} />
+```
+
+Default size if unspecified: **18px** (`--icon-md`). When a designer mockup specifies 20 or 24, round to the nearest token (18 or 22). Closer to consistency than fidelity.
+
+### Container sizing rule
+
+Icons inside fixed-size containers (avatar circles, button squares, badges) should be **~55–60% of container size**, rounded to the nearest token:
+
+| Container | Icon |
+|---|---|
+| 24px | 14 |
+| 32px | 18 |
+| 36–48px | 22 (or 32 at 48 — judgement) |
+| 80px | 32 |
+
+### Colour rule
+
+Icons inherit `currentColor`. Never set a `color` prop on an icon — colour the parent via existing text/ember/sage tokens. Hard-coded hex values, Tailwind colour utilities on the icon, or status-colour tokens (`--blue`, `--violet`) on icon strokes are forbidden.

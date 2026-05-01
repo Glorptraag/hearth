@@ -1,31 +1,42 @@
 'use client';
 
-const VALUES = [
-  { id: 'child-led', label: 'Child-led learning', emoji: '🧒' },
-  { id: 'structured', label: 'Structured curriculum', emoji: '📋' },
-  { id: 'nature', label: 'Nature & outdoors', emoji: '🌿' },
-  { id: 'arts', label: 'Arts & creativity', emoji: '🎨' },
-  { id: 'academic', label: 'Academic rigour', emoji: '📚' },
-  { id: 'real-world', label: 'Real-world connection', emoji: '🌍' },
-  { id: 'flexibility', label: 'Flexibility & flow', emoji: '🌊' },
-  { id: 'whole-child', label: 'Whole-child development', emoji: '💚' },
-  { id: 'independence', label: 'Independence & autonomy', emoji: '🦅' },
-  { id: 'mastery', label: 'Mastery & depth', emoji: '🎯' },
+import type { ComponentType } from 'react';
+import {
+  BabyCarriage, Ruler, Plant, Palette, GraduationCap, Globe, Waves,
+  HeartHalf, Bird, Target,
+  Timer, Buildings, BookOpen, Hand, Microphone, Flower, MusicNotes,
+  Repeat, FolderOpen, GameController, Brain, PencilLine,
+  Check,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+
+const VALUES: ReadonlyArray<{ id: string; label: string; Icon: IconC }> = [
+  { id: 'child-led',   label: 'Child-led learning',     Icon: BabyCarriage },
+  { id: 'structured',  label: 'Structured curriculum',  Icon: Ruler },
+  { id: 'nature',      label: 'Nature & outdoors',      Icon: Plant },
+  { id: 'arts',        label: 'Arts & creativity',      Icon: Palette },
+  { id: 'academic',    label: 'Academic rigour',        Icon: GraduationCap },
+  { id: 'real-world',  label: 'Real-world connection',  Icon: Globe },
+  { id: 'flexibility', label: 'Flexibility & flow',     Icon: Waves },
+  { id: 'whole-child', label: 'Whole-child development',Icon: HeartHalf },
+  { id: 'independence',label: 'Independence & autonomy',Icon: Bird },
+  { id: 'mastery',     label: 'Mastery & depth',        Icon: Target },
 ];
 
-const PRACTICES = [
-  { id: 'short-lessons', label: 'Short focused lessons', emoji: '⏱' },
-  { id: 'extended-projects', label: 'Extended projects', emoji: '🏗' },
-  { id: 'living-books', label: 'Living books & literature', emoji: '📖' },
-  { id: 'hands-on', label: 'Hands-on activities', emoji: '🤲' },
-  { id: 'narration', label: 'Narration & retelling', emoji: '🗣' },
-  { id: 'nature-journaling', label: 'Nature journaling', emoji: '🌸' },
-  { id: 'movement', label: 'Movement & rhythm', emoji: '🎵' },
-  { id: 'rhythm', label: 'Daily/weekly rhythm', emoji: '🔄' },
-  { id: 'documentation', label: 'Documentation & portfolios', emoji: '📁' },
-  { id: 'free-play', label: 'Free play & exploration', emoji: '🎮' },
-  { id: 'memory-work', label: 'Memory work & recitation', emoji: '🧠' },
-  { id: 'copywork', label: 'Copywork & dictation', emoji: '✍' },
+const PRACTICES: ReadonlyArray<{ id: string; label: string; Icon: IconC }> = [
+  { id: 'short-lessons',     label: 'Short focused lessons',     Icon: Timer },
+  { id: 'extended-projects', label: 'Extended projects',         Icon: Buildings },
+  { id: 'living-books',      label: 'Living books & literature', Icon: BookOpen },
+  { id: 'hands-on',          label: 'Hands-on activities',       Icon: Hand },
+  { id: 'narration',         label: 'Narration & retelling',     Icon: Microphone },
+  { id: 'nature-journaling', label: 'Nature journaling',         Icon: Flower },
+  { id: 'movement',          label: 'Movement & rhythm',         Icon: MusicNotes },
+  { id: 'rhythm',            label: 'Daily/weekly rhythm',       Icon: Repeat },
+  { id: 'documentation',     label: 'Documentation & portfolios',Icon: FolderOpen },
+  { id: 'free-play',         label: 'Free play & exploration',   Icon: GameController },
+  { id: 'memory-work',       label: 'Memory work & recitation',  Icon: Brain },
+  { id: 'copywork',          label: 'Copywork & dictation',      Icon: PencilLine },
 ];
 
 const VALUE_COMPATIBILITY: Record<string, Record<string, number>> = {
@@ -113,7 +124,7 @@ export function PedagogyProfilePanel({
                 return (
                   <div key={id} className="flex items-center gap-sm bg-surface-raised rounded-md border border-ember/30 px-md py-sm">
                     <span className="font-sans text-[11px] font-semibold text-text-muted w-4 text-center">{idx + 1}</span>
-                    <span className="text-sm">{item.emoji}</span>
+                    <span className="inline-flex text-text-secondary" aria-hidden="true"><item.Icon size={14} /></span>
                     <span className="font-serif text-sm text-text-primary flex-1">{item.label}</span>
                     <div className="flex gap-xs">
                       <button
@@ -161,12 +172,14 @@ export function PedagogyProfilePanel({
                     : 'border-border-subtle bg-surface-raised opacity-40 cursor-not-allowed',
                 ].join(' ')}
               >
-                <span className="text-base mt-[1px]">{value.emoji}</span>
+                <span className={`mt-[1px] inline-flex ${isSelected ? 'text-ember' : 'text-text-secondary'}`} aria-hidden="true">
+                  <value.Icon size={16} />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-serif text-sm text-text-primary">{value.label}</p>
                   <CompatibilityDot score={compat} />
                 </div>
-                {isSelected && <span className="text-ember text-sm" aria-hidden="true">✓</span>}
+                {isSelected && <span className="text-ember" aria-hidden="true"><Check size={14} /></span>}
               </button>
             );
           })}
@@ -192,7 +205,7 @@ export function PedagogyProfilePanel({
                 return (
                   <div key={id} className="flex items-center gap-sm bg-surface-raised rounded-md border border-ember/30 px-md py-sm">
                     <span className="font-sans text-[11px] font-semibold text-text-muted w-4 text-center">{idx + 1}</span>
-                    <span className="text-sm">{item.emoji}</span>
+                    <span className="inline-flex text-text-secondary" aria-hidden="true"><item.Icon size={14} /></span>
                     <span className="font-serif text-sm text-text-primary flex-1">{item.label}</span>
                     <div className="flex gap-xs">
                       <button
@@ -240,12 +253,14 @@ export function PedagogyProfilePanel({
                     : 'border-border-subtle bg-surface-raised opacity-40 cursor-not-allowed',
                 ].join(' ')}
               >
-                <span className="text-base mt-[1px]">{practice.emoji}</span>
+                <span className={`mt-[1px] inline-flex ${isSelected ? 'text-ember' : 'text-text-secondary'}`} aria-hidden="true">
+                  <practice.Icon size={16} />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-serif text-sm text-text-primary">{practice.label}</p>
                   <CompatibilityDot score={compat} />
                 </div>
-                {isSelected && <span className="text-ember text-sm" aria-hidden="true">✓</span>}
+                {isSelected && <span className="text-ember" aria-hidden="true"><Check size={14} /></span>}
               </button>
             );
           })}

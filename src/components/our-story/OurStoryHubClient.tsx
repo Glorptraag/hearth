@@ -1,10 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { differenceInYears, format, startOfMonth } from 'date-fns';
 import { getJurisdiction } from '@/config/jurisdictions';
+import {
+  BookOpenText,
+  Sparkle,
+  FolderOpen,
+  FileText,
+  User,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -167,7 +176,9 @@ export default function OurStoryHubClient() {
   if (learners.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-md py-xl text-center">
-        <span className="text-4xl block mb-md" aria-hidden="true">📖</span>
+        <span className="mx-auto mb-md inline-flex text-text-secondary" aria-hidden="true">
+          <BookOpenText size={32} />
+        </span>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
           Your story starts here
         </h2>
@@ -277,7 +288,9 @@ export default function OurStoryHubClient() {
         )}
         {stats && stats.portfolioTotal === 0 && stats.capabilityThreadsActive === 0 && (
           <div className="mt-lg flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-card">
-            <span className="text-3xl" aria-hidden="true">✨</span>
+            <span className="inline-flex text-ember" aria-hidden="true">
+              <Sparkle size={32} />
+            </span>
             <p className="font-serif text-sm text-text-secondary leading-relaxed">
               Log your first learning moment and watch {learner.name}&rsquo;s story come to life.
             </p>
@@ -295,7 +308,7 @@ export default function OurStoryHubClient() {
       <div className="mb-2xl grid grid-cols-2 gap-lg">
         <NavCard
           href="/our-story/portfolio"
-          icon="📁"
+          Icon={FolderOpen}
           title="Portfolio"
           stat1={statsLearnerId !== selectedId ? '—' : `${stats?.portfolioTotal ?? 0} entries`}
           stat2={
@@ -307,14 +320,14 @@ export default function OurStoryHubClient() {
 
         <NavCard
           href="/our-story/report"
-          icon="📋"
+          Icon={FileText}
           title={getJurisdiction(familyState).reportScreenTitle}
           stat1={getJurisdiction(familyState).reportTier === 'cd_level' ? 'Compliance view' : 'Learning summary'}
         />
 
         <NavCard
           href="/our-story/capabilities"
-          icon="✦"
+          Icon={Sparkle}
           title="Capabilities"
           stat1={statsLearnerId !== selectedId ? '—' : `${stats?.capabilityThreadsActive ?? 0} threads active`}
           stat2={
@@ -329,7 +342,7 @@ export default function OurStoryHubClient() {
 
         <NavCard
           href={`/our-story/learner/${learner.id}`}
-          icon="👤"
+          Icon={User}
           title="Learner Profile"
           stat1={`Who ${learner.name} is`}
         />
@@ -372,7 +385,7 @@ export default function OurStoryHubClient() {
 
 function NavCard({
   href,
-  icon,
+  Icon,
   title,
   stat1,
   stat1Highlight = false,
@@ -380,7 +393,7 @@ function NavCard({
   stat2Highlight = false,
 }: {
   href: string;
-  icon: string;
+  Icon: IconC;
   title: string;
   stat1: string;
   stat1Highlight?: boolean;
@@ -393,7 +406,7 @@ function NavCard({
       className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] ease-[var(--ease-default)] group-hover:opacity-100" />
-      <div className="mb-md text-[2rem] opacity-90">{icon}</div>
+      <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><Icon size={32} /></div>
       <h2 className="mb-sm font-serif text-[1.05rem] font-semibold text-text-primary">{title}</h2>
       <p className={`font-sans text-sm ${stat1Highlight ? 'text-sage' : 'text-text-secondary'}`}>
         {stat1}

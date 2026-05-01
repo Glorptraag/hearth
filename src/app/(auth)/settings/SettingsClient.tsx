@@ -10,6 +10,21 @@ import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
 import EmptyState from '@/components/ui/EmptyState';
+import {
+  House,
+  UsersThree,
+  Compass,
+  ShieldCheck,
+  Bell,
+  Key,
+  ShieldStar,
+  Diamond,
+  FlowerLotus,
+  ArrowLeft,
+  List,
+  Check,
+} from '@/components/icons';
+import type { ComponentType } from 'react';
 import { PEDAGOGIES, type Pedagogy } from '@/types';
 import { track } from '@/lib/analytics/posthog';
 
@@ -258,7 +273,7 @@ function FamilyAccessPanel() {
         <p className="font-sans text-sm text-text-muted">Loading...</p>
       ) : members.length === 0 ? (
         <EmptyState
-          emoji="🔑"
+          icon={Key}
           heading="No co-facilitators yet"
           body="Invite someone above to share access to your family's Hearth."
         />
@@ -316,15 +331,17 @@ interface SettingsClientProps {
 
 type Tab = 'profile' | 'children' | 'pedagogy' | 'reporting' | 'notifications' | 'access' | 'account' | 'billing';
 
-const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'profile', label: 'Family Profile', emoji: '🏡' },
-  { id: 'children', label: 'Our Learners', emoji: '👧' },
-  { id: 'pedagogy', label: 'Learning Approach', emoji: '🌿' },
-  { id: 'reporting', label: 'Reporting', emoji: '📋' },
-  { id: 'notifications', label: 'Notifications', emoji: '🔔' },
-  { id: 'access', label: 'Family Access', emoji: '🔑' },
-  { id: 'account', label: 'Account & Security', emoji: '🛡️' },
-  { id: 'billing', label: 'Subscription', emoji: '💎' },
+type TabIcon = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+
+const TABS: { id: Tab; label: string; Icon: TabIcon }[] = [
+  { id: 'profile',       label: 'Family Profile',     Icon: House },
+  { id: 'children',      label: 'Our Learners',       Icon: UsersThree },
+  { id: 'pedagogy',      label: 'Learning Approach',  Icon: Compass },
+  { id: 'reporting',     label: 'Reporting',          Icon: ShieldCheck },
+  { id: 'notifications', label: 'Notifications',      Icon: Bell },
+  { id: 'access',        label: 'Family Access',      Icon: Key },
+  { id: 'account',       label: 'Account & Security', Icon: ShieldStar },
+  { id: 'billing',       label: 'Subscription',       Icon: Diamond },
 ];
 
 export default function SettingsClient({
@@ -474,7 +491,9 @@ export default function SettingsClient({
         onClick={() => setSidebarOpen((v) => !v)}
         className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
-        {sidebarOpen ? '← Hide menu' : '☰ Settings menu'}
+        {sidebarOpen
+          ? <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Hide menu</span>
+          : <span className="inline-flex items-center gap-xs"><List size={14} aria-hidden="true" /> Settings menu</span>}
       </button>
 
       <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-xl lg:items-start">
@@ -493,7 +512,7 @@ export default function SettingsClient({
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
               }`}
             >
-              <span>{tab.emoji}</span>
+              <tab.Icon size={18} aria-hidden="true" />
               {tab.label}
             </button>
           ))}
@@ -526,7 +545,11 @@ export default function SettingsClient({
             disabled={saving}
             className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
           >
-            {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save changes'}
+            {saving
+              ? 'Saving…'
+              : saved
+                ? <span className="inline-flex items-center gap-xs">Saved <Check size={14} aria-hidden="true" /></span>
+                : 'Save changes'}
           </button>
         </div>
       )}
@@ -669,7 +692,7 @@ export default function SettingsClient({
           </div>
           <PedagogyLearnMore pedagogyKey={settings.pedagogyPreference} />
           {saved && (
-            <p className="font-sans text-xs text-sage">Saved ✓</p>
+            <p className="inline-flex items-center gap-xs font-sans text-xs text-sage">Saved <Check size={12} aria-hidden="true" /></p>
           )}
         </div>
       )}
@@ -701,7 +724,11 @@ export default function SettingsClient({
             disabled={saving}
             className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
           >
-            {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save changes'}
+            {saving
+              ? 'Saving…'
+              : saved
+                ? <span className="inline-flex items-center gap-xs">Saved <Check size={14} aria-hidden="true" /></span>
+                : 'Save changes'}
           </button>
         </div>
       )}
@@ -721,7 +748,7 @@ export default function SettingsClient({
             }}
           />
           {saved && (
-            <p className="font-sans text-xs text-sage">Saved ✓</p>
+            <p className="inline-flex items-center gap-xs font-sans text-xs text-sage">Saved <Check size={12} aria-hidden="true" /></p>
           )}
         </div>
       )}
@@ -744,7 +771,9 @@ export default function SettingsClient({
             <h2 className="mb-md font-serif text-xl font-semibold text-text-primary">Subscription</h2>
           </div>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-3xl" aria-hidden="true">🌿</span>
+            <span className="inline-flex text-ember" aria-hidden="true">
+              <FlowerLotus size={32} />
+            </span>
             <h2 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Founding Member
             </h2>

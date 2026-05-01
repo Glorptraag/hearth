@@ -4,6 +4,16 @@ import { db } from '@/lib/db';
 import { aiPipelineLogs } from '@/lib/db/schema';
 import { desc, gte } from 'drizzle-orm';
 import { subDays } from 'date-fns';
+import type { ComponentType } from 'react';
+import {
+  ChartBar,
+  ArrowSquareDown,
+  ArrowSquareUp,
+  Speedometer,
+  WarningCircle,
+} from '@/components/icons';
+
+type AdminIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 export default async function TokensDashboardPage() {
   const { userId } = await auth();
@@ -40,11 +50,11 @@ export default async function TokensDashboardPage() {
     byModel[m].output += log.outputTokens ?? 0;
   }
 
-  const summaryStats = [
-    { emoji: '📊', label: 'API calls', value: totalCalls.toLocaleString() },
-    { emoji: '📥', label: 'Input tokens', value: totalInput.toLocaleString() },
-    { emoji: '📤', label: 'Output tokens', value: totalOutput.toLocaleString() },
-    { emoji: '⚡', label: 'Avg latency', value: `${avgLatency}ms` },
+  const summaryStats: ReadonlyArray<{ Icon: AdminIconC; label: string; value: string }> = [
+    { Icon: ChartBar,        label: 'API calls',     value: totalCalls.toLocaleString() },
+    { Icon: ArrowSquareDown, label: 'Input tokens',  value: totalInput.toLocaleString() },
+    { Icon: ArrowSquareUp,   label: 'Output tokens', value: totalOutput.toLocaleString() },
+    { Icon: Speedometer,     label: 'Avg latency',   value: `${avgLatency}ms` },
   ];
 
   return (
@@ -66,7 +76,7 @@ export default async function TokensDashboardPage() {
             key={stat.label}
             className="bg-surface-panel rounded-lg border border-border-subtle p-md"
           >
-            <span className="text-xl block mb-xs">{stat.emoji}</span>
+            <span className="mb-xs inline-flex text-text-secondary" aria-hidden="true"><stat.Icon size={22} /></span>
             <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">
               {stat.label}
             </p>
@@ -109,7 +119,7 @@ export default async function TokensDashboardPage() {
       {retries > 0 && (
         <div className="bg-ember-glow/20 rounded-lg border border-ember/20 p-md mb-xl">
           <p className="font-sans text-sm text-text-secondary">
-            <span className="text-ember font-semibold">⚠ {retries} retries</span> in the last 30
+            <span className="inline-flex items-center gap-xs text-ember font-semibold"><WarningCircle size={14} aria-hidden="true" /> {retries} retries</span> in the last 30
             days.{sonnetFallbacks > 0 && ` ${sonnetFallbacks} confidence &lt; 0.5 triggered Sonnet re-enrichment.`}
           </p>
         </div>

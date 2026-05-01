@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { LEARNER_COLOURS, type Pedagogy } from '@/types';
 import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
 import { track } from '@/lib/analytics/posthog';
+import { Plant } from '@/components/icons';
 
 const SHAPE_OPTIONS = ['🌟', '🦋', '🌿', '🔥', '🌊', '🎨'];
 
@@ -374,7 +375,9 @@ export default function OnboardingPage() {
         {/* Step 4: First log prompt */}
         {step === 4 && (
           <div className="flex flex-col items-center gap-lg text-center">
-            <span className="text-4xl" aria-hidden="true">🌱</span>
+            <span className="inline-flex text-ember" aria-hidden="true">
+              <Plant size={32} />
+            </span>
             <h1 className="font-serif text-2xl font-semibold text-text-primary">
               You&rsquo;re all set
             </h1>

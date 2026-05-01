@@ -3,25 +3,38 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Wordmark } from '@/components/ui/Wordmark';
+import {
+  House,
+  ClipboardText,
+  Books,
+  CheckCircle,
+  UsersThree,
+  ChartBar,
+  Lightning,
+  FileText,
+} from '@/components/icons';
+import type { ComponentType } from 'react';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 interface NavItem {
   href: string;
   label: string;
-  emoji: string;
+  Icon: IconC;
   exact?: boolean;
   indent?: boolean;
   disabled?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/admin', label: 'Dashboard', emoji: '🏠', exact: true },
-  { href: '/admin/invitations', label: 'Invitations', emoji: '✉️' },
-  { href: '/admin/content', label: 'Content', emoji: '📚' },
-  { href: '/admin/content/qa', label: 'Content QA', emoji: '✅', indent: true },
-  { href: '/admin/families', label: 'Families', emoji: '👥' },
-  { href: '/admin/analytics', label: 'Analytics', emoji: '📊' },
-  { href: '/admin/snapshots', label: 'Snapshots', emoji: '⚡' },
-  { href: '/admin/audit-log', label: 'Audit Log', emoji: '📋' },
+  { href: '/admin',              label: 'Dashboard',   Icon: House,         exact: true },
+  { href: '/admin/invitations',  label: 'Invitations', Icon: ClipboardText },
+  { href: '/admin/content',      label: 'Content',     Icon: Books },
+  { href: '/admin/content/qa',   label: 'Content QA',  Icon: CheckCircle,   indent: true },
+  { href: '/admin/families',     label: 'Families',    Icon: UsersThree },
+  { href: '/admin/analytics',    label: 'Analytics',   Icon: ChartBar },
+  { href: '/admin/snapshots',    label: 'Snapshots',   Icon: Lightning },
+  { href: '/admin/audit-log',    label: 'Audit Log',   Icon: FileText },
 ];
 
 export default function AdminSidebar() {
@@ -60,7 +73,7 @@ export default function AdminSidebar() {
                 className={`mb-xs flex items-center gap-sm rounded-md px-md py-sm font-sans text-[0.8rem] font-medium text-text-muted/50 cursor-not-allowed ${indent ? 'ml-lg' : ''}`}
                 title="Coming soon"
               >
-                <span className="text-base opacity-50" aria-hidden="true">{item.emoji}</span>
+                <item.Icon size={16} aria-hidden="true" />
                 {item.label}
               </div>
             );
@@ -76,7 +89,7 @@ export default function AdminSidebar() {
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
               }`}
             >
-              <span className="text-base" aria-hidden="true">{item.emoji}</span>
+              <item.Icon size={16} aria-hidden="true" />
               {item.label}
             </Link>
           );

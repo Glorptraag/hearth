@@ -1,6 +1,18 @@
 'use client';
 
+import type { ComponentType } from 'react';
 import type { StudioState, Selection, StudioAction } from '@/lib/content-studio/types';
+import {
+  Package,
+  BookOpen,
+  Shuffle,
+  Note,
+  Medal,
+  Mountains,
+  Check,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 interface DraftListItem {
   id: string;
@@ -26,14 +38,14 @@ interface SidebarProps {
 }
 
 function TreeItem({
-  emoji,
+  Icon,
   label,
   depth = 0,
   active,
   right,
   onClick,
 }: {
-  emoji: string;
+  Icon: IconC;
   label: string;
   depth?: number;
   active: boolean;
@@ -50,7 +62,7 @@ function TreeItem({
       }`}
       style={{ paddingLeft: `${14 + depth * 18}px` }}
     >
-      <span className="text-sm w-[18px] text-center shrink-0">{emoji}</span>
+      <span className="w-[18px] flex justify-center shrink-0 text-text-secondary" aria-hidden="true"><Icon size={14} /></span>
       <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
       {right}
     </div>
@@ -138,7 +150,9 @@ export function Sidebar({
     <aside className="w-[280px] min-w-[280px] bg-surface-panel border-r border-border-subtle flex flex-col">
       {/* Header */}
       <div className="px-md py-3.5 border-b border-border-subtle">
-        <h1 className="font-serif text-lg font-semibold">🏔️ Content Studio</h1>
+        <h1 className="inline-flex items-center gap-xs font-serif text-lg font-semibold">
+          <Mountains size={20} aria-hidden="true" /> Content Studio
+        </h1>
         <div className="text-[0.65rem] text-text-muted uppercase tracking-[0.05em] font-sans">
           JSON Writer · Admin
         </div>
@@ -208,23 +222,23 @@ export function Sidebar({
           <button
             type="button"
             onClick={addPack}
-            className="flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
+            className="inline-flex items-center justify-center gap-xs flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
           >
-            📦 Pack
+            <Package size={12} aria-hidden="true" /> Pack
           </button>
           <button
             type="button"
             onClick={addStandaloneModule}
-            className="flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
+            className="inline-flex items-center justify-center gap-xs flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
           >
-            📖 Module
+            <BookOpen size={12} aria-hidden="true" /> Module
           </button>
           <button
             type="button"
             onClick={addStandaloneActivity}
-            className="flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
+            className="inline-flex items-center justify-center gap-xs flex-1 px-2 py-1.5 bg-surface-raised border border-border-subtle rounded-md text-[0.65rem] text-text-secondary font-sans hover:border-border-medium transition-colors"
           >
-            📝 Activity
+            <Note size={12} aria-hidden="true" /> Activity
           </button>
         </div>
       )}
@@ -240,7 +254,7 @@ export function Sidebar({
             {packs.map((p, pi) => (
               <div key={p._key}>
                 <TreeItem
-                  emoji="📦"
+                  Icon={Package}
                   label={p.title}
                   active={sel?.scope === 'pack' && sel.pi === pi && sel.type === 'pack'}
                   onClick={() => setSel({ scope: 'pack', pi, type: 'pack' })}
@@ -249,7 +263,7 @@ export function Sidebar({
                 {p.modules.map((m, mi) => (
                   <div key={m._key}>
                     <TreeItem
-                      emoji="📖"
+                      Icon={BookOpen}
                       label={m.title}
                       depth={1}
                       active={sel?.scope === 'pack' && sel.pi === pi && 'mi' in sel && sel.mi === mi && sel.type === 'module'}
@@ -259,7 +273,7 @@ export function Sidebar({
                     {m.approaches.map((app, ai) => (
                       <div key={app._key}>
                         <TreeItem
-                          emoji="🔀"
+                          Icon={Shuffle}
                           label={app.title}
                           depth={2}
                           active={sel?.scope === 'pack' && sel.pi === pi && 'mi' in sel && sel.mi === mi && 'ai' in sel && sel.ai === ai && sel.type === 'approach'}
@@ -274,7 +288,7 @@ export function Sidebar({
                         {app.activities.map((act, acti) => (
                           <TreeItem
                             key={act._key}
-                            emoji="📝"
+                            Icon={Note}
                             label={act.title}
                             depth={3}
                             active={sel?.scope === 'pack' && sel.pi === pi && 'mi' in sel && sel.mi === mi && 'ai' in sel && sel.ai === ai && 'acti' in sel && sel.acti === acti && sel.type === 'activity'}
@@ -292,7 +306,7 @@ export function Sidebar({
                 {p.badges.map((b, bi) => (
                   <TreeItem
                     key={b._key}
-                    emoji="🏅"
+                    Icon={Medal}
                     label={b.title}
                     depth={1}
                     active={sel?.scope === 'pack' && sel.pi === pi && 'bi' in sel && sel.bi === bi && sel.type === 'badge'}
@@ -316,7 +330,7 @@ export function Sidebar({
             {standaloneModules.map((m, mi) => (
               <div key={m._key}>
                 <TreeItem
-                  emoji="📖"
+                  Icon={BookOpen}
                   label={m.title}
                   active={sel?.scope === 'standalone-module' && sel.mi === mi && sel.type === 'module'}
                   onClick={() => setSel({ scope: 'standalone-module', mi, type: 'module' })}
@@ -325,7 +339,7 @@ export function Sidebar({
                 {m.approaches.map((app, ai) => (
                   <div key={app._key}>
                     <TreeItem
-                      emoji="🔀"
+                      Icon={Shuffle}
                       label={app.title}
                       depth={1}
                       active={sel?.scope === 'standalone-module' && sel.mi === mi && 'ai' in sel && sel.ai === ai && sel.type === 'approach'}
@@ -335,7 +349,7 @@ export function Sidebar({
                     {app.activities.map((act, acti) => (
                       <TreeItem
                         key={act._key}
-                        emoji="📝"
+                        Icon={Note}
                         label={act.title}
                         depth={2}
                         active={sel?.scope === 'standalone-module' && sel.mi === mi && 'ai' in sel && sel.ai === ai && 'acti' in sel && sel.acti === acti && sel.type === 'activity'}
@@ -361,7 +375,7 @@ export function Sidebar({
             {standaloneActivities.map((a, acti) => (
               <TreeItem
                 key={a._key}
-                emoji="📝"
+                Icon={Note}
                 label={a.title}
                 active={sel?.scope === 'standalone-activity' && sel.acti === acti}
                 onClick={() => setSel({ scope: 'standalone-activity', acti, type: 'activity' })}
@@ -381,9 +395,11 @@ export function Sidebar({
       {/* Footer */}
       <div className="px-md py-3 border-t border-border-subtle">
         <div className="flex items-center justify-between text-[0.65rem] text-text-muted font-sans mb-2">
-          <span>
-            {saveStatus === 'saving' && '⏳ Saving...'}
-            {saveStatus === 'saved' && lastSaved && `✓ Saved ${lastSaved.toLocaleTimeString()}`}
+          <span className="inline-flex items-center gap-xs">
+            {saveStatus === 'saving' && 'Saving…'}
+            {saveStatus === 'saved' && lastSaved && (
+              <><Check size={12} aria-hidden="true" /> Saved {lastSaved.toLocaleTimeString()}</>
+            )}
             {saveStatus === 'dirty' && '● Unsaved changes'}
             {saveStatus === 'idle' && 'No draft loaded'}
           </span>

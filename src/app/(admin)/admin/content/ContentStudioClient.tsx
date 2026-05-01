@@ -11,6 +11,7 @@ import { ActivityEditor } from './_components/editors/ActivityEditor';
 import { BadgeEditor } from './_components/editors/BadgeEditor';
 import { PromptDialog } from './_components/PromptDialog';
 import { ConfirmDialog } from './_components/ConfirmDialog';
+import { Mountains, FileText, Note } from '@/components/icons';
 
 interface DraftListItem {
   id: string;
@@ -314,7 +315,9 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
                 onClick={() => setJsonView(!jsonView)}
                 className="px-3 py-1.5 text-xs font-sans text-text-muted hover:text-text-primary transition-colors"
               >
-                {jsonView ? '📝 Form' : '{ } JSON'}
+                {jsonView
+                  ? <span className="inline-flex items-center gap-xs"><Note size={12} aria-hidden="true" /> Form</span>
+                  : '{ } JSON'}
               </button>
             )}
             {doc && (
@@ -333,7 +336,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
         <div className="flex-1 overflow-y-auto px-xl py-xl">
           {!doc && !draftId && (
             <div className="flex flex-col items-center justify-center h-full text-center p-xl">
-              <div className="text-5xl mb-md">🏔️</div>
+              <div className="mb-md inline-flex justify-center text-text-secondary" aria-hidden="true"><Mountains size={32} /></div>
               <h2 className="font-serif text-xl font-semibold mb-sm">Content Studio</h2>
               <p className="text-sm text-text-secondary max-w-sm mb-lg leading-relaxed">
                 Create or load a draft to begin. The studio produces Sanity-ready JSON for Pack, Module, Approach, Activity, and Badge documents.
@@ -353,7 +356,7 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
 
           {!doc && draftId && (
             <div className="flex flex-col items-center justify-center h-full text-center p-xl">
-              <div className="text-5xl mb-md">📄</div>
+              <div className="mb-md inline-flex justify-center text-text-secondary" aria-hidden="true"><FileText size={32} /></div>
               <h2 className="font-serif text-xl font-semibold mb-sm">Draft loaded</h2>
               <p className="text-sm text-text-secondary max-w-sm leading-relaxed">
                 Select a document from the sidebar, or create a new pack, module, or activity.

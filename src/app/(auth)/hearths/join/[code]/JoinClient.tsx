@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { House } from '@/components/icons';
 
 interface JoinClientProps {
   hearthId: string;
@@ -53,7 +54,9 @@ export default function JoinClient({
       <div className="bg-surface-panel border border-border-subtle rounded-[10px] p-xl shadow-card">
         {/* Header */}
         <div className="text-center mb-xl">
-          <div className="text-3xl mb-md" aria-hidden="true">🏡</div>
+          <div className="mb-md flex justify-center text-ember" aria-hidden="true">
+            <House size={32} />
+          </div>
           <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-sm">
             You&apos;ve been invited to join
           </p>

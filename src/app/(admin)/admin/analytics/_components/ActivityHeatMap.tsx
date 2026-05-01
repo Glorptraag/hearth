@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Flame } from '@/components/icons';
 
 interface Cell {
   stageNumber: number | null;
@@ -55,7 +56,7 @@ export default function ActivityHeatMap({ moduleId }: Props) {
   if (!hasData) {
     return (
       <div className="flex flex-col items-center justify-center py-xl gap-sm">
-        <span className="text-2xl" aria-hidden="true">🔥</span>
+        <span className="inline-flex text-text-secondary" aria-hidden="true"><Flame size={22} /></span>
         <p className="font-sans text-sm text-text-muted">Waiting for usage data</p>
         <p className="font-sans text-xs text-text-muted/60">Activity heat appears once families log sessions against this module</p>
       </div>

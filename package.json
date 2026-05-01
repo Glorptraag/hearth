@@ -22,6 +22,7 @@
     "@anthropic-ai/sdk": "^0.80.0",
     "@clerk/nextjs": "^7.0.6",
     "@neondatabase/serverless": "^1.0.2",
+    "@phosphor-icons/react": "^2.1.10",
     "@portabletext/react": "^6.0.3",
     "@sanity/client": "^7.20.0",
     "@sanity/image-url": "^2.0.3",

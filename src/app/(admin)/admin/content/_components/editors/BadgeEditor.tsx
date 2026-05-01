@@ -4,6 +4,7 @@ import type { BadgeDraft, CapabilityThreadOption } from '@/lib/content-studio/ty
 import { Panel } from '../primitives/Panel';
 import { FormField, Input, TextArea, Select } from '../primitives/FormField';
 import { ThreadPicker } from '../primitives/ThreadPicker';
+import { Medal, Compass } from '@/components/icons';
 
 interface BadgeEditorProps {
   fieldPrefix: (string | number)[];
@@ -19,7 +20,7 @@ export function BadgeEditor({ fieldPrefix, setField, toggleArrayItem, doc, capab
 
   return (
     <>
-      <Panel title="Badge Identity" emoji="🏅">
+      <Panel title="Badge Identity" Icon={Medal}>
         <FormField label="Title" required>
           <Input value={badge.title} onChange={(v) => setField(f('title'), v)} placeholder="e.g., Keen Observer" />
         </FormField>
@@ -49,7 +50,7 @@ export function BadgeEditor({ fieldPrefix, setField, toggleArrayItem, doc, capab
         </div>
       </Panel>
 
-      <Panel title="Capability Threads" emoji="🧭" defaultOpen={false} right={<span className="text-xs text-text-muted font-sans">{badge.capabilityThreadIds.length} selected</span>}>
+      <Panel title="Capability Threads" Icon={Compass} defaultOpen={false} right={<span className="text-xs text-text-muted font-sans">{badge.capabilityThreadIds.length} selected</span>}>
         <ThreadPicker
           threads={capabilityThreads}
           selected={badge.capabilityThreadIds}

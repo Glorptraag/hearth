@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Paperclip, NotePencil } from '@/components/icons';
 import { db } from '@/lib/db';
 import {
   hearths,
@@ -197,8 +198,8 @@ export default async function SessionDetailPage({
                       />
                     </div>
                   ) : (
-                    <div className="aspect-[4/3] bg-surface-raised rounded-[10px] border border-border-subtle flex items-center justify-center text-3xl">
-                      📎
+                    <div className="aspect-[4/3] bg-surface-raised rounded-[10px] border border-border-subtle flex items-center justify-center text-text-secondary">
+                      <Paperclip size={32} aria-hidden="true" />
                     </div>
                   )}
                   {e.caption && (
@@ -270,9 +271,9 @@ export default async function SessionDetailPage({
           <div className="flex items-center gap-md pt-md">
             <Link
               href={`/log?scaffold=${sessionId}&hearthId=${hearthId}`}
-              className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:opacity-90 transition-opacity duration-200"
+              className="inline-flex items-center gap-xs px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:opacity-90 transition-opacity duration-200"
             >
-              📝 Log this session
+              <NotePencil size={14} aria-hidden="true" /> Log this session
             </Link>
             <Link
               href={`/hearths/${hearthId}`}

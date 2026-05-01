@@ -3,46 +3,71 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { ToastProvider } from "@/components/ui/Toast";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useTheme } from "@/hooks/use-theme";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
+import {
+  House,
+  CalendarBlank,
+  PencilSimpleLine,
+  BookOpenText,
+  Sparkle,
+  FileText,
+  Books,
+  Compass,
+  Storefront,
+  Moon,
+  Sun,
+  Bell,
+  Gear,
+} from "@/components/icons";
 
-const NAV_SECTIONS = [
+type NavIcon = ComponentType<{ size?: number; weight?: "regular" | "fill" }>;
+
+const NAV_SECTIONS: ReadonlyArray<{
+  label: string;
+  items: ReadonlyArray<{ href: string; label: string; Icon: NavIcon }>;
+}> = [
   {
     label: "Home",
     items: [
-      { href: "/dashboard", label: "Your Hearth", emoji: "🏠" },
-      { href: "/planner", label: "This Week", emoji: "📅" },
+      { href: "/dashboard", label: "Your Hearth", Icon: House },
+      { href: "/planner", label: "This Week", Icon: CalendarBlank },
     ],
   },
   {
     label: "Learning",
     items: [
-      { href: "/log", label: "Log", emoji: "✏️" },
-      { href: "/our-story", label: "Our Story", emoji: "📖" },
-      { href: "/our-story/capabilities", label: "Capabilities", emoji: "🌟" },
-      { href: "/our-story/portfolio", label: "Portfolios", emoji: "📄" },
+      { href: "/log", label: "Log", Icon: PencilSimpleLine },
+      { href: "/our-story", label: "Our Story", Icon: BookOpenText },
+      { href: "/our-story/capabilities", label: "Capabilities", Icon: Sparkle },
+      { href: "/our-story/portfolio", label: "Portfolios", Icon: FileText },
     ],
   },
   {
     label: "Discover",
     items: [
-      { href: "/library", label: "Library", emoji: "📚" },
-      { href: "/explore/activities", label: "Explore", emoji: "🔍" },
-      { href: "/explore/marketplace", label: "Marketplace", emoji: "🏪" },
+      { href: "/library", label: "Library", Icon: Books },
+      { href: "/explore/activities", label: "Explore", Icon: Compass },
+      { href: "/explore/marketplace", label: "Marketplace", Icon: Storefront },
     ],
   },
 ];
 
-const BOTTOM_NAV_ITEMS = [
-  { href: "/dashboard", label: "Home", emoji: "🏠" },
-  { href: "/our-story", label: "Story", emoji: "📖" },
-  { href: "/log", label: "Log", emoji: "✏️", primary: true },
-  { href: "/planner", label: "Plan", emoji: "📅" },
-  { href: "/explore/activities", label: "Explore", emoji: "🔍" },
+const BOTTOM_NAV_ITEMS: ReadonlyArray<{
+  href: string;
+  label: string;
+  Icon: NavIcon;
+  primary?: boolean;
+}> = [
+  { href: "/dashboard", label: "Home", Icon: House },
+  { href: "/our-story", label: "Story", Icon: BookOpenText },
+  { href: "/log", label: "Log", Icon: PencilSimpleLine, primary: true },
+  { href: "/planner", label: "Plan", Icon: CalendarBlank },
+  { href: "/explore/activities", label: "Explore", Icon: Compass },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -146,6 +171,7 @@ export default function AuthLayout({
             </div>
             {section.items.map((item) => {
               const active = isActive(pathname, item.href);
+              const { Icon } = item;
               return (
                 <Link
                   key={item.href}
@@ -156,7 +182,7 @@ export default function AuthLayout({
                       : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
                   }`}
                 >
-                  <span className="text-lg" aria-hidden="true">{item.emoji}</span>
+                  <Icon size={18} aria-hidden="true" />
                   {item.label}
                 </Link>
               );
@@ -210,7 +236,9 @@ export default function AuthLayout({
             }`}
             aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
           >
-            <span className="text-lg" aria-hidden="true">{gathering ? '🌙' : '☀️'}</span>
+            {gathering
+              ? <Moon size={18} aria-hidden="true" />
+              : <Sun size={18} aria-hidden="true" />}
             {gathering ? 'Dark Mode' : 'Gathering Mode'}
           </button>
           {!isAutoMode && (
@@ -230,8 +258,8 @@ export default function AuthLayout({
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
-            <span className="relative text-lg" aria-hidden="true">
-              🔔
+            <span className="relative inline-flex" aria-hidden="true">
+              <Bell size={18} />
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1">
                   <NotificationBadge count={unreadCount} />
@@ -248,7 +276,7 @@ export default function AuthLayout({
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
             }`}
           >
-            <span className="text-lg" aria-hidden="true">⚙️</span>
+            <Gear size={18} aria-hidden="true" />
             Settings
           </Link>
         </div>
@@ -290,7 +318,7 @@ export default function AuthLayout({
               className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
-              <span className="text-lg" aria-hidden="true">🔔</span>
+              <Bell size={18} aria-hidden="true" />
               {unreadCount > 0 && (
                 <span className="absolute right-[2px] top-[2px]">
                   <NotificationBadge count={unreadCount} />
@@ -310,6 +338,7 @@ export default function AuthLayout({
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm lg:hidden">
         {BOTTOM_NAV_ITEMS.map((item) => {
           const active = isActiveBottom(pathname, item.href);
+          const { Icon } = item;
           return (
             <Link
               key={item.href}
@@ -325,14 +354,14 @@ export default function AuthLayout({
               }`}
             >
               <span
-                className={`text-xl ${
+                className={
                   item.primary
-                    ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-lg shadow-ember"
-                    : ""
-                }`}
+                    ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-text-inverse shadow-ember"
+                    : "inline-flex"
+                }
                 aria-hidden="true"
               >
-                {item.emoji}
+                <Icon size={item.primary ? 22 : 22} />
               </span>
               <span>{item.label}</span>
             </Link>

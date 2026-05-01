@@ -1,19 +1,28 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ComponentType } from 'react';
 import PackAdoptionFunnel from './_components/PackAdoptionFunnel';
 import ActivityHeatMap from './_components/ActivityHeatMap';
 import ThreadCoverageChart from './_components/ThreadCoverageChart';
 import AiCostPanel from './_components/AiCostPanel';
+import {
+  Package,
+  Flame,
+  TrendDown,
+  Compass,
+  CurrencyDollar,
+  WarningCircle,
+} from '@/components/icons';
 
 type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage' | 'ai-cost';
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
-const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'pack-adoption', label: 'Pack Adoption', emoji: '📦' },
-  { id: 'activity-heat', label: 'Activity Heat', emoji: '🔥' },
-  { id: 'abandonment', label: 'Abandonment', emoji: '📉' },
-  { id: 'thread-coverage', label: 'Thread Coverage', emoji: '🧵' },
-  { id: 'ai-cost', label: 'AI Cost', emoji: '💰' },
+const TABS: { id: Tab; label: string; Icon: IconC }[] = [
+  { id: 'pack-adoption',   label: 'Pack Adoption',   Icon: Package },
+  { id: 'activity-heat',   label: 'Activity Heat',   Icon: Flame },
+  { id: 'abandonment',     label: 'Abandonment',     Icon: TrendDown },
+  { id: 'thread-coverage', label: 'Thread Coverage', Icon: Compass },
+  { id: 'ai-cost',         label: 'AI Cost',         Icon: CurrencyDollar },
 ];
 
 export default function AnalyticsClient() {
@@ -32,7 +41,7 @@ export default function AnalyticsClient() {
           Monthly review — which content is working, which needs attention.
         </p>
         <div className="mt-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm inline-flex items-center gap-xs">
-          <span className="text-sm" aria-hidden="true">⚠️</span>
+          <span className="text-amber-400" aria-hidden="true"><WarningCircle size={14} /></span>
           <span className="font-sans text-xs text-text-muted">
             Phase C tool — metrics are most useful with 20+ active families.
           </span>
@@ -51,7 +60,7 @@ export default function AnalyticsClient() {
                 : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
             }`}
           >
-            <span className="text-sm" aria-hidden="true">{tab.emoji}</span>
+            <tab.Icon size={14} aria-hidden="true" />
             {tab.label}
           </button>
         ))}
@@ -247,7 +256,7 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-xl gap-sm">
-        <span className="text-2xl" aria-hidden="true">📉</span>
+        <span className="inline-flex text-text-secondary" aria-hidden="true"><TrendDown size={22} /></span>
         <p className="font-sans text-sm text-text-muted">Waiting for usage data</p>
         <p className="font-sans text-xs text-text-muted/60">Module abandonment appears once families log sessions</p>
       </div>

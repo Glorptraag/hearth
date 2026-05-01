@@ -6,6 +6,7 @@ import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName, THREAD_NAMES, THREAD_DOMAINS, getThreadDomain, THREAD_CONNECTIONS, type ThreadDomain } from '@/lib/capability-threads';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { getMarkersForThread, type ObservationalMarker } from '@/lib/pedagogy/observational-markers';
+import { Sparkle, Asterisk, Flame } from '@/components/icons';
 
 type Learner = {
   id: string;
@@ -237,7 +238,7 @@ function ThreadDetailPanel({
               }`}>
                 {thread.trajectory === 'accelerating' ? '↑ Accelerating' :
                  thread.trajectory === 'plateau' ? '— Plateau' :
-                 thread.trajectory === 'new' ? '✦ New' :
+                 thread.trajectory === 'new' ? <span className="inline-flex items-center gap-xs"><Asterisk size={10} aria-hidden="true" /> New</span> :
                  '↗ Steady growth'}
               </span>
               {thread.evidenceQuality && (
@@ -476,7 +477,7 @@ function ThreadEvidencePanel({
                     </p>
                     {entry.source === 'hearth_session' && (
                       <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
-                        🔥 From community
+                        <span className="inline-flex items-center gap-xs"><Flame size={12} aria-hidden="true" /> From community</span>
                       </span>
                     )}
                   </div>
@@ -924,7 +925,9 @@ export default function CapabilitiesPage() {
       {/* First-use empty state */}
       {totalObservations === 0 && (
         <div className="mt-xl rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-card">
-          <span className="text-3xl block mb-md" aria-hidden="true">✦</span>
+          <span className="mx-auto mb-md inline-flex text-ember" aria-hidden="true">
+            <Sparkle size={32} />
+          </span>
           <h2 className="font-serif text-lg font-semibold text-text-primary mb-sm">
             Capabilities emerge from logging
           </h2>

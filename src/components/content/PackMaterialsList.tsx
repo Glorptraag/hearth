@@ -5,6 +5,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { PACK_MATERIALS_QUERY } from '@/lib/sanity/queries';
 import { MaterialItemRow } from './MaterialItemRow';
 import { PrintSheet } from './PrintSheet';
+import { Package } from '@/components/icons';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from './types';
 import { isPrintableAssetKind, fetchPrintBundle, type AssetKind } from './types';
 
@@ -274,7 +275,9 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
           <h3 className="font-serif text-lg font-semibold text-text-primary">{packTitle}</h3>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-lg">
-          <span className="text-4xl mb-md" aria-hidden="true">📦</span>
+          <span className="mb-md inline-flex text-text-secondary" aria-hidden="true">
+            <Package size={32} />
+          </span>
           <p className="font-serif text-sm text-text-secondary">No materials included in this pack yet.</p>
         </div>
       </div>

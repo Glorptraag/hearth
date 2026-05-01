@@ -1,27 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
+import {
+  BookOpen, Wrench, SealQuestion, ClockCounterClockwise, Target,
+  CheckCircle, Check, HouseLine, Tree, BabyCarriage, Timer, Sparkle,
+  ClipboardText, MagicWand, PencilLine, Compass,
+  Books, FilmReel, Toolbox, DeviceMobile, MapPin, MusicNote, Package,
+  Palette, MagnifyingGlass, ChatsCircle, Flask, PencilSimpleLine, Brain,
+  Eye, Plant, DiceFive, CookingPot, Atom, PersonSimpleRun,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 type Pathway = 'material' | 'process' | 'inquiry' | 'retrospective' | 'goal';
 
-const RESOURCE_TYPES = [
-  { id: 'book', label: '📚 Book' },
-  { id: 'video', label: '🎬 Video' },
-  { id: 'kit', label: '🧰 Kit' },
-  { id: 'app', label: '📱 App' },
-  { id: 'place', label: '📍 Place' },
-  { id: 'audio', label: '🎵 Audio' },
-  { id: 'other', label: '📦 Other' },
+type LabelItem = { id: string; Icon: ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>; label: string };
+
+const RESOURCE_TYPES: ReadonlyArray<LabelItem> = [
+  { id: 'book',  Icon: Books,        label: 'Book' },
+  { id: 'video', Icon: FilmReel,     label: 'Video' },
+  { id: 'kit',   Icon: Toolbox,      label: 'Kit' },
+  { id: 'app',   Icon: DeviceMobile, label: 'App' },
+  { id: 'place', Icon: MapPin,       label: 'Place' },
+  { id: 'audio', Icon: MusicNote,    label: 'Audio' },
+  { id: 'other', Icon: Package,      label: 'Other' },
 ];
 
-const USAGE_INTENTS = [
-  { id: 'read', label: '📖 Read / watch together' },
-  { id: 'inspire', label: '🎨 Inspiration for a project' },
-  { id: 'explore', label: '🔍 Explore a topic' },
-  { id: 'discuss', label: '🗣️ Discuss and reflect' },
-  { id: 'do', label: '🧪 Do the activity / experiment' },
-  { id: 'write', label: '✍️ Writing / drawing starting point' },
-  { id: 'memorise', label: '🧠 Memorise / learn by heart' },
+const USAGE_INTENTS: ReadonlyArray<LabelItem> = [
+  { id: 'read',     Icon: BookOpen,           label: 'Read / watch together' },
+  { id: 'inspire',  Icon: Palette,            label: 'Inspiration for a project' },
+  { id: 'explore',  Icon: MagnifyingGlass,    label: 'Explore a topic' },
+  { id: 'discuss',  Icon: ChatsCircle,        label: 'Discuss and reflect' },
+  { id: 'do',       Icon: Flask,              label: 'Do the activity / experiment' },
+  { id: 'write',    Icon: PencilSimpleLine,   label: 'Writing / drawing starting point' },
+  { id: 'memorise', Icon: Brain,              label: 'Memorise / learn by heart' },
 ];
 
 type TemplateStep = { title: string; instructions: string; observationHint: string };
@@ -209,26 +221,26 @@ const SETTINGS = [
   { id: 'outdoor', label: 'Outdoor' },
 ];
 
-const INVESTIGATION_TYPES = [
-  { id: 'observe', label: '🔍 Observe closely' },
-  { id: 'test', label: '🧪 Test it out' },
-  { id: 'research', label: '📚 Look it up' },
-  { id: 'ask', label: '🗣️ Ask an expert' },
-  { id: 'visit', label: '📍 Go somewhere' },
-  { id: 'make', label: '🔧 Build or make' },
+const INVESTIGATION_TYPES: ReadonlyArray<LabelItem> = [
+  { id: 'observe',  Icon: Eye,            label: 'Observe closely' },
+  { id: 'test',     Icon: Flask,          label: 'Test it out' },
+  { id: 'research', Icon: Books,          label: 'Look it up' },
+  { id: 'ask',      Icon: ChatsCircle,    label: 'Ask an expert' },
+  { id: 'visit',    Icon: MapPin,         label: 'Go somewhere' },
+  { id: 'make',     Icon: Wrench,         label: 'Build or make' },
 ];
 
 const TIERS = ['Emerging', 'Developing', 'Demonstrating'];
 
-const ACTIVITY_PREFERENCES = [
-  { id: 'outdoors', label: '🌿 Outdoors' },
-  { id: 'art', label: '🎨 Art / craft' },
-  { id: 'books', label: '📚 Books' },
-  { id: 'games', label: '🎲 Games' },
-  { id: 'cooking', label: '🧑‍🍳 Cooking' },
-  { id: 'experiments', label: '🔬 Experiments' },
-  { id: 'active', label: '🏃 Active' },
-  { id: 'discussion', label: '🗣️ Discussion' },
+const ACTIVITY_PREFERENCES: ReadonlyArray<LabelItem> = [
+  { id: 'outdoors',    Icon: Tree,             label: 'Outdoors' },
+  { id: 'art',         Icon: Palette,          label: 'Art / craft' },
+  { id: 'books',       Icon: Books,            label: 'Books' },
+  { id: 'games',       Icon: DiceFive,         label: 'Games' },
+  { id: 'cooking',     Icon: CookingPot,       label: 'Cooking' },
+  { id: 'experiments', Icon: Atom,             label: 'Experiments' },
+  { id: 'active',      Icon: PersonSimpleRun,  label: 'Active' },
+  { id: 'discussion',  Icon: ChatsCircle,      label: 'Discussion' },
 ];
 
 const CAPABILITY_THREADS = [
@@ -246,34 +258,34 @@ const CAPABILITY_THREADS = [
   { id: 'EF2', domain: 'Executive Function', name: 'Self-Regulation' },
 ];
 
-const PATHWAYS = [
+const PATHWAYS: ReadonlyArray<{ id: Pathway; Icon: IconC; label: string; name: string; hint: string; badge: string | null }> = [
   {
-    id: 'material' as Pathway,
-    emoji: '📖',
+    id: 'material',
+    Icon: BookOpen,
     label: '"I have a great resource"',
     name: 'Material-Anchored',
     hint: 'Build a module around a book, video, kit, or place',
     badge: null,
   },
   {
-    id: 'process' as Pathway,
-    emoji: '🔧',
+    id: 'process',
+    Icon: Wrench,
     label: '"I know the steps"',
     name: 'Process',
     hint: 'You already know what to do — capture it as a reusable module',
     badge: null,
   },
   {
-    id: 'inquiry' as Pathway,
-    emoji: '❓',
+    id: 'inquiry',
+    Icon: SealQuestion,
     label: '"I have a question to explore"',
     name: 'Inquiry',
     hint: 'Start with curiosity and design an investigation',
     badge: null,
   },
   {
-    id: 'retrospective' as Pathway,
-    emoji: '🔄',
+    id: 'retrospective',
+    Icon: ClockCounterClockwise,
     label: '"We\'ve already been doing this"',
     name: 'Retrospective Lift',
     hint: 'Turn logged activities into a structured module',
@@ -281,9 +293,9 @@ const PATHWAYS = [
   },
 ];
 
-const GOAL_PATHWAY = {
-  id: 'goal' as Pathway,
-  emoji: '🎯',
+const GOAL_PATHWAY: { id: Pathway; Icon: IconC; label: string; name: string; hint: string; badge: string | null } = {
+  id: 'goal',
+  Icon: Target,
   label: '"I want to develop a skill area"',
   name: 'Goal-Forward',
   hint: 'Target a specific capability or learning gap',
@@ -325,7 +337,7 @@ function PillButton({
   );
 }
 
-function PathwayHeader({ emoji, name, subtitle, onBack }: { emoji: string; name: string; subtitle: string; onBack: () => void }) {
+function PathwayHeader({ Icon, name, subtitle, onBack }: { Icon: IconC; name: string; subtitle: string; onBack: () => void }) {
   return (
     <>
       <div className="flex items-center gap-sm">
@@ -339,8 +351,8 @@ function PathwayHeader({ emoji, name, subtitle, onBack }: { emoji: string; name:
         <span className="font-sans text-sm text-text-secondary">{name}</span>
       </div>
       <div>
-        <h2 className="font-serif text-xl font-semibold text-text-primary mb-xs">
-          {emoji} {name}
+        <h2 className="inline-flex items-center gap-sm font-serif text-xl font-semibold text-text-primary mb-xs">
+          <Icon size={22} aria-hidden="true" /> {name}
         </h2>
         <p className="font-serif text-sm text-text-secondary">{subtitle}</p>
       </div>
@@ -432,7 +444,9 @@ function SavedView({ onBack, preview }: { onBack: () => void; preview?: { title:
 
   return (
     <div className="flex flex-col items-center gap-lg py-2xl text-center max-w-xl mx-auto">
-      <span className="text-4xl" aria-hidden="true">✅</span>
+      <span className="inline-flex text-sage" aria-hidden="true">
+        <CheckCircle size={32} />
+      </span>
       <h2 className="font-serif text-xl font-semibold text-text-primary">Module published</h2>
       <p className="font-serif text-text-secondary">
         Your module has been saved and published to your family library. It&apos;s available to facilitate now.
@@ -662,15 +676,16 @@ function ModulePreview({
             </div>
           )}
           {data.duration && (
-            <span className="font-sans text-xs text-text-muted">⏱ {data.duration}</span>
+            <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Timer size={12} aria-hidden="true" /> {data.duration}</span>
           )}
           {data.setting && data.setting !== 'either' && (
-            <span className="font-sans text-xs text-text-muted">
-              {data.setting === 'indoor' ? '🏠' : '🌿'} {data.setting}
+            <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+              {data.setting === 'indoor' ? <HouseLine size={12} aria-hidden="true" /> : <Tree size={12} aria-hidden="true" />}
+              {data.setting}
             </span>
           )}
           {data.ageRange && (
-            <span className="font-sans text-xs text-text-muted">👶 {data.ageRange}</span>
+            <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><BabyCarriage size={12} aria-hidden="true" /> {data.ageRange}</span>
           )}
         </div>
 
@@ -1284,14 +1299,14 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
       <div className="flex flex-col gap-lg">
-        <PathwayHeader emoji="📖" name="Material-Anchored" subtitle="Start with what you have — a book, video, kit, place, or anything that sparked your interest." onBack={onBack} />
+        <PathwayHeader Icon={BookOpen} name="Material-Anchored" subtitle="Start with what you have — a book, video, kit, place, or anything that sparked your interest." onBack={onBack} />
 
         <div>
           <OLabel>What type of resource?</OLabel>
           <div className="flex flex-wrap gap-sm">
             {RESOURCE_TYPES.map((rt) => (
               <PillButton key={rt.id} active={form.resourceType === rt.id} onClick={() => setForm((f) => ({ ...f, resourceType: rt.id }))}>
-                {rt.label}
+                <span className="inline-flex items-center gap-xs"><rt.Icon size={14} aria-hidden="true" /> {rt.label}</span>
               </PillButton>
             ))}
           </div>
@@ -1334,7 +1349,7 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
                     : f.usageIntents.length < 3 ? [...f.usageIntents, intent.id] : f.usageIntents,
                 }))}
               >
-                {intent.label}
+                <span className="inline-flex items-center gap-xs"><intent.Icon size={14} aria-hidden="true" /> {intent.label}</span>
               </PillButton>
             ))}
           </div>
@@ -1437,7 +1452,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
       <div className="flex flex-col gap-lg">
-        <PathwayHeader emoji="🔧" name="Process" subtitle="You already know what to do — capture it as a reusable module." onBack={onBack} />
+        <PathwayHeader Icon={Wrench} name="Process" subtitle="You already know what to do — capture it as a reusable module." onBack={onBack} />
 
         <div>
           <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">Activity name</label>
@@ -1605,7 +1620,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
       <div className="flex flex-col gap-lg">
-        <PathwayHeader emoji="❓" name="Inquiry" subtitle="Start with curiosity and design an investigation." onBack={onBack} />
+        <PathwayHeader Icon={SealQuestion} name="Inquiry" subtitle="Start with curiosity and design an investigation." onBack={onBack} />
 
         <div>
           <label className="font-sans text-xs font-medium text-text-secondary block mb-xs">
@@ -1640,7 +1655,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
           <div className="flex flex-wrap gap-sm">
             {INVESTIGATION_TYPES.map((it) => (
               <PillButton key={it.id} active={form.investigationTypes.includes(it.id)} onClick={() => toggleType(it.id)}>
-                {it.label}
+                <span className="inline-flex items-center gap-xs"><it.Icon size={14} aria-hidden="true" /> {it.label}</span>
               </PillButton>
             ))}
           </div>
@@ -1775,13 +1790,15 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="flex flex-col gap-lg">
-      <PathwayHeader emoji="🔄" name="Retrospective Lift" subtitle="We'll find patterns in your logs and turn them into a reusable module." onBack={onBack} />
+      <PathwayHeader Icon={ClockCounterClockwise} name="Retrospective Lift" subtitle="We'll find patterns in your logs and turn them into a reusable module." onBack={onBack} />
 
       {loadingEntries ? (
         <p className="font-sans text-sm text-text-muted animate-pulse">Looking through your logs…</p>
       ) : patterns.length === 0 ? (
         <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-          <span className="text-3xl mb-md block" aria-hidden="true">📋</span>
+          <span className="mb-md inline-flex justify-center text-text-secondary" aria-hidden="true">
+            <ClipboardText size={32} />
+          </span>
           <p className="font-serif text-base font-semibold text-text-primary mb-xs">No patterns yet</p>
           <p className="font-serif text-sm text-text-secondary">
             Log at least 2 activities in the same subject area and we&apos;ll spot the pattern for you.
@@ -1973,7 +1990,9 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
           <p className="font-sans text-sm text-text-muted animate-pulse">Finding ideas for you…</p>
         ) : skeletons.length === 0 ? (
           <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-            <span className="text-3xl mb-md block" aria-hidden="true">🔮</span>
+            <span className="mb-md inline-flex justify-center text-ember" aria-hidden="true">
+              <MagicWand size={32} />
+            </span>
             <p className="font-serif text-base font-semibold text-text-primary mb-xs">No pre-built ideas yet</p>
             <p className="font-serif text-sm text-text-secondary mb-lg">We&apos;re still building the library. Start from scratch — the editor will still help you structure the learning.</p>
             <button
@@ -2009,19 +2028,20 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 <div className="flex items-start justify-between gap-sm mb-sm">
                   <h3 className="font-serif text-base font-semibold text-text-primary">{skeleton.title}</h3>
                   {skeleton.confidence === 'curated' && (
-                    <span className="font-sans text-[10px] font-semibold bg-sage/10 text-sage border border-sage/20 px-xs py-[2px] rounded-full flex-shrink-0">
-                      ✓ Curated
+                    <span className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold bg-sage/10 text-sage border border-sage/20 px-xs py-[2px] rounded-full flex-shrink-0">
+                      <Check size={10} aria-hidden="true" /> Curated
                     </span>
                   )}
                 </div>
                 <p className="font-serif text-sm text-text-secondary mb-md leading-relaxed">{skeleton.description}</p>
                 <div className="flex flex-wrap gap-xs">
                   {skeleton.estimatedDuration && (
-                    <span className="font-sans text-xs text-text-muted">⏱ {skeleton.estimatedDuration} min</span>
+                    <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Timer size={12} aria-hidden="true" /> {skeleton.estimatedDuration} min</span>
                   )}
                   {skeleton.setting && skeleton.setting !== 'either' && (
-                    <span className="font-sans text-xs text-text-muted">
-                      {skeleton.setting === 'indoor' ? '🏠' : '🌿'} {skeleton.setting}
+                    <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                      {skeleton.setting === 'indoor' ? <HouseLine size={12} aria-hidden="true" /> : <Tree size={12} aria-hidden="true" />}
+                      {skeleton.setting}
                     </span>
                   )}
                   <span className="font-sans text-xs text-text-muted">{skeleton.suggestedSteps.length} steps</span>
@@ -2044,7 +2064,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
   return (
     <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-xl lg:items-start">
       <div className="flex flex-col gap-lg">
-        <PathwayHeader emoji="🎯" name="Goal-Forward" subtitle="Target a specific capability or learning gap." onBack={onBack} />
+        <PathwayHeader Icon={Target} name="Goal-Forward" subtitle="Target a specific capability or learning gap." onBack={onBack} />
 
         {/* Mode switcher */}
         <div className="flex gap-xs rounded-lg border border-border-subtle bg-surface-raised p-xs">
@@ -2060,7 +2080,9 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                   : 'text-text-muted hover:text-text-secondary',
               ].join(' ')}
             >
-              {m === 'aspiration' ? '✏️ I have a goal' : '🧵 I have a thread'}
+              {m === 'aspiration'
+                ? <span className="inline-flex items-center gap-xs"><PencilLine size={14} aria-hidden="true" /> I have a goal</span>
+                : <span className="inline-flex items-center gap-xs"><Compass size={14} aria-hidden="true" /> I have a thread</span>}
             </button>
           ))}
         </div>
@@ -2159,7 +2181,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                   <div className="flex flex-wrap gap-sm">
                     {ACTIVITY_PREFERENCES.map((p) => (
                       <PillButton key={p.id} active={form.preferences.includes(p.id)} onClick={() => togglePref(p.id)}>
-                        {p.label}
+                        <span className="inline-flex items-center gap-xs"><p.Icon size={14} aria-hidden="true" /> {p.label}</span>
                       </PillButton>
                     ))}
                   </div>
@@ -2240,8 +2262,8 @@ export default function BuildModulesPage() {
               pathway.id === 'retrospective' ? 'border-ember/25' : 'border-border-subtle',
             ].join(' ')}
           >
-            <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
-              {pathway.emoji}
+            <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-text-secondary">
+              <pathway.Icon size={18} aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-serif text-base font-semibold text-text-primary leading-snug mb-xs">
@@ -2252,7 +2274,7 @@ export default function BuildModulesPage() {
               </p>
               {pathway.badge && (
                 <span className="inline-flex items-center gap-xs font-sans text-xs font-medium text-ember bg-ember-glow px-sm py-[2px] rounded-full mt-[6px]">
-                  ✨ {pathway.badge}
+                  <Sparkle size={12} aria-hidden="true" /> {pathway.badge}
                 </span>
               )}
             </div>
@@ -2271,8 +2293,8 @@ export default function BuildModulesPage() {
         onClick={() => setSelected(GOAL_PATHWAY.id)}
         className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
       >
-        <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-xl">
-          {GOAL_PATHWAY.emoji}
+        <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-text-secondary">
+          <GOAL_PATHWAY.Icon size={18} aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-serif text-base font-semibold text-text-primary leading-snug mb-xs">

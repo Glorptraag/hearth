@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Compass } from '@/components/icons';
 import {
   BarChart,
   Bar,
@@ -59,7 +60,7 @@ export default function ThreadCoverageChart({ dateFrom, dateTo }: Props) {
   if (!threads || threads.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-xl gap-sm">
-        <span className="text-2xl" aria-hidden="true">🧵</span>
+        <span className="inline-flex text-text-secondary" aria-hidden="true"><Compass size={22} /></span>
         <p className="font-sans text-sm text-text-muted">Waiting for usage data</p>
         <p className="font-sans text-xs text-text-muted/60">
           Thread coverage appears once AI enrichment runs on logged entries

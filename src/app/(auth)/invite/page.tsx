@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Key, Confetti, Lifebuoy } from '@/components/icons';
 
 export default function InvitePage() {
   const params = useSearchParams();
@@ -40,13 +41,17 @@ export default function InvitePage() {
       <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl text-center shadow-card">
         {status === 'loading' && (
           <>
-            <span className="text-3xl" aria-hidden="true">🔑</span>
+            <span className="inline-flex justify-center text-text-secondary" aria-hidden="true">
+              <Key size={32} />
+            </span>
             <p className="mt-md font-serif text-lg text-text-secondary">Accepting invitation...</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <span className="text-3xl" aria-hidden="true">🎉</span>
+            <span className="inline-flex justify-center text-ember" aria-hidden="true">
+              <Confetti size={32} />
+            </span>
             <h1 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Welcome to {familyName}
             </h1>
@@ -63,7 +68,9 @@ export default function InvitePage() {
         )}
         {status === 'error' && (
           <>
-            <span className="text-3xl" aria-hidden="true">😕</span>
+            <span className="inline-flex justify-center text-text-secondary" aria-hidden="true">
+              <Lifebuoy size={32} />
+            </span>
             <h1 className="mt-md font-serif text-xl font-semibold text-text-primary">
               Invitation Issue
             </h1>

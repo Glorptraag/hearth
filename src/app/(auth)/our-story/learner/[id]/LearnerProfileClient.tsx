@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { useToast } from '@/hooks/use-toast';
+import { Sparkle, Medal, Plant, Lock } from '@/components/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -248,7 +249,7 @@ export default function LearnerProfileClient({
       });
       if (!res.ok) throw new Error('Save failed');
       setEditing(false);
-      toast(`${learner.name}'s portrait saved ✓`);
+      toast(`${learner.name}'s portrait saved`);
     } catch {
       toast('Save failed — please try again', 'error');
     } finally {
@@ -363,7 +364,9 @@ export default function LearnerProfileClient({
           (!learner.profileData.interests || learner.profileData.interests.length === 0) &&
           (!learner.profileData.strengths || learner.profileData.strengths.length === 0) && (
           <div className="flex flex-col items-center gap-sm rounded-[16px] border border-border-subtle bg-surface-panel px-lg py-lg text-center shadow-card">
-            <span className="text-3xl" aria-hidden="true">🌟</span>
+            <span className="inline-flex text-ember" aria-hidden="true">
+              <Sparkle size={32} />
+            </span>
             <h2 className="font-serif text-lg font-semibold text-text-primary">
               {learner.name}&rsquo;s profile is ready to grow
             </h2>
@@ -595,7 +598,9 @@ export default function LearnerProfileClient({
             Bright Moments
           </p>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-2xl" aria-hidden="true">🏅</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true">
+              <Medal size={22} />
+            </span>
             <p className="mt-sm font-serif text-sm text-text-muted">
               Badges earned will appear here as {learner.name}&rsquo;s portfolio grows.
             </p>
@@ -608,7 +613,9 @@ export default function LearnerProfileClient({
             Family Thread
           </p>
           <div className="rounded-[10px] border border-border-subtle bg-surface-panel p-lg text-center">
-            <span className="text-2xl" aria-hidden="true">🌿</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true">
+              <Plant size={22} />
+            </span>
             <p className="mt-sm font-serif text-sm text-text-muted">
               Shared learning moments with siblings will appear here.
             </p>
@@ -650,8 +657,8 @@ export default function LearnerProfileClient({
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
               Facilitator Notes
             </p>
-            <span className="rounded-full bg-surface-raised px-xs py-[1px] font-sans text-[9px] text-text-muted border border-border-subtle">
-              🔒 Private
+            <span className="inline-flex items-center gap-xs rounded-full bg-surface-raised px-xs py-[1px] font-sans text-[9px] text-text-muted border border-border-subtle">
+              <Lock size={10} aria-hidden="true" /> Private
             </span>
           </div>
           {facilitatorNotesEditing && editing ? (

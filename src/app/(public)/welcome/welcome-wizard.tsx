@@ -1,37 +1,47 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wordmark } from '@/components/ui/Wordmark';
+import {
+  House,
+  NotePencil,
+  Sparkle,
+  Books,
+  ShieldCheck,
+  Flame,
+} from '@/components/icons';
 
-const slides = [
+type IconC = ComponentType<{ size?: number }>;
+
+const slides: Array<{ Icon: IconC; title: string; body: string }> = [
   {
-    emoji: '🏠',
+    Icon: House,
     title: 'Welcome to Hearth',
     body: "You just made one of the most important decisions for your family\u2019s education. This is your home base \u2014 let\u2019s show you around.",
   },
   {
-    emoji: '📝',
+    Icon: NotePencil,
     title: 'Capture learning as it happens',
     body: 'Had a great morning? Open the Logger, describe what happened, and Hearth handles the rest. AI spots the learning, maps the capabilities, builds the evidence. Under two minutes.',
   },
   {
-    emoji: '✨',
+    Icon: Sparkle,
     title: "See what they\u2019re really learning",
     body: "Every logged moment feeds the Capabilities Constellation \u2014 a living map of your child\u2019s growth across eight domains. Watch capabilities emerge that you didn\u2019t plan for.",
   },
   {
-    emoji: '📚',
+    Icon: Books,
     title: 'Activities shaped by your approach',
     body: "Structured packs, spontaneous modules, and everything in between \u2014 all filtered through your family\u2019s educational philosophy. Charlotte Mason, Classical, Montessori, or your own blend.",
   },
   {
-    emoji: '📋',
+    Icon: ShieldCheck,
     title: 'Reporting, handled',
     body: 'Portfolio evidence, capability coverage, work sample curation \u2014 Hearth produces the documentation you need. No stress, no last-minute scramble.',
   },
   {
-    emoji: '🔥',
+    Icon: Flame,
     title: 'Ready to get started?',
     body: "First, we\u2019ll set up your family profile and add your learners. It takes about two minutes. Then your Dashboard is waiting.",
   },
@@ -145,8 +155,11 @@ export default function WelcomeWizard() {
             key={animKey}
             className="flex flex-col items-center animate-[slideIn_var(--motion-gentle)_var(--ease-default)]"
           >
-            <div className="mb-lg text-5xl leading-none max-[520px]:text-4xl">
-              {slide.emoji}
+            <div
+              className="mb-lg inline-flex items-center justify-center text-ember"
+              aria-hidden="true"
+            >
+              <slide.Icon size={32} />
             </div>
             <h2 className="mb-md font-serif text-[1.4rem] font-semibold leading-[1.3] text-text-primary max-[520px]:text-xl">
               {slide.title}

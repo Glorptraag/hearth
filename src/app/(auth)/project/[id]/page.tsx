@@ -8,6 +8,16 @@ import type { PortableTextBlock } from '@portabletext/types';
 import { sanityClient } from '@/lib/sanity/client';
 import { PROJECT_DETAIL_QUERY } from '@/lib/sanity/queries';
 import { DOMAIN_CLASSES as SUBJECT_CLASSES, DOMAIN_LABELS as SUBJECT_LABELS } from '@/components/ui/DomainChip';
+import {
+  CalendarBlank,
+  User,
+  Check,
+  Timer,
+  Paperclip,
+  ClipboardText,
+  PencilLine,
+  Binoculars,
+} from '@/components/icons';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,10 +127,10 @@ function ProjectOverview({
 
         <div className="flex flex-wrap gap-md mb-lg">
           {project.duration && (
-            <span className="font-sans text-[0.8125rem] text-text-secondary flex items-center gap-xs">📅 {project.duration}</span>
+            <span className="font-sans text-[0.8125rem] text-text-secondary flex items-center gap-xs"><CalendarBlank size={14} aria-hidden="true" /> {project.duration}</span>
           )}
           {project.ageRange && (
-            <span className="font-sans text-[0.8125rem] text-text-secondary flex items-center gap-xs">👤 Ages {project.ageRange.min}–{project.ageRange.max}</span>
+            <span className="font-sans text-[0.8125rem] text-text-secondary flex items-center gap-xs"><User size={14} aria-hidden="true" /> Ages {project.ageRange.min}–{project.ageRange.max}</span>
           )}
         </div>
 
@@ -195,7 +205,7 @@ function ProjectOverview({
                           : 'bg-surface-raised text-text-muted'
                     }`}
                   >
-                    {isCompleted ? '✓' : stage.stageNumber}
+                    {isCompleted ? <Check size={14} aria-hidden="true" /> : stage.stageNumber}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-serif text-base font-semibold text-text-primary mb-xs">
@@ -203,18 +213,18 @@ function ProjectOverview({
                     </p>
                     <div className="flex flex-wrap items-center gap-sm">
                       {stage.estimatedDuration && (
-                        <span className="font-sans text-xs text-text-muted">⏱ {stage.estimatedDuration}</span>
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Timer size={12} aria-hidden="true" /> {stage.estimatedDuration}</span>
                       )}
                       {isCompleted && stage.artifactDescription && (
-                        <span className="font-sans text-xs text-sage">✓ {stage.artifactDescription}</span>
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-sage"><Check size={12} aria-hidden="true" /> {stage.artifactDescription}</span>
                       )}
                       {!isCompleted && stage.artifactDescription && (
-                        <span className="font-sans text-xs text-text-muted">📎 Produces: {stage.artifactDescription}</span>
+                        <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Paperclip size={12} aria-hidden="true" /> Produces: {stage.artifactDescription}</span>
                       )}
                     </div>
                     {stage.dependsOn && !isCompleted && (
-                      <p className="mt-sm font-sans text-xs text-text-muted">
-                        📋 {stage.dependsOn}
+                      <p className="mt-sm inline-flex items-center gap-xs font-sans text-xs text-text-muted">
+                        <ClipboardText size={12} aria-hidden="true" /> {stage.dependsOn}
                       </p>
                     )}
                   </div>
@@ -289,10 +299,10 @@ function StageDetail({
           </h1>
           <div className="flex flex-wrap gap-md">
             {stage.estimatedDuration && (
-              <span className="font-sans text-xs text-text-muted">⏱ {stage.estimatedDuration}</span>
+              <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Timer size={12} aria-hidden="true" /> {stage.estimatedDuration}</span>
             )}
             {stage.artifactDescription && (
-              <span className="font-sans text-xs text-text-muted">📎 {stage.artifactDescription}</span>
+              <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted"><Paperclip size={12} aria-hidden="true" /> {stage.artifactDescription}</span>
             )}
           </div>
         </div>
@@ -350,7 +360,7 @@ function StageDetail({
         <div className="flex flex-col gap-sm">
           {isCompleted ? (
             <div className="text-center py-md">
-              <span className="font-sans text-sm text-sage font-semibold">✓ Stage complete</span>
+              <span className="inline-flex items-center gap-xs font-sans text-sm text-sage font-semibold"><Check size={14} aria-hidden="true" /> Stage complete</span>
             </div>
           ) : showCompletePrompt ? (
             <div className="rounded-lg border border-border-subtle bg-surface-panel p-lg">
@@ -376,7 +386,7 @@ function StageDetail({
                   onClick={() => onComplete(artifactNote || undefined)}
                   className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
                 >
-                  Complete Stage ✓
+                  <span className="inline-flex items-center gap-xs">Complete Stage <Check size={14} aria-hidden="true" /></span>
                 </button>
                 <button
                   onClick={() => setShowCompletePrompt(false)}
@@ -398,9 +408,9 @@ function StageDetail({
           {/* Log entry link */}
           <Link
             href={`/log?source=project_stage&projectId=${project._id}&stageNumber=${stage.stageNumber}`}
-            className="w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
+            className="inline-flex items-center justify-center gap-xs w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
           >
-            ✏️ Log This Stage
+            <PencilLine size={14} aria-hidden="true" /> Log This Stage
           </Link>
 
           <button
@@ -483,7 +493,9 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="px-md py-xl text-center">
-        <span className="text-4xl mb-md block" aria-hidden="true">🔭</span>
+        <span className="mb-md inline-flex justify-center text-text-secondary" aria-hidden="true">
+          <Binoculars size={32} />
+        </span>
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">Project not found</h2>
         <p className="font-sans text-sm text-text-secondary mb-lg">This project may not exist or hasn&apos;t been published yet.</p>
         <button

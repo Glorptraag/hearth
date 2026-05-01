@@ -1,8 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { getPedagogyVocabulary } from '@/lib/pedagogy/adapter';
 import type { Pedagogy } from '@/types';
+import {
+  HouseLine,
+  Tree,
+  ArrowsClockwise,
+  Wind,
+  Lightning,
+  Flame,
+  HandsClapping,
+  Eye,
+  Ear,
+  Quotes,
+  UsersThree,
+  BookmarkSimple,
+  Binoculars,
+  Note,
+  Asterisk,
+} from '@/components/icons';
+
+type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 interface ActivityOverlay {
   perspective?: string;
@@ -29,10 +48,11 @@ interface ActivityCardProps {
   onStart?: () => void;
 }
 
-const SETTING_EMOJI: Record<string, string> = { indoor: '🏠', outdoor: '🌳', either: '🔄' };
-const ENERGY_EMOJI: Record<string, string> = { calm: '🧘', moderate: '⚡', active: '🔥' };
-const MODALITY_EMOJI: Record<string, string> = {
-  kinesthetic: '🤲', visual: '👁', auditory: '👂', narrative: '📖', social: '👥', reading: '📚', exploratory: '🔍',
+const SETTING_ICON: Record<string, IconC> = { indoor: HouseLine, outdoor: Tree, either: ArrowsClockwise };
+const ENERGY_ICON: Record<string, IconC> = { calm: Wind, moderate: Lightning, active: Flame };
+const MODALITY_ICON: Record<string, IconC> = {
+  kinesthetic: HandsClapping, visual: Eye, auditory: Ear, narrative: Quotes,
+  social: UsersThree, reading: BookmarkSimple, exploratory: Binoculars,
 };
 
 export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityCardProps) {
@@ -56,11 +76,14 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
             {activity.title}
           </h3>
         </div>
-        {activity.modality && (
-          <span className="text-xl flex-shrink-0" title={activity.modality}>
-            {MODALITY_EMOJI[activity.modality] ?? '📝'}
-          </span>
-        )}
+        {activity.modality && (() => {
+          const Icon = MODALITY_ICON[activity.modality] ?? Note;
+          return (
+            <span className="flex-shrink-0 text-text-secondary" title={activity.modality} aria-hidden="true">
+              <Icon size={22} />
+            </span>
+          );
+        })()}
       </div>
 
       {/* Summary */}
@@ -75,16 +98,24 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
             {activity.duration.min}–{activity.duration.max} min
           </span>
         )}
-        {activity.setting && (
-          <span className="font-sans text-[11px] text-text-muted bg-surface-raised rounded-md px-sm py-[2px]">
-            {SETTING_EMOJI[activity.setting]} {activity.setting}
-          </span>
-        )}
-        {activity.energyLevel && (
-          <span className="font-sans text-[11px] text-text-muted bg-surface-raised rounded-md px-sm py-[2px]">
-            {ENERGY_EMOJI[activity.energyLevel]} {activity.energyLevel}
-          </span>
-        )}
+        {activity.setting && (() => {
+          const Icon = SETTING_ICON[activity.setting];
+          return (
+            <span className="inline-flex items-center gap-xs font-sans text-[11px] text-text-muted bg-surface-raised rounded-md px-sm py-[2px]">
+              {Icon && <Icon size={12} aria-hidden="true" />}
+              {activity.setting}
+            </span>
+          );
+        })()}
+        {activity.energyLevel && (() => {
+          const Icon = ENERGY_ICON[activity.energyLevel];
+          return (
+            <span className="inline-flex items-center gap-xs font-sans text-[11px] text-text-muted bg-surface-raised rounded-md px-sm py-[2px]">
+              {Icon && <Icon size={12} aria-hidden="true" />}
+              {activity.energyLevel}
+            </span>
+          );
+        })()}
       </div>
 
       {/* Philosophy lens (overlay) */}
@@ -175,7 +206,9 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
               <ul className="space-y-xs">
                 {activity.observationPrompts.map((prompt, i) => (
                   <li key={i} className="font-serif text-sm text-text-secondary flex items-start gap-xs">
-                    <span className="text-ember mt-[2px]" aria-hidden="true">✦</span>
+                    <span className="text-ember mt-[3px]" aria-hidden="true">
+                      <Asterisk size={12} />
+                    </span>
                     {overlay?.languageFrame
                       ? prompt.replace(/child|student|learner/gi, vocab.learnerNoun)
                       : prompt}

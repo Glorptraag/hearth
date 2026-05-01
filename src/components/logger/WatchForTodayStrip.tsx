@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import type { ChildSnapshot, SnapshotData } from '@/types/snapshot';
+import { Asterisk, X } from '@/components/icons';
 
 // Thread label map — same taxonomy as enrich.ts, display names only.
 const THREAD_LABELS: Record<string, string> = {
@@ -88,7 +89,7 @@ export function WatchForTodayStrip({ learners, snapshotData }: WatchForTodayStri
                   </span>
                   {sig.sparkThread && (
                     <span className="flex items-center gap-xs font-sans text-xs text-text-secondary">
-                      <span className="text-ember" aria-hidden>✦</span>
+                      <span className="text-ember" aria-hidden><Asterisk size={12} /></span>
                       <span className="text-text-secondary">spark:</span>
                       <span className="text-text-primary">{sig.sparkThread.label}</span>
                     </span>
@@ -111,9 +112,9 @@ export function WatchForTodayStrip({ learners, snapshotData }: WatchForTodayStri
         <button
           onClick={() => setDismissed(true)}
           aria-label="Dismiss watch-for-today strip"
-          className="shrink-0 mt-[1px] text-text-muted hover:text-text-secondary transition-colors duration-200 font-sans text-sm leading-none"
+          className="shrink-0 mt-[1px] text-text-muted hover:text-text-secondary transition-colors duration-200"
         >
-          ✕
+          <X size={14} aria-hidden="true" />
         </button>
       </div>
     </div>

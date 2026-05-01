@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { Module, ActivityOverlay, QuickCaptureItem } from './types';
-import { SETTING_EMOJI, ENERGY_EMOJI, PEDAGOGY_LABELS } from './constants';
-import { ASSET_KIND_EMOJI, COMMONS_KIND_EMOJI } from '@/components/content/types';
+import { SETTING_ICON, ENERGY_ICON, PEDAGOGY_LABELS } from './constants';
+import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components/content/types';
+import { Timer, Lightbulb, Eye, Asterisk, Camera, X, CaretDown } from '@/components/icons';
 import { HearthPortableText } from './PortableTextRenderer';
 import SessionTimer from './SessionTimer';
 import QuickCapture from './QuickCapture';
@@ -101,20 +102,29 @@ export default function FacilitateMode({
           </h2>
           <div className="flex gap-sm flex-wrap">
             {current.duration && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                ⏱ {current.duration.min}–{current.duration.max} min
+              <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                <Timer size={14} aria-hidden="true" />
+                {current.duration.min}–{current.duration.max} min
               </span>
             )}
-            {current.setting && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                {SETTING_EMOJI[current.setting]} {current.setting}
-              </span>
-            )}
-            {current.energyLevel && (
-              <span className="font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
-                {ENERGY_EMOJI[current.energyLevel]} {current.energyLevel}
-              </span>
-            )}
+            {current.setting && (() => {
+              const SettingIcon = SETTING_ICON[current.setting];
+              return (
+                <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                  {SettingIcon && <SettingIcon size={14} aria-hidden="true" />}
+                  {current.setting}
+                </span>
+              );
+            })()}
+            {current.energyLevel && (() => {
+              const EnergyIcon = ENERGY_ICON[current.energyLevel];
+              return (
+                <span className="inline-flex items-center gap-xs font-sans text-xs text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle">
+                  {EnergyIcon && <EnergyIcon size={14} aria-hidden="true" />}
+                  {current.energyLevel}
+                </span>
+              );
+            })()}
           </div>
         </div>
 
@@ -128,8 +138,9 @@ export default function FacilitateMode({
         {/* Why This Works — collapsible pedagogy context */}
         {currentOverlay && (currentOverlay.lens.perspective || currentOverlay.lens.facilitatorTips) && (
           <details className="mb-lg">
-            <summary className="font-sans text-sm text-text-secondary cursor-pointer hover:text-text-primary transition-colors duration-200 select-none">
-              💡 Why This Works
+            <summary className="inline-flex items-center gap-xs font-sans text-sm text-text-secondary cursor-pointer hover:text-text-primary transition-colors duration-200 select-none">
+              <Lightbulb size={16} aria-hidden="true" />
+              Why This Works
             </summary>
             <div className="mt-sm bg-surface-raised rounded-lg border border-border-subtle p-lg space-y-md">
               {currentOverlay.lens.perspective && (
@@ -179,7 +190,7 @@ export default function FacilitateMode({
             <div className="space-y-sm">
               {current.assets?.map((ref) => {
                 if (!ref.asset) return null;
-                const emoji = ASSET_KIND_EMOJI[ref.asset.kind as keyof typeof ASSET_KIND_EMOJI] ?? '📄';
+                const KindIcon = ASSET_KIND_ICON[ref.asset.kind as AssetKind] ?? ASSET_KIND_ICON.template;
                 const isAudio = ref.asset.kind === 'audio';
                 return (
                   <div
@@ -191,8 +202,8 @@ export default function FacilitateMode({
                         <Image src={ref.asset.thumbnailUrl} alt="" fill sizes="48px" className="object-cover" />
                       </div>
                     ) : (
-                      <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">
-                        {emoji}
+                      <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-text-secondary">
+                        <KindIcon size={22} aria-hidden="true" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -222,8 +233,8 @@ export default function FacilitateMode({
                     key={ref._key}
                     className="flex items-center gap-md p-sm rounded-[10px] border border-border-subtle bg-surface-raised"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-lg">
-                      {COMMONS_KIND_EMOJI}
+                    <div className="shrink-0 w-12 h-12 rounded-[6px] bg-surface-panel border border-border-subtle flex items-center justify-center text-text-secondary">
+                      <COMMONS_KIND_ICON size={22} aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-serif text-sm text-text-primary truncate">{ref.text.title}</p>
@@ -255,8 +266,9 @@ export default function FacilitateMode({
                 Watch For
               </p>
               {current.observationPrompts.map((prompt, i) => (
-                <p key={i} className="font-serif text-sm text-text-secondary leading-relaxed italic">
-                  👁 {prompt}
+                <p key={i} className="inline-flex items-start gap-xs font-serif text-sm text-text-secondary leading-relaxed italic">
+                  <Eye size={14} className="mt-1 shrink-0" aria-hidden="true" />
+                  {prompt}
                 </p>
               ))}
             </div>
@@ -270,8 +282,8 @@ export default function FacilitateMode({
               onClick={() => setOverlayOpen((v) => !v)}
               className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
             >
-              <span>{overlayOpen ? '▾' : '▸'}</span>
-              <span className="text-ember" aria-hidden="true">✦</span>
+              <CaretDown size={12} className={`transition-transform duration-200 ${overlayOpen ? '' : '-rotate-90'}`} aria-hidden="true" />
+              <span className="text-ember" aria-hidden="true"><Asterisk size={12} /></span>
               <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
             </button>
             {overlayOpen && (
@@ -451,8 +463,8 @@ export default function FacilitateMode({
         {/* Observation prompts */}
         {current.observationPrompts && current.observationPrompts.length > 0 && (
           <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-sage mb-md pb-sm border-b border-border-subtle">
-              👁 Watch For
+            <p className="inline-flex items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-sage mb-md pb-sm border-b border-border-subtle">
+              <Eye size={12} aria-hidden="true" /> Watch For
             </p>
             <div className="space-y-sm">
               {current.observationPrompts.map((prompt, i) => (
@@ -470,8 +482,8 @@ export default function FacilitateMode({
         {/* Pedagogy lens — always visible */}
         {currentOverlay && (
           <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-md pb-sm border-b border-border-subtle">
-              ✦ {pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}
+            <p className="inline-flex items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember mb-md pb-sm border-b border-border-subtle">
+              <Asterisk size={12} aria-hidden="true" /> {pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}
             </p>
             <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
               {currentOverlay.lens.perspective && (
@@ -625,7 +637,7 @@ export default function FacilitateMode({
             className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
             aria-label="Quick capture"
           >
-            {mobileCapture ? '✕' : '📸'}
+            {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}
             {!mobileCapture && quickCaptures && quickCaptures.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-surface-raised text-ember text-[10px] font-semibold rounded-full w-5 h-5 flex items-center justify-center border border-border-subtle">
                 {quickCaptures.length}

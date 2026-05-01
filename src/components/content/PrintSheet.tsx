@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { type PrintableItem, type PrintSelection, type PrintBundleResponse, getItemEmoji } from './types';
+import { type PrintableItem, type PrintSelection, type PrintBundleResponse, getItemIcon } from './types';
+import { X, WarningCircle } from '@/components/icons';
 
 export interface PrintSheetGroup {
   label: string;
@@ -194,7 +195,7 @@ export function PrintSheet({
             className="shrink-0 p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
             aria-label="Close"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -296,7 +297,7 @@ export function PrintSheet({
               )}
               <div className="space-y-sm">
                 {group.items.map((item) => {
-                  const emoji = getItemEmoji(item);
+                  const ItemIcon = getItemIcon(item);
                   const isAudio = !item.isPrintable;
                   return (
                     <label
@@ -312,7 +313,7 @@ export function PrintSheet({
                         disabled={isAudio}
                         className="shrink-0 w-4 h-4 rounded-[6px] accent-ember"
                       />
-                      <span className="shrink-0 text-base">{emoji}</span>
+                      <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><ItemIcon size={16} /></span>
                       <span className="flex-1 min-w-0 font-serif text-sm text-text-primary truncate">
                         {item.title}
                       </span>
@@ -343,8 +344,9 @@ export function PrintSheet({
 
           {/* Large bundle warning */}
           {totalPages * copies > 100 && (
-            <p className="font-sans text-[0.75rem] text-amber-status mb-sm">
-              ⚠ Large bundle ({totalPages * copies} pages). Generation may take a moment.
+            <p className="inline-flex items-center gap-xs font-sans text-[0.75rem] text-amber-status mb-sm">
+              <WarningCircle size={14} aria-hidden="true" />
+              Large bundle ({totalPages * copies} pages). Generation may take a moment.
             </p>
           )}
 

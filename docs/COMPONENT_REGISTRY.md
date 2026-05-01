@@ -26,14 +26,13 @@
 
 **Implementation deviations from spec:**
 - **Theme default convention:** v2.1 says gathering is default; this implementation keeps **dark as default** (`data-theme=""` or absent → dark; `data-theme="gathering"` → light) for production stability. Auto time-of-day switching covers the addendum's daytime intent. Documented in `CLAUDE.md`.
-- **Icon library:** S8 specifies Lucide; the implementation will use **Phosphor Icons** (`@phosphor-icons/react`) per Drew's call. Same single-color stroke aesthetic and 24px grid.
+- **Icon library:** S8 specifies Lucide; the implementation uses **Phosphor Icons** (`@phosphor-icons/react`) per Drew's call. Same single-color stroke aesthetic and 24px grid.
 - **`--text-muted` value:** v2 spec is `#6B5D52`; implementation keeps WCAG-override `#726458` (3.15:1 on panel) per `hearth-canonical-design-tokens-v1.md` Appendix A.
 
 **Pending v2 / v2.1 deliverables (not yet produced):**
 - `hearth-dashboard-dark-v3.html` — dark-mode reference HTML prototype (Prompt B output)
 - `hearth-dashboard-gathering-v1.html` — daytime/light reference HTML prototype, structural twin of dark v3, replaces `hearth-dashboard-evening-v2.html`
 - In-place markdown updates to `hearth-canonical-design-tokens-v2.md` (gathering blocks under each theme-dependent section + new tokens) — no version bump per addendum migration order
-- S14 entry to be appended to `hearth-decisions-log-v1.md`
 - `hearth-ui-kit-v2.md` → revised to v3 once Dashboard Dark v3 is locked
 - Per-screen visual review across the 22 prototypes / built screens to catch any leftover drift
 
@@ -43,6 +42,14 @@
 | `hearth-canonical-design-tokens-v1.md` | Full token spec (colors, spacing, radius, shadows, transitions, typography) | **Superseded by v2** — retained per versioning rules |
 | `hearth-ui-kit-v2.md` | Canonical component reference (buttons, cards, inputs, modals, nav) — replaces dead `Hearth_LMS_UI_Kit.html` | Active (will be revised to v3 after Dashboard Dark v3 lands) |
 | `hearth-ui-token-deep-audit-v1.md` | Per-screen drift audit documenting every fix applied | Active (reference) |
+| `hearth-icon-system-v1.md` | Phosphor icon rules: weight, size tokens, colour, placement, custom-mark specs, Lucide→Phosphor migration map | Active (April 2026) |
+| `hearth-decisions-log-v1.md` | Append-only decision record (S14: icon library) | Active (April 2026) |
+
+### Production Code
+| Path | Purpose |
+|---|---|
+| `src/components/icons/index.tsx` | Central Phosphor re-export surface. App code imports from here, never from `@phosphor-icons/react` directly. Holds placeholder slots for illustrator-bespoke marks (`ChildShape*`, `HearthBrandMark`). |
+| `src/lib/icon-registry.ts` | Legacy emoji registry (`<HearthIcon>`). Coexists with Phosphor system; components migrate as touched. |
 
 ### Reference Implementation
 `hearth-dashboard-dark-v2.html` — current source of truth for all visual patterns. **Will be superseded by `hearth-dashboard-dark-v3.html` once v2 token system is applied (per Prompt B in `hearth-v2-claude-code-prompts.md`).** Until v3 lands, v2 remains canonical.

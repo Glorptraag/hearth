@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import type { QuickCaptureItem } from './types';
+import { PencilSimple, Camera, Microphone, X } from '@/components/icons';
 
 export default function QuickCapture({
   captures,
@@ -64,23 +65,23 @@ export default function QuickCapture({
       <div className="flex gap-xs flex-wrap">
         <button
           onClick={() => setNoteOpen((v) => !v)}
-          className="font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200"
+          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200"
         >
-          ✏️ Note
+          <PencilSimple size={14} aria-hidden="true" /> Note
         </button>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200 disabled:opacity-50"
+          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200 disabled:opacity-50"
         >
-          {uploading ? '📷 Uploading...' : '📷 Photo'}
+          <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
         </button>
         <button
           disabled
           title="Coming soon"
-          className="font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-muted cursor-not-allowed opacity-50"
+          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-muted cursor-not-allowed opacity-50"
         >
-          🎤 Voice
+          <Microphone size={14} aria-hidden="true" /> Voice
         </button>
         <input
           ref={fileRef}
@@ -127,7 +128,9 @@ export default function QuickCapture({
               key={cap.timestamp}
               className="flex items-start gap-xs bg-surface-panel rounded-md p-xs border border-border-subtle"
             >
-              <span className="shrink-0 text-xs">{cap.type === 'photo' ? '📷' : '✏️'}</span>
+              <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true">
+                {cap.type === 'photo' ? <Camera size={14} /> : <PencilSimple size={14} />}
+              </span>
               <div className="flex-1 min-w-0">
                 <p className="font-sans text-[10px] text-text-muted truncate">{cap.activityTitle}</p>
                 {cap.type === 'photo' ? (
@@ -142,9 +145,10 @@ export default function QuickCapture({
               </div>
               <button
                 onClick={() => onRemoveCapture(cap.timestamp)}
-                className="shrink-0 font-sans text-[10px] text-text-muted hover:text-red-400 transition-colors duration-200"
+                className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-200"
+                aria-label="Remove capture"
               >
-                ✕
+                <X size={12} aria-hidden="true" />
               </button>
             </div>
           ))}

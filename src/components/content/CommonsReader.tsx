@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { PortableText } from '@portabletext/react';
+import { SpeakerHigh, Printer, X } from '@/components/icons';
 
 type ReadingMode = 'standard' | 'short' | 'readAloud';
 
@@ -139,7 +140,7 @@ export function CommonsReader({
             title="Audio coming soon"
             aria-label="Audio coming soon"
           >
-            🔊
+            <SpeakerHigh size={18} aria-hidden="true" />
           </button>
           {onPrint && (
             <button
@@ -147,7 +148,7 @@ export function CommonsReader({
               className="p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
               aria-label="Print this text"
             >
-              🖨
+              <Printer size={18} aria-hidden="true" />
             </button>
           )}
           <button
@@ -155,7 +156,7 @@ export function CommonsReader({
             className="p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
             aria-label="Close reader"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
       </header>

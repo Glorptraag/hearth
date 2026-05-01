@@ -6,6 +6,14 @@ import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import EmptyState from '@/components/ui/EmptyState';
+import {
+  FileText,
+  BookOpenText, MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
+  Check,
+} from '@/components/icons';
+import type { ComponentType } from 'react';
+
+type ReportIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
@@ -78,15 +86,15 @@ type Settings = {
   createdAt: string;
 };
 
-const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
-  english: { label: 'English', emoji: '📚' },
-  mathematics: { label: 'Mathematics', emoji: '🔢' },
-  science: { label: 'Science', emoji: '🔬' },
-  hass: { label: 'HASS', emoji: '🌏' },
-  arts: { label: 'Arts', emoji: '🎨' },
-  technologies: { label: 'Technologies', emoji: '⚙️' },
-  hpe: { label: 'HPE', emoji: '🏃' },
-  languages: { label: 'Languages', emoji: '🗣️' },
+const SUBJECT_CONFIG: Record<string, { label: string; Icon: ReportIconC }> = {
+  english:      { label: 'English',      Icon: BookOpenText },
+  mathematics:  { label: 'Mathematics',  Icon: MathOperations },
+  science:      { label: 'Science',      Icon: Atom },
+  hass:         { label: 'HASS',         Icon: Globe },
+  arts:         { label: 'Arts',         Icon: Palette },
+  technologies: { label: 'Technologies', Icon: Cpu },
+  hpe:          { label: 'HPE',          Icon: PersonSimpleRun },
+  languages:    { label: 'Languages',    Icon: ChatsCircle },
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
@@ -375,7 +383,7 @@ export default function ReportPage() {
       {entries.length === 0 && (
         <div className="mt-lg">
           <EmptyState
-            emoji="📋"
+            icon={FileText}
             heading="Your report builds automatically"
             body="As you log learning moments, Hearth tracks subject coverage, maps curriculum descriptors, and assembles your report automatically. Start logging to see your report take shape."
           />
@@ -482,7 +490,7 @@ export default function ReportPage() {
                     <p className="font-sans text-[10px] text-text-muted mt-[2px]">{slot.timing}</p>
 
                     <span className={`inline-block mt-sm rounded-full px-sm py-[2px] font-sans text-[10px] ${statusStyle.badge}`}>
-                      {isConfirmed ? '✓ Confirmed' : statusStyle.label}
+                      {isConfirmed ? <span className="inline-flex items-center gap-xs"><Check size={12} aria-hidden="true" /> Confirmed</span> : statusStyle.label}
                     </span>
 
                     <p className="font-serif text-xs text-text-secondary mt-sm truncate">
@@ -508,7 +516,7 @@ export default function ReportPage() {
                 return (
                   <div key={s.key} className="flex items-center gap-md px-md py-sm">
                     <div className="flex items-center gap-sm w-[140px] shrink-0">
-                      <span className="text-base" aria-hidden="true">{s.emoji}</span>
+                      <span className="inline-flex text-text-secondary" aria-hidden="true"><s.Icon size={16} /></span>
                       <span className="font-serif text-sm font-semibold text-text-primary">{s.label}</span>
                     </div>
                     <div
@@ -559,7 +567,7 @@ export default function ReportPage() {
                       }`}>
                         {isCritical ? 'Critical' : 'Moderate'}
                       </span>
-                      <span className="text-base shrink-0">{g.emoji}</span>
+                      <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><g.Icon size={16} /></span>
                       <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
                       <p className="font-sans text-xs text-text-muted hidden sm:block max-w-[200px] text-right">
                         {GAP_ACTIONS[g.key] ?? 'Log an activity in this area'}
@@ -596,7 +604,7 @@ export default function ReportPage() {
                         {tagLabel}
                       </span>
                       <div className="flex items-center gap-sm mb-sm">
-                        <span className="text-xl">{g.emoji}</span>
+                        <span className="inline-flex text-text-secondary" aria-hidden="true"><g.Icon size={22} /></span>
                         <span className="font-serif text-sm font-semibold text-text-primary">{g.label}</span>
                       </div>
                       <p className="font-sans text-xs text-text-muted mb-md">
@@ -636,7 +644,7 @@ export default function ReportPage() {
                     className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover ${domain?.border ?? 'border-t-border-medium'}`}
                   >
                     <div className="flex items-center justify-between mb-sm">
-                      <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
+                      <span className="inline-flex text-text-secondary" aria-hidden="true"><s.Icon size={22} /></span>
                       <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
                         {s.count} {s.count === 1 ? 'entry' : 'entries'}
                       </span>
@@ -676,7 +684,7 @@ export default function ReportPage() {
                     key={g.key}
                     className="flex items-center gap-md rounded-lg border border-border-subtle bg-surface-raised px-md py-sm"
                   >
-                    <span className="text-base shrink-0">{g.emoji}</span>
+                    <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><g.Icon size={16} /></span>
                     <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
                     <span className="font-sans text-[10px] text-text-muted shrink-0">
                       {g.count === 0 ? 'No entries yet' : `${g.count} entr${g.count === 1 ? 'y' : 'ies'}`}

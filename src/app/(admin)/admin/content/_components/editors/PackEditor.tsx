@@ -9,6 +9,7 @@ import { Panel } from '../primitives/Panel';
 import { FormField, Input, TextArea, Select } from '../primitives/FormField';
 import { RangeInput } from '../primitives/RangeInput';
 import { TagInput } from '../primitives/TagInput';
+import { Package, BookOpen, Books, Medal } from '@/components/icons';
 
 const SUBJECT_OPTIONS = SUBJECTS.map((s) => ({
   value: s,
@@ -65,7 +66,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
 
   return (
     <>
-      <Panel title="Pack Identity" emoji="📦">
+      <Panel title="Pack Identity" Icon={Package}>
         <FormField label="Title" required>
           <Input value={pack.title} onChange={(v) => setField(f('title'), v)} placeholder="e.g., Starter Collection" />
         </FormField>
@@ -139,7 +140,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
         </FormField>
       </Panel>
 
-      <Panel title="Pack Intro" emoji="📘" defaultOpen={false}>
+      <Panel title="Pack Intro" Icon={Books} defaultOpen={false}>
         <FormField label="Intro Title">
           <Input value={pack.intro.title} onChange={(v) => setField(ff('intro', 'title'), v)} placeholder="Welcome to..." />
         </FormField>
@@ -195,7 +196,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
 
       <Panel
         title="Modules"
-        emoji="📖"
+        Icon={BookOpen}
         right={
           <span className="text-xs text-text-muted font-sans">
             {pack.modules.length} modules · {totalActs} activities
@@ -213,7 +214,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
             onClick={() => setSel({ scope: 'pack', pi: sel.pi, mi: i, type: 'module' })}
             className="flex items-center gap-3 px-3.5 py-3 bg-surface-body border border-border-subtle rounded-[8px] mb-2 cursor-pointer hover:border-border-medium transition-colors duration-150"
           >
-            <span className="text-lg">📖</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true"><BookOpen size={18} /></span>
             <div className="flex-1">
               <div className="text-sm font-medium text-text-primary font-serif">{m.title}</div>
               <div className="text-[0.7rem] text-text-muted mt-0.5 font-sans">
@@ -234,7 +235,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
 
       <Panel
         title="Badges"
-        emoji="🏅"
+        Icon={Medal}
         right={<span className="text-xs text-text-muted font-sans">{pack.badges.length} badges</span>}
       >
         {pack.badges.length === 0 && (
@@ -246,7 +247,7 @@ export function PackEditor({ state, sel, fieldPrefix, setField, dispatch, showPr
             onClick={() => setSel({ scope: 'pack', pi: sel.pi, bi: i, type: 'badge' })}
             className="flex items-center gap-3 px-3.5 py-3 bg-surface-body border border-border-subtle rounded-[8px] mb-2 cursor-pointer hover:border-border-medium transition-colors duration-150"
           >
-            <span className="text-lg">🏅</span>
+            <span className="inline-flex text-text-secondary" aria-hidden="true"><Medal size={18} /></span>
             <div className="flex-1">
               <div className="text-sm font-medium text-text-primary font-sans">{b.title}</div>
             </div>

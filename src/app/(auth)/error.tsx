@@ -1,6 +1,7 @@
 'use client';
 
 import EmptyState from '@/components/ui/EmptyState';
+import { Lifebuoy } from '@/components/icons';
 
 export default function AuthError({
   reset,
@@ -11,7 +12,7 @@ export default function AuthError({
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-lg">
       <EmptyState
-        emoji="🔥"
+        icon={Lifebuoy}
         heading="Something went wrong"
         body="An unexpected error occurred. Your learning data is safe."
         cta={{ label: 'Try again', onClick: reset }}

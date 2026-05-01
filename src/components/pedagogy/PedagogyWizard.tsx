@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Pedagogy } from '@/types';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { Check, Flame } from '@/components/icons';
 import {
   PHILOSOPHIES,
   VALUES,
@@ -258,7 +259,7 @@ export function PedagogyWizard({
                     ].join(' ')}
                     aria-current={isActive ? 'step' : undefined}
                   >
-                    {isComplete ? '✓' : idx + 1}
+                    {isComplete ? <Check size={14} aria-hidden="true" /> : idx + 1}
                   </div>
                   <span
                     className={[
@@ -366,7 +367,7 @@ export function PedagogyWizard({
                 : saving
                   ? 'Saving…'
                   : completeLabel === 'Light the Hearth'
-                    ? `🔥 ${completeLabel}`
+                    ? <span className="inline-flex items-center gap-xs"><Flame size={14} aria-hidden="true" /> {completeLabel}</span>
                     : completeLabel}
             </button>
           </div>
@@ -617,8 +618,8 @@ function PriorityStep({
                     {item.name}
                   </span>
                   {isSelected && (
-                    <span className="flex-shrink-0 text-sm text-ember" aria-hidden="true">
-                      ✓
+                    <span className="flex-shrink-0 text-ember" aria-hidden="true">
+                      <Check size={14} />
                     </span>
                   )}
                 </div>

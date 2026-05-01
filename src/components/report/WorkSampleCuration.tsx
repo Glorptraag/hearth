@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { X, Tray, Flame, ClipboardText, Camera, Check } from '@/components/icons';
 
 // ─── Types ───
 
@@ -74,10 +75,9 @@ const ANNOTATION_FIELDS = [
   { key: 'planning', label: 'Where to next', placeholder: 'What learning directions might follow from this?' },
 ] as const;
 
-const SUBJECT_EMOJI: Record<string, string> = {
-  english: '📚', mathematics: '🔢', science: '🔬', hass: '🌏',
-  arts: '🎨', technologies: '⚙️', hpe: '🏃', languages: '🗣️',
-};
+// Subject chips inside the candidate row label themselves — no need for an
+// extra glyph here. (Domain colour pills live in DomainChip.tsx for any
+// surface that needs them.)
 
 export default function WorkSampleCuration({
   reportId,
@@ -226,8 +226,9 @@ export default function WorkSampleCuration({
           <button
             onClick={onClose}
             className="rounded-full p-sm hover:bg-surface-hover transition-colors text-text-muted hover:text-text-primary"
+            aria-label="Close"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -259,7 +260,9 @@ export default function WorkSampleCuration({
             <div>
               {sortedCandidates.length === 0 ? (
                 <div className="text-center py-xl">
-                  <p className="text-3xl mb-sm" aria-hidden="true">📭</p>
+                  <p className="mb-sm flex justify-center text-text-secondary" aria-hidden="true">
+                    <Tray size={32} />
+                  </p>
                   <p className="font-serif text-sm text-text-secondary">No matching entries found for this slot.</p>
                   <p className="font-sans text-xs text-text-muted mt-xs">
                     Log a {slot.areaLabel.toLowerCase()} activity from {slot.timing.split('·')[1]?.trim()} to see candidates here.
@@ -290,7 +293,7 @@ export default function WorkSampleCuration({
                               <p className="font-serif text-sm font-semibold text-text-primary truncate">{entry.title}</p>
                               {entry.source === 'hearth_session' && (
                                 <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
-                                  🔥 From community
+                                  <Flame size={12} aria-hidden="true" /> From community
                                 </span>
                               )}
                             </div>
@@ -303,18 +306,18 @@ export default function WorkSampleCuration({
                           </div>
                           <div className="flex flex-col items-end gap-xs shrink-0">
                             {entry.workSampleCandidate && (
-                              <span className="rounded-full bg-sage/15 text-sage px-sm py-[1px] font-sans text-[10px] font-semibold">
-                                📋 Work Sample
+                              <span className="inline-flex items-center gap-xs rounded-full bg-sage/15 text-sage px-sm py-[1px] font-sans text-[10px] font-semibold">
+                                <ClipboardText size={10} aria-hidden="true" /> Work Sample
                               </span>
                             )}
                             {hasEvidence && (
-                              <span className="rounded-full bg-ember-glow text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">
-                                📷 {entry.evidenceUrls!.length}
+                              <span className="inline-flex items-center gap-xs rounded-full bg-ember-glow text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">
+                                <Camera size={10} aria-hidden="true" /> {entry.evidenceUrls!.length}
                               </span>
                             )}
                             {isSelected && (
-                              <span className="rounded-full bg-ember/15 text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">
-                                ✓ Selected
+                              <span className="inline-flex items-center gap-xs rounded-full bg-ember/15 text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">
+                                <Check size={10} aria-hidden="true" /> Selected
                               </span>
                             )}
                           </div>
@@ -323,7 +326,7 @@ export default function WorkSampleCuration({
                         <div className="flex flex-wrap gap-xs mt-sm">
                           {[...(entry.subjects ?? [])].map((s) => (
                             <span key={s} className="rounded-full bg-surface-hover px-sm py-[1px] font-sans text-[10px] text-text-muted">
-                              {SUBJECT_EMOJI[s] ?? ''} {s}
+                              {s}
                             </span>
                           ))}
                         </div>
@@ -408,7 +411,11 @@ export default function WorkSampleCuration({
                     : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'
                 }`}
               >
-                {saving ? 'Saving...' : sample?.annotation?.confirmedAt ? '✓ Confirmed — Update' : 'Confirm Work Sample'}
+                {saving
+                  ? 'Saving…'
+                  : sample?.annotation?.confirmedAt
+                  ? <span className="inline-flex items-center gap-xs"><Check size={14} aria-hidden="true" /> Confirmed — Update</span>
+                  : 'Confirm Work Sample'}
               </button>
 
               {sample?.annotation?.confirmedAt && (

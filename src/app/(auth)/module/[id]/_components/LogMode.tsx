@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Module, Learner, QuickCaptureItem } from './types';
 import { ENGAGEMENT_EMOJI } from './constants';
+import { Camera, PencilSimple, X, Check } from '@/components/icons';
 
 export default function LogMode({
   module,
@@ -155,7 +156,9 @@ export default function LogMode({
           <div className="space-y-sm">
             {quickCaptures.map((cap) => (
               <div key={cap.timestamp} className="flex items-start gap-sm bg-surface-raised rounded-md p-sm border border-border-subtle">
-                <span className="shrink-0 text-sm">{cap.type === 'photo' ? '📷' : '✏️'}</span>
+                <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true">
+                  {cap.type === 'photo' ? <Camera size={16} /> : <PencilSimple size={16} />}
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-sans text-[11px] text-text-muted">{cap.activityTitle}</p>
                   {cap.type === 'photo' ? (
@@ -171,9 +174,10 @@ export default function LogMode({
                 {onRemoveCapture && (
                   <button
                     onClick={() => onRemoveCapture(cap.timestamp)}
-                    className="shrink-0 font-sans text-xs text-text-muted hover:text-red-400 transition-colors duration-200"
+                    className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-200"
+                    aria-label="Remove capture"
                   >
-                    ✕
+                    <X size={14} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -337,7 +341,7 @@ export default function LogMode({
                       : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'
                   }`}
                 >
-                  {activePrompts.includes(prompt) ? '✓ ' : ''}
+                  {activePrompts.includes(prompt) && <Check size={12} className="inline mr-1" aria-hidden="true" />}
                   {prompt}
                 </button>
               ))}

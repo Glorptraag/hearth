@@ -7,6 +7,14 @@ import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { getThreadName } from '@/lib/capability-threads';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import {
+  CalendarBlank, BookOpenText, Medal, Plant,
+  MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
+  Flame, PencilSimple, Check, Sparkle, Camera, FilePdf,
+} from '@/components/icons';
+import type { ComponentType as PortfolioComponentType } from 'react';
+
+type PortfolioIconC = PortfolioComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 type CardType = 'evidence' | 'journey' | 'milestone';
 
@@ -88,15 +96,15 @@ type ActiveThread = {
   last_evidence_date: string;
 };
 
-const SUBJECT_CONFIG: Record<string, { label: string; emoji: string; color: string }> = {
-  english: { label: 'English', emoji: '📚', color: 'bg-domain-english/20 text-domain-english' },
-  mathematics: { label: 'Maths', emoji: '🔢', color: 'bg-domain-mathematics/20 text-domain-mathematics' },
-  science: { label: 'Science', emoji: '🔬', color: 'bg-domain-science/20 text-domain-science' },
-  hass: { label: 'HASS', emoji: '🌏', color: 'bg-domain-hass/20 text-domain-hass' },
-  arts: { label: 'Arts', emoji: '🎨', color: 'bg-domain-arts/20 text-domain-arts' },
-  technologies: { label: 'Tech', emoji: '⚙️', color: 'bg-domain-technologies/20 text-domain-technologies' },
-  hpe: { label: 'HPE', emoji: '🏃', color: 'bg-domain-hpe/20 text-domain-hpe' },
-  languages: { label: 'Languages', emoji: '🗣️', color: 'bg-domain-languages/20 text-domain-languages' },
+const SUBJECT_CONFIG: Record<string, { label: string; Icon: PortfolioIconC; color: string }> = {
+  english:      { label: 'English',   Icon: BookOpenText,    color: 'bg-domain-english/20 text-domain-english' },
+  mathematics:  { label: 'Maths',     Icon: MathOperations,  color: 'bg-domain-mathematics/20 text-domain-mathematics' },
+  science:      { label: 'Science',   Icon: Atom,            color: 'bg-domain-science/20 text-domain-science' },
+  hass:         { label: 'HASS',      Icon: Globe,           color: 'bg-domain-hass/20 text-domain-hass' },
+  arts:         { label: 'Arts',      Icon: Palette,         color: 'bg-domain-arts/20 text-domain-arts' },
+  technologies: { label: 'Tech',      Icon: Cpu,             color: 'bg-domain-technologies/20 text-domain-technologies' },
+  hpe:          { label: 'HPE',       Icon: PersonSimpleRun, color: 'bg-domain-hpe/20 text-domain-hpe' },
+  languages:    { label: 'Languages', Icon: ChatsCircle,     color: 'bg-domain-languages/20 text-domain-languages' },
 };
 
 const ENGAGEMENT_EMOJI: Record<number, string> = { 4: '😊', 3: '🙂', 2: '😐', 1: '😕' };
@@ -369,7 +377,7 @@ export default function PortfolioPage() {
                       : 'text-text-muted hover:text-text-secondary'
                   }`}
                 >
-                  {cfg.emoji}
+                  <cfg.Icon size={14} aria-hidden="true" />
                 </button>
               ))}
             </div>
@@ -418,7 +426,9 @@ export default function PortfolioPage() {
             entries.length > 0 ? (
               /* Filtered-empty: data exists but current filters match nothing */
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block" aria-hidden="true">📅</span>
+                <span className="mx-auto mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <CalendarBlank size={32} />
+                </span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Nothing logged this period</p>
                 <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
                   Try a different month or clear your filters to see all moments.
@@ -433,7 +443,9 @@ export default function PortfolioPage() {
             ) : (
               /* True empty: no entries at all */
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block" aria-hidden="true">📖</span>
+                <span className="mx-auto mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <BookOpenText size={32} />
+                </span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Your story starts here</p>
                 <p className="font-serif text-sm text-text-secondary mb-lg leading-relaxed">
                   Every {vocab.sessionNoun} you log becomes part of your learning story. Once you&apos;ve captured a few, they&apos;ll appear here as a portrait of your {vocab.learnerNoun}&apos;s {vocab.growthNoun}.
@@ -507,7 +519,7 @@ export default function PortfolioPage() {
                                     </h3>
                                     {entry.source === 'hearth_session' && (
                                       <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium whitespace-nowrap">
-                                        🔥 From community
+                                        <span className="inline-flex items-center gap-xs"><Flame size={12} aria-hidden="true" /> From community</span>
                                       </span>
                                     )}
                                   </div>
@@ -612,7 +624,7 @@ export default function PortfolioPage() {
                                       onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
                                       className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
                                     >
-                                      ✏️ Edit
+                                      <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
                                     </button>
                                   </div>
                                 )}
@@ -652,7 +664,10 @@ export default function PortfolioPage() {
                                       : 'text-text-muted hover:text-sage'
                                   }`}
                                 >
-                                  {entry.workSampleCandidate ? '✓ Work sample' : '☐ Mark as work sample'}
+                                  <span className="inline-flex items-center gap-xs">
+                                    <Check size={12} aria-hidden="true" />
+                                    {entry.workSampleCandidate ? 'Work sample' : 'Mark as work sample'}
+                                  </span>
                                 </button>
                               </div>
                             )}
@@ -797,7 +812,7 @@ export default function PortfolioPage() {
                             )}
                             {entry.aiEnrichment?.journey_observation && (
                               <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
-                                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs">✨ Journey Observation</p>
+                                <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Journey Observation</p>
                                 <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
                               </div>
                             )}
@@ -805,7 +820,7 @@ export default function PortfolioPage() {
                               onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
                               className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
                             >
-                              ✏️ Edit
+                              <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
                             </button>
                           </div>
                         )}
@@ -839,14 +854,14 @@ export default function PortfolioPage() {
                         )}
                         <div className="flex items-center gap-md mt-xs">
                           <button className="font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
-                            ✓ Mark as work sample
+                            <span className="inline-flex items-center gap-xs"><Check size={12} aria-hidden="true" /> Mark as work sample</span>
                           </button>
                           {entry.sourceModuleId && (
                             <a
                               href={`/module/${entry.sourceModuleId}`}
                               className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
                             >
-                              📄 View activity materials
+                              <span className="inline-flex items-center gap-xs"><FilePdf size={12} aria-hidden="true" /> View activity materials</span>
                             </a>
                           )}
                         </div>
@@ -875,7 +890,9 @@ export default function PortfolioPage() {
             <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Badges</h2>
             {badges.filter((b) => !b.retractedAt).length === 0 && badges.filter((b) => b.retractedAt).length === 0 ? (
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block" aria-hidden="true">🏅</span>
+                <span className="mx-auto mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <Medal size={32} />
+                </span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Milestones will appear here</p>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
                   Badges and capability milestones are earned through logged learning. Keep going!
@@ -932,7 +949,9 @@ export default function PortfolioPage() {
             </h3>
             {sortedThreads.length === 0 ? (
               <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
-                <span className="text-3xl mb-md block" aria-hidden="true">🌱</span>
+                <span className="mx-auto mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <Plant size={32} />
+                </span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">No evidence here yet</p>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
                   Keep logging — when you capture learning in this area, it&apos;ll show up here.

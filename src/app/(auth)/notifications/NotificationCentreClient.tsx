@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import NotificationRow from '@/components/notifications/NotificationRow';
 import EmptyState from '@/components/ui/EmptyState';
+import { Leaf, Moon } from '@/components/icons';
 
 interface Notification {
   id: string;
@@ -129,7 +130,7 @@ export default function NotificationCentreClient({
                   : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
               }`}
             >
-              🌙 Quiet Day {quietDay ? 'On' : 'Off'}
+              <span className="inline-flex items-center gap-xs"><Moon size={14} aria-hidden="true" /> Quiet Day {quietDay ? 'On' : 'Off'}</span>
             </button>
             {unreadCount > 0 && (
               <button
@@ -177,7 +178,7 @@ export default function NotificationCentreClient({
         {/* Empty state */}
         {filtered.length === 0 && (
           <EmptyState
-            emoji="🌿"
+            icon={Leaf}
             heading="Nothing here right now"
             body="That's a good thing."
             variant="inline"

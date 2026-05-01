@@ -8,6 +8,7 @@ import { FormField, Input, TextArea, Select } from '../primitives/FormField';
 import { RangeInput } from '../primitives/RangeInput';
 import { MaterialsList } from '../primitives/MaterialsList';
 import { ThreadPicker } from '../primitives/ThreadPicker';
+import { Note, Timer, Toolbox, GraduationCap, Eye, Compass } from '@/components/icons';
 import { TagInput } from '../primitives/TagInput';
 
 interface ActivityEditorProps {
@@ -25,7 +26,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
 
   return (
     <>
-      <Panel title="Activity Content" emoji="📝">
+      <Panel title="Activity Content" Icon={Note}>
         <FormField label="Title" required>
           <Input value={act.title} onChange={(v) => setField(f('title'), v)} placeholder="e.g., Find and Watch" />
         </FormField>
@@ -51,7 +52,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
         </FormField>
       </Panel>
 
-      <Panel title="Session Parameters" emoji="⏱️">
+      <Panel title="Session Parameters" Icon={Timer}>
         <div className="grid grid-cols-3 gap-3 mb-lg">
           <FormField label="Duration (mins)">
             <RangeInput
@@ -111,7 +112,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
         </FormField>
       </Panel>
 
-      <Panel title="Materials" emoji="🧱" right={<span className="text-xs text-text-muted font-sans">{act.materials.length} items</span>}>
+      <Panel title="Materials" Icon={Toolbox} right={<span className="text-xs text-text-muted font-sans">{act.materials.length} items</span>}>
         <MaterialsList
           materials={act.materials}
           onAdd={() => setField(f('materials'), [...act.materials, createEmptyMaterial()])}
@@ -125,7 +126,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
         />
       </Panel>
 
-      <Panel title="Facilitator Guidance" emoji="👩‍🏫">
+      <Panel title="Facilitator Guidance" Icon={GraduationCap}>
         <FormField label="Before the Activity" hint="What to prepare, mindset to set">
           <TextArea value={act.facilitatorGuidance.before ?? ''} onChange={(v) => setField(ff('facilitatorGuidance', 'before'), v)} rows={3} />
         </FormField>
@@ -137,7 +138,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
         </FormField>
       </Panel>
 
-      <Panel title="Observation & Reflection" emoji="👁️" defaultOpen={false}>
+      <Panel title="Observation & Reflection" Icon={Eye} defaultOpen={false}>
         <FormField label="Observation Prompts" hint="What to watch for. Press Enter to add.">
           <TagInput
             values={act.observationPrompts}
@@ -154,7 +155,7 @@ export function ActivityEditor({ fieldPrefix, setField, toggleArrayItem, doc, ca
         </FormField>
       </Panel>
 
-      <Panel title="Capability Threads" emoji="🧭" defaultOpen={false} right={<span className="text-xs text-text-muted font-sans">{act.capabilityThreadIds.length} selected</span>}>
+      <Panel title="Capability Threads" Icon={Compass} defaultOpen={false} right={<span className="text-xs text-text-muted font-sans">{act.capabilityThreadIds.length} selected</span>}>
         <ThreadPicker
           threads={capabilityThreads}
           selected={act.capabilityThreadIds}

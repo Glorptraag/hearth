@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Flame } from '@/components/icons';
 
 interface Learner {
   id: string;
@@ -80,7 +81,7 @@ export default function RecentEntryCard({ entry, learners }: RecentEntryCardProp
         </p>
         {entry.source === 'hearth_session' && (
           <span className="inline-flex items-center gap-xs px-2 py-0.5 bg-ember/[0.08] text-ember border border-ember/15 rounded-[6px] font-sans text-[0.65rem] font-medium">
-            🔥 From community
+            <Flame size={12} aria-hidden="true" /> From community
           </span>
         )}
       </div>

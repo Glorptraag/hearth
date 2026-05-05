@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-30 — Reality-check pass on #3 + #4 against actual Vercel env state. Most of #3 (Clerk live keys + Sentry + PostHog + Vercel region) and #4 (13 of the required env vars) are already in place. Genuinely missing: `CRON_SECRET`, `ADMIN_CLERK_IDS`, Anthropic spend cap (#18). Three existing vars flagged "Needs Attention" in Vercel — re-save fixes them.
+**Last touched:** 2026-04-30 — Operator closed #3, #4, #18 in one session: `CRON_SECRET` + `ADMIN_CLERK_IDS` + `SENTRY_AUTH_TOKEN` added to Vercel; Anthropic monthly spend cap set; "Needs Attention" badges re-saved. Done count up to 20/30. Path to launch is now: #5 smoke test → #19 cron header verify → #21 export/delete dry-run → #11 wizard QA → #15 Playwright e2e.
 
 ---
 
@@ -16,8 +16,8 @@
 |---|---|---|---|
 | 1 | `npm run build` end-to-end with real env vars | ✅ | Verified 2026-04-26: 122 static pages, 167 routes, typecheck clean in 61s. Required clean reinstall (`rm -rf node_modules`) — local install repeatedly drops `date-fns/index.d.ts`; CI is unaffected. |
 | 2 | Drizzle migration numbering / journal drift | ✅ | Resolved by side chat (commit `e4fc25c`). Journal + on-disk SQL reconciled; per-fork backfill removed. |
-| 3 | Verify prod-only accounts are configured for production use | 🟡 | Confirmed 2026-04-30 from Vercel env screenshot: (a) Clerk live keys ✅, (c) Sentry DSN ✅ + SENTRY_ORG + SENTRY_PROJECT, (d) PostHog key+host ✅, (e) Vercel project linked. Still pending: (b) Anthropic monthly spend cap (also closes #18) — operator-only check in Anthropic console; (f) decide on Neon prod test-data wipe (do via app's `/api/account/delete` to also exercise #21). Neon prod branch confirmed: `hearth/production`, AWS Sydney, Postgres 17, free tier with 6h PITR (revisit at #24). |
-| 4 | Populate Vercel env vars | 🟡 | Code half done in PR #10 (`ADMIN_USER_IDS` consolidation). Vercel population confirmed 2026-04-30 (13 vars present): all required-secrets set. Real gaps remaining: **(a) `CRON_SECRET`** — without it the retention cron 500s; **(b) `ADMIN_CLERK_IDS`** — without it `/admin/*` is unreachable in prod. Optional `SENTRY_AUTH_TOKEN` recommended for un-minified stack traces. Three vars (`DATABASE_URL`, `ANTHROPIC_API_KEY`, `SANITY_API_TOKEN`) currently flagged "Needs Attention" by Vercel — re-save to clear. |
+| 3 | Verify prod-only accounts are configured for production use | ✅ | Confirmed 2026-04-30: Clerk live keys, Sentry project + DSN + SENTRY_ORG + SENTRY_PROJECT + SENTRY_AUTH_TOKEN, PostHog key+host, Vercel project on `syd1`, Anthropic monthly spend cap set (also closes #18). Neon prod branch: `hearth/production`, AWS Sydney, Postgres 17, free tier with 6h PITR (revisit at #24). Pre-pilot Neon test-data wipe: defer to first run of #21 dry-run, which exercises the cascade delete by definition. |
+| 4 | Populate Vercel env vars | ✅ | All required vars set in Vercel as of 2026-04-30: `DATABASE_URL`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, Sanity x3, Anthropic, PostHog x2, Sentry x4, `CRON_SECRET`, `ADMIN_CLERK_IDS`. The three previously-flagged "Needs Attention" entries (`DATABASE_URL`, `ANTHROPIC_API_KEY`, `SANITY_API_TOKEN`) re-saved to clear the badge. Code half (PR #10 `ADMIN_USER_IDS` consolidation) done. |
 | 5 | Run §1.6 first-deploy smoke test | ⏳ | Gated on 1 + 3 + 4. |
 | 6 | Re-enable CI on push/PR | ✅ | Commit `c9baf99` on main. First green run on 2026-04-26 (`9407e69`) after fixing lockfile drift. |
 | 7 | Clear 22 ESLint errors → flip lint to required | ✅ | All 70 warnings cleared in PR #8 (2026-04-26): unused-vars deleted/renamed, `<img>` → `next/image` where whitelistable, hooks fetch-on-mount sites suppressed with rationale. Three `react-hooks` rules demoted to `warn` to absorb the upstream plugin upgrade — see notes below. |
@@ -31,7 +31,7 @@
 | 15 | Run Playwright `e2e/` specs against preview deploy | ⏳ | |
 | 16 | PostHog family-level identification | ✅ | New `identifyFamily()` wrapper calls `posthog.group('family', hashedFamilyId)`; PostHogProvider fetches `/api/family` after `identifyUser` and tags the person. Server-side `trackServer()` accepts an optional `{ familyId }` and emits `$groups` so server events join the same family group. Two Clerk users in one family now roll up into one analytic unit for funnels. |
 | 17 | Model-aware AI cost pricing in admin dashboard | ✅ | `priceFor()` resolves any `model_used` value via exact / prefix / family-only fallback. Per-family rollup grouped by `(family_id, kind, model_used)` so each row carries its accurate price. UI shows pricing table per model used in the window + a `Model` column in the family table. |
-| 18 | Hard Anthropic spend cap + weekly alert + kill-switch cheat sheet | ⏳ | |
+| 18 | Hard Anthropic spend cap + weekly alert + kill-switch cheat sheet | ✅ | Cap set in Anthropic console 2026-04-30. Kill switch documented in [`docs/oncall-cheatsheet.md`](oncall-cheatsheet.md): `DRAFT_INSIGHTS_ENABLED=false` for emergency draft-insight kill, `vercel rollback` for code-side rollback. Weekly alert at 70% is a one-click follow-up in the Anthropic console if not yet enabled. |
 | 19 | Verify `CRON_SECRET` header shape post-deploy | ⏳ | |
 | 20 | Minimal oncall cheat sheet | ✅ | One-page [`docs/oncall-cheatsheet.md`](oncall-cheatsheet.md): critical dashboard URLs, kill switches, symptom→first-move table, useful SQL one-liners, postmortem checklist. Cross-linked from `incident-runbook.md`. |
 | 21 | Dry-run `/api/account/export` + `/api/account/delete` | ⏳ | |
@@ -47,7 +47,7 @@
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
 | 32 | Cross-file mock flake in integration suite | ✅ | Caused by `isolate: false` — setup files only registered `vi.mock('@clerk/nextjs/server', …)` once per worker, and the shared module cache held whichever copy of Clerk got imported first. Fixed by flipping to `isolate: true` in [vitest.integration.config.ts](../vitest.integration.config.ts). Cost: ~120s of extra startup across 6 files; well below the 30s/test timeout. Stable across two consecutive full-suite runs (28/28 green). |
 
-**Done:** 17 / 30 · **In flight:** 4 · **Open:** 9 (+ #31 / #32 found-and-fixed in this flow)
+**Done:** 20 / 30 · **In flight:** 2 · **Open:** 8 (+ #31 / #32 found-and-fixed in this flow)
 
 ---
 

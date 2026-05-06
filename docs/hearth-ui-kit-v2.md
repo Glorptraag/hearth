@@ -1,8 +1,10 @@
 # Hearth UI Kit — Canonical Component Reference v1
 
+> **⚠️ PARTIALLY OUTDATED — v3 pending Dashboard Dark v3 rebuild.** This document still references v1 design fundamentals: deleted fonts (Crimson Text, Inter), v1 status hex values (`#4ADE80`, `#FBBF24`, etc.), v1 token names, and v1 shadow tokens. For tokens, fonts, shadows, and color values consult [hearth-canonical-design-tokens-v2.md](hearth-canonical-design-tokens-v2.md) + [hearth-design-system-v2.1-addendum.md](hearth-design-system-v2.1-addendum.md). Component patterns and anatomy described here remain useful as structural reference, but **do not copy color/font/shadow values verbatim** — translate through v2 tokens.
+
 > **Date:** 18 March 2026  
 > **Replaces:** `Hearth_LMS_UI_Kit.html` (retired — zero classes consumed by any prototype)  
-> **Companion:** `hearth-canonical-design-tokens-v1.md` (full token spec with hex values and Tailwind mappings)  
+> **Companion:** `hearth-canonical-design-tokens-v1.md` (full token spec with hex values and Tailwind mappings) — **archived; use v2**  
 > **Source of truth:** `hearth-dashboard-dark.html` / `hearth-dashboard-evening.html`  
 > **Role:** This is the build reference. Every component in the Next.js app conforms to the patterns described here.
 

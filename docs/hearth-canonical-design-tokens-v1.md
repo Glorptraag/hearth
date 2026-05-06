@@ -1,5 +1,7 @@
 # Hearth Design System — Canonical Token Spec v1
 
+> **⚠️ ARCHIVED — superseded 2026-04-30.** The canonical token system is now [hearth-canonical-design-tokens-v2.md](hearth-canonical-design-tokens-v2.md), with addenda in [hearth-design-system-v2.1-addendum.md](hearth-design-system-v2.1-addendum.md). v1 is retained for historical reference and Appendix A (WCAG AA token-value exceptions). Do not use v1 token names, shadows, or fonts in new work.
+
 > **Date:** 18 March 2026  
 > **Source of truth:** `hearth-dashboard-dark.html` (primary) and `hearth-dashboard-evening.html` (alternate theme)  
 > **Purpose:** Every token, rule, and pattern for the Next.js / Tailwind build. All 17 other screens conform to this — not the other way around.

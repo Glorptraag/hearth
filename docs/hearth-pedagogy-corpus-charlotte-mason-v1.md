@@ -2,6 +2,8 @@
 
 # Hearth Pedagogy Corpus — Charlotte Mason (Proof of Concept)
 
+> **📌 PROOF OF CONCEPT — NOT FULL CORPUS.** This document represents ~30% of target corpus volume. It is structurally complete (all six layers) and validated the retrieval model end-to-end, but a full corpus authoring sprint is still pending. Treat as reference shape, not complete content.
+
 > **Status:** v1 proof of concept. Approximately 30% of target volume. Structurally complete — all six layers represented.
 > **Architecture reference:** `hearth-pedagogy-knowledge-base-architecture-v1.md`
 > **Source status:** All excerpts from Mason, Charlotte M. *Home Education*. Home Education Series, Volume 1. London: Kegan Paul, Trench, Trübner & Co., Ltd., 1906 (Fifth Edition, Revised and Enlarged). Public domain worldwide (Mason d. 1923). Full text: [Project Gutenberg eBook #71087](https://www.gutenberg.org/ebooks/71087).

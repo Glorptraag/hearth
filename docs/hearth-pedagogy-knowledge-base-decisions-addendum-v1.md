@@ -2,6 +2,8 @@
 
 # Hearth Decisions Log — Pedagogy Knowledge Base Addendum
 
+> **⚠️ ARCHIVED — superseded by [hearth-pedagogy-knowledge-base-decisions-addendum-v2.md](hearth-pedagogy-knowledge-base-decisions-addendum-v2.md).** v1 retained for historical reference. Use v2 for the current canonical decisions.
+
 > **Parent document:** `hearth-decisions-log-v1.md` — append this section to the main log under a new "Pedagogy Knowledge Base" category.
 > **Decision date:** 2026-04-11
 > **Trigger:** Drew raised the pentagon-differentiation problem. Current `pedagogicalFramework` documents are too thin to carry the weight of pedagogy-as-differentiator once packs are well-built. The thin framework definitions produce thin AI output no matter how well the prompt is engineered. Fix requires structural, not cosmetic, changes.

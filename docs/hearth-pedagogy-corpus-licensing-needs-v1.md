@@ -2,6 +2,8 @@
 
 # Hearth Pedagogy Corpora — Licensing Needs
 
+> **⚠️ ARCHIVED — superseded by [hearth-pedagogy-corpus-licensing-needs-v2.md](hearth-pedagogy-corpus-licensing-needs-v2.md).** Retained for reference; consult v2 for the current licensing picture.
+
 > **Status:** Action document. Identifies in-copyright primary sources that need to be licensed, permission-sought, or intentionally paraphrased-with-attribution for the pedagogy knowledge base build.
 > **Architecture reference:** `hearth-pedagogy-knowledge-base-architecture-v1.md`
 > **Companion:** `hearth-pedagogy-corpus-charlotte-mason-v1.md` (proof of concept, no licensing needed — Mason is fully public domain)

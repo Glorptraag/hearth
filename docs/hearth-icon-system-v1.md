@@ -1,10 +1,10 @@
 # Hearth Icon System — v1
 
-> **Status:** Active. Document of record for icon usage in Hearth.
+> **Status:** Active. Document of record for icon usage in Hearth. **S14 shipped 2026-04-30** — Phosphor is now adopted across all `src/` UI surfaces. The Lucide → Phosphor migration map in §8 remains useful only for any future porting of frozen prototypes (`prototypes/` are reference-only and may still contain Lucide markup).
 > **Production library:** [@phosphor-icons/react](https://phosphoricons.com) (regular weight only)
-> **Prototype library:** Lucide via CDN
+> **Prototype library (historical):** Lucide via CDN — used only in `prototypes/`; do not introduce Lucide into `src/`.
 > **Decision record:** `docs/hearth-decisions-log-v1.md` (S14)
-> **Token spec:** `docs/hearth-canonical-design-tokens-v1.md` Appendix B
+> **Token spec:** `docs/hearth-canonical-design-tokens-v1.md` Appendix B (v1 archived; icon Appendix B not yet ported into v2)
 > **Implementation:** `src/components/icons/index.tsx` (re-export surface)
 
 ---

@@ -13,6 +13,19 @@ _(none)_
 
 ## Resolved after pilot
 
+- **Onboarding family-name pre-fill silently committed Clerk surname.**
+  Resolved on branch `claude/fix-lastname-persistence-BXFXU`
+  (2026-05-06). `/api/welcome/complete` and `/api/onboarding/complete`
+  now derive `${user.lastName} Family` from Clerk and pass it to
+  `getOrCreateFamily`, so the row is born with the surname already set
+  instead of literal `"My Family"`. The onboarding family-name input
+  is now optional: it's seeded from Clerk via `useEffect` once
+  `useUser()` hydrates (only while untouched, so a user edit — or a
+  cleared field — is preserved), and `handleSaveFamily` only PATCHes
+  `/api/family` when the user typed an override (with `res.ok`
+  checking). The dashboard no longer surfaces `"Douglas"` for a
+  Douglas-Clerk identity unless the user explicitly chose it.
+
 - **`source .env.local` fails on `&` in DATABASE_URL** — Resolved.
   `package.json#scripts.test:integration` now invokes
   `node --env-file-if-exists=.env.test.local --env-file-if-exists=.env.local

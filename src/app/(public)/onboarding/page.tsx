@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { LEARNER_COLOURS, type Pedagogy } from '@/types';
@@ -40,12 +40,18 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Step 2 state
-  const defaultFamilyName = user?.lastName
-    ? `${user.lastName} Family`
-    : '';
-  const [familyName, setFamilyName] = useState(defaultFamilyName);
+  // Step 2 state. Family name is optional — Clerk's lastName seeds the default
+  // (already persisted by /api/welcome/complete), and this field only overrides
+  // it. We sync the input once Clerk hydrates, but only while it's untouched
+  // so a user's edit (including clearing it) is never clobbered.
+  const [familyName, setFamilyName] = useState('');
+  const [familyNameTouched, setFamilyNameTouched] = useState(false);
   const [children, setChildren] = useState<ChildDraft[]>([emptyChild(0)]);
+
+  useEffect(() => {
+    if (familyNameTouched) return;
+    if (user?.lastName) setFamilyName(`${user.lastName} Family`);
+  }, [user?.lastName, familyNameTouched]);
 
   function addChild() {
     if (children.length >= 6) return;
@@ -70,19 +76,23 @@ export default function OnboardingPage() {
       setError('Add at least one child with a name.');
       return;
     }
-    if (!familyName.trim()) {
-      setError('Enter a family name.');
-      return;
-    }
 
     setSaving(true);
     try {
-      // Update family name
-      await fetch('/api/family', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ familyName: familyName.trim() }),
-      });
+      // Family name is optional — only PATCH when the user supplied a value
+      // to override the Clerk-derived default already on the family row.
+      const trimmedFamilyName = familyName.trim();
+      if (trimmedFamilyName) {
+        const familyRes = await fetch('/api/family', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ familyName: trimmedFamilyName }),
+        });
+        if (!familyRes.ok) {
+          setError('Could not save your family name. Please try again.');
+          return;
+        }
+      }
 
       // Create learners
       for (let i = 0; i < validChildren.length; i++) {
@@ -253,15 +263,18 @@ export default function OnboardingPage() {
               Your Family
             </h1>
 
-            {/* Family name */}
+            {/* Family name — optional override; defaults to Clerk surname */}
             <div>
               <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs block">
-                Family Name
+                Family Name <span className="text-text-muted font-normal normal-case tracking-normal">(optional)</span>
               </label>
               <input
                 type="text"
                 value={familyName}
-                onChange={(e) => setFamilyName(e.target.value)}
+                onChange={(e) => {
+                  setFamilyNameTouched(true);
+                  setFamilyName(e.target.value);
+                }}
                 placeholder="e.g. Douglas Family"
                 className="w-full rounded-[6px] border border-border-subtle bg-surface-panel px-md py-sm font-serif text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-200"
               />

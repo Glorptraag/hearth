@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { families, familyLibrary } from '@/lib/db/schema';
 import { getOrCreateFamily } from '@/lib/auth/helpers';
@@ -10,7 +10,11 @@ export async function POST() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const family = await getOrCreateFamily(userId);
+  const user = await currentUser();
+  const familyName = user?.lastName?.trim()
+    ? `${user.lastName.trim()} Family`
+    : undefined;
+  const family = await getOrCreateFamily(userId, familyName);
 
   // Mark onboarding complete
   await db

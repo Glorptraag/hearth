@@ -9,7 +9,39 @@ walkthrough. Each item is a follow-up; none are pilot blockers.
 
 ## Open
 
-_(none)_
+- **Onboarding family-name pre-fill silently commits Clerk surname.**
+  `src/app/(public)/onboarding/page.tsx:44-47` initialises the family-name
+  input with `${user.lastName} Family`. A user who accepts the pre-fill
+  (or doesn't notice it after Clerk's `useUser()` hydrates post-mount)
+  ships their surname into `families.familyName`, and the dashboard
+  greeting at `src/app/(auth)/dashboard/DashboardClient.tsx:111` strips
+  ` Family` and renders e.g. "Douglas". Reproduces consistently for the
+  dev Clerk identity (`lastName = "Douglas"`): every new sign-up under
+  the same Clerk profile re-derives "Douglas Family" as the default,
+  which reads as cross-account persistence even though each family row
+  is fresh.
+
+  Linked gaps surfaced by the same survey, fix together:
+
+  - `src/app/api/welcome/complete/route.ts:12` and
+    `src/app/api/onboarding/complete/route.ts:13` call
+    `getOrCreateFamily(userId)` with no `familyName`; the row is born as
+    literal `"My Family"` (`src/lib/auth/helpers.ts:19`) if onboarding
+    is ever skipped. Pass `user.lastName` through so the fallback is
+    `"<Surname> Family"`.
+  - `onboarding/page.tsx:81-85` does not check `res.ok` on the
+    `PATCH /api/family` call — a silent failure leaves "My Family" on
+    the dashboard. Add error surfacing.
+  - `useState(defaultFamilyName)` runs once; if `useUser()` resolves
+    after first render, the input visibly jumps from empty to
+    "<Surname> Family" mid-flow. Sync via effect when the field is
+    still untouched, or drop the auto-fill in favour of the existing
+    `placeholder="e.g. Douglas Family"`.
+
+  Survey-only on branch `claude/fix-lastname-persistence-BXFXU`
+  (2026-05-06); fix deferred. Verify after fix: Clerk identity with
+  `lastName = "Douglas"` → finish onboarding without touching the
+  field → dashboard must NOT read "Douglas".
 
 ## Resolved after pilot
 

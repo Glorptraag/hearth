@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useTheme } from "@/hooks/use-theme";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
+import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
 import {
   House,
   CalendarBlank,
@@ -57,19 +58,6 @@ const NAV_SECTIONS: ReadonlyArray<{
   },
 ];
 
-const BOTTOM_NAV_ITEMS: ReadonlyArray<{
-  href: string;
-  label: string;
-  Icon: NavIcon;
-  primary?: boolean;
-}> = [
-  { href: "/dashboard", label: "Home", Icon: House },
-  { href: "/our-story", label: "Story", Icon: BookOpenText },
-  { href: "/log", label: "Log", Icon: PencilSimpleLine, primary: true },
-  { href: "/planner", label: "Plan", Icon: CalendarBlank },
-  { href: "/explore/activities", label: "Explore", Icon: Compass },
-];
-
 function isActive(pathname: string, href: string): boolean {
   if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/our-story") return pathname === "/our-story";
@@ -83,15 +71,6 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/settings") return pathname === "/settings";
   if (href === "/notifications") return pathname === "/notifications";
   if (href.startsWith("/hearths/")) return pathname.startsWith(href);
-  return false;
-}
-
-function isActiveBottom(pathname: string, href: string): boolean {
-  if (href === "/dashboard") return pathname === "/dashboard";
-  if (href === "/our-story") return pathname.startsWith("/our-story");
-  if (href === "/log") return pathname === "/log";
-  if (href === "/planner") return pathname.startsWith("/planner");
-  if (href === "/explore/activities") return pathname.startsWith("/explore");
   return false;
 }
 
@@ -328,46 +307,15 @@ export default function AuthLayout({
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto pb-[72px] lg:pb-0">
+        {/* Main content. Bottom padding clears the mobile nav (~72px) plus the
+            iOS home-indicator safe area on notched devices. lg: drops it. */}
+        <main className="flex-1 overflow-y-auto pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-0">
           <ToastProvider>{children}</ToastProvider>
         </main>
       </div>
 
       {/* Mobile bottom nav — hidden at lg */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm lg:hidden">
-        {BOTTOM_NAV_ITEMS.map((item) => {
-          const active = isActiveBottom(pathname, item.href);
-          const { Icon } = item;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[var(--ease-default)] ${
-                item.primary
-                  ? active
-                    ? "text-ember"
-                    : "text-ember/80"
-                  : active
-                    ? "text-ember"
-                    : "text-text-muted"
-              }`}
-            >
-              <span
-                className={
-                  item.primary
-                    ? "flex h-[44px] w-[44px] items-center justify-center rounded-full bg-ember text-text-inverse shadow-ember"
-                    : "inline-flex"
-                }
-                aria-hidden="true"
-              >
-                <Icon size={item.primary ? 22 : 22} />
-              </span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <MobileBottomNav />
     </div>
     </PostHogProvider>
   );

@@ -216,6 +216,82 @@ export const activity = defineType({
       of: [{ type: 'reference', to: [{ type: 'badge' }] }],
     }),
     defineField({
+      name: 'workbench',
+      title: 'Workbench (parent-off addendum)',
+      type: 'object',
+      description:
+        'Optional. A parent-off addendum: child returns alone to material the parent has already introduced. See claude-kindling/design/workbench-specification.md.',
+      fields: [
+        defineField({
+          name: 'handOffFraming',
+          title: 'Hand-off Framing',
+          type: 'array',
+          description:
+            "The parent's closing line at the tail of the facilitated activity. Conversational, not a script. ~80 words max.",
+          of: [{ type: 'block', styles: [{ title: 'Normal', value: 'normal' }] }],
+          validation: (r) => r.required(),
+        }),
+        defineField({
+          name: 'parentOffGuidance',
+          title: 'Parent-Off Guidance',
+          type: 'array',
+          description:
+            'What the parent does and explicitly does NOT do once the bench is the child\'s. Must include explicit "do not" language. ~120 words max.',
+          of: [{ type: 'block', styles: [{ title: 'Normal', value: 'normal' }] }],
+          validation: (r) => r.required(),
+        }),
+        defineField({
+          name: 'whatTheBenchInvites',
+          title: 'What the Bench Invites',
+          type: 'text',
+          description:
+            'Descriptive of affordance, not a task list. 1–3 sentences. No duration or completion language.',
+          validation: (r) => r.required().max(400),
+        }),
+        defineField({
+          name: 'evidenceTrail',
+          title: 'Evidence Trail',
+          type: 'text',
+          description:
+            'What naturally accumulates that the parent can later notice. For HEU and passive evidence collection. 1–2 sentences.',
+          validation: (r) => r.required().max(300),
+        }),
+        defineField({
+          name: 'materialAssets',
+          title: 'Material Assets at the Bench',
+          type: 'array',
+          description: 'Hearth-supplied assets that live at the workbench.',
+          of: [{ type: 'reference', to: [{ type: 'asset' }] }],
+          validation: (r) => r.required().min(1).max(8),
+        }),
+        defineField({
+          name: 'childFacingSetupNotes',
+          title: 'Child-Facing Setup Notes',
+          type: 'text',
+          description:
+            'Where the bench lives, how materials are laid out. The parent reads this once when setting up.',
+          validation: (r) => r.max(300),
+        }),
+        defineField({
+          name: 'workbenchId',
+          title: 'Workbench ID',
+          type: 'string',
+          description:
+            "Must match a workbenches[].id declared on the parent pack. E.g., 'wb_roots_discovery'.",
+          validation: (r) => r.required(),
+        }),
+        defineField({
+          name: 'capabilityThreadsSecondary',
+          title: 'Capability Threads (Secondary)',
+          type: 'array',
+          description:
+            'Threads the workbench layer reinforces. EF7 (Self-Regulation & Persistence) is canonical.',
+          of: [{ type: 'reference', to: [{ type: 'capabilityThread' }] }],
+          validation: (r) => r.max(4),
+        }),
+      ],
+    }),
+    defineField({
       name: 'deliveryChannel',
       title: 'Delivery Channel',
       type: 'string',

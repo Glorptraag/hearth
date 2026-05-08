@@ -6,6 +6,8 @@ import type {
   BadgeDraft,
   MaterialDraft,
   FurtherReadingItem,
+  WorkbenchDraft,
+  WorkbenchPackDraft,
 } from './types';
 
 function uid() {
@@ -101,6 +103,29 @@ export function createEmptyMaterial(): MaterialDraft {
     name: '',
     required: true,
     alternative: '',
+  };
+}
+
+export function createEmptyWorkbench(): WorkbenchDraft {
+  return {
+    handOffFraming: '',
+    parentOffGuidance: '',
+    whatTheBenchInvites: '',
+    evidenceTrail: '',
+    materialAssetIds: [],
+    childFacingSetupNotes: '',
+    workbenchId: '',
+    capabilityThreadsSecondaryIds: [],
+  };
+}
+
+export function createEmptyWorkbenchPack(id = ''): WorkbenchPackDraft {
+  return {
+    _key: uid(),
+    id,
+    name: '',
+    consolidatesPaths: [],
+    physicalForm: '',
   };
 }
 

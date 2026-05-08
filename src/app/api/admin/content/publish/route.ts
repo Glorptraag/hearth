@@ -6,7 +6,12 @@ import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
 import { createBadge, createFullModule, createPack } from '@/lib/sanity/mutations';
 import { transformBadge, transformModuleForFullCreate, transformPack } from '@/lib/content-studio/sanity-transform';
-import { packPublishSchema } from '@/lib/content-studio/validation';
+import {
+  packPublishSchema,
+  workbenchContentFlags,
+  workbenchIdResolutionFlags,
+  type WorkbenchFlag,
+} from '@/lib/content-studio/validation';
 import type { StudioState } from '@/lib/content-studio/types';
 
 export async function POST(req: Request) {
@@ -38,6 +43,30 @@ export async function POST(req: Request) {
       { error: 'Validation failed', issues: validation.error.issues },
       { status: 422 },
     );
+  }
+
+  // Workbench addendum §5 — soft validation. Surface flags but do not block.
+  const workbenchFlags: WorkbenchFlag[] = [];
+  const declaredIds = new Set((pack.workbenches ?? []).map((w) => w.id));
+  workbenchFlags.push(
+    ...workbenchIdResolutionFlags({ declaredIds, modules: pack.modules }),
+  );
+  for (const m of pack.modules) {
+    for (const a of m.approaches) {
+      for (const act of a.activities) {
+        if (!act.workbench) continue;
+        workbenchFlags.push(
+          ...workbenchContentFlags(
+            {
+              handOffFraming: act.workbench.handOffFraming,
+              parentOffGuidance: act.workbench.parentOffGuidance,
+              whatTheBenchInvites: act.workbench.whatTheBenchInvites,
+            },
+            `module[${m.title}].approach[${a.title}].activity[${act.title}]`,
+          ),
+        );
+      }
+    }
   }
 
   try {
@@ -78,6 +107,7 @@ export async function POST(req: Request) {
       packId: createdPack._id,
       moduleIds,
       badgeIds,
+      workbenchFlags,
     });
   } catch (err) {
     console.error('Publish failed:', err);

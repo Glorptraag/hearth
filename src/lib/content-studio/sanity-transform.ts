@@ -4,6 +4,7 @@ import type {
   ApproachDraft,
   ActivityDraft,
   BadgeDraft,
+  WorkbenchDraft,
 } from './types';
 import { slugify } from '@/lib/sanity/helpers';
 
@@ -31,6 +32,20 @@ export function transformBadge(badge: BadgeDraft) {
     capabilityThreadIds: badge.capabilityThreadIds.length > 0 ? badge.capabilityThreadIds : undefined,
     observationThreshold: badge.observationThreshold,
     status: badge.status as 'draft' | 'published',
+  };
+}
+
+function transformWorkbench(wb: WorkbenchDraft) {
+  return {
+    handOffFraming: wb.handOffFraming,
+    parentOffGuidance: wb.parentOffGuidance,
+    whatTheBenchInvites: wb.whatTheBenchInvites,
+    evidenceTrail: wb.evidenceTrail,
+    materialAssetIds: wb.materialAssetIds,
+    childFacingSetupNotes: wb.childFacingSetupNotes || undefined,
+    workbenchId: wb.workbenchId,
+    capabilityThreadsSecondaryIds:
+      wb.capabilityThreadsSecondaryIds.length > 0 ? wb.capabilityThreadsSecondaryIds : undefined,
   };
 }
 
@@ -66,6 +81,7 @@ export function transformActivity(activity: ActivityDraft, approachId: string) {
     reflectionPrompts: activity.reflectionPrompts.length > 0 ? activity.reflectionPrompts : undefined,
     capabilityThreadIds: activity.capabilityThreadIds.length > 0 ? activity.capabilityThreadIds : undefined,
     badgeIds: activity.enabledBadgeKeys.length > 0 ? activity.enabledBadgeKeys : undefined,
+    workbench: activity.workbench ? transformWorkbench(activity.workbench) : undefined,
     status: activity.status as 'draft' | 'published',
   };
 }
@@ -131,6 +147,7 @@ export function transformModuleForFullCreate(mod: ModuleDraft) {
         observationPrompts: act.observationPrompts.length > 0 ? act.observationPrompts : undefined,
         reflectionPrompts: act.reflectionPrompts.length > 0 ? act.reflectionPrompts : undefined,
         capabilityThreadIds: act.capabilityThreadIds.length > 0 ? act.capabilityThreadIds : undefined,
+        workbench: act.workbench ? transformWorkbench(act.workbench) : undefined,
         status: act.status,
       })),
     })),
@@ -156,6 +173,15 @@ export function transformPack(
     version: pack.version || undefined,
     moduleIds,
     badgeIds: badgeIds.length > 0 ? badgeIds : undefined,
+    workbenches:
+      pack.workbenches && pack.workbenches.length > 0
+        ? pack.workbenches.map((w) => ({
+            id: w.id,
+            name: w.name,
+            consolidatesPaths: w.consolidatesPaths.length > 0 ? w.consolidatesPaths : undefined,
+            physicalForm: w.physicalForm || undefined,
+          }))
+        : undefined,
     moduleCount: pack.modules.length,
     totalActivities: pack.modules.reduce(
       (s, m) => s + m.approaches.reduce((s2, a) => s2 + a.activities.length, 0),

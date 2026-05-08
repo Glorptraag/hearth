@@ -75,6 +75,17 @@ export interface BadgeDraft {
   status: ContentStatus;
 }
 
+export interface WorkbenchDraft {
+  handOffFraming: string;
+  parentOffGuidance: string;
+  whatTheBenchInvites: string;
+  evidenceTrail: string;
+  materialAssetIds: string[];
+  childFacingSetupNotes: string;
+  workbenchId: string;
+  capabilityThreadsSecondaryIds: string[];
+}
+
 export interface ActivityDraft {
   _key: string;
   title: string;
@@ -92,6 +103,7 @@ export interface ActivityDraft {
   capabilityThreadIds: string[];
   enabledBadgeKeys: string[];
   deliveryChannel: DeliveryChannel;
+  workbench?: WorkbenchDraft;
   status: ContentStatus;
 }
 
@@ -138,6 +150,14 @@ export interface PackIntroDraft {
   furtherReading: FurtherReadingItem[];
 }
 
+export interface WorkbenchPackDraft {
+  _key: string;
+  id: string;
+  name: string;
+  consolidatesPaths: string[];
+  physicalForm: string;
+}
+
 export interface PackDraft {
   _key: string;
   title: string;
@@ -153,6 +173,7 @@ export interface PackDraft {
   version: string;
   modules: ModuleDraft[];
   badges: BadgeDraft[];
+  workbenches?: WorkbenchPackDraft[];
   status: PackStatus;
 }
 

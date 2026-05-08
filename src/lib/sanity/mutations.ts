@@ -265,6 +265,17 @@ interface FacilitatorGuidance { before?: string; during?: string; challenges?: s
 interface AssetRefInput { assetId: string; role?: 'core' | 'optional' | 'extension'; notes?: string }
 interface CommonsTextRefInput { textId: string; role?: 'core' | 'optional' | 'extension'; presentationMode?: 'read_aloud' | 'child_reads' | 'reference_only' | 'memorisation'; notes?: string }
 
+interface WorkbenchInput {
+  handOffFraming: string | ReturnType<typeof blockText>;
+  parentOffGuidance: string | ReturnType<typeof blockText>;
+  whatTheBenchInvites: string;
+  evidenceTrail: string;
+  materialAssetIds: string[];
+  childFacingSetupNotes?: string;
+  workbenchId: string;
+  capabilityThreadsSecondaryIds?: string[];
+}
+
 interface CreateActivity {
   _id?: string;
   title: string;
@@ -284,6 +295,7 @@ interface CreateActivity {
   reflectionPrompts?: string[];
   capabilityThreadIds?: string[];
   badgeIds?: string[];
+  workbench?: WorkbenchInput;
   status?: Status;
 }
 
@@ -320,6 +332,26 @@ export async function createActivity(input: CreateActivity) {
   if (input.reflectionPrompts) doc.reflectionPrompts = input.reflectionPrompts;
   if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
   if (input.badgeIds) doc.enabledBadges = keyedRefs(input.badgeIds);
+  if (input.workbench) {
+    const wb = input.workbench;
+    const wbDoc: Record<string, unknown> = {
+      handOffFraming:
+        typeof wb.handOffFraming === 'string' ? blockText(wb.handOffFraming) : wb.handOffFraming,
+      parentOffGuidance:
+        typeof wb.parentOffGuidance === 'string'
+          ? blockText(wb.parentOffGuidance)
+          : wb.parentOffGuidance,
+      whatTheBenchInvites: wb.whatTheBenchInvites,
+      evidenceTrail: wb.evidenceTrail,
+      materialAssets: keyedRefs(wb.materialAssetIds),
+      workbenchId: wb.workbenchId,
+    };
+    if (wb.childFacingSetupNotes) wbDoc.childFacingSetupNotes = wb.childFacingSetupNotes;
+    if (wb.capabilityThreadsSecondaryIds) {
+      wbDoc.capabilityThreadsSecondary = keyedRefs(wb.capabilityThreadsSecondaryIds);
+    }
+    doc.workbench = wbDoc;
+  }
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -412,6 +444,13 @@ interface AssetCounts {
   manipulative?: number;
 }
 
+interface PackWorkbenchInput {
+  id: string;
+  name: string;
+  consolidatesPaths?: string[];
+  physicalForm?: string;
+}
+
 interface CreatePack {
   _id?: string;
   title: string;
@@ -427,6 +466,7 @@ interface CreatePack {
   totalActivities?: number;
   assetCounts?: AssetCounts;
   commonsTextCount?: number;
+  workbenches?: PackWorkbenchInput[];
   worldview?: 'christian-classical' | 'secular' | 'neutral';
   availability?: 'included' | 'premium';
   creator?: string;
@@ -455,6 +495,14 @@ export async function createPack(input: CreatePack) {
   if (input.totalActivities != null) doc.totalActivities = input.totalActivities;
   if (input.assetCounts) doc.assetCounts = input.assetCounts;
   if (input.commonsTextCount != null) doc.commonsTextCount = input.commonsTextCount;
+  if (input.workbenches) {
+    doc.workbenches = input.workbenches.map((w) => {
+      const o: Record<string, unknown> = { _key: key('wb'), id: w.id, name: w.name };
+      if (w.consolidatesPaths) o.consolidatesPaths = w.consolidatesPaths;
+      if (w.physicalForm) o.physicalForm = w.physicalForm;
+      return o;
+    });
+  }
   if (input.worldview) doc.worldview = input.worldview;
   if (input.creator) doc.creator = input.creator;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);

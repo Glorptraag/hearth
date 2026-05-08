@@ -109,6 +109,49 @@ export const pack = defineType({
     }),
     defineField({ name: 'commonsTextCount', title: 'Commons Text Count (denormalised)', type: 'number', readOnly: true }),
     defineField({
+      name: 'workbenches',
+      title: 'Workbenches',
+      type: 'array',
+      description:
+        'Optional. Pack-level controlled list of workbenches. Activities reference these by id via activity.workbench.workbenchId.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'id',
+              title: 'ID',
+              type: 'string',
+              description: "Stable identifier. E.g., 'wb_roots_discovery'.",
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'name',
+              title: 'Name',
+              type: 'string',
+              description: 'Human-readable name shown in admin views.',
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'consolidatesPaths',
+              title: 'Consolidates Paths',
+              type: 'array',
+              of: [{ type: 'string' }],
+            }),
+            defineField({
+              name: 'physicalForm',
+              title: 'Physical Form',
+              type: 'text',
+              description: 'Brief description for parent setup.',
+            }),
+          ],
+          preview: {
+            select: { title: 'name', subtitle: 'id' },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: 'worldview',
       title: 'Worldview',
       type: 'string',

@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { ToastProvider } from "@/components/ui/Toast";
 import { Wordmark } from "@/components/ui/Wordmark";
-import { useTheme } from "@/hooks/use-theme";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
 import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
 import {
@@ -20,37 +19,39 @@ import {
   Books,
   Compass,
   Storefront,
-  Moon,
-  Sun,
   Bell,
   Gear,
+  CaretRight,
+  UsersThree,
 } from "@/components/icons";
 
 type NavIcon = ComponentType<{ size?: number; weight?: "regular" | "fill" }>;
 
-const NAV_SECTIONS: ReadonlyArray<{
+type NavTrayItem = { href: string; label: string; Icon?: NavIcon };
+type NavRowConfig = {
   label: string;
-  items: ReadonlyArray<{ href: string; label: string; Icon: NavIcon }>;
-}> = [
+  Icon: NavIcon;
+  href?: string;
+  tray?: ReadonlyArray<NavTrayItem>;
+};
+
+const PRIMARY_NAV: ReadonlyArray<NavRowConfig> = [
+  { label: "Your Hearth", Icon: House, href: "/dashboard" },
+  { label: "This Week", Icon: CalendarBlank, href: "/planner" },
+  { label: "Log", Icon: PencilSimpleLine, href: "/log" },
   {
-    label: "Home",
-    items: [
-      { href: "/dashboard", label: "Your Hearth", Icon: House },
-      { href: "/planner", label: "This Week", Icon: CalendarBlank },
-    ],
-  },
-  {
-    label: "Learning",
-    items: [
-      { href: "/log", label: "Log", Icon: PencilSimpleLine },
-      { href: "/our-story", label: "Our Story", Icon: BookOpenText },
+    label: "Our Story",
+    Icon: BookOpenText,
+    href: "/our-story",
+    tray: [
       { href: "/our-story/capabilities", label: "Capabilities", Icon: Sparkle },
       { href: "/our-story/portfolio", label: "Portfolios", Icon: FileText },
     ],
   },
   {
     label: "Discover",
-    items: [
+    Icon: Compass,
+    tray: [
       { href: "/library", label: "Library", Icon: Books },
       { href: "/explore/activities", label: "Explore", Icon: Compass },
       { href: "/explore/marketplace", label: "Marketplace", Icon: Storefront },
@@ -122,160 +123,86 @@ export default function AuthLayout({
     fetchHearths();
   }, []);
 
-  const { theme, toggleTheme, isAutoMode, resetToAuto } = useTheme();
-  const gathering = theme === 'gathering';
-
   const firstName = user?.firstName ?? "there";
   const initials = `${(user?.firstName ?? "H")[0]}${(user?.lastName ?? "")[0] ?? ""}`;
+  const hasUnreadHearth = hearths.some((h) => h.pendingCount > 0);
 
   return (
     <PostHogProvider>
     <div className="flex min-h-dvh bg-surface-body">
       {/* Desktop sidebar — hidden below lg */}
-      <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel p-xl">
-        {/* Brand */}
-        <Link href="/dashboard" className="mb-3xl inline-flex items-center" aria-label="Hearth — home">
-          <Wordmark
-            iconHeight={40}
-            textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
-            className="inline-flex items-center gap-md"
-          />
-        </Link>
-
-        {/* Nav sections */}
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className="mb-xl">
-            <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-              {section.label}
-            </div>
-            {section.items.map((item) => {
-              const active = isActive(pathname, item.href);
-              const { Icon } = item;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
-                    active
-                      ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
-                      : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
-                  }`}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-
-        {/* Community hearths */}
-        {hearths.length > 0 && (
-          <div className="mb-xl">
-            <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-              Community
-            </div>
-            {hearths.map((h) => {
-              const active = pathname.startsWith(`/hearths/${h.id}`);
-              return (
-                <Link
-                  key={h.id}
-                  href={`/hearths/${h.id}`}
-                  className={`mb-xs flex items-center gap-sm rounded-md px-md py-[10px] font-sans text-[0.85rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
-                    active
-                      ? 'border-border-medium bg-surface-raised text-ember'
-                      : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
-                  }`}
-                >
-                  <span className={`h-2 w-2 rounded-full flex-shrink-0 ${h.pendingCount > 0 ? 'bg-ember' : 'bg-sage'}`} />
-                  <span className="truncate">{h.name}</span>
-                  {h.pendingCount > 0 && (
-                    <span className="ml-auto flex-shrink-0 rounded-[6px] bg-ember px-1.5 py-px font-sans text-[0.65rem] font-semibold text-text-inverse">
-                      {h.pendingCount}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Bottom section: settings, notifications */}
-        <div className="mb-xl">
-          <div className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-            System
-          </div>
-          {/* Gathering mode toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
-              gathering
-                ? 'border-border-medium bg-surface-raised text-ember shadow-card'
-                : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
-            }`}
-            aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
-          >
-            {gathering
-              ? <Moon size={18} aria-hidden="true" />
-              : <Sun size={18} aria-hidden="true" />}
-            {gathering ? 'Dark Mode' : 'Gathering Mode'}
-          </button>
-          {!isAutoMode && (
-            <button
-              onClick={resetToAuto}
-              className="mb-xs flex w-full items-center gap-md rounded-md px-md py-sm font-sans text-[0.75rem] font-medium text-text-muted transition-all duration-200 hover:text-text-secondary"
-              aria-label="Reset to automatic theme switching"
-            >
-              Reset to auto
-            </button>
-          )}
+      <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel">
+        {/* Top corner: home + notifications */}
+        <div className="flex shrink-0 items-center gap-sm px-xl pt-xl pb-2xl">
           <Link
-            href="/notifications"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
-              isActive(pathname, "/notifications")
-                ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
-                : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
-            }`}
+            href="/dashboard"
+            className="relative inline-flex items-center transition-opacity duration-200 ease-[var(--ease-default)] hover:opacity-80 focus:outline-none focus-visible:opacity-80"
+            aria-label={`Hearth — home${unreadCount > 0 ? ` (${unreadCount} unread notifications)` : ''}`}
           >
-            <span className="relative inline-flex" aria-hidden="true">
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1">
-                  <NotificationBadge count={unreadCount} />
-                </span>
-              )}
-            </span>
-            Notifications
+            <Wordmark
+              iconHeight={40}
+              textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
+              className="inline-flex items-center gap-md"
+            />
+            {unreadCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[24px] top-[-2px] h-2.5 w-2.5 rounded-full bg-ember ring-2 ring-surface-panel"
+              />
+            )}
           </Link>
           <Link
-            href="/settings"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
-              isActive(pathname, "/settings")
-                ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
-                : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
+            href="/notifications"
+            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+            className={`relative ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+              isActive(pathname, '/notifications')
+                ? 'bg-surface-raised text-ember'
+                : 'text-text-muted hover:bg-ember-glow hover:text-text-primary'
             }`}
           >
-            <Gear size={18} aria-hidden="true" />
-            Settings
+            <Bell size={18} aria-hidden="true" />
+            {unreadCount > 0 && (
+              <span className="absolute right-1 top-1">
+                <NotificationBadge count={unreadCount} />
+              </span>
+            )}
           </Link>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Scrollable middle: primary nav + community */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-xl">
+          {PRIMARY_NAV.map((row) => (
+            <DesktopNavRow key={row.label} row={row} pathname={pathname} />
+          ))}
+          {hearths.length > 0 && (
+            <DesktopCommunityRow hearths={hearths} pathname={pathname} hasUnread={hasUnreadHearth} />
+          )}
+        </div>
 
-        {/* User badge */}
-        <div className="flex items-center gap-md rounded-md border border-border-subtle bg-surface-raised p-md shadow-card">
-          <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-gradient-to-br from-ember to-ember-hover font-serif text-[0.9rem] font-semibold text-surface-body shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="truncate font-sans text-[0.85rem] font-semibold text-text-primary">
-              {firstName}
+        {/* Pinned bottom: user badge → settings */}
+        <div className="shrink-0 border-t border-border-subtle px-xl py-xl">
+          <Link
+            href="/settings"
+            aria-label={`Settings — ${firstName}`}
+            className={`flex items-center gap-md rounded-md border p-md text-left transition-colors duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+              isActive(pathname, '/settings')
+                ? 'border-border-medium bg-surface-raised shadow-card'
+                : 'border-border-subtle bg-surface-raised hover:border-border-medium'
+            }`}
+          >
+            <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-gradient-to-br from-ember to-ember-hover font-serif text-[0.9rem] font-semibold text-surface-body shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
+              {initials}
             </div>
-            <div className="font-sans text-[0.75rem] text-text-muted">
-              Facilitator
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-sans text-[0.85rem] font-semibold text-text-primary">
+                {firstName}
+              </div>
+              <div className="font-sans text-[0.75rem] text-text-muted">
+                Facilitator
+              </div>
             </div>
-          </div>
+            <Gear size={16} aria-hidden="true" className="text-text-muted" />
+          </Link>
         </div>
       </nav>
 
@@ -318,5 +245,204 @@ export default function AuthLayout({
       <MobileBottomNav />
     </div>
     </PostHogProvider>
+  );
+}
+
+const DESKTOP_NAV_ROW_BASE =
+  'mb-xs flex w-full items-center gap-md rounded-md border px-md py-md text-left font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+const DESKTOP_NAV_ROW_ACTIVE =
+  'border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight';
+const DESKTOP_NAV_ROW_IDLE =
+  'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary';
+const DESKTOP_TRAY_BASE =
+  'absolute left-full top-0 z-50 ml-xs min-w-[200px] rounded-lg border border-border-subtle bg-surface-panel p-sm shadow-float';
+const DESKTOP_TRAY_ITEM_BASE =
+  'flex w-full items-center gap-md rounded-md border px-md py-sm text-left font-sans text-[0.85rem] font-medium transition-colors duration-150 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+
+function DesktopNavRow({
+  row,
+  pathname,
+}: {
+  row: NavRowConfig;
+  pathname: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const trayId = useId();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isExpandable = !!row.tray && row.tray.length > 0;
+  const ownActive = row.href ? isActive(pathname, row.href) : false;
+  const trayActive = row.tray?.some((t) => isActive(pathname, t.href)) ?? false;
+  const active = ownActive || trayActive;
+  const { Icon } = row;
+
+  const rowClass = `${DESKTOP_NAV_ROW_BASE} ${active ? DESKTOP_NAV_ROW_ACTIVE : DESKTOP_NAV_ROW_IDLE}`;
+
+  if (!isExpandable && row.href) {
+    return (
+      <Link href={row.href} className={rowClass}>
+        <Icon size={18} aria-hidden="true" />
+        <span>{row.label}</span>
+      </Link>
+    );
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (!wrapperRef.current?.contains(e.relatedTarget as Node | null)) {
+      setOpen(false);
+    }
+  };
+
+  const trigger = row.href ? (
+    <Link
+      href={row.href}
+      className={rowClass}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-controls={trayId}
+    >
+      <Icon size={18} aria-hidden="true" />
+      <span className="flex-1">{row.label}</span>
+      <CaretRight
+        size={14}
+        aria-hidden="true"
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+      />
+    </Link>
+  ) : (
+    <button
+      type="button"
+      className={rowClass}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-controls={trayId}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <Icon size={18} aria-hidden="true" />
+      <span className="flex-1">{row.label}</span>
+      <CaretRight
+        size={14}
+        aria-hidden="true"
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+      />
+    </button>
+  );
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={handleBlur}
+    >
+      {trigger}
+      {open && row.tray && (
+        <div
+          id={trayId}
+          role="menu"
+          aria-label={`${row.label} submenu`}
+          className={DESKTOP_TRAY_BASE}
+        >
+          {row.tray.map((item) => {
+            const itemActive = isActive(pathname, item.href);
+            const ItemIcon = item.Icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={`${DESKTOP_TRAY_ITEM_BASE} ${itemActive ? 'border-border-medium bg-surface-raised text-ember' : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'}`}
+              >
+                {ItemIcon && <ItemIcon size={16} aria-hidden="true" />}
+                <span className="flex-1">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DesktopCommunityRow({
+  hearths,
+  pathname,
+  hasUnread,
+}: {
+  hearths: Array<{ id: string; name: string; pendingCount: number }>;
+  pathname: string;
+  hasUnread: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const trayId = useId();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const trayActive = hearths.some((h) => pathname.startsWith(`/hearths/${h.id}`));
+
+  const rowClass = `${DESKTOP_NAV_ROW_BASE} ${trayActive ? DESKTOP_NAV_ROW_ACTIVE : DESKTOP_NAV_ROW_IDLE}`;
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={(e) => {
+        if (!wrapperRef.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        className={rowClass}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={trayId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="relative inline-flex" aria-hidden="true">
+          <UsersThree size={18} />
+          {hasUnread && (
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-ember ring-2 ring-surface-panel" />
+          )}
+        </span>
+        <span className="flex-1">Community</span>
+        <CaretRight
+          size={14}
+          aria-hidden="true"
+          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+        />
+      </button>
+      {open && (
+        <div
+          id={trayId}
+          role="menu"
+          aria-label="Community submenu"
+          className={DESKTOP_TRAY_BASE}
+        >
+          {hearths.map((h) => {
+            const active = pathname.startsWith(`/hearths/${h.id}`);
+            return (
+              <Link
+                key={h.id}
+                href={`/hearths/${h.id}`}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={`${DESKTOP_TRAY_ITEM_BASE} ${active ? 'border-border-medium bg-surface-raised text-ember' : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'}`}
+              >
+                <span className={`h-2 w-2 flex-shrink-0 rounded-full ${h.pendingCount > 0 ? 'bg-ember' : 'bg-sage'}`} />
+                <span className="flex-1 truncate">{h.name}</span>
+                {h.pendingCount > 0 && (
+                  <span className="flex-shrink-0 rounded-[6px] bg-ember px-1.5 py-px font-sans text-[0.65rem] font-semibold text-text-inverse">
+                    {h.pendingCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

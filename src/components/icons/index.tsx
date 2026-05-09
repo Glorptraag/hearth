@@ -235,7 +235,7 @@ export { MoonStars } from '@phosphor-icons/react';                   // misc.sno
 export { ChartLine } from '@phosphor-icons/react';                   // misc.no-patterns
 
 // ── Universal UI chrome ────────────────────────────────────────────
-export { ArrowLeft, ArrowRight, CaretDown, Plus, Check, X, Trash, List, Play } from '@phosphor-icons/react';
+export { ArrowLeft, ArrowRight, CaretDown, CaretRight, Plus, Check, X, Trash, List, Play } from '@phosphor-icons/react';
 
 // ── Tri-state response (yes / sometimes / not-yet) ────────────────
 export {

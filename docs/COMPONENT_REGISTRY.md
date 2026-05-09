@@ -3,7 +3,7 @@
 > **Purpose:** Single source of truth for every UI screen, its canonical file, status, and role.
 > **Rule:** Before proposing new work, check this file. Before creating a new screen, update this file.
 > **Cross-screen coherence:** `Hearth_System_Interaction_Map.md` is the canonical document for navigation flows, data relationships, and inter-screen dependencies.
-> **Last verified:** 30 April 2026
+> **Last verified:** 9 May 2026
 
 ---
 
@@ -26,7 +26,7 @@
 
 **Implementation deviations from spec:**
 - **Theme default convention:** v2.1 says gathering is default; this implementation keeps **dark as default** (`data-theme=""` or absent → dark; `data-theme="gathering"` → light) for production stability. Auto time-of-day switching covers the addendum's daytime intent. Documented in `CLAUDE.md`.
-- **Icon library:** S8 specifies Lucide; the implementation uses **Phosphor Icons** (`@phosphor-icons/react`) per Drew's call. Same single-color stroke aesthetic and 24px grid.
+- **Icon library:** S8 specifies Lucide; the implementation uses **Phosphor Icons** (`@phosphor-icons/react`) per S14. **Adopted across all UI surfaces 2026-05-01** (commit `64cd9df`). Same single-color stroke aesthetic and 24px grid.
 - **`--text-muted` value:** v2 spec is `#6B5D52`; implementation keeps WCAG-override `#726458` (3.15:1 on panel) per `hearth-canonical-design-tokens-v1.md` Appendix A.
 
 **Pending v2 / v2.1 deliverables (not yet produced):**
@@ -48,8 +48,10 @@
 ### Production Code
 | Path | Purpose |
 |---|---|
-| `src/components/icons/index.tsx` | Central Phosphor re-export surface. App code imports from here, never from `@phosphor-icons/react` directly. Holds placeholder slots for illustrator-bespoke marks (`ChildShape*`, `HearthBrandMark`). |
+| `src/components/icons/index.tsx` | Central Phosphor re-export surface (~140 icons + IconProvider). App code imports from here, never from `@phosphor-icons/react` directly. Holds placeholder slots for illustrator-bespoke marks (`ChildShape*`, `HearthBrandMark`). Mounted in root `layout.tsx`; defaults every icon to `size 18` / `regular` weight. |
 | `src/lib/icon-registry.ts` | Legacy emoji registry (`<HearthIcon>`). Coexists with Phosphor system; components migrate as touched. |
+| `src/components/nav/` | **Mobile bottom nav** (built 2026-05-06). 5-tab parent-facing bar (Home / Story / Log / Plan / Explore). Plan + Explore are trayed tabs that anchor a vertical column of destinations above the bar. Single source of truth: `navConfig.ts`. Components: `MobileBottomNav.tsx`, `NavTab.tsx`, `TrayedTab.tsx`, `NavTray.tsx`, `TrayRow.tsx`, `LogButton.tsx`. Replaces the inline 5-tab bar previously in `(auth)/layout.tsx`. |
+| `src/lib/content-studio/` | **Editorial workbench** (built 2026-05-08, commit `2493d5e`). Optional `workbench` on activities + `workbenches` on packs per `workbench-claude-code-addendum`. Soft-flag helpers (`workbenchIdResolutionFlags`, `workbenchContentFlags`) surface non-blocking validation in `/api/admin/content/publish` response. Files: `types.ts`, `factories.ts`, `validation.ts` (Zod), `sanity-transform.ts`, `reducer.ts`, `workbench.test.ts` (15 cases). `/api/modules/publish` (parent path) is unchanged. |
 
 ### Reference Implementation
 `hearth-dashboard-dark-v2.html` — current source of truth for all visual patterns. **Will be superseded by `hearth-dashboard-dark-v3.html` once v2 token system is applied (per Prompt B in `hearth-v2-claude-code-prompts.md`).** Until v3 lands, v2 remains canonical.
@@ -341,8 +343,16 @@ These files have been superseded. Candidates for removal to reduce project file 
 
 ---
 
-*Registry updated 30 April 2026 — v2.1 addendum landed: gathering (light/daytime) canonicalised as second theme via `[data-theme]` scoping. Adds S14 to decisions log; introduces three new tokens (`--surface-input`, `--backdrop-modal`, `--backdrop-success`). `hearth-dashboard-evening-v2.html` flagged as pending supersession by `hearth-dashboard-gathering-v1.html`. Pending: motion utilities CSS, in-place gathering blocks in tokens v2 doc, Dashboard Dark v3 + Dashboard Gathering v1 reference builds.*
+*Registry updated 9 May 2026 — Editorial workbench shipped (PR #37, commit `2493d5e`): optional `workbench` on activity schema + `workbenches` array on pack schema per `workbench-claude-code-addendum`. `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts` adds `WorkbenchDraft` + `WorkbenchPackDraft` with Zod schemas and soft-flag helpers (id resolution, restrictive/duration/completion language, word cap). `/api/admin/content/publish` returns `workbenchFlags` alongside published ids (non-blocking). `/api/modules/publish` unchanged.*
 
-*Registry updated 30 April 2026 — Design System v2 landed: tokens v2, motion v1, decisions addendum (S7–S13), and Claude Code rollout prompts added under new "Design System v2" group. v1 tokens marked superseded but retained per versioning rules. Pending: motion utilities CSS + Dashboard Dark v3 reference build.*
+*Registry updated 6 May 2026 — Mobile bottom nav shipped (PR #36, commit `1ba1203`): 5-tab parent-facing bar (Home / Story / Log / Plan / Explore). Plan + Explore are trayed tabs that anchor a vertical column of destinations above the bar. Components in `src/components/nav/` with single-source-of-truth `navConfig.ts`. Replaces the inline bar previously in `(auth)/layout.tsx`. Spec: `docs/hearth-mobile-bottom-nav-spec-v1.md`.*
+
+*Registry updated 1 May 2026 — Phosphor adopted across all UI surfaces (PR #32, commit `64cd9df`, S14): `@phosphor-icons/react` installed; `src/components/icons/index.tsx` (~140 icons + IconProvider) mounted at root. 75+ files migrated from emoji to Phosphor `regular` weight. `--icon-*` size tokens added to `globals.css`. `docs/hearth-icon-system-v1.md` is the rules doc.*
+
+*Registry updated 1 May 2026 — Design System v2 + v2.1 applied to live code (PR #31, commit `781c0c9`): font swap (Crimson Text → Fraunces variable; Inter → DM Sans variable), status palette desaturated, body surface warmed (`#0F0D0B → #15110D`), borders flipped from ember-tinted to cream-tinted, v1 shadow tokens deleted, motion tokens + 13-class `hearth-motion-utilities.css` shipped, three v2.1 tokens (`--surface-input`, `--backdrop-modal`, `--backdrop-success`) live.*
+
+*Registry updated 30 April 2026 — v2.1 addendum landed: gathering (light/daytime) canonicalised as second theme via `[data-theme]` scoping. Adds S14 to decisions log; introduces three new tokens (`--surface-input`, `--backdrop-modal`, `--backdrop-success`). `hearth-dashboard-evening-v2.html` flagged as pending supersession by `hearth-dashboard-gathering-v1.html`.*
+
+*Registry updated 30 April 2026 — Design System v2 landed: tokens v2, motion v1, decisions addendum (S7–S13), and Claude Code rollout prompts added under new "Design System v2" group. v1 tokens marked superseded but retained per versioning rules.*
 
 *Registry updated 3 April 2026 — Community (Hearth) feature added: 3 screens, 5 components, 19 API routes, 8 tables. Update when adding or modifying screens.*

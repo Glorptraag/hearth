@@ -1,30 +1,38 @@
 # Hearth LMS — Project Status
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
-> **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v1.md` for design values.
-> **Last updated:** 21 April 2026
+> **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. `production-readiness-tracker.md` for the disposable 30-step alpha pilot path.
+> **Last updated:** 9 May 2026
 
 ---
 
-## Current Phase: Alpha Readiness
+## Current Phase: Alpha Pilot Path (20 / 30 done)
 
-**Build progress:** Next.js 16 app fully implemented — 25+ auth-protected routes, 107 API route files (~130 handlers), 30 Drizzle tables, 10 Sanity schemas, AI enrichment pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, and audit logging.
-**Design system:** Conformance pass complete — all screens revised to canonical tokens (2026-03-20).
-**Content:** Starter Pack seeded (121 Sanity docs, 79 activities).
+**Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 103 API route files, 30 Drizzle tables, **19 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.
+**Design system:** v2 + v2.1 token system **landed in code** 2026-05-01 (Fraunces + DM Sans, desaturated status palette, cream-tinted borders, motion tokens, gathering theme via `[data-theme]`). Phosphor icons adopted across all UI surfaces 2026-05-01.
+**Mobile UX:** Trayed bottom nav shipped 2026-05-06 — 5 tabs (Home/Story/Log/Plan/Explore) with anchored vertical trays for Plan + Explore.
+**Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families in Queensland, Australia.
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
 
+### Recent Milestones (May 2026)
+
+- **Editorial workbench publish validation** (shipped 8 May, PR #37, `2493d5e`) — Optional `workbench` on activity schema + `workbenches` on pack per `workbench-claude-code-addendum`. New `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts` with Zod schemas and soft-flag helpers (id resolution, restrictive/duration/completion language, word cap). `/api/admin/content/publish` returns `workbenchFlags` (non-blocking). `/api/modules/publish` parent path unchanged.
+- **Mobile bottom nav** (shipped 6 May, PR #36, `1ba1203`) — 5-tab nav with trayed Plan/Explore tabs in `src/components/nav/` (single-source-of-truth `navConfig.ts`). Staggered enter / uniform exit consuming `--motion-quick`/`--ease-default`. Focus management on tray open/close. `env(safe-area-inset-bottom)` handling.
+- **Onboarding family-name pre-fill fix** (shipped 6 May, PR #35, `21bf522`) — Welcome and onboarding-complete routes derive `${user.lastName} Family` from Clerk and pass to `getOrCreateFamily`. Onboarding family-name input becomes an optional override that syncs from Clerk while untouched.
+- **Stale-doc audit** (shipped 6 May, PR #34, `7e130fd`) — Archival banners on superseded v1 specs; `ui-kit-v2.md` flagged for deleted Crimson/Inter; `hearth-claude-code-transition-plan-v1.md` moved to `docs/archive/` (gitignored). All six pilot-issue "Open" items reconciled.
+- **Phosphor icons across all UI** (shipped 1 May, PR #32, `64cd9df`, S14) — `@phosphor-icons/react` installed; `src/components/icons/index.tsx` (~140 icons + IconProvider) mounted at root. 75+ files migrated from emoji to Phosphor `regular` weight. `--icon-*` size tokens added.
+- **Design System v2 + v2.1 applied to code** (shipped 1 May, PR #31, `781c0c9`) — Font swap, status palette desaturation, body surface warmed (`#0F0D0B → #15110D`), borders flipped from ember-tinted to cream-tinted, v1 shadow tokens deleted, motion tokens + 13-class `hearth-motion-utilities.css` shipped, three v2.1 tokens live (`--surface-input`, `--backdrop-modal`, `--backdrop-success`).
+- **Production readiness tracker** (added 26 Apr, refreshed through 8 May) — Disposable 30-step path to pilot launch. **20 / 30 done**, 2 in flight, 8 open. CI green on main; lint required.
+- **Operator config closeout** (PR #33, 5 May) — `CRON_SECRET`, `ADMIN_CLERK_IDS`, `SENTRY_AUTH_TOKEN` populated in Vercel; Anthropic monthly spend cap set; production env audit clean. Tracker items #3, #4, #18 closed.
+
 ### Recent Milestones (April 2026)
 
-- **Logger Depth Coaching** (shipped 16 Apr) — Guided/Quick mode, observation chip detail fields, coach hints API behind pluggable provider interface (retrieval default, Haiku/hybrid scaffolded), snapshot-aware reflection prompts, template-driven post-save profile nudge. Plan: `.claude/plans/PLAN-logger-depth-coaching.md`.
-- **Pedagogy Knowledge Base** (shipped 21 Apr) — Vector-search retrieval over pedagogy corpus (Charlotte Mason, Montessori, Unschooling), Voyage AI embeddings with batch rate-limit handling, richer chunk metadata, enrichment integration. Corpus docs and tooling scripts.
-- **Snapshot & Recommendations** (shipped 21 Apr) — Richer active thread trajectories, badge progress, evidence quality, curriculum coverage. Module recommendation engine scored against child snapshot signals.
-- **UI Surfaces** (shipped 21 Apr) — Capabilities thread detail panels, planner recommendations, explore relevance sorting, facilitate-mode practice patterns, pedagogy learn-more in settings.
-- **Alpha Readiness Sprint** (merged 21 Apr from cloud session) — Sentry + PostHog observability, debounced Haiku draft insights, badge assessment queue, pedagogy onboarding wizard, AI cost dashboard, deploy/incident runbooks. See `docs/alpha-readiness-pickup.md`.
-
-### Known Merge Issue
-
-`src/app/(auth)/log/page.tsx` took the cloud branch version during the alpha-readiness merge (7 conflict blocks). Logger depth coaching features (guided mode, coach hints, observation details, WatchForTodayStrip, completeness gate) need re-integration. This is the top priority for the next session.
+- **Logger Depth Coaching** (shipped 16 Apr) — Guided/Quick mode, observation chip detail fields, coach hints API behind pluggable provider interface (retrieval default, Haiku/hybrid scaffolded), snapshot-aware reflection prompts, template-driven post-save profile nudge.
+- **Pedagogy Knowledge Base** (shipped 21 Apr) — Vector-search retrieval over pedagogy corpus (Charlotte Mason, Montessori, Unschooling), Voyage AI embeddings with batch rate-limit handling, richer chunk metadata, enrichment integration.
+- **Alpha Readiness Sprint** (21 Apr) — Sentry + PostHog observability, debounced Haiku draft insights, badge assessment queue, pedagogy onboarding wizard, AI cost dashboard, deploy/incident runbooks.
+- **Test platform pilot** (23 Apr) — Four-layer vitest with Clerk v7 async mocks (`vitest.setup.ts` + `vitest.integration.setup.ts`); ephemeral Neon branch orchestrator; 28 integration cases green against real Neon across critical API routes.
+- **Pilot ops + content groundwork** (27 Apr) — Logger offline banner + offline-aware save error; PostHog family-level identification; model-aware AI cost dashboard; wizard arrow-key cycling + draft persistence; noisy-family rate-limit detection in retention cron; privacy + terms rewritten; test-family onboarding packet; oncall cheat sheet; sample-pack seed script.
 
 ---
 
@@ -34,7 +42,7 @@
 | Route | Screen |
 |-------|--------|
 | `/dashboard` | Dashboard (learner rows, moments grid, desktop right panel) |
-| `/log` | Retrospective Logger |
+| `/log` | Retrospective Logger (offline banner + autosave) |
 | `/planner` | Weekly Planner |
 | `/settings` | Family Settings |
 | `/notifications` | Notification Centre |
@@ -45,28 +53,49 @@
 | `/our-story/learner/[id]` | Learner Profile / Identity Portrait |
 | `/explore/activities` | Activity Discovery |
 | `/explore/marketplace` | Marketplace |
+| `/library` | Family Library (added/built modules visible) |
 | `/build/modules` | Module Builder |
 | `/build/badges` | Badge Creator |
 | `/badges/assess/[id]` | Badge Assessment |
 | `/module/[id]` | Module Experience |
 | `/project/[id]` | Project Experience |
 | `/invite` | Invite / Provider Codes |
+| `/admin/tokens` | Admin Token Management (auth-gated, distinct from `(admin)/`) |
 | `/hearths/[hearthId]` | Hearth Home (Our Story, Sessions, Members, Settings tabs) |
 | `/hearths/[hearthId]/sessions/[sessionId]` | Session Detail |
 | `/hearths/join/[code]` | Invite Acceptance / Join Flow |
 
-### Other
+### Admin (`(admin)/admin/`)
+| Route | Screen |
+|-------|--------|
+| `/admin` | Admin Dashboard (ops summary) |
+| `/admin/analytics` | Analytics (thread coverage, abandonment, activity heat, pack adoption, AI cost) |
+| `/admin/content` | Content Studio (draft CRUD, publish to Sanity, **workbench validation**) |
+| `/admin/content/qa` | Pack QA dashboard |
+| `/admin/content/qa/[packId]` | Pack QA detail |
+| `/admin/content/qa/issues` | QA issue list |
+| `/admin/families` | Family search / view / snapshot rebuild |
+| `/admin/invitations` | Beta invitation code management |
+| `/admin/snapshots` | Snapshot health monitoring |
+| `/admin/audit-log` | Admin action audit trail |
+
+### Public + Other
 | Route | Screen |
 |-------|--------|
 | `/` | Landing Page (public) |
 | `/welcome` | Welcome Wizard (public) |
 | `/onboarding` | Onboarding flow (public) |
+| `/sign-in/[[...sign-in]]` | Clerk sign-in (public) |
+| `/sign-up/[[...sign-up]]` | Clerk sign-up (public) |
+| `/privacy` | Privacy Policy (public) |
+| `/terms` | Terms & Conditions (public) |
 | `/dev-preview/*` | Dev preview bypass routes (no Clerk) |
-| `/admin` | Sanity Studio |
+| `/demo/*` | Static demo flows (no Clerk) |
+| `/studio/[[...tool]]` | Sanity Studio (was `/admin` — moved to `/studio`) |
 
 ---
 
-## API Surface (107 route files, ~130 handlers)
+## API Surface (103 route files, ~130 handlers)
 
 | Domain | Endpoints |
 |--------|-----------|
@@ -79,7 +108,7 @@
 | Dashboard | `GET /api/dashboard`, `GET /api/snapshot` |
 | Family | `GET\|PATCH /api/family`, `GET\|POST\|DELETE /api/family/members`, `POST /api/family/invite` |
 | Settings | `GET\|PATCH /api/settings` |
-| Modules | `GET\|POST /api/modules/drafts`, `POST /api/modules/publish` |
+| Modules | `GET\|POST /api/modules/drafts`, `POST /api/modules/publish` (parent path — unchanged by workbench addendum) |
 | Library | `GET\|POST /api/library` |
 | Evidence | `POST /api/evidence/upload` |
 | Report | `GET\|POST /api/report`, `PATCH /api/report/[reportId]`, `GET\|PATCH /api/report/[reportId]/samples`, `PATCH /api/report/[reportId]/samples/[sampleId]`, `GET /api/report/export` |
@@ -87,7 +116,7 @@
 | Account | `GET /api/account/export`, `POST /api/account/delete` |
 | Admin | `GET /api/admin/tokens`, `GET\|POST /api/admin/retention`, `GET /api/admin/audit-log`, `GET /api/admin/ops/summary` |
 | Admin Analytics | `GET /api/admin/analytics/thread-coverage\|abandonment\|activity-heat\|pack-adoption` |
-| Admin Content | `GET\|POST /api/admin/content/drafts`, `GET\|PUT\|DELETE /api/admin/content/drafts/[id]`, `POST /api/admin/content/publish` |
+| Admin Content | `GET\|POST /api/admin/content/drafts`, `GET\|PUT\|DELETE /api/admin/content/drafts/[id]`, `POST /api/admin/content/publish` (returns `workbenchFlags` — soft non-blocking validation per addendum §5) |
 | Admin Snapshots | `GET /api/admin/snapshots/stale\|health`, `POST /api/admin/snapshots/rebuild` |
 | Admin Families | `GET /api/admin/families/search`, `GET /api/admin/families/[familyId]/view`, `POST /api/admin/families/[familyId]/snapshot/rebuild` |
 | Admin Invitations | `GET\|POST /api/admin/invitations`, `GET /api/admin/invitations/[id]`, `POST /api/admin/invitations/[id]/revoke`, `GET /api/admin/invitations/expire` |
@@ -120,8 +149,22 @@
 - **Community:** `hearths`, `hearthMemberships`, `hearthSessions`, `sessionAttendance`, `sessionEvidence`, `suggestedObservations`, `sessionReflections`, `hearthInvites`
 - **Admin:** `adminAuditLog`, `invitations`, `contentStudioDrafts`
 
-### Sanity CMS — 10 schemas
-`capabilityThread`, `badge`, `activity`, `approach`, `module`, `pack`, `projectStage`, `project`, `pedagogyOverlay`, `moduleSkeleton`
+### Sanity CMS — 19 schemas
+**All published learning content lives in Sanity.** Modules, approaches, activities, packs, projects, badges, capability threads, and the pedagogy knowledge base are stored there and read at runtime via GROQ (`src/lib/sanity/{client,queries}.ts`). Postgres holds only user/transactional data — entries, snapshots, badges awarded, planner items, hearths, etc. Sanity Studio is mounted at `/studio` for direct editorial.
+
+**Curriculum content (8):** `capabilityThread`, `badge`, `asset`, `commonsText`, `activity` (with optional `workbench`), `approach`, `module`, `pack` (with optional `workbenches`)
+**Project / scaffolding (3):** `projectStage`, `project`, `moduleSkeleton`
+**Pedagogy overlay + knowledge base (8):** `pedagogyOverlay`, `pedagogicalFramework`, `pedagogySourceExcerpt`, `pedagogyPracticePattern`, `pedagogyObservationalMarker`, `pedagogyFacilitationVocabulary`, `pedagogyContraindication`, `pedagogyWorkedExample`
+
+### Content authoring paths
+
+Two writers feed Sanity. Both use the same schemas; they differ in tooling, audit trail, and which API path they go through.
+
+| Path | Used by | Entry | Output | Notes |
+|---|---|---|---|---|
+| **In-app editorial** (parent / family-authored) | Families using Module Builder | `src/app/(auth)/build/modules` UI | `POST /api/modules/publish` | Auto-sets `authorFamilyId` on the module. Goes through `src/lib/sanity/mutations.ts`. |
+| **In-app editorial** (admin / official content) | Hearth admins via Content Studio | `(admin)/admin/content` UI | `POST /api/admin/content/publish` | Accepts the optional `workbench` shape per addendum §2/§3; returns non-blocking `workbenchFlags` per §5. Used for editorial packs and revisions. |
+| **External authoring** (`claude-kindling/`) | Drew / Cowork building official packs from spec docs | `claude-kindling/library/build-mode/orchestrator.ts` (CLI) | Direct Sanity mutations with deterministic IDs | **Lives in a separate repo** — `claude-kindling/` is gitignored from this repo (sibling checkout only). Uses `register/modules.jsonl` for event trail and `specced → content_constructed` bucket gates. Bypasses `/api/modules/publish` because that endpoint violates the editorial rule. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). |
 
 ### AI Pipeline
 - **Enrichment** (`src/lib/ai/enrich.ts`): Claude Haiku enriches entries at save-time with subject detection, capability mapping, AC V9 descriptors, engagement scores, insight suggestions.
@@ -134,13 +177,18 @@
 
 ## Immediate Priorities (ordered)
 
-1. **Re-integrate logger depth coaching into merged log/page.tsx** — guided mode, coach hints, observation details, WatchForTodayStrip, completeness gate lost in alpha-readiness merge. Source: commit d9a66f1.
-2. **End-to-end testing with real family data** — validate the full loop: onboarding → log entry → AI enrichment → snapshot rebuild → dashboard/portfolio/report
-3. **npm install + tsc --noEmit + test + lint** — post-merge validation not yet run (alpha-readiness merge was fast-tracked)
-4. **Content production** — Starter Pack seeded; additional packs needed for launch diversity
-5. **Resolve remaining open design questions** — 5 still fully open from System Interaction Map (regression handling #7 affects data integrity)
-6. **Production deployment hardening** — error handling, rate limiting, edge cases
-7. **Test family onboarding** — documentation and support flow for first 10-20 families
+> Living list lives in `docs/production-readiness-tracker.md` (20/30 done). The big rocks remaining:
+
+1. **§1.6 first-deploy smoke test** (#5) — gated on a successful production build with full env, drizzle migrate, and Vercel deploy.
+2. **Verify `CRON_SECRET` header shape post-deploy** (#19).
+3. **Dry-run `/api/account/export` + `/api/account/delete`** (#21) — exercises the cascade-delete path against Neon prod branch.
+4. **Manual QA pedagogy wizard (onboarding + Settings re-run)** (#11) — never clicked through end-to-end.
+5. **Run Playwright `e2e/` specs against preview deploy** (#15).
+6. **HEU report export vs. actual QLD HEU template diff** (#23).
+7. **Editorial pass on three sample-pack drafts** (#26) — `First Term Foundations`, `Outdoor Naturalist`, `Storytellers` published as `status: 'draft'`; AC mapping required before flipping to published.
+8. **Neon PITR retention + restore drill** (#24).
+9. **Rotate `SANITY_API_TOKEN`; calendar quarterly** (#25).
+10. **Migrate rate limiter to Redis / Upstash** (#30) — design landed, do not implement until trigger conditions hit.
 
 ---
 
@@ -160,17 +208,22 @@
 | Auth | Clerk | Family account model, good free tier, Next.js middleware |
 | ORM | Drizzle | TypeScript-native, works with Neon serverless driver |
 | AI | Anthropic Haiku (write-time only) | Screens read from pre-computed Family Intelligence Snapshots |
-| Design system | Canonical spec in `hearth-canonical-design-tokens-v1.md` | Dual-theme (Dark + Gathering) via `data-theme` attribute |
+| Design system | Canonical spec in `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` + `hearth-motion-system-v1.md` | Dual-theme (Dark + Gathering) via `data-theme` attribute. v2 + v2.1 landed in code 2026-05-01 |
+| Icon library | Phosphor Icons (`@phosphor-icons/react`) per S14 | Curated re-export at `src/components/icons/index.tsx`. Adopted across all UI 2026-05-01 |
+| Mobile nav | 5-tab bottom nav with trayed Plan + Explore | `src/components/nav/` with single-source-of-truth `navConfig.ts`. Spec: `hearth-mobile-bottom-nav-spec-v1.md` |
+| Editorial workbench | Soft-flag publish validation in admin path | Optional `workbench` on activity, `workbenches` on pack. `/api/admin/content/publish` returns non-blocking `workbenchFlags`. `/api/modules/publish` parent path unchanged |
 
 ---
 
 ## Design System
 
-**Theme:** Mont Blanc Dark Coffee
-**Canonical tokens:** `hearth-canonical-design-tokens-v1.md`
-**Component reference:** `hearth-ui-kit-v2.md`
-**Implementation:** Tailwind v4 utility classes + CSS custom properties in `globals.css` (no `tailwind.config.ts`)
-**Approach:** Mobile-first. No custom decorative assets — emoji placeholders.
+**Theme:** Mont Blanc Dark Coffee (v2) + Gathering (v2.1)
+**Canonical tokens:** `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` (v1 superseded but retained per versioning rules)
+**Motion:** `hearth-motion-system-v1.md` — five duration tokens, four easings, 13 `.hearth-*` utility classes in `src/app/hearth-motion-utilities.css`
+**Component reference:** `hearth-ui-kit-v2.md` (revision to v3 pending Dashboard Dark v3 + Dashboard Gathering v1)
+**Implementation:** Tailwind v4 utility classes + CSS custom properties in `globals.css` via `@theme` (no `tailwind.config.ts`)
+**Icons:** Phosphor (`@phosphor-icons/react`) via `src/components/icons/index.tsx` — emoji placeholders gone from `src/`.
+**Approach:** Mobile-first. Trayed bottom nav for Plan/Explore. Auto time-of-day theme switching (Gathering 6am–6pm, Dark 6pm–6am).
 
 ---
 
@@ -201,10 +254,11 @@
 
 ### Technical
 - **Payment processing (Stripe)** — STUBBED. API routes return 503. Marketplace UI renders but purchase flow is non-functional. Stripe package removed from dependencies. Revisit when ready to onboard paying families (Phase 3+). Requires: Stripe account, product/price IDs in Sanity, `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` env vars, restore `stripe` package and real implementations in `src/lib/stripe/client.ts`, `api/stripe/checkout`, `api/stripe/webhook`.
-- **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema).
-- **Production error handling** — RESOLVED: `parseBody()` utility added, all 19 JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
+- **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema). First-deploy smoke test still pending (#5 in tracker).
+- **Production error handling** — RESOLVED: `parseBody()` utility added, all JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
 - **Photo/media storage** — Vercel Blob infrastructure wired (`@vercel/blob`). Requires `BLOB_READ_WRITE_TOKEN` in environment. Upload route returns 503 with clear message if unconfigured.
-- **Offline support** — not addressed
+- **Offline support** — Logger autosaves drafts to `localStorage` every 10s; offline banner + offline-aware save error live (`useOnlineStatus()` hook). Full PWA / sync queue is Phase 2.
+- **Rate limiting** — In-process limiter today. Redis/Upstash migration plan landed (`docs/redis-rate-limiter-plan.md`); flip behind `LIMITER_BACKEND` switch when one of the trigger conditions hits.
 
 ### Cross-Screen Coherence (Open Design Questions)
 > **Source:** `Hearth_System_Interaction_Map.md` Part 6
@@ -255,4 +309,4 @@
 
 ---
 
-*Updated 12 April 2026. Update this file when priorities shift or major decisions are made.*
+*Updated 9 May 2026 — Added May milestones (workbench publish validation, mobile bottom nav, onboarding family-name fix, stale-doc audit, Phosphor icons, v2 + v2.1 design landing, production-readiness tracker). Refreshed routes (admin, public, demo). Bumped Sanity schema count from 10 to 19. Replaced "Known Merge Issue" + 7-item priority list with a 10-item view derived from the production-readiness tracker. Update this file when priorities shift or major decisions are made.*

@@ -14,7 +14,8 @@
 - **Hosting:** Vercel
 - **Validation:** Zod
 - **Dates:** date-fns
-X
+- **Icons:** Phosphor Icons (`@phosphor-icons/react`) — single curated re-export at `src/components/icons/index.tsx`
+
 ## Project Structure
 
 ```
@@ -25,13 +26,18 @@ src/
     api/             # API routes
   components/
     ui/              # Shared primitives (buttons, cards, inputs)
+    nav/             # Mobile bottom nav (5-tab, trayed Plan/Explore)
+    icons/           # Phosphor re-export surface + IconProvider
     layout/          # Nav, header
     screens/         # Screen-specific component groups
   lib/
     db/              # Drizzle schema, client, migrations
-    sanity/          # Sanity client, GROQ queries
+    sanity/          # Sanity client, GROQ queries, typed mutations
+    content-studio/  # Editorial draft types, validation, sanity-transform (workbench)
     ai/              # Write-time enrichment pipeline
     utils/           # Design tokens, constants
+  sanity/
+    schemas/         # 19 Sanity document type definitions
   hooks/
   types/
 prototypes/          # Original HTML/JSX prototypes (VISUAL REFERENCE ONLY)
@@ -57,6 +63,10 @@ docs/                # Architecture specs, design system docs
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
 | `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
 | `docs/test-pilot-runbook.md` | **Canonical testing setup.** Read before writing or running any test. |
+| `docs/production-readiness-tracker.md` | Disposable 30-step path to alpha pilot. Trails reality by minutes — check `git log` first. |
+| `docs/external-services-guide.md` | All-in-one reference for every external service Hearth depends on (Clerk, Neon, Sanity, Anthropic, PostHog, Sentry, Vercel, Upstash) — rationale + alternatives. |
+| `docs/oncall-cheatsheet.md` | One-page on-call reference: dashboards, kill-switches, symptom→first-move table. |
+| `docs/hearth-icon-system-v1.md` | Phosphor icon rules — weight, size tokens (`--icon-xs..xl`), colour, placement, custom-mark specs. |
 
 When building a specific screen, also read its spec doc (e.g., `docs/hearth-logger-spec-v1.md`) and look at its prototype in `prototypes/`.
 
@@ -164,7 +174,14 @@ See `docs/hearth-canonical-design-tokens-v1.md` Appendix A for details.
 
 ### Icon library
 
-Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** instead (`@phosphor-icons/react` to be installed when icon work begins). Single-color stroke aesthetic and 24px grid match the system. No emoji-as-icon usage exists in `src/` (prototypes only). When introducing icons, import from the chosen library — do not generate decorative SVGs or AI-generated icons.
+Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`@phosphor-icons/react`) per S14. Adopted across all UI surfaces 2026-05-01 (commit `64cd9df`).
+
+- **Single curated re-export:** `src/components/icons/index.tsx` (~140 icons). App code imports from `@/components/icons`, never from `@phosphor-icons/react` directly.
+- **IconProvider** mounted in `src/app/layout.tsx` defaults every icon to `size 18` / `regular` weight.
+- **Size tokens** in `globals.css`: `--icon-xs` (14) / `--icon-sm` (16) / `--icon-md` (18) / `--icon-lg` (22) / `--icon-xl` (32).
+- **Custom-mark slots** (`ChildShape*`, `HearthBrandMark`) are placeholders for illustrator-bespoke marks — not Phosphor.
+- **Legacy emoji registry** (`src/lib/icon-registry.ts`, `<HearthIcon>`) coexists; components migrate as touched.
+- Full rules in `docs/hearth-icon-system-v1.md`. Do not generate decorative SVGs or AI-generated icons.
 
 ## Accessibility
 
@@ -184,8 +201,11 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** in
 5. **Portfolio is a filtered view,** not an independent data store. No "add to portfolio" button. No sync drift.
 6. **Australian Curriculum mapping is backend.** UI shows capability threads and plain-language descriptors only.
 7. **No freemium language.** Membership-included content has zero transactional UI.
-8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types.
-9. **Sanity = reusable content. Postgres = user/transactional data.** Never store user data in Sanity. Never store portable content in Postgres.
+8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types (plus 15 supporting schemas — projects, badges, capability threads, pedagogy knowledge base, assets, commons text, module skeletons).
+9. **Sanity = reusable content. Postgres = user/transactional data.** **Modules, approaches, activities, packs, projects, badges, capability threads, and the pedagogy knowledge base all live in Sanity.** The Next.js app reads them via GROQ at runtime through `src/lib/sanity/{client,queries}.ts`. Never store user data in Sanity. Never store portable content in Postgres.
+10. **Two authoring paths into Sanity, by writer:**
+    - **In-app editorial path** (operator UI): Module Builder + admin Content Studio → `/api/modules/publish` (parent / family-authored) and `/api/admin/content/publish` (editorial, returns soft `workbenchFlags`). Both use `src/lib/sanity/mutations.ts`.
+    - **External authoring path** (`claude-kindling/`, separate repo, gitignored): module spec docs → `claude-kindling/library/build-mode/orchestrator.ts` → direct Sanity mutations with deterministic IDs and `register/modules.jsonl` event trail. Used by Drew / Cowork to build official content packs. Writes via direct mutations because `/api/modules/publish` violates the editorial rule (it auto-sets `authorFamilyId`). See the kindling repo's `design/sanity-schema-reference.md` and `library/build-mode/README.md`. The hearth repo only has `claude-kindling/` as a gitignored sibling checkout — do not commit anything inside it from this repo.
 
 ## Key implementation surfaces
 
@@ -197,8 +217,12 @@ Non-obvious locations for features that come up often:
 | Pedagogy language adapter (overlay vocabulary at runtime) | `src/lib/pedagogy/adapter.ts`; tests `adapter.test.ts` (also enforces wizard↔adapter contract). |
 | Client analytics (PostHog) | `src/lib/analytics/posthog.ts`. Add new events to the `HearthEvent` union. |
 | Server analytics (fires from API routes) | `src/lib/analytics/posthog-server.ts`. Identify on the SAME id as the client (Clerk userId) so funnels join. |
-| Admin AI cost dashboard | `/api/admin/analytics/ai-cost/route.ts` + `src/app/(admin)/admin/analytics/_components/AiCostPanel.tsx`. Pricing constants live in the route. |
+| Admin AI cost dashboard | `/api/admin/analytics/ai-cost/route.ts` + `src/app/(admin)/admin/analytics/_components/AiCostPanel.tsx`. Pricing constants live in the route. Model-aware: `priceFor()` resolves any `model_used` value via exact / prefix / family-only fallback. |
 | Stale-branch audit | `scripts/audit-stale-branches.mjs`. Configurable via `STALE_DAYS`, `PROTECTED`, `BASE` env vars. |
+| Mobile bottom nav | `src/components/nav/` — 5-tab (Home/Story/Log/Plan/Explore). Plan + Explore are trayed tabs (anchored vertical tray above bar). Single source of truth: `navConfig.ts`. Mounted from `src/app/(auth)/layout.tsx`. Spec: `docs/hearth-mobile-bottom-nav-spec-v1.md`. |
+| Editorial workbench (admin publish) | `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts`. Optional `workbench` on activities + `workbenches` on packs. Soft-flag helpers (`workbenchIdResolutionFlags`, `workbenchContentFlags`) surface non-blocking validation in `/api/admin/content/publish` response. `/api/modules/publish` is unchanged (parent path). |
+| Logger offline minimum | `useOnlineStatus()` hook + offline banner on `/log`. 10s autosave to `localStorage`; save-failure toast distinguishes offline from server error. Full PWA / sync queue stays Phase 2. |
+| Noisy-family detection | Daily retention cron runs `detectNoisyFamilies()`. Above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) → `admin_audit_log` row + Sentry breadcrumb. |
 
 ## Testing
 

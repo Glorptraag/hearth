@@ -202,7 +202,10 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`
 6. **Australian Curriculum mapping is backend.** UI shows capability threads and plain-language descriptors only.
 7. **No freemium language.** Membership-included content has zero transactional UI.
 8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types (plus 15 supporting schemas — projects, badges, capability threads, pedagogy knowledge base, assets, commons text, module skeletons).
-9. **Sanity = reusable content. Postgres = user/transactional data.** Never store user data in Sanity. Never store portable content in Postgres.
+9. **Sanity = reusable content. Postgres = user/transactional data.** **Modules, approaches, activities, packs, projects, badges, capability threads, and the pedagogy knowledge base all live in Sanity.** The Next.js app reads them via GROQ at runtime through `src/lib/sanity/{client,queries}.ts`. Never store user data in Sanity. Never store portable content in Postgres.
+10. **Two authoring paths into Sanity, by writer:**
+    - **In-app editorial path** (operator UI): Module Builder + admin Content Studio → `/api/modules/publish` (parent / family-authored) and `/api/admin/content/publish` (editorial, returns soft `workbenchFlags`). Both use `src/lib/sanity/mutations.ts`.
+    - **External authoring path** (`claude-kindling/`, separate repo, gitignored): module spec docs → `claude-kindling/library/build-mode/orchestrator.ts` → direct Sanity mutations with deterministic IDs and `register/modules.jsonl` event trail. Used by Drew / Cowork to build official content packs. Writes via direct mutations because `/api/modules/publish` violates the editorial rule (it auto-sets `authorFamilyId`). See the kindling repo's `design/sanity-schema-reference.md` and `library/build-mode/README.md`. The hearth repo only has `claude-kindling/` as a gitignored sibling checkout — do not commit anything inside it from this repo.
 
 ## Key implementation surfaces
 

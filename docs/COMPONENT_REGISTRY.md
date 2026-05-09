@@ -53,6 +53,16 @@
 | `src/components/nav/` | **Mobile bottom nav** (built 2026-05-06). 5-tab parent-facing bar (Home / Story / Log / Plan / Explore). Plan + Explore are trayed tabs that anchor a vertical column of destinations above the bar. Single source of truth: `navConfig.ts`. Components: `MobileBottomNav.tsx`, `NavTab.tsx`, `TrayedTab.tsx`, `NavTray.tsx`, `TrayRow.tsx`, `LogButton.tsx`. Replaces the inline 5-tab bar previously in `(auth)/layout.tsx`. |
 | `src/lib/content-studio/` | **Editorial workbench** (built 2026-05-08, commit `2493d5e`). Optional `workbench` on activities + `workbenches` on packs per `workbench-claude-code-addendum`. Soft-flag helpers (`workbenchIdResolutionFlags`, `workbenchContentFlags`) surface non-blocking validation in `/api/admin/content/publish` response. Files: `types.ts`, `factories.ts`, `validation.ts` (Zod), `sanity-transform.ts`, `reducer.ts`, `workbench.test.ts` (15 cases). `/api/modules/publish` (parent path) is unchanged. |
 
+### Content runtime + authoring
+
+**All published learning content (modules, approaches, activities, packs, projects, badges, capability threads, pedagogy knowledge base) lives in Sanity** and is read at runtime via `src/lib/sanity/{client,queries}.ts`. Sanity Studio is mounted at `/studio`. Postgres holds only user/transactional data.
+
+| Authoring path | Location | Entry / API |
+|---|---|---|
+| **In-app editorial — family** | `src/app/(auth)/build/modules` (Module Builder UI) | `POST /api/modules/publish` — sets `authorFamilyId` |
+| **In-app editorial — admin** | `src/app/(admin)/admin/content` + `src/lib/content-studio/` | `POST /api/admin/content/publish` — accepts `workbench` shape, returns soft `workbenchFlags` |
+| **External authoring** | `claude-kindling/` — **separate git repo**, gitignored from this one (sibling checkout only) | `claude-kindling/library/build-mode/orchestrator.ts` CLI → direct Sanity mutations with deterministic IDs + `register/modules.jsonl` event trail. Used by Drew / Cowork to build official content packs from spec docs. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). Bypasses `/api/modules/publish` because that endpoint violates the editorial rule (auto-stamps `authorFamilyId`). |
+
 ### Reference Implementation
 `hearth-dashboard-dark-v2.html` — current source of truth for all visual patterns. **Will be superseded by `hearth-dashboard-dark-v3.html` once v2 token system is applied (per Prompt B in `hearth-v2-claude-code-prompts.md`).** Until v3 lands, v2 remains canonical.
 

@@ -150,9 +150,21 @@
 - **Admin:** `adminAuditLog`, `invitations`, `contentStudioDrafts`
 
 ### Sanity CMS — 19 schemas
+**All published learning content lives in Sanity.** Modules, approaches, activities, packs, projects, badges, capability threads, and the pedagogy knowledge base are stored there and read at runtime via GROQ (`src/lib/sanity/{client,queries}.ts`). Postgres holds only user/transactional data — entries, snapshots, badges awarded, planner items, hearths, etc. Sanity Studio is mounted at `/studio` for direct editorial.
+
 **Curriculum content (8):** `capabilityThread`, `badge`, `asset`, `commonsText`, `activity` (with optional `workbench`), `approach`, `module`, `pack` (with optional `workbenches`)
 **Project / scaffolding (3):** `projectStage`, `project`, `moduleSkeleton`
 **Pedagogy overlay + knowledge base (8):** `pedagogyOverlay`, `pedagogicalFramework`, `pedagogySourceExcerpt`, `pedagogyPracticePattern`, `pedagogyObservationalMarker`, `pedagogyFacilitationVocabulary`, `pedagogyContraindication`, `pedagogyWorkedExample`
+
+### Content authoring paths
+
+Two writers feed Sanity. Both use the same schemas; they differ in tooling, audit trail, and which API path they go through.
+
+| Path | Used by | Entry | Output | Notes |
+|---|---|---|---|---|
+| **In-app editorial** (parent / family-authored) | Families using Module Builder | `src/app/(auth)/build/modules` UI | `POST /api/modules/publish` | Auto-sets `authorFamilyId` on the module. Goes through `src/lib/sanity/mutations.ts`. |
+| **In-app editorial** (admin / official content) | Hearth admins via Content Studio | `(admin)/admin/content` UI | `POST /api/admin/content/publish` | Accepts the optional `workbench` shape per addendum §2/§3; returns non-blocking `workbenchFlags` per §5. Used for editorial packs and revisions. |
+| **External authoring** (`claude-kindling/`) | Drew / Cowork building official packs from spec docs | `claude-kindling/library/build-mode/orchestrator.ts` (CLI) | Direct Sanity mutations with deterministic IDs | **Lives in a separate repo** — `claude-kindling/` is gitignored from this repo (sibling checkout only). Uses `register/modules.jsonl` for event trail and `specced → content_constructed` bucket gates. Bypasses `/api/modules/publish` because that endpoint violates the editorial rule. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). |
 
 ### AI Pipeline
 - **Enrichment** (`src/lib/ai/enrich.ts`): Claude Haiku enriches entries at save-time with subject detection, capability mapping, AC V9 descriptors, engagement scores, insight suggestions.

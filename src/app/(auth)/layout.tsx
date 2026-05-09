@@ -10,7 +10,6 @@ import { Wordmark } from "@/components/ui/Wordmark";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
 import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
 import {
-  House,
   CalendarBlank,
   PencilSimpleLine,
   BookOpenText,
@@ -36,7 +35,6 @@ type NavRowConfig = {
 };
 
 const PRIMARY_NAV: ReadonlyArray<NavRowConfig> = [
-  { label: "Your Hearth", Icon: House, href: "/dashboard" },
   { label: "This Week", Icon: CalendarBlank, href: "/planner" },
   { label: "Log", Icon: PencilSimpleLine, href: "/log" },
   {
@@ -255,9 +253,9 @@ const DESKTOP_NAV_ROW_ACTIVE =
 const DESKTOP_NAV_ROW_IDLE =
   'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary';
 const DESKTOP_TRAY_BASE =
-  'absolute left-full top-0 z-50 ml-xs min-w-[200px] rounded-lg border border-border-subtle bg-surface-panel p-sm shadow-float';
+  'mb-xs ml-xl flex flex-col gap-px border-l border-border-subtle pl-sm';
 const DESKTOP_TRAY_ITEM_BASE =
-  'flex w-full items-center gap-md rounded-md border px-md py-sm text-left font-sans text-[0.85rem] font-medium transition-colors duration-150 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+  'flex w-full items-center gap-sm rounded-md border px-sm py-xs text-left font-sans text-[0.85rem] font-medium transition-colors duration-150 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
 
 function DesktopNavRow({
   row,
@@ -305,7 +303,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
       />
     </Link>
   ) : (
@@ -322,7 +320,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
       />
     </button>
   );
@@ -411,7 +409,7 @@ function DesktopCommunityRow({
         <CaretRight
           size={14}
           aria-hidden="true"
-          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'translate-x-px' : ''}`}
+          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
         />
       </button>
       {open && (

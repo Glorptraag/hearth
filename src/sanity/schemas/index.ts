@@ -15,6 +15,11 @@ import { pedagogyObservationalMarker } from './pedagogyObservationalMarker';
 import { pedagogyFacilitationVocabulary } from './pedagogyFacilitationVocabulary';
 import { pedagogyContraindication } from './pedagogyContraindication';
 import { pedagogyWorkedExample } from './pedagogyWorkedExample';
+import { pedagogyLensBundle } from './pedagogyLensBundle';
+import { methodologyOverlay } from './methodologyOverlay';
+import { practice } from './practice';
+import { lensSurfaceMap } from './lensSurfaceMap';
+import { bannedPhraseSet } from './bannedPhraseSet';
 import { moduleSkeleton } from './moduleSkeleton';
 import { asset } from './asset';
 import { commonsText } from './commonsText';
@@ -28,6 +33,14 @@ export const schemaTypes = [
   pedagogyFacilitationVocabulary,
   pedagogyContraindication,
   pedagogyWorkedExample,
+  // Practices (methodology layer)
+  practice,
+  // Per-module bundle/overlay objects
+  pedagogyLensBundle,
+  methodologyOverlay,
+  // Singletons
+  lensSurfaceMap,
+  bannedPhraseSet,
   // Curriculum content
   capabilityThread,
   discreteLearningObjective,

@@ -270,7 +270,10 @@ function DesktopNavRow({
   const isExpandable = !!row.tray && row.tray.length > 0;
   const ownActive = row.href ? isActive(pathname, row.href) : false;
   const trayActive = row.tray?.some((t) => isActive(pathname, t.href)) ?? false;
-  const active = ownActive || trayActive;
+  // Parent stays idle when only a sub-page is current — the sub-item carries the highlight.
+  const active = ownActive;
+  // Tray stays open whenever a sub-page is current, regardless of hover/focus.
+  const effectiveOpen = open || trayActive;
   const { Icon } = row;
 
   const rowClass = `${DESKTOP_NAV_ROW_BASE} ${active ? DESKTOP_NAV_ROW_ACTIVE : DESKTOP_NAV_ROW_IDLE}`;
@@ -295,7 +298,7 @@ function DesktopNavRow({
       href={row.href}
       className={rowClass}
       aria-haspopup="menu"
-      aria-expanded={open}
+      aria-expanded={effectiveOpen}
       aria-controls={trayId}
     >
       <Icon size={18} aria-hidden="true" />
@@ -303,7 +306,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
       />
     </Link>
   ) : (
@@ -311,7 +314,7 @@ function DesktopNavRow({
       type="button"
       className={rowClass}
       aria-haspopup="menu"
-      aria-expanded={open}
+      aria-expanded={effectiveOpen}
       aria-controls={trayId}
       onClick={() => setOpen((v) => !v)}
     >
@@ -320,7 +323,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
+        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
       />
     </button>
   );
@@ -335,7 +338,7 @@ function DesktopNavRow({
       onBlur={handleBlur}
     >
       {trigger}
-      {open && row.tray && (
+      {effectiveOpen && row.tray && (
         <div
           id={trayId}
           role="menu"
@@ -377,8 +380,11 @@ function DesktopCommunityRow({
   const trayId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const trayActive = hearths.some((h) => pathname.startsWith(`/hearths/${h.id}`));
+  // Parent stays idle; the active hearth carries the highlight inside the tray.
+  // Tray stays open whenever a hearth page is current.
+  const effectiveOpen = open || trayActive;
 
-  const rowClass = `${DESKTOP_NAV_ROW_BASE} ${trayActive ? DESKTOP_NAV_ROW_ACTIVE : DESKTOP_NAV_ROW_IDLE}`;
+  const rowClass = `${DESKTOP_NAV_ROW_BASE} ${DESKTOP_NAV_ROW_IDLE}`;
 
   return (
     <div
@@ -409,10 +415,10 @@ function DesktopCommunityRow({
         <CaretRight
           size={14}
           aria-hidden="true"
-          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${open ? 'rotate-90' : ''}`}
+          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
         />
       </button>
-      {open && (
+      {effectiveOpen && (
         <div
           id={trayId}
           role="menu"

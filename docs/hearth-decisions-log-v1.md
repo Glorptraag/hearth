@@ -53,3 +53,53 @@ This change introduces the three-layer content model: **(1) pedagogy / (2) metho
 **Briefs:** `docs/hearth-kindler-methodology-integration-brief-v1.md`, `docs/hearth-runtime-methodology-integration-brief-v1.md`
 **Schema:** `src/sanity/schemas/methodologyOverlay.ts`, `src/sanity/schemas/practice.ts`, fields on `src/sanity/schemas/module.ts`
 **Date:** 2026-05-09
+
+### C-PA1 — Pedagogy system frame: interpretive, not prescriptive
+
+**Decision:** The methodology layer of Hearth makes the catalogue legible in the family's tradition and lets accumulated reads inform later surfacing. It does NOT steer the curriculum, branch modules into reactive trees, generate forward task lists, schedule the parent's week, or adapt curriculum at run-time. The user journey it serves: moment → moment surfaced in the Logger → observation presented to the parent → activity selection picking up the clew → next moment. The platform makes the thread visible; the parent pulls it.
+
+**Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §1, §13
+**Date:** 2026-05-13
+
+### C-PA2 — Seven-layer pedagogy architecture
+
+**Decision:** The methodology layer is implemented as seven distinct layers with well-defined interfaces (mostly the FIS and the Sanity content schema). No layer reaches across boundaries. Layers 1–4 are about interpretation (what the parent sees/hears); layers 5–7 are about surfacing (what the platform offers next). The bridge is the Logger save event.
+
+| # | Layer | Where it lives |
+|---|---|---|
+| 1 | Family Pedagogy Profile | PostgreSQL (JSONB on `families`) |
+| 2 | Pedagogy Knowledge Base | Sanity + pgvector |
+| 3 | Pedagogy Lens Bundle | Sanity (per module per pedagogy) |
+| 4 | Per-screen overlay behaviours | Runtime templates + FIS |
+| 5 | Lens Accumulated Signals | PostgreSQL (on FIS, per child) |
+| 6 | Method Affinity | Sanity (on modules) |
+| 7 | Tag-match recommender loop | PostgreSQL read-time query |
+
+**Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §3
+**Date:** 2026-05-13
+
+### C-PA3 — Interpretive Patterns reframe (PKB layer)
+
+**Decision:** The PKB's "Practice Patterns" layer is renamed **Interpretive Patterns**, target volume halved from ~15 to ~8 per pedagogy for Wave 1, and scope tightened from "what the tradition does when X happens" to "how the tradition *reads* what's happening when X happens." Each Interpretive Pattern does double duty: a retrieval source for Logger insight generation, AND a classifier ID that gets tallied into the family's `lensAccumulatedSignals` (Layer 5). Patterns that exist as prose only — that tell the parent what to do without a diagnostic shape — are cut or rewritten. CM corpus audit needed; at least one existing pattern (PP-CM-006) likely crosses the prescriptive line.
+
+**Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §5
+**Date:** 2026-05-13
+
+### C-PA4 — Forward-prescription guard
+
+**Decision:** The Lens Bundle validation pipeline gains a forward-prescription guard alongside banned-phrase and cross-field similarity checks. Reject fields containing imperative forward-direction language that implies content the module doesn't contain — patterns like "next, switch to…", "tomorrow do…", "follow this with…", "a good next module is…". The tradition can caution, redirect within the moment, and point at existing structure — it cannot generate forward content paths. The `questionOverlay` field's scope is now explicit: "what to notice on the next encounter with this *same module's* content." Within-module, not cross-module.
+
+**Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §6
+**Implementation:** `claude-kindling/library/build-mode/bundle-validation.ts` (`validateForwardPrescription`)
+**Date:** 2026-05-13
+
+### C-PA5 — Lens loop closure (Layers 5/6/7) — accumulated signals × method affinity × tag-match
+
+**Decision:** The closed loop from observation to next-content surfacing is implemented as plain overlap-scoring, not vector ranking or learned model. Per-child `lensAccumulatedSignals` (Layer 5) live on the FIS and are written as part of the existing Logger save Haiku call (no new LLM operation). Per-module `methodAffinity` (Layer 6) is a supply-side tag block on the Sanity module schema at **v1 Option 2 granularity: pedagogy keys + Interpretive Pattern IDs** (defer richer activity-shape + capability-thread tagging until usage data shows option 2 is too coarse). The recommender (Layer 7) runs at read-time at Discovery / Planner / Marketplace as a PostgreSQL JSONB overlap query — `score = overlap(family.lensAccumulatedSignals, module.methodAffinity)`. Zero LLM cost at read-time. Filter-bubble exploration budget and signal decay weighting deferred until usage data demands them.
+
+The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded by Layer 5 — leave the field in the schema (it costs nothing), don't write to it, deprecate in a future engine spec revision.
+
+**Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §8–§10
+**Schema:** `src/sanity/schemas/module.ts` (`methodAffinity` added 2026-05-13)
+**Future spec:** `hearth-lens-loop-architecture-v1.md` (blocked on PKB Wave 1 corpus completion)
+**Date:** 2026-05-13

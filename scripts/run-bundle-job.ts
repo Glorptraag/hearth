@@ -25,7 +25,12 @@
  * Spec: docs/hearth-methodology-overlay-bundle-v1.md, docs/hearth-pedagogy-lens-bundle-v1.md.
  */
 
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+// `override: true` is required because the shell may set ANTHROPIC_API_KEY='' which
+// otherwise wins over .env.local. Without this, the Anthropic SDK fails auth at runtime.
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
+
 import { createClient, type SanityClient } from '@sanity/client';
 import {
   runBundleJob,

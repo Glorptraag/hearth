@@ -167,5 +167,44 @@ export const moduleSchema = defineType({
       initialValue: 'pending',
       options: { list: bundleStatusList },
     }),
+    // Method Affinity — Layer 6 supply-side tags. Drives the tag-match recommender at
+    // Discovery / Planner / Marketplace by overlapping with the family's
+    // `lensAccumulatedSignals` (Layer 5 on the FIS, written at Logger save time).
+    // v1 granularity: Option 2 — pedagogy keys + Interpretive Pattern IDs only.
+    // Spec: docs/hearth-pedagogy-system-architecture-v1.md §9 (decision C-PA5).
+    defineField({
+      name: 'methodAffinity',
+      title: 'Method Affinity',
+      description:
+        'Supply-side tags. Which pedagogies and Interpretive Patterns this module satisfies. Universal (not family-specific). Recommendation scores computed at read-time, not stored.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'pedagogies',
+          title: 'Pedagogies',
+          description: 'Which pedagogies read this module favourably.',
+          type: 'array',
+          of: [{ type: 'string' }],
+          options: {
+            list: [
+              { title: 'Charlotte Mason', value: 'charlotte_mason' },
+              { title: 'Classical', value: 'classical' },
+              { title: 'Montessori', value: 'montessori' },
+              { title: 'Waldorf / Steiner', value: 'waldorf_steiner' },
+              { title: 'Unschooling', value: 'unschooling' },
+              { title: 'Eclectic', value: 'eclectic' },
+            ],
+          },
+        }),
+        defineField({
+          name: 'interpretivePatterns',
+          title: 'Interpretive Pattern IDs',
+          description:
+            'IDs from the PKB Interpretive Patterns layer (e.g. IP-CM-001). These also double as classifier IDs in the family lens accumulated signals.',
+          type: 'array',
+          of: [{ type: 'string' }],
+        }),
+      ],
+    }),
   ],
 });

@@ -14,7 +14,10 @@
  * Spec: docs/hearth-methodology-overlay-bundle-v1.md §9.
  */
 
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
 import { db } from '../src/lib/db';
 import { sql } from 'drizzle-orm';
 import { createClient } from '@sanity/client';
@@ -58,14 +61,15 @@ async function chunkCounts(): Promise<Record<string, number>> {
 
 async function chunksMatchingThemes(themes: string[]): Promise<{ pedagogy_key: string; n: number }[]> {
   if (themes.length === 0) return [];
-  // Match if metadata->'themes' contains any of the keywords (case-insensitive comparison
-  // after pulling them out — JSONB `?|` is exact-key, so we do array overlap on the JSON elements).
+  const arrayLiteral = sql.raw(
+    `ARRAY[${themes.map((t) => `'${t.replace(/'/g, "''")}'`).join(',')}]::text[]`,
+  );
   const rows = await db.execute<{ pedagogy_key: string; n: number }>(
     sql`SELECT pedagogy_key, COUNT(*)::int AS n
         FROM pedagogy_knowledge_chunks
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'themes', '[]'::jsonb)) t
-          WHERE LOWER(t) = ANY(${themes})
+          WHERE LOWER(t) = ANY(${arrayLiteral})
         )
         GROUP BY pedagogy_key`,
   );

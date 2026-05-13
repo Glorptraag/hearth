@@ -49,7 +49,7 @@ export const pedagogyLensBundle = defineType({
       name: 'questionOverlay',
       title: 'Question Overlay',
       description:
-        'UC6 Surface A artefact, grammar-shaped per pedagogy. Stored as opaque object — runtime renders per pedagogy grammar.',
+        'What to notice on the next encounter with THIS SAME MODULE\'s content. Within-module scope only — no cross-module forward prescription (per C-PA4, 2026-05-13). Grammar-shaped per pedagogy; runtime renders per pedagogy grammar.',
       type: 'object',
       fields: [
         { name: 'grammar', type: 'string' },

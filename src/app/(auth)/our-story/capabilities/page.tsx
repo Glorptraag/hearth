@@ -33,11 +33,18 @@ export default function CapabilitiesPage() {
 
   useEffect(() => {
     if (!selectedLearnerId) return;
+    let cancelled = false;
+    // Clear stale rows from the previous learner so the constellation doesn't
+    // briefly paint that learner's progress under the new learner's name.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveThreads([]);
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => r.json())
       .then((data) => {
+        if (cancelled) return;
         setActiveThreads(Array.isArray(data) ? (data as ActiveThreadRow[]) : []);
       });
+    return () => { cancelled = true; };
   }, [selectedLearnerId]);
 
   const learner = learners.find((l) => l.id === selectedLearnerId) ?? null;

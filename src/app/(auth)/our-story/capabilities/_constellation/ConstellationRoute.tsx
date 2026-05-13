@@ -55,15 +55,12 @@ function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
 }
 
 function Stepper({
-  depth, focus, onJump,
-}: { depth: Depth; focus: Focus; onJump: (d: Depth) => void }) {
+  depth, focus, snap, onJump,
+}: { depth: Depth; focus: Focus; snap: LearnerSnapshot; onJump: (d: Depth) => void }) {
   const domainLabel = focus.domain ? ORDERED_DOMAINS.find((d) => d.key === focus.domain)?.label ?? null : null;
   const threadLabel = focus.thread ? THREADS_BY_ID[focus.thread]?.name ?? null : null;
-  const dloLabel = focus.dlo
-    ? buildDLOs(focus.thread ?? '', { /* tier-only access */
-        id: '', name: '', colourToken: null, tierByThread: {}, observationsByThread: {},
-        lastDateByThread: {}, threadState: {}, badges: [], dlosByThread: {},
-      } as LearnerSnapshot).find((d) => d.id === focus.dlo)?.descriptor ?? null
+  const dloLabel = focus.thread && focus.dlo
+    ? buildDLOs(focus.thread, snap).find((d) => d.id === focus.dlo)?.descriptor ?? null
     : null;
 
   const steps: Array<{ d: Depth; label: string; context: string | null; reachable: boolean }> = [
@@ -175,19 +172,21 @@ export function ConstellationRoute({
   const initialFocus: Focus = (() => {
     const f = search.get('focus');
     if (!f) return { domain: null, thread: null, dlo: null };
+    // DLO IDs look like "L3.e" — try splitting first.
     const parts = f.split('.');
-    if (parts.length === 1) return { domain: parts[0], thread: null, dlo: null };
-    const threadId = parts.slice(0, -1).join('.');
-    const t = THREADS_BY_ID[threadId];
-    if (t) {
-      // could be ".e/.d/.m"
-      if (parts[parts.length - 1].length === 1) {
+    if (parts.length >= 2) {
+      const threadId = parts.slice(0, -1).join('.');
+      const tier = parts[parts.length - 1];
+      const t = THREADS_BY_ID[threadId];
+      if (t && tier.length === 1) {
         return { domain: t.domain, thread: threadId, dlo: f };
       }
     }
+    // Otherwise it's either a thread id (e.g. "L3") or a domain key (e.g. "literacy").
     const directThread = THREADS_BY_ID[f];
     if (directThread) return { domain: directThread.domain, thread: f, dlo: null };
-    return { domain: f, thread: null, dlo: null };
+    if (ORDERED_DOMAINS.some((d) => d.key === f)) return { domain: f, thread: null, dlo: null };
+    return { domain: null, thread: null, dlo: null };
   })();
 
   const [view, setView] = useState<ViewMode>(initialView);
@@ -249,7 +248,7 @@ export function ConstellationRoute({
         </div>
       </div>
 
-      <Stepper depth={depth} focus={focus} onJump={jump} />
+      <Stepper depth={depth} focus={focus} snap={snap} onJump={jump} />
 
       <div className="mt-xs mb-lg flex flex-wrap items-center justify-between gap-md">
         <ContextLine snap={snap} depth={depth} focus={focus} />

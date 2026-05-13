@@ -125,6 +125,34 @@ export async function createCapabilityThread(input: CreateCapabilityThread) {
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
+// ── Discrete Learning Objective ──────────────────────────────────────────────
+
+interface CreateDiscreteLearningObjective {
+  _id?: string;
+  threadId: string;
+  tier: Tier;
+  descriptor: string;
+  slug?: string;
+  parentVersion?: string;
+  badgeLevel?: 'starter' | 'intermediate' | 'advanced';
+  status?: StatusExt;
+}
+
+export async function createDiscreteLearningObjective(input: CreateDiscreteLearningObjective) {
+  const doc: SanityDoc = {
+    _type: 'discreteLearningObjective',
+    thread: ref(input.threadId),
+    tier: input.tier,
+    descriptor: input.descriptor,
+    slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.descriptor),
+    status: input.status ?? 'published',
+  };
+  if (input._id) doc._id = input._id;
+  if (input.parentVersion) doc.parentVersion = input.parentVersion;
+  if (input.badgeLevel) doc.badgeLevel = input.badgeLevel;
+  return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
+}
+
 // ── Badge ────────────────────────────────────────────────────────────────────
 
 interface CreateBadge {

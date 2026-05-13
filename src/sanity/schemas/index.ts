@@ -6,6 +6,7 @@ import { project } from './project';
 import { projectStage } from './projectStage';
 import { badge } from './badge';
 import { capabilityThread } from './capabilityThread';
+import { discreteLearningObjective } from './discreteLearningObjective';
 import { pedagogyOverlay } from './pedagogyOverlay';
 import { pedagogicalFramework } from './pedagogicalFramework';
 import { pedagogySourceExcerpt } from './pedagogySourceExcerpt';
@@ -29,6 +30,7 @@ export const schemaTypes = [
   pedagogyWorkedExample,
   // Curriculum content
   capabilityThread,
+  discreteLearningObjective,
   badge,
   asset,
   commonsText,

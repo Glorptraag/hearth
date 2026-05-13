@@ -1,4 +1,5 @@
 <!-- Version: 2 | Date: 2026-04-21 | Changes: Rewrote as living status doc reflecting the wizard / analytics / cost-dashboard sprint; consolidated honest caveats + known limitations; original 19 Apr handover preserved in History section. -->
+<!-- Stale-caveat sweep: 2026-05-13 — caveats §8, §9 and the §16 list (Constellation L3, Portfolio card differentiation) were marked obsolete after audit verification against the code. See docs/pre-release-tracker.md §D. -->
 
 # Alpha-Readiness — Status
 
@@ -84,13 +85,8 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 7. **Review-step demo insights are hardcoded per-philosophy.** Matches
    spec (template synthesis acceptable for MVP, Haiku-generated
    synthesis is a Phase-2 polish item).
-8. **Wizard does not persist partial progress.** Closing the Settings
-   wizard mid-flow discards unsaved selections; re-opening pre-fills
-   from the last saved state.
-9. **Review-step tab keyboard navigation is partial.** Structure is
-   ARIA-correct (tablist / tab / tabpanel / roving tabIndex), but
-   arrow-key cycling between tabs isn't implemented — users must Tab
-   to each tab and press Enter. Polish item.
+8. ~~**Wizard does not persist partial progress.**~~ **[Superseded 2026-05-13]** Shipped per `production-readiness-tracker.md` #13 — `PedagogyWizard` reads/writes `hearth-pedagogy-wizard-draft` in localStorage on every state change.
+9. ~~**Review-step tab keyboard navigation is partial.**~~ **[Superseded 2026-05-13]** Shipped per tracker #14 — arrow-key cycling + Home/End handle WAI-ARIA APG.
 10. **Admin AI-cost pricing is hardcoded** to Haiku 4.5 rates ($0.80 /
     Mtok input, $4.00 / Mtok output) in `PRICING_PER_MTOK` inside
     `/api/admin/analytics/ai-cost/route.ts`. If the wired model
@@ -116,10 +112,11 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 ### Conscious omissions from this sprint
 
 15. **No PR opened.** User hadn't asked for one.
-16. **Phase-2 items from the original audit are untouched:** Hub term
-    summary AI narrative, Portfolio Journey/Milestone distinct card
-    rendering, Constellation L3 DLO panel, offline support (#16 on
-    the Interaction Map).
+16. **Phase-2 items from the original audit — partially out of date as of 2026-05-13:**
+    - ~~Portfolio Journey/Milestone distinct card rendering~~ → **shipped.** Three colour treatments (coffee / ember / sage) live at `src/app/(auth)/our-story/portfolio/page.tsx:21-37`.
+    - ~~Constellation L3 DLO panel~~ → **shipped.** Verified at `src/app/(auth)/our-story/capabilities/page.tsx:204-294`.
+    - **Hub term summary AI narrative** → still falls back to template often; see `pre-release-tracker.md` F6.
+    - **Offline support (PWA / sync queue)** → still Phase 2 (#16 on the Interaction Map); see tracker F5.
 
 ---
 
@@ -128,11 +125,10 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 ### Gated on decisions (none of these have them yet)
 
 - Hub term summary: static template today, spec wants AI-generated
-  monthly growth copy.
-- Portfolio Journey/Milestone distinct card rendering — architectural
-  change.
-- Constellation L3 DLO panel — architectural change.
-- Offline support — out of MVP per the original spec.
+  monthly growth copy. (Now also tracked as `pre-release-tracker.md` F6.)
+- ~~Portfolio Journey/Milestone distinct card rendering — architectural change.~~ **Shipped 2026-05-13 verification.**
+- ~~Constellation L3 DLO panel — architectural change.~~ **Shipped 2026-05-13 verification.**
+- Offline support — out of MVP per the original spec. (Now also tracked as `pre-release-tracker.md` F5.)
 
 ### Decision-free, ready to pick up
 

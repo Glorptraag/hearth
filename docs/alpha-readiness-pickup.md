@@ -114,7 +114,7 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 15. **No PR opened.** User hadn't asked for one.
 16. **Phase-2 items from the original audit — partially out of date as of 2026-05-13:**
     - ~~Portfolio Journey/Milestone distinct card rendering~~ → **shipped.** Three colour treatments (coffee / ember / sage) live at `src/app/(auth)/our-story/portfolio/page.tsx:21-37`.
-    - ~~Constellation L3 DLO panel~~ → **shipped.** Verified at `src/app/(auth)/our-story/capabilities/page.tsx:204-294`.
+    - ~~Constellation L3 DLO panel~~ → **shipped, structurally.** Verified at `src/app/(auth)/our-story/capabilities/page.tsx`. **Data source as of 2026-05-13:** Sanity-loaded `discreteLearningObjective` documents via `ALL_DLOS_QUERY` (page.tsx → ConstellationRoute → buildDLOs). Falls back to `dlo-descriptors.ts` placeholder per-thread when Sanity has no published DLO for that thread; emits a one-shot `console.warn` per missing thread. **Open follow-ups:** (1) run `npx tsx scripts/seed-dlos.ts` against the production Sanity dataset — the seed script exists but no record of it having been run; (2) build the `learner_dlo_status` Postgres surface so per-DLO status stops being mechanically derived from `dlos_confirmed / dlos_total` arithmetic; (3) wire entry-to-DLO mapping in AI enrichment so the moments pip-row in `GalleryDLOs` can drill below tier granularity.
     - **Hub term summary AI narrative** → still falls back to template often; see `pre-release-tracker.md` F6.
     - **Offline support (PWA / sync queue)** → still Phase 2 (#16 on the Interaction Map); see tracker F5.
 

@@ -109,6 +109,19 @@ export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(
   "enablesIds": enables[]._ref
 }`;
 
+// All discrete learning objectives (reference data, grouped client-side by thread).
+// Deterministic IDs follow the convention `dlo.{threadId}.{tier}` (one per tier per
+// thread today; the array shape supports n-per-tier authoring once Studio editing
+// adds extras). Status field gates draft-vs-published.
+export const ALL_DLOS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{
+  _id,
+  "threadId": thread->slug.current,
+  "threadRef": thread._ref,
+  tier,
+  descriptor,
+  badgeLevel
+} | order(tier asc, _id asc)`;
+
 // Modules in family library (by pack IDs)
 export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
   modules[]->{

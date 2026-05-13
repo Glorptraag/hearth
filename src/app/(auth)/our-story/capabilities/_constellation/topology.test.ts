@@ -6,8 +6,11 @@ import {
   buildDLOs,
   buildSnapshot,
   deriveThreadStates,
+  indexDLOsByThread,
+  threadIdFromRef,
   topoColumn,
   type ActiveThreadRow,
+  type SanityDLO,
 } from './topology';
 
 describe('topology', () => {
@@ -81,7 +84,27 @@ describe('topology', () => {
     expect(snap.dlosByThread['L1']).toEqual({ confirmed: 1, total: 3 });
   });
 
-  it('buildDLOs derives 3 tier-stratified objectives with mechanical statuses', () => {
+  it('threadIdFromRef strips the capabilityThread. prefix', () => {
+    expect(threadIdFromRef('capabilityThread.L1')).toBe('L1');
+    expect(threadIdFromRef('capabilityThread.EF8')).toBe('EF8');
+    expect(threadIdFromRef('something-else')).toBe(null);
+  });
+
+  it('indexDLOsByThread groups Sanity DLOs by derived threadId', () => {
+    const rows: SanityDLO[] = [
+      { _id: 'dlo.L1.emerging', threadRef: 'capabilityThread.L1', tier: 'emerging', descriptor: 'A' },
+      { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'B' },
+      { _id: 'dlo.M1.emerging', threadRef: 'capabilityThread.M1', tier: 'emerging', descriptor: 'C' },
+      { _id: 'dlo.bad', threadRef: 'capabilityThread.', tier: 'emerging', descriptor: 'D' },
+    ];
+    const idx = indexDLOsByThread(rows);
+    expect(idx['L1']?.length).toBe(2);
+    expect(idx['M1']?.length).toBe(1);
+    // Empty prefix produces an empty-string threadId; the helper still groups it,
+    // which is fine — unknown threadIds won't match any consumer lookup.
+  });
+
+  it('buildDLOs resolves Sanity DLOs in tier order with mechanical statuses', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -92,11 +115,62 @@ describe('topology', () => {
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
-    const dlos = buildDLOs('L1', snap);
+    const sanityByThread: Record<string, SanityDLO[]> = {
+      L1: [
+        { _id: 'dlo.L1.demonstrating', threadRef: 'capabilityThread.L1', tier: 'demonstrating', descriptor: 'Adapts register to audience' },
+        { _id: 'dlo.L1.emerging', threadRef: 'capabilityThread.L1', tier: 'emerging', descriptor: 'Initiates a conversation' },
+        { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'Sustains back-and-forth' },
+      ],
+    };
+    const dlos = buildDLOs('L1', snap, sanityByThread);
     expect(dlos).toHaveLength(3);
-    expect(dlos[0].status).toBe('confirmed');     // emerging (rank 1 <= 1)
-    expect(dlos[1].status).toBe('emerging');      // developing (rank 2 == 1+1, currentTier active)
-    expect(dlos[2].status).toBe('not-started');   // demonstrating
+    expect(dlos.map((d) => d.tier)).toEqual(['emerging', 'developing', 'demonstrating']);
+    expect(dlos.map((d) => d.source)).toEqual(['sanity', 'sanity', 'sanity']);
+    expect(dlos[0].status).toBe('confirmed');    // emerging (rank 1 <= confirmed 1)
+    expect(dlos[1].status).toBe('emerging');     // developing (rank 2 == 1+1, current active)
+    expect(dlos[2].status).toBe('not-started');  // demonstrating
+    expect(dlos[0].descriptor).toBe('Initiates a conversation');
+  });
+
+  it('buildDLOs supports n-DLOs-per-tier from Sanity (no synth fallback)', () => {
+    const rows: ActiveThreadRow[] = [
+      {
+        thread_id: 'L1', thread_name: 'Oral Communication',
+        observation_count: 1, suggested_tier: 'emerging',
+        last_evidence_date: '2026-05-01',
+        current_badge_level: null, next_badge: null, next_badge_progress: 0,
+        dlos_confirmed: 0, dlos_total: 5,
+      },
+    ];
+    const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
+    const sanityByThread: Record<string, SanityDLO[]> = {
+      L1: [
+        { _id: 'dlo.L1.emerging.a', threadRef: 'capabilityThread.L1', tier: 'emerging', descriptor: 'A' },
+        { _id: 'dlo.L1.emerging.b', threadRef: 'capabilityThread.L1', tier: 'emerging', descriptor: 'B' },
+        { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'C' },
+      ],
+    };
+    const dlos = buildDLOs('L1', snap, sanityByThread);
+    expect(dlos).toHaveLength(3);
+    expect(dlos.filter((d) => d.tier === 'emerging')).toHaveLength(2);
+    // Tier-rank arithmetic: both emerging DLOs get 'emerging' status (rank 1 == confirmed 0 + 1).
+    expect(dlos.filter((d) => d.tier === 'emerging').every((d) => d.status === 'emerging')).toBe(true);
+  });
+
+  it('buildDLOs falls back to placeholder descriptors when Sanity is empty for a thread', () => {
+    const rows: ActiveThreadRow[] = [
+      {
+        thread_id: 'L1', thread_name: 'Oral Communication',
+        observation_count: 0, suggested_tier: 'unobserved',
+        last_evidence_date: '',
+        current_badge_level: null, next_badge: null, next_badge_progress: 0,
+        dlos_confirmed: 0, dlos_total: 3,
+      },
+    ];
+    const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
+    const dlos = buildDLOs('L1', snap, {});
+    expect(dlos).toHaveLength(3);
+    expect(dlos.every((d) => d.source === 'placeholder')).toBe(true);
   });
 
   it('THREADS_BY_ID resolves by id', () => {

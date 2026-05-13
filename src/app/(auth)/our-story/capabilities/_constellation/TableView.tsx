@@ -12,6 +12,7 @@ import {
   domainColor,
   threadCurrentTier,
   type LearnerSnapshot,
+  type SanityDLO,
   type SynthDLO,
   type Tier,
   type ThreadNode,
@@ -318,10 +319,10 @@ export function TableThreads({
 
 /* ----- Depth 3 : DLO list ----- */
 export function TableDLOs({
-  snap, threadId, onDrillDown,
-}: { snap: LearnerSnapshot; threadId: string; onDrillDown: (d: DLO) => void }) {
+  snap, threadId, dlosByThread, onDrillDown,
+}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrillDown: (d: DLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
-  const dlos = useMemo(() => buildDLOs(threadId, snap), [threadId, snap]);
+  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
 
   if (!thread) return null;
   const approaching = snap.badges.find((b) => b.thread === threadId && b.status === 'approaching');

@@ -5,6 +5,7 @@ import {
   getThreadDomain,
   type ThreadDomain,
 } from '@/lib/capability-threads';
+import { DLO_DESCRIPTORS, fallbackDescriptor } from './dlo-descriptors';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
 export type ThreadState = 'active' | 'ghost' | 'dormant';
@@ -248,12 +249,14 @@ export function buildDLOs(threadId: string, snap: LearnerSnapshot): SynthDLO[] {
   const confirmed = dloProgress.confirmed;
   const currentTier = snap.tierByThread[threadId] ?? 'unobserved';
   const tierOrder: Exclude<Tier, 'unobserved'>[] = ['emerging', 'developing', 'demonstrating'];
-  return tierOrder.map((t): SynthDLO => {
+  const seeded = DLO_DESCRIPTORS[threadId];
+  return tierOrder.map((t, idx): SynthDLO => {
     const rank = TIER_RANK[t];
     let status: SynthDLO['status'];
     if (rank <= confirmed) status = 'confirmed';
     else if (currentTier !== 'unobserved' && rank === confirmed + 1) status = 'emerging';
     else status = 'not-started';
+    const descriptor = seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]);
     return {
       id: `${threadId}.${t[0]}`,
       thread: threadId,
@@ -261,7 +264,7 @@ export function buildDLOs(threadId: string, snap: LearnerSnapshot): SynthDLO[] {
       tier: t,
       glyph: TIER_GLYPH[t],
       tierLabel: TIER_LABEL[t],
-      descriptor: `${TIER_LABEL[t]} ${thread.name.toLowerCase()}`,
+      descriptor,
       badgeLevel: rank === 1 ? 'foundation' : rank === 2 ? 'practising' : 'mastery',
       status,
     };

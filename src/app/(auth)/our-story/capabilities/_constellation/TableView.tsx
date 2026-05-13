@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   ALL_THREADS,
@@ -323,6 +324,7 @@ export function TableDLOs({
   const dlos = useMemo(() => buildDLOs(threadId, snap), [threadId, snap]);
 
   if (!thread) return null;
+  const approaching = snap.badges.find((b) => b.thread === threadId && b.status === 'approaching');
 
   return (
     <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel">
@@ -330,6 +332,22 @@ export function TableDLOs({
         <em>{thread.name}</em> · {dlos.length} discrete learning objectives. Each glows when{' '}
         {snap.name} has demonstrated it.
       </div>
+      {approaching && (
+        <div className="flex items-center justify-between gap-md border-b border-border-subtle bg-ember-glow px-lg py-md">
+          <div>
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-ember">Badge approaching</p>
+            <p className="font-serif text-sm italic text-text-secondary mt-xs">
+              {snap.name} is close to the next badge for {thread.name}. A short, focused observation could tip it over.
+            </p>
+          </div>
+          <Link
+            href={`/log?source=check-in&thread=${encodeURIComponent(threadId)}&learner=${encodeURIComponent(snap.id)}`}
+            className="shrink-0 rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-colors duration-[var(--motion-quick)] hover:bg-ember-hover"
+          >
+            Plan a check-in →
+          </Link>
+        </div>
+      )}
       {dlos.map((dlo) => {
         const tierColor = dlo.tier === 'demonstrating' ? 'var(--color-sage)' : dlo.tier === 'developing' ? 'var(--color-child-amber)' : 'var(--color-text-muted)';
         const statusChip =
@@ -425,7 +443,12 @@ export function TableMoments({
             return (
               <tr key={m.id} className="border-b border-border-subtle last:border-b-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]">
                 <td className="p-md align-middle">
-                  <div className="font-serif text-[0.95rem] font-medium text-text-primary">{m.title}</div>
+                  <Link
+                    href={`/our-story/portfolio#entry-${m.id}`}
+                    className="block font-serif text-[0.95rem] font-medium text-text-primary hover:text-ember transition-colors duration-[var(--motion-quick)]"
+                  >
+                    {m.title}
+                  </Link>
                   <div className="font-sans text-[0.7rem] uppercase tracking-[0.06em] text-text-muted">{relTime(m.dateOccurred)}</div>
                 </td>
                 <td className="p-md align-middle font-sans text-sm text-text-secondary">{m.dateOccurred}</td>

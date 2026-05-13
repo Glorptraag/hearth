@@ -97,14 +97,14 @@ export function GalleryDomains({
     return arr;
   }, []);
 
-  const edges: Array<{ key: string; src: { x: number; y: number }; tgt: { x: number; y: number } }> = [];
+  const edges: Array<{ key: string; src: { x: number; y: number }; tgt: { x: number; y: number }; crossDomain: boolean }> = [];
   ALL_THREADS.forEach((t) => {
     t.prereqs.forEach((p) => {
       const src = positions[p];
       const tgt = positions[t.id];
       const srcT = THREADS_BY_ID[p];
-      if (!src || !tgt || !srcT || srcT.domain !== t.domain) return;
-      edges.push({ src, tgt, key: `${p}->${t.id}` });
+      if (!src || !tgt || !srcT) return;
+      edges.push({ src, tgt, key: `${p}->${t.id}`, crossDomain: srcT.domain !== t.domain });
     });
   });
 
@@ -134,12 +134,20 @@ export function GalleryDomains({
       </text>
       <text x={W - 24} y={26} className="cap-band-meta" textAnchor="end">▸  SYNTHESISING</text>
 
-      <g style={{ opacity: 'var(--edge-opacity, 0.12)' }}>
+      <g>
         {edges.map((e) => {
           const dx = e.tgt.x - e.src.x;
           const c1x = e.src.x + dx * 0.55;
           const path = `M ${e.src.x} ${e.src.y} C ${c1x} ${e.src.y}, ${c1x} ${e.tgt.y}, ${e.tgt.x} ${e.tgt.y}`;
-          return <path key={e.key} d={path} stroke="var(--color-text-secondary)" strokeWidth={0.8} fill="none" />;
+          return (
+            <path
+              key={e.key}
+              d={path}
+              className={`cap-edge ${e.crossDomain ? 'cross-domain' : ''}`}
+              strokeWidth={e.crossDomain ? 0.7 : 0.8}
+              fill="none"
+            />
+          );
         })}
       </g>
 
@@ -423,6 +431,30 @@ export function GalleryDLOs({
   const padL = 60, padR = 60;
   const thread = THREADS_BY_ID[threadId];
   const dlos = useMemo(() => buildDLOs(threadId, snap), [threadId, snap]);
+  const [momentsByTier, setMomentsByTier] = useState<Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>>>({
+    emerging: [], developing: [], demonstrating: [],
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
+      .then((r) => r.json())
+      .then((data: Array<{ source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
+        if (cancelled) return;
+        const buckets: Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>> = {
+          emerging: [], developing: [], demonstrating: [],
+        };
+        for (const e of Array.isArray(data) ? data : []) {
+          const match = e.aiEnrichment?.capability_threads?.find((c) => c.thread_id === threadId);
+          if (!match || match.confidence < 0.5) continue;
+          const tier = match.confidence >= 0.8 ? 'demonstrating' : match.confidence >= 0.65 ? 'developing' : 'emerging';
+          buckets[tier].push({ source: e.source === 'module' ? 'module' : 'logger' });
+        }
+        setMomentsByTier(buckets);
+      })
+      .catch(() => { if (!cancelled) setMomentsByTier({ emerging: [], developing: [], demonstrating: [] }); });
+    return () => { cancelled = true; };
+  }, [snap.id, threadId]);
 
   if (!thread) return null;
   const dColor = domainColor(thread.domain);
@@ -475,6 +507,31 @@ export function GalleryDLOs({
                   style={{ fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: 500, fill: 'var(--color-text-primary)' }}>
               {dlo.descriptor}
             </text>
+            {/* Per-DLO source pips: ember = Logger, secondary = Module */}
+            {(() => {
+              const ms = momentsByTier[dlo.tier];
+              if (ms.length === 0) return null;
+              const max = Math.min(ms.length, 10);
+              const startX = x - ((max - 1) * 10) / 2;
+              return (
+                <g aria-hidden>
+                  {ms.slice(0, max).map((m, mi) => (
+                    <circle
+                      key={mi}
+                      cx={startX + mi * 10}
+                      cy={y + r + 48}
+                      r={3}
+                      fill={m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)'}
+                      opacity={0.85}
+                    />
+                  ))}
+                  <text x={x} y={y + r + 64} textAnchor="middle"
+                        style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fill: 'var(--color-text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    {ms.length} {ms.length === 1 ? 'moment' : 'moments'}
+                  </text>
+                </g>
+              );
+            })()}
           </g>
         );
       })}

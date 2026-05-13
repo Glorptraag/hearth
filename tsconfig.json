@@ -37,6 +37,7 @@
     "vitest.setup.ts",
     "vitest.integration.setup.ts",
     "vitest.integration.globalSetup.ts",
-    "claude-kindling/**"
+    "claude-kindling/**",
+    "scripts/run-bundle-job.ts"
   ]
 }

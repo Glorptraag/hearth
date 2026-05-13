@@ -6,24 +6,44 @@ import type { Pedagogy } from '@/types';
 
 type PedagogyVocabulary = ReturnType<typeof getPedagogyVocabulary>;
 
-let cachedPedagogy: Pedagogy | null = null;
+interface PedagogyState {
+  pedagogy: Pedagogy;
+  pedagogyPractices: string[];
+}
 
-export function usePedagogy(): { pedagogy: Pedagogy; vocab: PedagogyVocabulary; loading: boolean } {
-  const [pedagogy, setPedagogy] = useState<Pedagogy>(cachedPedagogy ?? 'eclectic');
-  const [loading, setLoading] = useState(!cachedPedagogy);
+let cachedState: PedagogyState | null = null;
+
+export function usePedagogy(): {
+  pedagogy: Pedagogy;
+  pedagogyPractices: string[];
+  vocab: PedagogyVocabulary;
+  loading: boolean;
+} {
+  const [state, setState] = useState<PedagogyState>(
+    cachedState ?? { pedagogy: 'eclectic', pedagogyPractices: [] },
+  );
+  const [loading, setLoading] = useState(!cachedState);
 
   useEffect(() => {
-    if (cachedPedagogy) return;
+    if (cachedState) return;
     fetch('/api/settings')
       .then((r) => r.json())
       .then((data) => {
-        const p = (data?.pedagogyPreference ?? 'eclectic') as Pedagogy;
-        cachedPedagogy = p;
-        setPedagogy(p);
+        const next: PedagogyState = {
+          pedagogy: (data?.pedagogyPreference ?? 'eclectic') as Pedagogy,
+          pedagogyPractices: Array.isArray(data?.pedagogyPractices) ? data.pedagogyPractices : [],
+        };
+        cachedState = next;
+        setState(next);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  return { pedagogy, vocab: getPedagogyVocabulary(pedagogy), loading };
+  return {
+    pedagogy: state.pedagogy,
+    pedagogyPractices: state.pedagogyPractices,
+    vocab: getPedagogyVocabulary(state.pedagogy),
+    loading,
+  };
 }

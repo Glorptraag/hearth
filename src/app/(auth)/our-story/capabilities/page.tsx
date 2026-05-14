@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ConstellationRoute, buildSnapshotFromApi } from './_constellation/ConstellationRoute';
-import type { ActiveThreadRow, LearnerSnapshot } from './_constellation/topology';
+import {
+  indexDLOsByThread,
+  type ActiveThreadRow,
+  type LearnerSnapshot,
+  type SanityDLO,
+} from './_constellation/topology';
+import { sanityClient } from '@/lib/sanity/client';
+import { ALL_DLOS_QUERY } from '@/lib/sanity/queries';
 import { Sparkle } from '@/components/icons';
 
 type Learner = {
@@ -17,6 +24,7 @@ export default function CapabilitiesPage() {
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
+  const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +37,19 @@ export default function CapabilitiesPage() {
         }
         setLoading(false);
       });
+  }, []);
+
+  // DLO content is shared across learners — fetch once.
+  useEffect(() => {
+    let cancelled = false;
+    sanityClient
+      .fetch<SanityDLO[]>(ALL_DLOS_QUERY)
+      .then((rows) => {
+        if (cancelled) return;
+        setDlosByThread(indexDLOsByThread(Array.isArray(rows) ? rows : []));
+      })
+      .catch(() => { /* fall back to placeholder descriptors in topology.ts */ });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -79,6 +100,7 @@ export default function CapabilitiesPage() {
         learners={learners}
         learnerId={selectedLearnerId}
         snap={snap}
+        dlosByThread={dlosByThread}
         onSelectLearner={setSelectedLearnerId}
       />
       {totalObservations === 0 && (

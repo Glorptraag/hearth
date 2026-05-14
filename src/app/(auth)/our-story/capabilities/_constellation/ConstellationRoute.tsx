@@ -13,6 +13,7 @@ import {
   threadCurrentTier,
   type ActiveThreadRow,
   type LearnerSnapshot,
+  type SanityDLO,
   type SynthDLO,
   type ThreadNode,
 } from './topology';
@@ -55,12 +56,12 @@ function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
 }
 
 function Stepper({
-  depth, focus, snap, onJump,
-}: { depth: Depth; focus: Focus; snap: LearnerSnapshot; onJump: (d: Depth) => void }) {
+  depth, focus, snap, dlosByThread, onJump,
+}: { depth: Depth; focus: Focus; snap: LearnerSnapshot; dlosByThread: Record<string, SanityDLO[]>; onJump: (d: Depth) => void }) {
   const domainLabel = focus.domain ? ORDERED_DOMAINS.find((d) => d.key === focus.domain)?.label ?? null : null;
   const threadLabel = focus.thread ? THREADS_BY_ID[focus.thread]?.name ?? null : null;
   const dloLabel = focus.thread && focus.dlo
-    ? buildDLOs(focus.thread, snap).find((d) => d.id === focus.dlo)?.descriptor ?? null
+    ? buildDLOs(focus.thread, snap, dlosByThread).find((d) => d.id === focus.dlo)?.descriptor ?? null
     : null;
 
   const steps: Array<{ d: Depth; label: string; context: string | null; reachable: boolean }> = [
@@ -132,7 +133,9 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
   );
 }
 
-function ContextLine({ snap, depth, focus }: { snap: LearnerSnapshot; depth: Depth; focus: Focus }) {
+function ContextLine({
+  snap, depth, focus, dlosByThread,
+}: { snap: LearnerSnapshot; depth: Depth; focus: Focus; dlosByThread: Record<string, SanityDLO[]> }) {
   let text = '';
   if (depth === 1) {
     text = `${ALL_THREADS.length} threads across ${ORDERED_DOMAINS.length} domains`;
@@ -141,9 +144,10 @@ function ContextLine({ snap, depth, focus }: { snap: LearnerSnapshot; depth: Dep
     const n = ALL_THREADS.filter((t) => t.domain === focus.domain).length;
     text = `${dom?.label} · ${n} threads`;
   } else if (depth === 3 && focus.thread) {
-    text = `${THREADS_BY_ID[focus.thread]?.name} · 3 learning objectives`;
+    const count = buildDLOs(focus.thread, snap, dlosByThread).length;
+    text = `${THREADS_BY_ID[focus.thread]?.name} · ${count} learning ${count === 1 ? 'objective' : 'objectives'}`;
   } else if (depth === 4 && focus.dlo && focus.thread) {
-    const dlo = buildDLOs(focus.thread, snap).find((d) => d.id === focus.dlo);
+    const dlo = buildDLOs(focus.thread, snap, dlosByThread).find((d) => d.id === focus.dlo);
     text = dlo?.descriptor ?? '';
   }
   return (
@@ -154,11 +158,12 @@ function ContextLine({ snap, depth, focus }: { snap: LearnerSnapshot; depth: Dep
 }
 
 export function ConstellationRoute({
-  learners, learnerId, snap, onSelectLearner,
+  learners, learnerId, snap, dlosByThread = {}, onSelectLearner,
 }: {
   learners: Learner[];
   learnerId: string;
   snap: LearnerSnapshot;
+  dlosByThread?: Record<string, SanityDLO[]>;
   onSelectLearner: (id: string) => void;
 }) {
   const router = useRouter();
@@ -223,8 +228,8 @@ export function ConstellationRoute({
 
   const dloObj = useMemo<SynthDLO | null>(() => {
     if (!focus.thread || !focus.dlo) return null;
-    return buildDLOs(focus.thread, snap).find((d) => d.id === focus.dlo) ?? null;
-  }, [focus.thread, focus.dlo, snap]);
+    return buildDLOs(focus.thread, snap, dlosByThread).find((d) => d.id === focus.dlo) ?? null;
+  }, [focus.thread, focus.dlo, snap, dlosByThread]);
 
   return (
     <div className="cap-route mx-auto max-w-[1280px] px-md py-xl lg:px-xl lg:py-2xl">
@@ -248,10 +253,10 @@ export function ConstellationRoute({
         </div>
       </div>
 
-      <Stepper depth={depth} focus={focus} snap={snap} onJump={jump} />
+      <Stepper depth={depth} focus={focus} snap={snap} dlosByThread={dlosByThread} onJump={jump} />
 
       <div className="mt-xs mb-lg flex flex-wrap items-center justify-between gap-md">
-        <ContextLine snap={snap} depth={depth} focus={focus} />
+        <ContextLine snap={snap} depth={depth} focus={focus} dlosByThread={dlosByThread} />
         <ViewToggle view={view} onChange={setView} />
       </div>
 
@@ -265,7 +270,7 @@ export function ConstellationRoute({
           <TableThreads snap={snap} depth={2} focusDomain={focus.domain} onDrillDown={drillToThread} />
         )}
         {view === 'table' && depth === 3 && focus.thread && (
-          <TableDLOs snap={snap} threadId={focus.thread} onDrillDown={drillToDLO} />
+          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrillDown={drillToDLO} />
         )}
         {view === 'table' && depth === 4 && dloObj && (
           <TableMoments snap={snap} dlo={dloObj} />
@@ -275,7 +280,7 @@ export function ConstellationRoute({
           <div className="cap-gallery rounded-lg border border-border-subtle p-xl min-h-[540px]">
             {depth === 1 && <GalleryDomains snap={snap} onDrill={drillToDomain} />}
             {depth === 2 && focus.domain && <GalleryThreads snap={snap} domainKey={focus.domain} onDrill={drillToThread} />}
-            {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} onDrill={drillToDLO} />}
+            {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrill={drillToDLO} />}
             {depth === 4 && dloObj && <GalleryMoments snap={snap} dlo={dloObj} />}
           </div>
         )}

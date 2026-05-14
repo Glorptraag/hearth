@@ -11,6 +11,7 @@ import {
   threadCurrentTier,
   topoColumn,
   type LearnerSnapshot,
+  type SanityDLO,
   type SynthDLO,
   type ThreadNode,
 } from './topology';
@@ -423,14 +424,16 @@ export function GalleryThreads({
   );
 }
 
-/* ─── Depth 3 : DLOs of one thread ───────────────────────────────────── */
+/* ─── Depth 3 : DLOs of one thread ─────────────────────────────────────
+   Layout: three columns (emerging → developing → demonstrating), each stacking
+   its DLOs vertically. n-DLOs-per-tier is supported — Sanity may publish any
+   number per tier. The moments pip-row sits beneath each column and is per-tier
+   (entry→DLO mapping is a future AI-enrichment step). */
 export function GalleryDLOs({
-  snap, threadId, onDrill,
-}: { snap: LearnerSnapshot; threadId: string; onDrill: (d: SynthDLO) => void }) {
-  const W = 1100, H = 460;
-  const padL = 60, padR = 60;
+  snap, threadId, dlosByThread, onDrill,
+}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrill: (d: SynthDLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
-  const dlos = useMemo(() => buildDLOs(threadId, snap), [threadId, snap]);
+  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
   const [momentsByTier, setMomentsByTier] = useState<Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>>>({
     emerging: [], developing: [], demonstrating: [],
   });
@@ -456,9 +459,26 @@ export function GalleryDLOs({
     return () => { cancelled = true; };
   }, [snap.id, threadId]);
 
+  const tierOrder: Array<'emerging' | 'developing' | 'demonstrating'> = ['emerging', 'developing', 'demonstrating'];
+  const dlosByTier = useMemo(() => {
+    const by: Record<'emerging' | 'developing' | 'demonstrating', SynthDLO[]> = {
+      emerging: [], developing: [], demonstrating: [],
+    };
+    for (const d of dlos) by[d.tier].push(d);
+    return by;
+  }, [dlos]);
+
+  // Pack height grows with the tallest column so the SVG always fits without clipping.
+  const maxRows = Math.max(1, ...tierOrder.map((t) => dlosByTier[t].length));
+  const rowSpacing = 92;
+  const topY = 120;          // first DLO row
+  const W = 1100;
+  const padL = 60, padR = 60;
+  const colWidth = (W - padL - padR) / 3;
+  const H = Math.max(460, topY + maxRows * rowSpacing + 60);
+
   if (!thread) return null;
   const dColor = domainColor(thread.domain);
-  const colSpan = (W - padL - padR) / dlos.length;
 
   return (
     <svg
@@ -474,64 +494,78 @@ export function GalleryDLOs({
         Left → right reads as tier progression. The right edge is mastery.
       </text>
 
-      <line x1={padL + colSpan / 2} y1={H / 2} x2={W - padR - colSpan / 2} y2={H / 2}
+      {/* Tier column headers + progression rail */}
+      {tierOrder.map((t, ci) => {
+        const cx = padL + ci * colWidth + colWidth / 2;
+        const tierColor = t === 'demonstrating' ? 'var(--color-sage)'
+                        : t === 'developing'    ? 'var(--color-child-amber)'
+                        :                          'var(--color-text-secondary)';
+        return (
+          <text key={`hdr-${t}`} x={cx} y={88} textAnchor="middle"
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, fill: tierColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {t}
+          </text>
+        );
+      })}
+      <line x1={padL + colWidth / 2} y1={topY - 8} x2={W - padR - colWidth / 2} y2={topY - 8}
             stroke="var(--color-border-medium)" strokeWidth={1} strokeDasharray="3 5" />
 
-      {dlos.map((dlo, i) => {
-        const x = padL + i * colSpan + colSpan / 2;
-        const y = H / 2;
-        const r = dlo.status === 'confirmed' ? 30 : dlo.status === 'emerging' ? 22 : 16;
-        const fill = dlo.status === 'confirmed' ? dColor : dlo.status === 'emerging' ? dColor : 'transparent';
-        const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'emerging' ? 0.6 : 0.4;
-        const tierColor = dlo.tier === 'demonstrating' ? 'var(--color-sage)' : dlo.tier === 'developing' ? 'var(--color-child-amber)' : 'var(--color-text-secondary)';
+      {/* DLOs stacked per column */}
+      {tierOrder.flatMap((t, ci) => {
+        const cx = padL + ci * colWidth + colWidth / 2;
+        const col = dlosByTier[t];
+        return col.map((dlo, ri) => {
+          const y = topY + ri * rowSpacing;
+          const r = dlo.status === 'confirmed' ? 26 : dlo.status === 'emerging' ? 20 : 15;
+          const fill = dlo.status === 'confirmed' ? dColor : dlo.status === 'emerging' ? dColor : 'transparent';
+          const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'emerging' ? 0.6 : 0.4;
+          return (
+            <g key={dlo.id} style={{ cursor: 'pointer' }} onClick={() => onDrill(dlo)}>
+              {dlo.status === 'confirmed' && (
+                <circle cx={cx} cy={y} r={r + 6} fill="none" stroke={dColor} strokeWidth={1} opacity={0.3} />
+              )}
+              {dlo.tier === 'demonstrating' && dlo.status === 'confirmed' && (
+                <circle cx={cx} cy={y} r={r + 14} fill="none" stroke="var(--color-sage)" strokeWidth={0.8} opacity={0.4} />
+              )}
+              <circle cx={cx} cy={y} r={r} fill={fill} stroke={dColor} strokeWidth={2} opacity={opacity} />
+              <text x={cx} y={y + 5} textAnchor="middle"
+                    style={{ fontFamily: 'var(--font-sans)', fontSize: '18px', fontWeight: 600,
+                             fill: dlo.status === 'confirmed' ? 'var(--color-surface-body)' : 'var(--color-text-primary)' }}>
+                {dlo.glyph}
+              </text>
+              <text x={cx} y={y + r + 22} textAnchor="middle"
+                    style={{ fontFamily: 'var(--font-serif)', fontSize: '13px', fontWeight: 500, fill: 'var(--color-text-primary)' }}>
+                <tspan>{dlo.descriptor.length > 56 ? `${dlo.descriptor.slice(0, 54)}…` : dlo.descriptor}</tspan>
+              </text>
+            </g>
+          );
+        });
+      })}
 
+      {/* Per-column moments footer */}
+      {tierOrder.map((t, ci) => {
+        const cx = padL + ci * colWidth + colWidth / 2;
+        const ms = momentsByTier[t];
+        if (ms.length === 0) return null;
+        const max = Math.min(ms.length, 10);
+        const startX = cx - ((max - 1) * 10) / 2;
+        const footerY = H - 40;
         return (
-          <g key={dlo.id} style={{ cursor: 'pointer' }} onClick={() => onDrill(dlo)}>
-            {dlo.status === 'confirmed' && (
-              <circle cx={x} cy={y} r={r + 6} fill="none" stroke={dColor} strokeWidth={1} opacity={0.3} />
-            )}
-            {dlo.tier === 'demonstrating' && dlo.status === 'confirmed' && (
-              <circle cx={x} cy={y} r={r + 14} fill="none" stroke="var(--color-sage)" strokeWidth={0.8} opacity={0.4} />
-            )}
-            <circle cx={x} cy={y} r={r} fill={fill} stroke={dColor} strokeWidth={2} opacity={opacity} />
-            <text x={x} y={y + 5} textAnchor="middle"
-                  style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 600,
-                           fill: dlo.status === 'confirmed' ? 'var(--color-surface-body)' : 'var(--color-text-primary)' }}>
-              {dlo.glyph}
+          <g key={`moments-${t}`} aria-hidden>
+            {ms.slice(0, max).map((m, mi) => (
+              <circle
+                key={mi}
+                cx={startX + mi * 10}
+                cy={footerY}
+                r={3}
+                fill={m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)'}
+                opacity={0.85}
+              />
+            ))}
+            <text x={cx} y={footerY + 16} textAnchor="middle"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fill: 'var(--color-text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {ms.length} {ms.length === 1 ? 'moment' : 'moments'}
             </text>
-            <text x={x} y={y - r - 16} textAnchor="middle"
-                  style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, fill: tierColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {dlo.tierLabel}
-            </text>
-            <text x={x} y={y + r + 28} textAnchor="middle"
-                  style={{ fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: 500, fill: 'var(--color-text-primary)' }}>
-              {dlo.descriptor}
-            </text>
-            {/* Per-DLO source pips: ember = Logger, secondary = Module */}
-            {(() => {
-              const ms = momentsByTier[dlo.tier];
-              if (ms.length === 0) return null;
-              const max = Math.min(ms.length, 10);
-              const startX = x - ((max - 1) * 10) / 2;
-              return (
-                <g aria-hidden>
-                  {ms.slice(0, max).map((m, mi) => (
-                    <circle
-                      key={mi}
-                      cx={startX + mi * 10}
-                      cy={y + r + 48}
-                      r={3}
-                      fill={m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)'}
-                      opacity={0.85}
-                    />
-                  ))}
-                  <text x={x} y={y + r + 64} textAnchor="middle"
-                        style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fill: 'var(--color-text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    {ms.length} {ms.length === 1 ? 'moment' : 'moments'}
-                  </text>
-                </g>
-              );
-            })()}
           </g>
         );
       })}

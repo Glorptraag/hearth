@@ -48,8 +48,9 @@ async function run() {
   try {
     const res = await client.delete({ query: `*[_id in $ids]`, params: { ids: LEGACY_IDS } });
     console.log('Delete result:', JSON.stringify(res, null, 2));
-  } catch (err: any) {
-    console.error('Delete failed:', err.message ?? err);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('Delete failed:', msg);
     console.error('\nLikely cause: one or more legacy threads are referenced by other docs.');
     console.error('Query for referrers, rewrite refs to capabilityThread.{id}, then re-run.');
     process.exit(1);

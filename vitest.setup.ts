@@ -118,6 +118,31 @@ vi.mock('@clerk/nextjs', () => {
 });
 
 // ---------------------------------------------------------------------------
+// next/server — partial mock so route tests can call `after()`.
+//
+// In real Next.js, `after()` only works inside a request scope. Vitest
+// imports the route handler directly and invokes POST(req) outside that
+// scope, so the real `after()` throws `NEXT_DYNAMIC_API_WRONG_CONTEXT`.
+//
+// We replace `after` with a no-op that runs the callback as a bare
+// fire-and-forget promise — fine for tests, which don't assert on the
+// post-response enrichment work anyway. NextRequest/NextResponse/etc.
+// are pulled from the real module so route construction still works.
+// ---------------------------------------------------------------------------
+vi.mock('next/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next/server')>();
+  return {
+    ...actual,
+    after: vi.fn((callback: () => void | Promise<void>) => {
+      // Fire-and-forget — same as the pre-after.ts pattern. Test env
+      // doesn't terminate the worker the way Vercel terminates a
+      // serverless instance, so this is safe.
+      void Promise.resolve().then(callback).catch(() => { /* silent */ });
+    }),
+  };
+});
+
+// ---------------------------------------------------------------------------
 // next/headers — some Clerk internals read these
 // ---------------------------------------------------------------------------
 vi.mock('next/headers', () => ({

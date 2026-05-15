@@ -4,7 +4,7 @@
 > when the pilot launches. Updated as items land — check the git log
 > first; this doc trails reality by a few minutes.
 
-**Last touched:** 2026-04-30 — Operator closed #3, #4, #18 in one session: `CRON_SECRET` + `ADMIN_CLERK_IDS` + `SENTRY_AUTH_TOKEN` added to Vercel; Anthropic monthly spend cap set; "Needs Attention" badges re-saved. Done count up to 20/30. Path to launch is now: #5 smoke test → #19 cron header verify → #21 export/delete dry-run → #11 wizard QA → #15 Playwright e2e.
+**Last touched:** 2026-04-30 — #5 smoke test surfaced a real prod bug (#33): write-time enrichment was firing-and-forgetting on Vercel, getting killed before completing. Two routes patched to use `after()` from `next/server`. After this PR redeploys, re-run Step 5 of the smoke test — `ai_pipeline_logs` should now write within ~3s of a saved entry.
 
 ---
 
@@ -46,8 +46,9 @@
 | 30 | Move rate limiter to Redis / Upstash before multi-region | 🟡 | Design landed at [`docs/redis-rate-limiter-plan.md`](redis-rate-limiter-plan.md): Upstash REST + sorted-set sliding window, async API matching today's signature, three-commit migration behind a `LIMITER_BACKEND` env switch, fail-open on Redis errors. **Do NOT implement yet** — flip when one of the trigger conditions in §"Trigger conditions" becomes true. |
 | 31 | Migrate `report/export/route.ts` to jspdf-autotable v5 API | ✅ | Found and fixed while writing #10 coverage. 7 `doc.autoTable(...)` call sites + 1 import migrated to `autoTable(doc, ...)` named-import API. |
 | 32 | Cross-file mock flake in integration suite | ✅ | Caused by `isolate: false` — setup files only registered `vi.mock('@clerk/nextjs/server', …)` once per worker, and the shared module cache held whichever copy of Clerk got imported first. Fixed by flipping to `isolate: true` in [vitest.integration.config.ts](../vitest.integration.config.ts). Cost: ~120s of extra startup across 6 files; well below the 30s/test timeout. Stable across two consecutive full-suite runs (28/28 green). |
+| 33 | Enrichment fire-and-forget killed by Vercel termination | ✅ | Discovered during #5 smoke test: entries saved but `ai_pipeline_logs` never wrote, with NO Sentry event and NO Vercel error log. Root cause: both `/api/entries` (POST) and `/api/entries/[id]/complete` (POST) kicked off `enrichEntry(...)` as a bare unawaited Promise, then returned the response. Vercel serverless terminates the function instance the moment the response is sent — the background Promise gets killed before its first `await` completes. Works in `next dev` (long-lived process) but never in prod. Fix: wrap the post-response work in `after()` from `next/server`, which tells Vercel to keep the function alive until the callback finishes. Both routes patched. |
 
-**Done:** 20 / 30 · **In flight:** 2 · **Open:** 8 (+ #31 / #32 found-and-fixed in this flow)
+**Done:** 20 / 30 · **In flight:** 2 · **Open:** 8 (+ #31 / #32 / #33 found-and-fixed in this flow)
 
 ---
 

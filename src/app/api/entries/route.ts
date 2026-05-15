@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -116,30 +116,41 @@ export async function POST(request: NextRequest) {
     })
     .returning();
 
-  // Async AI enrichment — does not block the response
+  // Async AI enrichment — does not block the response.
+  // CRITICAL: wrap in `after()` so Vercel serverless keeps the function
+  // instance alive past the response. A bare fire-and-forget Promise
+  // (the old pattern) is killed the moment NextResponse returns —
+  // entries land but never get enriched, with no error trace anywhere.
   if (parsed.data.status === 'complete') {
     const enrichStart = Date.now();
-    enrichEntry({ entryId: entry.id, familyId: family.id })
-      .then(() => {
-        rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
+    after(async () => {
+      try {
+        await enrichEntry({ entryId: entry.id, familyId: family.id });
+        await rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
         // Identify on Clerk userId so the event joins with client-side
         // events (entry_created, etc.) which identify the same way.
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'ok',
         }, { familyId: family.id });
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('[entries/POST] AI pipeline error:', err);
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'error',
         }, { familyId: family.id });
-      });
+      }
+    });
   } else {
-    // Draft saved — schedule a gentle resume nudge (frequency-capped)
-    triggerDraftResume(family.id, { title: entry.title })
-      .catch((err) => console.error('[entries/POST] draft_resume notification error:', err));
+    // Draft saved — schedule a gentle resume nudge (frequency-capped).
+    // Also wrapped in `after()` for the same termination-safety reason.
+    after(async () => {
+      try {
+        await triggerDraftResume(family.id, { title: entry.title });
+      } catch (err) {
+        console.error('[entries/POST] draft_resume notification error:', err);
+      }
+    });
   }
 
   return NextResponse.json(entry, { status: 201 });

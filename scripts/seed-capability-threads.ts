@@ -761,9 +761,10 @@ async function run() {
     console.log('\nNext: npx tsx scripts/seed-dlos.ts');
     console.log('(That script seeds 171 DLO documents referencing capabilityThread.{id} ' +
                 'as written here. Refs will resolve.)');
-  } catch (err: any) {
-    console.error('✗ Seed failed:', err.message ?? err);
-    if (err.message?.includes('non-existent document')) {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('✗ Seed failed:', msg);
+    if (msg.includes('non-existent document')) {
       console.error('\nLikely cause: seed-capability-domains.ts has not run yet.');
       console.error('Run it first, then re-run this script.');
     }

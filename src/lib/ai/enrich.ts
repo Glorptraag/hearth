@@ -362,21 +362,28 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
 export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Promise<void> {
   const startTime = Date.now();
   let retried = false;
+  const tape = (step: string) =>
+    console.log(`[enrich-tape] entryId=${entryId} step=${step} ts=${Date.now() - startTime}ms`);
 
+  tape('enrichEntry-entered');
   try {
     const ctx = await assembleContext(entryId, familyId);
+    tape('context-assembled');
     const { prompt: userPrompt, pedagogySources } = await buildUserPrompt(ctx);
+    tape('prompt-built');
     const childNames = ctx.childRecords.map((c) => c.name);
 
     const client = new Anthropic();
 
     const callLLM = async (): Promise<EnrichmentResult> => {
+      tape(retried ? 'anthropic-call-retry' : 'anthropic-call-start');
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: userPrompt }],
       });
+      tape('anthropic-call-returned');
 
       const text = response.content
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
@@ -384,6 +391,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         .join('');
 
       const parsed = JSON.parse(text) as EnrichmentResult;
+      tape('json-parsed');
       const inputTokens = response.usage.input_tokens;
       const outputTokens = response.usage.output_tokens;
 
@@ -397,6 +405,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         confidence: String(parsed.confidence ?? 0),
         retryTriggered: retried,
       });
+      tape('pipeline-log-written');
 
       return parsed;
     };
@@ -415,13 +424,15 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     }
     await attachProfileNudge(validated, familyId, ctx.childRecords);
 
+    tape('validation-done');
     await db
       .update(learningEntries)
       .set({
-        aiEnrichment: validated,
+        aiEnrichment: { ...validated, status: 'enriched' as const },
         updatedAt: new Date(),
       })
       .where(eq(learningEntries.id, entryId));
+    tape('learning-entry-updated');
 
     // If low confidence, queue async Sonnet re-enrichment
     if (validated.confidence < 0.5) {
@@ -429,7 +440,26 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         .catch((err) => console.error('[enrichEntry] Sonnet fallback failed:', err));
     }
   } catch (error) {
+    tape(`caught-error msg=${error instanceof Error ? error.message.slice(0, 80) : String(error).slice(0, 80)}`);
     console.error('[enrichEntry] Failed:', error);
+    // Mark the row as failed so the Logger post-save surface and Portfolio
+    // can render an honest state (and the parent-initiated retry has a
+    // signal to attach to). Best-effort — never re-throw from the writeback.
+    try {
+      await db
+        .update(learningEntries)
+        .set({
+          aiEnrichment: {
+            status: 'failed' as const,
+            failedAt: new Date().toISOString(),
+            error: error instanceof Error ? error.message.slice(0, 200) : 'enrichment failed',
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(learningEntries.id, entryId));
+    } catch (writeErr) {
+      console.error('[enrichEntry] failed-status writeback errored:', writeErr);
+    }
     // Entry already saved — enrichment failure is non-blocking, but we do
     // want to see it in Sentry so silent degradation doesn't hide behind
     // a healthy response.
@@ -496,7 +526,10 @@ async function sonnetFallback(
 
   await db
     .update(learningEntries)
-    .set({ aiEnrichment: validated, updatedAt: new Date() })
+    .set({
+      aiEnrichment: { ...validated, status: 'enriched' as const },
+      updatedAt: new Date(),
+    })
     .where(eq(learningEntries.id, entryId));
 
   // Rebuild snapshot since Sonnet may produce different thread mappings

@@ -1054,10 +1054,17 @@ ALTER TABLE learning_entries ADD COLUMN enrichment JSONB;
 
 ### 11.2 API Endpoints
 
+> **Updated 2026-05-18 (D-LPS-3).** `POST /api/entries/:id/enrich` is now a parent-initiated retry endpoint, not just an internal hook. Source: `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3.
+
 ```
-POST   /api/entries/:id/enrich         Trigger LLM pipeline for an entry
-       (called internally on entry save — not a public endpoint)
-       Returns: enriched entry JSON
+POST   /api/entries/:id/enrich         Parent-initiated enrichment retry.
+       Auth: Clerk; family ownership + write permission.
+       Rate-limit: 10 / hour / family.
+       Optimistically writes aiEnrichment.status = 'pending', then routes
+       through the same enrichEntry() service (one Haiku call per tap;
+       Sonnet fallback inside the service). No parallel Anthropic SDK
+       call site — preserves the UC5 grep audit boundary.
+       Returns 202: { status: 'pending' }.
 
 GET    /api/families/:id/snapshot       Read the family intelligence snapshot
        Query: ?fields=recommendations,dashboard_summary
@@ -1141,18 +1148,21 @@ function matchKeywords(text) {
 
 ### 12.1 What Happens When the LLM Fails
 
+> **Updated 2026-05-18 (D-LPS-5).** No silent auto-retry queue. Failure is visible at the Logger (honest copy on PostSaveSurface) and recoverable at the Portfolio via the parent-initiated retry affordance (§9.7 of the Portfolio spec). Source: `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3.
+
 ```
 FAILURE SCENARIO                 BEHAVIOUR                              USER IMPACT
 ════════════════                 ═════════                              ═══════════
 
-LLM API timeout                  Entry saves with enrichment_status:    Parent sees entry saved
-(>5 seconds)                     "pending". Retry queued as async job.  without AI suggestions.
-                                 Logger shows: "We'll add insights      Insights appear later
-                                 shortly — your entry is saved."        on next visit.
+LLM API timeout / hard error     Entry saves with                       Logger PostSaveSurface
+(after Haiku + Sonnet fallback)  aiEnrichment.status = 'failed'         shows honest "couldn't
+                                 (failedAt + short error).              draw out insights this
+                                 No auto-retry. Portfolio shows         time" copy. Parent can
+                                 a quiet "Generate now" affordance.     retry from Portfolio.
 
-LLM returns invalid JSON         Retry once immediately with same       Same as timeout — entry
-                                 prompt. If second failure, save        saves, insights deferred.
-                                 without enrichment.
+LLM returns invalid JSON         enrichEntry() handles parse retry      Same — terminal failure
+                                 internally. Terminal failure ->        becomes 'failed' status
+                                 status = 'failed'.                     and surfaces honestly.
 
 LLM confidence < 0.5             Entry saves with Haiku results.        Parent sees lower-
 (low quality output)             Sonnet retry queued (async).           confidence suggestions

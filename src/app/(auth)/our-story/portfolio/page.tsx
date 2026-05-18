@@ -50,6 +50,7 @@ type CapabilityThread = {
 };
 
 type AiEnrichment = {
+  status?: 'pending' | 'enriched' | 'failed';
   capability_threads?: CapabilityThread[];
   curriculum_descriptors?: { code: string; confidence: number }[];
   subjects_detected?: string[];
@@ -123,6 +124,9 @@ export default function PortfolioPage() {
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
+  // Pinned at fetch time so the render-path "looksStuck" check stays pure
+  // (React Compiler flags Date.now() during render). Refreshed on each load.
+  const [entriesFetchedAtMs, setEntriesFetchedAtMs] = useState<number>(0);
   const [badges, setBadges] = useState<BadgeAward[]>([]);
   const [threads, setThreads] = useState<ActiveThread[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -151,6 +155,34 @@ export default function PortfolioPage() {
       setEditingId(null);
     } finally {
       setSavingEdit(false);
+    }
+  }
+
+  // Honest, repeatable enrichment retry — same Haiku service the save path
+  // uses (see docs/hearth-logger-post-save-resolution-v1.md §2 Item 3).
+  async function retryEnrichment(id: string) {
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, aiEnrichment: { ...(e.aiEnrichment ?? {}), status: 'pending' } } : e))
+    );
+    try {
+      const res = await fetch(`/api/entries/${id}/enrich`, { method: 'POST' });
+      if (!res.ok) throw new Error('retry failed');
+      // Server runs the call in after(); poll for the terminal status.
+      // Counter-bounded (not Date.now()) so React Compiler treats the loop
+      // body as pure. 20 attempts × 1.5s = 30s budget.
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const refreshed = await fetch(`/api/entries/${id}`);
+        if (!refreshed.ok) continue;
+        const updated = (await refreshed.json()) as Entry;
+        const status = updated.aiEnrichment?.status;
+        setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+        if (status === 'enriched' || status === 'failed') break;
+      }
+    } catch {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, aiEnrichment: { ...(e.aiEnrichment ?? {}), status: 'failed' } } : e))
+      );
     }
   }
 
@@ -203,6 +235,7 @@ export default function PortfolioPage() {
       fetch('/api/snapshot').then((r) => r.json()).catch(() => ({})),
     ]).then(([e, b, t, snap]) => {
       setEntries(Array.isArray(e) ? e : []);
+      setEntriesFetchedAtMs(Date.now());
       setBadges(Array.isArray(b) ? b : []);
       setThreads(Array.isArray(t) ? t : []);
       const childSnap = snap?.snapshotData?.children?.[selectedLearnerId];
@@ -815,6 +848,37 @@ export default function PortfolioPage() {
                                 <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Journey Observation</p>
                                 <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
                               </div>
+                            )}
+                            {(() => {
+                              // Honest + recoverable: surface a quiet affordance when
+                              // enrichment failed, or when a complete entry older than
+                              // ~2 min still has no enrichment (legacy / stuck). Never
+                              // a red banner — never alarming.
+                              if (entry.status !== 'complete') return null;
+                              const status = entry.aiEnrichment?.status;
+                              const ageMs = entriesFetchedAtMs - new Date(entry.createdAt).getTime();
+                              const looksStuck = !entry.aiEnrichment && ageMs > 2 * 60_000;
+                              if (status !== 'failed' && !looksStuck) return null;
+                              if (status === 'pending') return null;
+                              return (
+                                <div className="mt-sm flex items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm">
+                                  <p className="font-sans text-xs text-text-muted">
+                                    Insights weren&rsquo;t generated for this moment.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => retryEnrichment(entry.id)}
+                                    className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                                  >
+                                    Generate now
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                            {entry.aiEnrichment?.status === 'pending' && (
+                              <p className="mt-sm font-sans text-xs text-text-muted">
+                                Reading this moment&hellip;
+                              </p>
                             )}
                             <button
                               onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}

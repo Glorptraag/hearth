@@ -79,6 +79,7 @@ export function resetIdentity() {
 export type HearthEvent =
   | 'entry_created'
   | 'entry_enriched'
+  | 'entry_enrich_retried'
   | 'module_added_to_library'
   | 'badge_awarded'
   | 'badge_deferred'

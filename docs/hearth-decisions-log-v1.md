@@ -103,3 +103,59 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Schema:** `src/sanity/schemas/module.ts` (`methodAffinity` added 2026-05-13)
 **Future spec:** `hearth-lens-loop-architecture-v1.md` (blocked on PKB Wave 1 corpus completion)
 **Date:** 2026-05-13
+
+### D-LPS-1 — Logger post-save is a deliberately designed second screen
+
+**Decision:** The post-save state at the Logger is a first-class designed surface, not the placeholder "Moment Saved ✨" overlay that was doing undesigned double-duty. The substantive entry path morphs the capture form in place into a confirmation + enrichment surface with parent-controlled exit; thin entries keep the fast overlay unchanged. This is alpha-priority because the core value loop (Logger → Portfolio → HEU → Capabilities) routes through it.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2
+**Implementation:** `src/components/logger/PostSaveSurface.tsx`; mount point `src/app/(auth)/log/page.tsx`
+**Date:** 2026-05-18
+
+### D-LPS-2 — Inline form-morph, parent-controlled exit, depth fades in
+
+**Decision:** The second screen is an inline morph (not an overlay, not a sheet) so capture → seen reads as one continuous act. Exit is parent-controlled — "Back to Dashboard" / "Log Another" — no auto-dismiss on the substantive screen. The confirmation renders instantly on save; the enrichment (reflection prompt + connection observation) fades in as the single Haiku call returns. While the call is in flight an honest interim state ("Reading this moment…") resolves into either depth or failure — never a spinner that hangs. Poll timeout is 30s; on timeout the surface resolves to failed and the Portfolio retry affordance becomes the path forward.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2
+**Implementation:** `src/components/logger/PostSaveSurface.tsx`; poll loop in `src/app/(auth)/log/page.tsx`
+**Date:** 2026-05-18
+
+### D-LPS-3 — Three density states; thin entries keep the fast overlay
+
+**Decision:** Honest Density applies to parent time, not just to AI output. Three density states are supported: thin entries (short description, no Guided chips, no evidence) get the existing fast "Moment Saved ✨" toast unchanged and a quick exit; substantive enriched entries get the full second screen; substantive failed entries get the honest recoverable failure surface. The screen earns weight only when the entry did.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2 density table
+**Implementation:** thin-entry heuristic in `handleSave` (Logger page) — short description + no observation chips + no evidence
+**Date:** 2026-05-18
+
+### D-LPS-4 — No forward prescription on the post-save screen
+
+**Decision:** Nothing on the Logger post-save screen is "try this next time" / "do this tomorrow." The forward-prescription guard from C-PA4 applies. The Logger second screen observes and reflects; forward surfacing lives at read-time on Dashboard / Discover via the Layer 7 tag-match recommender — zero LLM, template-filled, pull-not-push, on a different screen, on the next visit. **Save deposits; next-visit surfaces.** This split is the spine intact.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2
+**Cross-reference:** C-PA4 (forward-prescription guard); `docs/hearth-pedagogy-system-architecture-v1.md` §6
+**Date:** 2026-05-18
+
+### D-LPS-5 — Alpha: enrichment failure must be visible (silent-degradation suspended)
+
+**Decision:** For production resilience the system silently degrades when enrichment fails (entry saves, parent sees success). For alpha that mode is suspended: the post-save state must distinguish enriched / pending / failed so a broken enrichment cannot masquerade as a working one. The `learning_entries.ai_enrichment` JSONB now carries a `status: 'pending' | 'enriched' | 'failed'` discriminant written at save / completion / catch. The Logger surface and Portfolio entry view read the discriminant to render honest state.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 1
+**Implementation:** `src/app/api/entries/route.ts` (pending on insert, failed in catch); `src/lib/ai/enrich.ts` (enriched on success, failed in inner catch); shared `src/types/enrichment.ts`
+**Date:** 2026-05-18
+
+### D-LPS-6 — Captured moment decoupled from enrichment layer
+
+**Decision:** Description, per-child discoveries, evidence and all other captured fields are persisted independent of enrichment outcome. Enrichment is an enhancement layer that can be absent and later filled. "Couldn't generate insights" must never read as "couldn't save your moment." On the Logger second screen the failure copy plainly states insights couldn't be generated this time and tells the parent the moment is safe and where it lives. On the Portfolio entry view a quiet, non-alarming affordance — not an error banner — offers a [Generate now] retry.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3
+**Implementation:** failed branch of `PostSaveSurface`; affordance row in `src/app/(auth)/our-story/portfolio/page.tsx`
+**Date:** 2026-05-18
+
+### D-LPS-7 — Retry is parent-initiated, one call per tap, routes through existing service
+
+**Decision:** Enrichment retry is parent-initiated only — never automatic background retry. One Haiku call per tap. Routes through the same `enrichEntry()` service the save path uses, not a parallel Anthropic SDK call site. This preserves the spine ("no surprise AI") and keeps the audit boundary intact: a separate retry endpoint with its own Anthropic call would add a third Anthropic call site for entries and break the audit. Endpoint is rate-limited to 10 retries / hour / family.
+
+**Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3
+**Implementation:** `src/app/api/entries/[id]/enrich/route.ts` (POST, parent-initiated, rate-limited, delegates to `enrichEntry`)
+**Date:** 2026-05-18

@@ -179,6 +179,9 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 
 > Living list lives in `docs/production-readiness-tracker.md` (20/30 done). The big rocks remaining:
 
+0. **[ALPHA BLOCKER] Logger post-save enrichment surface** — Drew's diagnostic against family `b74e611c-157e-4408-a609-4c2a6ec98fcb` confirmed entries land with no enrichment surfacing. Root cause: undesigned post-save screen (Cause C); the form previously rendered a hardcoded toast with nowhere for enrichment to land. Three-item resolution specced in `docs/hearth-logger-post-save-resolution-v1.md` is built — see D-LPS-1…D-LPS-7 in `docs/hearth-decisions-log-v1.md`. **Sits on Priority #2 (core value loop Logger → Portfolio → HEU → Capabilities).** Does not reopen the one-call rule.
+0a. **System Interaction Map open question #13** ("gentle migration from retro logging to modules") — adjacent but not resolved by D-LPS-*. Flag only.
+
 1. **§1.6 first-deploy smoke test** (#5) — gated on a successful production build with full env, drizzle migrate, and Vercel deploy.
 2. **Verify `CRON_SECRET` header shape post-deploy** (#19).
 3. **Dry-run `/api/account/export` + `/api/account/delete`** (#21) — exercises the cascade-delete path against Neon prod branch.

@@ -98,7 +98,7 @@ export const learningEntries = pgTable(
     sourceSessionId: uuid('source_session_id'),
     status: text('status').notNull().default('draft'),
     observationDetails: jsonb('observation_details').default({}),
-    aiEnrichment: jsonb('ai_enrichment'),
+    aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),

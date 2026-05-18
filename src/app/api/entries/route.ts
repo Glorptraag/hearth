@@ -1,4 +1,10 @@
 import { after, NextRequest, NextResponse } from 'next/server';
+
+// Extend serverless lifetime so the `after()` enrichment callback has room
+// to finish (Sanity context reads + Haiku call + two DB writebacks). Default
+// is 10s on Hobby / 15s on Pro — too tight; this is the suspected cause of
+// production-readiness-tracker #34 (Anthropic billed, no DB writeback).
+export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -108,11 +114,18 @@ export async function POST(request: NextRequest) {
     console.log(JSON.stringify({ event: 'entry_save', mode, familyId: family.id }));
   }
 
+  const willEnrich = parsed.data.status === 'complete';
   const [entry] = await db
     .insert(learningEntries)
     .values({
       familyId: family.id,
       ...entryData,
+      // Seed enrichment with pending status so the Logger post-save surface
+      // can distinguish "in flight" from "never ran" while the after() job
+      // runs. Overwritten by enrichEntry on success / by the catch on failure.
+      ...(willEnrich
+        ? { aiEnrichment: { status: 'pending' as const, startedAt: new Date().toISOString() } }
+        : {}),
     })
     .returning();
 
@@ -121,12 +134,18 @@ export async function POST(request: NextRequest) {
   // instance alive past the response. A bare fire-and-forget Promise
   // (the old pattern) is killed the moment NextResponse returns —
   // entries land but never get enriched, with no error trace anywhere.
-  if (parsed.data.status === 'complete') {
+  if (willEnrich) {
     const enrichStart = Date.now();
     after(async () => {
+      // Tracker #34 diagnostic tape. Each checkpoint is a single console.log
+      // line so Vercel's function logs read top-to-bottom on the next test
+      // and we know exactly where execution stops.
+      console.log(`[enrich-tape] entryId=${entry.id} step=after-fired ts=${Date.now() - enrichStart}ms`);
       try {
         await enrichEntry({ entryId: entry.id, familyId: family.id });
+        console.log(`[enrich-tape] entryId=${entry.id} step=enrichEntry-done ts=${Date.now() - enrichStart}ms`);
         await rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
+        console.log(`[enrich-tape] entryId=${entry.id} step=snapshot-done ts=${Date.now() - enrichStart}ms`);
         // Identify on Clerk userId so the event joins with client-side
         // events (entry_created, etc.) which identify the same way.
         trackServer('entry_enriched', userId, {
@@ -135,6 +154,24 @@ export async function POST(request: NextRequest) {
         }, { familyId: family.id });
       } catch (err) {
         console.error('[entries/POST] AI pipeline error:', err);
+        // Mark the entry as failed so the post-save surface can render an
+        // honest state instead of a green-checkmark-over-silent-failure.
+        // Best-effort; never re-throw.
+        try {
+          await db
+            .update(learningEntries)
+            .set({
+              aiEnrichment: {
+                status: 'failed' as const,
+                failedAt: new Date().toISOString(),
+                error: err instanceof Error ? err.message.slice(0, 200) : 'enrichment failed',
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(learningEntries.id, entry.id));
+        } catch (updateErr) {
+          console.error('[entries/POST] failed to persist failed status:', updateErr);
+        }
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'error',

@@ -113,14 +113,30 @@ export const CAPABILITY_THREADS_QUERY = `*[_type == "capabilityThread"] | order(
 // Deterministic IDs follow the convention `dlo.{threadId}.{tier}` (one per tier per
 // thread today; the array shape supports n-per-tier authoring once Studio editing
 // adds extras). Status field gates draft-vs-published.
+// `descriptor` is aliased to coalesce(parentVersion, descriptor): the lo-fi
+// descriptors are already parent-readable, so there is no parent/technical
+// split — if a parentVersion is ever authored it wins, otherwise the
+// descriptor renders. Transitional per Item 4. `badgeLevel` is still selected
+// but is not seeded; the constellation synthesises it from tier (Item 5).
 export const ALL_DLOS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{
   _id,
   "threadId": thread->slug.current,
   "threadRef": thread._ref,
   tier,
-  descriptor,
+  "descriptor": coalesce(parentVersion, descriptor),
   badgeLevel
 } | order(tier asc, _id asc)`;
+
+// Lean per-thread DLO tier list for the Family Intelligence Snapshot rebuild.
+// Standalone discreteLearningObjective documents are the single source of
+// truth (Item 3) — the snapshot's dlos_confirmed math and the constellation
+// visualiser now read the SAME documents, so they cannot drift. threadRef is
+// the deterministic `capabilityThread.{shortCode}` ref written by seed-dlos.ts.
+export const DLO_TIERS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{
+  _id,
+  "threadRef": thread._ref,
+  tier
+} | order(_id asc)`;
 
 // Modules in family library (by pack IDs)
 export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{

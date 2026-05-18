@@ -278,6 +278,11 @@ const TIER_RANK: Record<Exclude<Tier, 'unobserved'>, number> = {
 
 const TIER_ORDER: Exclude<Tier, 'unobserved'>[] = ['emerging', 'developing', 'demonstrating'];
 
+// TRANSITIONAL (Item 5): badgeLevel is synthesised from tier, not authored.
+// seed-dlos.ts deliberately does NOT write a badgeLevel on DLO documents and
+// ALL_DLOS_QUERY's badgeLevel is therefore null in practice. This tier-derived
+// mapping is the accepted lo-fi stand-in until v2 stage-tier badges (D8) are
+// authored against atomic capabilities. Do not seed badgeLevel to "fix" this.
 const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']> = {
   emerging: 'foundation',
   developing: 'practising',

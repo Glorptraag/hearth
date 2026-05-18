@@ -46,6 +46,9 @@ const TABLES_TO_TRUNCATE = [
   'badge_awards',
   'badge_definitions',
 
+  // capability per-DLO state
+  'learner_dlo_status',
+
   // per-family data
   'planner_entries',
   'notifications',

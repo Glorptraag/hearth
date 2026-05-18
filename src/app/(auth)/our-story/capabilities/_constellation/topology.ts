@@ -294,17 +294,6 @@ const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']
    fallback doesn't spam the console once per render. */
 const PLACEHOLDER_WARNED = new Set<string>();
 
-function statusFor(
-  tier: Exclude<Tier, 'unobserved'>,
-  confirmed: number,
-  currentTier: Tier,
-): DLO['status'] {
-  const rank = TIER_RANK[tier];
-  if (rank <= confirmed) return 'confirmed';
-  if (currentTier !== 'unobserved' && rank === confirmed + 1) return 'emerging';
-  return 'not-started';
-}
-
 /* Build the Depth-3 DLO list for a thread.
 
    Resolution order:
@@ -312,20 +301,23 @@ function statusFor(
    2. Placeholder descriptors from dlo-descriptors.ts (legacy; TODO remove once
       Sanity content is seeded across all 57 threads in production).
 
-   Per-DLO status is mechanical from `dlos_confirmed / dlos_total` until the
-   Postgres learner_dlo_status surface lands. The arithmetic operates on tier
-   rank, so n-per-tier authoring (multiple DLOs at the same tier) is supported
-   — they share the same status. */
+   Per-DLO status is GENUINE (Item 6): it is read from the persisted
+   learner_dlo_status surface, keyed by the Sanity DLO _id, NOT synthesised
+   from a thread-level tier-rank count. Absence of a persisted row = honest
+   'not-started'. State is set only by explicit parent confirmation for now;
+   write-time observation→DLO enrichment + a confidence model are the
+   deliberately deferred keystone. `snap` is retained in the signature for
+   call-site stability but no longer drives DLO status. */
 export function buildDLOs(
   threadId: string,
   snap: LearnerSnapshot,
   sanityByThread?: Record<string, SanityDLO[]>,
+  dloStateById?: Record<string, DLO['status']>,
 ): DLO[] {
+  void snap;
   const thread = THREADS_BY_ID[threadId];
   if (!thread) return [];
-  const dloProgress = snap.dlosByThread[threadId] ?? { confirmed: 0, total: 3 };
-  const confirmed = dloProgress.confirmed;
-  const currentTier = snap.tierByThread[threadId] ?? 'unobserved';
+  const stateFor = (id: string): DLO['status'] => dloStateById?.[id] ?? 'not-started';
 
   const sanityList = sanityByThread?.[threadId];
   if (sanityList && sanityList.length > 0) {
@@ -342,7 +334,7 @@ export function buildDLOs(
       tierLabel: TIER_LABEL[d.tier],
       descriptor: d.descriptor,
       badgeLevel: BADGE_LEVEL_BY_TIER[d.tier],
-      status: statusFor(d.tier, confirmed, currentTier),
+      status: stateFor(d._id),
       source: 'sanity',
     }));
   }
@@ -359,17 +351,20 @@ export function buildDLOs(
     }
   }
   const seeded = DLO_DESCRIPTORS[threadId];
-  return TIER_ORDER.map((t, idx): DLO => ({
-    id: `${threadId}.${t[0]}`,
-    thread: threadId,
-    domain: thread.domain,
-    tier: t,
-    glyph: TIER_GLYPH[t],
-    tierLabel: TIER_LABEL[t],
-    descriptor: seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]),
-    badgeLevel: BADGE_LEVEL_BY_TIER[t],
-    status: statusFor(t, confirmed, currentTier),
-    source: 'placeholder',
-  }));
+  return TIER_ORDER.map((t, idx): DLO => {
+    const id = `${threadId}.${t[0]}`;
+    return {
+      id,
+      thread: threadId,
+      domain: thread.domain,
+      tier: t,
+      glyph: TIER_GLYPH[t],
+      tierLabel: TIER_LABEL[t],
+      descriptor: seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]),
+      badgeLevel: BADGE_LEVEL_BY_TIER[t],
+      status: stateFor(id),
+      source: 'placeholder',
+    };
+  });
 }
 

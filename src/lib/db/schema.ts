@@ -195,6 +195,38 @@ export const badgeAssessmentLogs = pgTable('badge_assessment_logs', {
   assessedAt: timestamp('assessed_at').defaultNow(),
 });
 
+// ─── Per-DLO status (Capability Universe v2, Item 6) ───
+// Minimal genuine per-DLO state. Replaces the tier-rank arithmetic the
+// constellation used to fabricate per-DLO status from a thread-level count.
+// State is set only by explicit parent confirmation for now — write-time
+// observation→DLO enrichment + a confidence model (the keystone) are
+// deliberately deferred. Absence of a row = honest "not-started".
+export const learnerDloStatus = pgTable(
+  'learner_dlo_status',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    learnerId: uuid('learner_id')
+      .references(() => learners.id)
+      .notNull(),
+    // Sanity discreteLearningObjective _id, e.g. "dlo.L1.emerging".
+    dloId: text('dlo_id').notNull(),
+    state: text('state').notNull().default('not-started'),
+    source: text('source').notNull().default('parent'),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('learner_dlo_status_learner_dlo_idx').on(table.learnerId, table.dloId),
+    index('learner_dlo_status_learner_idx').on(table.learnerId),
+    check(
+      'learner_dlo_status_state_chk',
+      sql`${table.state} in ('not-started', 'emerging', 'confirmed')`,
+    ),
+  ],
+);
+
 // ─── Planner ───
 
 export const plannerEntries = pgTable(

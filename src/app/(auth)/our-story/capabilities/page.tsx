@@ -25,6 +25,7 @@ export default function CapabilitiesPage() {
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
   const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
+  const [dloStateById, setDloStateById] = useState<Record<string, 'not-started' | 'emerging' | 'confirmed'>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,12 +60,25 @@ export default function CapabilitiesPage() {
     // briefly paint that learner's progress under the new learner's name.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveThreads([]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDloStateById({});
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         setActiveThreads(Array.isArray(data) ? (data as ActiveThreadRow[]) : []);
       });
+    fetch(`/api/capabilities/${selectedLearnerId}/dlo-status`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        setDloStateById(
+          data && typeof data === 'object' && !Array.isArray(data)
+            ? (data as Record<string, 'not-started' | 'emerging' | 'confirmed'>)
+            : {},
+        );
+      })
+      .catch(() => { /* honest not-started everywhere on failure */ });
     return () => { cancelled = true; };
   }, [selectedLearnerId]);
 
@@ -101,6 +115,7 @@ export default function CapabilitiesPage() {
         learnerId={selectedLearnerId}
         snap={snap}
         dlosByThread={dlosByThread}
+        dloStateById={dloStateById}
         onSelectLearner={setSelectedLearnerId}
       />
       {totalObservations === 0 && (

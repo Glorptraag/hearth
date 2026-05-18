@@ -430,10 +430,10 @@ export function GalleryThreads({
    number per tier. The moments pip-row sits beneath each column and is per-tier
    (entry→DLO mapping is a future AI-enrichment step). */
 export function GalleryDLOs({
-  snap, threadId, dlosByThread, onDrill,
-}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrill: (d: SynthDLO) => void }) {
+  snap, threadId, dlosByThread, dloStateById, onDrill,
+}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; dloStateById?: Record<string, SynthDLO['status']>; onDrill: (d: SynthDLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
-  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
+  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread, dloStateById), [threadId, snap, dlosByThread, dloStateById]);
   const [momentsByTier, setMomentsByTier] = useState<Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>>>({
     emerging: [], developing: [], demonstrating: [],
   });

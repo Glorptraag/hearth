@@ -319,10 +319,10 @@ export function TableThreads({
 
 /* ----- Depth 3 : DLO list ----- */
 export function TableDLOs({
-  snap, threadId, dlosByThread, onDrillDown,
-}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrillDown: (d: DLO) => void }) {
+  snap, threadId, dlosByThread, dloStateById, onDrillDown,
+}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; dloStateById?: Record<string, SynthDLO['status']>; onDrillDown: (d: DLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
-  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
+  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread, dloStateById), [threadId, snap, dlosByThread, dloStateById]);
 
   if (!thread) return null;
   const approaching = snap.badges.find((b) => b.thread === threadId && b.status === 'approaching');

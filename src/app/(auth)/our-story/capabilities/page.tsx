@@ -60,7 +60,6 @@ export default function CapabilitiesPage() {
     // briefly paint that learner's progress under the new learner's name.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveThreads([]);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDloStateById({});
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => r.json())

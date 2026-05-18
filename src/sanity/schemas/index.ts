@@ -7,6 +7,11 @@ import { projectStage } from './projectStage';
 import { badge } from './badge';
 import { capabilityThread } from './capabilityThread';
 import { discreteLearningObjective } from './discreteLearningObjective';
+import { capabilityDomain } from './capabilityDomain';
+import { strand } from './strand';
+import { atomicCapability } from './atomicCapability';
+import { prerequisiteEdge } from './prerequisiteEdge';
+import { regulatoryFramework } from './regulatoryFramework';
 import { pedagogyOverlay } from './pedagogyOverlay';
 import { pedagogicalFramework } from './pedagogicalFramework';
 import { pedagogySourceExcerpt } from './pedagogySourceExcerpt';
@@ -41,8 +46,13 @@ export const schemaTypes = [
   // Singletons
   lensSurfaceMap,
   bannedPhraseSet,
-  // Curriculum content
+  // Capability Universe v2 substrate (§3 data model)
+  capabilityDomain,
   capabilityThread,
+  strand,
+  atomicCapability,
+  prerequisiteEdge,
+  regulatoryFramework,
   discreteLearningObjective,
   badge,
   asset,

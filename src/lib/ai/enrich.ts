@@ -13,6 +13,23 @@ import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
 
+// Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
+// the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
+// choked on the leading backticks, both attempts failed, status went to
+// 'failed' with zero enrichment landing. Strip fences (and any stray text
+// outside the first/last brace) before parsing.
+function extractJson(text: string): string {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const candidate = fenced ? fenced[1] : trimmed;
+  const firstBrace = candidate.indexOf('{');
+  const lastBrace = candidate.lastIndexOf('}');
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
+    return candidate;
+  }
+  return candidate.slice(firstBrace, lastBrace + 1);
+}
+
 const VALID_THREAD_IDS = new Set([
   'L1','L2','L3','L4','L5','L6','L7','L8','L9',
   'M1','M2','M3','M4','M5','M6','M7','M8','M9',
@@ -26,7 +43,7 @@ const VALID_THREAD_IDS = new Set([
 
 const AC9_CODE_PATTERN = /^AC9[A-Z]{1,4}\d{1,2}[A-Z]{1,3}\d{2}$/;
 
-const SYSTEM_PROMPT = `You are Hearth's learning entry enrichment engine. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation.
+const SYSTEM_PROMPT = `You are Hearth's learning entry enrichment engine. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation. Do NOT wrap the JSON in code fences (no \`\`\`json … \`\`\`). The first character of your response must be { and the last must be }.
 
 OUTPUT SCHEMA:
 {
@@ -390,7 +407,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         .map((b) => b.text)
         .join('');
 
-      const parsed = JSON.parse(text) as EnrichmentResult;
+      const parsed = JSON.parse(extractJson(text)) as EnrichmentResult;
       tape('json-parsed');
       const inputTokens = response.usage.input_tokens;
       const outputTokens = response.usage.output_tokens;
@@ -494,7 +511,7 @@ async function sonnetFallback(
     .map((b) => b.text)
     .join('');
 
-  const parsed = JSON.parse(text) as EnrichmentResult;
+  const parsed = JSON.parse(extractJson(text)) as EnrichmentResult;
   const validated = validateEnrichment(parsed, childNames);
 
   // Preserve pedagogy_sources from the Haiku pass — retrieval happens once upstream.

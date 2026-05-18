@@ -336,6 +336,19 @@ When a Learning Entry is soft-deleted (per the data deletion privacy model's 30-
 
 Some entries are text-only (no photos or documents). These display with a document placeholder emoji (📝) in the thumbnail position. They are still valid Portfolio entries — not all learning produces a photo.
 
+### 9.7 Entries Without Enrichment (failed / stuck)
+
+> **Added 2026-05-18 (D-LPS-6, D-LPS-7).** Source: `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3.
+
+An entry may carry `aiEnrichment.status === 'failed'`, or be `status: 'complete'` and older than ~2 minutes with no enrichment JSONB. In both cases the entry-detail view renders a quiet, non-alarming row beneath the description:
+
+- Plain text: *"Insights weren't generated for this moment."*
+- Ghost-button: **[Generate now]** — single tap calls `POST /api/entries/[id]/enrich`.
+
+The retry endpoint routes through the same `enrichEntry()` service the save path uses (one Haiku call per tap), is rate-limited to 10 retries / hour / family, and re-flips the row to `aiEnrichment.status === 'pending'` while in flight. On success the affordance is replaced by the normal enrichment display. On repeated failure the same affordance returns — honest and repeatable. Never a red banner, never an automatic background retry.
+
+While `status === 'pending'` the entry shows the line *"Reading this moment…"* in muted type rather than the affordance.
+
 ---
 
 ## 10. Data Model

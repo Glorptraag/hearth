@@ -16,6 +16,8 @@ import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
 import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
+import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
+import type { AiEnrichment } from '@/types/enrichment';
 import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/components/logger/ObservationChipDetail';
 import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
@@ -357,6 +359,15 @@ export default function LogPage() {
   const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
   const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
   const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
+
+  // Post-save second-screen state. Non-null hides the form and renders
+  // PostSaveSurface in its place. Thin entries skip this (toast-only).
+  // See docs/hearth-logger-post-save-resolution-v1.md.
+  const [postSave, setPostSave] = useState<{
+    entryId: string;
+    evidenceCount: number;
+    enrichment: AiEnrichment | null;
+  } | null>(null);
 
   // Guard so an in-flight enrichment poll can't write post-save UI state into
   // a new entry. Holds the entryId being polled; cleared when the parent
@@ -764,11 +775,35 @@ export default function LogPage() {
 
       clearDraft();
 
-      // Show reflection modal for hearth session entries instead of normal toast
-      if (scaffoldData) {
-        setShowReflection(true);
+      // Heuristic for "thin" entry — three signals must all agree:
+      //   1. Short description (<60 chars)
+      //   2. No Guided observation chip details
+      //   3. No evidence
+      //   4. completeness score below "Strong" (55)
+      // Thin entries skip the substantive second screen and keep the fast
+      // "Saved" toast (see spec §2 Item 2 density table). Per D-LPS-?:
+      // scoreCompleteness is the authoritative weighting (covers learners +
+      // engagement + observations + duration + location), so we anchor the
+      // heuristic to it rather than duplicating signal weights here.
+      const isThinEntry =
+        (description?.trim().length ?? 0) < 60 &&
+        Object.keys(observationDetails ?? {}).length === 0 &&
+        evidenceUrls.length === 0 &&
+        completeness < 55;
+
+      // Scaffold (hearth session) entries also surface the post-save second
+      // screen — per the resolution doc, PostSaveSurface is where enrichment
+      // is most crucial to surface. ReflectionModal layers on top for the
+      // session-specific data capture.
+      if (scaffoldData) setShowReflection(true);
+
+      if (isThinEntry || !savedEntryId) {
+        if (!scaffoldData) setToast({ type: 'success', message: 'Learning entry saved!' });
       } else {
-        setToast({ type: 'success', message: 'Learning entry saved!' });
+        // Substantive entry → render the inline post-save second screen.
+        // Enrichment starts as null; the poll below populates it as the
+        // server's after() job lands data.
+        setPostSave({ entryId: savedEntryId, evidenceCount: evidenceUrls.length, enrichment: null });
       }
       const learnersToCheck = [...selectedLearners];
       setSelectedLearners([]);
@@ -795,7 +830,7 @@ export default function LogPage() {
       (async () => {
         if (savedEntryId) {
           const POLL_INTERVAL_MS = 1500;
-          const POLL_TIMEOUT_MS = 15000;
+          const POLL_TIMEOUT_MS = 30000;
           const start = Date.now();
           while (Date.now() - start < POLL_TIMEOUT_MS) {
             // First check after 1.5s; enrichment is rarely ready sooner.
@@ -805,17 +840,21 @@ export default function LogPage() {
               const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
               if (!enrichedRes.ok) continue;
               const enrichedEntry = await enrichedRes.json() as {
-                aiEnrichment?: {
-                  pedagogy_sources?: PedagogyAttributionSource[];
-                  insight_suggestions?: string[];
-                  profile_nudge?: { text: string; thread_id: string } | null;
-                } | null;
+                aiEnrichment?: AiEnrichment | null;
               };
               const enrichment = enrichedEntry?.aiEnrichment;
               if (!enrichment) continue;
               // Re-check the guard — the parent may have started a new entry
               // while the fetch was in flight.
               if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
+
+              // Drive the post-save surface state machine. Pending → keep
+              // polling; enriched/failed → write final state and stop.
+              const status = enrichment.status;
+              setPostSave((prev) =>
+                prev && prev.entryId === savedEntryId ? { ...prev, enrichment } : prev
+              );
+
               const sources = enrichment.pedagogy_sources ?? [];
               if (sources.length > 0) {
                 setPedagogySources(sources);
@@ -831,6 +870,9 @@ export default function LogPage() {
                 setProfileNudge(nudge);
                 setInsightsExpanded(true);
               }
+              // Keep polling while status is 'pending' (the row exists but
+              // enrichment hasn't completed). Only break on a terminal state.
+              if (status === 'pending') continue;
               activeEnrichmentEntryIdRef.current = null;
               break;
             } catch {
@@ -840,6 +882,20 @@ export default function LogPage() {
           if (activeEnrichmentEntryIdRef.current === savedEntryId) {
             activeEnrichmentEntryIdRef.current = null;
           }
+          // Poll timed out without a terminal status. Spec: "never a spinner
+          // that hangs." Resolve the surface to a failed view so the parent
+          // can exit; the DB row may still finish enriching later, and the
+          // Portfolio retry affordance covers that case.
+          setPostSave((prev) => {
+            if (!prev || prev.entryId !== savedEntryId) return prev;
+            if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
+              return prev;
+            }
+            return {
+              ...prev,
+              enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
+            };
+          });
         }
 
         try {
@@ -909,6 +965,43 @@ export default function LogPage() {
   // ─── Render ───
   if (isLoadingLearners) {
     return <SkeletonLoader />;
+  }
+
+  // Substantive entry just saved — show the deliberate second screen in
+  // place of the form (spec §2 Item 2: inline morph, parent-controlled exit).
+  // Badge-readiness toasts still render here so a quick-check prompt isn't
+  // lost when an entry trips a badge threshold.
+  if (postSave) {
+    return (
+      <div className="relative">
+        <PostSaveSurface
+          enrichment={postSave.enrichment}
+          evidenceCount={postSave.evidenceCount}
+          onLogAnother={() => setPostSave(null)}
+        />
+        {toast && (
+          <div
+            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
+              toast.type === 'badge'
+                ? 'bg-ember/20 text-ember border border-ember/30'
+                : toast.type === 'success'
+                ? 'bg-sage/20 text-sage border border-sage/30'
+                : 'bg-red-900/20 text-red-400 border border-red-900/30'
+            }`}
+          >
+            <span>{toast.message}</span>
+            {toast.action && (
+              <a
+                href={toast.action.href}
+                className="ml-sm font-semibold underline underline-offset-2 hover:no-underline"
+              >
+                {toast.action.label}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (

@@ -105,7 +105,7 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 
 | # | Screen | Canonical File | Spec | Role | Key Interactions |
 |---|--------|---------------|------|------|-----------------|
-| 9 | **Retrospective Logger v3** | `hearth-logger-workspace-v3.html` | `hearth-logger-spec-v1.md` | Core interaction — capture spontaneous learning after it happens | Two-column workspace: tap-driven form (left) + live AI insights (right). Completeness gate at 50%. Per-child differentiation with color-coded engagement emojis + per-child discovery fields keyed by learner_id. Voice input via Web Speech API (en-AU) |
+| 9 | **Retrospective Logger v3** | `hearth-logger-workspace-v3.html` | `hearth-logger-spec-v1.md` | Core interaction — capture spontaneous learning after it happens | Two-column workspace: tap-driven form (left) + live AI insights (right). Completeness gate at 50%. Per-child differentiation with color-coded engagement emojis + per-child discovery fields keyed by learner_id. Voice input via Web Speech API (en-AU). **Post-save second screen:** `PostSaveSurface` (`src/components/logger/PostSaveSurface.tsx`) — inline morph, three density branches (thin / substantive-pending / substantive-enriched / failed). Source: `hearth-logger-post-save-resolution-v1.md` §2 Item 2; decisions D-LPS-1..7. |
 
 #### Nav Group: Explore / Build
 

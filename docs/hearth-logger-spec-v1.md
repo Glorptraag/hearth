@@ -553,16 +553,28 @@ When the save button is tapped (only possible at ≥50% completeness):
 
 ### 7.2 Standard Save Success
 
-A full-screen overlay appears with:
+> **Revised 2026-05-18 (D-LPS-1, D-LPS-2, D-LPS-3).** What was a single overlay is now branched by entry density. Source of record: `docs/hearth-logger-post-save-resolution-v1.md`.
 
-- A green (sage) circle with animated checkmark (pop-in animation)
-- Title: "Moment Saved ✨"
-- Message: *"Added to the portfolio and learning record. HEU evidence has been catalogued automatically."*
-- Two buttons: "Back to Dashboard" (secondary) and "Log Another" (primary, ember)
+The form **morphs in place** into a post-save second screen — not an overlay, not a sheet. Reinforces capture → seen as one continuous act. Exit is parent-controlled; nothing auto-dismisses on the substantive path.
 
-**"Log Another"** resets all state and UI to the initial empty form. All fields are cleared, per-child data is reset, insights return to empty state, completeness returns to 0.
+**Density branch:**
+
+| Entry shape | Behaviour |
+|---|---|
+| **Thin** (description < 60 chars AND no Guided observation chips AND no evidence) | Existing fast "Moment Saved ✨" toast unchanged. Auto-dismiss ~2s. No second screen. |
+| **Substantive, pending** | Inline morph. Heading: "Saved — reading this moment…" + skeleton block. Resolves into enriched or failed when Haiku returns. Never a spinner that hangs (30s poll timeout flips to failed). |
+| **Substantive, enriched** | Heading: "Saved — and here's what we noticed." Subject + evidence chips. Reflection prompt (from `insight_suggestions[0]` or `journey_observation.text`) in serif. Connection observation naming the top `capability_thread`. Exit row: "Back to Dashboard" / "Log Another". |
+| **Substantive, failed** | Heading: "Saved." Honest copy: *"We couldn't draw out insights this time. This moment is safe in your sessions — you can return to it any time."* Exit row. No spinner. No "retry soon" language (retry lives on the Portfolio affordance — §7.5). |
+
+**Forbidden on this screen** (D-LPS-4): forward-prescription language ("try this next time", "do this tomorrow"), apology copy on missing optional fields, second LLM call, auto-dismiss on the substantive path.
+
+**Hearth-session entries (`scaffoldData`):** post-save renders the same surface, with the `ReflectionModal` overlaid on top (the reflection-shareback flow owns its data path; the post-save surface owns enrichment surfacing).
+
+**"Log Another"** resets all state and UI to the initial empty form.
 
 **"Back to Dashboard"** navigates to the Dashboard screen.
+
+**Implementation:** `src/components/logger/PostSaveSurface.tsx`, mounted from `src/app/(auth)/log/page.tsx`.
 
 ### 7.3 Badge Threshold Transition
 
@@ -591,11 +603,20 @@ When `checkBadgeThreshold()` finds a badge at ≥70% progress:
 
 ### 7.5 Error Handling
 
+> **Revised 2026-05-18 (D-LPS-5, D-LPS-6, D-LPS-7).** Alpha suspends the silent-degradation behaviour described in the old #4 below.
+
 **Network failure on save:** In production, the save action should:
 1. Show a loading spinner on the save button
 2. On timeout (>5 seconds): show inline error *"Couldn't save — check your connection and try again."*
 3. Entry data remains in local state; parent can retry without data loss
-4. If save succeeds but enrichment fails: entry saves with `enrichment_status: 'pending'`; parent sees success; enrichment retries asynchronously
+
+**Enrichment failure (alpha behaviour):** The captured moment is decoupled from the enrichment layer. Description, per-child discoveries, evidence and all captured fields persist independent of enrichment outcome. The `learning_entries.ai_enrichment` JSONB carries a `status: 'pending' | 'enriched' | 'failed'` discriminant written at save / completion / catch:
+
+- On insert (with `status: 'complete'`): `{ status: 'pending', startedAt }` seeded so the surface can distinguish in-flight from never-ran.
+- On Haiku / Sonnet success: full enrichment + `status: 'enriched'`.
+- On either `enrichEntry()` inner catch or the route's after()-catch: `{ status: 'failed', failedAt, error }` preserved.
+
+**Surfacing:** the Logger post-save screen (§7.2) renders the honest failed state. Portfolio entry view shows a quiet [Generate now] affordance for `status === 'failed'` or for `complete` entries older than ~2 minutes with no enrichment. Retry is parent-initiated only — never automatic — one Haiku call per tap, rate-limited (10 / hour / family), and routes through the same `enrichEntry()` service the save path uses (D-LPS-7). Endpoint: `POST /api/entries/[id]/enrich`.
 
 **Validation errors:** The completeness gate prevents most validation issues. Additional server-side validation should catch: empty `learner_ids` (should not happen if gate is working), missing `family_id`, description exceeding storage limits.
 

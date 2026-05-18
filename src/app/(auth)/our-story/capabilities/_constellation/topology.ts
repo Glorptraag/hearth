@@ -1,10 +1,13 @@
 import {
-  THREAD_DOMAINS,
   THREAD_NAMES,
   THREAD_CONNECTIONS,
-  getThreadDomain,
   type ThreadDomain,
 } from '@/lib/capability-threads';
+import {
+  V2_DOMAINS,
+  V2_DOMAINS_BY_KEY,
+  getV2DomainKey,
+} from '@/lib/capability-universe-v2';
 import { DLO_DESCRIPTORS, fallbackDescriptor } from './dlo-descriptors';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
@@ -27,35 +30,34 @@ export type DomainSpec = {
   threadCount: number;
 };
 
-/* The v5 spec orders domains left→right as foundational → synthesising.
-   Map Hearth's 8 v2 domains to spec ordering, with short labels + colour token.
-   These mirror the prototype's domains[] but keyed to the real domain keys. */
-const DOMAIN_META: Record<string, { short: string; cssVar: string; order: number }> = {
-  literacy:           { short: 'Lit',  cssVar: '--color-domain-english',      order: 0 },
-  mathematics:        { short: 'Math', cssVar: '--color-domain-mathematics',  order: 1 },
-  personal:           { short: 'Phys', cssVar: '--color-domain-hpe',          order: 2 },
-  psychosocial:       { short: 'P&S',  cssVar: '--color-domain-languages',    order: 3 },
-  science:            { short: 'Sci',  cssVar: '--color-domain-science',      order: 4 },
-  humanities:         { short: 'Hum',  cssVar: '--color-domain-hass',         order: 5 },
-  creative:           { short: 'Crv',  cssVar: '--color-domain-arts',         order: 6 },
-  executiveFunction:  { short: 'Exec', cssVar: '--color-domain-technologies', order: 7 },
-};
+/* v2 substrate: 15 canonical domains ordered by numericId (foundational →
+   human-formation). ORDERED_DOMAINS keeps the DomainSpec shape consumers
+   expect (key/short/label/color/threadCount) but is now derived from the v2
+   taxonomy. Domains with no v1 successor threads (7 Classical Languages, 9
+   Theology) still render — present but unlit — per spec §9.1 / D9. Colour
+   assignment is deferred design (each domain reuses an existing token). */
+const V2_THREAD_COUNTS: Record<string, number> = Object.keys(THREAD_NAMES).reduce(
+  (acc, id) => {
+    const key = getV2DomainKey(id);
+    if (key) acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>,
+);
 
-export const ORDERED_DOMAINS: DomainSpec[] = [...THREAD_DOMAINS]
-  .map((d): DomainSpec => {
-    const meta = DOMAIN_META[d.key] ?? { short: d.label.slice(0, 4), cssVar: '--color-domain-english', order: 99 };
-    return {
-      key: d.key,
-      short: meta.short,
-      label: d.label,
-      color: `var(${meta.cssVar})`,
-      threadCount: d.threadCount,
-    };
-  })
-  .sort((a, b) => (DOMAIN_META[a.key]?.order ?? 99) - (DOMAIN_META[b.key]?.order ?? 99));
+export const ORDERED_DOMAINS: DomainSpec[] = [...V2_DOMAINS]
+  .sort((a, b) => a.numericId - b.numericId)
+  .map((d): DomainSpec => ({
+    key: d.key,
+    short: d.shortName,
+    label: d.name,
+    color: `var(${d.colourVar})`,
+    threadCount: V2_THREAD_COUNTS[d.key] ?? 0,
+  }));
 
 export function domainColor(domainKey: string): string {
-  return `var(${DOMAIN_META[domainKey]?.cssVar ?? '--color-domain-english'})`;
+  const d = V2_DOMAINS_BY_KEY[domainKey];
+  return `var(${d?.colourVar ?? '--color-domain-english'})`;
 }
 
 /* Build a thread DAG from THREAD_NAMES + THREAD_CONNECTIONS.
@@ -68,12 +70,11 @@ function buildThreads(): ThreadNode[] {
     (enablesMap[from] ||= []).push(to);
   });
   return Object.keys(THREAD_NAMES).map((id) => {
-    const domain = getThreadDomain(id);
     const prereqs = prereqMap[id] ?? [];
     return {
       id,
       name: THREAD_NAMES[id],
-      domain: domain?.key ?? 'literacy',
+      domain: getV2DomainKey(id) ?? 'languageLiteracy',
       prereqs,
       enables: enablesMap[id] ?? [],
       foundational: prereqs.length === 0,

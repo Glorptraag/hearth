@@ -14,11 +14,19 @@ import {
 } from './topology';
 
 describe('topology', () => {
-  it('ALL_THREADS includes every domain', () => {
-    const seenDomains = new Set(ALL_THREADS.map((t) => t.domain));
-    for (const d of ORDERED_DOMAINS) {
-      expect(seenDomains.has(d.key)).toBe(true);
+  it('every thread maps to a known v2 domain', () => {
+    const domainKeys = new Set(ORDERED_DOMAINS.map((d) => d.key));
+    for (const t of ALL_THREADS) {
+      expect(domainKeys.has(t.domain)).toBe(true);
     }
+  });
+
+  it('ORDERED_DOMAINS is the 15 v2 domains; Classical Languages & Theology are empty', () => {
+    expect(ORDERED_DOMAINS).toHaveLength(15);
+    const byKey = Object.fromEntries(ORDERED_DOMAINS.map((d) => [d.key, d]));
+    expect(byKey['classicalLanguages']?.threadCount).toBe(0);
+    expect(byKey['theologyScripture']?.threadCount).toBe(0);
+    expect(byKey['languageLiteracy']?.threadCount).toBe(7);
   });
 
   it('foundational threads have no prereqs', () => {
@@ -29,14 +37,14 @@ describe('topology', () => {
   });
 
   it('topoColumn places foundational nodes at column 0', () => {
-    const literacy = ALL_THREADS.filter((t) => t.domain === 'literacy');
+    const literacy = ALL_THREADS.filter((t) => t.domain === 'languageLiteracy');
     const cols = topoColumn(literacy);
     const foundationCols = literacy.filter((t) => t.foundational).map((t) => cols[t.id]);
     expect(Math.min(...foundationCols)).toBe(0);
   });
 
   it('topoColumn places L3 (Reading Comprehension) downstream of L1', () => {
-    const lit = ALL_THREADS.filter((t) => t.domain === 'literacy');
+    const lit = ALL_THREADS.filter((t) => t.domain === 'languageLiteracy');
     const cols = topoColumn(lit);
     expect(cols['L3']).toBeGreaterThan(cols['L1']);
   });

@@ -36,13 +36,20 @@
  */
 
 import { createClient } from '@sanity/client';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 // ─── Sanity client ──────────────────────────────────────────────────────
+// Reconciled to the repo script convention (dotenv + NEXT_PUBLIC_SANITY_*),
+// matching seed-capability-domains.ts / seed-dlos.ts. Thread content and
+// domainKey mappings are unchanged (already the spec-canonical Opus version).
 const client = createClient({
-  projectId: process.env.SANITY_PROJECT_ID ?? 'g5zhwbxg',
-  dataset: process.env.SANITY_DATASET ?? 'production',
-  apiVersion: '2025-01-01',
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? process.env.SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? process.env.SANITY_DATASET ?? 'production',
   token: process.env.SANITY_API_TOKEN,
+  apiVersion: '2024-01-01',
   useCdn: false,
 });
 

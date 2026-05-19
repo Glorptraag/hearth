@@ -1,10 +1,13 @@
 import {
-  THREAD_DOMAINS,
   THREAD_NAMES,
   THREAD_CONNECTIONS,
-  getThreadDomain,
   type ThreadDomain,
 } from '@/lib/capability-threads';
+import {
+  V2_DOMAINS,
+  V2_DOMAINS_BY_KEY,
+  getV2DomainKey,
+} from '@/lib/capability-universe-v2';
 import { DLO_DESCRIPTORS, fallbackDescriptor } from './dlo-descriptors';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
@@ -27,35 +30,34 @@ export type DomainSpec = {
   threadCount: number;
 };
 
-/* The v5 spec orders domains left→right as foundational → synthesising.
-   Map Hearth's 8 v2 domains to spec ordering, with short labels + colour token.
-   These mirror the prototype's domains[] but keyed to the real domain keys. */
-const DOMAIN_META: Record<string, { short: string; cssVar: string; order: number }> = {
-  literacy:           { short: 'Lit',  cssVar: '--color-domain-english',      order: 0 },
-  mathematics:        { short: 'Math', cssVar: '--color-domain-mathematics',  order: 1 },
-  personal:           { short: 'Phys', cssVar: '--color-domain-hpe',          order: 2 },
-  psychosocial:       { short: 'P&S',  cssVar: '--color-domain-languages',    order: 3 },
-  science:            { short: 'Sci',  cssVar: '--color-domain-science',      order: 4 },
-  humanities:         { short: 'Hum',  cssVar: '--color-domain-hass',         order: 5 },
-  creative:           { short: 'Crv',  cssVar: '--color-domain-arts',         order: 6 },
-  executiveFunction:  { short: 'Exec', cssVar: '--color-domain-technologies', order: 7 },
-};
+/* v2 substrate: 15 canonical domains ordered by numericId (foundational →
+   human-formation). ORDERED_DOMAINS keeps the DomainSpec shape consumers
+   expect (key/short/label/color/threadCount) but is now derived from the v2
+   taxonomy. Domains with no v1 successor threads (7 Classical Languages, 9
+   Theology) still render — present but unlit — per spec §9.1 / D9. Colour
+   assignment is deferred design (each domain reuses an existing token). */
+const V2_THREAD_COUNTS: Record<string, number> = Object.keys(THREAD_NAMES).reduce(
+  (acc, id) => {
+    const key = getV2DomainKey(id);
+    if (key) acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>,
+);
 
-export const ORDERED_DOMAINS: DomainSpec[] = [...THREAD_DOMAINS]
-  .map((d): DomainSpec => {
-    const meta = DOMAIN_META[d.key] ?? { short: d.label.slice(0, 4), cssVar: '--color-domain-english', order: 99 };
-    return {
-      key: d.key,
-      short: meta.short,
-      label: d.label,
-      color: `var(${meta.cssVar})`,
-      threadCount: d.threadCount,
-    };
-  })
-  .sort((a, b) => (DOMAIN_META[a.key]?.order ?? 99) - (DOMAIN_META[b.key]?.order ?? 99));
+export const ORDERED_DOMAINS: DomainSpec[] = [...V2_DOMAINS]
+  .sort((a, b) => a.numericId - b.numericId)
+  .map((d): DomainSpec => ({
+    key: d.key,
+    short: d.shortName,
+    label: d.name,
+    color: `var(${d.colourVar})`,
+    threadCount: V2_THREAD_COUNTS[d.key] ?? 0,
+  }));
 
 export function domainColor(domainKey: string): string {
-  return `var(${DOMAIN_META[domainKey]?.cssVar ?? '--color-domain-english'})`;
+  const d = V2_DOMAINS_BY_KEY[domainKey];
+  return `var(${d?.colourVar ?? '--color-domain-english'})`;
 }
 
 /* Build a thread DAG from THREAD_NAMES + THREAD_CONNECTIONS.
@@ -68,12 +70,11 @@ function buildThreads(): ThreadNode[] {
     (enablesMap[from] ||= []).push(to);
   });
   return Object.keys(THREAD_NAMES).map((id) => {
-    const domain = getThreadDomain(id);
     const prereqs = prereqMap[id] ?? [];
     return {
       id,
       name: THREAD_NAMES[id],
-      domain: domain?.key ?? 'literacy',
+      domain: getV2DomainKey(id) ?? 'languageLiteracy',
       prereqs,
       enables: enablesMap[id] ?? [],
       foundational: prereqs.length === 0,
@@ -278,6 +279,11 @@ const TIER_RANK: Record<Exclude<Tier, 'unobserved'>, number> = {
 
 const TIER_ORDER: Exclude<Tier, 'unobserved'>[] = ['emerging', 'developing', 'demonstrating'];
 
+// TRANSITIONAL (Item 5): badgeLevel is synthesised from tier, not authored.
+// seed-dlos.ts deliberately does NOT write a badgeLevel on DLO documents and
+// ALL_DLOS_QUERY's badgeLevel is therefore null in practice. This tier-derived
+// mapping is the accepted lo-fi stand-in until v2 stage-tier badges (D8) are
+// authored against atomic capabilities. Do not seed badgeLevel to "fix" this.
 const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']> = {
   emerging: 'foundation',
   developing: 'practising',
@@ -288,17 +294,6 @@ const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']
    fallback doesn't spam the console once per render. */
 const PLACEHOLDER_WARNED = new Set<string>();
 
-function statusFor(
-  tier: Exclude<Tier, 'unobserved'>,
-  confirmed: number,
-  currentTier: Tier,
-): DLO['status'] {
-  const rank = TIER_RANK[tier];
-  if (rank <= confirmed) return 'confirmed';
-  if (currentTier !== 'unobserved' && rank === confirmed + 1) return 'emerging';
-  return 'not-started';
-}
-
 /* Build the Depth-3 DLO list for a thread.
 
    Resolution order:
@@ -306,20 +301,21 @@ function statusFor(
    2. Placeholder descriptors from dlo-descriptors.ts (legacy; TODO remove once
       Sanity content is seeded across all 57 threads in production).
 
-   Per-DLO status is mechanical from `dlos_confirmed / dlos_total` until the
-   Postgres learner_dlo_status surface lands. The arithmetic operates on tier
-   rank, so n-per-tier authoring (multiple DLOs at the same tier) is supported
-   — they share the same status. */
+   Per-DLO status is NOT fabricated. The old tier-rank arithmetic (which
+   synthesised confirmed/emerging from a thread-level dlos_confirmed count)
+   has been removed: every DLO reports an honest 'not-started' until a
+   genuine per-DLO persistence surface lands in a follow-up. `snap` is
+   retained in the signature for call-site stability but does not drive
+   DLO status. */
 export function buildDLOs(
   threadId: string,
   snap: LearnerSnapshot,
   sanityByThread?: Record<string, SanityDLO[]>,
 ): DLO[] {
+  void snap;
   const thread = THREADS_BY_ID[threadId];
   if (!thread) return [];
-  const dloProgress = snap.dlosByThread[threadId] ?? { confirmed: 0, total: 3 };
-  const confirmed = dloProgress.confirmed;
-  const currentTier = snap.tierByThread[threadId] ?? 'unobserved';
+  const stateFor = (_id: string): DLO['status'] => 'not-started';
 
   const sanityList = sanityByThread?.[threadId];
   if (sanityList && sanityList.length > 0) {
@@ -336,7 +332,7 @@ export function buildDLOs(
       tierLabel: TIER_LABEL[d.tier],
       descriptor: d.descriptor,
       badgeLevel: BADGE_LEVEL_BY_TIER[d.tier],
-      status: statusFor(d.tier, confirmed, currentTier),
+      status: stateFor(d._id),
       source: 'sanity',
     }));
   }
@@ -353,17 +349,20 @@ export function buildDLOs(
     }
   }
   const seeded = DLO_DESCRIPTORS[threadId];
-  return TIER_ORDER.map((t, idx): DLO => ({
-    id: `${threadId}.${t[0]}`,
-    thread: threadId,
-    domain: thread.domain,
-    tier: t,
-    glyph: TIER_GLYPH[t],
-    tierLabel: TIER_LABEL[t],
-    descriptor: seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]),
-    badgeLevel: BADGE_LEVEL_BY_TIER[t],
-    status: statusFor(t, confirmed, currentTier),
-    source: 'placeholder',
-  }));
+  return TIER_ORDER.map((t, idx): DLO => {
+    const id = `${threadId}.${t[0]}`;
+    return {
+      id,
+      thread: threadId,
+      domain: thread.domain,
+      tier: t,
+      glyph: TIER_GLYPH[t],
+      tierLabel: TIER_LABEL[t],
+      descriptor: seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]),
+      badgeLevel: BADGE_LEVEL_BY_TIER[t],
+      status: stateFor(id),
+      source: 'placeholder',
+    };
+  });
 }
 

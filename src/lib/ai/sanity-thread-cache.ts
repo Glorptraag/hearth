@@ -1,5 +1,5 @@
 import { sanityClient } from '@/lib/sanity/client';
-import { CAPABILITY_THREADS_QUERY } from '@/lib/sanity/queries';
+import { DLO_TIERS_QUERY } from '@/lib/sanity/queries';
 
 // ─── Types ───
 
@@ -120,26 +120,35 @@ export async function getCachedThreads(): Promise<Map<string, ThreadMeta>> {
     });
   }
 
-  // Augment with Sanity DLO data
+  // Augment with standalone discreteLearningObjective documents — the single
+  // source of truth (Item 3). The constellation visualiser reads the SAME
+  // documents (ALL_DLOS_QUERY), so the snapshot's dlos_confirmed math and the
+  // rendered DLO list cannot drift. Keyed directly by the deterministic
+  // `capabilityThread.{shortCode}` ref — no fuzzy title matching.
   try {
-    const sanityThreads: SanityThread[] = await sanityClient.fetch(CAPABILITY_THREADS_QUERY);
+    const dloRows: Array<{ _id: string; threadRef: string; tier: SanityDLO['tier'] }> =
+      await sanityClient.fetch(DLO_TIERS_QUERY);
 
-    // Build a lookup by normalized title for fuzzy matching
-    const sanityByTitle = new Map<string, SanityThread>();
-    for (const st of sanityThreads) {
-      sanityByTitle.set(normalizeTitle(st.title), st);
+    const byShortCode = new Map<string, SanityDLO[]>();
+    for (const row of dloRows) {
+      const m = row.threadRef?.match(/^capabilityThread\.(.+)$/);
+      if (!m) continue;
+      const code = m[1];
+      const list = byShortCode.get(code) ?? [];
+      list.push({ _key: row._id, title: '', tier: row.tier });
+      byShortCode.set(code, list);
     }
 
-    for (const [, meta] of threads) {
-      const match = sanityByTitle.get(normalizeTitle(meta.title));
-      if (match && match.dlos?.length) {
-        meta.dlos = match.dlos;
-        meta.dlos_total = match.dlos.length;
+    for (const [code, meta] of threads) {
+      const dlos = byShortCode.get(code);
+      if (dlos && dlos.length) {
+        meta.dlos = dlos;
+        meta.dlos_total = dlos.length;
       }
     }
   } catch (err) {
     // Sanity fetch failed — proceed with taxonomy-only data (no DLOs)
-    console.warn('[sanity-thread-cache] Failed to fetch from Sanity, using taxonomy only:', err);
+    console.warn('[sanity-thread-cache] Failed to fetch DLOs from Sanity, using taxonomy only:', err);
   }
 
   cachedThreads = threads;
@@ -158,13 +167,3 @@ export function getThreadSync(threadId: string): ThreadMeta | null {
   return cachedThreads?.get(threadId) ?? null;
 }
 
-// ─── Helpers ───
-
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[&]/g, 'and')
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}

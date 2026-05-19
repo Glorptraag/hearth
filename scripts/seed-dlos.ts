@@ -1,9 +1,13 @@
 /**
  * Seed Discrete Learning Objectives — one per (thread × tier) for all 57 capability threads.
  *
- * Source of prose: src/app/(auth)/our-story/capabilities/_constellation/dlo-descriptors.ts.
- * Threads not present in DLO_DESCRIPTORS fall back to a generic descriptor keyed off
- * the thread name (so the seed always covers every entry in THREAD_NAMES).
+ * Source of prose (resolution order):
+ *   1. Lo-fi content payload v1LegacyTiers (scripts/data/hearth-constellation-content-lo-fi-v1.ts)
+ *      — the authored lo-fi set, 55 of 57 threads.
+ *   2. DLO_DESCRIPTORS placeholder (the constellation fallback descriptors) — covers
+ *      the threads the lo-fi set drops (H6 First Nations, PS5 Environmental Stewardship).
+ *   3. Generic descriptor keyed off the thread name (so the seed always covers every
+ *      entry in THREAD_NAMES — full 57 × 3 = 171 coverage).
  *
  * Idempotent: uses deterministic IDs (`dlo.{threadId}.{tier}`) + createOrReplace.
  *
@@ -16,6 +20,12 @@ import * as path from 'path';
 
 import { DLO_DESCRIPTORS, fallbackDescriptor } from '../src/app/(auth)/our-story/capabilities/_constellation/dlo-descriptors';
 import { THREAD_NAMES } from '../src/lib/capability-threads';
+import { THREADS as LOFI_THREADS } from './data/hearth-constellation-content-lo-fi-v1';
+
+// legacyV1Id → { emerging, developing, demonstrating } from the lo-fi payload.
+const LOFI_BY_THREAD = new Map(
+  LOFI_THREADS.map((t) => [t.legacyV1Id, t.v1LegacyTiers]),
+);
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -56,9 +66,12 @@ function buildDocs(): DloDoc[] {
   const docs: DloDoc[] = [];
   for (const threadId of Object.keys(THREAD_NAMES)) {
     const descriptors = DLO_DESCRIPTORS[threadId];
+    const lofiTiers = LOFI_BY_THREAD.get(threadId);
     TIERS.forEach((tier, idx) => {
       const descriptor =
-        descriptors?.[idx] ?? fallbackDescriptor(THREAD_NAMES[threadId], TIER_LABELS[tier]);
+        lofiTiers?.[tier] ??
+        descriptors?.[idx] ??
+        fallbackDescriptor(THREAD_NAMES[threadId], TIER_LABELS[tier]);
       docs.push({
         _id: `dlo.${threadId}.${tier}`,
         _type: 'discreteLearningObjective',

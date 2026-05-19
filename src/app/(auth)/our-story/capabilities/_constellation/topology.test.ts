@@ -14,11 +14,19 @@ import {
 } from './topology';
 
 describe('topology', () => {
-  it('ALL_THREADS includes every domain', () => {
-    const seenDomains = new Set(ALL_THREADS.map((t) => t.domain));
-    for (const d of ORDERED_DOMAINS) {
-      expect(seenDomains.has(d.key)).toBe(true);
+  it('every thread maps to a known v2 domain', () => {
+    const domainKeys = new Set(ORDERED_DOMAINS.map((d) => d.key));
+    for (const t of ALL_THREADS) {
+      expect(domainKeys.has(t.domain)).toBe(true);
     }
+  });
+
+  it('ORDERED_DOMAINS is the 15 v2 domains; Classical Languages & Theology are empty', () => {
+    expect(ORDERED_DOMAINS).toHaveLength(15);
+    const byKey = Object.fromEntries(ORDERED_DOMAINS.map((d) => [d.key, d]));
+    expect(byKey['classicalLanguages']?.threadCount).toBe(0);
+    expect(byKey['theologyScripture']?.threadCount).toBe(0);
+    expect(byKey['languageLiteracy']?.threadCount).toBe(7);
   });
 
   it('foundational threads have no prereqs', () => {
@@ -29,14 +37,14 @@ describe('topology', () => {
   });
 
   it('topoColumn places foundational nodes at column 0', () => {
-    const literacy = ALL_THREADS.filter((t) => t.domain === 'literacy');
+    const literacy = ALL_THREADS.filter((t) => t.domain === 'languageLiteracy');
     const cols = topoColumn(literacy);
     const foundationCols = literacy.filter((t) => t.foundational).map((t) => cols[t.id]);
     expect(Math.min(...foundationCols)).toBe(0);
   });
 
   it('topoColumn places L3 (Reading Comprehension) downstream of L1', () => {
-    const lit = ALL_THREADS.filter((t) => t.domain === 'literacy');
+    const lit = ALL_THREADS.filter((t) => t.domain === 'languageLiteracy');
     const cols = topoColumn(lit);
     expect(cols['L3']).toBeGreaterThan(cols['L1']);
   });
@@ -104,7 +112,7 @@ describe('topology', () => {
     // which is fine — unknown threadIds won't match any consumer lookup.
   });
 
-  it('buildDLOs resolves Sanity DLOs in tier order with mechanical statuses', () => {
+  it('buildDLOs resolves Sanity DLOs in tier order with no fabricated status', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -122,17 +130,18 @@ describe('topology', () => {
         { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'Sustains back-and-forth' },
       ],
     };
+
+    // dlos_confirmed:1 used to fabricate confirmed/emerging via tier-rank.
+    // That arithmetic is gone — every DLO is an honest 'not-started' until a
+    // genuine per-DLO persistence surface lands in a follow-up.
     const dlos = buildDLOs('L1', snap, sanityByThread);
-    expect(dlos).toHaveLength(3);
     expect(dlos.map((d) => d.tier)).toEqual(['emerging', 'developing', 'demonstrating']);
     expect(dlos.map((d) => d.source)).toEqual(['sanity', 'sanity', 'sanity']);
-    expect(dlos[0].status).toBe('confirmed');    // emerging (rank 1 <= confirmed 1)
-    expect(dlos[1].status).toBe('emerging');     // developing (rank 2 == 1+1, current active)
-    expect(dlos[2].status).toBe('not-started');  // demonstrating
+    expect(dlos.every((d) => d.status === 'not-started')).toBe(true);
     expect(dlos[0].descriptor).toBe('Initiates a conversation');
   });
 
-  it('buildDLOs supports n-DLOs-per-tier from Sanity (no synth fallback)', () => {
+  it('buildDLOs supports n-DLOs-per-tier from Sanity without fabricating status', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -153,8 +162,7 @@ describe('topology', () => {
     const dlos = buildDLOs('L1', snap, sanityByThread);
     expect(dlos).toHaveLength(3);
     expect(dlos.filter((d) => d.tier === 'emerging')).toHaveLength(2);
-    // Tier-rank arithmetic: both emerging DLOs get 'emerging' status (rank 1 == confirmed 0 + 1).
-    expect(dlos.filter((d) => d.tier === 'emerging').every((d) => d.status === 'emerging')).toBe(true);
+    expect(dlos.every((d) => d.status === 'not-started')).toBe(true);
   });
 
   it('buildDLOs falls back to placeholder descriptors when Sanity is empty for a thread', () => {

@@ -158,13 +158,14 @@ function ContextLine({
 }
 
 export function ConstellationRoute({
-  learners, learnerId, snap, dlosByThread = {}, dloStateById = {}, onSelectLearner,
+  learners, learnerId, snap, dlosByThread = {}, dloStateById = {}, onSetDloState, onSelectLearner,
 }: {
   learners: Learner[];
   learnerId: string;
   snap: LearnerSnapshot;
   dlosByThread?: Record<string, SanityDLO[]>;
   dloStateById?: Record<string, SynthDLO['status']>;
+  onSetDloState?: (dloId: string, next: SynthDLO['status']) => void;
   onSelectLearner: (id: string) => void;
 }) {
   const router = useRouter();
@@ -271,7 +272,7 @@ export function ConstellationRoute({
           <TableThreads snap={snap} depth={2} focusDomain={focus.domain} onDrillDown={drillToThread} />
         )}
         {view === 'table' && depth === 3 && focus.thread && (
-          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} dloStateById={dloStateById} onDrillDown={drillToDLO} />
+          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} dloStateById={dloStateById} onSetDloState={onSetDloState} onDrillDown={drillToDLO} />
         )}
         {view === 'table' && depth === 4 && dloObj && (
           <TableMoments snap={snap} dlo={dloObj} />

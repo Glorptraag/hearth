@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConstellationRoute, buildSnapshotFromApi } from './_constellation/ConstellationRoute';
 import {
   indexDLOsByThread,
@@ -87,6 +87,44 @@ export default function CapabilitiesPage() {
     [learner, activeThreads],
   );
 
+  // Explicit parent confirmation — the only writer for per-DLO state until
+  // the deferred enrichment/confidence keystone lands. Optimistic; reverts
+  // the single key on failure so the constellation never lies about state.
+  const setDloState = useCallback(
+    (dloId: string, next: 'not-started' | 'emerging' | 'confirmed') => {
+      if (!selectedLearnerId) return;
+      const learnerId = selectedLearnerId;
+      let prev: 'not-started' | 'emerging' | 'confirmed' | undefined;
+      setDloStateById((cur) => {
+        prev = cur[dloId];
+        return { ...cur, [dloId]: next };
+      });
+      fetch(`/api/capabilities/${learnerId}/dlo-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dloId, state: next }),
+      })
+        .then((r) => {
+          if (r.ok) return;
+          setDloStateById((cur) => {
+            const reverted = { ...cur };
+            if (prev === undefined) delete reverted[dloId];
+            else reverted[dloId] = prev;
+            return reverted;
+          });
+        })
+        .catch(() => {
+          setDloStateById((cur) => {
+            const reverted = { ...cur };
+            if (prev === undefined) delete reverted[dloId];
+            else reverted[dloId] = prev;
+            return reverted;
+          });
+        });
+    },
+    [selectedLearnerId],
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4xl">
@@ -115,6 +153,7 @@ export default function CapabilitiesPage() {
         snap={snap}
         dlosByThread={dlosByThread}
         dloStateById={dloStateById}
+        onSetDloState={setDloState}
         onSelectLearner={setSelectedLearnerId}
       />
       {totalObservations === 0 && (

@@ -137,15 +137,17 @@ export async function POST(request: NextRequest) {
   if (willEnrich) {
     const enrichStart = Date.now();
     after(async () => {
-      // Tracker #34 diagnostic tape. Each checkpoint is a single console.log
-      // line so Vercel's function logs read top-to-bottom on the next test
-      // and we know exactly where execution stops.
-      console.log(`[enrich-tape] entryId=${entry.id} step=after-fired ts=${Date.now() - enrichStart}ms`);
+      // Route-level tape was the diagnostic surface for tracker #34. Now
+      // that the pipeline is healthy these gate on ENRICH_TAPE=1 so prod
+      // logs stay quiet. enrichEntry() itself still logs a one-line summary
+      // on success and full detail on failure.
+      const TAPE = process.env.ENRICH_TAPE === '1';
+      if (TAPE) console.log(`[enrich-tape] entryId=${entry.id} step=after-fired ts=${Date.now() - enrichStart}ms`);
       try {
         await enrichEntry({ entryId: entry.id, familyId: family.id });
-        console.log(`[enrich-tape] entryId=${entry.id} step=enrichEntry-done ts=${Date.now() - enrichStart}ms`);
+        if (TAPE) console.log(`[enrich-tape] entryId=${entry.id} step=enrichEntry-done ts=${Date.now() - enrichStart}ms`);
         await rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
-        console.log(`[enrich-tape] entryId=${entry.id} step=snapshot-done ts=${Date.now() - enrichStart}ms`);
+        if (TAPE) console.log(`[enrich-tape] entryId=${entry.id} step=snapshot-done ts=${Date.now() - enrichStart}ms`);
         // Identify on Clerk userId so the event joins with client-side
         // events (entry_created, etc.) which identify the same way.
         trackServer('entry_enriched', userId, {

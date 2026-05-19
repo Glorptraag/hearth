@@ -158,14 +158,12 @@ function ContextLine({
 }
 
 export function ConstellationRoute({
-  learners, learnerId, snap, dlosByThread = {}, dloStateById = {}, onSetDloState, onSelectLearner,
+  learners, learnerId, snap, dlosByThread = {}, onSelectLearner,
 }: {
   learners: Learner[];
   learnerId: string;
   snap: LearnerSnapshot;
   dlosByThread?: Record<string, SanityDLO[]>;
-  dloStateById?: Record<string, SynthDLO['status']>;
-  onSetDloState?: (dloId: string, next: SynthDLO['status']) => void;
   onSelectLearner: (id: string) => void;
 }) {
   const router = useRouter();
@@ -230,8 +228,8 @@ export function ConstellationRoute({
 
   const dloObj = useMemo<SynthDLO | null>(() => {
     if (!focus.thread || !focus.dlo) return null;
-    return buildDLOs(focus.thread, snap, dlosByThread, dloStateById).find((d) => d.id === focus.dlo) ?? null;
-  }, [focus.thread, focus.dlo, snap, dlosByThread, dloStateById]);
+    return buildDLOs(focus.thread, snap, dlosByThread).find((d) => d.id === focus.dlo) ?? null;
+  }, [focus.thread, focus.dlo, snap, dlosByThread]);
 
   return (
     <div className="cap-route mx-auto max-w-[1280px] px-md py-xl lg:px-xl lg:py-2xl">
@@ -272,7 +270,7 @@ export function ConstellationRoute({
           <TableThreads snap={snap} depth={2} focusDomain={focus.domain} onDrillDown={drillToThread} />
         )}
         {view === 'table' && depth === 3 && focus.thread && (
-          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} dloStateById={dloStateById} onSetDloState={onSetDloState} onDrillDown={drillToDLO} />
+          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrillDown={drillToDLO} />
         )}
         {view === 'table' && depth === 4 && dloObj && (
           <TableMoments snap={snap} dlo={dloObj} />
@@ -282,7 +280,7 @@ export function ConstellationRoute({
           <div className="cap-gallery rounded-lg border border-border-subtle p-xl min-h-[540px]">
             {depth === 1 && <GalleryDomains snap={snap} onDrill={drillToDomain} />}
             {depth === 2 && focus.domain && <GalleryThreads snap={snap} domainKey={focus.domain} onDrill={drillToThread} />}
-            {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} dloStateById={dloStateById} onDrill={drillToDLO} />}
+            {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrill={drillToDLO} />}
             {depth === 4 && dloObj && <GalleryMoments snap={snap} dlo={dloObj} />}
           </div>
         )}

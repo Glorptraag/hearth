@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ConstellationRoute, buildSnapshotFromApi } from './_constellation/ConstellationRoute';
 import {
   indexDLOsByThread,
@@ -25,7 +25,6 @@ export default function CapabilitiesPage() {
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
   const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
-  const [dloStateById, setDloStateById] = useState<Record<string, 'not-started' | 'emerging' | 'confirmed'>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,24 +59,12 @@ export default function CapabilitiesPage() {
     // briefly paint that learner's progress under the new learner's name.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveThreads([]);
-    setDloStateById({});
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         setActiveThreads(Array.isArray(data) ? (data as ActiveThreadRow[]) : []);
       });
-    fetch(`/api/capabilities/${selectedLearnerId}/dlo-status`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        setDloStateById(
-          data && typeof data === 'object' && !Array.isArray(data)
-            ? (data as Record<string, 'not-started' | 'emerging' | 'confirmed'>)
-            : {},
-        );
-      })
-      .catch(() => { /* honest not-started everywhere on failure */ });
     return () => { cancelled = true; };
   }, [selectedLearnerId]);
 
@@ -85,44 +72,6 @@ export default function CapabilitiesPage() {
   const snap: LearnerSnapshot | null = useMemo(
     () => (learner ? buildSnapshotFromApi(learner, activeThreads) : null),
     [learner, activeThreads],
-  );
-
-  // Explicit parent confirmation — the only writer for per-DLO state until
-  // the deferred enrichment/confidence keystone lands. Optimistic; reverts
-  // the single key on failure so the constellation never lies about state.
-  const setDloState = useCallback(
-    (dloId: string, next: 'not-started' | 'emerging' | 'confirmed') => {
-      if (!selectedLearnerId) return;
-      const learnerId = selectedLearnerId;
-      let prev: 'not-started' | 'emerging' | 'confirmed' | undefined;
-      setDloStateById((cur) => {
-        prev = cur[dloId];
-        return { ...cur, [dloId]: next };
-      });
-      fetch(`/api/capabilities/${learnerId}/dlo-status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dloId, state: next }),
-      })
-        .then((r) => {
-          if (r.ok) return;
-          setDloStateById((cur) => {
-            const reverted = { ...cur };
-            if (prev === undefined) delete reverted[dloId];
-            else reverted[dloId] = prev;
-            return reverted;
-          });
-        })
-        .catch(() => {
-          setDloStateById((cur) => {
-            const reverted = { ...cur };
-            if (prev === undefined) delete reverted[dloId];
-            else reverted[dloId] = prev;
-            return reverted;
-          });
-        });
-    },
-    [selectedLearnerId],
   );
 
   if (loading) {
@@ -152,8 +101,6 @@ export default function CapabilitiesPage() {
         learnerId={selectedLearnerId}
         snap={snap}
         dlosByThread={dlosByThread}
-        dloStateById={dloStateById}
-        onSetDloState={setDloState}
         onSelectLearner={setSelectedLearnerId}
       />
       {totalObservations === 0 && (

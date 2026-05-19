@@ -319,10 +319,10 @@ export function TableThreads({
 
 /* ----- Depth 3 : DLO list ----- */
 export function TableDLOs({
-  snap, threadId, dlosByThread, dloStateById, onSetDloState, onDrillDown,
-}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; dloStateById?: Record<string, SynthDLO['status']>; onSetDloState?: (dloId: string, next: SynthDLO['status']) => void; onDrillDown: (d: DLO) => void }) {
+  snap, threadId, dlosByThread, onDrillDown,
+}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrillDown: (d: DLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
-  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread, dloStateById), [threadId, snap, dlosByThread, dloStateById]);
+  const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
 
   if (!thread) return null;
   const approaching = snap.badges.find((b) => b.thread === threadId && b.status === 'approaching');
@@ -355,49 +355,27 @@ export function TableDLOs({
           dlo.status === 'confirmed' ? 'bg-sage-muted text-sage-text' :
           dlo.status === 'emerging' ? 'bg-ember-glow text-ember' :
           'text-text-muted bg-surface-hover';
-        const nextState: SynthDLO['status'] =
-          dlo.status === 'not-started' ? 'emerging' :
-          dlo.status === 'emerging' ? 'confirmed' : 'not-started';
-        const cycleLabel =
-          dlo.status === 'not-started' ? 'Mark emerging' :
-          dlo.status === 'emerging' ? 'Mark confirmed' : 'Clear';
         return (
-          <div
+          <button
             key={dlo.id}
-            className="flex items-center border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
+            type="button"
+            onClick={() => onDrillDown(dlo)}
+            className="grid w-full grid-cols-[48px_1fr_200px_120px] items-center gap-md px-lg py-md text-left border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
           >
-            <button
-              type="button"
-              onClick={() => onDrillDown(dlo)}
-              className="grid flex-1 grid-cols-[48px_1fr_180px_100px] items-center gap-md px-lg py-md text-left"
-            >
-              <span className="inline-flex justify-center text-[1.6rem] leading-none" style={{ color: tierColor }}>{dlo.glyph}</span>
-              <div>
-                <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
-                <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
-                  {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
-                </div>
+            <span className="inline-flex justify-center text-[1.6rem] leading-none" style={{ color: tierColor }}>{dlo.glyph}</span>
+            <div>
+              <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
+              <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
+                {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
               </div>
-              <div>
-                <span className={`inline-block rounded-sm px-sm py-[4px] font-sans text-[0.75rem] uppercase tracking-[0.05em] ${statusChip}`}>
-                  {dlo.status === 'confirmed' ? 'Confirmed' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
-                </span>
-              </div>
-              <div className="text-right font-sans text-[0.78rem] text-text-muted">→ moments</div>
-            </button>
-            {onSetDloState && (
-              <div className="shrink-0 pr-lg">
-                <button
-                  type="button"
-                  onClick={() => onSetDloState(dlo.id, nextState)}
-                  aria-label={`${cycleLabel} — ${dlo.descriptor}`}
-                  className="rounded-md border border-border-subtle px-sm py-[6px] font-sans text-[0.72rem] text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
-                >
-                  {cycleLabel}
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+            <div>
+              <span className={`inline-block rounded-sm px-sm py-[4px] font-sans text-[0.75rem] uppercase tracking-[0.05em] ${statusChip}`}>
+                {dlo.status === 'confirmed' ? 'Confirmed' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
+              </span>
+            </div>
+            <div className="text-right font-sans text-[0.78rem] text-text-muted">→ moments</div>
+          </button>
         );
       })}
     </div>

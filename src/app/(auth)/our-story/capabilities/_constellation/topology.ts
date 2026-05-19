@@ -301,23 +301,21 @@ const PLACEHOLDER_WARNED = new Set<string>();
    2. Placeholder descriptors from dlo-descriptors.ts (legacy; TODO remove once
       Sanity content is seeded across all 57 threads in production).
 
-   Per-DLO status is GENUINE (Item 6): it is read from the persisted
-   learner_dlo_status surface, keyed by the Sanity DLO _id, NOT synthesised
-   from a thread-level tier-rank count. Absence of a persisted row = honest
-   'not-started'. State is set only by explicit parent confirmation for now;
-   write-time observation→DLO enrichment + a confidence model are the
-   deliberately deferred keystone. `snap` is retained in the signature for
-   call-site stability but no longer drives DLO status. */
+   Per-DLO status is NOT fabricated. The old tier-rank arithmetic (which
+   synthesised confirmed/emerging from a thread-level dlos_confirmed count)
+   has been removed: every DLO reports an honest 'not-started' until a
+   genuine per-DLO persistence surface lands in a follow-up. `snap` is
+   retained in the signature for call-site stability but does not drive
+   DLO status. */
 export function buildDLOs(
   threadId: string,
   snap: LearnerSnapshot,
   sanityByThread?: Record<string, SanityDLO[]>,
-  dloStateById?: Record<string, DLO['status']>,
 ): DLO[] {
   void snap;
   const thread = THREADS_BY_ID[threadId];
   if (!thread) return [];
-  const stateFor = (id: string): DLO['status'] => dloStateById?.[id] ?? 'not-started';
+  const stateFor = (_id: string): DLO['status'] => 'not-started';
 
   const sanityList = sanityByThread?.[threadId];
   if (sanityList && sanityList.length > 0) {

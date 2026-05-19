@@ -112,7 +112,7 @@ describe('topology', () => {
     // which is fine — unknown threadIds won't match any consumer lookup.
   });
 
-  it('buildDLOs resolves Sanity DLOs in tier order; status is genuine per-DLO state', () => {
+  it('buildDLOs resolves Sanity DLOs in tier order with no fabricated status', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -131,24 +131,17 @@ describe('topology', () => {
       ],
     };
 
-    // No persisted state → every DLO is honestly 'not-started' (no tier-rank
-    // fabrication from dlos_confirmed).
-    const noState = buildDLOs('L1', snap, sanityByThread);
-    expect(noState.map((d) => d.tier)).toEqual(['emerging', 'developing', 'demonstrating']);
-    expect(noState.map((d) => d.source)).toEqual(['sanity', 'sanity', 'sanity']);
-    expect(noState.every((d) => d.status === 'not-started')).toBe(true);
-    expect(noState[0].descriptor).toBe('Initiates a conversation');
-
-    // Persisted learner_dlo_status drives status, keyed by the Sanity DLO _id.
-    const dloStateById = {
-      'dlo.L1.emerging': 'confirmed' as const,
-      'dlo.L1.developing': 'emerging' as const,
-    };
-    const dlos = buildDLOs('L1', snap, sanityByThread, dloStateById);
-    expect(dlos.map((d) => d.status)).toEqual(['confirmed', 'emerging', 'not-started']);
+    // dlos_confirmed:1 used to fabricate confirmed/emerging via tier-rank.
+    // That arithmetic is gone — every DLO is an honest 'not-started' until a
+    // genuine per-DLO persistence surface lands in a follow-up.
+    const dlos = buildDLOs('L1', snap, sanityByThread);
+    expect(dlos.map((d) => d.tier)).toEqual(['emerging', 'developing', 'demonstrating']);
+    expect(dlos.map((d) => d.source)).toEqual(['sanity', 'sanity', 'sanity']);
+    expect(dlos.every((d) => d.status === 'not-started')).toBe(true);
+    expect(dlos[0].descriptor).toBe('Initiates a conversation');
   });
 
-  it('buildDLOs supports n-DLOs-per-tier; each DLO carries its own state', () => {
+  it('buildDLOs supports n-DLOs-per-tier from Sanity without fabricating status', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -166,15 +159,10 @@ describe('topology', () => {
         { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'C' },
       ],
     };
-    // Two same-tier DLOs can hold different state (no shared tier-rank status).
-    const dlos = buildDLOs('L1', snap, sanityByThread, {
-      'dlo.L1.emerging.a': 'confirmed',
-    });
+    const dlos = buildDLOs('L1', snap, sanityByThread);
     expect(dlos).toHaveLength(3);
-    const emerging = dlos.filter((d) => d.tier === 'emerging');
-    expect(emerging).toHaveLength(2);
-    expect(emerging.find((d) => d.id === 'dlo.L1.emerging.a')?.status).toBe('confirmed');
-    expect(emerging.find((d) => d.id === 'dlo.L1.emerging.b')?.status).toBe('not-started');
+    expect(dlos.filter((d) => d.tier === 'emerging')).toHaveLength(2);
+    expect(dlos.every((d) => d.status === 'not-started')).toBe(true);
   });
 
   it('buildDLOs falls back to placeholder descriptors when Sanity is empty for a thread', () => {

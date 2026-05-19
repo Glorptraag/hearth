@@ -376,11 +376,23 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
   };
 }
 
+// Tracker #34 was diagnosed by a per-step console.log "tape" inside this
+// function. Now that the pipeline is healthy we keep the tape but gate it
+// on ENRICH_TAPE=1 so prod logs stay readable. The error path always logs
+// the final step + message regardless, so the next regression is still
+// pinpointable from Vercel logs alone.
+const TAPE_ENABLED = process.env.ENRICH_TAPE === '1';
+
 export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Promise<void> {
   const startTime = Date.now();
   let retried = false;
-  const tape = (step: string) =>
-    console.log(`[enrich-tape] entryId=${entryId} step=${step} ts=${Date.now() - startTime}ms`);
+  let lastStep = 'enrichEntry-entered';
+  const tape = (step: string) => {
+    lastStep = step;
+    if (TAPE_ENABLED) {
+      console.log(`[enrich-tape] entryId=${entryId} step=${step} ts=${Date.now() - startTime}ms`);
+    }
+  };
 
   tape('enrichEntry-entered');
   try {
@@ -451,13 +463,24 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       .where(eq(learningEntries.id, entryId));
     tape('learning-entry-updated');
 
+    // One-line summary log on the healthy path — keeps a paper trail
+    // without 11 lines per save. ENRICH_TAPE=1 still streams the full tape.
+    console.log(
+      `[enrichEntry] ok entryId=${entryId} totalMs=${Date.now() - startTime} retried=${retried} confidence=${validated.confidence.toFixed(2)}`
+    );
+
     // If low confidence, queue async Sonnet re-enrichment
     if (validated.confidence < 0.5) {
       sonnetFallback(entryId, familyId, userPrompt, childNames)
         .catch((err) => console.error('[enrichEntry] Sonnet fallback failed:', err));
     }
   } catch (error) {
-    tape(`caught-error msg=${error instanceof Error ? error.message.slice(0, 80) : String(error).slice(0, 80)}`);
+    const errMsg = error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200);
+    // Error path always logs the last successful step so the next regression
+    // is diagnosable from Vercel logs without flipping ENRICH_TAPE on.
+    console.error(
+      `[enrichEntry] FAIL entryId=${entryId} lastStep=${lastStep} totalMs=${Date.now() - startTime} msg=${errMsg}`
+    );
     console.error('[enrichEntry] Failed:', error);
     // Mark the row as failed so the Logger post-save surface and Portfolio
     // can render an honest state (and the parent-initiated retry has a

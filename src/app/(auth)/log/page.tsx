@@ -657,6 +657,20 @@ export default function LogPage() {
 
   const canSave = canSaveEntry(completeness, loggerMode);
 
+  // Concrete checklist of what's still missing before the entry can be saved.
+  // Surfaced prominently in the mobile save bar so the parent never has to
+  // guess why Save is disabled.
+  const missingItems = useMemo(() => {
+    const items: string[] = [];
+    if (selectedLearners.length === 0) items.push('Pick who was learning');
+    if (description.trim().length <= 20) items.push('Describe what happened');
+    if (loggerMode === 'guided' && !activityType) items.push('Choose an activity');
+    if (selectedLearners.length > 0 && !selectedLearners.some((id) => engagement[id]))
+      items.push('Rate engagement');
+    if (observations.length === 0) items.push('Add an observation');
+    return items;
+  }, [selectedLearners, description, activityType, engagement, observations, loggerMode]);
+
   // Fire `logger_completed_50pct` exactly once per Logger session, the
   // moment completeness first crosses the save threshold. Useful for
   // measuring funnel drop-off between started-typing and saved.
@@ -1061,23 +1075,25 @@ export default function LogPage() {
               ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
               : vocab.logNudge}
           </p>
-          <button
-            type="button"
-            onClick={() => setShowBatch(true)}
-            className="font-sans text-sm text-text-muted hover:text-ember underline underline-offset-2 transition-colors duration-200"
-          >
-            Log multiple sessions at once
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowImport(true)}
-            className="font-sans text-sm text-text-muted hover:text-ember underline underline-offset-2 transition-colors duration-200"
-          >
-            Import from CSV
-          </button>
+          <div className="mt-xs flex flex-wrap items-center gap-xs">
+            <button
+              type="button"
+              onClick={() => setShowBatch(true)}
+              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+            >
+              <ClipboardText size={12} aria-hidden="true" /> Batch log
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowImport(true)}
+              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+            >
+              <ClipboardText size={12} aria-hidden="true" /> Import CSV
+            </button>
+          </div>
         </div>
         <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />
-        <div className="flex items-center gap-sm">
+        <div className="hidden lg:flex items-center gap-sm">
           <CompletenessRing score={completeness} />
           <div className="hidden sm:block text-left">
             <p className="font-sans text-[0.6875rem] font-semibold text-text-secondary leading-tight">{completenessLabel}</p>
@@ -1087,7 +1103,7 @@ export default function LogPage() {
         <button
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className={`flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
             canSave
               ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
               : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
@@ -1126,7 +1142,7 @@ export default function LogPage() {
 
       {!showBatch && !showImport && <div className="flex-1 lg:flex">
         {/* ─── Left: Capture Form ─── */}
-        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
+        <div className="flex-1 overflow-y-auto px-md pt-lg pb-[220px] lg:py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
           {/* Section 1: Who Was Learning? */}
           <section>
@@ -1574,19 +1590,11 @@ export default function LogPage() {
         </aside>
       </div>}
 
-      {/* ─── Mobile AI Insights Drawer ─── */}
-      <div className="lg:hidden fixed bottom-[72px] left-0 right-0 z-40">
-        <button
-          onClick={() => setInsightsExpanded(!insightsExpanded)}
-          className="w-full flex items-center justify-center gap-sm border-t border-border-subtle bg-surface-panel px-md py-sm"
-        >
-          <div className="h-[4px] w-[32px] rounded-full bg-border-medium" />
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {insightsExpanded ? 'Hide' : 'Show'} Insights
-          </span>
-        </button>
+      {/* ─── Mobile bottom stack: AI Insights drawer + Save bar ─── */}
+      <div className="lg:hidden fixed bottom-[72px] left-0 right-0 z-50">
+        {/* AI Insights drawer — expands upward, above the save bar */}
         {insightsExpanded && (
-          <div className="max-h-[60vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
+          <div className="max-h-[55vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
             <div className="flex items-center gap-sm mb-md">
               <span className="text-ember" aria-hidden="true"><Sparkle size={18} /></span>
               <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
@@ -1601,6 +1609,69 @@ export default function LogPage() {
               postSaveInsights={postSaveInsights}
             />
             <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
+          </div>
+        )}
+        <button
+          onClick={() => setInsightsExpanded(!insightsExpanded)}
+          className="w-full flex items-center justify-center gap-sm border-t border-border-subtle bg-surface-panel px-md py-sm"
+        >
+          <div className="h-[4px] w-[32px] rounded-full bg-border-medium" />
+          <span className="font-sans text-xs font-medium text-text-secondary">
+            {insightsExpanded ? 'Hide' : 'Show'} Insights
+          </span>
+        </button>
+
+        {/* Save bar — primary action anchored at the bottom on mobile */}
+        {!showBatch && !showImport && (
+          <div className="border-t border-border-subtle bg-surface-panel px-md py-sm pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+            {!canSave && missingItems.length > 0 && (
+              <div
+                className="mb-sm flex flex-wrap items-center gap-xs"
+                role="status"
+                aria-live="polite"
+              >
+                <span className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  Before you save
+                </span>
+                {missingItems.map((m) => (
+                  <span
+                    key={m}
+                    className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-surface-raised px-sm py-[2px] font-sans text-[0.6875rem] text-text-secondary"
+                  >
+                    <span className="h-[5px] w-[5px] rounded-full bg-ember" aria-hidden="true" />
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-md">
+              <CompletenessRing score={completeness} />
+              <div className="min-w-0 flex-1">
+                <p className="font-sans text-[0.75rem] font-semibold text-text-secondary leading-tight">
+                  {completenessLabel}
+                </p>
+                <p className="font-sans text-[0.6875rem] text-text-muted leading-tight truncate">
+                  {canSave
+                    ? completenessHint
+                    : `${missingItems.length} thing${missingItems.length === 1 ? '' : 's'} left`}
+                </p>
+              </div>
+              <button
+                onClick={handleSave}
+                disabled={!canSave || isSaving}
+                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+                  canSave
+                    ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
+                    : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
+                }`}
+              >
+                {isSaving
+                  ? 'Saving…'
+                  : canSave
+                    ? <span className="inline-flex items-center gap-xs"><Check size={16} aria-hidden="true" /> Save</span>
+                    : 'Save'}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -1620,7 +1691,7 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
+          className={`fixed bottom-[200px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
             toast.type === 'badge'
               ? 'bg-ember/20 text-ember border border-ember/30'
               : toast.type === 'success'

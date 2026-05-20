@@ -60,6 +60,20 @@ The metaphor: five ramps onto the same road. The ramps have different gradients 
 
 **Philosophy-neutral at all layers.** Entry paths don't assume pedagogy. A Charlotte Mason parent and an Unschooling parent using the Material-Anchored path both describe their resource; the system generates philosophy-neutral module content that the runtime overlay system interprets through their family's lens.
 
+### 1.3.1 Spec ↔ Code Naming
+
+The display names in this spec ("Material-Anchored", "Process", "Inquiry", "Retrospective Lift", "Goal-Forward") are intentionally narrative — they describe the parent's cognitive starting point. The code uses short slugs on `module.createdVia` for the same set:
+
+| Spec display name | Code value (`createdVia`) |
+|---|---|
+| Material-Anchored | `'material'` |
+| Process | `'process'` |
+| Inquiry | `'inquiry'` |
+| Retrospective Lift | `'retrospective'` |
+| Goal-Forward | `'goal'` |
+
+The slug `'goal'` covers both modes of the Goal-Forward path (aspiration mode + capability mode). Mode-level provenance lives in `sourceGoal` / `sourceCapability`, not in `createdVia`. Renaming `'goal'` to `'understanding'` was considered and rejected: "goal" is the parent's framing and matches the spec's display name better than "understanding" (which is what the system *infers*, not what the parent *brings*).
+
 ### 1.4 The Five-Path System as a Coherent Whole
 
 Each path exists because a parent arrives in a different cognitive state — not a different goal (they all want to create a module), but a different relationship to the learning they're about to formalise. The system's value proposition per path is always the same: "You bring what you have, we reveal the educational structure you couldn't see." What differs is what the parent brings and what the system has to infer.

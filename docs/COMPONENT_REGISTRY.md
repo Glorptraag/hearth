@@ -282,8 +282,6 @@ These are content instances using the Module Experience shell — not unique scr
 | `hearth-jumpstart-classical-pack-plan-v2.md` | Jumpstart Classical content pack plan — 10-week QLD term, 12 modules across 6 strands, Genesis 1-11 anchor, Christian classical worldview |
 | `hearth-starter-pack-plan-v3.md` | Starter Pack content plan v3 — ages 4-8, 7 modules (~203 activities), balanced experiential + structured content. Rebalanced from v2 to include structured literacy and number work |
 | `02_Hearth_Implementation_Guide.md` | Technical implementation roadmap |
-| `lms-database-schema.js` | PostgreSQL schema for user data |
-| `lms-api-endpoints.js` | API endpoint definitions |
 | `lms-terms-and-concepts.md` | Domain glossary |
 | `Hearth_LMS_Pre-Development_Checklist.md` | Pre-dev verification checklist |
 | `platform-app-documentation-guide.md` | Documentation standards |

@@ -77,12 +77,15 @@ jobs:
   # Secrets required:
   #   NEON_API_KEY           (secret)   — API key with branch-management
   #   NEON_PROJECT_ID        (variable) — identifier of the Neon project
-  #   NEON_PARENT_BRANCH_ID  (variable) — branch to fork from (NOT main/prod)
+  #   NEON_PARENT_BRANCH_ID  (variable) — the permanently-empty `test-base`
+  #                                       branch to fork from (NOT prod/dev)
   #
   # The Neon GitHub integration auto-sets NEON_API_KEY and NEON_PROJECT_ID
-  # when installed. You'll need to set NEON_PARENT_BRANCH_ID manually —
-  # make it a dev branch, not production. If you fork from production, your
-  # test truncate statements wipe real data. Don't do that.
+  # when installed. You must set NEON_PARENT_BRANCH_ID manually to the
+  # empty `test-base` branch's ID. The orchestrator forks from it and runs
+  # the full drizzle migration set against the ephemeral fork before tests
+  # (empty-base + migrate-the-fork) — so it must NOT point at prod or any
+  # branch carrying schema/data.
   # -------------------------------------------------------------------------
   integration:
     name: Integration tests

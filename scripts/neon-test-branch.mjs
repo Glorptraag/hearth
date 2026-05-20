@@ -10,22 +10,28 @@
  * Required env vars:
  *   NEON_API_KEY      — API key with branch management permissions
  *   NEON_PROJECT_ID   — project to create branches inside
- *   NEON_PARENT_BRANCH_ID — branch to fork from (usually dev, not prod)
+ *   NEON_PARENT_BRANCH_ID — branch to fork from. This MUST be the
+ *     permanently-empty `test-base` branch (no schema, no data), NOT prod
+ *     and NOT a dev branch. See "How it works" below.
  *
  * Optional:
  *   NEON_DATABASE_NAME — database name (default: neondb)
  *   NEON_ROLE_NAME     — role to connect as (default: neondb_owner)
  *
  * How it works:
- *   1. POST to Neon API creating a schema-only branch with an endpoint
+ *   1. POST to Neon API creating an ephemeral branch from the empty
+ *      test-base branch (NEON_PARENT_BRANCH_ID)
  *   2. Poll until the endpoint is "active" and get the connection URI
- *   3. Spawn vitest with DATABASE_URL + NEON_TEST_BRANCH_ID in its env
- *   4. When vitest exits, DELETE the branch (always — via finally + signals)
+ *   3. Run the full Drizzle migration set against the ephemeral fork
+ *   4. Spawn vitest with DATABASE_URL + NEON_TEST_BRANCH_ID in its env
+ *   5. When vitest exits, DELETE the branch (always — via finally + signals)
  *
- * Migrations are NOT applied per fork. The schema-only fork inherits the
- * parent branch's DDL, which is the canonical state. If you add a new
- * drizzle migration, apply it to the parent branch (via `drizzle-kit
- * migrate` against NEON_PARENT_BRANCH_ID) before running tests.
+ * Empty-base + migrate-the-fork: the fork starts empty and builds its
+ * entire schema from `drizzle/` migrations every run. This decouples CI
+ * from production/any durable branch (no human ever hand-migrates to make
+ * tests pass) and makes every run a from-scratch migration-correctness
+ * check. If migration fails the run aborts before vitest — that is a real
+ * correctness signal, not noise.
  */
 
 import { spawn } from 'node:child_process';
@@ -85,7 +91,9 @@ async function createBranch(suffix) {
     branch: {
       name: branchName,
       parent_id: NEON_PARENT_BRANCH_ID,
-      // schema-only means no data copy. Fast. Tests seed their own data.
+      // Parent is the empty test-base branch, so there is nothing to copy
+      // either way; schema-only keeps creation fast. The fork's schema is
+      // built by `drizzle-kit migrate` (see main()), not inherited.
       init_source: 'schema-only',
     },
     endpoints: [
@@ -180,9 +188,16 @@ async function main() {
   console.log(`[neon] Fetching connection URI...`);
   const databaseUrl = await getBranchConnectionUri(branchId);
 
+  // Empty-base: the fork has no schema. Build it from the canonical
+  // drizzle/ migration set before any test runs. A migration failure here
+  // aborts the run (runCommand rejects → main throws → cleanup deletes the
+  // branch + exits non-zero) — a genuine migration-correctness signal.
+  console.log(`[neon] Applying drizzle migrations to the ephemeral fork...\n`);
+  await runCommand('npx', ['drizzle-kit', 'migrate'], { DATABASE_URL: databaseUrl });
+
   // Hand off to vitest. Extra args after this script's argv[2] are passed
   // through — e.g. `npm run test:integration -- entries` to filter by name.
-  console.log(`[neon] Starting vitest against test branch...\n`);
+  console.log(`\n[neon] Starting vitest against test branch...\n`);
   const extraArgs = process.argv.slice(2);
   await runCommand(
     'npx',

@@ -2,10 +2,12 @@
 // Each layer composes its embedding text differently to optimise retrieval quality.
 // SHA-256 hash is used for change detection — re-embed only when hash changes.
 //
-// PKB authoring path: pedagogyWorkedExample, pedagogyContraindication and
-// pedagogyFacilitationVocabulary documents are authored externally in the
-// claude-kindling repo (corpus markdown → deterministic-id mutations), not via
-// the Hearth Studio. See claude-kindling/design/sanity-schema-reference.md.
+// PKB authoring is kindler-owned (no Hearth Studio CRUD by design).
+// pedagogyWorkedExample, pedagogyContraindication and pedagogyFacilitationVocabulary
+// documents are authored in the claude-kindling repo (corpus markdown →
+// deterministic-id mutations). See claude-kindling/design/sanity-schema-reference.md.
+// Flip condition before adding Studio mutation helpers here: a non-Drew editor
+// needs to update PKB corpus without git access.
 
 import { createHash } from 'crypto';
 

@@ -22,14 +22,14 @@ Verified to render. Each one leaks future scope to pilot families.
 
 | # | Item | Where | Visibility | Verdict |
 |---|---|---|---|---|
-| A1 | `CommonsReader` audio button — `title="Audio coming soon"` (disabled) | `src/components/content/CommonsReader.tsx:140` | All users with commons text access | 🤔 Hide button until audio ships, or wire audio. |
+| A1 | `CommonsReader` audio button — `title="Audio coming soon"` (disabled) | `src/components/content/CommonsReader.tsx:140` | All users with commons text access | ✅ Hidden 2026-05-20. |
 | A2 | `CommonsReader` "Reading coming soon" fallback | `src/components/content/CommonsReader.tsx:206` | All users when content lacks reading variants | 🤔 Either ensure all commons texts have reading variants in Sanity, or render a less-leaky fallback. |
-| A3 | `PrintSheet` "Download as separate files (coming soon)" disabled radio | `src/components/content/PrintSheet.tsx:270` | All users with printable items | 🤔 Hide the disabled option entirely; nothing about it should be visible. |
-| A4 | `MaterialItemRow` "Coming soon" badge on audio assets | `src/components/content/MaterialItemRow.tsx:133` | All users browsing materials | 🤔 Hide the badge for audio rows until audio playback lands. |
+| A3 | `PrintSheet` "Download as separate files (coming soon)" disabled radio | `src/components/content/PrintSheet.tsx:270` | All users with printable items | ✅ Hidden 2026-05-20. |
+| A4 | `MaterialItemRow` "Coming soon" badge on audio assets | `src/components/content/MaterialItemRow.tsx:133` | All users browsing materials | ✅ Hidden 2026-05-20. |
 | A5 | `MarketplaceCard` "Coming soon" button on premium packs without `stripePriceId` | `src/components/screens/MarketplaceCard.tsx:242` | All users on Marketplace | 🤔 Tied to B1 (Stripe). Either wire Stripe + assign price IDs, or remove premium packs from the public marketplace before pilot. |
-| A6 | `QuickCapture` voice button `title="Coming soon"` (disabled) | `src/app/(auth)/module/[id]/_components/QuickCapture.tsx:81` | Authenticated users in facilitate mode | 🤔 Main Logger DOES have full Web Speech API wiring with `en-AU` locale. Either port the same hook into QuickCapture or hide the disabled button. |
-| A7 | `FacilitateMode` "Coming soon" span on audio assets | `src/app/(auth)/module/[id]/_components/FacilitateMode.tsx:217` | Authenticated facilitators | 🤔 Same call as A4. |
-| A8 | `AdminSidebar` Analytics tooltip "Coming soon" | `src/app/(admin)/admin/_components/AdminSidebar.tsx:74` | Admin only | 🟡 Low priority. Note: requires `disabled: true` on the NAV_ITEMS entry; verify whether any entry currently sets this. |
+| A6 | `QuickCapture` voice button `title="Coming soon"` (disabled) | `src/app/(auth)/module/[id]/_components/QuickCapture.tsx:81` | Authenticated users in facilitate mode | ✅ Hidden 2026-05-20. Voice capture remains a post-pilot decision (no Web Speech hook in QuickCapture path). |
+| A7 | `FacilitateMode` "Coming soon" span on audio assets | `src/app/(auth)/module/[id]/_components/FacilitateMode.tsx:217` | Authenticated facilitators | ✅ Hidden 2026-05-20. |
+| A8 | `AdminSidebar` Analytics tooltip "Coming soon" | `src/app/(admin)/admin/_components/AdminSidebar.tsx:74` | Admin only | ✅ No-op 2026-05-20 — verified no NAV_ITEMS entry currently sets `disabled: true`, so the tooltip path is unreachable. |
 | A9 | `/dev-preview/log` placeholder route | `src/app/dev-preview/log/page.tsx:20` | Dev preview only | ⏳ Accept; not user-facing. |
 
 **Recommended pre-pilot move:** Sweep A1–A7 in one PR. Default to hiding rather than building; accept a slimmer pilot surface area and ship audio + Stripe post-pilot.
@@ -47,7 +47,7 @@ Verified to either throw, return 503, or be unreachable.
 | B3 | `HaikuCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/haiku-provider.ts:8-13` | 🤔 Hardcoded-unreachable via resolver (B5). Either implement + flip the flag, or delete the file. |
 | B4 | `HybridCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/hybrid-provider.ts:9-14` | Same as B3. |
 | B5 | `LOGGER_COACH_PROVIDER` env flag silently overridden | `src/lib/logger/coaching/resolve.ts:10-16` — `getProviderKey()` warns then hardcodes `'retrieval'` | ⏳ Footgun. Either implement B3/B4 so the flag works, or remove the flag + warning so config can't drift. |
-| B6 | `src/test/example.integration.test.ts:25` — `describe.skip(...)` on `POST /api/entries` real-DB suite | `src/test/example.integration.test.ts:25` | ⏳ Enable, port to a real spec under `src/app/api/entries/`, or delete the file. |
+| B6 | `src/test/example.integration.test.ts:25` — `describe.skip(...)` on `POST /api/entries` real-DB suite | `src/test/example.integration.test.ts:25` | ✅ Deleted 2026-05-20 — pure scaffold (all code inside `describe.skip` was commented out). Real entries integration coverage lives at `src/app/api/entries/route.integration.test.ts`. |
 
 ---
 
@@ -75,13 +75,13 @@ These docs were misleading our audits. Fixing them is cheap and prevents future 
 
 | # | Item | Where | Verdict |
 |---|---|---|---|
-| D1 | `docs/alpha-readiness-pickup.md §8` "Wizard does not persist partial progress" — STALE | `docs/alpha-readiness-pickup.md:87-89` | ✅ Already shipped per `production-readiness-tracker.md` #13. Strike the caveat. |
-| D2 | `docs/alpha-readiness-pickup.md §9` "Review-step tab keyboard navigation is partial" — STALE | `docs/alpha-readiness-pickup.md:90-93` | ✅ Already shipped per tracker #14. Strike the caveat. |
-| D3 | `docs/alpha-readiness-pickup.md §16` "Constellation L3 DLO panel… untouched" — STALE | `docs/alpha-readiness-pickup.md` | ✅ Built. UI shipped (PR #42); placeholder data swapped for Sanity-loaded DLOs on `claude/constellation-dlo-swap` (2026-05-13). See C7 / C8 / C9 below for the remaining follow-ups (run seed, build `learner_dlo_status`, entry→DLO mapping). Strike. |
-| D4 | `docs/alpha-readiness-pickup.md §16` "Portfolio Journey/Milestone distinct card rendering… untouched" — STALE | `docs/alpha-readiness-pickup.md:119-122` | ✅ Built. Three colour treatments (coffee / ember / sage) verified at `src/app/(auth)/our-story/portfolio/page.tsx:21-37,492,699`. Strike. |
-| D5 | `docs/alpha-readiness-pickup.md "Still open / Gated on decisions"` — STALE | `docs/alpha-readiness-pickup.md:128-135` | ⏳ Update list: remove Portfolio + Constellation; keep Hub narrative + Offline (PWA). |
+| D1 | `docs/alpha-readiness-pickup.md §8` "Wizard does not persist partial progress" — STALE | `docs/alpha-readiness-pickup.md:87-89` | ✅ Already shipped per `production-readiness-tracker.md` #13. Caveat already marked superseded inline in the doc (2026-05-13 sweep). |
+| D2 | `docs/alpha-readiness-pickup.md §9` "Review-step tab keyboard navigation is partial" — STALE | `docs/alpha-readiness-pickup.md:90-93` | ✅ Already shipped per tracker #14. Caveat already marked superseded inline in the doc (2026-05-13 sweep). |
+| D3 | `docs/alpha-readiness-pickup.md §16` "Constellation L3 DLO panel… untouched" — STALE | `docs/alpha-readiness-pickup.md` | ✅ Built. UI shipped (PR #42); placeholder data swapped for Sanity-loaded DLOs on `claude/constellation-dlo-swap` (2026-05-13). See C7 / C8 / C9 below for the remaining follow-ups (run seed, build `learner_dlo_status`, entry→DLO mapping). |
+| D4 | `docs/alpha-readiness-pickup.md §16` "Portfolio Journey/Milestone distinct card rendering… untouched" — STALE | `docs/alpha-readiness-pickup.md:119-122` | ✅ Built. Three colour treatments (coffee / ember / sage) verified at `src/app/(auth)/our-story/portfolio/page.tsx:21-37,492,699`. |
+| D5 | `docs/alpha-readiness-pickup.md "Still open / Gated on decisions"` — STALE | `docs/alpha-readiness-pickup.md:128-135` | ✅ Updated 2026-05-20 — dropped the redundant struck-through Portfolio + Constellation lines and the now-obsolete "Arrow-key cycling (caveat 9)" entry. Hub narrative + Offline retained. |
 | D6 | `docs/hearth-module-builder-pathways-architecture-v2.md` pathway naming drift | Spec uses "Understanding-First / Material-Anchored / Process-Steps / Inquiry-Driven / Retrospective Lift". Code uses `'material' \| 'process' \| 'inquiry' \| 'retrospective' \| 'goal'` at `src/app/(auth)/build/modules/page.tsx:15`. | 🤔 Either rename `'goal'` → `'understanding'` in code (semantic match), or update the spec's pathway labels. Pick one canonical naming. |
-| D7 | Pedagogy KB corpus docs — multiple `-v1` and `-v2` variants exist | `docs/hearth-pedagogy-corpus-licensing-needs-v1.md` + `-v2.md`, etc. | ⏳ Archive the superseded versions (move to `docs/archive/` or annotate at top). |
+| D7 | Pedagogy KB corpus docs — `-v1`/`-v2` variants | `docs/hearth-pedagogy-corpus-licensing-needs-v1.md` + `-v2.md` (the others are v1-only proof-of-concept files) | ✅ Verified 2026-05-20 — only `licensing-needs` has a v2, and `licensing-needs-v1.md` is already annotated as ARCHIVED → see v2 at the top of the file. `montessori-v1-pt2`, `unschooling-v1`, `charlotte-mason-v1` have no `-v2` and are explicitly proof-of-concept; nothing to supersede. |
 
 **Why this section exists:** every false negative in the original audit traced back to a stale caveat or spec doc. Keeping a "stale docs to fix" lane prevents future audits from re-flagging the same ghosts.
 
@@ -96,9 +96,9 @@ These docs were misleading our audits. Fixing them is cheap and prevents future 
 | E1 | `scripts/neon-test-branch.mjs` | ✅ Wired (`npm run test:integration`) | Keep. |
 | E2 | `scripts/audit-stale-branches.mjs` | 📖 Documented as manual in `docs/branch-hygiene.md:68` | Keep, optionally wire into a monthly cron or GH Action. |
 | E3 | `scripts/check-token-size.ts` | Orphan | 🤔 Wire or delete. |
-| E4 | `scripts/debug-framework-slug.ts` | Orphan, "debug-" name | ⏳ Delete (debug one-shot). |
-| E5 | `scripts/debug-full-query.ts` | Orphan, "debug-" name | ⏳ Delete. |
-| E6 | `scripts/fix-pedagogy-key.ts` | Orphan, one-shot fix | ⏳ Delete after confirming the fix landed. |
+| E4 | `scripts/debug-framework-slug.ts` | Orphan, "debug-" name | ✅ Deleted 2026-05-20. |
+| E5 | `scripts/debug-full-query.ts` | Orphan, "debug-" name | ✅ Deleted 2026-05-20. |
+| E6 | `scripts/fix-pedagogy-key.ts` | Orphan, one-shot fix | ✅ Deleted 2026-05-20 — one-shot Postgres fix for empty `pedagogy_key` values; assumed run. |
 | E7 | `scripts/ingest-pedagogy-corpus.ts` | Orphan | 🤔 Wire under `npm run seed:pedagogy` if it's the canonical ingestion path. |
 | E8 | `scripts/reembed-pedagogy-corpus.ts` | Orphan | 🤔 Same as E7. |
 | E9 | `scripts/seed-content.ts` | Orphan | 🤔 Reconcile with `src/scripts/seed-sample-packs/` (the actually-wired seeder). One source of truth. |

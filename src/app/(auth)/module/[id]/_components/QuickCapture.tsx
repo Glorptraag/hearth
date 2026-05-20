@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import type { QuickCaptureItem } from './types';
-import { PencilSimple, Camera, Microphone, X } from '@/components/icons';
+import { PencilSimple, Camera, X } from '@/components/icons';
 
 export default function QuickCapture({
   captures,
@@ -75,13 +75,6 @@ export default function QuickCapture({
           className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200 disabled:opacity-50"
         >
           <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
-        </button>
-        <button
-          disabled
-          title="Coming soon"
-          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-muted cursor-not-allowed opacity-50"
-        >
-          <Microphone size={14} aria-hidden="true" /> Voice
         </button>
         <input
           ref={fileRef}

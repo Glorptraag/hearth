@@ -126,15 +126,12 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 
 - Hub term summary: static template today, spec wants AI-generated
   monthly growth copy. (Now also tracked as `pre-release-tracker.md` F6.)
-- ~~Portfolio Journey/Milestone distinct card rendering — architectural change.~~ **Shipped 2026-05-13 verification.**
-- ~~Constellation L3 DLO panel — architectural change.~~ **Shipped 2026-05-13 verification.**
 - Offline support — out of MVP per the original spec. (Now also tracked as `pre-release-tracker.md` F5.)
 
 ### Decision-free, ready to pick up
 
 - Clear the 22 pre-existing ESLint errors → flip `continue-on-error` on
   the lint job to `false` in `.github/workflows/test.yml`.
-- Arrow-key cycling between the Review-step insight tabs (caveat 9).
 - Family-level PostHog identification (caveat 4).
 - Drag-and-drop reordering for values/practices if user feedback asks.
 - Model-aware pricing in the cost dashboard: accept a `model_used` →

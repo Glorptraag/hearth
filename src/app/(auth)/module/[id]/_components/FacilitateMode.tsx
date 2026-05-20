@@ -213,9 +213,7 @@ export default function FacilitateMode({
                         {ref.asset.printGuidance ? ` · ${ref.asset.printGuidance}` : ''}
                       </p>
                     </div>
-                    {isAudio ? (
-                      <span className="font-sans text-[0.68rem] text-text-muted">Coming soon</span>
-                    ) : onDownloadAsset ? (
+                    {!isAudio && onDownloadAsset ? (
                       <button
                         onClick={() => onDownloadAsset(ref.asset._id)}
                         className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"

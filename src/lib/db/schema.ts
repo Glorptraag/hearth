@@ -402,6 +402,10 @@ export const providerCodes = pgTable('provider_codes', {
   code: text('code').notNull().unique(),
   redeemedByFamilyId: uuid('redeemed_by_family_id').references(() => families.id),
   redeemedAt: timestamp('redeemed_at'),
+  expiresAt: timestamp('expires_at'),
+  heuLabel: text('heu_label'),
+  notes: text('notes'),
+  createdByAdminId: text('created_by_admin_id'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

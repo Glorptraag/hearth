@@ -12,6 +12,7 @@ import {
   ChartBar,
   Lightning,
   FileText,
+  Key,
 } from '@/components/icons';
 import type { ComponentType } from 'react';
 
@@ -29,6 +30,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/admin',              label: 'Dashboard',   Icon: House,         exact: true },
   { href: '/admin/invitations',  label: 'Invitations', Icon: ClipboardText },
+  { href: '/admin/provider-codes', label: 'Provider Codes', Icon: Key },
   { href: '/admin/content',      label: 'Content',     Icon: Books },
   { href: '/admin/content/qa',   label: 'Content QA',  Icon: CheckCircle,   indent: true },
   { href: '/admin/families',     label: 'Families',    Icon: UsersThree },

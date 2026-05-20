@@ -24,6 +24,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ valid: false, message: 'Code not recognised or already used.' });
   }
 
+  if (providerCode.expiresAt && providerCode.expiresAt < new Date()) {
+    return NextResponse.json({ valid: false, message: 'This code has expired.' });
+  }
+
   return NextResponse.json({
     valid: true,
     message: 'Code accepted — pricing will be adjusted at checkout.',

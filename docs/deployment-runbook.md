@@ -64,6 +64,8 @@ After populating, click **Redeploy** on the latest production deployment so it p
 
 - [ ] Visit `https://your-sanity-project.sanity.studio/` and confirm you can sign in with the project's auth.
 - [ ] If the dataset is empty, run the seed scripts locally with `SANITY_API_TOKEN` set: `npx tsx src/scripts/seed-capability-threads.ts` (and any other seed scripts present). The `publish` API (`/api/modules/publish`) can also be driven manually for ad-hoc content.
+- [ ] **Seed DLOs (required before pilot).** Run `npx tsx scripts/seed-dlos.ts` with `SANITY_API_TOKEN` set. Idempotent (deterministic IDs + `createOrReplace`). Without this, constellation Depth-3 falls back to `dlo-descriptors.ts` and logs one `console.warn` per visited thread — functional but noisy. Mark tracker row C7 ✅ once run.
+- [ ] **(Optional) Pedagogy Knowledge Base.** If running the PKB-enriched coach path: `npm run seed:pedagogy:frameworks`, then `npm run seed:pkb`, then `npm run verify:pkb` to confirm embeddings landed. Re-embed with `npm run pkb:reembed` when corpus markdown changes. PKB authoring otherwise happens in `claude-kindling/` (see tracker C3).
 - [ ] **Rotate `SANITY_API_TOKEN` quarterly** (or immediately after a laptop loss). In Sanity Manage → API → Tokens → create new → revoke old. Update the Vercel env var.
 
 ### 1.4 Database migrations (manual)

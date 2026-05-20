@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
@@ -234,6 +234,17 @@ export default function DashboardClient({
   );
   const hasEntries = recentEntries.length > 0;
   const weekStats = snapshot.weekStats;
+
+  const narrativeKickedRef = useRef(false);
+  useEffect(() => {
+    if (narrativeKickedRef.current) return;
+    if (!hasEntries) return;
+    narrativeKickedRef.current = true;
+    // Fire-and-forget. Server is authoritative on throttling + need;
+    // we just ping it once per Dashboard mount so the snapshot's monthly
+    // narrative gets refreshed if it's missing.
+    fetch('/api/snapshot/regenerate-narrative', { method: 'POST' }).catch(() => {});
+  }, [hasEntries]);
 
   return (
     <div className="mx-auto max-w-6xl px-md py-xl lg:px-4xl lg:py-3xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-xl">

@@ -17,6 +17,11 @@
     "test:all": "npm run test:unit && npm run test:integration",
     "test:e2e": "playwright test",
     "seed:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/seed-sample-packs/index.ts",
+    "seed:pedagogy:frameworks": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-pedagogy-frameworks.ts",
+    "seed:pkb": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/ingest-pedagogy-corpus.ts",
+    "pkb:reembed": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/reembed-pedagogy-corpus.ts",
+    "verify:pkb": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-pkb-embeddings.ts",
+    "verify:sanity": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-sanity-docs.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:check-drift": "node --env-file-if-exists=.env.local scripts/check-migration-drift.mjs",
     "db:check-schema": "node scripts/check-schema-vs-migrations.mjs"

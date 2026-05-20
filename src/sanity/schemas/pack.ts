@@ -181,6 +181,19 @@ export const pack = defineType({
       hidden: ({ document }) => document?.availability !== 'premium',
     }),
     defineField({ name: 'creator', title: 'Creator', type: 'string' }),
+    defineField({
+      name: 'creatorType',
+      title: 'Creator Type',
+      type: 'string',
+      description: 'Drives the creator badge + icon on Marketplace cards.',
+      options: {
+        list: [
+          { title: 'Hearth Content Team', value: 'content-team' },
+          { title: 'Educator', value: 'educator' },
+          { title: 'Parent Creator', value: 'parent' },
+        ],
+      },
+    }),
     defineField({ name: 'version', title: 'Version', type: 'string', initialValue: '1.0.0' }),
     defineField({
       name: 'status',

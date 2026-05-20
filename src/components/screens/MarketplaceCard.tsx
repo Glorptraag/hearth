@@ -42,6 +42,11 @@ export interface AssetCounts {
   manipulative?: number;
 }
 
+export interface PackIntro {
+  title?: string;
+  keyPoints?: string[];
+}
+
 export interface SanityPack {
   _id: string;
   title: string;
@@ -54,6 +59,7 @@ export interface SanityPack {
   availability?: 'included' | 'premium';
   stripePriceId?: string;
   description?: string;
+  intro?: PackIntro;
   assetCounts?: AssetCounts;
   commonsTextCount?: number;
 }
@@ -233,15 +239,7 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
             >
               Get Pack
             </button>
-          ) : (
-            <button
-              disabled
-              aria-label={`${pack.title} — coming soon`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember/40 text-text-inverse/50 cursor-not-allowed whitespace-nowrap"
-            >
-              Coming soon
-            </button>
-          )}
+          ) : null}
         </div>
       </div>
     </article>

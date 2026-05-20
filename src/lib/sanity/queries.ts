@@ -2,7 +2,8 @@
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges),
-  assetCounts, commonsTextCount
+  assetCounts, commonsTextCount,
+  intro{ title, keyPoints }
 }`;
 
 // Single pack with full module tree

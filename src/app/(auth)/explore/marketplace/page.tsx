@@ -101,6 +101,9 @@ export default function MarketplacePage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return packs.filter((pack) => {
+      // Hide premium packs that don't yet have a Stripe price wired up.
+      // Re-surfaces automatically once stripePriceId is set in Sanity.
+      if (pack.availability === 'premium' && !pack.stripePriceId) return false;
       const matchesSearch =
         !q ||
         pack.title.toLowerCase().includes(q) ||
@@ -422,6 +425,26 @@ export default function MarketplacePage() {
                 <p className="font-serif text-sm leading-relaxed text-text-secondary">
                   {detailPack.description}
                 </p>
+              )}
+
+              {detailPack.intro && (detailPack.intro.title || (detailPack.intro.keyPoints && detailPack.intro.keyPoints.length > 0)) && (
+                <div>
+                  {detailPack.intro.title && (
+                    <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+                      {detailPack.intro.title}
+                    </p>
+                  )}
+                  {detailPack.intro.keyPoints && detailPack.intro.keyPoints.length > 0 && (
+                    <ul className="space-y-xs font-serif text-sm text-text-secondary">
+                      {detailPack.intro.keyPoints.map((point, i) => (
+                        <li key={i} className="flex gap-xs">
+                          <span className="text-ember" aria-hidden="true">•</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               )}
 
               {/* Creator */}

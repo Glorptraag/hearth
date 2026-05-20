@@ -194,7 +194,7 @@ export function CommonsReader({
             <PortableText value={activeBody as Parameters<typeof PortableText>[0]['value']} components={activeComponents} />
           </div>
         ) : (
-          <p className="font-serif text-base text-text-muted italic">Reading coming soon</p>
+          <p className="font-serif text-base text-text-muted italic">Reading not available for this text.</p>
         )}
 
         {/* Divider */}

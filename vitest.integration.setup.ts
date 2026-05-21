@@ -8,63 +8,28 @@
  * into each other. Schemas/migrations are NOT touched — they live for the
  * whole test run.
  */
-import { sql } from 'drizzle-orm';
+import { sql, getTableName, is } from 'drizzle-orm';
+import { PgTable } from 'drizzle-orm/pg-core';
 import { vi, beforeEach, afterAll } from 'vitest';
 
 // Re-use the Clerk/Anthropic/Sanity/Blob mocks from unit setup.
 // This side-effects-registers them via vi.mock() calls.
 import './vitest.setup';
+import * as schema from '@/lib/db/schema';
 
-// Tables to truncate between tests. These are the ones with user/family data.
-// Reference tables (e.g. Sanity-mirrored catalog data if any) are NOT listed
-// so they don't get wiped between tests. Order is for human readability —
-// CASCADE handles FK dependencies in a single pass.
-const TABLES_TO_TRUNCATE = [
-  // admin / no-deps
-  'admin_audit_log',
-  'content_studio_drafts',
-  'invitations',
-  'provider_codes',
-
-  // hearth session children → sessions → hearths
-  'session_reflections',
-  'session_evidence',
-  'session_attendance',
-  'suggested_observations',
-  'hearth_invites',
-  'hearth_sessions',
-  'hearth_memberships',
-  'hearths',
-
-  // compliance children → heu_reports (Queensland HEU). Was incorrectly
-  // listed as `compliance_reports`, which no migration ever created — the
-  // truncate then threw `relation "compliance_reports" does not exist` on
-  // every test run.
-  'work_sample_annotations',
-  'work_samples',
-  'heu_reports',
-
-  // badges
-  'badge_assessment_logs',
-  'badge_awards',
-  'badge_definitions',
-
-  // per-family data
-  'planner_entries',
-  'notifications',
-  'ai_pipeline_logs',
-  'facilitator_notes',
-  'family_intelligence_snapshots',
-  'learning_entries',
-  'family_library',
-  'module_drafts',
-
-  // family structure
-  'learners',
-  'family_members',
-  'family_settings',
-  'families',
-];
+// Truncate every user-data table defined in src/lib/db/schema.ts. We derive
+// the list from schema.ts exports at runtime — adding a new pgTable export
+// automatically opts it into the truncate sweep, so the suite can't silently
+// leak rows between tests. CASCADE handles FK dependencies in a single pass;
+// no manual topological ordering needed.
+//
+// Tables that exist in the DB but are NOT exported from schema.ts (e.g. the
+// pedagogy_knowledge_chunks reference table populated by an offline embedder)
+// are not truncated — they hold reference data that should survive between
+// tests, which matches the historical hand-curated intent.
+const TABLES_TO_TRUNCATE: string[] = Object.values(schema)
+  .filter((v): v is PgTable => is(v, PgTable))
+  .map((t) => getTableName(t));
 
 async function truncateAll() {
   // Lazy import so this module doesn't hit Neon at setup-file load time.

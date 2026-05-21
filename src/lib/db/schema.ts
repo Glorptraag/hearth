@@ -66,8 +66,8 @@ export const familySettings = pgTable('family_settings', {
   pedagogyPreference: text('pedagogy_preference').default('eclectic'),
   pedagogyValues: text('pedagogy_values').array().default([]),
   pedagogyPractices: text('pedagogy_practices').array().default([]),
-  registrationNumber: text('heu_registration_number'),
-  nextReportDate: date('heu_next_report_date'),
+  registrationNumber: text('registration_number'),
+  nextReportDate: date('next_report_date'),
   state: text('state'),
   notificationPrefs: jsonb('notification_prefs').default({}),
   createdAt: timestamp('created_at').defaultNow(),
@@ -100,6 +100,8 @@ export const learningEntries = pgTable(
     observationDetails: jsonb('observation_details').default({}),
     aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
+    capturedLibraryVersion: text('captured_library_version').notNull().default('2.0.0'),
+    threadLinks: jsonb('thread_links').default([]),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -162,6 +164,17 @@ export const badgeDefinitions = pgTable('badge_definitions', {
   indicatorStatements: text('indicator_statements').array(),
   capabilityThreadIds: text('capability_thread_ids').array(),
   observationThreshold: integer('observation_threshold').default(5),
+  // v2 additive (v1 cols above kept alive until badge code cut-over)
+  whatItRecognises: text('what_it_recognises'),
+  parentNarrative: text('parent_narrative'),
+  threadId: text('thread_id'),
+  stageBand: text('stage_band'),
+  criteria: jsonb('criteria').default([]),
+  criteriaPolicy: text('criteria_policy').notNull().default('all'),
+  thresholdCount: integer('threshold_count'),
+  prerequisiteBadgeIds: text('prerequisite_badge_ids').array(),
+  introducedInVersion: text('introduced_in_version').notNull().default('2.0.0'),
+  canonStatus: text('canon_status').notNull().default('active'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -334,7 +347,7 @@ export const facilitatorNotes = pgTable('facilitator_notes', {
 // ─── Compliance Reports ───
 
 export const complianceReports = pgTable(
-  'heu_reports',
+  'compliance_reports',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     familyId: uuid('family_id')
@@ -602,4 +615,51 @@ export const contentStudioDrafts = pgTable(
   (table) => [
     index('csd_user_status_idx').on(table.clerkUserId, table.status),
   ]
+);
+
+// ─── Capability Universe v2 ───
+
+export const familyLibraryState = pgTable('family_library_state', {
+  familyId: uuid('family_id')
+    .primaryKey()
+    .references(() => families.id),
+  currentLibraryVersion: text('current_library_version').notNull().default('2.0.0'),
+  pinnedAtVersion: text('pinned_at_version'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const libraryUpgradeEvents = pgTable(
+  'library_upgrade_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    fromVersion: text('from_version').notNull(),
+    toVersion: text('to_version').notNull(),
+    upgradedAt: timestamp('upgraded_at').notNull().defaultNow(),
+    observationsRetagged: integer('observations_retagged').notNull().default(0),
+    observationsCarriedAsLegacy: integer('observations_carried_as_legacy').notNull().default(0),
+    notes: jsonb('notes').default([]),
+  },
+  (table) => [index('lue_family_idx').on(table.familyId, table.upgradedAt)]
+);
+
+export const customThreads = pgTable(
+  'custom_threads',
+  {
+    id: text('id').primaryKey(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    createdByUserId: text('created_by_user_id').notNull(),
+    name: text('name').notNull(),
+    summary: text('summary'),
+    tierIndicators: jsonb('tier_indicators').notNull().default({ emerging: [], developing: [], demonstrating: [] }),
+    domainAffinity: text('domain_affinity'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [index('ct_family_idx').on(table.familyId)]
 );

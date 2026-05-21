@@ -67,7 +67,7 @@ export const familySettings = pgTable('family_settings', {
   pedagogyValues: text('pedagogy_values').array().default([]),
   pedagogyPractices: text('pedagogy_practices').array().default([]),
   registrationNumber: text('heu_registration_number'),
-  nextReportDate: date('next_report_date'),
+  nextReportDate: date('heu_next_report_date'),
   state: text('state'),
   notificationPrefs: jsonb('notification_prefs').default({}),
   createdAt: timestamp('created_at').defaultNow(),

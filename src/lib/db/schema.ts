@@ -66,7 +66,7 @@ export const familySettings = pgTable('family_settings', {
   pedagogyPreference: text('pedagogy_preference').default('eclectic'),
   pedagogyValues: text('pedagogy_values').array().default([]),
   pedagogyPractices: text('pedagogy_practices').array().default([]),
-  registrationNumber: text('registration_number'),
+  registrationNumber: text('heu_registration_number'),
   nextReportDate: date('next_report_date'),
   state: text('state'),
   notificationPrefs: jsonb('notification_prefs').default({}),
@@ -334,7 +334,7 @@ export const facilitatorNotes = pgTable('facilitator_notes', {
 // ─── Compliance Reports ───
 
 export const complianceReports = pgTable(
-  'compliance_reports',
+  'heu_reports',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     familyId: uuid('family_id')

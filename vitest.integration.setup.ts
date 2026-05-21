@@ -36,10 +36,13 @@ const TABLES_TO_TRUNCATE = [
   'hearth_memberships',
   'hearths',
 
-  // compliance children
+  // compliance children → heu_reports (Queensland HEU). Was incorrectly
+  // listed as `compliance_reports`, which no migration ever created — the
+  // truncate then threw `relation "compliance_reports" does not exist` on
+  // every test run.
   'work_sample_annotations',
   'work_samples',
-  'compliance_reports',
+  'heu_reports',
 
   // badges
   'badge_assessment_logs',
@@ -66,9 +69,27 @@ const TABLES_TO_TRUNCATE = [
 async function truncateAll() {
   // Lazy import so this module doesn't hit Neon at setup-file load time.
   const { db } = await import('@/lib/db');
+
+  // Filter the curated list against what actually exists in the database.
+  // The hand-maintained list above documents *intent* (every user-data
+  // table the suite wants wiped between tests). The filter handles real
+  // drift between the list and the migrations — e.g. a table that was
+  // created and later dropped (capability_observations was created in
+  // 0000_last_gunslinger.sql and dropped in 0005_eminent_paladin.sql, so
+  // a hand-curated entry for it would throw 42P01 here). Without the
+  // filter, every test in the suite fails on the first `beforeEach`.
+  const result = (await db.execute(
+    sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
+  )) as { rows: Array<{ tablename: string }> } | Array<{ tablename: string }>;
+  const rows = Array.isArray(result) ? result : result.rows;
+  const existing = new Set(rows.map((r) => r.tablename));
+  const present = TABLES_TO_TRUNCATE.filter((t) => existing.has(t));
+
+  if (present.length === 0) return;
+
   // CASCADE handles FK dependencies in one pass. RESTART IDENTITY resets
   // any serial sequences so tests that assert on row IDs stay deterministic.
-  const tables = TABLES_TO_TRUNCATE.map((t) => `"${t}"`).join(', ');
+  const tables = present.map((t) => `"${t}"`).join(', ');
   await db.execute(sql.raw(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE;`));
 }
 

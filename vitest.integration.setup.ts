@@ -36,10 +36,13 @@ const TABLES_TO_TRUNCATE = [
   'hearth_memberships',
   'hearths',
 
-  // compliance children
+  // compliance children → heu_reports (Queensland HEU). Was incorrectly
+  // listed as `compliance_reports`, which no migration ever created — the
+  // truncate then threw `relation "compliance_reports" does not exist` on
+  // every test run.
   'work_sample_annotations',
   'work_samples',
-  'compliance_reports',
+  'heu_reports',
 
   // badges
   'badge_assessment_logs',
@@ -52,6 +55,7 @@ const TABLES_TO_TRUNCATE = [
   'ai_pipeline_logs',
   'facilitator_notes',
   'family_intelligence_snapshots',
+  'capability_observations',
   'learning_entries',
   'family_library',
   'module_drafts',

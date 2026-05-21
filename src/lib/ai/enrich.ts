@@ -12,6 +12,8 @@ import { rebuildSnapshot } from './snapshot-rebuild';
 import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
+import { validateDlos, persistDloLinks, type DloEnrichmentItem } from './dlo-persistence';
+import { trackServer } from '@/lib/analytics/posthog-server';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -71,7 +73,10 @@ OUTPUT SCHEMA:
   "journey_observation": null | {
     "text": "string",
     "trigger": "cross_domain|independence|metacognition|transfer"
-  }
+  },
+  "discrete_learning_objectives": [
+    { "dlo_id": "string", "tier": "emerging|developing|demonstrating", "confidence": 0.0-1.0, "rationale": "string" }
+  ]
 }
 
 VALID SUBJECTS: Mathematics, English, Science, HASS, The Arts, Technologies, HPE, Languages
@@ -102,6 +107,7 @@ RULES:
 - Per-child signals are required if multiple children participated.
 - insight_suggestions: 1-3 short sentences a parent would find encouraging and specific. When pedagogy reference material is provided, ground suggestions in that material and cite sources naturally (e.g. "This aligns with Charlotte Mason's principle of..."). When contraindications are present, avoid suggesting flagged practices.
 - If entry text is very thin (<20 words), return minimal mappings with low confidence.
+- discrete_learning_objectives: Map this observation to AT MOST 3 specific DLO ids (e.g. "dlo.M1.emerging"). The dlo_id MUST be one Hearth has authored — never invent ids. Omit any DLO with confidence < 0.4. Tier reflects the evidence in THIS entry alone: 'emerging' (first noticing), 'developing' (practising with support), 'demonstrating' (independent fluency). Return [] when no DLO clearly applies.
 - journey_observation: Include ONLY when you detect a genuinely meaningful pattern — cross-domain connection (learning from one area applied to another), independence marker (child self-directed, initiated, or persisted without adult prompting), metacognition (child reflecting on their own learning process), or transfer of learning (applying prior knowledge to a new context). Aim for roughly 1 per 5 entries — do NOT include for every entry. When included: 1-2 warm, interpretive sentences written from the facilitator's perspective. Set to null when not warranted.`;
 
 export type EnrichmentResult = {
@@ -124,6 +130,7 @@ export type EnrichmentResult = {
     text: string;
     trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
   } | null;
+  discrete_learning_objectives?: DloEnrichmentItem[];
   pedagogy_sources?: PedagogySource[];
   // Post-save profile nudge, surfaced by the client after enrichment completes.
   // Explicit null means "nudge provider ran but no quiet thread qualified."
@@ -452,6 +459,33 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       validated.pedagogy_sources = pedagogySources;
     }
     await attachProfileNudge(validated, familyId, ctx.childRecords);
+
+    const validatedDlos = await validateDlos(result.discrete_learning_objectives);
+    validated.discrete_learning_objectives = validatedDlos;
+    if (validatedDlos.length > 0) {
+      try {
+        await persistDloLinks({
+          entryId,
+          learnerIds: ctx.entry.learnerIds ?? [],
+          dlos: validatedDlos,
+          observedAt: new Date(),
+        });
+        tape('dlo-links-persisted');
+        // Fire-and-forget — analytics MUST NOT block enrichment.
+        void trackServer(
+          'dlo.enrichment.completed',
+          familyId,
+          {
+            entry_id: entryId,
+            dlo_count: validatedDlos.length,
+            learner_count: (ctx.entry.learnerIds ?? []).length,
+          },
+          { familyId },
+        );
+      } catch (dloErr) {
+        console.error('[enrichEntry] DLO persist failed:', dloErr);
+      }
+    }
 
     tape('validation-done');
     await db

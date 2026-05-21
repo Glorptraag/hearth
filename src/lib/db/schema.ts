@@ -12,6 +12,7 @@ import {
   unique,
   uniqueIndex,
   check,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -662,4 +663,51 @@ export const customThreads = pgTable(
     updatedAt: timestamp('updated_at').defaultNow(),
   },
   (table) => [index('ct_family_idx').on(table.familyId)]
+);
+
+// ─── DLO (Discrete Learning Objective) state ───
+
+export const learnerDloStatus = pgTable(
+  'learner_dlo_status',
+  {
+    learnerId: uuid('learner_id')
+      .notNull()
+      .references(() => learners.id, { onDelete: 'cascade' }),
+    dloId: text('dlo_id').notNull(),
+    status: text('status').notNull(),
+    confidence: decimal('confidence'),
+    lastObservedAt: timestamp('last_observed_at', { withTimezone: true }),
+    sourceObservationId: uuid('source_observation_id').references(() => learningEntries.id, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.learnerId, table.dloId] }),
+    index('lds_learner_idx').on(table.learnerId),
+    index('lds_dlo_idx').on(table.dloId),
+  ]
+);
+
+export const observationDloLinks = pgTable(
+  'observation_dlo_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    observationId: uuid('observation_id')
+      .notNull()
+      .references(() => learningEntries.id, { onDelete: 'cascade' }),
+    learnerId: uuid('learner_id')
+      .notNull()
+      .references(() => learners.id, { onDelete: 'cascade' }),
+    dloId: text('dlo_id').notNull(),
+    tier: text('tier').notNull(),
+    confidence: decimal('confidence'),
+    rationale: text('rationale'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('odl_observation_idx').on(table.observationId),
+    index('odl_learner_dlo_idx').on(table.learnerId, table.dloId),
+    index('odl_dlo_idx').on(table.dloId),
+  ]
 );

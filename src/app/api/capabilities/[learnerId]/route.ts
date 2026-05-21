@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { learners, familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
-import type { SnapshotActiveThread, SnapshotData } from '@/types/snapshot';
+import type { SnapshotActiveThread, SnapshotData, DloStatusEntry } from '@/types/snapshot';
 
 type Params = { params: Promise<{ learnerId: string }> };
 
@@ -30,10 +30,12 @@ export async function GET(request: NextRequest, { params }: Params) {
     where: eq(familyIntelligenceSnapshots.familyId, family.id),
   });
 
-  if (!snapshot) return NextResponse.json([]);
+  if (!snapshot) return NextResponse.json({ activeThreads: [], dloStatus: {} });
 
   const data = snapshot.snapshotData as SnapshotData;
-  const activeThreads: SnapshotActiveThread[] = data?.children?.[learnerId]?.active_threads ?? [];
+  const child = data?.children?.[learnerId];
+  const activeThreads: SnapshotActiveThread[] = child?.active_threads ?? [];
+  const dloStatus: Record<string, DloStatusEntry> = child?.dlo_status ?? {};
 
-  return NextResponse.json(activeThreads);
+  return NextResponse.json({ activeThreads, dloStatus });
 }

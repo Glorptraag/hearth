@@ -168,6 +168,9 @@ export type LearnerSnapshot = {
   threadState: Record<string, ThreadState>;
   badges: Array<{ thread: string; level?: string | null; status?: 'approaching' | 'awarded' }>;
   dlosByThread: Record<string, { confirmed: number; total: number }>;
+  // Per-DLO status keyed by Sanity DLO `_id`. Populated by the snapshot rebuild
+  // from `learner_dlo_status`. Missing entries default to 'not-started'.
+  dloStatusById: Record<string, { status: string }>;
 };
 
 export type ActiveThreadRow = {
@@ -186,6 +189,7 @@ export type ActiveThreadRow = {
 export function buildSnapshot(
   learner: { id: string; name: string; colourToken: string | null },
   rows: ActiveThreadRow[],
+  dloStatusById?: Record<string, { status: string }>,
 ): LearnerSnapshot {
   const tier: Record<string, Tier> = {};
   const obs: Record<string, number> = {};
@@ -216,6 +220,7 @@ export function buildSnapshot(
     threadState: deriveThreadStates(tier),
     badges,
     dlosByThread: dlos,
+    dloStatusById: dloStatusById ?? {},
   };
 }
 
@@ -301,21 +306,25 @@ const PLACEHOLDER_WARNED = new Set<string>();
    2. Placeholder descriptors from dlo-descriptors.ts (legacy; TODO remove once
       Sanity content is seeded across all 57 threads in production).
 
-   Per-DLO status is NOT fabricated. The old tier-rank arithmetic (which
-   synthesised confirmed/emerging from a thread-level dlos_confirmed count)
-   has been removed: every DLO reports an honest 'not-started' until a
-   genuine per-DLO persistence surface lands in a follow-up. `snap` is
-   retained in the signature for call-site stability but does not drive
-   DLO status. */
+   Per-DLO status comes from `snap.dloStatusById`, populated by the snapshot
+   rebuild from the `learner_dlo_status` table. The persisted status uses four
+   values (emerging | developing | demonstrating | not-started); the constellation's
+   DLO type collapses these into three render states ('confirmed' for
+   demonstrating, 'emerging' for emerging/developing, 'not-started' for absent
+   entries) to keep Gallery/Table rendering stable. */
 export function buildDLOs(
   threadId: string,
   snap: LearnerSnapshot,
   sanityByThread?: Record<string, SanityDLO[]>,
 ): DLO[] {
-  void snap;
   const thread = THREADS_BY_ID[threadId];
   if (!thread) return [];
-  const stateFor = (_id: string): DLO['status'] => 'not-started';
+  const stateFor = (id: string): DLO['status'] => {
+    const persisted = snap.dloStatusById?.[id]?.status;
+    if (persisted === 'demonstrating') return 'confirmed';
+    if (persisted === 'developing' || persisted === 'emerging') return 'emerging';
+    return 'not-started';
+  };
 
   const sanityList = sanityByThread?.[threadId];
   if (sanityList && sanityList.length > 0) {

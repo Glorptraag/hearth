@@ -8,8 +8,9 @@ import {
   badgeAwards,
   familyLibrary,
   plannerEntries,
+  learnerDloStatus,
 } from '@/lib/db/schema';
-import { eq, and, desc, gte, lte, count } from 'drizzle-orm';
+import { eq, and, desc, gte, lte, count, inArray } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import {
@@ -74,6 +75,25 @@ export async function rebuildSnapshot(
 
     const childSnapshots: Record<string, unknown> = {};
     const pendingNotifications: unknown[] = [];
+
+    // Load per-learner DLO state once for the whole family. Indexed by learner_id
+    // so each child gets its own slice without an N+1.
+    const learnerIds = familyLearners.map((l) => l.id);
+    const dloRows = learnerIds.length > 0
+      ? await db
+          .select()
+          .from(learnerDloStatus)
+          .where(inArray(learnerDloStatus.learnerId, learnerIds))
+      : [];
+    const dloStatusByLearner: Record<string, Record<string, { status: string; confidence: number | null; last_observed_at: string | null }>> = {};
+    for (const row of dloRows) {
+      const bucket = (dloStatusByLearner[row.learnerId] ||= {});
+      bucket[row.dloId] = {
+        status: row.status,
+        confidence: row.confidence ? Number(row.confidence) : null,
+        last_observed_at: row.lastObservedAt ? row.lastObservedAt.toISOString() : null,
+      };
+    }
 
     for (const child of familyLearners) {
       const childEntries = allEntries.filter((e) =>
@@ -421,6 +441,7 @@ export async function rebuildSnapshot(
           suggested_focus_threads: suggestedFocusThreads,
         },
         monthly_narrative: monthlyNarrative,
+        dlo_status: dloStatusByLearner[child.id] ?? {},
       };
     }
 

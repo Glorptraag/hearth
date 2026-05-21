@@ -24,6 +24,7 @@ export default function CapabilitiesPage() {
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
+  const [dloStatus, setDloStatus] = useState<Record<string, { status: string }>>({});
   const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
   const [loading, setLoading] = useState(true);
 
@@ -59,19 +60,27 @@ export default function CapabilitiesPage() {
     // briefly paint that learner's progress under the new learner's name.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveThreads([]);
+    setDloStatus({});
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        setActiveThreads(Array.isArray(data) ? (data as ActiveThreadRow[]) : []);
+        // New shape: { activeThreads, dloStatus }. Old shape was a bare array.
+        if (Array.isArray(data)) {
+          setActiveThreads(data as ActiveThreadRow[]);
+          setDloStatus({});
+        } else {
+          setActiveThreads(Array.isArray(data?.activeThreads) ? data.activeThreads : []);
+          setDloStatus(data?.dloStatus ?? {});
+        }
       });
     return () => { cancelled = true; };
   }, [selectedLearnerId]);
 
   const learner = learners.find((l) => l.id === selectedLearnerId) ?? null;
   const snap: LearnerSnapshot | null = useMemo(
-    () => (learner ? buildSnapshotFromApi(learner, activeThreads) : null),
-    [learner, activeThreads],
+    () => (learner ? buildSnapshotFromApi(learner, activeThreads, dloStatus) : null),
+    [learner, activeThreads, dloStatus],
   );
 
   if (loading) {

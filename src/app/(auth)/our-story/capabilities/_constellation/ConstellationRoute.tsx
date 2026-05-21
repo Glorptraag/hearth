@@ -309,9 +309,11 @@ export function ConstellationRoute({
 export function buildSnapshotFromApi(
   learner: Learner,
   rows: ActiveThreadRow[],
+  dloStatus?: Record<string, { status: string }>,
 ): LearnerSnapshot {
   return buildSnapshot(
     { id: learner.id, name: learner.name, colourToken: learner.colourToken },
     rows,
+    dloStatus,
   );
 }

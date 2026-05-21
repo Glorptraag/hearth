@@ -136,7 +136,13 @@ export default function OurStoryHubClient() {
     ])
       .then(([entries, threads]) => {
         const entryList: Entry[] = Array.isArray(entries) ? entries : [];
-        const threadList: Thread[] = Array.isArray(threads) ? threads : [];
+        // /api/capabilities/[learnerId] now returns { activeThreads, dloStatus };
+        // older callers received the bare array. Accept both shapes.
+        const threadList: Thread[] = Array.isArray(threads)
+          ? threads
+          : Array.isArray(threads?.activeThreads)
+            ? threads.activeThreads
+            : [];
 
         const portfolioTotal = entryList.length;
         const portfolioThisTerm = entryList.filter(

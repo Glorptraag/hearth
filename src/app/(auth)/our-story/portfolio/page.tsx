@@ -237,7 +237,14 @@ export default function PortfolioPage() {
       setEntries(Array.isArray(e) ? e : []);
       setEntriesFetchedAtMs(Date.now());
       setBadges(Array.isArray(b) ? b : []);
-      setThreads(Array.isArray(t) ? t : []);
+      // /api/capabilities/[learnerId] returns { activeThreads, dloStatus };
+      // accept the legacy bare-array shape too.
+      const threadList = Array.isArray(t)
+        ? t
+        : Array.isArray(t?.activeThreads)
+          ? t.activeThreads
+          : [];
+      setThreads(threadList);
       const childSnap = snap?.snapshotData?.children?.[selectedLearnerId];
       setMonthlyNarrative(childSnap?.monthly_narrative ?? '');
     });

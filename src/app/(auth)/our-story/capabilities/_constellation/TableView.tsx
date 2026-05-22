@@ -383,16 +383,53 @@ export function TableDLOs({
 }
 
 /* ----- Depth 4 : moments table ----- */
+
+/**
+ * DLO-level evidence rows from /api/capabilities/[learnerId]/dlo-evidence.
+ * These come from the post-Phase-2 observation_dlo_links table — one row per
+ * (observation × dlo) with the tier the enrichment assigned and the parent-
+ * facing rationale Haiku wrote.
+ */
+type DloEvidence = {
+  entryId: string;
+  title: string;
+  dateOccurred: string;
+  source: string;
+  tier: 'emerging' | 'developing' | 'demonstrating';
+  confidence: number | null;
+  rationale: string | null;
+};
+
+const TIER_BADGE: Record<DloEvidence['tier'], { label: string; cls: string }> = {
+  emerging:      { label: 'Emerging',      cls: 'bg-surface-hover text-text-secondary' },
+  developing:    { label: 'Developing',    cls: 'bg-ember-glow text-ember' },
+  demonstrating: { label: 'Demonstrating', cls: 'bg-sage/10 text-sage' },
+};
+
 export function TableMoments({
   snap, dlo,
 }: { snap: LearnerSnapshot; dlo: DLO }) {
-  const [entries, setEntries] = useState<EvidenceEntry[] | null>(null);
+  const [evidence, setEvidence] = useState<DloEvidence[] | null>(null);
+  // Thread-level fallback for legacy entries logged before Phase 2 (which have
+  // no observation_dlo_links rows). Once backfill ships this can be deleted.
+  const [fallback, setFallback] = useState<EvidenceEntry[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    // Reset stale data when the dependency changes; fresh fetch resolves into the same setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEntries(null);
+    setEvidence(null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFallback(null);
+
+    fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
+      .then((r) => r.json())
+      .then((data: { evidence?: DloEvidence[] }) => {
+        if (cancelled) return;
+        setEvidence(Array.isArray(data?.evidence) ? data.evidence : []);
+      })
+      .catch(() => { if (!cancelled) setEvidence([]); });
+
+    // Fire the fallback in parallel so it's ready instantly if DLO returns empty.
     fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
       .then((r) => r.json())
       .then((data: EvidenceEntry[]) => {
@@ -402,13 +439,14 @@ export function TableMoments({
             (ct) => ct.thread_id === dlo.thread && ct.confidence >= 0.5,
           ),
         );
-        setEntries(filtered.sort((a, b) => b.dateOccurred.localeCompare(a.dateOccurred)));
+        setFallback(filtered.sort((a, b) => b.dateOccurred.localeCompare(a.dateOccurred)));
       })
-      .catch(() => { if (!cancelled) setEntries([]); });
-    return () => { cancelled = true; };
-  }, [snap.id, dlo.thread]);
+      .catch(() => { if (!cancelled) setFallback([]); });
 
-  if (entries === null) {
+    return () => { cancelled = true; };
+  }, [snap.id, dlo.id, dlo.thread]);
+
+  if (evidence === null) {
     return (
       <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel p-lg">
         <p className="font-sans text-sm text-text-muted">Loading moments…</p>
@@ -416,7 +454,67 @@ export function TableMoments({
     );
   }
 
-  if (entries.length === 0) {
+  // Prefer DLO-precise evidence; only fall back to thread-level matches when
+  // there are zero DLO links yet (pre-backfill, or learner not enriched).
+  if (evidence.length > 0) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel">
+        <table className="cap-table w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Moment</th>
+              <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Tier read</th>
+              <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Why it counted</th>
+              <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {evidence.map((m) => {
+              const badge = TIER_BADGE[m.tier] ?? TIER_BADGE.emerging;
+              return (
+                <tr key={m.entryId} className="border-b border-border-subtle last:border-b-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]">
+                  <td className="p-md align-top">
+                    <Link
+                      href={`/our-story/portfolio#entry-${m.entryId}`}
+                      className="block font-serif text-[0.95rem] font-medium text-text-primary hover:text-ember transition-colors duration-[var(--motion-quick)]"
+                    >
+                      {m.title}
+                    </Link>
+                    <div className="font-sans text-[0.7rem] uppercase tracking-[0.06em] text-text-muted">
+                      {m.dateOccurred} · {relTime(m.dateOccurred)}
+                    </div>
+                  </td>
+                  <td className="p-md align-top">
+                    <span className={`inline-block rounded-sm px-sm py-[2px] font-sans text-[0.72rem] font-medium ${badge.cls}`}>
+                      {badge.label}
+                    </span>
+                  </td>
+                  <td className="p-md align-top font-serif italic text-sm text-text-secondary max-w-[42ch]">
+                    {m.rationale ?? <span className="not-italic text-text-muted">—</span>}
+                  </td>
+                  <td className="p-md align-top font-sans text-sm text-text-muted">
+                    {m.confidence != null ? `${Math.round(m.confidence * 100)}%` : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // No DLO-precise evidence. Show the thread-level fallback so the screen
+  // isn't empty for families whose entries pre-date Phase 2 enrichment.
+  if (fallback === null) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel p-lg">
+        <p className="font-sans text-sm text-text-muted">Loading moments…</p>
+      </div>
+    );
+  }
+
+  if (fallback.length === 0) {
     return (
       <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel">
         <div className="bg-surface-raised px-lg py-md font-serif italic text-text-secondary">
@@ -428,6 +526,9 @@ export function TableMoments({
 
   return (
     <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-panel">
+      <div className="bg-surface-raised px-lg py-sm font-sans text-[0.7rem] uppercase tracking-[0.06em] text-text-muted">
+        Showing thread-level matches (this objective has no DLO-level evidence yet)
+      </div>
       <table className="cap-table w-full border-collapse">
         <thead>
           <tr>
@@ -438,7 +539,7 @@ export function TableMoments({
           </tr>
         </thead>
         <tbody>
-          {entries.map((m) => {
+          {fallback.map((m) => {
             const isLogger = m.source !== 'module';
             const conf = m.aiEnrichment?.capability_threads?.find((c) => c.thread_id === dlo.thread)?.confidence ?? null;
             return (

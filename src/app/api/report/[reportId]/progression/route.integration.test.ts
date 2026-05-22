@@ -17,20 +17,23 @@ import { POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../../vitest.setup';
 
 function mockProgressionResponse() {
-  vi.mocked(Anthropic).mockImplementation(() => ({
-    messages: {
-      create: vi.fn(async () => ({
-        id: 'msg_progression',
-        type: 'message',
-        role: 'assistant',
-        content: [{ type: 'text', text: 'From early counting in March to multi-step word problems in October — Sam now sustains attention across three-step calculations without needing to restart.' }],
-        model: 'claude-haiku-4-5-20251001',
-        stop_reason: 'end_turn',
-        usage: { input_tokens: 100, output_tokens: 40 },
-      })),
-    },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }) as any);
+  // Must be a regular function (not arrow) so the route's `new Anthropic()` works.
+  vi.mocked(Anthropic).mockImplementation(function () {
+    return {
+      messages: {
+        create: vi.fn(async () => ({
+          id: 'msg_progression',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'text', text: 'From early counting in March to multi-step word problems in October — Sam now sustains attention across three-step calculations without needing to restart.' }],
+          model: 'claude-haiku-4-5-20251001',
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 100, output_tokens: 40 },
+        })),
+      },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+  });
 }
 
 async function seedConfirmedPair() {

@@ -20,28 +20,31 @@ import { POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../../../../vitest.setup';
 
 function mockDraftResponse() {
-  vi.mocked(Anthropic).mockImplementation(() => ({
-    messages: {
-      create: vi.fn(async () => ({
-        id: 'msg_test_draft',
-        type: 'message',
-        role: 'assistant',
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            observations: 'I noticed Sam working through magnet pairings with focused attention. They paused often to test attractions.',
-            needsStrengths: 'Sam was visibly engaged. They asked thoughtful follow-up questions about why some objects did not respond.',
-            adjustment: 'I followed their lead and pulled out a few more household items to extend the test rather than steering back to the worksheet.',
-            planning: 'Next week we might build a simple compass to extend the conversation from attraction to direction.',
-          }),
-        }],
-        model: 'claude-haiku-4-5-20251001',
-        stop_reason: 'end_turn',
-        usage: { input_tokens: 100, output_tokens: 200 },
-      })),
-    },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }) as any);
+  // Must be a regular function (not arrow) so the route's `new Anthropic()` works.
+  vi.mocked(Anthropic).mockImplementation(function () {
+    return {
+      messages: {
+        create: vi.fn(async () => ({
+          id: 'msg_test_draft',
+          type: 'message',
+          role: 'assistant',
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              observations: 'I noticed Sam working through magnet pairings with focused attention. They paused often to test attractions.',
+              needsStrengths: 'Sam was visibly engaged. They asked thoughtful follow-up questions about why some objects did not respond.',
+              adjustment: 'I followed their lead and pulled out a few more household items to extend the test rather than steering back to the worksheet.',
+              planning: 'Next week we might build a simple compass to extend the conversation from attraction to direction.',
+            }),
+          }],
+          model: 'claude-haiku-4-5-20251001',
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 100, output_tokens: 200 },
+        })),
+      },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+  });
 }
 
 async function seedReportWithSample() {

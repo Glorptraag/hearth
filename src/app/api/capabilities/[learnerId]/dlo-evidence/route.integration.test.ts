@@ -59,7 +59,7 @@ describe('GET /api/capabilities/[learnerId]/dlo-evidence — real DB', () => {
   it('returns 404 when the learner belongs to another family', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
-    const other = await createFamily(db, { clerkUserId: 'user-other' });
+    const other = await createFamily(db, { id: crypto.randomUUID(), clerkUserId: 'user-other' });
     const otherLearner = await createLearner(db, { familyId: other.id, name: 'X' });
 
     const res = await GET(

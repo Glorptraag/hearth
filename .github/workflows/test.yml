@@ -47,6 +47,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
+      # Catches the case where a new pgTable in schema.ts has no matching
+      # CREATE TABLE migration — exactly the gap that left prod missing
+      # learner_dlo_status after PR #60.
+      - run: npm run db:check-schema
 
   # -------------------------------------------------------------------------
   # Unit tests — everything mocked, fast, run in parallel with the others.

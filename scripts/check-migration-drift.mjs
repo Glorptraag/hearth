@@ -58,9 +58,31 @@ const expected = journal.entries.map((e) => e.tag);
 const missing = expected.filter((t) => !applied.has(t));
 const extra = [...applied].filter((t) => !expected.includes(t));
 
-if (missing.length === 0 && extra.length === 0) {
-  console.log(`[drift] OK — ${expected.length} migrations applied in order`);
+// Secondary check: every table declared in schema.ts must physically exist
+// in the database. Catches the case where __drizzle_migrations says a
+// migration ran but the SQL was actually no-op'd (e.g. by a buggy bespoke
+// runner — see the 2026-05-22 incident notes in scripts/repair-prod-migrations.mjs).
+const schemaPath = 'src/lib/db/schema.ts';
+let physicalMissing = [];
+try {
+  const schemaSrc = readFileSync(resolve(process.cwd(), schemaPath), 'utf8');
+  const declared = [...schemaSrc.matchAll(/pgTable\(\s*['"]([a-zA-Z0-9_]+)['"]/g)].map((m) => m[1]);
+  const rows = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public'`;
+  const present = new Set(rows.map((r) => r.table_name));
+  physicalMissing = declared.filter((t) => !present.has(t)).sort();
+} catch (e) {
+  console.error(`[drift] could not run physical table check: ${e.message}`);
+}
+
+if (missing.length === 0 && extra.length === 0 && physicalMissing.length === 0) {
+  console.log(`[drift] OK — ${expected.length} migrations applied in order, all schema.ts tables present in db`);
   process.exit(0);
+}
+
+if (physicalMissing.length > 0) {
+  console.error(`[drift] PHYSICAL MISMATCH — tables declared in schema.ts but missing from db:`);
+  for (const t of physicalMissing) console.error(`  - ${t}`);
+  console.error(`        → a migration was journaled as applied but its DDL did not run.`);
 }
 
 if (missing.length > 0) {

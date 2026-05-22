@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 import { asUser, asSignedOut } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
@@ -18,9 +19,8 @@ import { eq } from 'drizzle-orm';
 import { POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../../../../vitest.setup';
 
-// Override the global Anthropic mock for this file
-vi.mock('@anthropic-ai/sdk', () => {
-  const MockAnthropic = vi.fn(() => ({
+function mockDraftResponse() {
+  vi.mocked(Anthropic).mockImplementation(() => ({
     messages: {
       create: vi.fn(async () => ({
         id: 'msg_test_draft',
@@ -40,9 +40,9 @@ vi.mock('@anthropic-ai/sdk', () => {
         usage: { input_tokens: 100, output_tokens: 200 },
       })),
     },
-  }));
-  return { default: MockAnthropic, Anthropic: MockAnthropic };
-});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any);
+}
 
 async function seedReportWithSample() {
   await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
@@ -76,7 +76,7 @@ function getReq() {
 
 describe('POST /api/report/[reportId]/samples/[sampleId]/draft', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockDraftResponse();
   });
 
   it('returns 401 when signed out', async () => {

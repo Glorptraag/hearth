@@ -5,8 +5,9 @@
  * be confirmed, stores the summary on the late sample's annotation row,
  * and refuses to overwrite when the parent has edited the summary.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 import { asUser, asSignedOut } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
@@ -15,8 +16,8 @@ import { eq } from 'drizzle-orm';
 import { POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../../vitest.setup';
 
-vi.mock('@anthropic-ai/sdk', () => {
-  const MockAnthropic = vi.fn(() => ({
+function mockProgressionResponse() {
+  vi.mocked(Anthropic).mockImplementation(() => ({
     messages: {
       create: vi.fn(async () => ({
         id: 'msg_progression',
@@ -28,9 +29,9 @@ vi.mock('@anthropic-ai/sdk', () => {
         usage: { input_tokens: 100, output_tokens: 40 },
       })),
     },
-  }));
-  return { default: MockAnthropic, Anthropic: MockAnthropic };
-});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any);
+}
 
 async function seedConfirmedPair() {
   await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
@@ -78,6 +79,10 @@ function req(pair: string) {
 }
 
 describe('POST /api/report/[reportId]/progression', () => {
+  beforeEach(() => {
+    mockProgressionResponse();
+  });
+
   it('returns 401 when signed out', async () => {
     asSignedOut();
     const res = await POST(req('maths'), { params: Promise.resolve({ reportId: 'r' }) });

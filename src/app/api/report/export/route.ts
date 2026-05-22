@@ -237,6 +237,7 @@ export async function GET(request: NextRequest) {
         needsStrengths: string | null;
         adjustment: string | null;
         planning: string | null;
+        progressionSummary: string | null;
         confirmedAt: Date | null;
       } | null;
     }> = [];
@@ -257,12 +258,24 @@ export async function GET(request: NextRequest) {
           : [];
         const annotationMap = new Map(annotations.map((a) => [a.workSampleId, a]));
 
-        dbSamples = samples.map((s) => ({
-          slot: s.slot,
-          entryId: s.entryId,
-          status: s.status,
-          annotation: annotationMap.get(s.id) ?? null,
-        }));
+        dbSamples = samples.map((s) => {
+          const a = annotationMap.get(s.id);
+          return {
+            slot: s.slot,
+            entryId: s.entryId,
+            status: s.status,
+            annotation: a
+              ? {
+                  observations: a.observations,
+                  needsStrengths: a.needsStrengths,
+                  adjustment: a.adjustment,
+                  planning: a.planning,
+                  progressionSummary: a.progressionSummary,
+                  confirmedAt: a.confirmedAt,
+                }
+              : null,
+          };
+        });
       }
     }
 
@@ -358,6 +371,41 @@ export async function GET(request: NextRequest) {
 
         y += 8;
       }
+    }
+
+    // Progression summaries (one per subject pair where late slot has summary)
+    const progressionPairs: Array<{ lateSlot: string; label: string }> = [
+      { lateSlot: 'later_writing', label: 'English writing' },
+      { lateSlot: 'later_maths', label: 'Mathematics' },
+      { lateSlot: 'later_choice', label: 'Science / HASS' },
+    ];
+    const progressions = progressionPairs
+      .map((p) => {
+        const s = dbSamples.find((ds) => ds.slot === p.lateSlot);
+        return s?.annotation?.progressionSummary ? { label: p.label, text: s.annotation.progressionSummary } : null;
+      })
+      .filter((p): p is { label: string; text: string } => p !== null);
+
+    if (progressions.length > 0) {
+      if (y > 220) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Progression Summaries', 14, y); y += 8;
+
+      for (const p of progressions) {
+        if (y > 260) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 80, 60);
+        doc.text(p.label, 14, y); y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const lines = doc.splitTextToSize(p.text, pageW - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 4.5 + 6;
+      }
+      y += 4;
     }
 
     // Gap analysis

@@ -15,6 +15,7 @@ import type { ComponentType } from 'react';
 
 type ReportIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
+import ProgressionConnector from '@/components/report/ProgressionConnector';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
 
@@ -506,6 +507,47 @@ export default function ReportPage() {
             </div>
           </div>
 
+          {/* Progression Summaries — one per subject pair */}
+          {(() => {
+            const pairs: Array<{ key: 'english' | 'maths' | 'choice'; label: string; earlySlot: string; lateSlot: string }> = [
+              { key: 'english', label: 'English writing', earlySlot: 'early_writing', lateSlot: 'later_writing' },
+              { key: 'maths', label: 'Mathematics', earlySlot: 'early_maths', lateSlot: 'later_maths' },
+              { key: 'choice', label: 'Science / HASS', earlySlot: 'early_choice', lateSlot: 'later_choice' },
+            ];
+            const hasAnyConfirmed = pairs.some((p) => {
+              const e = report?.samples?.find((s) => s.slot === p.earlySlot);
+              const l = report?.samples?.find((s) => s.slot === p.lateSlot);
+              return e?.annotation?.confirmedAt || l?.annotation?.confirmedAt;
+            });
+            if (!hasAnyConfirmed || !report) return null;
+            return (
+              <div className="mt-lg">
+                <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Growth</p>
+                <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Progression Summaries</h2>
+                <div className="space-y-sm">
+                  {pairs.map((p) => {
+                    const early = report.samples?.find((s) => s.slot === p.earlySlot);
+                    const late = report.samples?.find((s) => s.slot === p.lateSlot);
+                    return (
+                      <ProgressionConnector
+                        key={p.key}
+                        reportId={report.id}
+                        pair={p.key}
+                        pairLabel={p.label}
+                        earlyConfirmed={Boolean(early?.annotation?.confirmedAt)}
+                        lateConfirmed={Boolean(late?.annotation?.confirmedAt)}
+                        lateSampleId={late?.id ?? null}
+                        summary={late?.annotation?.progressionSummary ?? null}
+                        edited={Boolean(late?.annotation?.progressionSummaryEdited)}
+                        onChanged={refreshReport}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Curriculum Coverage */}
           <div className="mt-lg">
             <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">Subject Areas</p>
@@ -791,6 +833,7 @@ export default function ReportPage() {
           entries={entries}
           reportYear={reportYear}
           sample={report.samples?.find((s) => s.slot === curationSlot.slotKey) ?? null}
+          learnerName={learners.find((l) => l.id === selectedLearnerId)?.name ?? ''}
           onSampleChanged={refreshReport}
           onClose={() => setCurationSlot(null)}
         />

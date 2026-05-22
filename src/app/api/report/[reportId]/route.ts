@@ -36,7 +36,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const [updated] = await db
     .update(complianceReports)
-    .set({ ...body.data, updatedAt: new Date() })
+    .set({
+      ...body.data,
+      ...(body.data.status === 'exported' ? { lastExportedAt: new Date() } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(complianceReports.id, reportId))
     .returning();
 

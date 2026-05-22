@@ -48,8 +48,13 @@ const EPOCH_DATE = '2026-01-01'; // PostgreSQL `date` columns round-trip as ISO 
 // ---------------------------------------------------------------------------
 
 export function buildFamily(overrides: Partial<Family> = {}): Family {
+  // IMPORTANT: default to randomUUID, NOT TEST_FAMILY_ID. A sticky default
+  // here caused silent PK collisions when a test seeded two families without
+  // explicit ids (e.g. cross-family isolation tests calling createFamily
+  // twice). Tests that want the canonical "current user's family" should
+  // pass `{ id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID }` explicitly.
   return {
-    id: overrides.id ?? TEST_FAMILY_ID,
+    id: overrides.id ?? randomUUID(),
     clerkUserId: TEST_USER_ID,
     familyName: 'Test Family',
     onboardingComplete: true,

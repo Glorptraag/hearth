@@ -1,0 +1,75 @@
+#!/usr/bin/expect -f
+# Automated resync of drizzle snapshots 0008-0015.
+#
+# Drives `drizzle-kit generate` non-interactively.
+#
+# CRITICAL DESIGN NOTE
+# --------------------
+# Drizzle prompts alphabetically over the set of "new" tables/columns and
+# greedily offers the closest-named legacy element as a rename source. That
+# means when a *brand-new* column (e.g. observation_details from migration
+# 0010) is prompted, drizzle may still offer heu_candidate as a rename
+# candidate — and accepting that suggestion would WRONGLY consume
+# heu_candidate, leaving the actual rename target (work_sample_candidate)
+# orphaned and creating a destructive migration.
+#
+# So we don't match on the prompt question alone. We match on the FULL
+# rename arrow (`source › target`) that drizzle prints in the option list.
+# Only four arrows are valid renames in this repo (per 0013):
+#
+#   heu_reports                ›  compliance_reports        (table)
+#   heu_registration_number    ›  registration_number       (column)
+#   heu_next_report_date       ›  next_report_date          (column)
+#   heu_candidate              ›  work_sample_candidate     (column)
+#
+# Anything else → accept default (create).
+#
+# Safety: the generated SQL is reviewed before commit (docs/drizzle-snapshot-recovery.md).
+# If anything goes wrong, `git checkout -- drizzle/` discards everything.
+
+set timeout 60
+log_user 1
+
+# These four patterns are the ONLY arrows we want to convert to renames.
+# Order matters in expect — more-specific patterns first.
+spawn npx drizzle-kit generate --name=resync_snapshots
+
+expect {
+  # Table-level rename arrow — must match the exact pair.
+  -re "heu_reports \u2023 compliance_reports rename table" {
+    send "\033\[B"
+    send "\r"
+    exp_continue
+  }
+  # Column-level renames — explicit pairs only.
+  -re "heu_registration_number \u2023 registration_number rename column" {
+    send "\033\[B"
+    send "\r"
+    exp_continue
+  }
+  -re "heu_next_report_date \u2023 next_report_date rename column" {
+    send "\033\[B"
+    send "\r"
+    exp_continue
+  }
+  -re "heu_candidate \u2023 work_sample_candidate rename column" {
+    send "\033\[B"
+    send "\r"
+    exp_continue
+  }
+  # Any other prompt — accept default (create). We match on the "create
+  # table"/"create column" highlighted default at the END of the menu, so
+  # we know all options have been printed before we answer.
+  -re "create (table|column)" {
+    send "\r"
+    exp_continue
+  }
+  # Drizzle prints this exit confirmation if it succeeds with no further
+  # input needed.
+  "all table conflicts resolved" { exp_continue }
+  "all columns conflicts" { exp_continue }
+  eof
+}
+
+catch wait result
+exit [lindex $result 3]

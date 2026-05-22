@@ -72,7 +72,10 @@ Drizzle migrations live in `./drizzle/*.sql`. `drizzle.config.ts` reads `DATABAS
 
 ```
 # From the operator's laptop, with .env.local pointing at the prod DB:
-npx drizzle-kit migrate
+npm run db:migrate
+
+# After it returns, confirm the journal matches:
+npm run db:check-drift
 ```
 
 **Rules:**
@@ -117,7 +120,8 @@ If anything fails, jump to [`docs/incident-runbook.md`](./incident-runbook.md).
 Short version — see §1.6 for the full smoke test, only run it after risky changes.
 
 - [ ] PR green on CI (typecheck + unit tests required; lint is non-blocking until the 22 pre-existing errors are cleared — see `.github/workflows/test.yml`).
-- [ ] If the PR adds a Drizzle migration, run `npx drizzle-kit migrate` against prod **before** merging.
+- [ ] If the PR adds a Drizzle migration, run `npm run db:migrate` against prod **before** merging.
+- [ ] After every merge that touched `drizzle/` or `src/lib/db/schema.ts`, run `npm run db:check-drift` against prod. Non-zero exit ⇒ migration was skipped; re-run `db:migrate` and verify before declaring the deploy stable. (This catches the failure mode that broke PR #60: code expected `learner_dlo_status`; prod never ran 0015.)
 - [ ] If the PR touches `/api/admin/retention` or `/api/admin/invitations/expire`, manually trigger both after deploy (step 1.6 #7) to make sure nothing regresses silently until the next cron tick.
 - [ ] If the PR touches AI enrichment (`src/lib/ai/*`), run step 1.6 #4 and then check `ai_pipeline_logs` for a fresh row.
 - [ ] Delete merged feature branches (or rely on GitHub auto-delete, per `docs/branch-hygiene.md`).

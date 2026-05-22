@@ -588,21 +588,44 @@ export function GalleryMoments({
     // Reset stale data when the dependency changes; fresh fetch resolves into the same setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMoments(null);
-    fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
+
+    // Try the DLO-precise endpoint first (post-Phase 2). Fall back to the
+    // thread-level entries endpoint if it returns no rows — covers legacy
+    // entries logged before observation_dlo_links existed.
+    fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
       .then((r) => r.json())
-      .then((data: Array<{ id: string; title: string; dateOccurred: string; source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
+      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string }> }) => {
         if (cancelled) return;
-        const ms: GalleryMoment[] = (Array.isArray(data) ? data : [])
-          .filter((e) => e.aiEnrichment?.capability_threads?.some((c) => c.thread_id === dlo.thread && c.confidence >= 0.5))
-          .map((e) => ({
-            id: e.id, title: e.title, date: e.dateOccurred,
+        const evidence = Array.isArray(data?.evidence) ? data.evidence : [];
+        if (evidence.length > 0) {
+          const ms: GalleryMoment[] = evidence.map((e) => ({
+            id: e.entryId,
+            title: e.title,
+            date: e.dateOccurred,
             source: e.source === 'module' ? 'module' : 'logger',
           }));
-        setMoments(ms);
+          setMoments(ms);
+          return;
+        }
+        // Fallback path: thread-level matches
+        fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
+          .then((r) => r.json())
+          .then((entries: Array<{ id: string; title: string; dateOccurred: string; source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
+            if (cancelled) return;
+            const ms: GalleryMoment[] = (Array.isArray(entries) ? entries : [])
+              .filter((e) => e.aiEnrichment?.capability_threads?.some((c) => c.thread_id === dlo.thread && c.confidence >= 0.5))
+              .map((e) => ({
+                id: e.id, title: e.title, date: e.dateOccurred,
+                source: e.source === 'module' ? 'module' : 'logger',
+              }));
+            setMoments(ms);
+          })
+          .catch(() => { if (!cancelled) setMoments([]); });
       })
       .catch(() => { if (!cancelled) setMoments([]); });
+
     return () => { cancelled = true; };
-  }, [snap.id, dlo.thread]);
+  }, [snap.id, dlo.id, dlo.thread]);
 
   if (moments === null) {
     return (

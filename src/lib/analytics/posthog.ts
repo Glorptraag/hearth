@@ -85,7 +85,8 @@ export type HearthEvent =
   | 'badge_deferred'
   | 'report_exported'
   | 'logger_completed_50pct'
-  | 'pedagogy_set';
+  | 'pedagogy_set'
+  | 'dlo.enrichment.completed';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {
   if (!enabled || !initialised) return;

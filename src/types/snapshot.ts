@@ -86,6 +86,18 @@ export interface ChildSnapshot {
     suggested_focus_threads: string[];
   };
   monthly_narrative: string;
+  // Per-DLO status keyed by Sanity DLO `_id`. Absent before any DLO links exist
+  // for the learner (older snapshots, or before Phase 2 rebuild) — readers must
+  // default to 'not-started' when the entry is missing.
+  dlo_status?: Record<string, DloStatusEntry>;
+}
+
+export type DloStatusValue = 'emerging' | 'developing' | 'demonstrating' | 'not-started';
+
+export interface DloStatusEntry {
+  status: DloStatusValue | string;
+  confidence: number | null;
+  last_observed_at: string | null;
 }
 
 // ─── Family-wide snapshot ───

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { X, Tray, Flame, ClipboardText, Camera, Check } from '@/components/icons';
+import { X, Tray, Flame, ClipboardText, Camera, Check, Sparkle } from '@/components/icons';
 
 // ─── Types ───
 
@@ -64,6 +64,7 @@ type Props = {
   entries: Entry[];
   reportYear: number;
   sample: WorkSampleData | null;
+  learnerName: string;
   onSampleChanged: () => void;
   onClose: () => void;
 };
@@ -79,12 +80,36 @@ const ANNOTATION_FIELDS = [
 // extra glyph here. (Domain colour pills live in DomainChip.tsx for any
 // surface that needs them.)
 
+type SourceVal = 'ai_draft' | 'parent_edited' | 'parent_written';
+type FieldKey = 'observations' | 'needsStrengths' | 'adjustment' | 'planning';
+type SourceMap = Record<FieldKey, SourceVal | null>;
+
+function readSource(value: string | null | undefined): SourceVal | null {
+  return value === 'ai_draft' || value === 'parent_edited' || value === 'parent_written'
+    ? value
+    : null;
+}
+
+function classifyQuality(value: string, source: SourceVal | null, learnerName: string) {
+  const trimmed = value.trim();
+  const words = trimmed ? trimmed.split(/\s+/).length : 0;
+  if (source === 'ai_draft' || words < 20) {
+    return { tone: 'needs', label: 'Needs attention', dot: 'bg-child-rose' };
+  }
+  const hasSpecific = trimmed.toLowerCase().includes(learnerName.toLowerCase()) || /\d/.test(trimmed);
+  if (words >= 60 && hasSpecific) {
+    return { tone: 'strong', label: 'Strong', dot: 'bg-sage' };
+  }
+  return { tone: 'consider', label: 'Consider expanding', dot: 'bg-amber-status' };
+}
+
 export default function WorkSampleCuration({
   reportId,
   slot,
   entries,
   reportYear,
   sample,
+  learnerName,
   onSampleChanged,
   onClose,
 }: Props) {
@@ -93,12 +118,20 @@ export default function WorkSampleCuration({
   );
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(sample?.entryId ?? null);
   const [saving, setSaving] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [annotationDraft, setAnnotationDraft] = useState({
     observations: sample?.annotation?.observations ?? '',
     needsStrengths: sample?.annotation?.needsStrengths ?? '',
     adjustment: sample?.annotation?.adjustment ?? '',
     planning: sample?.annotation?.planning ?? '',
   });
+  const [sources, setSources] = useState<SourceMap>({
+    observations: readSource(sample?.annotation?.observationsSource),
+    needsStrengths: readSource(sample?.annotation?.needsStrengthsSource),
+    adjustment: readSource(sample?.annotation?.adjustmentSource),
+    planning: readSource(sample?.annotation?.planningSource),
+  });
+  const [showAiDraftWarning, setShowAiDraftWarning] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trapRef = useFocusTrap(true);
 
@@ -166,7 +199,11 @@ export default function WorkSampleCuration({
   };
 
   // Auto-save annotation with debounce
-  const saveAnnotation = useCallback(async (draft: typeof annotationDraft, confirmed?: boolean) => {
+  const saveAnnotation = useCallback(async (
+    draft: typeof annotationDraft,
+    srcs: SourceMap,
+    confirmed?: boolean,
+  ) => {
     if (!sample?.id) return;
     try {
       await fetch(`/api/report/${reportId}/samples/${sample.id}`, {
@@ -174,13 +211,13 @@ export default function WorkSampleCuration({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           observations: draft.observations || null,
-          observationsSource: 'parent_written',
+          observationsSource: srcs.observations ?? undefined,
           needsStrengths: draft.needsStrengths || null,
-          needsStrengthsSource: 'parent_written',
+          needsStrengthsSource: srcs.needsStrengths ?? undefined,
           adjustment: draft.adjustment || null,
-          adjustmentSource: 'parent_written',
+          adjustmentSource: srcs.adjustment ?? undefined,
           planning: draft.planning || null,
-          planningSource: 'parent_written',
+          planningSource: srcs.planning ?? undefined,
           ...(confirmed ? { confirmed: true } : {}),
         }),
       });
@@ -190,19 +227,64 @@ export default function WorkSampleCuration({
     }
   }, [sample, reportId, onSampleChanged]);
 
-  const handleFieldChange = (key: string, value: string) => {
+  const handleFieldChange = (key: FieldKey, value: string) => {
     const next = { ...annotationDraft, [key]: value };
+    const prevSource = sources[key];
+    // ai_draft → parent_edited on first keystroke. null → parent_written.
+    const nextSource: SourceVal =
+      prevSource === 'ai_draft' ? 'parent_edited' :
+      prevSource === null ? 'parent_written' :
+      prevSource;
+    const nextSources = { ...sources, [key]: nextSource };
     setAnnotationDraft(next);
-    // Debounced auto-save
+    setSources(nextSources);
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveAnnotation(next), 5000);
+    saveTimer.current = setTimeout(() => saveAnnotation(next, nextSources), 5000);
   };
 
+  const allAiDraft = (Object.values(sources) as (SourceVal | null)[]).every((s) => s === 'ai_draft');
+
   const handleConfirm = async () => {
+    if (allAiDraft && !showAiDraftWarning) {
+      setShowAiDraftWarning(true);
+      return;
+    }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setSaving(true);
-    await saveAnnotation(annotationDraft, true);
+    await saveAnnotation(annotationDraft, sources, true);
     setSaving(false);
+    setShowAiDraftWarning(false);
+  };
+
+  // Generate an AI draft for an empty annotation. Refused server-side if
+  // any parent text already exists.
+  const handleGenerateDraft = async () => {
+    if (!sample?.id || drafting) return;
+    setDrafting(true);
+    try {
+      const res = await fetch(`/api/report/${reportId}/samples/${sample.id}/draft`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const { annotation } = await res.json();
+        setAnnotationDraft({
+          observations: annotation.observations ?? '',
+          needsStrengths: annotation.needsStrengths ?? '',
+          adjustment: annotation.adjustment ?? '',
+          planning: annotation.planning ?? '',
+        });
+        setSources({
+          observations: 'ai_draft',
+          needsStrengths: 'ai_draft',
+          adjustment: 'ai_draft',
+          planning: 'ai_draft',
+        });
+        onSampleChanged();
+      }
+    } catch {
+      // ignore
+    }
+    setDrafting(false);
   };
 
   // Cleanup timer
@@ -381,25 +463,78 @@ export default function WorkSampleCuration({
                 </span>
               </div>
 
+              {/* AI draft trigger — shown only when annotation is empty */}
+              {filledFields === 0 && (
+                <div className="rounded-lg border border-ember/20 bg-ember-glow px-md py-sm mb-md flex items-center justify-between gap-sm">
+                  <div>
+                    <p className="font-sans text-xs font-semibold text-ember inline-flex items-center gap-xs">
+                      <Sparkle size={12} weight="fill" aria-hidden="true" /> Get an AI draft to start
+                    </p>
+                    <p className="font-sans text-[10px] text-text-muted mt-[2px]">
+                      We&rsquo;ll draft each field from this entry&rsquo;s description. You review and edit before confirming.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleGenerateDraft}
+                    disabled={drafting}
+                    className="rounded-md bg-ember text-text-inverse px-md py-xs font-sans text-xs font-semibold whitespace-nowrap hover:bg-ember-hover transition-colors disabled:opacity-60"
+                  >
+                    {drafting ? 'Drafting…' : 'Draft with AI'}
+                  </button>
+                </div>
+              )}
+
               {/* 4 annotation fields */}
               <div className="space-y-md">
-                {ANNOTATION_FIELDS.map((field) => (
-                  <div key={field.key}>
-                    <label className="block font-sans text-xs font-semibold text-text-secondary mb-xs">
-                      {field.label}
-                    </label>
-                    <textarea
-                      value={annotationDraft[field.key]}
-                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      rows={3}
-                      className="w-full rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-serif text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none focus:ring-1 focus:ring-ember/30 resize-none transition-colors"
-                    />
-                  </div>
-                ))}
+                {ANNOTATION_FIELDS.map((field) => {
+                  const value = annotationDraft[field.key];
+                  const source = sources[field.key];
+                  const showAiLabel = source === 'ai_draft';
+                  const quality = value.trim() ? classifyQuality(value, source, learnerName) : null;
+                  return (
+                    <div key={field.key}>
+                      <div className="flex items-center justify-between mb-xs">
+                        <label className="font-sans text-xs font-semibold text-text-secondary">
+                          {field.label}
+                        </label>
+                        {showAiLabel && (
+                          <span className="inline-flex items-center gap-xs rounded-full bg-ember/10 text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">
+                            <Sparkle size={10} weight="fill" aria-hidden="true" /> AI draft — review and edit
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        value={value}
+                        onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        rows={3}
+                        className={`w-full rounded-md border bg-surface-panel px-md py-sm font-serif text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none focus:ring-1 focus:ring-ember/30 resize-none transition-colors ${
+                          showAiLabel ? 'border-ember/30' : 'border-border-subtle'
+                        }`}
+                      />
+                      {quality && (
+                        <div className="flex items-center gap-xs mt-[4px]">
+                          <span className={`h-[6px] w-[6px] rounded-full ${quality.dot}`} aria-hidden="true" />
+                          <span className="font-sans text-[10px] text-text-muted">{quality.label}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <p className="font-sans text-[10px] text-text-muted mt-sm">Auto-saves every 5 seconds while typing.</p>
+
+              {showAiDraftWarning && (
+                <div className="mt-md rounded-md border border-amber-status/40 bg-amber-status/10 px-md py-sm">
+                  <p className="font-sans text-xs font-semibold text-amber-status mb-xs">
+                    These annotations haven&rsquo;t been reviewed yet.
+                  </p>
+                  <p className="font-sans text-[11px] text-text-secondary">
+                    The HEU expects your own observations. Edit each field to reflect what you actually saw, then confirm. If you&rsquo;re sure the draft is accurate as-is, tap Confirm again.
+                  </p>
+                </div>
+              )}
 
               {/* Confirm button */}
               <button
@@ -415,6 +550,8 @@ export default function WorkSampleCuration({
                   ? 'Saving…'
                   : sample?.annotation?.confirmedAt
                   ? <span className="inline-flex items-center gap-xs"><Check size={14} aria-hidden="true" /> Confirmed — Update</span>
+                  : allAiDraft && showAiDraftWarning
+                  ? 'Confirm anyway'
                   : 'Confirm Work Sample'}
               </button>
 

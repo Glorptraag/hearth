@@ -159,6 +159,9 @@ export function GalleryDomains({
         const active = threads.filter((t) => snap.threadState[t.id] === 'active').length;
         const ghosts = threads.filter((t) => snap.threadState[t.id] === 'ghost').length;
         const demos = threads.filter((t) => threadCurrentTier(t.id, snap) === 'demonstrating').length;
+        const threadIds = new Set(threads.map((t) => t.id));
+        const earned = snap.badges.filter((b) => b.status === 'awarded' && threadIds.has(b.thread)).length;
+        const approaching = snap.badges.filter((b) => b.status === 'approaching' && threadIds.has(b.thread)).length;
 
         return (
           <g key={domain.key} style={{ cursor: 'pointer' }} onClick={() => onDrill(domain.key)}>
@@ -183,6 +186,18 @@ export function GalleryDomains({
               <text x={labelW - 22} y={cy + 24} textAnchor="end" className="cap-band-meta"
                     style={{ fill: 'var(--color-sage)', letterSpacing: '0.06em' }}>
                 ● {demos} demonstrating
+              </text>
+            )}
+            {(earned > 0 || approaching > 0) && (
+              <text x={labelW - 22} y={cy + (demos > 0 ? 38 : 24)} textAnchor="end" className="cap-band-meta"
+                    style={{ letterSpacing: '0.06em' }}>
+                {earned > 0 && (
+                  <tspan style={{ fill: 'var(--color-sage)' }}>★ {earned} earned</tspan>
+                )}
+                {earned > 0 && approaching > 0 && ' · '}
+                {approaching > 0 && (
+                  <tspan style={{ fill: 'var(--color-ember)' }}>◯ {approaching} approaching</tspan>
+                )}
               </text>
             )}
 
@@ -287,6 +302,12 @@ export function GalleryThreads({
   }, [domainKey]);
 
   const [hovered, setHovered] = useState<string | null>(null);
+
+  const badgeByThread = useMemo(() => {
+    const m: Record<string, LearnerSnapshot['badges'][number]> = {};
+    snap.badges.forEach((b) => { m[b.thread] = b; });
+    return m;
+  }, [snap.badges]);
 
   const edges: Array<{ key: string; src: { x: number; y: number }; tgt: { x: number; y: number }; crossDomain: boolean; active: boolean }> = [];
   threads.forEach((t) => {
@@ -407,6 +428,28 @@ export function GalleryThreads({
                 <circle cx={pos.x} cy={pos.y} r={5} fill="var(--color-ember)" opacity={0.3} filter="url(#cap-halo-ember)" />
               </>
             )}
+            {(() => {
+              const b = badgeByThread[t.id];
+              if (!b) return null;
+              const bx = pos.x + r * 0.78;
+              const by = pos.y - r * 0.78;
+              if (b.status === 'awarded') {
+                return (
+                  <g aria-label={`Badge earned${b.level ? ` — ${b.level}` : ''}`}>
+                    <circle cx={bx} cy={by} r={6} fill="var(--color-sage)" opacity={0.18} filter="url(#cap-halo-strong)" />
+                    <circle cx={bx} cy={by} r={3.4} fill="var(--color-sage)" />
+                  </g>
+                );
+              }
+              if (b.status === 'approaching') {
+                return (
+                  <g className="cap-badge-mark-approaching" aria-label="Badge approaching">
+                    <circle cx={bx} cy={by} r={4} fill="none" stroke="var(--color-ember)" strokeWidth={1.4} />
+                  </g>
+                );
+              }
+              return null;
+            })()}
             <text x={pos.x} y={pos.y + r + 16}
                   className={`cap-node-label ${state === 'active' ? 'cap-node-label-active' : state === 'ghost' ? 'cap-node-label-ghost' : ''}`}>
               {t.name}

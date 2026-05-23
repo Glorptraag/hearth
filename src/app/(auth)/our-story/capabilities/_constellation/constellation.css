@@ -152,9 +152,17 @@
   animation: cap-pulse-soft 2s ease-in-out infinite;
 }
 
+/* SVG badge marks (gallery view, per-thread overlays) */
+.cap-badge-mark-approaching circle {
+  animation: cap-pulse-soft 2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
 /* Reduced motion — zero all motion */
 @media (prefers-reduced-motion: reduce) {
   .cap-ghost,
   .cap-stage,
+  .cap-badge-mark-approaching circle,
   .cap-badge-approaching::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; }
 }

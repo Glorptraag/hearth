@@ -165,8 +165,31 @@ export function GalleryDomains({
         const earned = snap.badges.filter((b) => b.status === 'awarded' && threadIds.has(b.thread)).length;
         const approaching = snap.badges.filter((b) => b.status === 'approaching' && threadIds.has(b.thread)).length;
 
+        const ariaParts = [
+          domain.label,
+          `${active} active`,
+          ghosts > 0 ? `${ghosts} opening up` : null,
+          demos > 0 ? `${demos} demonstrating` : null,
+          earned > 0 ? `${earned} badge${earned === 1 ? '' : 's'} earned` : null,
+          approaching > 0 ? `${approaching} approaching` : null,
+        ].filter(Boolean).join(', ');
+
         return (
-          <g key={domain.key} style={{ cursor: 'pointer' }} onClick={() => onDrill(domain.key)}>
+          <g
+            key={domain.key}
+            className="cap-interactive"
+            style={{ cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-label={`${ariaParts}. Drill in to see threads.`}
+            onClick={() => onDrill(domain.key)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onDrill(domain.key);
+              }
+            }}
+          >
             {i < ORDERED_DOMAINS.length - 1 && (
               <line x1={labelW - 12} y1={y + bandH} x2={W - 20} y2={y + bandH}
                     stroke="var(--color-border-subtle)" strokeWidth={0.5} opacity={0.7} />
@@ -406,12 +429,27 @@ export function GalleryThreads({
           r = 6; fill = domain.color; stroke = 'none'; op = 0.4; hasOuterHalo = false;
         }
 
+        const tierLabel = state === 'ghost' ? 'opening up' : state === 'dormant' ? 'dormant' : tier ?? 'unobserved';
+        const badge = badgeByThread[t.id];
+        const ariaLabel = `${t.name}, ${tierLabel}${badge ? `, badge ${badge.status}` : ''}. Drill in for objectives.`;
+
         return (
           <g key={t.id}
-             className={state === 'ghost' ? 'cap-ghost' : undefined}
+             className={`cap-interactive${state === 'ghost' ? ' cap-ghost' : ''}`}
+             role="button"
+             tabIndex={0}
+             aria-label={ariaLabel}
              onMouseEnter={() => setHovered(t.id)}
              onMouseLeave={() => setHovered(null)}
+             onFocus={() => setHovered(t.id)}
+             onBlur={() => setHovered(null)}
              onClick={() => onDrill(t)}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 onDrill(t);
+               }
+             }}
              style={{ cursor: 'pointer' }}>
             {hasOuterHalo && (
               <>
@@ -575,7 +613,21 @@ export function GalleryDLOs({
           const fill = dlo.status === 'confirmed' ? dColor : dlo.status === 'emerging' ? dColor : 'transparent';
           const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'emerging' ? 0.6 : 0.4;
           return (
-            <g key={dlo.id} style={{ cursor: 'pointer' }} onClick={() => onDrill(dlo)}>
+            <g
+              key={dlo.id}
+              className="cap-interactive"
+              style={{ cursor: 'pointer' }}
+              role="button"
+              tabIndex={0}
+              aria-label={`${dlo.descriptor}, ${dlo.tier} tier, ${dlo.status}. Drill in for moments.`}
+              onClick={() => onDrill(dlo)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onDrill(dlo);
+                }
+              }}
+            >
               {dlo.status === 'confirmed' && (
                 <circle cx={cx} cy={y} r={r + 6} fill="none" stroke={dColor} strokeWidth={1} opacity={0.3} />
               )}

@@ -629,14 +629,28 @@ export function GalleryDLOs({
 }
 
 /* ─── Depth 4 : Moments timeline ─────────────────────────────────────── */
-type GalleryMoment = { id: string; date: string; title: string; source: 'logger' | 'module' };
+type GalleryMoment = {
+  id: string;
+  date: string;
+  title: string;
+  source: 'logger' | 'module';
+  tier: 'emerging' | 'developing' | 'demonstrating' | null;
+  rationale: string | null;
+};
+
+const TIER_COLOR: Record<'emerging' | 'developing' | 'demonstrating', string> = {
+  emerging: 'var(--color-text-muted)',
+  developing: 'var(--color-child-amber)',
+  demonstrating: 'var(--color-sage)',
+};
 
 export function GalleryMoments({
   snap, dlo,
 }: { snap: LearnerSnapshot; dlo: SynthDLO }) {
-  const W = 1100, H = 420;
+  const W = 1100, H = 460;
   const padL = 100, padR = 60;
   const [moments, setMoments] = useState<GalleryMoment[] | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -649,7 +663,7 @@ export function GalleryMoments({
     // entries logged before observation_dlo_links existed.
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
       .then((r) => r.json())
-      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string }> }) => {
+      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null }> }) => {
         if (cancelled) return;
         const evidence = Array.isArray(data?.evidence) ? data.evidence : [];
         if (evidence.length > 0) {
@@ -658,11 +672,14 @@ export function GalleryMoments({
             title: e.title,
             date: e.dateOccurred,
             source: e.source === 'module' ? 'module' : 'logger',
+            tier: e.tier === 'emerging' || e.tier === 'developing' || e.tier === 'demonstrating' ? e.tier : null,
+            rationale: e.rationale ?? null,
           }));
           setMoments(ms);
           return;
         }
-        // Fallback path: thread-level matches
+        // Fallback path: thread-level matches (legacy entries without dlo links carry
+        // no tier/rationale — only fields we have are title, date, source).
         fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
           .then((r) => r.json())
           .then((entries: Array<{ id: string; title: string; dateOccurred: string; source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
@@ -672,6 +689,7 @@ export function GalleryMoments({
               .map((e) => ({
                 id: e.id, title: e.title, date: e.dateOccurred,
                 source: e.source === 'module' ? 'module' : 'logger',
+                tier: null, rationale: null,
               }));
             setMoments(ms);
           })
@@ -759,14 +777,58 @@ export function GalleryMoments({
         const x = xFor(m.date);
         const y = m.source === 'logger' ? yLogger : yModule;
         const color = m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)';
+        const tierColor = m.tier ? TIER_COLOR[m.tier] : null;
+        const isHovered = hovered === m.id;
         return (
-          <g key={m.id}>
+          <g key={m.id}
+             onMouseEnter={() => setHovered(m.id)}
+             onMouseLeave={() => setHovered(null)}
+             onFocus={() => setHovered(m.id)}
+             onBlur={() => setHovered(null)}
+             style={{ cursor: m.rationale ? 'help' : 'default' }}
+             tabIndex={m.rationale ? 0 : -1}
+             aria-label={m.rationale ? `${m.title}. ${m.tier ?? ''} tier. ${m.rationale}` : m.title}>
             <line x1={x} y1={y} x2={x} y2={H / 2} stroke={color} strokeWidth={1} opacity={0.3} strokeDasharray="2 3" />
+            {tierColor && (
+              <circle cx={x} cy={y} r={10} fill="none" stroke={tierColor} strokeWidth={1.4} opacity={0.7} />
+            )}
             <circle cx={x} cy={y} r={7} fill={color} opacity={0.9} />
             <text x={x} y={y + (m.source === 'logger' ? 26 : -16)} textAnchor="middle"
                   style={{ fontFamily: 'var(--font-serif)', fontSize: '11px', fill: 'var(--color-text-primary)' }}>
               {m.title.length > 38 ? `${m.title.slice(0, 36)}…` : m.title}
             </text>
+            {isHovered && m.rationale && (
+              <g pointerEvents="none">
+                <rect
+                  x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140))}
+                  y={m.source === 'logger' ? y + 40 : y - 76}
+                  width={280}
+                  height={64}
+                  rx={6}
+                  fill="var(--color-surface-raised)"
+                  stroke="var(--color-border-medium)"
+                  strokeWidth={0.6}
+                  opacity={0.98}
+                />
+                <foreignObject
+                  x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140)) + 10}
+                  y={(m.source === 'logger' ? y + 40 : y - 76) + 8}
+                  width={260}
+                  height={48}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  <div style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '11px',
+                    lineHeight: 1.4,
+                    fontStyle: 'italic',
+                    color: 'var(--color-text-secondary)',
+                  }}>
+                    {m.rationale}
+                  </div>
+                </foreignObject>
+              </g>
+            )}
           </g>
         );
       })}

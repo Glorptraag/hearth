@@ -114,9 +114,11 @@ export function GalleryDomains({
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Capability constellation for ${snap.name}. Eight domains, each shown as a horizontal band.`}
+      aria-labelledby="cap-domains-title cap-domains-desc"
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id="cap-domains-title">{`Capability constellation for ${snap.name}`}</title>
+      <desc id="cap-domains-desc">{`${ORDERED_DOMAINS.length} domains, each shown as a horizontal band. Bands read left-to-right as capability dependency, from foundational to synthesising.`}</desc>
       <GalleryDefs />
 
       <g aria-hidden="true">
@@ -324,14 +326,22 @@ export function GalleryThreads({
 
   if (!domain) return null;
 
+  const earnedCount = threads.filter((t) => badgeByThread[t.id]?.status === 'awarded').length;
+  const approachingCount = threads.filter((t) => badgeByThread[t.id]?.status === 'approaching').length;
+  const badgeSummary = earnedCount > 0 || approachingCount > 0
+    ? ` ${earnedCount > 0 ? `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned` : ''}${earnedCount > 0 && approachingCount > 0 ? ', ' : ''}${approachingCount > 0 ? `${approachingCount} approaching` : ''}.`
+    : '';
+
   return (
     <svg
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`${domain.label} band for ${snap.name}. ${threads.length} threads laid out left-to-right by capability dependency.`}
+      aria-labelledby={`cap-threads-title-${domainKey} cap-threads-desc-${domainKey}`}
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id={`cap-threads-title-${domainKey}`}>{`${domain.label} band for ${snap.name}`}</title>
+      <desc id={`cap-threads-desc-${domainKey}`}>{`${threads.length} threads laid out left-to-right by capability dependency.${badgeSummary}`}</desc>
       <GalleryDefs />
 
       <g aria-hidden="true">
@@ -528,9 +538,11 @@ export function GalleryDLOs({
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Discrete learning objectives for ${thread.name}.`}
+      aria-labelledby={`cap-dlos-title-${threadId} cap-dlos-desc-${threadId}`}
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id={`cap-dlos-title-${threadId}`}>{`Learning objectives for ${thread.name} — ${snap.name}`}</title>
+      <desc id={`cap-dlos-desc-${threadId}`}>{`Three columns left-to-right: emerging, developing, demonstrating. Each column lists the DLOs at that tier with a moments pip-row beneath.`}</desc>
       <GalleryDefs />
       <text x={padL} y={28} className="cap-band-label">{thread.name}</text>
       <text x={padL} y={48} className="cap-band-meta">
@@ -672,7 +684,14 @@ export function GalleryMoments({
 
   if (moments === null) {
     return (
-      <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+      <svg
+        className="cap-gallery-svg"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading moments"
+      >
         <text x={W / 2} y={H / 2} textAnchor="middle"
               style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fill: 'var(--color-text-muted)' }}>
           Loading moments…
@@ -683,7 +702,13 @@ export function GalleryMoments({
 
   if (moments.length === 0) {
     return (
-      <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+      <svg
+        className="cap-gallery-svg"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="No moments yet for this objective. Log a moment from the Logger and tag this thread."
+      >
         <text x={W / 2} y={H / 2} textAnchor="middle"
               style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '16px', fill: 'var(--color-text-secondary)' }}>
           No moments yet for this objective.
@@ -705,7 +730,15 @@ export function GalleryMoments({
   const yModule = H / 2 - 40;
 
   return (
-    <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} role="img" preserveAspectRatio="xMidYMid meet">
+    <svg
+      className="cap-gallery-svg"
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-labelledby={`cap-moments-title cap-moments-desc`}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <title id="cap-moments-title">{`Moments for "${dlo.descriptor}" — ${snap.name}`}</title>
+      <desc id="cap-moments-desc">{`${sorted.length} ${sorted.length === 1 ? 'moment' : 'moments'} plotted left-to-right by date. Top lane is module-sourced, bottom lane is parent-logged.`}</desc>
       <text x={padL} y={28} className="cap-band-label">Moments for &ldquo;{dlo.descriptor}&rdquo;</text>
       <text x={padL} y={48} className="cap-band-meta">
         Left → right is time. Top lane is module-sourced, bottom lane is parent-logged.

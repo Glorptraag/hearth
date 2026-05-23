@@ -15,6 +15,7 @@ type Entry = {
   evidenceUrls: string[] | null;
   description: string | null;
   workSampleCandidate: boolean | null;
+  workSampleQuality: number | null;
   source: string;
   aiEnrichment: {
     subjects_detected?: string[];
@@ -149,10 +150,16 @@ export default function WorkSampleCuration({
     return subjects.has(slot.area) || (slot.altArea ? subjects.has(slot.altArea) : false);
   });
 
-  // Sort: HEU candidates first, then by evidence, then by recency
+  // Sort: HEU candidates first (flag from write-time AI or manual parent
+  // override), then by AI quality score (0-1), then by evidence presence, then
+  // by recency. Quality score lets the panel rank candidates even within a
+  // tied flag bucket — pre-quality entries fall through to the evidence tier.
   const sortedCandidates = [...candidates].sort((a, b) => {
     if (a.workSampleCandidate && !b.workSampleCandidate) return -1;
     if (!a.workSampleCandidate && b.workSampleCandidate) return 1;
+    const aq = a.workSampleQuality ?? -1;
+    const bq = b.workSampleQuality ?? -1;
+    if (aq !== bq) return bq - aq;
     const aEvidence = (a.evidenceUrls?.length ?? 0) > 0;
     const bEvidence = (b.evidenceUrls?.length ?? 0) > 0;
     if (aEvidence !== bEvidence) return aEvidence ? -1 : 1;

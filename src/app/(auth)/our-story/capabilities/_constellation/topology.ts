@@ -8,7 +8,6 @@ import {
   V2_DOMAINS_BY_KEY,
   getV2DomainKey,
 } from '@/lib/capability-universe-v2';
-import { DLO_DESCRIPTORS, fallbackDescriptor } from './dlo-descriptors';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
 export type ThreadState = 'active' | 'ghost' | 'dormant';
@@ -256,9 +255,7 @@ export function indexDLOsByThread(dlos: SanityDLO[]): Record<string, SanityDLO[]
 }
 
 /* DLO instance returned by buildDLOs — what GalleryDLOs / TableDLOs render.
-   Renamed from SynthDLO because the descriptors are now real Sanity content
-   when available; the synth-fallback path is only used when Sanity has no
-   DLOs for the thread (e.g. before the seed has run). */
+   Descriptors come from Sanity (seed-dlos.ts authored 57 × 3 = 171). */
 export type DLO = {
   id: string;
   thread: string;
@@ -269,11 +266,10 @@ export type DLO = {
   descriptor: string;
   badgeLevel: 'foundation' | 'practising' | 'mastery';
   status: 'confirmed' | 'emerging' | 'not-started';
-  source: 'sanity' | 'placeholder';
+  source: 'sanity';
 };
 
-/* Back-compat alias — keeps SynthDLO importable while call sites migrate.
-   TODO: remove once no caller imports SynthDLO. */
+/* Back-compat alias — keeps SynthDLO importable while call sites migrate. */
 export type SynthDLO = DLO;
 
 const TIER_RANK: Record<Exclude<Tier, 'unobserved'>, number> = {
@@ -282,36 +278,25 @@ const TIER_RANK: Record<Exclude<Tier, 'unobserved'>, number> = {
   demonstrating: 3,
 };
 
-const TIER_ORDER: Exclude<Tier, 'unobserved'>[] = ['emerging', 'developing', 'demonstrating'];
-
-// TRANSITIONAL (Item 5): badgeLevel is synthesised from tier, not authored.
-// seed-dlos.ts deliberately does NOT write a badgeLevel on DLO documents and
-// ALL_DLOS_QUERY's badgeLevel is therefore null in practice. This tier-derived
-// mapping is the accepted lo-fi stand-in until v2 stage-tier badges (D8) are
-// authored against atomic capabilities. Do not seed badgeLevel to "fix" this.
+// badgeLevel is synthesised from tier, not authored. seed-dlos.ts deliberately
+// does NOT write a badgeLevel on DLO documents; this tier-derived mapping is
+// the accepted lo-fi stand-in until v2 stage-tier badges (D8) are authored
+// against atomic capabilities. Do not seed badgeLevel to "fix" this.
 const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']> = {
   emerging: 'foundation',
   developing: 'practising',
   demonstrating: 'mastery',
 };
 
-/* Track which threads have already warned about missing Sanity content so the
-   fallback doesn't spam the console once per render. */
-const PLACEHOLDER_WARNED = new Set<string>();
-
-/* Build the Depth-3 DLO list for a thread.
-
-   Resolution order:
-   1. Sanity-authored DLOs for this thread, in tier order (preferred).
-   2. Placeholder descriptors from dlo-descriptors.ts (legacy; TODO remove once
-      Sanity content is seeded across all 57 threads in production).
-
-   Per-DLO status comes from `snap.dloStatusById`, populated by the snapshot
-   rebuild from the `learner_dlo_status` table. The persisted status uses four
-   values (emerging | developing | demonstrating | not-started); the constellation's
+/* Build the Depth-3 DLO list for a thread. Sanity is the single source of
+   DLO content (seed-dlos.ts authors 57 × 3). Per-DLO status comes from
+   `snap.dloStatusById`, populated by the snapshot rebuild from the
+   `learner_dlo_status` table. The persisted status uses four values
+   (emerging | developing | demonstrating | not-started); the constellation's
    DLO type collapses these into three render states ('confirmed' for
    demonstrating, 'emerging' for emerging/developing, 'not-started' for absent
-   entries) to keep Gallery/Table rendering stable. */
+   entries) to keep Gallery/Table rendering stable. Returns [] for unknown
+   threads or threads with no Sanity content (caller renders an empty state). */
 export function buildDLOs(
   threadId: string,
   snap: LearnerSnapshot,
@@ -326,52 +311,24 @@ export function buildDLOs(
     return 'not-started';
   };
 
-  const sanityList = sanityByThread?.[threadId];
-  if (sanityList && sanityList.length > 0) {
-    // Sort by tier order so render is stable regardless of GROQ ordering.
-    const sorted = [...sanityList].sort(
-      (a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier],
-    );
-    return sorted.map((d): DLO => ({
-      id: d._id,
-      thread: threadId,
-      domain: thread.domain,
-      tier: d.tier,
-      glyph: TIER_GLYPH[d.tier],
-      tierLabel: TIER_LABEL[d.tier],
-      descriptor: d.descriptor,
-      badgeLevel: BADGE_LEVEL_BY_TIER[d.tier],
-      status: stateFor(d._id),
-      source: 'sanity',
-    }));
-  }
+  const sanityList = sanityByThread?.[threadId] ?? [];
+  if (sanityList.length === 0) return [];
 
-  // Fallback: synthesise three tier DLOs from the placeholder descriptors.
-  // TODO: delete this branch + dlo-descriptors.ts once seed-dlos.ts has run
-  // against production and the GROQ returns content for every thread.
-  if (!PLACEHOLDER_WARNED.has(threadId)) {
-    PLACEHOLDER_WARNED.add(threadId);
-    if (typeof console !== 'undefined') {
-      console.warn(
-        `[constellation] DLO placeholder used for thread ${threadId} — Sanity has no published discreteLearningObjective for this thread. Run scripts/seed-dlos.ts.`,
-      );
-    }
-  }
-  const seeded = DLO_DESCRIPTORS[threadId];
-  return TIER_ORDER.map((t, idx): DLO => {
-    const id = `${threadId}.${t[0]}`;
-    return {
-      id,
-      thread: threadId,
-      domain: thread.domain,
-      tier: t,
-      glyph: TIER_GLYPH[t],
-      tierLabel: TIER_LABEL[t],
-      descriptor: seeded?.[idx] ?? fallbackDescriptor(thread.name, TIER_LABEL[t]),
-      badgeLevel: BADGE_LEVEL_BY_TIER[t],
-      status: stateFor(id),
-      source: 'placeholder',
-    };
-  });
+  // Sort by tier order so render is stable regardless of GROQ ordering.
+  const sorted = [...sanityList].sort(
+    (a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier],
+  );
+  return sorted.map((d): DLO => ({
+    id: d._id,
+    thread: threadId,
+    domain: thread.domain,
+    tier: d.tier,
+    glyph: TIER_GLYPH[d.tier],
+    tierLabel: TIER_LABEL[d.tier],
+    descriptor: d.descriptor,
+    badgeLevel: BADGE_LEVEL_BY_TIER[d.tier],
+    status: stateFor(d._id),
+    source: 'sanity',
+  }));
 }
 

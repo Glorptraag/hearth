@@ -117,6 +117,7 @@ export function buildEntry(overrides: Partial<LearningEntry> = {}): LearningEntr
     observationDetails: {},
     aiEnrichment: null,
     workSampleCandidate: false,
+    workSampleQuality: null,
     capturedLibraryVersion: '2.0.0',
     threadLinks: [],
     createdAt: EPOCH,

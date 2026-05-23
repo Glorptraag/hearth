@@ -22,15 +22,15 @@ Verified to render. Each one leaks future scope to pilot families.
 
 | # | Item | Where | Visibility | Verdict |
 |---|---|---|---|---|
-| A1 | `CommonsReader` audio button — `title="Audio coming soon"` (disabled) | `src/components/content/CommonsReader.tsx:140` | All users with commons text access | 🤔 Hide button until audio ships, or wire audio. |
-| A2 | `CommonsReader` "Reading coming soon" fallback | `src/components/content/CommonsReader.tsx:206` | All users when content lacks reading variants | 🤔 Either ensure all commons texts have reading variants in Sanity, or render a less-leaky fallback. |
-| A3 | `PrintSheet` "Download as separate files (coming soon)" disabled radio | `src/components/content/PrintSheet.tsx:270` | All users with printable items | 🤔 Hide the disabled option entirely; nothing about it should be visible. |
-| A4 | `MaterialItemRow` "Coming soon" badge on audio assets | `src/components/content/MaterialItemRow.tsx:133` | All users browsing materials | 🤔 Hide the badge for audio rows until audio playback lands. |
-| A5 | `MarketplaceCard` "Coming soon" button on premium packs without `stripePriceId` | `src/components/screens/MarketplaceCard.tsx:242` | All users on Marketplace | 🤔 Tied to B1 (Stripe). Either wire Stripe + assign price IDs, or remove premium packs from the public marketplace before pilot. |
-| A6 | `QuickCapture` voice button `title="Coming soon"` (disabled) | `src/app/(auth)/module/[id]/_components/QuickCapture.tsx:81` | Authenticated users in facilitate mode | 🤔 Main Logger DOES have full Web Speech API wiring with `en-AU` locale. Either port the same hook into QuickCapture or hide the disabled button. |
-| A7 | `FacilitateMode` "Coming soon" span on audio assets | `src/app/(auth)/module/[id]/_components/FacilitateMode.tsx:217` | Authenticated facilitators | 🤔 Same call as A4. |
-| A8 | `AdminSidebar` Analytics tooltip "Coming soon" | `src/app/(admin)/admin/_components/AdminSidebar.tsx:74` | Admin only | 🟡 Low priority. Note: requires `disabled: true` on the NAV_ITEMS entry; verify whether any entry currently sets this. |
-| A9 | `/dev-preview/log` placeholder route | `src/app/dev-preview/log/page.tsx:20` | Dev preview only | ⏳ Accept; not user-facing. |
+| A1 | `CommonsReader` audio button — `title="Audio coming soon"` (disabled) | `src/components/content/CommonsReader.tsx:140` | All users with commons text access | ✅ Hidden 2026-05-24 (`0883b8f`). Audio button deleted entirely. |
+| A2 | `CommonsReader` "Reading coming soon" fallback | `src/components/content/CommonsReader.tsx:206` | All users when content lacks reading variants | ✅ Replaced 2026-05-24 (`0883b8f`) with neutral "Reading not available for this text" empty state. |
+| A3 | `PrintSheet` "Download as separate files (coming soon)" disabled radio | `src/components/content/PrintSheet.tsx:270` | All users with printable items | ✅ Removed 2026-05-24 (`0883b8f`). Combine-into-PDF is the only mode; no radio group rendered. |
+| A4 | `MaterialItemRow` "Coming soon" badge on audio assets | `src/components/content/MaterialItemRow.tsx:133` | All users browsing materials | ✅ Filtered upstream 2026-05-24 (`0883b8f`). Audio items dropped in PrintSheet's grouping; badge branch removed. |
+| A5 | `MarketplaceCard` "Coming soon" button on premium packs without `stripePriceId` | `src/components/screens/MarketplaceCard.tsx:242` | All users on Marketplace | ✅ Stripe wired end-to-end 2026-05-24 (`227d54e`/`48b2777`/`87f7adb`/`4348daa`). Premium packs with `stripePriceId` now render "Get Pack"; "Owned" badge after purchase via entitlements lookup. |
+| A6 | `QuickCapture` voice button `title="Coming soon"` (disabled) | `src/app/(auth)/module/[id]/_components/QuickCapture.tsx:81` | Authenticated users in facilitate mode | ✅ Wired 2026-05-24 (`0883b8f`). Logger's en-AU Web Speech hook extracted into shared `useSpeechRecognition`; QuickCapture appends transcripts into the note field. |
+| A7 | `FacilitateMode` "Coming soon" span on audio assets | `src/app/(auth)/module/[id]/_components/FacilitateMode.tsx:217` | Authenticated facilitators | ✅ Filtered upstream 2026-05-24 (`0883b8f`). Audio branch removed; same filter as A4. |
+| A8 | `AdminSidebar` Analytics tooltip "Coming soon" | `src/app/(admin)/admin/_components/AdminSidebar.tsx:74` | Admin only | ✅ Accepted 2026-05-24 — admin-only, low blast radius. Inline comment in component documents the intentional placeholder. |
+| A9 | `/dev-preview/log` placeholder route | `src/app/dev-preview/log/page.tsx:20` | Dev preview only | ✅ Accepted 2026-05-24 — dev-only route, not in production navigation. |
 
 **Recommended pre-pilot move:** Sweep A1–A7 in one PR. Default to hiding rather than building; accept a slimmer pilot surface area and ship audio + Stripe post-pilot.
 
@@ -42,12 +42,12 @@ Verified to either throw, return 503, or be unreachable.
 
 | # | Item | Where | Verdict |
 |---|---|---|---|
-| B1 | Stripe webhook returns 503 "Payments not configured" | `src/app/api/stripe/webhook/route.ts:4-5` | 🤔 Hold until pilot decision: free-only pilot, or wire Stripe. Currently MarketplaceCard handles missing `stripePriceId` via A5. |
-| B2 | Stripe checkout returns 503 | `src/app/api/stripe/checkout/route.ts:4-5` | Same as B1. |
-| B3 | `HaikuCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/haiku-provider.ts:8-13` | 🤔 Hardcoded-unreachable via resolver (B5). Either implement + flip the flag, or delete the file. |
-| B4 | `HybridCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/hybrid-provider.ts:9-14` | Same as B3. |
-| B5 | `LOGGER_COACH_PROVIDER` env flag silently overridden | `src/lib/logger/coaching/resolve.ts:10-16` — `getProviderKey()` warns then hardcodes `'retrieval'` | ⏳ Footgun. Either implement B3/B4 so the flag works, or remove the flag + warning so config can't drift. |
-| B6 | `src/test/example.integration.test.ts:25` — `describe.skip(...)` on `POST /api/entries` real-DB suite | `src/test/example.integration.test.ts:25` | ⏳ Enable, port to a real spec under `src/app/api/entries/`, or delete the file. |
+| B1 | Stripe webhook returns 503 "Payments not configured" | `src/app/api/stripe/webhook/route.ts:4-5` | ✅ Wired 2026-05-24 (`87f7adb`). Signature-verifying webhook handler with idempotent entitlement insert + `pack_purchased` server event. 6 unit tests green. |
+| B2 | Stripe checkout returns 503 | `src/app/api/stripe/checkout/route.ts:4-5` | ✅ Wired 2026-05-24 (`87f7adb`). Clerk-auth'd, rate-limited 10/min, server-side Sanity re-fetch of `stripePriceId`. |
+| B3 | `HaikuCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/haiku-provider.ts:8-13` | ✅ Deleted 2026-05-24 (`badfcd8`). |
+| B4 | `HybridCoachProvider.getHints()` throws `"not yet implemented"` | `src/lib/logger/coaching/hybrid-provider.ts:9-14` | ✅ Deleted 2026-05-24 (`badfcd8`). |
+| B5 | `LOGGER_COACH_PROVIDER` env flag silently overridden | `src/lib/logger/coaching/resolve.ts:10-16` — `getProviderKey()` warns then hardcodes `'retrieval'` | ✅ Removed 2026-05-24 (`badfcd8`). Resolver returns retrieval directly; env flag stripped from `.env.example` + external-services-guide. |
+| B6 | `src/test/example.integration.test.ts:25` — `describe.skip(...)` on `POST /api/entries` real-DB suite | `src/test/example.integration.test.ts:25` | ✅ Deleted 2026-05-24 (`badfcd8`) — real `src/app/api/entries/route.integration.test.ts` is canonical. |
 
 ---
 
@@ -141,13 +141,24 @@ These are intentionally inert. Worth a line in the tracker so future audits don'
 
 ## Decision queue (concise, for skimming)
 
-Open decisions, no implementation yet, in rough priority order:
+✅ **All sections cleared 2026-05-24.** Overnight grind through A→F closed every 🤔 / ⏳ except the deliberately-deferred F-section Phase-2 items. Outstanding work is now operational (deploy, Stripe dashboard wiring, dataset seeding) rather than build-side.
 
-1. Pilot is free-only → A5 + B1 + B2 (hide premium UI, accept Stripe stubs). Otherwise wire Stripe.
-2. Audio assets in commons + materials → hide A1/A2/A4/A7 for pilot, or wire audio playback.
-3. QuickCapture voice → port Logger's Web Speech hook, or hide A6.
-4. Coach providers (Haiku/Hybrid) → implement and flip flag, or delete B3/B4 + remove flag B5.
-5. Pack schema gaps → fix C1 (`creatorType`) before any new pack ships; decide C2 (`intro`) opportunistically.
-6. PKB schemas C3 → embeddings-only or full Studio CRUD.
-7. Docs sweep D1–D5 → 30-minute job; just do it.
-8. Scripts sweep E → 30-minute job; just do it.
+Remaining deferred items (acknowledged, not blockers):
+
+1. **F1/F2** — Snapshot recommendation/planner interfaces left as types-only stubs for Phase 2.
+2. **F3** — Redis rate limiter migration still gated on multi-region trigger.
+3. **F4** — Custom illustrator marks (`ChildShape*`, `HearthBrandMark`) still aliased to Phosphor `Star`/`Flame` pending bespoke deliverables.
+4. **F5** — PWA / offline sync queue stays in Phase 2; `useOnlineStatus` + localStorage is the alpha minimum.
+5. **F6** — Hub monthly term-summary narrative falls back to template; revisit when Hub copy resumes.
+6. **F7** — Editorial workbench rich-block instruction picker is plain-text emit today; revisit if editorial volume grows.
+7. **F8** — AI cost dashboard pricing table hardcoded to Haiku 4.5; move to per-model config when the wired model changes.
+8. **F9** — Badge assessment "compare" step UI stub; post-pilot.
+9. **E3** — `scripts/check-token-size.ts` debug helper left in place; low priority.
+
+Operational follow-ups (for `production-readiness-tracker.md`, not this file):
+
+- Stripe dashboard: products + prices created and `stripePriceId` set on each premium Sanity pack.
+- Stripe dashboard: prod webhook endpoint created → `STRIPE_WEBHOOK_SECRET` set in Vercel.
+- Local dev: `STRIPE_SECRET_KEY` + the `stripe listen` `whsec_…` in `.env.local`.
+
+Once those three are done, this tracker can be deleted at pilot launch.

@@ -12,6 +12,7 @@ import { strand } from './strand';
 import { atomicCapability } from './atomicCapability';
 import { prerequisiteEdge } from './prerequisiteEdge';
 import { regulatoryFramework } from './regulatoryFramework';
+import { achievementStandard } from './achievementStandard';
 import { pedagogyOverlay } from './pedagogyOverlay';
 import { pedagogicalFramework } from './pedagogicalFramework';
 import { pedagogySourceExcerpt } from './pedagogySourceExcerpt';
@@ -53,6 +54,7 @@ export const schemaTypes = [
   atomicCapability,
   prerequisiteEdge,
   regulatoryFramework,
+  achievementStandard,
   discreteLearningObjective,
   badge,
   asset,

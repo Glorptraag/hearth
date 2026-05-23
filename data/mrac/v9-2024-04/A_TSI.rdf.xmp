@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:skosxl="http://www.w3.org/2008/05/skos-xl#"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+	xmlns:tags="http://www.holygoat.co.uk/owl/redwood/0.1/tags/"
+	xmlns:cycAnnot="http://sw.cyc.com/CycAnnotations_v1#"
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns:csw="http://semantic-web.at/ontologies/csw.owl#"
+	xmlns:dbpedia="http://dbpedia.org/resource/"
+	xmlns:freebase="http://rdf.freebase.com/ns/"
+	xmlns:opencyc="http://sw.opencyc.org/concept/"
+	xmlns:cyc="http://sw.cyc.com/concept/"
+	xmlns:ctag="http://commontag.org/ns#">
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/19679b09-cfba-4cd0-a02e-366ace2f3d83">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">root</statementNotation>
+	<dcterms:description xml:lang="en-au">Corrected html tags</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2024-04-22T01:16:51.365Z</dcterms:modified>
+	<dcterms:rights xml:lang="en-au">©Copyright Australian Curriculum, Assessment and Reporting Authority</dcterms:rights>
+	<dcterms:rightsHolder xml:lang="en-au">Australian Curriculum, Assessment and Reporting Authority</dcterms:rightsHolder>
+	<dcterms:title xml:lang="en-au">Corrected html tags</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/5c04d332-8412-4e26-bd57-425883be63aa"/>
+	<skos:prefLabel xml:lang="en-au">root</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/5c04d332-8412-4e26-bd57-425883be63aa">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">3</listID>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">CCP</statementNotation>
+	<dcterms:description xml:lang="en-au">Cross-curriculum Priorities</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Cross-curriculum Priorities</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f84c84ea-02a6-42c2-8c97-66f527855587"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/19679b09-cfba-4cd0-a02e-366ace2f3d83"/>
+	<skos:prefLabel xml:lang="en-au">CCP</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f84c84ea-02a6-42c2-8c97-66f527855587">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Cross-Curriculum Priority</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSI</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;The Aboriginal and Torres Strait Islander Histories and Cultures cross-curriculum priority provides opportunities for all students to deepen their knowledge of Australia by learning about the world’s oldest continuous living cultures.&lt;/p&gt;&lt;p&gt;The Aboriginal and Torres Strait Islander Histories and Cultures cross-curriculum priority engages with Australian First Nations Peoples’ knowledges, experiences, values and perspectives. Through the Australian Curriculum, students learn that contemporary First Nations Australian communities are strong, resilient, rich and diverse. It also allows Aboriginal and Torres Strait Islander students to see themselves and their cultures reflected in the curriculum.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Aboriginal and Torres Strait Islander Histories and Cultures</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/14284281-58d4-43c6-9195-ae4a00a59cdf"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/a6a830c6-102b-4325-8c1e-7dd3552b983c"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/48c4c1a1-d829-4664-8065-81098c789148"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/5c04d332-8412-4e26-bd57-425883be63aa"/>
+	<skos:prefLabel xml:lang="en-au">A_TSI</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/14284281-58d4-43c6-9195-ae4a00a59cdf">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">1</listID>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Set of organising ideas</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSICP</statementNotation>
+	<dcterms:description xml:lang="en-au">These organising ideas recognise the special connection of First Nations Australians to Country/Place and acknowledge the impacts of colonisation on their ownership of, and access to, Country/Place.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Country/Place</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f8d4a191-c790-4ff8-b203-2427a21d0b9a"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/725a84d5-de92-432c-8d02-3b655813131d"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/d7a08fd7-9924-4e01-875f-6ae08cc4674d"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f84c84ea-02a6-42c2-8c97-66f527855587"/>
+	<skos:prefLabel xml:lang="en-au">A_TSICP</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f8d4a191-c790-4ff8-b203-2427a21d0b9a">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSICP1</statementNotation>
+	<dcterms:description xml:lang="en-au">First Nations communities of Australia maintain a deep connection to, and responsibility for, Country/Place and have holistic values and belief systems that are connected to the land, sea, sky and waterways.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">First Nations communities of Australia maintain a deep connection to, and responsibility for, Country/Place and have holistic values and belief systems that are connected to the land, sea, sky and waterways.</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/14284281-58d4-43c6-9195-ae4a00a59cdf"/>
+	<skos:prefLabel xml:lang="en-au">A_TSICP1</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/725a84d5-de92-432c-8d02-3b655813131d">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSICP2</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;The occupation and colonisation of Australia by the British, under the now overturned doctrine of &lt;em&gt;terra nullius&lt;/em&gt;, were experienced by First Nations Australians as an invasion that denied their occupation of, and connection to, Country/Place.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">&lt;p&gt;The occupation and colonisation of Australia by the British, under the now overturned doctrine of &lt;em&gt;terra nullius&lt;/em&gt;, were experienced by First Nations Australians as an invasion that denied their occupation of, and connection to, Country/Place.&lt;/p&gt;</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/14284281-58d4-43c6-9195-ae4a00a59cdf"/>
+	<skos:prefLabel xml:lang="en-au">A_TSICP2</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/d7a08fd7-9924-4e01-875f-6ae08cc4674d">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSICP3</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;The First Peoples of Australia are the Traditional Owners of Country/Place, protected in Australian Law by the &lt;em&gt;Native Title Act 1993&lt;/em&gt; which recognises pre-existing sovereignty, continuing systems of law and customs, and connection to Country/Place. This recognised legal right provides for economic sustainability and a voice into the development and management of Country/Place.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">&lt;p&gt;The First Peoples of Australia are the Traditional Owners of Country/Place, protected in Australian Law by the &lt;em&gt;Native Title Act 1993&lt;/em&gt; which recognises pre-existing sovereignty, continuing systems of law and customs, and connection to Country/Place. This recognised legal right provides for economic sustainability and a voice into the development and management of Country/Place.&lt;/p&gt;</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/14284281-58d4-43c6-9195-ae4a00a59cdf"/>
+	<skos:prefLabel xml:lang="en-au">A_TSICP3</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/a6a830c6-102b-4325-8c1e-7dd3552b983c">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">2</listID>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Set of organising ideas</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIC</statementNotation>
+	<dcterms:description xml:lang="en-au">These organising ideas examine the cultural diversity of the First Peoples of Australia and the First Nations Peoples of the Torres Strait, and recognise Australian First Nations Peoples as belonging to the world’s oldest continuous cultures. </dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Culture</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/ccb438a5-f1c9-4cde-b65d-4629843294e4"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/646e98e2-6711-4331-a503-d664524421bf"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/119a4f3c-5dd2-4248-b35c-9310080b8f8b"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f84c84ea-02a6-42c2-8c97-66f527855587"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIC</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/ccb438a5-f1c9-4cde-b65d-4629843294e4">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIC1</statementNotation>
+	<dcterms:description xml:lang="en-au">First Nations Australian societies are diverse and have distinct cultural expressions such as language, customs and beliefs. As First Nations Peoples of Australia, they have the right to maintain, control, protect and develop their cultural expressions, while also maintaining the right to control, protect and develop culture as Indigenous Cultural and Intellectual Property.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">First Nations Australian societies are diverse and have distinct cultural expressions such as language, customs and beliefs. As First Nations Peoples of Australia, they have the right to maintain, control, protect and develop their cultural expressions, while also maintaining the right to control, protect and develop culture as Indigenous Cultural and Intellectual Property.</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/a6a830c6-102b-4325-8c1e-7dd3552b983c"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIC1</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/646e98e2-6711-4331-a503-d664524421bf">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIC2</statementNotation>
+	<dcterms:description xml:lang="en-au">First Nations Australians’ ways of life reflect unique ways of being, knowing, thinking and doing.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">First Nations Australians’ ways of life reflect unique ways of being, knowing, thinking and doing.</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/a6a830c6-102b-4325-8c1e-7dd3552b983c"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIC2</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/119a4f3c-5dd2-4248-b35c-9310080b8f8b">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIC3</statementNotation>
+	<dcterms:description xml:lang="en-au">The First Peoples of Australia (Aboriginal Peoples) belong to the world’s oldest continuous cultures. First Nations Australians demonstrate resilience in the maintenance, practice and revitalisation of culture despite the many historic and enduring impacts of colonisation, and continue to celebrate and share the past, present and future manifestations of their cultures.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">The First Peoples of Australia (Aboriginal Peoples) belong to the world’s oldest continuous cultures. First Nations Australians demonstrate resilience in the maintenance, practice and revitalisation of culture despite the many historic and enduring impacts of colonisation, and continue to celebrate and share the past, present and future manifestations of their cultures.</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/a6a830c6-102b-4325-8c1e-7dd3552b983c"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIC3</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/48c4c1a1-d829-4664-8065-81098c789148">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">3</listID>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Set of organising ideas</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIP</statementNotation>
+	<dcterms:description xml:lang="en-au">These organising ideas recognise that Australia has 2 distinct First Nations Peoples, each encompassing a diversity of nations and peoples, and examine the significant contributions of First Nations Australians histories and cultures on a local, national and global scale.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">People</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/940cfe04-48e5-475b-a682-94cb6c6b2235"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/958b0a03-070f-4f61-af60-36b5172ae4f2"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/62558d29-5510-4bf5-a4cb-afc390bf4dac"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/f84c84ea-02a6-42c2-8c97-66f527855587"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIP</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/940cfe04-48e5-475b-a682-94cb6c6b2235">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIP1</statementNotation>
+	<dcterms:description xml:lang="en-au">Australia has 2 distinct First Nations Peoples; each encompasses a diversity of nations across Australia. Aboriginal Peoples are the first peoples of Australia and have occupied the Australian continent for more than 60,000 years. Torres Strait Islander Peoples are the First Nations Peoples of the Torres Strait and have occupied the region for over 4,000 years. </dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Australia has 2 distinct First Nations Peoples; each encompasses a diversity of nations across Australia. Aboriginal Peoples are the first peoples of Australia and have occupied the Australian continent for more than 60,000 years. Torres Strait Islander Peoples are the First Nations Peoples of the Torres Strait and have occupied the region for over 4,000 years. </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/48c4c1a1-d829-4664-8065-81098c789148"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIP1</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/958b0a03-070f-4f61-af60-36b5172ae4f2">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIP2</statementNotation>
+	<dcterms:description xml:lang="en-au">First Nations Australians have sophisticated political, economic and social organisation systems, which include family and kinship structures, laws, traditions, customs, land tenure systems, and protocols for strong governance and authority.</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">First Nations Australians have sophisticated political, economic and social organisation systems, which include family and kinship structures, laws, traditions, customs, land tenure systems, and protocols for strong governance and authority.</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/48c4c1a1-d829-4664-8065-81098c789148"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIP2</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/62558d29-5510-4bf5-a4cb-afc390bf4dac">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Organising Idea</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">A_TSIP3</statementNotation>
+	<dcterms:description xml:lang="en-au">The significant and ongoing contributions of First Nations Australians and their histories and cultures are acknowledged locally, nationally and globally. </dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30.000Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">The significant and ongoing contributions of First Nations Australians and their histories and cultures are acknowledged locally, nationally and globally. </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/CCP/A_TSI/48c4c1a1-d829-4664-8065-81098c789148"/>
+	<skos:prefLabel xml:lang="en-au">A_TSIP3</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2008/05/skos-xl">
+	<dcterms:contributor rdf:resource="http://vocabulary.curriculum.edu.au/user/srichardson"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2004/02/skos/core">
+	<dcterms:contributor rdf:resource="http://vocabulary.curriculum.edu.au/user/srichardson"/>
+</rdf:Description>
+
+</rdf:RDF>

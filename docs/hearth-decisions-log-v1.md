@@ -159,3 +159,94 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3
 **Implementation:** `src/app/api/entries/[id]/enrich/route.ts` (POST, parent-initiated, rate-limited, delegates to `enrichEntry`)
 **Date:** 2026-05-18
+
+---
+
+## Capability Universe v2
+
+### D1 — Achievement Standard chosen as the primary regulatory anchor
+
+**Decision:** HEU rollups report at Achievement Standard (AS) level rather than at content-descriptor level. Atoms carry framework codes inside `regulatoryMappings[].codes[]`; AS prose is resolved through a separate `achievementStandard` document (see D2).
+
+Rationale: AS prose is what regulators inspect during HEU portfolio review. Mapping at descriptor granularity would inflate the substrate without changing the report surface.
+
+Resolves Q3 of the atom-prep blockers.
+
+**Document of record:** `docs/hearth-capability-universe-v2-architecture-spec-v1.md` §7
+
+**Date:** 2026-05-13
+
+### D2 — `achievementStandard` as a separate Sanity document type
+
+**Decision:** Achievement Standard prose lives in its own Sanity document type (`achievementStandard`), not as a JSON blob inside `regulatoryFramework.evidenceRequirements` and not via runtime fetch from the ACARA MRAC.
+
+Considered and rejected:
+- JSON blob inside `regulatoryFramework` — couples wording revisions to schema edits; loses Studio-editable provenance.
+- Runtime MRAC fetch — adds a network dependency to report rendering; defeats append-only protection of regulator wording.
+
+Append-only after publication: when a regulator updates a standard, the existing document is marked `deprecated`, `deprecationReplacement` points at the successor's `standardId`, and a new document is authored. Historical observations referencing the deprecated standard continue to resolve.
+
+**Document of record:** `docs/hearth-capability-universe-v2-architecture-spec-v1.md` §7
+**Implementation:** `src/sanity/schemas/achievementStandard.ts`
+
+**Date:** 2026-05-13
+
+### D3 — `REGULATORY_FRAMEWORKS` enum coupling accepted for v2
+
+**Decision:** The hardcoded `REGULATORY_FRAMEWORKS` enum is duplicated across `achievementStandard.ts`, the future `atomicCapability.ts`, and any subsequent doc types that key off framework. No rationalisation with a `regulatoryFramework` document type for v2.
+
+Rationale: a `regulatoryFramework` document doesn't exist yet, and introducing one to satisfy DRY would require three concurrent schema migrations to deliver no observable user benefit. Accepted as a known piece of debt to revisit in v3 if the framework set grows beyond the current 13 entries.
+
+**Document of record:** `docs/hearth-capability-universe-v2-architecture-spec-v1.md` §7
+**Implementation:** `src/sanity/schemas/achievementStandard.ts` (`REGULATORY_FRAMEWORKS` constant, lines 14–28)
+
+**Date:** 2026-05-13
+
+### D4 — v1 → v2 thread migration table authored
+
+**Decision:** The v1 → v2 thread migration mapping is committed as a standalone reference document. Outcome: 38 direct (1:1), 11 re-homes (1:1, new domain), 6 splits (1:many), 1 merge (H1+H3), 1 distribute (H6), and ~20–30 net-new threads (Domains 4, 7, 8, 9, 12). Per-thread open items flagged in the table's final section pending Drew's review.
+
+The migration table drives the `legacyV1Id` field on each v2 thread and the observation re-tagging contract specified in spec §11.4.
+
+**Document of record:** `docs/hearth-v1-to-v2-thread-migration-table-v1.md`
+**Parent spec:** `docs/hearth-capability-universe-v2-architecture-spec-v1.md` §11
+
+**Date:** 2026-05-13
+
+### D5 — MRAC source version confirmed: AC V9, 2024-04 release
+
+**Decision:** The ACARA Machine-Readable Australian Curriculum (MRAC) source for `achievementStandard` ingestion is the Australian Curriculum V9 manifest, **2024-04 release**.
+
+Verification: five `.rdf.xmp` manifests supplied by Drew (A_TSI, AA, ART, CCT, DL) all carry the vocabulary base URI `http://vocabulary.curriculum.edu.au/MRAC/2024/04/`, `dcterms:modified 2024-04-22T01:16:51.365Z`, root description "Corrected html tags". The V8.4 fallback path raised in the Wave 1 prompt is therefore not needed.
+
+Reference data committed at `data/mrac/v9-2024-04/`. Subsequent ACARA releases land in sibling `v9-YYYY-MM/` directories; old releases are append-only for audit and historical-observation resolution.
+
+**Document of record:** `data/mrac/v9-2024-04/README.md`
+
+**Date:** 2026-05-13
+
+### D6 — Cross-Curriculum Priorities and General Capabilities deferred to a future wave
+
+**Decision:** Cross-Curriculum Priorities (CCP) and General Capabilities (GC) — visible in MRAC as separate top-level branches — do not fit the `achievementStandard` shape and have no slot in the Capability Universe v2 spec as currently written. Deferred to a future wave; flagged as open item.
+
+Rationale: `achievementStandard` is keyed on `{learningArea, subject, yearLevel}` with prose copy. CCPs and GCs are cross-cutting frames that span learning areas at the *organising-idea* and *element* level. A separate doc type (working name `curriculumCrossCutter`) — or two distinct doc types if CCPs and GCs diverge structurally — will be authored when the cross-cutter integration is designed.
+
+Architectural impact: the v1→v2 migration table's H6 First Nations row (currently "distribute, no direct successor") will eventually consume `A_TSI.rdf.xmp` once CCPs land. The migration table's open-items section already flags H6 as content-paused pending consultation.
+
+**Open items propagated to the Opus chat:**
+- Decide whether CCPs and GCs share a doc type or split into two.
+- Decide whether atoms reference cross-cutters as soft tags or as a fifth `regulatoryMappings`-like array.
+
+**Date:** 2026-05-13
+
+### D3.1 — `regulatoryFramework` registry document added (clarifier to D3)
+
+**Decision:** A `regulatoryFramework` Sanity document type now exists (added by PR #45 alongside the v2 capability schemas). D3 still holds in its literal sense: the `REGULATORY_FRAMEWORKS` *enum* remains duplicated across `achievementStandard.ts` and `atomicCapability.ts` and has not been rationalised away. The new `regulatoryFramework.ts` document is a per-framework **registry** carrying metadata (`frameworkKey`, `jurisdiction`, `reportTier`, `totalCodes`, `evidenceRequirements`, `reportFormat`) — it sits alongside the enum rather than replacing it.
+
+Net effect: the enum is the value space (what an atom's `regulatoryMappings[].framework` may be); the registry document is the descriptor space (what each framework value *means* for reporting). Both coexist by design.
+
+D3 stands. No action required.
+
+**Implementation:** `src/sanity/schemas/regulatoryFramework.ts` (PR #45), `src/sanity/schemas/atomicCapability.ts` (REGULATORY_FRAMEWORKS, lines 20–35).
+
+**Date:** 2026-05-14

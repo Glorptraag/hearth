@@ -101,6 +101,7 @@ export const learningEntries = pgTable(
     observationDetails: jsonb('observation_details').default({}),
     aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
+    workSampleQuality: decimal('work_sample_quality', { precision: 3, scale: 2 }),
     capturedLibraryVersion: text('captured_library_version').notNull().default('2.0.0'),
     threadLinks: jsonb('thread_links').default([]),
     createdAt: timestamp('created_at').defaultNow(),

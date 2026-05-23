@@ -165,7 +165,7 @@ describe('topology', () => {
     expect(dlos.every((d) => d.status === 'not-started')).toBe(true);
   });
 
-  it('buildDLOs falls back to placeholder descriptors when Sanity is empty for a thread', () => {
+  it('buildDLOs returns [] when Sanity has no DLOs for the thread', () => {
     const rows: ActiveThreadRow[] = [
       {
         thread_id: 'L1', thread_name: 'Oral Communication',
@@ -176,9 +176,7 @@ describe('topology', () => {
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
-    const dlos = buildDLOs('L1', snap, {});
-    expect(dlos).toHaveLength(3);
-    expect(dlos.every((d) => d.source === 'placeholder')).toBe(true);
+    expect(buildDLOs('L1', snap, {})).toEqual([]);
   });
 
   it('THREADS_BY_ID resolves by id', () => {

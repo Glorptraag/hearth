@@ -76,7 +76,12 @@ OUTPUT SCHEMA:
   },
   "discrete_learning_objectives": [
     { "dlo_id": "string", "tier": "emerging|developing|demonstrating", "confidence": 0.0-1.0, "rationale": "string" }
-  ]
+  ],
+  "work_sample": {
+    "flag": true/false,
+    "quality": 0.0-1.0,
+    "rationale": "string"
+  }
 }
 
 VALID SUBJECTS: Mathematics, English, Science, HASS, The Arts, Technologies, HPE, Languages
@@ -108,6 +113,7 @@ RULES:
 - insight_suggestions: 1-3 short sentences a parent would find encouraging and specific. When pedagogy reference material is provided, ground suggestions in that material and cite sources naturally (e.g. "This aligns with Charlotte Mason's principle of..."). When contraindications are present, avoid suggesting flagged practices.
 - If entry text is very thin (<20 words), return minimal mappings with low confidence.
 - discrete_learning_objectives: Map this observation to AT MOST 3 specific DLO ids (e.g. "dlo.M1.emerging"). The dlo_id MUST be one Hearth has authored — never invent ids. Omit any DLO with confidence < 0.4. Tier reflects the evidence in THIS entry alone: 'emerging' (first noticing), 'developing' (practising with support), 'demonstrating' (independent fluency). Return [] when no DLO clearly applies.
+- work_sample: Set flag=true ONLY when this entry would make a strong piece of evidence in a Home Education Unit report — i.e. it shows a discrete learning outcome clearly, has rich description and/or attached evidence, and would be defensible to a regulator. Quality is 0.0-1.0 across five factors: (1) richness of description, (2) presence of evidence URLs/photos, (3) clarity of the learning shown, (4) specificity of capability/subject mapping, (5) how independently the child engaged. Default to flag=false with a low quality score for thin entries; flag=true should fire on roughly 1 in 5 entries, not every save. Rationale: one short sentence explaining the score for parent review.
 - journey_observation: Include ONLY when you detect a genuinely meaningful pattern — cross-domain connection (learning from one area applied to another), independence marker (child self-directed, initiated, or persisted without adult prompting), metacognition (child reflecting on their own learning process), or transfer of learning (applying prior knowledge to a new context). Aim for roughly 1 per 5 entries — do NOT include for every entry. When included: 1-2 warm, interpretive sentences written from the facilitator's perspective. Set to null when not warranted.`;
 
 export type EnrichmentResult = {
@@ -131,6 +137,11 @@ export type EnrichmentResult = {
     trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
   } | null;
   discrete_learning_objectives?: DloEnrichmentItem[];
+  work_sample?: {
+    flag: boolean;
+    quality: number;
+    rationale?: string | null;
+  } | null;
   pedagogy_sources?: PedagogySource[];
   // Post-save profile nudge, surfaced by the client after enrichment completes.
   // Explicit null means "nudge provider ran but no quiet thread qualified."
@@ -358,6 +369,21 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
       ? { text: rawJourney.text, trigger: rawJourney.trigger }
       : null;
 
+  // Clamp + coerce the work-sample envelope. Treat missing/malformed as null
+  // (entries from older Haiku responses) rather than fabricating a default.
+  const rawWS = raw.work_sample;
+  const work_sample =
+    rawWS && typeof rawWS === 'object' && typeof rawWS.quality === 'number'
+      ? {
+          flag: Boolean(rawWS.flag),
+          quality: Math.max(0, Math.min(1, rawWS.quality)),
+          rationale:
+            typeof rawWS.rationale === 'string' && rawWS.rationale.length > 0
+              ? rawWS.rationale.slice(0, 240)
+              : null,
+        }
+      : null;
+
   return {
     ...raw,
     capability_threads: (raw.capability_threads ?? []).filter(
@@ -380,6 +406,7 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
       multi_subject: false,
     },
     journey_observation,
+    work_sample,
   };
 }
 
@@ -488,10 +515,20 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     }
 
     tape('validation-done');
+    // Persist the work-sample signal onto the row's columns so Portfolio /
+    // Report candidate ranking can sort by quality without re-parsing JSONB.
+    // workSampleCandidate stays in lockstep with work_sample.flag; manual parent
+    // overrides via Portfolio still win (route handler writes the column directly).
+    const wsUpdate: { workSampleCandidate?: boolean; workSampleQuality?: string | null } = {};
+    if (validated.work_sample) {
+      wsUpdate.workSampleCandidate = validated.work_sample.flag;
+      wsUpdate.workSampleQuality = validated.work_sample.quality.toFixed(2);
+    }
     await db
       .update(learningEntries)
       .set({
         aiEnrichment: { ...validated, status: 'enriched' as const },
+        ...wsUpdate,
         updatedAt: new Date(),
       })
       .where(eq(learningEntries.id, entryId));
@@ -598,10 +635,16 @@ async function sonnetFallback(
     retryTriggered: false,
   });
 
+  const wsUpdate: { workSampleCandidate?: boolean; workSampleQuality?: string | null } = {};
+  if (validated.work_sample) {
+    wsUpdate.workSampleCandidate = validated.work_sample.flag;
+    wsUpdate.workSampleQuality = validated.work_sample.quality.toFixed(2);
+  }
   await db
     .update(learningEntries)
     .set({
       aiEnrichment: { ...validated, status: 'enriched' as const },
+      ...wsUpdate,
       updatedAt: new Date(),
     })
     .where(eq(learningEntries.id, entryId));

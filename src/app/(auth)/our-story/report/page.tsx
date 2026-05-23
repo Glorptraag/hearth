@@ -44,6 +44,7 @@ type Entry = {
   evidenceUrls: string[] | null;
   aiEnrichment: AiEnrichment;
   workSampleCandidate: boolean | null;
+  workSampleQuality: number | null;
   status: string;
   source: string;
 };

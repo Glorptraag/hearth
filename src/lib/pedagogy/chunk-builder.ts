@@ -1,6 +1,13 @@
 // Chunk text composition rules for the Pedagogy Knowledge Base.
 // Each layer composes its embedding text differently to optimise retrieval quality.
 // SHA-256 hash is used for change detection — re-embed only when hash changes.
+//
+// PKB document types are embeddings-only: pedagogyWorkedExample,
+// pedagogyContraindication, pedagogyFacilitationVocabulary and friends have no
+// CRUD path in src/lib/sanity/{queries,mutations}.ts. They are populated via
+// `npm run seed:pedagogy:corpus` (scripts/ingest-pedagogy-corpus.ts) and
+// re-embedded with `npm run seed:pedagogy:reembed`
+// (scripts/reembed-pedagogy-corpus.ts). Author edits happen in Sanity Studio.
 
 import { createHash } from 'crypto';
 

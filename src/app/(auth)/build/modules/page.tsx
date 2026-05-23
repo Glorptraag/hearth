@@ -12,7 +12,7 @@ import {
 
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
-type Pathway = 'material' | 'process' | 'inquiry' | 'retrospective' | 'goal';
+type Pathway = 'material' | 'process' | 'inquiry' | 'retrospective' | 'understanding';
 
 type LabelItem = { id: string; Icon: ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>; label: string };
 
@@ -294,7 +294,7 @@ const PATHWAYS: ReadonlyArray<{ id: Pathway; Icon: IconC; label: string; name: s
 ];
 
 const GOAL_PATHWAY: { id: Pathway; Icon: IconC; label: string; name: string; hint: string; badge: string | null } = {
-  id: 'goal',
+  id: 'understanding',
   Icon: Target,
   label: '"I want to develop a skill area"',
   name: 'Goal-Forward',
@@ -587,8 +587,8 @@ function detectCrossPathNudge(currentPathway: Pathway, text: string): NudgeSugge
       return { pathway: 'inquiry', label: 'Inquiry', reason: 'This sounds like a question to explore' };
     }
   }
-  if (currentPathway !== 'goal' && GOAL_KEYWORDS.some((kw) => lower.includes(kw))) {
-    return { pathway: 'goal', label: 'Goal-Forward', reason: 'Sounds like a learning target' };
+  if (currentPathway !== 'understanding' && GOAL_KEYWORDS.some((kw) => lower.includes(kw))) {
+    return { pathway: 'understanding', label: 'Goal-Forward', reason: 'Sounds like a learning target' };
   }
   if (currentPathway !== 'process' && PROCESS_KEYWORDS.filter((kw) => lower.includes(kw)).length >= 2) {
     return { pathway: 'process', label: 'Process', reason: 'Sounds like you know the steps already' };
@@ -884,7 +884,7 @@ function normalizeToEditData(pathway: Pathway, data: Record<string, unknown>): S
         entryIds: data.entryIds,
       };
       break;
-    case 'goal':
+    case 'understanding':
       base.title = (data.goal as string) ?? (data.threadName as string) ?? '';
       if (data.mode === 'capability') {
         base.provenance = {
@@ -1683,7 +1683,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
               Lots of prior knowledge — this might work well as a <strong>Goal-Forward</strong> module instead.
             </p>
             <button
-              onClick={() => onSwitchPathway('goal')}
+              onClick={() => onSwitchPathway('understanding')}
               className="shrink-0 font-sans text-xs text-ember hover:underline"
             >
               Switch →
@@ -1911,7 +1911,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
   const [skeletons, setSkeletons] = useState<import('@/lib/sanity/queries').SkeletonRecord[] | null>(null);
   const [selectedSkeleton] = useState<import('@/lib/sanity/queries').SkeletonRecord | null>(null);
   const [loadingSkeletons, setLoadingSkeletons] = useState(false);
-  const nudge = detectCrossPathNudge('goal', form.goal + ' ' + form.successLooksLike);
+  const nudge = detectCrossPathNudge('understanding', form.goal + ' ' + form.successLooksLike);
 
   const togglePref = (id: string) =>
     setForm((f) => ({ ...f, preferences: f.preferences.includes(id) ? f.preferences.filter((x) => x !== id) : [...f.preferences, id] }));
@@ -1953,11 +1953,11 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
         }
         return;
       }
-      setEditing(normalizeToEditData('goal', { ...form, mode } as unknown as Record<string, unknown>));
+      setEditing(normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>));
       return;
     }
     setSaving(true); setError(null);
-    const ok = await saveDraft('goal', { ...form, mode }, status);
+    const ok = await saveDraft('understanding', { ...form, mode }, status);
     setSaving(false);
     if (ok) setSaved(true);
     else setError('Something went wrong. Please try again.');
@@ -1997,7 +1997,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
             <p className="font-serif text-sm text-text-secondary mb-lg">We&apos;re still building the library. Start from scratch — the editor will still help you structure the learning.</p>
             <button
               onClick={() => {
-                setEditing(normalizeToEditData('goal', { ...form, mode } as unknown as Record<string, unknown>));
+                setEditing(normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>));
               }}
               className="font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200"
             >
@@ -2011,7 +2011,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 key={skeleton._id}
                 type="button"
                 onClick={() => {
-                  const editData = normalizeToEditData('goal', { ...form, mode } as unknown as Record<string, unknown>);
+                  const editData = normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>);
                   editData.title = skeleton.title;
                   editData.targetUnderstanding = skeleton.suggestedUnderstanding;
                   editData.steps = skeleton.suggestedSteps.map((s, i) => ({
@@ -2050,7 +2050,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
             ))}
 
             <button
-              onClick={() => setEditing(normalizeToEditData('goal', { ...form, mode } as unknown as Record<string, unknown>))}
+              onClick={() => setEditing(normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>))}
               className="font-sans text-sm text-text-muted hover:text-text-secondary text-center underline underline-offset-2 transition-colors duration-200"
             >
               Start from scratch instead
@@ -2236,7 +2236,7 @@ export default function BuildModulesPage() {
   if (selected === 'retrospective') {
     return <div className="px-md py-lg max-w-2xl mx-auto"><RetrospectiveLiftPathwayForm onBack={() => setSelected(null)} /></div>;
   }
-  if (selected === 'goal') {
+  if (selected === 'understanding') {
     return <div className="px-md py-lg max-w-4xl mx-auto"><GoalForwardPathwayForm onBack={() => setSelected(null)} onSwitchPathway={setSelected} /></div>;
   }
 

@@ -325,7 +325,7 @@ The full CM corpus (~100 documents) is roughly 3–5 full working days of focuse
 
 **New documents introduced alongside this spec:**
 - `hearth-pedagogy-corpus-charlotte-mason-v1.md` — proof-of-concept corpus with real PD excerpts across all six layers.
-- `hearth-pedagogy-corpus-licensing-needs-v1.md` — list of in-copyright sources needing licensing for the Montessori, Classical, and Unschooling waves.
+- `archive/hearth-pedagogy-corpus-licensing-needs-v1.md` (archived; superseded by `-v2.md`) — list of in-copyright sources needing licensing for the Montessori, Classical, and Unschooling waves.
 
 ---
 

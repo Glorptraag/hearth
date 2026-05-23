@@ -86,7 +86,7 @@ All five paths produce the same output structure. This is the contract between t
   id: String,                    // Generated at creation
   title: String,                 // Required
   description: String,           // Required (1-2 sentences)
-  createdVia: String,            // 'material' | 'process' | 'inquiry' | 'retrospective' | 'goal'
+  createdVia: String,            // 'material' | 'process' | 'inquiry' | 'retrospective' | 'understanding'
   createdAt: DateTime,
   updatedAt: DateTime,
   status: 'draft' | 'complete',
@@ -164,7 +164,7 @@ The `toRunnerFormat()` transformation (defined in v3 spec) converts this schema 
 
 | Field | v1 | v2 (this spec) | Rationale |
 |-------|-----|----------------|-----------|
-| `createdVia` | `'understanding' \| 'material' \| 'process' \| 'inquiry' \| 'retrospective' \| 'capability'` | `'material' \| 'process' \| 'inquiry' \| 'retrospective' \| 'goal'` | Understanding-First and Capability-Targeted merged into Goal-Forward |
+| `createdVia` | `'understanding' \| 'material' \| 'process' \| 'inquiry' \| 'retrospective' \| 'capability'` | `'material' \| 'process' \| 'inquiry' \| 'retrospective' \| 'understanding'` | Understanding-First and Capability-Targeted merged into Goal-Forward (literal kept as `'understanding'`) |
 | `sourceGoal` | Not present | Optional string | Captures aspiration-mode free text for Goal-Forward path |
 | `sourceCapability` | Capability-Targeted only | Goal-Forward capability mode | Same structure, now populated by capability mode of merged path |
 
@@ -958,7 +958,7 @@ For families who feel impostor syndrome about homeschooling — "Are we doing en
 **Entry card label:** "I have a learning goal"
 **Entry card hint:** Tell us the target — we'll help you get there
 **Entry card emoji:** 🎯
-**`createdVia` value:** `'goal'`
+**`createdVia` value:** `'understanding'`
 
 > **Merge note:** This path combines the v1 Understanding-First (Path 1) and Capability-Targeted (Path 6) pathways. The merge was driven by the shared cognitive starting point: both parent profiles arrive with a forward-looking educational target. The system detects which mode to activate based on whether the parent's input maps to a capability thread.
 

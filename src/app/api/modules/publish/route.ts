@@ -12,7 +12,7 @@ const createdViaEnum = z.enum([
   'process',
   'inquiry',
   'retrospective',
-  'goal',
+  'understanding',
   'editorial',
 ]);
 

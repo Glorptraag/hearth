@@ -296,7 +296,7 @@ export const moduleDrafts = pgTable(
     familyId: uuid('family_id')
       .references(() => families.id)
       .notNull(),
-    pathway: text('pathway').notNull(), // 'material' | 'process' | 'inquiry' | 'retrospective' | 'goal'
+    pathway: text('pathway').notNull(), // 'material' | 'process' | 'inquiry' | 'retrospective' | 'understanding'
     draftData: jsonb('draft_data').notNull().default({}),
     status: text('status').notNull().default('draft'), // 'draft' | 'complete'
     createdAt: timestamp('created_at').defaultNow(),

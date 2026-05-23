@@ -102,11 +102,12 @@ function formatAgeRange(ageRange?: { min: number; max: number }): string {
 interface MarketplaceCardProps {
   pack: SanityPack;
   inLibrary: boolean;
+  owned?: boolean;
   onAddToLibrary: (id: string) => void;
   onPurchase?: (id: string) => void;
 }
 
-export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }: MarketplaceCardProps) {
+export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary, onPurchase }: MarketplaceCardProps) {
   const subjects = pack.subjects ?? [];
   const primary = subjects[0];
   const primaryMeta = primary ? SUBJECT_META[primary] : null;
@@ -221,6 +222,14 @@ export function MarketplaceCard({ pack, inLibrary, onAddToLibrary, onPurchase }:
               className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
             >
               Add to Library
+            </button>
+          ) : owned ? (
+            <button
+              disabled
+              aria-label={`${pack.title} — owned`}
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-sage/30 bg-sage/15 text-sage cursor-default select-none whitespace-nowrap"
+            >
+              Owned
             </button>
           ) : pack.stripePriceId ? (
             <button

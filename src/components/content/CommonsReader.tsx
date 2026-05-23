@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { PortableText } from '@portabletext/react';
-import { SpeakerHigh, Printer, X } from '@/components/icons';
+import { Printer, X } from '@/components/icons';
 
 type ReadingMode = 'standard' | 'short' | 'readAloud';
 
@@ -133,15 +133,6 @@ export function CommonsReader({
           ← {returnLabel}
         </button>
         <div className="flex items-center gap-sm">
-          {/* Audio — disabled in v1 */}
-          <button
-            disabled
-            className="p-sm text-text-muted opacity-40 cursor-not-allowed"
-            title="Audio coming soon"
-            aria-label="Audio coming soon"
-          >
-            <SpeakerHigh size={18} aria-hidden="true" />
-          </button>
           {onPrint && (
             <button
               onClick={onPrint}
@@ -203,7 +194,7 @@ export function CommonsReader({
             <PortableText value={activeBody as Parameters<typeof PortableText>[0]['value']} components={activeComponents} />
           </div>
         ) : (
-          <p className="font-serif text-base text-text-muted italic">Reading coming soon</p>
+          <p className="font-serif text-base text-text-muted italic">No reading available.</p>
         )}
 
         {/* Divider */}

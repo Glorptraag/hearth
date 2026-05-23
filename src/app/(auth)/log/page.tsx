@@ -10,6 +10,7 @@ import type { DraftInsight } from '@/lib/ai/draft-insight';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { useOnlineStatus } from '@/hooks/use-online-status';
+import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
@@ -603,12 +604,14 @@ export default function LogPage() {
   }, [description, activityType, selectedLearners, observations]);
 
   // ─── UI state ───
-  const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'badge'; message: string; action?: { label: string; href: string } } | null>(null);
   const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
-  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+
+  const { isRecording, start: startVoiceInput, stop: stopVoiceInput } = useSpeechRecognition({
+    onTranscript: (transcript) => setDescription((prev) => prev + (prev ? ' ' : '') + transcript),
+  });
 
   // ─── Completeness ───
   const completeness = useMemo(() => scoreCompleteness({
@@ -704,38 +707,6 @@ export default function LogPage() {
     if (whenDate === 'earlier') return format(subDays(today, 5), 'yyyy-MM-dd');
     return format(today, 'yyyy-MM-dd');
   }, [whenDate]);
-
-  const startVoiceInput = () => {
-    // SpeechRecognition API has inconsistent browser typings — vendor-prefix access is intentional
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      alert('Voice input is not supported in your browser. Try Chrome or Edge.');
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recognition: any = new SR();
-    recognition.lang = 'en-AU';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognitionRef.current = recognition;
-    recognition.onresult = (event: { resultIndex: number; results: { [k: number]: { [k: number]: { transcript: string } } } }) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < (event.results as unknown as unknown[]).length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      setDescription((prev) => prev + (prev ? ' ' : '') + transcript);
-    };
-    recognition.onerror = () => setIsRecording(false);
-    recognition.onend = () => setIsRecording(false);
-    recognition.start();
-    setIsRecording(true);
-  };
-
-  const stopVoiceInput = () => {
-    recognitionRef.current?.stop();
-    setIsRecording(false);
-  };
 
   const handleSave = async () => {
     if (!canSave || isSaving) return;

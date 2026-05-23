@@ -181,17 +181,16 @@ export default function FacilitateMode({
           </div>
         )}
 
-        {/* Hearth materials — inline embeds for current activity */}
-        {((current.assets && current.assets.length > 0) || (current.commonsTexts && current.commonsTexts.length > 0)) && (
+        {/* Hearth materials — inline embeds for current activity (audio filtered out) */}
+        {(((current.assets?.filter((ref) => ref.asset && ref.asset.kind !== 'audio').length ?? 0) > 0) || (current.commonsTexts && current.commonsTexts.length > 0)) && (
           <div className="mb-lg">
             <p className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-sm">
               Hearth Materials
             </p>
             <div className="space-y-sm">
-              {current.assets?.map((ref) => {
+              {current.assets?.filter((ref) => ref.asset && ref.asset.kind !== 'audio').map((ref) => {
                 if (!ref.asset) return null;
                 const KindIcon = ASSET_KIND_ICON[ref.asset.kind as AssetKind] ?? ASSET_KIND_ICON.template;
-                const isAudio = ref.asset.kind === 'audio';
                 return (
                   <div
                     key={ref._key}
@@ -213,16 +212,14 @@ export default function FacilitateMode({
                         {ref.asset.printGuidance ? ` · ${ref.asset.printGuidance}` : ''}
                       </p>
                     </div>
-                    {isAudio ? (
-                      <span className="font-sans text-[0.68rem] text-text-muted">Coming soon</span>
-                    ) : onDownloadAsset ? (
+                    {onDownloadAsset && (
                       <button
                         onClick={() => onDownloadAsset(ref.asset._id)}
                         className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
                       >
                         Download
                       </button>
-                    ) : null}
+                    )}
                   </div>
                 );
               })}

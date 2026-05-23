@@ -41,7 +41,7 @@ export function PrintSheet({
   });
   const [copies, setCopies] = useState(defaultCopies);
   const [customCopies, setCustomCopies] = useState(false);
-  const [combine, setCombine] = useState(defaultCombine);
+  const combine = defaultCombine;
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,32 +245,6 @@ export function PrintSheet({
             </div>
           )}
 
-          {/* Combine toggle */}
-          <div>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm">
-              Format
-            </p>
-            <div className="space-y-xs">
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input
-                  type="radio"
-                  checked={combine}
-                  onChange={() => setCombine(true)}
-                  className="accent-ember"
-                />
-                <span className="font-sans text-sm text-text-primary">Combine printables into single PDF</span>
-              </label>
-              <label className="flex items-center gap-sm cursor-not-allowed opacity-50">
-                <input
-                  type="radio"
-                  checked={!combine}
-                  disabled
-                  className="accent-ember"
-                />
-                <span className="font-sans text-sm text-text-muted">Download as separate files (coming soon)</span>
-              </label>
-            </div>
-          </div>
         </div>
 
         {/* Item list */}
@@ -288,44 +262,44 @@ export function PrintSheet({
             </button>
           </div>
 
-          {groups.map((group) => (
-            <div key={group.label} className="mb-lg">
-              {groups.length > 1 && (
-                <p className="font-sans text-[0.8rem] font-medium text-text-secondary mb-sm">
-                  ▼ {group.label}
-                </p>
-              )}
-              <div className="space-y-sm">
-                {group.items.map((item) => {
-                  const ItemIcon = getItemIcon(item);
-                  const isAudio = !item.isPrintable;
-                  return (
-                    <label
-                      key={item.id}
-                      className={`flex items-center gap-sm p-sm rounded-[6px] cursor-pointer transition-colors duration-200 ${
-                        isAudio ? 'opacity-50 cursor-default' : 'hover:bg-surface-hover'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(item.id)}
-                        onChange={(e) => toggleItem(item.id, e.target.checked)}
-                        disabled={isAudio}
-                        className="shrink-0 w-4 h-4 rounded-[6px] accent-ember"
-                      />
-                      <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><ItemIcon size={16} /></span>
-                      <span className="flex-1 min-w-0 font-serif text-sm text-text-primary truncate">
-                        {item.title}
-                      </span>
-                      <span className="shrink-0 font-sans text-[0.72rem] text-text-muted">
-                        {item.isPrintable ? `${item.pageCount}pg` : 'audio'}
-                      </span>
-                    </label>
-                  );
-                })}
+          {groups.map((group) => {
+            const printableInGroup = group.items.filter((i) => i.isPrintable);
+            if (printableInGroup.length === 0) return null;
+            return (
+              <div key={group.label} className="mb-lg">
+                {groups.length > 1 && (
+                  <p className="font-sans text-[0.8rem] font-medium text-text-secondary mb-sm">
+                    ▼ {group.label}
+                  </p>
+                )}
+                <div className="space-y-sm">
+                  {printableInGroup.map((item) => {
+                    const ItemIcon = getItemIcon(item);
+                    return (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-sm p-sm rounded-[6px] cursor-pointer transition-colors duration-200 hover:bg-surface-hover"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={(e) => toggleItem(item.id, e.target.checked)}
+                          className="shrink-0 w-4 h-4 rounded-[6px] accent-ember"
+                        />
+                        <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><ItemIcon size={16} /></span>
+                        <span className="flex-1 min-w-0 font-serif text-sm text-text-primary truncate">
+                          {item.title}
+                        </span>
+                        <span className="shrink-0 font-sans text-[0.72rem] text-text-muted">
+                          {item.pageCount}pg
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Footer */}

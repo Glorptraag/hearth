@@ -56,8 +56,6 @@ docs/                # Architecture specs, design system docs
 | `docs/hearth-data-architecture-overview-v1.md` | Sanity vs Postgres data boundaries |
 | `docs/hearth-pack-data-architecture-v1.md` | Content hierarchy: Pack → Module → Approach → Activity |
 | `docs/hearth-capability-universe-v2-architecture-spec-v1.md` | **Capability Universe v2 substrate (authoritative).** 15 domains × 4 stage-bands × strands × atomic capabilities; typed prerequisite graph; stage-tier badges; regulatory mappings on atoms. Read on any capability/thread/badge/observation/Constellation/HEU work. |
-| `docs/lms-database-schema.js` | PostgreSQL table definitions |
-| `docs/lms-api-endpoints.js` | API route reference |
 | `docs/Hearth_AI_Intelligence_Layer_Architecture.md` | AI enrichment pipeline (Phase 6) |
 | `docs/alpha-readiness-pickup.md` | Current alpha-readiness status + honest caveats. Read first on any pilot-ops task. |
 | `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |

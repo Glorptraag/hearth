@@ -298,6 +298,12 @@ export function ConstellationRoute({
             <span className="inline-block h-[14px] w-[14px] rounded-full border border-sage" /> Demonstrating tier (sage halo)
           </span>
           <span className="inline-flex items-center gap-[6px]">
+            <span className="inline-block h-[10px] w-[10px] rounded-full bg-sage" /> Badge earned
+          </span>
+          <span className="inline-flex items-center gap-[6px]">
+            <span className="inline-block h-[10px] w-[10px] rounded-full border-[1.5px] border-ember" /> Badge approaching
+          </span>
+          <span className="inline-flex items-center gap-[6px]">
             <span className="inline-block h-[1px] w-[14px] bg-text-secondary" /> Enables (within domain)
           </span>
         </div>

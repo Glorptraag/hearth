@@ -114,9 +114,11 @@ export function GalleryDomains({
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Capability constellation for ${snap.name}. Eight domains, each shown as a horizontal band.`}
+      aria-labelledby="cap-domains-title cap-domains-desc"
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id="cap-domains-title">{`Capability constellation for ${snap.name}`}</title>
+      <desc id="cap-domains-desc">{`${ORDERED_DOMAINS.length} domains, each shown as a horizontal band. Bands read left-to-right as capability dependency, from foundational to synthesising.`}</desc>
       <GalleryDefs />
 
       <g aria-hidden="true">
@@ -159,9 +161,35 @@ export function GalleryDomains({
         const active = threads.filter((t) => snap.threadState[t.id] === 'active').length;
         const ghosts = threads.filter((t) => snap.threadState[t.id] === 'ghost').length;
         const demos = threads.filter((t) => threadCurrentTier(t.id, snap) === 'demonstrating').length;
+        const threadIds = new Set(threads.map((t) => t.id));
+        const earned = snap.badges.filter((b) => b.status === 'awarded' && threadIds.has(b.thread)).length;
+        const approaching = snap.badges.filter((b) => b.status === 'approaching' && threadIds.has(b.thread)).length;
+
+        const ariaParts = [
+          domain.label,
+          `${active} active`,
+          ghosts > 0 ? `${ghosts} opening up` : null,
+          demos > 0 ? `${demos} demonstrating` : null,
+          earned > 0 ? `${earned} badge${earned === 1 ? '' : 's'} earned` : null,
+          approaching > 0 ? `${approaching} approaching` : null,
+        ].filter(Boolean).join(', ');
 
         return (
-          <g key={domain.key} style={{ cursor: 'pointer' }} onClick={() => onDrill(domain.key)}>
+          <g
+            key={domain.key}
+            className="cap-interactive"
+            style={{ cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-label={`${ariaParts}. Drill in to see threads.`}
+            onClick={() => onDrill(domain.key)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onDrill(domain.key);
+              }
+            }}
+          >
             {i < ORDERED_DOMAINS.length - 1 && (
               <line x1={labelW - 12} y1={y + bandH} x2={W - 20} y2={y + bandH}
                     stroke="var(--color-border-subtle)" strokeWidth={0.5} opacity={0.7} />
@@ -183,6 +211,18 @@ export function GalleryDomains({
               <text x={labelW - 22} y={cy + 24} textAnchor="end" className="cap-band-meta"
                     style={{ fill: 'var(--color-sage)', letterSpacing: '0.06em' }}>
                 ● {demos} demonstrating
+              </text>
+            )}
+            {(earned > 0 || approaching > 0) && (
+              <text x={labelW - 22} y={cy + (demos > 0 ? 38 : 24)} textAnchor="end" className="cap-band-meta"
+                    style={{ letterSpacing: '0.06em' }}>
+                {earned > 0 && (
+                  <tspan style={{ fill: 'var(--color-sage)' }}>★ {earned} earned</tspan>
+                )}
+                {earned > 0 && approaching > 0 && ' · '}
+                {approaching > 0 && (
+                  <tspan style={{ fill: 'var(--color-ember)' }}>◯ {approaching} approaching</tspan>
+                )}
               </text>
             )}
 
@@ -288,6 +328,12 @@ export function GalleryThreads({
 
   const [hovered, setHovered] = useState<string | null>(null);
 
+  const badgeByThread = useMemo(() => {
+    const m: Record<string, LearnerSnapshot['badges'][number]> = {};
+    snap.badges.forEach((b) => { m[b.thread] = b; });
+    return m;
+  }, [snap.badges]);
+
   const edges: Array<{ key: string; src: { x: number; y: number }; tgt: { x: number; y: number }; crossDomain: boolean; active: boolean }> = [];
   threads.forEach((t) => {
     t.prereqs.forEach((p) => {
@@ -303,14 +349,22 @@ export function GalleryThreads({
 
   if (!domain) return null;
 
+  const earnedCount = threads.filter((t) => badgeByThread[t.id]?.status === 'awarded').length;
+  const approachingCount = threads.filter((t) => badgeByThread[t.id]?.status === 'approaching').length;
+  const badgeSummary = earnedCount > 0 || approachingCount > 0
+    ? ` ${earnedCount > 0 ? `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned` : ''}${earnedCount > 0 && approachingCount > 0 ? ', ' : ''}${approachingCount > 0 ? `${approachingCount} approaching` : ''}.`
+    : '';
+
   return (
     <svg
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`${domain.label} band for ${snap.name}. ${threads.length} threads laid out left-to-right by capability dependency.`}
+      aria-labelledby={`cap-threads-title-${domainKey} cap-threads-desc-${domainKey}`}
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id={`cap-threads-title-${domainKey}`}>{`${domain.label} band for ${snap.name}`}</title>
+      <desc id={`cap-threads-desc-${domainKey}`}>{`${threads.length} threads laid out left-to-right by capability dependency.${badgeSummary}`}</desc>
       <GalleryDefs />
 
       <g aria-hidden="true">
@@ -375,12 +429,27 @@ export function GalleryThreads({
           r = 6; fill = domain.color; stroke = 'none'; op = 0.4; hasOuterHalo = false;
         }
 
+        const tierLabel = state === 'ghost' ? 'opening up' : state === 'dormant' ? 'dormant' : tier ?? 'unobserved';
+        const badge = badgeByThread[t.id];
+        const ariaLabel = `${t.name}, ${tierLabel}${badge ? `, badge ${badge.status}` : ''}. Drill in for objectives.`;
+
         return (
           <g key={t.id}
-             className={state === 'ghost' ? 'cap-ghost' : undefined}
+             className={`cap-interactive${state === 'ghost' ? ' cap-ghost' : ''}`}
+             role="button"
+             tabIndex={0}
+             aria-label={ariaLabel}
              onMouseEnter={() => setHovered(t.id)}
              onMouseLeave={() => setHovered(null)}
+             onFocus={() => setHovered(t.id)}
+             onBlur={() => setHovered(null)}
              onClick={() => onDrill(t)}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 onDrill(t);
+               }
+             }}
              style={{ cursor: 'pointer' }}>
             {hasOuterHalo && (
               <>
@@ -407,6 +476,28 @@ export function GalleryThreads({
                 <circle cx={pos.x} cy={pos.y} r={5} fill="var(--color-ember)" opacity={0.3} filter="url(#cap-halo-ember)" />
               </>
             )}
+            {(() => {
+              const b = badgeByThread[t.id];
+              if (!b) return null;
+              const bx = pos.x + r * 0.78;
+              const by = pos.y - r * 0.78;
+              if (b.status === 'awarded') {
+                return (
+                  <g aria-label={`Badge earned${b.level ? ` — ${b.level}` : ''}`}>
+                    <circle cx={bx} cy={by} r={6} fill="var(--color-sage)" opacity={0.18} filter="url(#cap-halo-strong)" />
+                    <circle cx={bx} cy={by} r={3.4} fill="var(--color-sage)" />
+                  </g>
+                );
+              }
+              if (b.status === 'approaching') {
+                return (
+                  <g className="cap-badge-mark-approaching" aria-label="Badge approaching">
+                    <circle cx={bx} cy={by} r={4} fill="none" stroke="var(--color-ember)" strokeWidth={1.4} />
+                  </g>
+                );
+              }
+              return null;
+            })()}
             <text x={pos.x} y={pos.y + r + 16}
                   className={`cap-node-label ${state === 'active' ? 'cap-node-label-active' : state === 'ghost' ? 'cap-node-label-ghost' : ''}`}>
               {t.name}
@@ -485,9 +576,11 @@ export function GalleryDLOs({
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Discrete learning objectives for ${thread.name}.`}
+      aria-labelledby={`cap-dlos-title-${threadId} cap-dlos-desc-${threadId}`}
       preserveAspectRatio="xMidYMid meet"
     >
+      <title id={`cap-dlos-title-${threadId}`}>{`Learning objectives for ${thread.name} — ${snap.name}`}</title>
+      <desc id={`cap-dlos-desc-${threadId}`}>{`Three columns left-to-right: emerging, developing, demonstrating. Each column lists the DLOs at that tier with a moments pip-row beneath.`}</desc>
       <GalleryDefs />
       <text x={padL} y={28} className="cap-band-label">{thread.name}</text>
       <text x={padL} y={48} className="cap-band-meta">
@@ -520,7 +613,21 @@ export function GalleryDLOs({
           const fill = dlo.status === 'confirmed' ? dColor : dlo.status === 'emerging' ? dColor : 'transparent';
           const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'emerging' ? 0.6 : 0.4;
           return (
-            <g key={dlo.id} style={{ cursor: 'pointer' }} onClick={() => onDrill(dlo)}>
+            <g
+              key={dlo.id}
+              className="cap-interactive"
+              style={{ cursor: 'pointer' }}
+              role="button"
+              tabIndex={0}
+              aria-label={`${dlo.descriptor}, ${dlo.tier} tier, ${dlo.status}. Drill in for moments.`}
+              onClick={() => onDrill(dlo)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onDrill(dlo);
+                }
+              }}
+            >
               {dlo.status === 'confirmed' && (
                 <circle cx={cx} cy={y} r={r + 6} fill="none" stroke={dColor} strokeWidth={1} opacity={0.3} />
               )}
@@ -574,14 +681,28 @@ export function GalleryDLOs({
 }
 
 /* ─── Depth 4 : Moments timeline ─────────────────────────────────────── */
-type GalleryMoment = { id: string; date: string; title: string; source: 'logger' | 'module' };
+type GalleryMoment = {
+  id: string;
+  date: string;
+  title: string;
+  source: 'logger' | 'module';
+  tier: 'emerging' | 'developing' | 'demonstrating' | null;
+  rationale: string | null;
+};
+
+const TIER_COLOR: Record<'emerging' | 'developing' | 'demonstrating', string> = {
+  emerging: 'var(--color-text-muted)',
+  developing: 'var(--color-child-amber)',
+  demonstrating: 'var(--color-sage)',
+};
 
 export function GalleryMoments({
   snap, dlo,
 }: { snap: LearnerSnapshot; dlo: SynthDLO }) {
-  const W = 1100, H = 420;
+  const W = 1100, H = 460;
   const padL = 100, padR = 60;
   const [moments, setMoments] = useState<GalleryMoment[] | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -594,7 +715,7 @@ export function GalleryMoments({
     // entries logged before observation_dlo_links existed.
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
       .then((r) => r.json())
-      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string }> }) => {
+      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null }> }) => {
         if (cancelled) return;
         const evidence = Array.isArray(data?.evidence) ? data.evidence : [];
         if (evidence.length > 0) {
@@ -603,11 +724,14 @@ export function GalleryMoments({
             title: e.title,
             date: e.dateOccurred,
             source: e.source === 'module' ? 'module' : 'logger',
+            tier: e.tier === 'emerging' || e.tier === 'developing' || e.tier === 'demonstrating' ? e.tier : null,
+            rationale: e.rationale ?? null,
           }));
           setMoments(ms);
           return;
         }
-        // Fallback path: thread-level matches
+        // Fallback path: thread-level matches (legacy entries without dlo links carry
+        // no tier/rationale — only fields we have are title, date, source).
         fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
           .then((r) => r.json())
           .then((entries: Array<{ id: string; title: string; dateOccurred: string; source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
@@ -617,6 +741,7 @@ export function GalleryMoments({
               .map((e) => ({
                 id: e.id, title: e.title, date: e.dateOccurred,
                 source: e.source === 'module' ? 'module' : 'logger',
+                tier: null, rationale: null,
               }));
             setMoments(ms);
           })
@@ -629,7 +754,14 @@ export function GalleryMoments({
 
   if (moments === null) {
     return (
-      <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+      <svg
+        className="cap-gallery-svg"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading moments"
+      >
         <text x={W / 2} y={H / 2} textAnchor="middle"
               style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fill: 'var(--color-text-muted)' }}>
           Loading moments…
@@ -640,7 +772,13 @@ export function GalleryMoments({
 
   if (moments.length === 0) {
     return (
-      <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+      <svg
+        className="cap-gallery-svg"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="No moments yet for this objective. Log a moment from the Logger and tag this thread."
+      >
         <text x={W / 2} y={H / 2} textAnchor="middle"
               style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '16px', fill: 'var(--color-text-secondary)' }}>
           No moments yet for this objective.
@@ -662,7 +800,15 @@ export function GalleryMoments({
   const yModule = H / 2 - 40;
 
   return (
-    <svg className="cap-gallery-svg" viewBox={`0 0 ${W} ${H}`} role="img" preserveAspectRatio="xMidYMid meet">
+    <svg
+      className="cap-gallery-svg"
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-labelledby={`cap-moments-title cap-moments-desc`}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <title id="cap-moments-title">{`Moments for "${dlo.descriptor}" — ${snap.name}`}</title>
+      <desc id="cap-moments-desc">{`${sorted.length} ${sorted.length === 1 ? 'moment' : 'moments'} plotted left-to-right by date. Top lane is module-sourced, bottom lane is parent-logged.`}</desc>
       <text x={padL} y={28} className="cap-band-label">Moments for &ldquo;{dlo.descriptor}&rdquo;</text>
       <text x={padL} y={48} className="cap-band-meta">
         Left → right is time. Top lane is module-sourced, bottom lane is parent-logged.
@@ -683,14 +829,58 @@ export function GalleryMoments({
         const x = xFor(m.date);
         const y = m.source === 'logger' ? yLogger : yModule;
         const color = m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)';
+        const tierColor = m.tier ? TIER_COLOR[m.tier] : null;
+        const isHovered = hovered === m.id;
         return (
-          <g key={m.id}>
+          <g key={m.id}
+             onMouseEnter={() => setHovered(m.id)}
+             onMouseLeave={() => setHovered(null)}
+             onFocus={() => setHovered(m.id)}
+             onBlur={() => setHovered(null)}
+             style={{ cursor: m.rationale ? 'help' : 'default' }}
+             tabIndex={m.rationale ? 0 : -1}
+             aria-label={m.rationale ? `${m.title}. ${m.tier ?? ''} tier. ${m.rationale}` : m.title}>
             <line x1={x} y1={y} x2={x} y2={H / 2} stroke={color} strokeWidth={1} opacity={0.3} strokeDasharray="2 3" />
+            {tierColor && (
+              <circle cx={x} cy={y} r={10} fill="none" stroke={tierColor} strokeWidth={1.4} opacity={0.7} />
+            )}
             <circle cx={x} cy={y} r={7} fill={color} opacity={0.9} />
             <text x={x} y={y + (m.source === 'logger' ? 26 : -16)} textAnchor="middle"
                   style={{ fontFamily: 'var(--font-serif)', fontSize: '11px', fill: 'var(--color-text-primary)' }}>
               {m.title.length > 38 ? `${m.title.slice(0, 36)}…` : m.title}
             </text>
+            {isHovered && m.rationale && (
+              <g pointerEvents="none">
+                <rect
+                  x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140))}
+                  y={m.source === 'logger' ? y + 40 : y - 76}
+                  width={280}
+                  height={64}
+                  rx={6}
+                  fill="var(--color-surface-raised)"
+                  stroke="var(--color-border-medium)"
+                  strokeWidth={0.6}
+                  opacity={0.98}
+                />
+                <foreignObject
+                  x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140)) + 10}
+                  y={(m.source === 'logger' ? y + 40 : y - 76) + 8}
+                  width={260}
+                  height={48}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  <div style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '11px',
+                    lineHeight: 1.4,
+                    fontStyle: 'italic',
+                    color: 'var(--color-text-secondary)',
+                  }}>
+                    {m.rationale}
+                  </div>
+                </foreignObject>
+              </g>
+            )}
           </g>
         );
       })}

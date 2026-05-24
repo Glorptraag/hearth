@@ -117,7 +117,7 @@ export const moduleSchema = defineType({
           { title: 'Process-Anchored', value: 'process' },
           { title: 'Inquiry-Anchored', value: 'inquiry' },
           { title: 'Retrospective Lift', value: 'retrospective' },
-          { title: 'Goal-Forward', value: 'goal' },
+          { title: 'Goal-Forward', value: 'understanding' },
           { title: 'Editorial', value: 'editorial' },
         ],
       },

@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 const createDraftSchema = z.object({
-  pathway: z.enum(['material', 'process', 'inquiry', 'retrospective', 'goal']),
+  pathway: z.enum(['material', 'process', 'inquiry', 'retrospective', 'understanding']),
   draftData: z.record(z.string(), z.unknown()),
   status: z.enum(['draft', 'complete']).optional().default('draft'),
 });

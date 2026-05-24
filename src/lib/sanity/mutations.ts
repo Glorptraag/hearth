@@ -418,7 +418,7 @@ export type CreatedVia =
   | 'process'
   | 'inquiry'
   | 'retrospective'
-  | 'goal'
+  | 'understanding'
   | 'editorial';
 
 interface CreateModule {

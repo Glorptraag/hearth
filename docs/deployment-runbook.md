@@ -86,6 +86,21 @@ npm run db:check-drift
 
 The `src/lib/db/migrations/*.sql` folder contains ad-hoc historical one-offs (e.g. `add_pedagogy_values_practices.sql`). New migrations should go through `drizzle-kit generate` + `migrate`, not that folder.
 
+#### Provider codes (HEU registration validation)
+
+`provider_codes` is a read-only lookup table (see [src/lib/db/schema.ts](../src/lib/db/schema.ts) and [`/api/provider-code/validate`](../src/app/api/provider-code/validate/route.ts)). It has no admin UI; seed and rotate via SQL or Drizzle on the prod branch.
+
+```sql
+-- Add a new provider
+INSERT INTO provider_codes (code, label, state, active)
+VALUES ('HEU-QLD-2026', 'Queensland HEU 2026', 'QLD', true);
+
+-- Rotate (deactivate an old code, leave the row for audit)
+UPDATE provider_codes SET active = false WHERE code = 'HEU-QLD-2025';
+```
+
+Codes are case-sensitive and validated against `active = true`. Keep at least one active QLD code at all times during pilot.
+
 ### 1.5 First Vercel deploy
 
 - [ ] Link the repo to the Vercel project (Import Git Repository).

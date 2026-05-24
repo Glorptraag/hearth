@@ -20,40 +20,6 @@ export const pack = defineType({
     defineField({ name: 'slug', title: 'Slug', type: 'slug', options: { source: 'title' } }),
     defineField({ name: 'description', title: 'Description', type: 'text' }),
     defineField({
-      name: 'intro',
-      title: 'Introduction',
-      type: 'object',
-      fields: [
-        { name: 'title', title: 'Intro Title', type: 'string' },
-        {
-          name: 'body',
-          title: 'Body',
-          type: 'array',
-          of: [{ type: 'block' }],
-        },
-        {
-          name: 'keyPoints',
-          title: 'Key Points',
-          type: 'array',
-          of: [{ type: 'string' }],
-        },
-        {
-          name: 'furtherReading',
-          title: 'Further Reading',
-          type: 'array',
-          of: [
-            {
-              type: 'object',
-              fields: [
-                { name: 'title', title: 'Title', type: 'string' },
-                { name: 'url', title: 'URL', type: 'url' },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-    defineField({
       name: 'modules',
       title: 'Modules',
       type: 'array',
@@ -181,6 +147,18 @@ export const pack = defineType({
       hidden: ({ document }) => document?.availability !== 'premium',
     }),
     defineField({ name: 'creator', title: 'Creator', type: 'string' }),
+    defineField({
+      name: 'creatorType',
+      title: 'Creator Type',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Content Team', value: 'content-team' },
+          { title: 'Educator', value: 'educator' },
+          { title: 'Parent', value: 'parent' },
+        ],
+      },
+    }),
     defineField({ name: 'version', title: 'Version', type: 'string', initialValue: '1.0.0' }),
     defineField({
       name: 'status',

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import type { QuickCaptureItem } from './types';
 import { PencilSimple, Camera, Microphone, X } from '@/components/icons';
+import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 
 export default function QuickCapture({
   captures,
@@ -21,6 +22,13 @@ export default function QuickCapture({
   const [noteText, setNoteText] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const { isRecording, isSupported: voiceSupported, start: startVoice, stop: stopVoice } = useSpeechRecognition({
+    onTranscript: (transcript) => {
+      setNoteOpen(true);
+      setNoteText((prev) => prev + (prev ? ' ' : '') + transcript);
+    },
+  });
 
   const addNote = () => {
     const text = noteText.trim();
@@ -76,13 +84,18 @@ export default function QuickCapture({
         >
           <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
         </button>
-        <button
-          disabled
-          title="Coming soon"
-          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-muted cursor-not-allowed opacity-50"
-        >
-          <Microphone size={14} aria-hidden="true" /> Voice
-        </button>
+        {voiceSupported && (
+          <button
+            onClick={isRecording ? stopVoice : startVoice}
+            className={`inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition-all duration-200 ${
+              isRecording
+                ? 'border-ember bg-ember/10 text-ember'
+                : 'border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary'
+            }`}
+          >
+            <Microphone size={14} aria-hidden="true" /> {isRecording ? 'Recording…' : 'Voice'}
+          </button>
+        )}
         <input
           ref={fileRef}
           type="file"

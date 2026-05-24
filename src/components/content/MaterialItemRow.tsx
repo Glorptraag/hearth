@@ -129,9 +129,6 @@ export function MaterialItemRow({
               <Printer size={16} aria-hidden="true" />
             </button>
           )}
-          {isAudio && (
-            <span className="font-sans text-[0.68rem] text-text-muted">Coming soon</span>
-          )}
         </div>
       )}
     </div>

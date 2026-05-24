@@ -4,7 +4,7 @@
 > **Status:** Architecture specification — resolves Open Question #4 from `Hearth_System_Interaction_Map.md`
 > **Date:** March 2026
 > **Read first:** `Hearth_System_Interaction_Map.md`, `hearth-capabilities-connector-architecture.md`, `hearth-pedagogy-integration-framework.md`
-> **Companion files:** `lms-database-schema.js` (data model), `03_CMS_Usage_Mapping.md` (Sanity vs PostgreSQL boundary)
+> **Companion files:** `src/lib/db/schema.ts` (canonical data model), `03_CMS_Usage_Mapping.md` (Sanity vs PostgreSQL boundary)
 
 ---
 

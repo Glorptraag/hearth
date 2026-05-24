@@ -57,12 +57,12 @@ Verified by reading schemas + queries + mutations.
 
 | # | Item | Where | Verdict |
 |---|---|---|---|
-| C1 | `pack.creatorType` queried + consumed but **not defined in schema** | Query: `src/lib/sanity/queries.ts:4` · Consumer: `src/components/screens/MarketplaceCard.tsx:49,167` · Schema: `src/sanity/schemas/pack.ts` (missing) | 🤔 Add `creatorType` to the pack schema, or stop querying/consuming it. Currently relies on Sanity's schemaless runtime — values may exist in production but the schema doesn't enforce them. |
-| C2 | `pack.intro` object defined, **never queried** | Schema: `src/sanity/schemas/pack.ts:23-55` | ⏳ Either expose via a query + UI surface, or remove the field. Dead schema fields rot quickly. |
-| C3 | Three PKB schemas have **no CRUD path** — only used for embeddings indexing | Schemas exist for `pedagogyWorkedExample`, `pedagogyContraindication`, `pedagogyFacilitationVocabulary`. Zero hits in `src/lib/sanity/queries.ts` and `src/lib/sanity/mutations.ts`. | 🤔 Decide: (a) add Studio mutation helpers if these will be authored, or (b) keep as embeddings-only and document the seed path in `src/lib/pedagogy/chunk-builder.ts`. |
-| C4 | `providerCodes` table is read-only | Schema: `src/lib/db/schema.ts:400-406` · Only reader: `src/app/api/provider-code/validate/route.ts:19-20` (`findFirst`) | ⏳ If admin needs to create provider codes via UI, add a write path. Otherwise document the out-of-band seeding path (probably Drizzle migration or admin SQL). |
-| C5 | `docs/lms-database-schema.js` drift — missing `families.loggerDefaultMode`, missing `familyLibrary.sanityModuleId` (and its XOR constraint) | `docs/lms-database-schema.js` vs. `src/lib/db/schema.ts` | ⏳ Either regenerate the doc from Drizzle (or delete it — Drizzle is the source of truth and CLAUDE.md acknowledges it). |
-| C6 | `docs/lms-api-endpoints.js` — currency unverified | `docs/lms-api-endpoints.js` | ⏳ Audit against actual `src/app/api/` tree, or delete. |
+| C1 | `pack.creatorType` queried + consumed but **not defined in schema** | Query: `src/lib/sanity/queries.ts:4` · Consumer: `src/components/screens/MarketplaceCard.tsx:49,167` · Schema: `src/sanity/schemas/pack.ts` (missing) | ✅ Added 2026-05-24 (`a6aa02d`). `creatorType` defined with options list (`content-team` / `educator` / `parent`). |
+| C2 | `pack.intro` object defined, **never queried** | Schema: `src/sanity/schemas/pack.ts:23-55` | ✅ Removed 2026-05-24 (`a6aa02d`). |
+| C3 | Three PKB schemas have **no CRUD path** — only used for embeddings indexing | Schemas exist for `pedagogyWorkedExample`, `pedagogyContraindication`, `pedagogyFacilitationVocabulary`. Zero hits in `src/lib/sanity/queries.ts` and `src/lib/sanity/mutations.ts`. | ✅ Documented 2026-05-24 (`a6aa02d`). Top-of-file note in `chunk-builder.ts` declares PKB schemas embeddings-only; seeding via `npm run seed:pedagogy:corpus` + `seed:pedagogy:reembed`. |
+| C4 | `providerCodes` table is read-only | Schema: `src/lib/db/schema.ts:400-406` · Only reader: `src/app/api/provider-code/validate/route.ts:19-20` (`findFirst`) | ✅ Documented 2026-05-24 (`a6aa02d`). Deployment runbook §1.4 covers SQL INSERT/UPDATE seed path. No admin UI. |
+| C5 | `docs/lms-database-schema.js` drift — missing `families.loggerDefaultMode`, missing `familyLibrary.sanityModuleId` (and its XOR constraint) | `docs/lms-database-schema.js` vs. `src/lib/db/schema.ts` | ✅ Deleted 2026-05-24. Drizzle (`src/lib/db/schema.ts`) is canonical. CLAUDE.md row + Hearth_AI_Intelligence_Layer_Architecture / COMPONENT_REGISTRY refs updated. |
+| C6 | `docs/lms-api-endpoints.js` — currency unverified | `docs/lms-api-endpoints.js` | ✅ Deleted 2026-05-24. Source tree at `src/app/api/` is canonical. CLAUDE.md row + COMPONENT_REGISTRY ref removed. |
 | C7 | `scripts/seed-dlos.ts` has never been run against the production Sanity dataset | `scripts/seed-dlos.ts` · GROQ: `src/lib/sanity/queries.ts` (ALL_DLOS_QUERY) | ✅ Run against production 2026-05-23 (`c1c0336`, PR #63): 171 docs = 57 threads × 3 tiers. Constellation L3/L4 now reads exclusively from Sanity. Placeholder fallback branch + `'placeholder'` source discriminator removed from `topology.ts`; `dlo-descriptors.ts` retained as a seed-time-only artefact. |
 | C8 | `learner_dlo_status` Postgres surface is unbuilt | Referenced in `docs/hearth-badge-assessment-spec.md:291,302` · Not in `src/lib/db/schema.ts` | ✅ Shipped (`f1e287b` "Item 6 — genuine per-DLO state, kill tier-rank fake" + migration `0015_dlo_state.sql`). Tier-rank arithmetic in `statusFor()` replaced by real per-DLO state from `learner_dlo_state`. Explicit parent-confirmation write path in `f084750`. |
 | C9 | No entry-to-DLO mapping in AI enrichment | `aiEnrichment.capability_threads[]` has `thread_id` + `confidence`, no `dlo_id` | ✅ Shipped (`16821ca` "end-to-end DLO generation from observations" + `c1c0336`). Haiku output now carries DLO refs; persistence at `src/lib/ai/dlo-persistence.ts`; per-column moments pip-row in `GalleryDLOs` drills to actual DLO, not tier bucket. |
@@ -95,18 +95,18 @@ These docs were misleading our audits. Fixing them is cheap and prevents future 
 |---|---|---|---|
 | E1 | `scripts/neon-test-branch.mjs` | ✅ Wired (`npm run test:integration`) | Keep. |
 | E2 | `scripts/audit-stale-branches.mjs` | 📖 Documented as manual in `docs/branch-hygiene.md:68` | Keep, optionally wire into a monthly cron or GH Action. |
-| E3 | `scripts/check-token-size.ts` | Orphan | 🤔 Wire or delete. |
-| E4 | `scripts/debug-framework-slug.ts` | Orphan, "debug-" name | ⏳ Delete (debug one-shot). |
-| E5 | `scripts/debug-full-query.ts` | Orphan, "debug-" name | ⏳ Delete. |
-| E6 | `scripts/fix-pedagogy-key.ts` | Orphan, one-shot fix | ⏳ Delete after confirming the fix landed. |
-| E7 | `scripts/ingest-pedagogy-corpus.ts` | Orphan | 🤔 Wire under `npm run seed:pedagogy` if it's the canonical ingestion path. |
-| E8 | `scripts/reembed-pedagogy-corpus.ts` | Orphan | 🤔 Same as E7. |
-| E9 | `scripts/seed-content.ts` | Orphan | 🤔 Reconcile with `src/scripts/seed-sample-packs/` (the actually-wired seeder). One source of truth. |
-| E10 | `scripts/seed-pedagogy-frameworks.ts` | Orphan | 🤔 Wire under `npm run seed:pedagogy` or delete. |
-| E11 | `scripts/test-enrichment-integration.ts` | Orphan | ⏳ Either move to `*.integration.test.ts` under vitest, or delete. |
-| E12 | `scripts/test-retrieval.ts` | Orphan | ⏳ Same as E11. |
-| E13 | `scripts/verify-pkb-embeddings.ts` | Orphan | 🤔 Wire as a post-seed verification step in the pedagogy ingestion flow. |
-| E14 | `scripts/verify-sanity-docs.ts` | Orphan | 🤔 Same — useful as a verification gate, but only if wired into a script or CI. |
+| E3 | `scripts/check-token-size.ts` | Orphan | 🤔 Deferred — low priority debug helper. |
+| E4 | `scripts/debug-framework-slug.ts` | Orphan, "debug-" name | ✅ Deleted 2026-05-24. |
+| E5 | `scripts/debug-full-query.ts` | Orphan, "debug-" name | ✅ Deleted 2026-05-24. |
+| E6 | `scripts/fix-pedagogy-key.ts` | Orphan, one-shot fix | ✅ Deleted 2026-05-24. |
+| E7 | `scripts/ingest-pedagogy-corpus.ts` | Orphan | ✅ Wired 2026-05-24 as `npm run seed:pedagogy:corpus`. |
+| E8 | `scripts/reembed-pedagogy-corpus.ts` | Orphan | ✅ Wired 2026-05-24 as `npm run seed:pedagogy:reembed`. |
+| E9 | `scripts/seed-content.ts` | Orphan | ✅ Deleted 2026-05-24 — superseded by `src/scripts/seed-sample-packs/` (already wired as `npm run seed:packs`). |
+| E10 | `scripts/seed-pedagogy-frameworks.ts` | Orphan | ✅ Wired 2026-05-24 as `npm run seed:pedagogy:frameworks`. |
+| E11 | `scripts/test-enrichment-integration.ts` | Orphan | ✅ Deleted 2026-05-24. |
+| E12 | `scripts/test-retrieval.ts` | Orphan | ✅ Deleted 2026-05-24. |
+| E13 | `scripts/verify-pkb-embeddings.ts` | Orphan | ✅ Wired 2026-05-24 as `npm run verify:pkb`. |
+| E14 | `scripts/verify-sanity-docs.ts` | Orphan | ✅ Wired 2026-05-24 as `npm run verify:sanity`. |
 
 **Recommended:** spend one PR to `chore: prune scripts/` — keep E1/E2/E7/E8/E9/E10/E13/E14 if useful (wire each), delete the rest.
 

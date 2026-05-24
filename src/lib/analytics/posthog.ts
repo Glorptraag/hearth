@@ -86,6 +86,7 @@ export type HearthEvent =
   | 'report_exported'
   | 'logger_completed_50pct'
   | 'pedagogy_set'
+  | 'pack_purchased'
   | 'dlo.enrichment.completed';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {

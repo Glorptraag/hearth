@@ -56,7 +56,8 @@ Copy each key below into Vercel → Project → Settings → Environment Variabl
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ✅ | — | — | Enables source-map upload on deploy. |
 | `NEXT_PUBLIC_POSTHOG_KEY` | ✅ | ✅ | — | |
 | `NEXT_PUBLIC_POSTHOG_HOST` | ✅ | ✅ | — | Self-hosted URL. |
-| `STRIPE_*` | ⛔ | ⛔ | ⛔ | Stripe is stubbed until Phase 3+. Leave unset. |
+| `STRIPE_SECRET_KEY` | ✅ | ✅ | ✅ | `sk_live_…` in prod, `sk_test_…` everywhere else. Created in Stripe → Developers → API keys. |
+| `STRIPE_WEBHOOK_SECRET` | ✅ | ✅ | ✅ | `whsec_…` from the endpoint config in Stripe → Developers → Webhooks (different secret per endpoint — prod URL and `stripe listen` give you separate values). |
 
 After populating, click **Redeploy** on the latest production deployment so it picks up the new values (env changes don't hot-swap into running functions).
 
@@ -100,6 +101,39 @@ UPDATE provider_codes SET active = false WHERE code = 'HEU-QLD-2025';
 ```
 
 Codes are case-sensitive and validated against `active = true`. Keep at least one active QLD code at all times during pilot.
+
+#### Stripe (premium pack purchases)
+
+One-time pack purchases (no subscriptions, no recurring billing). Three moving parts: API key, a Sanity `stripePriceId` per pack, and a webhook endpoint that writes the entitlement row.
+
+**Stripe dashboard setup (first deploy):**
+
+1. **API keys** — Stripe → Developers → API keys. Copy the **Secret key** for the active mode (`sk_live_…` for prod, `sk_test_…` for preview/dev) into `STRIPE_SECRET_KEY` per the env-vars table.
+2. **Products + prices** — For each premium pack, create a Stripe Product with a single one-time Price (mode `payment`, currency `AUD`). Copy the price ID (`price_…`) into the matching Sanity pack document's `stripePriceId` field. The checkout route refuses to start a session for any pack missing this field.
+3. **Webhook endpoint** — Stripe → Developers → Webhooks → Add endpoint. URL: `https://<prod-domain>/api/stripe/webhook`. Events to send: `checkout.session.completed` (only — anything else is ignored by the handler, so don't subscribe to noise). After saving, reveal the signing secret (`whsec_…`) and paste into `STRIPE_WEBHOOK_SECRET`.
+
+**Local development:**
+
+```
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+The CLI prints a one-off `whsec_…` — put it in `.env.local` as `STRIPE_WEBHOOK_SECRET` so local webhook receipts verify. (This secret is **separate** from the prod endpoint's secret. Don't reuse.)
+
+Then trigger a test purchase from the Stripe dashboard or:
+
+```
+stripe trigger checkout.session.completed
+```
+
+Smoke test, end-to-end:
+
+1. From `/explore/marketplace`, click **Get Pack** on a premium pack with a `stripePriceId`.
+2. Complete checkout with test card `4242 4242 4242 4242` (any future date / any CVC).
+3. Confirm an `entitlements` row exists for the family with `stripe_session_id` matching the session, and the card now reads **Owned** on next page load.
+4. PostHog should show a `pack_purchased` event identified by the hashed family ID within ~30s.
+
+**Idempotency** is enforced at the DB layer — `entitlements` has UNIQUE `(family_id, sanity_pack_id)` and UNIQUE `(stripe_session_id)` indexes plus `.onConflictDoNothing()` in the handler. Stripe retries on transient handler failures, so this matters.
 
 ### 1.5 First Vercel deploy
 
@@ -171,6 +205,7 @@ All events are opt-in (only fire when `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_P
 | `badge_awarded`, `badge_deferred` | client | Badge assessment page |
 | `report_exported` | client | HEU report Export button (`src/app/(auth)/our-story/report/page.tsx`) |
 | `pedagogy_set` | client | Onboarding wizard save, Settings wizard save, Settings inline philosophy selector (each tagged with `source`) |
+| `pack_purchased` | server | Stripe webhook (`/api/stripe/webhook`) after the entitlement row is written |
 
 Privacy posture: no entry text, no learner names, no email, no free-form strings (the `sanitise()` helpers on both client and server drop anything >40 chars or with 2+ consecutive spaces).
 
@@ -181,5 +216,5 @@ Privacy posture: no entry text, no learner names, no email, no free-form strings
 - **Cron secret rotation.** Changing `CRON_SECRET` in Vercel does not retroactively authorise past cron invocations — only new ones. Expect a brief window where the next cron run succeeds with the new token; old curl commands must use the new value.
 - **Clerk v7 Sign-in contrast** has a theme regression — see commits `c590d41` / `06bfee1`. If sign-in text reads low-contrast on either theme, re-check `src/app/clerk-theme.ts`.
 - **`DRAFT_INSIGHTS_ENABLED` is read at runtime**, so flipping the Vercel env var takes effect on the next cold-start. Force it sooner by redeploying (no code change required — just click Redeploy).
-- **Stripe routes return 503 by design.** `/api/stripe/*` is stubbed; do not set `STRIPE_*` keys in alpha.
+- **Stripe webhook signature uses the raw body.** `/api/stripe/webhook` calls `request.text()` (not `.json()`) because the HMAC is computed over the original bytes. Don't add middleware that re-parses or normalises the body for that route — it will silently break signature verification.
 - **Open caveats for pilot launch** are tracked in `docs/alpha-readiness-pickup.md` → "Honest caveats / known limitations". Skim it before the first deploy and before the weekly cost watch.

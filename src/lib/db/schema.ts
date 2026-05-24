@@ -287,6 +287,33 @@ export const familyLibrary = pgTable(
   ]
 );
 
+// ─── Pack Entitlements (Stripe one-time purchases) ───
+// One row per (family, sanityPackId) for premium packs the family has bought.
+// Membership-included packs (`pack.availability === 'included'`) don't get an
+// entitlement row — they're free to anyone with a Hearth membership.
+// The marketplace UI keys "Owned" off the presence of a row here.
+
+export const entitlements = pgTable(
+  'entitlements',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    sanityPackId: text('sanity_pack_id').notNull(),
+    stripeSessionId: text('stripe_session_id').notNull(),
+    stripeCustomerId: text('stripe_customer_id'),
+    amountCents: integer('amount_cents').notNull(),
+    currency: text('currency').notNull().default('aud'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('entitlements_family_pack_unique_idx').on(table.familyId, table.sanityPackId),
+    uniqueIndex('entitlements_session_unique_idx').on(table.stripeSessionId),
+    index('entitlements_family_idx').on(table.familyId),
+  ],
+);
+
 // ─── Module Drafts ───
 
 export const moduleDrafts = pgTable(

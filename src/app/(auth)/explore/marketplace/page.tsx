@@ -63,21 +63,27 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [detailPack, setDetailPack] = useState<SanityPack | null>(null);
   const [showMaterials, setShowMaterials] = useState(false);
   const [gapSubjects, setGapSubjects] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
-      const [sanityPacks, libraryRes, snapshotRes] = await Promise.all([
+      const [sanityPacks, libraryRes, entitlementsRes, snapshotRes] = await Promise.all([
         sanityClient.fetch<SanityPack[]>(PACKS_QUERY),
         fetch('/api/library'),
+        fetch('/api/entitlements').catch(() => null),
         fetch('/api/snapshot').catch(() => null),
       ]);
       setPacks(sanityPacks ?? []);
       if (libraryRes.ok) {
         const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
         setLibraryIds(new Set(library.filter((l) => l.kind === 'pack').map((l) => l.id)));
+      }
+      if (entitlementsRes?.ok) {
+        const owned: string[] = await entitlementsRes.json();
+        setOwnedIds(new Set(owned));
       }
       // Extract gap subjects from snapshot
       if (snapshotRes?.ok) {
@@ -338,6 +344,7 @@ export default function MarketplacePage() {
                     <MarketplaceCard
                       pack={pack}
                       inLibrary={libraryIds.has(pack._id)}
+                      owned={ownedIds.has(pack._id)}
                       onAddToLibrary={handleAddToLibrary}
                       onPurchase={handlePurchase}
                     />

@@ -127,6 +127,13 @@
       "when": 1779800000000,
       "tag": "0017_module_pathway_rename_goal_to_understanding",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1779900000000,
+      "tag": "0018_entitlements",
+      "breakpoints": true
     }
   ]
 }

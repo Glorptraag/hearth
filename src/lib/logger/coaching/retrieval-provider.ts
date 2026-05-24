@@ -1,11 +1,8 @@
-// Retrieval-based CoachHintProvider — the default v1 implementation.
+// Retrieval-based CoachHintProvider — the v1 implementation.
 // Wraps the pedagogy knowledge base with a tight budget (top-k 2, ~400 tokens)
 // and session-caches results on (description_hash, learnerIds.sorted,
 // activityType). No LLM call. Returns [] cleanly when PEDAGOGY_KB_ENABLED=false
 // or retrieval fails.
-//
-// Upgrade path: flip LOGGER_COACH_PROVIDER=haiku to route through HaikuProvider
-// without touching this file.
 
 import { createHash } from 'crypto';
 import {

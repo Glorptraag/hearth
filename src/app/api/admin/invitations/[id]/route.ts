@@ -3,11 +3,12 @@ import { db } from '@/lib/db';
 import { invitations, adminAuditLog } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(
+export const GET = routeHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -36,4 +37,4 @@ export async function GET(
     .limit(50);
 
   return NextResponse.json({ invitation, auditHistory });
-}
+}, { route: 'GET /api/admin/invitations/[id]' });

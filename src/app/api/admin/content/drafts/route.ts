@@ -5,8 +5,9 @@ import { eq, desc } from 'drizzle-orm';
 import { createEmptyStudioState } from '@/lib/content-studio/factories';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -24,9 +25,9 @@ export async function GET() {
     .limit(50);
 
   return NextResponse.json(drafts);
-}
+}, { route: 'GET /api/admin/content/drafts' });
 
-export async function POST(req: Request) {
+export const POST = routeHandler(async (req: Request) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -53,4 +54,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(draft, { status: 201 });
-}
+}, { route: 'POST /api/admin/content/drafts' });

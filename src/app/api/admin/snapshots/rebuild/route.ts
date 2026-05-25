@@ -4,6 +4,7 @@ import { families, familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -11,7 +12,7 @@ const bodySchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -47,4 +48,4 @@ export async function POST(req: NextRequest) {
     .where(eq(familyIntelligenceSnapshots.familyId, body.familyId));
 
   return NextResponse.json({ queued: true, familyId: body.familyId });
-}
+}, { route: 'POST /api/admin/snapshots/rebuild' });

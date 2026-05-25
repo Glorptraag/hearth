@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 const K_THRESHOLD = 5;
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -50,4 +51,4 @@ export async function GET(req: NextRequest) {
     dateTo: dateTo ?? null,
     totalThreadsWithData: threads.length,
   });
-}
+}, { route: 'GET /api/admin/analytics/thread-coverage' });

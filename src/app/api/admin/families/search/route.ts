@@ -4,6 +4,7 @@ import { families } from '@/lib/db/schema';
 import { eq, ilike } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 import { z } from 'zod';
 
 const searchSchema = z.object({
@@ -11,7 +12,7 @@ const searchSchema = z.object({
   type: z.enum(['id', 'email', 'name']),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -60,4 +61,4 @@ export async function GET(req: NextRequest) {
     .limit(20);
 
   return NextResponse.json({ matches });
-}
+}, { route: 'GET /api/admin/families/search' });

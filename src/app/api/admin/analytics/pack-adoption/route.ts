@@ -3,10 +3,11 @@ import { db } from '@/lib/db';
 import { familyLibrary, learningEntries } from '@/lib/db/schema';
 import { sql, eq, and } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 const K_THRESHOLD = 5;
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -75,4 +76,4 @@ export async function GET(req: NextRequest) {
     kThreshold: K_THRESHOLD,
     note: 'Started/Engaged are approximations — pack→module mapping requires Sanity cross-reference.',
   });
-}
+}, { route: 'GET /api/admin/analytics/pack-adoption' });

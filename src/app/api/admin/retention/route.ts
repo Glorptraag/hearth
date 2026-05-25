@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { adminAuditLog, notifications, moduleDrafts } from '@/lib/db/schema';
 import { lt, and, eq, ne, sql } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
 // Token budget per family per 24h that triggers a noisy-family alert.
 // Calibration: typical pilot family runs ~3-10k tokens/day at Haiku rates,
@@ -141,7 +142,7 @@ async function detectNoisyFamilies(): Promise<NoisyFamilyAlert[]> {
 }
 
 // Vercel Cron invokes GET — this is the primary entry point
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   if (!process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
   }
@@ -150,10 +151,10 @@ export async function GET(req: NextRequest) {
   }
 
   return runCleanup();
-}
+}, { route: 'GET /api/admin/retention' });
 
 // POST kept for manual/external triggers
-export async function POST(req: NextRequest) {
+export const POST = routeHandler(async (req: NextRequest) => {
   if (!process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
   }
@@ -162,4 +163,4 @@ export async function POST(req: NextRequest) {
   }
 
   return runCleanup();
-}
+}, { route: 'POST /api/admin/retention' });

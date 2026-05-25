@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 const BUCKETS = ['lt5m', 'to60m', 'to24h', 'to7d', 'beyond'] as const;
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -43,4 +44,4 @@ export async function GET() {
     ],
     total,
   });
-}
+}, { route: 'GET /api/admin/snapshots/health' });

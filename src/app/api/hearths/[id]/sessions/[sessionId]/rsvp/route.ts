@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import { sessionAttendance } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { requireSessionAccess } from '@/lib/auth/hearth-helpers';
@@ -12,10 +12,10 @@ const rsvpSchema = z.object({
   learnerIds: z.array(z.string().uuid()).optional(),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -50,4 +50,4 @@ export async function POST(
   }
 
   return NextResponse.json(record);
-}
+}, { route: 'POST /api/hearths/[id]/sessions/[sessionId]/rsvp' });

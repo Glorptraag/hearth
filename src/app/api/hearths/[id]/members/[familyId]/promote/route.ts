@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
 import { hearthMemberships } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export async function POST(
+export const POST = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; familyId: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
 
@@ -37,4 +37,4 @@ export async function POST(
     .returning();
 
   return NextResponse.json({ membership: updated });
-}
+}, { route: 'POST /api/hearths/[id]/members/[familyId]/promote' });

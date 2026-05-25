@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { randomBytes } from 'crypto';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { hearthInvites } from '@/lib/db/schema';
 import { requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
 
-export async function POST(
+export const POST = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -32,4 +32,4 @@ export async function POST(
     { code, expiresAt, joinUrl: '/hearths/join/' + code },
     { status: 201 }
   );
-}
+}, { route: 'POST /api/hearths/[id]/invite' });

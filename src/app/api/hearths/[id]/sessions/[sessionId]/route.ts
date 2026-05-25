@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import {
   hearthSessions,
   sessionAttendance,
@@ -16,10 +16,10 @@ import { eq, and } from 'drizzle-orm';
 import { requireHearthMember } from '@/lib/auth/hearth-helpers';
 import { triggerSessionCompleted } from '@/lib/notifications/triggers';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -58,7 +58,7 @@ export async function GET(
   ]);
 
   return NextResponse.json({ session, evidence, attendance, reflections, observations });
-}
+}, { route: 'GET /api/hearths/[id]/sessions/[sessionId]' });
 
 const patchSessionSchema = z.object({
   title: z.string().optional(),
@@ -72,10 +72,10 @@ const patchSessionSchema = z.object({
   status: z.enum(['upcoming', 'completed', 'cancelled']).optional(),
 });
 
-export async function PATCH(
+export const PATCH = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -138,4 +138,4 @@ export async function PATCH(
   }
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/hearths/[id]/sessions/[sessionId]' });

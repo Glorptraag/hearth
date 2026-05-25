@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { requireHearthMember } from '@/lib/auth/hearth-helpers';
 import {
   hearths, hearthMemberships, hearthSessions, sessionEvidence,
@@ -9,10 +9,10 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, desc, count, inArray } from 'drizzle-orm';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id: hearthId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -118,4 +118,4 @@ export async function GET(
   const narrative = settings.narrative?.text ?? null;
 
   return NextResponse.json({ narrative, stats, timeline, gallery });
-}
+}, { route: 'GET /api/hearths/[id]/our-story' });

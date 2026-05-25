@@ -3,14 +3,14 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { hearths } from '@/lib/db/schema';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import { requireHearthMember, requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
 import { eq } from 'drizzle-orm';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -26,7 +26,7 @@ export async function GET(
   if (!hearth) return apiError('Hearth not found', 404);
 
   return NextResponse.json({ ...hearth, role: membership.role });
-}
+}, { route: 'GET /api/hearths/[id]' });
 
 const patchHearthSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -35,10 +35,10 @@ const patchHearthSchema = z.object({
   settings: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function PATCH(
+export const PATCH = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -62,4 +62,4 @@ export async function PATCH(
   if (!updated) return apiError('Hearth not found', 404);
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/hearths/[id]' });

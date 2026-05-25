@@ -5,17 +5,17 @@ import { eq, and, asc } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { sessionReflections } from '@/lib/db/schema';
 import { generateTermNarrative } from '@/lib/ai/hearth-narrative';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import { requireSessionAccess } from '@/lib/auth/hearth-helpers';
 
 const reflectionSchema = z.object({
   reflectionText: z.string().min(1).max(2000),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
 
@@ -55,12 +55,12 @@ export async function POST(
   );
 
   return NextResponse.json(reflection, { status: 201 });
-}
+}, { route: 'POST /api/hearths/[id]/sessions/[sessionId]/reflections' });
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
 
@@ -88,4 +88,4 @@ export async function GET(
   }));
 
   return NextResponse.json(result);
-}
+}, { route: 'GET /api/hearths/[id]/sessions/[sessionId]/reflections' });

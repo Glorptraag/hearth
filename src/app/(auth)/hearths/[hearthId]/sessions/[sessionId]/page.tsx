@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Paperclip, NotePencil } from '@/components/icons';
+import { Paperclip, NotePencil, Lifebuoy } from '@/components/icons';
 import { db } from '@/lib/db';
 import {
   hearths,
@@ -14,6 +14,21 @@ import {
 import { eq, and, inArray } from 'drizzle-orm';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { getHearthMembership } from '@/lib/auth/hearth-helpers';
+import { safeLoad } from '@/lib/server/safe-load';
+import EmptyState from '@/components/ui/EmptyState';
+
+function SessionErrorState({ hearthId }: { hearthId: string }) {
+  return (
+    <div className="mx-auto max-w-2xl px-lg py-2xl">
+      <EmptyState
+        icon={Lifebuoy}
+        heading="Couldn't load this session"
+        body="Something went wrong on our side. Try again in a moment."
+        cta={{ label: 'Back to Hearth', href: `/hearths/${hearthId}` }}
+      />
+    </div>
+  );
+}
 
 export default async function SessionDetailPage({
   params,
@@ -24,49 +39,67 @@ export default async function SessionDetailPage({
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
-  const family = await getFamilyByClerkId(userId);
+  const familyResult = await safeLoad('hearths/[hearthId]/sessions/[sessionId]', () =>
+    getFamilyByClerkId(userId),
+  );
+  if (!familyResult.ok) return <SessionErrorState hearthId={hearthId} />;
+  const family = familyResult.data;
   if (!family) redirect('/onboarding');
 
-  const membership = await getHearthMembership(family.id, hearthId);
+  const membershipResult = await safeLoad('hearths/[hearthId]/sessions/[sessionId]', () =>
+    getHearthMembership(family.id, hearthId),
+  );
+  if (!membershipResult.ok) return <SessionErrorState hearthId={hearthId} />;
+  const membership = membershipResult.data;
   if (!membership) redirect('/dashboard');
 
-  // Parallel data fetches
-  const [hearth, session, evidence, observations, familyLearners] = await Promise.all([
-    db.query.hearths.findFirst({ where: eq(hearths.id, hearthId) }),
-    db.query.hearthSessions.findFirst({
-      where: and(eq(hearthSessions.id, sessionId), eq(hearthSessions.hearthId, hearthId)),
-    }),
-    db.query.sessionEvidence.findMany({
-      where: eq(sessionEvidence.sessionId, sessionId),
-    }),
-    // PRIVACY: only load observations targeting THIS family
-    db.query.suggestedObservations.findMany({
-      where: and(
-        eq(suggestedObservations.sessionId, sessionId),
-        eq(suggestedObservations.targetFamilyId, family.id),
-      ),
-    }),
-    db.query.learners.findMany({
-      where: eq(learners.familyId, family.id),
-    }),
-  ]);
+  const result = await safeLoad('hearths/[hearthId]/sessions/[sessionId]', async () => {
+    const [hearth, session, evidence, observations, familyLearners] = await Promise.all([
+      db.query.hearths.findFirst({ where: eq(hearths.id, hearthId) }),
+      db.query.hearthSessions.findFirst({
+        where: and(eq(hearthSessions.id, sessionId), eq(hearthSessions.hearthId, hearthId)),
+      }),
+      db.query.sessionEvidence.findMany({
+        where: eq(sessionEvidence.sessionId, sessionId),
+      }),
+      // PRIVACY: only load observations targeting THIS family
+      db.query.suggestedObservations.findMany({
+        where: and(
+          eq(suggestedObservations.sessionId, sessionId),
+          eq(suggestedObservations.targetFamilyId, family.id),
+        ),
+      }),
+      db.query.learners.findMany({
+        where: eq(learners.familyId, family.id),
+      }),
+    ]);
 
-  if (!hearth || !session) redirect(`/hearths/${hearthId}`);
+    if (!hearth || !session) {
+      return { hearth, session, evidence, observations, familyLearners, facilitatorFamily: null, observerFamilyMap: new Map<string, string>() };
+    }
 
-  // Load facilitator name
-  const facilitatorFamily = await db.query.families.findFirst({
-    where: eq(families.id, session.facilitatorFamilyId),
+    // Load facilitator name
+    const facilitatorFamily = await db.query.families.findFirst({
+      where: eq(families.id, session.facilitatorFamilyId),
+    });
+
+    // Batch load observer families for observations
+    let observerFamilyMap = new Map<string, string>();
+    if (observations.length > 0) {
+      const observerFamilyIds = [...new Set(observations.map((o) => o.observerFamilyId))];
+      const observerFamilies = await db.query.families.findMany({
+        where: inArray(families.id, observerFamilyIds),
+      });
+      observerFamilyMap = new Map(observerFamilies.map((f) => [f.id, f.familyName]));
+    }
+
+    return { hearth, session, evidence, observations, familyLearners, facilitatorFamily, observerFamilyMap };
   });
 
-  // Batch load observer families for observations
-  let observerFamilyMap = new Map<string, string>();
-  if (observations.length > 0) {
-    const observerFamilyIds = [...new Set(observations.map((o) => o.observerFamilyId))];
-    const observerFamilies = await db.query.families.findMany({
-      where: inArray(families.id, observerFamilyIds),
-    });
-    observerFamilyMap = new Map(observerFamilies.map((f) => [f.id, f.familyName]));
-  }
+  if (!result.ok) return <SessionErrorState hearthId={hearthId} />;
+  const { hearth, session, evidence, observations, familyLearners, facilitatorFamily, observerFamilyMap } = result.data;
+
+  if (!hearth || !session) redirect(`/hearths/${hearthId}`);
 
   // Map learner IDs to learner records
   const learnerMap = new Map(familyLearners.map((l) => [l.id, l]));

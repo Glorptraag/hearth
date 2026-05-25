@@ -8,7 +8,23 @@ import {
   getHearthMembership,
   sanitizeMembersForExposure,
 } from '@/lib/auth/hearth-helpers';
+import { safeLoad } from '@/lib/server/safe-load';
+import EmptyState from '@/components/ui/EmptyState';
+import { Lifebuoy } from '@/components/icons';
 import HearthHomeClient from '@/components/hearth/HearthHomeClient';
+
+function HearthErrorState() {
+  return (
+    <div className="mx-auto max-w-2xl px-lg py-2xl">
+      <EmptyState
+        icon={Lifebuoy}
+        heading="Couldn't load this Hearth"
+        body="Something went wrong on our side. Try again in a moment."
+        cta={{ label: 'Back to Dashboard', href: '/dashboard' }}
+      />
+    </div>
+  );
+}
 
 export default async function HearthHomePage({
   params,
@@ -19,22 +35,34 @@ export default async function HearthHomePage({
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
-  const family = await getFamilyByClerkId(userId);
+  const familyResult = await safeLoad('hearths/[hearthId]', () => getFamilyByClerkId(userId));
+  if (!familyResult.ok) return <HearthErrorState />;
+  const family = familyResult.data;
   if (!family) redirect('/onboarding');
 
-  const membership = await getHearthMembership(family.id, hearthId);
+  const membershipResult = await safeLoad('hearths/[hearthId]', () =>
+    getHearthMembership(family.id, hearthId),
+  );
+  if (!membershipResult.ok) return <HearthErrorState />;
+  const membership = membershipResult.data;
   if (!membership) redirect('/dashboard');
 
-  const [hearth, sessions, members, familyLearners] = await Promise.all([
-    db.query.hearths.findFirst({ where: eq(hearths.id, hearthId) }),
-    db
-      .select()
-      .from(hearthSessions)
-      .where(eq(hearthSessions.hearthId, hearthId))
-      .orderBy(desc(hearthSessions.date)),
-    sanitizeMembersForExposure(hearthId),
-    db.select().from(learners).where(eq(learners.familyId, family.id)),
-  ]);
+  const result = await safeLoad('hearths/[hearthId]', async () => {
+    const [hearth, sessions, members, familyLearners] = await Promise.all([
+      db.query.hearths.findFirst({ where: eq(hearths.id, hearthId) }),
+      db
+        .select()
+        .from(hearthSessions)
+        .where(eq(hearthSessions.hearthId, hearthId))
+        .orderBy(desc(hearthSessions.date)),
+      sanitizeMembersForExposure(hearthId),
+      db.select().from(learners).where(eq(learners.familyId, family.id)),
+    ]);
+    return { hearth, sessions, members, familyLearners };
+  });
+
+  if (!result.ok) return <HearthErrorState />;
+  const { hearth, sessions, members, familyLearners } = result.data;
 
   if (!hearth) redirect('/dashboard');
 

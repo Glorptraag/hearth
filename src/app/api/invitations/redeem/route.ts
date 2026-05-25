@@ -5,13 +5,14 @@ import { invitations } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { normalizeCode } from '@/lib/admin/invitation-codes';
 import { z } from 'zod';
+import { routeHandler } from '@/lib/api-helpers';
 
 const redeemSchema = z.object({
   code: z.string().min(1),
   familyId: z.string().uuid(),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = routeHandler(async (req: NextRequest) => {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -60,4 +61,4 @@ export async function POST(req: NextRequest) {
     .where(eq(invitations.id, invitation.id));
 
   return NextResponse.json({ ok: true });
-}
+}, { route: 'POST /api/invitations/redeem' });

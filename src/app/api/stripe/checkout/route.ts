@@ -11,7 +11,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { getStripe } from '@/lib/stripe/client';
 import { rateLimit } from '@/lib/rate-limit';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
 const bodySchema = z.object({
   packId: z.string().min(1),
@@ -20,7 +20,7 @@ const bodySchema = z.object({
   returnUrl: z.string().url().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -86,4 +86,4 @@ export async function POST(request: NextRequest) {
     console.error('[stripe-checkout] session create failed:', err);
     return NextResponse.json({ error: 'Checkout creation failed' }, { status: 500 });
   }
-}
+}, { route: 'POST /api/stripe/checkout' });

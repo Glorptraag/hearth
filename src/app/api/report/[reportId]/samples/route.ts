@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { complianceReports, workSamples, learningEntries } from '@/lib/db/schema';
-import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
 type Params = { params: Promise<{ reportId: string }> };
 
 // GET /api/report/[reportId]/samples — all samples with annotations
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = routeHandler(async (request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { family } = result;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   }));
 
   return NextResponse.json(enriched);
-}
+}, { route: 'GET /api/report/[reportId]/samples' });
 
 const assignSampleSchema = z.object({
   slot: z.string(),
@@ -49,7 +49,7 @@ const assignSampleSchema = z.object({
 });
 
 // PATCH /api/report/[reportId]/samples — assign or clear an entry on a slot
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -108,4 +108,4 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/report/[reportId]/samples' });

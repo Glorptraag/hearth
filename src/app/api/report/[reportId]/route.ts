@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { complianceReports } from '@/lib/db/schema';
-import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
@@ -14,7 +14,7 @@ const updateReportSchema = z.object({
 });
 
 // PATCH /api/report/[reportId] — update report metadata (choice area, status)
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -45,4 +45,4 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/report/[reportId]' });

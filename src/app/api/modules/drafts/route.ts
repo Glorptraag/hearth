@@ -6,8 +6,9 @@ import { moduleDrafts } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { enrichModuleDraft } from '@/lib/ai/enrich-module';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -20,7 +21,7 @@ export async function GET() {
   });
 
   return NextResponse.json(drafts);
-}
+}, { route: 'GET /api/modules/drafts' });
 
 const createDraftSchema = z.object({
   pathway: z.enum(['material', 'process', 'inquiry', 'retrospective', 'understanding']),
@@ -28,7 +29,7 @@ const createDraftSchema = z.object({
   status: z.enum(['draft', 'complete']).optional().default('draft'),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -58,4 +59,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(draft, { status: 201 });
-}
+}, { route: 'POST /api/modules/drafts' });

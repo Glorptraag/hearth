@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { isAdmin } from '@/lib/auth/admin';
 import { seedContentAssets } from '@/scripts/seed-content-assets';
+import { routeHandler } from '@/lib/api-helpers';
 
 /**
  * POST /api/seed/content-assets
@@ -12,7 +13,7 @@ import { seedContentAssets } from '@/scripts/seed-content-assets';
  *
  * Requires authentication. Production-restricted to admin users.
  */
-export async function POST(_req: NextRequest) {
+export const POST = routeHandler(async (_req: NextRequest) => {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -42,4 +43,4 @@ export async function POST(_req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { route: 'POST /api/seed/content-assets' });

@@ -4,8 +4,9 @@ import { db } from '@/lib/db';
 import { families } from '@/lib/db/schema';
 import { getOrCreateFamily } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST() {
+export const POST = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -21,4 +22,4 @@ export async function POST() {
     .where(eq(families.id, family.id));
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'POST /api/welcome/complete' });

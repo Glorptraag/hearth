@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { complianceReports, workSamples, learners } from '@/lib/db/schema';
-import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
@@ -16,7 +16,7 @@ const WORK_SAMPLE_SLOTS = [
 ] as const;
 
 // GET /api/report?learnerId=...&year=...
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { family } = result;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({ ...report, samples });
-}
+}, { route: 'GET /api/report' });
 
 const createReportSchema = z.object({
   learnerId: z.string().uuid(),
@@ -49,7 +49,7 @@ const createReportSchema = z.object({
 });
 
 // POST /api/report — create report + 6 empty work sample slots
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -105,4 +105,4 @@ export async function POST(request: NextRequest) {
   const samples = await db.insert(workSamples).values(sampleRows).returning();
 
   return NextResponse.json({ ...report, samples }, { status: 201 });
-}
+}, { route: 'POST /api/report' });

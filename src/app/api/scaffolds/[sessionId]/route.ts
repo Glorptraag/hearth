@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { apiError, authenticatedFamily } from '@/lib/api-helpers';
+import { apiError, authenticatedFamily, routeHandler } from '@/lib/api-helpers';
 import {
   hearthSessions,
   sessionAttendance,
@@ -10,10 +10,10 @@ import {
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
-) {
+) => {
   const { sessionId } = await params;
 
   const result = await authenticatedFamily();
@@ -89,4 +89,4 @@ export async function GET(
     observations: observationRows,
     attendingLearnerIds: attendance.learnerIds ?? [],
   });
-}
+}, { route: 'GET /api/scaffolds/[sessionId]' });

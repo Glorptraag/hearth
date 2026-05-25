@@ -5,8 +5,9 @@ import { families, familyLibrary } from '@/lib/db/schema';
 import { getOrCreateFamily } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST() {
+export const POST = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -39,4 +40,4 @@ export async function POST() {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'POST /api/onboarding/complete' });

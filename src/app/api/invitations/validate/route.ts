@@ -3,8 +3,9 @@ import { db } from '@/lib/db';
 import { invitations } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { normalizeCode } from '@/lib/admin/invitation-codes';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const rawCode = req.nextUrl.searchParams.get('code');
   if (!rawCode) {
     return NextResponse.json({ valid: false, error: 'no_code' }, { status: 400 });
@@ -54,4 +55,4 @@ export async function GET(req: NextRequest) {
       locationState: invitation.intendedLocationState ?? undefined,
     },
   });
-}
+}, { route: 'GET /api/invitations/validate' });

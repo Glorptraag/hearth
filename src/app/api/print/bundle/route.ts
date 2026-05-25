@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticatedFamily, parseBody } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, routeHandler } from '@/lib/api-helpers';
 import { checkBulkAccess } from '@/lib/entitlements';
 import { sanityClient } from '@/lib/sanity/client';
 import { ASSET_DETAIL_QUERY, COMMONS_TEXT_DETAIL_QUERY } from '@/lib/sanity/queries';
@@ -26,7 +26,7 @@ const bundleSchema = z.object({
  * Streams the PDF directly in the response — no external storage.
  * Warnings are returned via X-Bundle-Warnings header (JSON-encoded).
  */
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily({ rateLimitKey: 'print-bundle', rateLimit: 10, rateLimitWindow: 60_000 });
   if ('error' in result) return result.error;
 
@@ -164,4 +164,4 @@ export async function POST(request: NextRequest) {
   }
 
   return new NextResponse(Buffer.from(mergedBytes), { status: 200, headers });
-}
+}, { route: 'POST /api/print/bundle' });

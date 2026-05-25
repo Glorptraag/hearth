@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { isAdmin } from '@/lib/auth/admin';
 import { seedCapabilityThreads } from '@/scripts/seed-capability-threads';
+import { routeHandler } from '@/lib/api-helpers';
 
 /**
  * POST /api/seed/capability-threads
@@ -11,7 +12,7 @@ import { seedCapabilityThreads } from '@/scripts/seed-capability-threads';
  *
  * Response: { success: boolean; created: number; failed: number; message: string }
  */
-export async function POST(_req: NextRequest) {
+export const POST = routeHandler(async (_req: NextRequest) => {
   try {
     // Require authentication
     const { userId } = await auth();
@@ -52,4 +53,4 @@ export async function POST(_req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { route: 'POST /api/seed/capability-threads' });

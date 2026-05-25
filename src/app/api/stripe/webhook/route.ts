@@ -16,11 +16,12 @@ import { db } from '@/lib/db';
 import { entitlements } from '@/lib/db/schema';
 import { trackServer } from '@/lib/analytics/posthog-server';
 import type Stripe from 'stripe';
+import { routeHandler } from '@/lib/api-helpers';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const sig = request.headers.get('stripe-signature');
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!sig || !secret) {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
-}
+}, { route: 'POST /api/stripe/webhook' });
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const familyId = session.metadata?.familyId;

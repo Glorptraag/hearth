@@ -1,11 +1,7 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { addMonths, subDays, addDays, format } from 'date-fns';
 import * as schema from './schema';
-
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql, { schema });
+import { db } from './index';
 
 async function seed() {
   console.log('🌱 Seeding database...');

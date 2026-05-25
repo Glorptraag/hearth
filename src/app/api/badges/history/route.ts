@@ -5,8 +5,9 @@ import { badgeAssessmentLogs, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, desc } from 'drizzle-orm';
 import { resolveBadgeDefinitionId } from '@/lib/resolve-badge-id';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -41,4 +42,4 @@ export async function GET(request: NextRequest) {
     .limit(10);
 
   return NextResponse.json(logs);
-}
+}, { route: 'GET /api/badges/history' });

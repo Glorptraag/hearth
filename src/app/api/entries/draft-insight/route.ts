@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { rateLimit } from '@/lib/rate-limit';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { generateDraftInsight } from '@/lib/ai/draft-insight';
 
 const schema = z.object({
@@ -11,7 +11,7 @@ const schema = z.object({
   childNames: z.array(z.string().max(60)).max(10).optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   // Feature flag (decision B — firm flag to kill instantly if cost spikes).
   // Default ON in production; unset or "false" disables the endpoint.
   if (process.env.DRAFT_INSIGHTS_ENABLED === 'false') {
@@ -49,4 +49,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(insight);
-}
+}, { route: 'POST /api/entries/draft-insight' });

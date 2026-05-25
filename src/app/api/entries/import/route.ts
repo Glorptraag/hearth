@@ -6,6 +6,7 @@ import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { SUBJECTS } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { routeHandler } from '@/lib/api-helpers';
 
 // CSV format expected:
 // title,dateOccurred,subjects,description
@@ -54,7 +55,7 @@ function validateDate(raw: string): string | null {
   return null;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -138,4 +139,4 @@ export async function POST(request: NextRequest) {
     imported: saved.length,
     errors: errors.length > 0 ? errors : undefined,
   });
-}
+}, { route: 'POST /api/entries/import' });

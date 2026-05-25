@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { badgeAwards, badgeAssessmentLogs, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { resolveBadgeDefinitionId } from '@/lib/resolve-badge-id';
@@ -21,7 +21,7 @@ const awardSchema = z.object({
   ),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -63,4 +63,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ award }, { status: 201 });
-}
+}, { route: 'POST /api/badges/award' });

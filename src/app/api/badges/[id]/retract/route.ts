@@ -4,11 +4,12 @@ import { db } from '@/lib/db';
 import { badgeAwards, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function PATCH(
+export const PATCH = routeHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -35,4 +36,4 @@ export async function PATCH(
     .where(eq(badgeAwards.id, id));
 
   return NextResponse.json({ ok: true, retracted: !restore });
-}
+}, { route: 'PATCH /api/badges/[id]/retract' });

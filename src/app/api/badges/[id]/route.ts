@@ -5,11 +5,12 @@ import { badgeDefinitions } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { SEED_BADGES } from '@/lib/seed-badges';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -54,4 +55,4 @@ export async function GET(
     assessmentQuestions,
     source: 'database',
   });
-}
+}, { route: 'GET /api/badges/[id]' });

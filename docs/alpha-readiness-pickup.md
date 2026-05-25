@@ -75,11 +75,13 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
    DO join correctly (this was a bug, now fixed). The family-level
    aggregation fix still wants to happen — see
    `src/components/analytics/PostHogProvider.tsx`.
-5. **22 pre-existing ESLint errors** (mostly `@typescript-eslint/no-explicit-any`
+5. ~~**22 pre-existing ESLint errors** (mostly `@typescript-eslint/no-explicit-any`
    plus one `@next/next/no-html-link-for-pages` and two setState-in-effect
    warnings). None in files touched this sprint. While they exist, the
    CI workflow keeps `lint` as `continue-on-error: true`. Clearing them
-   is the gating task before lint becomes a required check.
+   is the gating task before lint becomes a required check.~~
+   **[Superseded 2026-05-25]** Lint is now 0 errors / 10 warnings and is a
+   required CI check (no `continue-on-error`). Verified via `npm run lint`.
 6. **Pedagogy wizard prioritisation uses ↑↓ buttons, not drag.** The
    spec allows either; arrows are more accessible and have no dep
    cost. If real users ask for drag, revisit.

@@ -5,9 +5,9 @@ import { db } from '@/lib/db';
 import { badgeDefinitions } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, or, isNull } from 'drizzle-orm';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -22,7 +22,7 @@ export async function GET() {
   });
 
   return NextResponse.json(badges);
-}
+}, { route: 'GET /api/badges' });
 
 const createBadgeSchema = z.object({
   title: z.string().min(1),
@@ -34,7 +34,7 @@ const createBadgeSchema = z.object({
   observationThreshold: z.number().min(1).optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -53,4 +53,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(badge, { status: 201 });
-}
+}, { route: 'POST /api/badges' });

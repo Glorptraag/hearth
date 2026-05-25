@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { badgeAssessmentLogs, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { addDays } from 'date-fns';
 import { resolveBadgeDefinitionId } from '@/lib/resolve-badge-id';
@@ -21,7 +21,7 @@ const deferSchema = z.object({
   ),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -50,4 +50,4 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ deferred: true, coolingUntil });
-}
+}, { route: 'POST /api/badges/defer' });

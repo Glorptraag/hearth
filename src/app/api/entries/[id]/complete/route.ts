@@ -6,10 +6,11 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { routeHandler } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function POST(request: NextRequest, { params }: Params) {
+export const POST = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -53,4 +54,4 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
 
   return NextResponse.json(updated);
-}
+}, { route: 'POST /api/entries/[id]/complete' });

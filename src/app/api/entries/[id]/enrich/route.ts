@@ -16,10 +16,11 @@ import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { rateLimit } from '@/lib/rate-limit';
 import { trackServer } from '@/lib/analytics/posthog-server';
+import { routeHandler } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function POST(_request: NextRequest, { params }: Params) {
+export const POST = routeHandler(async (_request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -74,4 +75,4 @@ export async function POST(_request: NextRequest, { params }: Params) {
   });
 
   return NextResponse.json({ status: 'pending' }, { status: 202 });
-}
+}, { route: 'POST /api/entries/[id]/enrich' });

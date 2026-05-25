@@ -9,7 +9,7 @@ import {
   learners,
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and, or, isNull } from 'drizzle-orm';
 
 const checkSchema = z.object({
@@ -27,7 +27,7 @@ type SnapshotData = {
   children?: Record<string, { active_threads?: ActiveThread[] }>;
 };
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -92,4 +92,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ badgeIds: crossedThreshold });
-}
+}, { route: 'POST /api/badges/check-thresholds' });

@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and, lte } from 'drizzle-orm';
 import { NOTIFICATION_STATES } from '@/types';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -36,14 +36,14 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
-}
+}, { route: 'GET /api/notifications' });
 
 const updateNotificationSchema = z.object({
   ids: z.array(z.string().uuid()),
   state: z.enum(NOTIFICATION_STATES),
 });
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -70,4 +70,4 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/notifications' });

@@ -16,10 +16,10 @@ import { enrichEntry } from '@/lib/ai/enrich';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
 import { rateLimit } from '@/lib/rate-limit';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { trackServer } from '@/lib/analytics/posthog-server';
 
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     .offset(offset);
 
   return NextResponse.json(entries);
-}
+}, { route: 'GET /api/entries' });
 
 const observationDetailSchema = z.object({
   detail: z.string(),
@@ -84,7 +84,7 @@ const createEntrySchema = z.object({
   mode: z.enum(['guided', 'quick']).optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -193,4 +193,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(entry, { status: 201 });
-}
+}, { route: 'POST /api/entries' });

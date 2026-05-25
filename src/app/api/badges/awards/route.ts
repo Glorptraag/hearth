@@ -4,8 +4,9 @@ import { db } from '@/lib/db';
 import { badgeAwards, badgeDefinitions, learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, isNull } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -44,4 +45,4 @@ export async function GET(request: NextRequest) {
     .where(whereClause);
 
   return NextResponse.json(awards);
-}
+}, { route: 'GET /api/badges/awards' });

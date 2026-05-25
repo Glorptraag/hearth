@@ -54,3 +54,61 @@ export async function parseBody<T>(
   }
   return { data: parsed.data };
 }
+
+/**
+ * Wrap a route handler so uncaught throws return JSON-500 instead of HTML.
+ *
+ * The 2026-05-25 incident showed how a single unrun migration cascaded into
+ * a white-screen crash on every client page that called `.json()` on the
+ * resulting HTML 500 body (WebKit throws SyntaxError synchronously). The
+ * server-side fix is to never return HTML on error — always JSON.
+ *
+ * Usage:
+ *
+ *   export const GET = routeHandler(async () => {
+ *     const result = await db.query.X.findMany(...);
+ *     return NextResponse.json(result);
+ *   }, { route: 'GET /api/learners' });
+ *
+ * The wrapper:
+ *  - Catches uncaught throws.
+ *  - Logs to console.error and Sentry (with route tag).
+ *  - Returns NextResponse.json({ error: 'Internal Server Error' }, { status: 500 }).
+ *
+ * The `route` tag is optional but strongly recommended for Sentry triage.
+ */
+// Permissive handler signature so callers don't have to widen union returns
+// (eg. authenticatedFamily()'s discriminated union confuses strict inference).
+// The wrapper itself always resolves to a real Response; if the inner returns
+// undefined we treat it as a 500.
+type RouteResult = NextResponse | Response | undefined;
+
+export function routeHandler<TArgs extends unknown[]>(
+  handler: (...args: TArgs) => Promise<RouteResult>,
+  opts?: { route?: string }
+): (...args: TArgs) => Promise<NextResponse | Response> {
+  return async (...args: TArgs) => {
+    try {
+      const res = await handler(...args);
+      if (!res) {
+        const tag = opts?.route ?? 'unknown';
+        console.error(`[routeHandler ${tag}] handler returned undefined`);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+      }
+      return res;
+    } catch (err) {
+      const tag = opts?.route ?? 'unknown';
+      console.error(`[routeHandler ${tag}]`, err);
+      try {
+        const Sentry = await import('@sentry/nextjs');
+        Sentry.captureException(err, {
+          tags: { pipeline: 'route-handler', route: tag },
+        });
+      } catch {
+        // Sentry import can fail in test env or if the SDK is misconfigured.
+        // Never let observability crash the response.
+      }
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+  };
+}

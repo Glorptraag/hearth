@@ -9,8 +9,9 @@ import {
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, desc } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -52,4 +53,4 @@ export async function GET() {
     familyName: family.familyName,
     todayEntryCount,
   });
-}
+}, { route: 'GET /api/dashboard' });

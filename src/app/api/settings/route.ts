@@ -7,9 +7,9 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { PEDAGOGIES } from '@/types';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -29,7 +29,7 @@ export async function GET() {
   }
 
   return NextResponse.json(settings);
-}
+}, { route: 'GET /api/settings' });
 
 const updateSettingsSchema = z.object({
   pedagogyPreference: z.enum(PEDAGOGIES).optional(),
@@ -41,7 +41,7 @@ const updateSettingsSchema = z.object({
   notificationPrefs: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -81,4 +81,4 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/settings' });

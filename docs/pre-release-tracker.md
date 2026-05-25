@@ -186,11 +186,10 @@ Once those three are done, this tracker can be deleted at pilot launch.
 **Process gaps identified.**
 
 1. Migrations were merged to `main` (PRs #73, #75) without `npm run db:migrate` being run first — runbook §2 violation. Mitigation: future migration-bearing PRs should either (a) run the migration before merging, or (b) have the migration script auto-run on Vercel deploy. Currently it's a manual step that's easy to forget.
-2. `scripts/check-migration-drift.mjs` has a tag-vs-hash comparison bug (lines 51-58 compare `__drizzle_migrations.hash` SHA256 storage against `journal.entries.map((e) => e.tag)`). It always reports false-positive MISSING/EXTRA, so it can't be trusted to confirm a migration ran. **Open follow-up.**
+2. `scripts/check-migration-drift.mjs` had a tag-vs-hash comparison bug — root cause turned out to be that the `__drizzle_migrations.hash` column actually holds **two** formats in prod: rows 0..15 are tag names (legacy custom migrator), rows 16+ are SHA256(sql) (standard drizzle migrator, populated when the 3 missed migrations were applied during this incident). ✅ Fixed 2026-05-25 (`da3bf10`): checker now accepts either form per entry and reports clean against prod (`OK — 19 migrations applied in order`).
 
 **Remaining open follow-ups (chipped for spawn):**
 
 - Wrap remaining ~75 API routes with `routeHandler` (mechanical, one PR per route group).
 - Lazy `getDb()` + typed `ConfigError` in `src/lib/db/index.ts` so missing `DATABASE_URL` fails with a JSON-500 instead of module-load crash.
 - Wrap 8 `(auth)/**/page.tsx` server-component DB reads in try/catch with route-specific error UI; log `error.digest` from `(auth)/error.tsx`.
-- Fix `scripts/check-migration-drift.mjs` tag-vs-hash bug so we can trust the drift detector.

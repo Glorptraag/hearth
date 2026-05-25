@@ -1,5 +1,6 @@
 <!-- Version: 2 | Date: 2026-04-21 | Changes: Rewrote as living status doc reflecting the wizard / analytics / cost-dashboard sprint; consolidated honest caveats + known limitations; original 19 Apr handover preserved in History section. -->
 <!-- Stale-caveat sweep: 2026-05-13 — caveats §8, §9 and the §16 list (Constellation L3, Portfolio card differentiation) were marked obsolete after audit verification against the code. See docs/pre-release-tracker.md §D. -->
+<!-- Incident-amplifier hardening: 2026-05-25 — PRs #78–#84 closed the white-screen-on-API-error class of failure. Every API route now returns JSON on error; every client `.json()` is guarded; drift checker gates deploys. See docs/incident-runbook.md §7. -->
 
 # Alpha-Readiness — Status
 

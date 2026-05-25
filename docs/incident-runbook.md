@@ -192,4 +192,22 @@ Once resolved, append to §7 with one paragraph: symptom, cause, fix, prevention
 
 ## 7. Recent incidents
 
-> Empty for now — log incidents here as they occur. Format: `### YYYY-MM-DD — one-line summary` followed by 3–5 sentences covering what happened, what we did, what we changed.
+> Log incidents here as they occur. Format: `### YYYY-MM-DD — one-line summary` followed by 3–5 sentences covering what happened, what we did, what we changed.
+
+### 2026-05-25 — Unrun migration cascaded into white-screen on every client page
+
+**Symptom.** `/our-story/portfolio` and several other dashboard pages crashed with `SyntaxError: The string did not match the expected pattern` in WebKit. The page rendered blank because React error boundaries didn't catch the synchronous parse throw.
+
+**Cause.** Migration `0016` had landed in `drizzle/meta` but hadn't run against the deployed Neon branch. The first query against the affected table threw a Postgres `relation does not exist` error, which bubbled up as an uncaught throw from the API route. Next.js wrapped that in a default HTML 500 page. The client's `await res.json()` parser then choked on the HTML and threw synchronously inside the render path — bypassing every error boundary because the throw happened during the `.json()` await, before the response body became state.
+
+**Amplifiers.** The root cause was the unrun migration, but the blast radius (every page that fetched anything → white screen) came from three structural problems:
+1. **Server returned HTML on error.** Next.js default 500 page is HTML; we never enforced JSON.
+2. **Client called `.json()` without a content-type or status guard.** Every fetch in the app assumed a JSON body on every status code.
+3. **No drift checker.** Migration drift between the repo and the deployment was silent until the first runtime query.
+
+**Fix shipped (PRs #78 → #84).**
+- **#78** — guarded every client `.json()` so 5xx returns no longer parse-throw.
+- **#79** — lazy db imports, error boundaries on auth-protected segments, `routeHandler` wrapper, drift checker added to deploy gate.
+- **#80–#84** — mechanical sweep wrapping all 108 API route files with `routeHandler` from `src/lib/api-helpers.ts`. The wrapper catches uncaught throws and returns `NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })` plus a tagged Sentry capture (`pipeline:route-handler`, `route:<METHOD /api/path>`, `error_kind:runtime|config`).
+
+**Prevention.** The class of incident is now structurally impossible: every API route returns JSON on error, every client `.json()` is guarded, and the drift checker fails the deploy if `drizzle/meta` is ahead of the database. Any new route added to `src/app/api/**/route.ts` should follow the `routeHandler` pattern — there's a lint check tracked but not yet wired (TODO). If a future incident matches the symptom "white screen on dashboard pages", the first investigation step is the Vercel deploy log + the drift checker status, not the client console.

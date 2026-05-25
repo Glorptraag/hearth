@@ -209,13 +209,21 @@ export default function PortfolioPage() {
   }
 
   useEffect(() => {
+    // Guarded fetch: a 5xx from /api/learners (eg. unrun migration) would
+    // otherwise throw SyntaxError on r.json() and white-screen the page.
+    // See incident 2026-05-25 — migration 0016 left a missing column.
     fetch('/api/learners')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setLearners(data);
           setSelectedLearnerId(data[0].id);
         }
+      })
+      .catch(() => {
+        // Degrade silently to empty learners; loading-end below releases the spinner.
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
@@ -228,24 +236,31 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     if (!selectedLearnerId) return;
+    // Each fetch self-guards: a 5xx from any one endpoint must NOT crash the
+    // whole page via JSON-parse SyntaxError. Failed fetches degrade to empty data.
+    const jsonOr = <T,>(fallback: T) => (r: Response) =>
+      r.ok ? (r.json() as Promise<T>) : Promise.resolve(fallback);
     Promise.all([
-      fetch(`/api/entries?learnerId=${selectedLearnerId}`).then((r) => r.json()),
-      fetch(`/api/badges/awards?learnerId=${selectedLearnerId}&includeArchived=true`).then((r) => r.json()),
-      fetch(`/api/capabilities/${selectedLearnerId}`).then((r) => r.json()),
-      fetch('/api/snapshot').then((r) => r.json()).catch(() => ({})),
+      fetch(`/api/entries?learnerId=${selectedLearnerId}`).then(jsonOr<unknown[]>([])).catch(() => []),
+      fetch(`/api/badges/awards?learnerId=${selectedLearnerId}&includeArchived=true`)
+        .then(jsonOr<unknown[]>([])).catch(() => []),
+      fetch(`/api/capabilities/${selectedLearnerId}`).then(jsonOr<unknown>([])).catch(() => []),
+      fetch('/api/snapshot').then(jsonOr<unknown>({})).catch(() => ({})),
     ]).then(([e, b, t, snap]) => {
-      setEntries(Array.isArray(e) ? e : []);
+      setEntries(Array.isArray(e) ? (e as Entry[]) : []);
       setEntriesFetchedAtMs(Date.now());
-      setBadges(Array.isArray(b) ? b : []);
+      setBadges(Array.isArray(b) ? (b as BadgeAward[]) : []);
       // /api/capabilities/[learnerId] returns { activeThreads, dloStatus };
       // accept the legacy bare-array shape too.
-      const threadList = Array.isArray(t)
-        ? t
-        : Array.isArray(t?.activeThreads)
-          ? t.activeThreads
+      const tt = t as { activeThreads?: unknown[] } | unknown[];
+      const threadList = Array.isArray(tt)
+        ? tt
+        : Array.isArray((tt as { activeThreads?: unknown[] })?.activeThreads)
+          ? (tt as { activeThreads: unknown[] }).activeThreads
           : [];
-      setThreads(threadList);
-      const childSnap = snap?.snapshotData?.children?.[selectedLearnerId];
+      setThreads(threadList as ActiveThread[]);
+      const childSnap = (snap as { snapshotData?: { children?: Record<string, { monthly_narrative?: string }> } })
+        ?.snapshotData?.children?.[selectedLearnerId];
       setMonthlyNarrative(childSnap?.monthly_narrative ?? '');
     });
   }, [selectedLearnerId]);

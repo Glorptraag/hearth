@@ -328,9 +328,12 @@ export default function LogPage() {
   const [learners, setLearners] = useState<Learner[]>([]);
   const [isLoadingLearners, setIsLoadingLearners] = useState(true);
   useEffect(() => {
+    // Guarded: a 5xx from /api/learners must NOT crash Logger via JSON-parse
+    // SyntaxError. See incident 2026-05-25 (missing migration 0016).
     fetch('/api/learners')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
       .then((data) => { if (Array.isArray(data)) setLearners(data); })
+      .catch(() => { /* degrade to empty learners; learner picker shows empty state */ })
       .finally(() => setIsLoadingLearners(false));
   }, []);
 

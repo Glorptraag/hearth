@@ -191,5 +191,5 @@ Once those three are done, this tracker can be deleted at pilot launch.
 **Remaining open follow-ups (chipped for spawn):**
 
 - Wrap remaining ~75 API routes with `routeHandler` (mechanical, one PR per route group).
-- Lazy `getDb()` + typed `ConfigError` in `src/lib/db/index.ts` so missing `DATABASE_URL` fails with a JSON-500 instead of module-load crash.
+- ~~Lazy `getDb()` + typed `ConfigError` in `src/lib/db/index.ts`~~ ✅ Done 2026-05-25 (`09f96ce`). `db` is a Proxy over a memoised `getDb()`; missing `DATABASE_URL` now throws `ConfigError` on first use (not module load), and `routeHandler` tags those as `error_kind: 'config'` in Sentry so the env-var failure mode gets its own alert.
 - Wrap 8 `(auth)/**/page.tsx` server-component DB reads in try/catch with route-specific error UI; log `error.digest` from `(auth)/error.tsx`.

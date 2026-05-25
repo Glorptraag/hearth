@@ -19,6 +19,8 @@
  *   NEON_ROLE_NAME     — role to connect as (default: neondb_owner)
  *
  * How it works:
+ *   0. Sweep `test-*` branches older than 10 minutes (reap leaks from
+ *      previous runs whose cleanup didn't fire). See sweepStaleTestBranches.
  *   1. POST to Neon API creating an ephemeral branch from the empty
  *      test-base branch (NEON_PARENT_BRANCH_ID)
  *   2. Poll until the endpoint is "active" and get the connection URI
@@ -152,6 +154,68 @@ async function deleteBranch(branchId) {
   }
 }
 
+/**
+ * Reap leaked `test-*` branches from previous runs before creating a new one.
+ *
+ * Why this exists:
+ *   This script deletes its own branch in `finally` + signal handlers, but
+ *   that only fires if Node gets to run the cleanup. The orchestrator can
+ *   leak a branch if (a) the GitHub Actions runner is killed mid-step,
+ *   (b) the node process is SIGKILL'd (no handler runs), or (c) the network
+ *   drops between createBranch and the cleanup path. Each leak is invisible
+ *   until enough accumulate to trip Neon's `ROOT_BRANCHES_LIMIT_EXCEEDED`
+ *   — at which point every subsequent CI run fails on branch creation, not
+ *   on anything the PR actually changed. The 2026-05-25 CI freeze was
+ *   exactly this.
+ *
+ *   `init_source: 'schema-only'` on createBranch creates a NEW root branch
+ *   (Neon decouples it from the parent's data), so every test branch counts
+ *   against the project's root-branch ceiling — leaks add up forever.
+ *
+ * Why the 10-min cutoff:
+ *   Integration runs typically finish in 3-5 minutes. A 10-minute floor is
+ *   comfortably past any healthy in-flight run, so we never reap a branch
+ *   that another CI job is actively using. Branches younger than 10 min are
+ *   left alone even if we suspect they might be orphans — false positives
+ *   here would break concurrent PRs' tests.
+ *
+ * Failure mode:
+ *   Best-effort. If listing or deleting fails, we log and proceed to the
+ *   normal createBranch call. The sweep is a defense in depth, not a gate.
+ */
+async function sweepStaleTestBranches() {
+  const STALE_MS = 10 * 60 * 1000; // 10 minutes
+  let data;
+  try {
+    data = await neon('GET', `/projects/${NEON_PROJECT_ID}/branches`);
+  } catch (err) {
+    console.error(`[neon] sweep: could not list branches: ${err.message}`);
+    return;
+  }
+  const cutoff = Date.now() - STALE_MS;
+  const stale = (data.branches || []).filter(
+    (b) =>
+      typeof b.name === 'string' &&
+      b.name.startsWith('test-') &&
+      b.id !== NEON_PARENT_BRANCH_ID &&
+      b.created_at &&
+      new Date(b.created_at).getTime() < cutoff
+  );
+  if (stale.length === 0) {
+    console.log('[neon] sweep: no stale test branches found.');
+    return;
+  }
+  console.log(`[neon] sweep: deleting ${stale.length} stale test branch(es) older than 10min:`);
+  for (const b of stale) {
+    try {
+      await neon('DELETE', `/projects/${NEON_PROJECT_ID}/branches/${b.id}`);
+      console.log(`[neon]   deleted ${b.name} (${b.id}, created ${b.created_at})`);
+    } catch (err) {
+      console.error(`[neon]   delete failed for ${b.name} (${b.id}): ${err.message}`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Subprocess helpers
 // ---------------------------------------------------------------------------
@@ -177,6 +241,13 @@ function runCommand(cmd, args, env) {
 let branchId = null;
 
 async function main() {
+  // Defense in depth: reap any leaked `test-*` branches from previous runs
+  // before we try to create a new one. See sweepStaleTestBranches() header
+  // for the failure modes this protects against (CI runner killed mid-run,
+  // SIGKILL, network drops). Without this, leaked branches accumulate until
+  // the project hits ROOT_BRANCHES_LIMIT_EXCEEDED and every CI run fails.
+  await sweepStaleTestBranches();
+
   const suffix = `${Date.now()}-${randomBytes(3).toString('hex')}`;
 
   const { branchId: newId, branchName } = await createBranch(suffix);

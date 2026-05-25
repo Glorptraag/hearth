@@ -205,9 +205,10 @@ Once resolved, append to §7 with one paragraph: symptom, cause, fix, prevention
 2. **Client called `.json()` without a content-type or status guard.** Every fetch in the app assumed a JSON body on every status code.
 3. **No drift checker.** Migration drift between the repo and the deployment was silent until the first runtime query.
 
-**Fix shipped (PRs #78 → #84).**
+**Fix shipped (PRs #78 → #86).**
 - **#78** — guarded every client `.json()` so 5xx returns no longer parse-throw.
 - **#79** — lazy db imports, error boundaries on auth-protected segments, `routeHandler` wrapper, drift checker added to deploy gate.
 - **#80–#84** — mechanical sweep wrapping all 108 API route files with `routeHandler` from `src/lib/api-helpers.ts`. The wrapper catches uncaught throws and returns `NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })` plus a tagged Sentry capture (`pipeline:route-handler`, `route:<METHOD /api/path>`, `error_kind:runtime|config`).
+- **#86** — `scripts/check-route-handlers.mjs` + `npm run check:route-handlers` wired into the CI typecheck job. Any new `src/app/api/**/route.ts` that lands without the `routeHandler` wrapper fails the build with a pointed error pointing back to this entry.
 
-**Prevention.** The class of incident is now structurally impossible: every API route returns JSON on error, every client `.json()` is guarded, and the drift checker fails the deploy if `drizzle/meta` is ahead of the database. Any new route added to `src/app/api/**/route.ts` should follow the `routeHandler` pattern — there's a lint check tracked but not yet wired (TODO). If a future incident matches the symptom "white screen on dashboard pages", the first investigation step is the Vercel deploy log + the drift checker status, not the client console.
+**Prevention.** The class of incident is now structurally impossible: every API route returns JSON on error, every client `.json()` is guarded, the drift checker fails the deploy if `drizzle/meta` is ahead of the database, and the CI route-handler gate fails the build if any new route file ships without the wrapper. If a future incident matches the symptom "white screen on dashboard pages", the first investigation step is the Vercel deploy log + the drift checker status, not the client console.

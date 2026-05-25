@@ -29,15 +29,18 @@ export default function CapabilitiesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Guarded: a 5xx must NOT crash the page via JSON-parse SyntaxError.
+    // See incident 2026-05-25 (unrun migration 0016).
     fetch('/api/learners')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setLearners(data);
           setSelectedLearnerId(data[0].id);
         }
-        setLoading(false);
-      });
+      })
+      .catch(() => { /* degrade silently; capability view stays empty */ })
+      .finally(() => setLoading(false));
   }, []);
 
   // DLO content is shared across learners — fetch once.
@@ -62,7 +65,7 @@ export default function CapabilitiesPage() {
     setActiveThreads([]);
     setDloStatus({});
     fetch(`/api/capabilities/${selectedLearnerId}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`capabilities ${r.status}`))))
       .then((data) => {
         if (cancelled) return;
         // New shape: { activeThreads, dloStatus }. Old shape was a bare array.
@@ -73,7 +76,8 @@ export default function CapabilitiesPage() {
           setActiveThreads(Array.isArray(data?.activeThreads) ? data.activeThreads : []);
           setDloStatus(data?.dloStatus ?? {});
         }
-      });
+      })
+      .catch(() => { /* leave threads/dloStatus empty on failure */ });
     return () => { cancelled = true; };
   }, [selectedLearnerId]);
 

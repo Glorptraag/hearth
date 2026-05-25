@@ -218,15 +218,21 @@ export default function ReportPage() {
   }, [selectedLearnerId, ensureReport]);
 
   useEffect(() => {
+    // Guarded: a 5xx from either endpoint must NOT crash the page via
+    // JSON-parse SyntaxError. See incident 2026-05-25 (unrun migration 0016).
     Promise.all([
-      fetch('/api/learners').then((r) => r.json()),
-      fetch('/api/settings').then((r) => r.json()),
+      fetch('/api/learners')
+        .then((r) => (r.ok ? r.json() : Promise.resolve(null)))
+        .catch(() => null),
+      fetch('/api/settings')
+        .then((r) => (r.ok ? r.json() : Promise.resolve(null)))
+        .catch(() => null),
     ]).then(([l, s]) => {
       if (Array.isArray(l) && l.length > 0) {
         setLearners(l);
         setSelectedLearnerId(l[0].id);
       }
-      setSettings(s);
+      if (s) setSettings(s);
       setLoading(false);
     });
   }, []);
@@ -234,9 +240,15 @@ export default function ReportPage() {
   useEffect(() => {
     if (!selectedLearnerId) return;
     fetch(`/api/entries?learnerId=${selectedLearnerId}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`entries ${r.status}`))))
       .then((data) => {
         setEntries(Array.isArray(data) ? data : []);
+        ensureReport(selectedLearnerId);
+      })
+      .catch(() => {
+        // Still try to render the report shell with no entries so the page
+        // doesn't white-screen on a 5xx from /api/entries.
+        setEntries([]);
         ensureReport(selectedLearnerId);
       });
   }, [selectedLearnerId, ensureReport]);

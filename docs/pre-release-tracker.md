@@ -162,3 +162,35 @@ Operational follow-ups (for `production-readiness-tracker.md`, not this file):
 - Local dev: `STRIPE_SECRET_KEY` + the `stripe listen` `whsec_…` in `.env.local`.
 
 Once those three are done, this tracker can be deleted at pilot launch.
+
+---
+
+## Incident log
+
+### 2026-05-25 — `SyntaxError` white-screen on `/our-story/portfolio` and Dashboard
+
+**Symptom.** Sentry: `SyntaxError: The string did not match the expected pattern.` from `r.json()` on `/our-story/portfolio`. Dashboard hit Next.js's retry boundary.
+
+**Root cause.** Three Drizzle migrations (0016 `work_sample_quality`, 0017 `module_pathway_rename`, 0018 `entitlements`) had been merged to `main` and deployed without `npm run db:migrate` being run against prod. Migration 0016 added `learning_entries.work_sample_quality`. Drizzle's relational query API SELECTs all schema columns, so `/api/entries` and `/dashboard` started returning Postgres errors. Next.js wrapped them in HTML 500 pages. Client `fetch(...).then((r) => r.json())` choked on the HTML — WebKit throws `SyntaxError` synchronously — and the unguarded chain crashed the whole page into the retry boundary.
+
+**Immediate fix.** Ran `npm run db:migrate` against prod via the deployment runbook §2 procedure (~3 min).
+
+**Followup remediations.**
+
+| PR | Scope |
+|---|---|
+| #78 | Client-side: `.ok` guard + `.catch` fallback on the 4 worst client-fetch sites (`our-story/portfolio`, `log`, `our-story/capabilities`, `our-story/report`). |
+| #79 part A | Client-side: same hardening applied to 3 more sites (`our-story/OurStoryHubClient`, `module/[id]/LogMode`, `badges/assess/[id]`). |
+| #79 part B | Server-side: new `routeHandler()` wrapper in `src/lib/api-helpers.ts`. Catches throws, returns JSON-500 instead of HTML, logs to Sentry with route tag. Applied to the 9 hottest routes (learners, entries, snapshot, badges/awards, capabilities, settings, notifications, hearths, dashboard). 4 new unit tests. |
+
+**Process gaps identified.**
+
+1. Migrations were merged to `main` (PRs #73, #75) without `npm run db:migrate` being run first — runbook §2 violation. Mitigation: future migration-bearing PRs should either (a) run the migration before merging, or (b) have the migration script auto-run on Vercel deploy. Currently it's a manual step that's easy to forget.
+2. `scripts/check-migration-drift.mjs` has a tag-vs-hash comparison bug (lines 51-58 compare `__drizzle_migrations.hash` SHA256 storage against `journal.entries.map((e) => e.tag)`). It always reports false-positive MISSING/EXTRA, so it can't be trusted to confirm a migration ran. **Open follow-up.**
+
+**Remaining open follow-ups (chipped for spawn):**
+
+- Wrap remaining ~75 API routes with `routeHandler` (mechanical, one PR per route group).
+- Lazy `getDb()` + typed `ConfigError` in `src/lib/db/index.ts` so missing `DATABASE_URL` fails with a JSON-500 instead of module-load crash.
+- Wrap 8 `(auth)/**/page.tsx` server-component DB reads in try/catch with route-specific error UI; log `error.digest` from `(auth)/error.tsx`.
+- Fix `scripts/check-migration-drift.mjs` tag-vs-hash bug so we can trust the drift detector.

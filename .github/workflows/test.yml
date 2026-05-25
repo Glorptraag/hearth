@@ -51,6 +51,11 @@ jobs:
       # CREATE TABLE migration — exactly the gap that left prod missing
       # learner_dlo_status after PR #60.
       - run: npm run db:check-schema
+      # Catches the case where a new API route file lands without the
+      # `routeHandler` wrapper — without it, uncaught throws return HTML
+      # 500 and white-screen every client page that calls .json() on the
+      # response (the 2026-05-25 incident class; see incident-runbook §7).
+      - run: npm run check:route-handlers
 
   # -------------------------------------------------------------------------
   # Unit tests — everything mocked, fast, run in parallel with the others.

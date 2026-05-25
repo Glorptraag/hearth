@@ -24,7 +24,8 @@
     "verify:sanity": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-sanity-docs.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:check-drift": "node --env-file-if-exists=.env.local scripts/check-migration-drift.mjs",
-    "db:check-schema": "node scripts/check-schema-vs-migrations.mjs"
+    "db:check-schema": "node scripts/check-schema-vs-migrations.mjs",
+    "check:route-handlers": "node scripts/check-route-handlers.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

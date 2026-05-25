@@ -4,8 +4,9 @@ import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function PATCH() {
+export const PATCH = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -20,4 +21,4 @@ export async function PATCH() {
     );
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'PATCH /api/notifications/mark-all-read' });

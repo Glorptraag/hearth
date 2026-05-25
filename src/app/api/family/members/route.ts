@@ -6,7 +6,7 @@ import { familyMembers } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -17,7 +17,7 @@ const removeMemberSchema = z.object({
   memberId: z.string().min(1),
 });
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -47,9 +47,9 @@ export async function GET() {
     members: active,
     ownerEmail: null, // Clerk manages the owner identity
   });
-}
+}, { route: 'GET /api/family/members' });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -108,9 +108,9 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ invited: true, token });
-}
+}, { route: 'POST /api/family/members' });
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -133,4 +133,4 @@ export async function DELETE(request: NextRequest) {
     );
 
   return NextResponse.json({ removed: true });
-}
+}, { route: 'DELETE /api/family/members' });

@@ -21,12 +21,13 @@ import {
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, inArray } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
 const deleteSchema = z.object({
   confirmation: z.literal('DELETE MY ACCOUNT'),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -87,4 +88,4 @@ export async function POST(request: NextRequest) {
   // using Clerk's deleteUser API or by the user through Clerk's UI
 
   return NextResponse.json({ deleted: true });
-}
+}, { route: 'POST /api/account/delete' });

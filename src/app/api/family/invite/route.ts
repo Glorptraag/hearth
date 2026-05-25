@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { familyMembers, families } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
 const acceptSchema = z.object({
   token: z.string().min(1),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -49,4 +49,4 @@ export async function POST(request: NextRequest) {
     familyId: invite.familyId,
     familyName: family?.familyName ?? 'Family',
   });
-}
+}, { route: 'POST /api/family/invite' });

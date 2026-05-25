@@ -5,9 +5,9 @@ import { db } from '@/lib/db';
 import { plannerEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     .where(and(...conditions));
 
   return NextResponse.json(entries);
-}
+}, { route: 'GET /api/planner' });
 
 const createPlannerEntrySchema = z.object({
   date: z.string().min(1),
@@ -42,7 +42,7 @@ const createPlannerEntrySchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -58,4 +58,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(entry, { status: 201 });
-}
+}, { route: 'POST /api/planner' });

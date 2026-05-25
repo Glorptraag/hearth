@@ -6,11 +6,11 @@ import { learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { LEARNER_COLOURS } from '@/types';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!learner) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   return NextResponse.json(learner);
-}
+}, { route: 'GET /api/learners/[id]' });
 
 const updateLearnerSchema = z.object({
   name: z.string().min(1).optional(),
@@ -48,7 +48,7 @@ const updateLearnerSchema = z.object({
     .optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -78,9 +78,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/learners/[id]' });
 
-export async function DELETE(request: NextRequest, { params }: Params) {
+export const DELETE = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -105,4 +105,4 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     );
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'DELETE /api/learners/[id]' });

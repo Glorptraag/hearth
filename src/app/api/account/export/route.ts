@@ -13,8 +13,9 @@ import {
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, inArray } from 'drizzle-orm';
 import { format } from 'date-fns';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -108,4 +109,4 @@ export async function GET() {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
-}
+}, { route: 'GET /api/account/export' });

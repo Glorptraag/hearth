@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
@@ -16,7 +16,7 @@ const overrideSchema = z.object({
   reason: z.string().optional(),
 });
 
-export async function POST(request: NextRequest, { params }: Params) {
+export const POST = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -62,4 +62,4 @@ export async function POST(request: NextRequest, { params }: Params) {
   );
 
   return NextResponse.json({ success: true, threadId, tier });
-}
+}, { route: 'POST /api/capabilities/[learnerId]/override' });

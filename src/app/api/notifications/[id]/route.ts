@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { and, eq } from 'drizzle-orm';
 import { addHours } from 'date-fns';
 import { NOTIFICATION_STATES } from '@/types';
@@ -16,7 +16,7 @@ const patchSchema = z.object({
   snoozeHours: z.number().min(1).max(72).optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -47,4 +47,4 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/notifications/[id]' });

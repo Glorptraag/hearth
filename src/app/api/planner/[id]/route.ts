@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { plannerEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq } from 'drizzle-orm';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -18,7 +18,7 @@ const patchSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -42,9 +42,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/planner/[id]' });
 
-export async function DELETE(request: NextRequest, { params }: Params) {
+export const DELETE = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -63,4 +63,4 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     .where(and(eq(plannerEntries.id, id), eq(plannerEntries.familyId, family.id)));
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'DELETE /api/planner/[id]' });

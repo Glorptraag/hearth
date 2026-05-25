@@ -24,6 +24,12 @@
 .DS_Store
 *.pem
 
+# macOS Finder duplicates (created when a file is open during git ops)
+* 2
+* 2.*
+* 3
+* 3.*
+
 # debug
 npm-debug.log*
 yarn-debug.log*

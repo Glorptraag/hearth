@@ -6,9 +6,9 @@ import { learners } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { LEARNER_COLOURS } from '@/types';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -21,7 +21,7 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
-}
+}, { route: 'GET /api/learners' });
 
 const createLearnerSchema = z.object({
   name: z.string().min(1),
@@ -31,7 +31,7 @@ const createLearnerSchema = z.object({
   displayOrder: z.number().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -50,4 +50,4 @@ export async function POST(request: NextRequest) {
     .returning();
 
   return NextResponse.json(learner, { status: 201 });
-}
+}, { route: 'POST /api/learners' });

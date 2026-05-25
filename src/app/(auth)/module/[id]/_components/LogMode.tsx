@@ -45,21 +45,25 @@ export default function LogMode({
   );
 
   useEffect(() => {
+    // Guarded: avoid SyntaxError on HTML 5xx (see incident 2026-05-25).
+    // .catch was already here but it's safer to also skip the parse attempt.
+    const jsonOrEmpty = <T,>(fallback: T) => (r: Response) =>
+      r.ok ? (r.json() as Promise<T>) : Promise.resolve(fallback);
     Promise.all([
-      fetch('/api/learners').then((r) => r.json()),
-      fetch(`/api/entries?status=complete&limit=100`).then((r) => r.json()),
-    ])
-      .then(([learnerData, entries]) => {
-        const data = learnerData as Learner[];
-        setLearners(data);
-        if (data.length > 0) setSelectedLearnerIds([data[0].id]);
+      fetch('/api/learners').then(jsonOrEmpty<Learner[]>([])).catch(() => [] as Learner[]),
+      fetch(`/api/entries?status=complete&limit=100`)
+        .then(jsonOrEmpty<{ sourceModuleId?: string }[]>([]))
+        .catch(() => [] as { sourceModuleId?: string }[]),
+    ]).then(([learnerData, entries]) => {
+      const data = learnerData as Learner[];
+      setLearners(data);
+      if (data.length > 0) setSelectedLearnerIds([data[0].id]);
 
-        const previousRuns = (entries as { sourceModuleId?: string }[]).filter(
-          (e) => e.sourceModuleId === module._id
-        );
-        setAttemptNumber(previousRuns.length + 1);
-      })
-      .catch(() => {});
+      const previousRuns = (entries as { sourceModuleId?: string }[]).filter(
+        (e) => e.sourceModuleId === module._id
+      );
+      setAttemptNumber(previousRuns.length + 1);
+    });
   }, [module._id]);
 
   const toggleLearner = (id: string) =>

@@ -22,6 +22,7 @@
 import { neon } from '@neondatabase/serverless';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { createHash } from 'crypto';
 
 const arg = (name, fallback) => {
   const m = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -45,18 +46,39 @@ try {
 }
 
 const sql = neon(url);
-let applied;
+let appliedHashes;
 try {
   const rows = await sql`SELECT hash FROM drizzle.__drizzle_migrations`;
-  applied = new Set(rows.map((r) => r.hash));
+  appliedHashes = new Set(rows.map((r) => r.hash));
 } catch (e) {
   console.error(`[drift] failed to query __drizzle_migrations: ${e.message}`);
   process.exit(2);
 }
 
-const expected = journal.entries.map((e) => e.tag);
-const missing = expected.filter((t) => !applied.has(t));
-const extra = [...applied].filter((t) => !expected.includes(t));
+// The `__drizzle_migrations.hash` column has TWO formats in prod, because the
+// repo's migrator changed under it:
+//
+//   1. Legacy custom migrator (rows 0..15 in prod as of 2026-05-25) stored the
+//      filename tag itself, eg. "0015_dlo_state" (≤32 chars).
+//   2. Standard drizzle-orm migrator (rows 16+ — anything I ran during the
+//      2026-05-25 incident) stores SHA256(sql body), per
+//      `node_modules/drizzle-orm/migrator.js:23`. 64-char hex.
+//
+// We don't get to rewrite history, so a journal entry is considered "applied"
+// if EITHER form appears in the column. Likewise an applied row is "extra"
+// only if neither its tag-name nor its hash appears in the journal.
+function hashOfMigration(tag) {
+  const sqlPath = resolve(process.cwd(), 'drizzle', `${tag}.sql`);
+  const body = readFileSync(sqlPath, 'utf8');
+  return createHash('sha256').update(body).digest('hex');
+}
+
+const expected = journal.entries.map((e) => ({ tag: e.tag, hash: hashOfMigration(e.tag) }));
+const missing = expected
+  .filter((e) => !appliedHashes.has(e.hash) && !appliedHashes.has(e.tag))
+  .map((e) => e.tag);
+const expectedTokens = new Set(expected.flatMap((e) => [e.tag, e.hash]));
+const extra = [...appliedHashes].filter((h) => !expectedTokens.has(h));
 
 // Secondary check: every table declared in schema.ts must physically exist
 // in the database. Catches the case where __drizzle_migrations says a

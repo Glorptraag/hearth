@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { hearths, hearthMemberships, hearthSessions, sessionAttendance, learningEntries } from '@/lib/db/schema';
-import { parseBody, authenticatedFamily } from '@/lib/api-helpers';
+import { parseBody, authenticatedFamily, routeHandler } from '@/lib/api-helpers';
 import { eq, and, gte, asc, count, inArray } from 'drizzle-orm';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const result = await authenticatedFamily({ rateLimitKey: 'hearths' });
   if ('error' in result) return result.error;
   const { family } = result;
@@ -96,7 +96,7 @@ export async function GET() {
   );
 
   return NextResponse.json({ hearths: hearthList.filter(Boolean) });
-}
+}, { route: 'GET /api/hearths' });
 
 const createHearthSchema = z.object({
   name: z.string().min(1).max(100),
@@ -104,7 +104,7 @@ const createHearthSchema = z.object({
   location: z.string().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily({ rateLimitKey: 'hearths:create', rateLimit: 5 });
   if ('error' in result) return result.error;
   const { family } = result;
@@ -134,4 +134,4 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json(hearth, { status: 201 });
-}
+}, { route: 'POST /api/hearths' });

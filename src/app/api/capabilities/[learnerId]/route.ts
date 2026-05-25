@@ -5,10 +5,11 @@ import { learners, familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import type { SnapshotActiveThread, SnapshotData, DloStatusEntry } from '@/types/snapshot';
+import { routeHandler } from '@/lib/api-helpers';
 
 type Params = { params: Promise<{ learnerId: string }> };
 
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -38,4 +39,4 @@ export async function GET(request: NextRequest, { params }: Params) {
   const dloStatus: Record<string, DloStatusEntry> = child?.dlo_status ?? {};
 
   return NextResponse.json({ activeThreads, dloStatus });
-}
+}, { route: 'GET /api/capabilities/[learnerId]' });

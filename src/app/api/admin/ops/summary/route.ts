@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { families, learners, learningEntries, invitations } from '@/lib/db/schema';
 import { sql, gte, eq, and, isNotNull, lte } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 function getMonday(): Date {
   const now = new Date();
@@ -12,7 +13,7 @@ function getMonday(): Date {
   return monday;
 }
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -125,4 +126,4 @@ export async function GET() {
     engagementPulse,
     lastUpdated: new Date().toISOString(),
   });
-}
+}, { route: 'GET /api/admin/ops/summary' });

@@ -5,6 +5,7 @@ import { eq, desc, sql, and, ilike, or } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
 import { generateInvitationCode } from '@/lib/admin/invitation-codes';
+import { routeHandler } from '@/lib/api-helpers';
 import { z } from 'zod';
 
 const createSchema = z.object({
@@ -16,7 +17,7 @@ const createSchema = z.object({
   expiresAt: z.string().datetime().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -64,9 +65,9 @@ export async function GET(req: NextRequest) {
     page,
     pageSize,
   });
-}
+}, { route: 'GET /api/admin/invitations' });
 
-export async function POST(req: NextRequest) {
+export const POST = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -105,4 +106,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ invitation }, { status: 201 });
-}
+}, { route: 'POST /api/admin/invitations' });

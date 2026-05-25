@@ -4,16 +4,17 @@ import { invitations } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 import { z } from 'zod';
 
 const revokeSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -63,4 +64,4 @@ export async function POST(
   });
 
   return NextResponse.json({ invitation: updated });
-}
+}, { route: 'POST /api/admin/invitations/[id]/revoke' });

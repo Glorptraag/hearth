@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { invitations, adminAuditLog } from '@/lib/db/schema';
 import { eq, and, lt, isNotNull } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
 function isAuthorized(req: NextRequest): boolean {
   const validToken = process.env.CRON_SECRET;
@@ -40,7 +41,7 @@ async function expireStaleInvitations() {
   return NextResponse.json({ expired: count });
 }
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   if (!process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
   }
@@ -48,4 +49,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return expireStaleInvitations();
-}
+}, { route: 'GET /api/admin/invitations/expire' });

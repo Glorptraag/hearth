@@ -11,16 +11,17 @@ import {
 import { eq, desc, and, gte, sql } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 import { z } from 'zod';
 
 const bodySchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ familyId: string }> }
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -174,4 +175,4 @@ export async function POST(
       : null,
     notifications: notificationRows,
   });
-}
+}, { route: 'POST /api/admin/families/[familyId]/view' });

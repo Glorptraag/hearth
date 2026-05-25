@@ -4,11 +4,12 @@ import { contentStudioDrafts } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(
+export const GET = routeHandler(async (
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -21,12 +22,12 @@ export async function GET(
 
   if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(draft);
-}
+}, { route: 'GET /api/admin/content/drafts/[id]' });
 
-export async function PUT(
+export const PUT = routeHandler(async (
   req: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -55,12 +56,12 @@ export async function PUT(
   });
 
   return NextResponse.json(updated);
-}
+}, { route: 'PUT /api/admin/content/drafts/[id]' });
 
-export async function DELETE(
+export const DELETE = routeHandler(async (
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -81,4 +82,4 @@ export async function DELETE(
   });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: 'DELETE /api/admin/content/drafts/[id]' });

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { fetchAllIssues } from '@/lib/content-qa/run';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(request: Request) {
+export const GET = routeHandler(async (request: Request) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -39,4 +40,4 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ issues, total: issues.length });
-}
+}, { route: 'GET /api/admin/qa/issues' });

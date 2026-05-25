@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 /**
  * Aggregates `ai_pipeline_logs` for the admin AI Cost dashboard.
@@ -63,7 +64,7 @@ function priceFor(model: string): { input: number; output: number } {
   return PRICING_PER_MTOK.default;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -193,7 +194,7 @@ export async function GET(req: NextRequest) {
     pricing,
     generatedAt: new Date().toISOString(),
   });
-}
+}, { route: 'GET /api/admin/analytics/ai-cost' });
 
 function clamp(n: number, lo: number, hi: number) {
   if (Number.isNaN(n)) return lo;

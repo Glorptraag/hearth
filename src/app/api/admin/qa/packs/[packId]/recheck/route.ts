@@ -3,11 +3,12 @@ import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
 import { logAdminAction } from '@/lib/admin/audit';
 import { bustCache } from '@/lib/content-qa/cache';
 import { fetchPackDetail } from '@/lib/content-qa/run';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST(
+export const POST = routeHandler(async (
   _request: Request,
   { params }: { params: Promise<{ packId: string }> }
-) {
+) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -36,4 +37,4 @@ export async function POST(
   });
 
   return NextResponse.json(detail);
-}
+}, { route: 'POST /api/admin/qa/packs/[packId]/recheck' });

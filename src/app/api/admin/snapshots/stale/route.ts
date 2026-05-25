@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -32,4 +33,4 @@ export async function GET() {
       lastWrite: string;
     }>,
   });
-}
+}, { route: 'GET /api/admin/snapshots/stale' });

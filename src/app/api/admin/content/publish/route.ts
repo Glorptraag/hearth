@@ -13,8 +13,9 @@ import {
   type WorkbenchFlag,
 } from '@/lib/content-studio/validation';
 import type { StudioState } from '@/lib/content-studio/types';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST(req: Request) {
+export const POST = routeHandler(async (req: Request) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -116,4 +117,4 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
-}
+}, { route: 'POST /api/admin/content/publish' });

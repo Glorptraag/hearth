@@ -3,10 +3,11 @@ import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
 import { sql, eq, and, isNotNull } from 'drizzle-orm';
 import { requireAdmin, isAdminContext } from '@/lib/admin/guard';
+import { routeHandler } from '@/lib/api-helpers';
 
 const K_THRESHOLD = 5;
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const admin = await requireAdmin();
   if (!isAdminContext(admin)) return admin;
 
@@ -50,4 +51,4 @@ export async function GET(req: NextRequest) {
     stages,
     kThreshold: K_THRESHOLD,
   });
-}
+}, { route: 'GET /api/admin/analytics/abandonment' });

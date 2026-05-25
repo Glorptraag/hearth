@@ -6,19 +6,9 @@
  */
 
 import 'dotenv/config';
-import { createClient } from '@sanity/client';
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { families, familyLibrary } from '../db/schema';
-
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
-  apiVersion: '2024-01-01',
-  useCdn: false,
-  token: process.env.SANITY_API_TOKEN,
-});
+import { sanityWriteClient as sanity } from './client';
 
 // ─── IDs (stable, predictable for idempotency) ───────────────────────────────
 
@@ -553,8 +543,7 @@ async function seedPack() {
 
 async function seedFamilyLibrary() {
   console.log('\n── Family Library (PostgreSQL)');
-  const sql = neon(process.env.DATABASE_URL!);
-  const db = drizzle(sql, { schema: { families, familyLibrary } });
+  const { db } = await import('../db');
 
   // Find the Campbells family (or any family — seed for first family found)
   const allFamilies = await db.select().from(families).limit(5);

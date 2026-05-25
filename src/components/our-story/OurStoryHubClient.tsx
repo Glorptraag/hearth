@@ -101,10 +101,12 @@ export default function OurStoryHubClient() {
     router.replace(`${pathname}?child=${id}`, { scroll: false });
   };
 
-  // Fetch family settings once (for jurisdiction config)
+  // Fetch family settings once (for jurisdiction config).
+  // All fetches in this client are guarded: a 5xx must NOT crash the hub
+  // via SyntaxError on r.json(). See incident 2026-05-25.
   useEffect(() => {
     fetch('/api/settings')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`settings ${r.status}`))))
       .then((data) => {
         if (data?.state) setFamilyState(data.state);
       })
@@ -114,15 +116,15 @@ export default function OurStoryHubClient() {
   // Fetch learner list once
   useEffect(() => {
     fetch('/api/learners')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setLearners(data);
           setSelectedId(data[0].id);
         }
-        setLoadingLearners(false);
       })
-      .catch(() => setLoadingLearners(false));
+      .catch(() => { /* leave learners empty; hub stays usable */ })
+      .finally(() => setLoadingLearners(false));
   }, []);
 
   // Fetch per-learner stats when selection changes
@@ -130,18 +132,21 @@ export default function OurStoryHubClient() {
     if (!selectedId) return;
     const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
 
+    const jsonOr = <T,>(fallback: T) => (r: Response) =>
+      r.ok ? (r.json() as Promise<T>) : Promise.resolve(fallback);
     Promise.all([
-      fetch(`/api/entries?learnerId=${selectedId}`).then((r) => r.json()),
-      fetch(`/api/capabilities/${selectedId}`).then((r) => r.json()),
+      fetch(`/api/entries?learnerId=${selectedId}`).then(jsonOr<unknown[]>([])).catch(() => []),
+      fetch(`/api/capabilities/${selectedId}`).then(jsonOr<unknown>([])).catch(() => []),
     ])
       .then(([entries, threads]) => {
-        const entryList: Entry[] = Array.isArray(entries) ? entries : [];
+        const entryList: Entry[] = Array.isArray(entries) ? (entries as Entry[]) : [];
         // /api/capabilities/[learnerId] now returns { activeThreads, dloStatus };
         // older callers received the bare array. Accept both shapes.
-        const threadList: Thread[] = Array.isArray(threads)
-          ? threads
-          : Array.isArray(threads?.activeThreads)
-            ? threads.activeThreads
+        const tt = threads as { activeThreads?: Thread[] } | Thread[];
+        const threadList: Thread[] = Array.isArray(tt)
+          ? tt
+          : Array.isArray((tt as { activeThreads?: Thread[] })?.activeThreads)
+            ? (tt as { activeThreads: Thread[] }).activeThreads
             : [];
 
         const portfolioTotal = entryList.length;

@@ -99,24 +99,25 @@ export default function BadgeAssessPage() {
   const [previousAssessments, setPreviousAssessments] = useState<AssessmentLog[]>([]);
 
   useEffect(() => {
+    // Guarded: a 5xx must NOT crash the assess page via JSON-parse SyntaxError.
+    // See incident 2026-05-25 (unrun migration 0016).
     fetch(`/api/badges/${badgeId}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`badge ${r.status}`))))
       .then((data) => {
         setBadge(data);
-        setLoading(false);
       })
       .catch(() => {
         setError('Could not load badge');
-        setLoading(false);
-      });
+      })
+      .finally(() => setLoading(false));
 
     if (learnerId) {
       fetch(`/api/badges/history?badgeId=${badgeId}&learnerId=${learnerId}`)
-        .then((r) => r.json())
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`history ${r.status}`))))
         .then((data) => {
           if (Array.isArray(data)) setPreviousAssessments(data);
         })
-        .catch(() => {});
+        .catch(() => { /* prior assessments are optional context */ });
     }
   }, [badgeId, learnerId]);
 

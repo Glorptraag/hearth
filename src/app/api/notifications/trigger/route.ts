@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { plannerEntries, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { rateLimit } from '@/lib/rate-limit';
 import {
@@ -37,7 +37,7 @@ const triggerSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -104,4 +104,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ created });
-}
+}, { route: 'POST /api/notifications/trigger' });

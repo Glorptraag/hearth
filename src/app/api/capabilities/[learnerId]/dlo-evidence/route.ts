@@ -8,6 +8,7 @@ import {
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, desc } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
 /**
  * GET /api/capabilities/[learnerId]/dlo-evidence?dloId=<sanityId>
@@ -36,7 +37,7 @@ import { eq, and, desc } from 'drizzle-orm';
  */
 type Params = { params: Promise<{ learnerId: string }> };
 
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = routeHandler(async (request: NextRequest, { params }: Params) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -85,4 +86,4 @@ export async function GET(request: NextRequest, { params }: Params) {
   }));
 
   return NextResponse.json({ evidence });
-}
+}, { route: 'GET /api/capabilities/[learnerId]/dlo-evidence' });

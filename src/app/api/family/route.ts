@@ -5,9 +5,9 @@ import { db } from '@/lib/db';
 import { families, familySettings, learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, sql } from 'drizzle-orm';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -30,14 +30,14 @@ export async function GET() {
     entryCount: entryCountRow[0]?.count ?? 0,
     pedagogyPreference: settings?.pedagogyPreference ?? 'eclectic',
   });
-}
+}, { route: 'GET /api/family' });
 
 const updateFamilySchema = z.object({
   familyName: z.string().min(1).max(80).optional(),
   loggerDefaultMode: z.enum(['guided', 'quick']).nullable().optional(),
 });
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -55,4 +55,4 @@ export async function PATCH(request: NextRequest) {
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'PATCH /api/family' });

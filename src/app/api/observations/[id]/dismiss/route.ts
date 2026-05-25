@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { suggestedObservations } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -31,4 +31,4 @@ export async function POST(
     .returning();
 
   return NextResponse.json(updated);
-}
+}, { route: 'POST /api/observations/[id]/dismiss' });

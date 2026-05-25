@@ -98,11 +98,18 @@ export function routeHandler<TArgs extends unknown[]>(
       return res;
     } catch (err) {
       const tag = opts?.route ?? 'unknown';
-      console.error(`[routeHandler ${tag}]`, err);
+      // Tag config errors distinctly — they almost always mean a Vercel env
+      // var is missing on this deployment, and we want a separate Sentry alert
+      // for that rather than burying it in the generic-5xx noise.
+      const errorKind =
+        err instanceof Error && (err as { code?: string }).code === 'CONFIG_ERROR'
+          ? 'config'
+          : 'runtime';
+      console.error(`[routeHandler ${tag}] (${errorKind})`, err);
       try {
         const Sentry = await import('@sentry/nextjs');
         Sentry.captureException(err, {
-          tags: { pipeline: 'route-handler', route: tag },
+          tags: { pipeline: 'route-handler', route: tag, error_kind: errorKind },
         });
       } catch {
         // Sentry import can fail in test env or if the SDK is misconfigured.

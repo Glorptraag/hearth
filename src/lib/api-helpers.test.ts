@@ -10,6 +10,14 @@ vi.mock('@/lib/auth/helpers', () => ({
   getFamilyByClerkId: vi.fn(),
   checkWritePermission: vi.fn(),
 }));
+// Sentry's real `await import(...)` resolves to a heavy module that takes
+// several seconds to evaluate in jsdom, blowing the per-test timeout for any
+// test that exercises the catch path. The wrapper's own try/catch already
+// makes Sentry optional — mock it so observability cost stays out of the test
+// loop without changing the production path.
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+}));
 
 import { routeHandler } from './api-helpers';
 
@@ -68,5 +76,35 @@ describe('routeHandler', () => {
     const res = await wrapped({ url: '/api/x/abc' }, { id: 'abc' });
 
     expect(await res.json()).toEqual({ url: '/api/x/abc', id: 'abc' });
+  });
+
+  it('tags ConfigError distinctly in console + still returns JSON-500', async () => {
+    // We can't easily spy on the dynamically-imported Sentry mock without
+    // restructuring the wrapper. Asserting the console log carries the
+    // 'config' kind is enough to prove the branch is taken — Sentry tagging
+    // reads from the same conditional in the source.
+    const logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    class ConfigError extends Error {
+      readonly code = 'CONFIG_ERROR';
+      constructor(message: string) {
+        super(message);
+        this.name = 'ConfigError';
+      }
+    }
+
+    const inner = vi.fn(async () => {
+      throw new ConfigError('DATABASE_URL is not set');
+    });
+    const wrapped = routeHandler(inner, { route: 'GET /api/learners' });
+
+    const res = await wrapped();
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Internal Server Error' });
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('(config)'),
+      expect.any(ConfigError)
+    );
   });
 });

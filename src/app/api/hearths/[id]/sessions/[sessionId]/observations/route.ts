@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import { suggestedObservations, hearthMemberships, learners, families } from '@/lib/db/schema';
 import { triggerObservationReceived } from '@/lib/notifications/triggers';
 import { eq, and } from 'drizzle-orm';
@@ -18,10 +18,10 @@ const submitObservationSchema = z.object({
   evidenceIds: z.array(z.string().uuid()).optional(),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id: hearthId, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -87,12 +87,12 @@ export async function POST(
   }).catch(console.error);
 
   return NextResponse.json(observation, { status: 201 });
-}
+}, { route: 'POST /api/hearths/[id]/sessions/[sessionId]/observations' });
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id: hearthId, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -109,4 +109,4 @@ export async function GET(
   });
 
   return NextResponse.json(observations);
-}
+}, { route: 'GET /api/hearths/[id]/sessions/[sessionId]/observations' });

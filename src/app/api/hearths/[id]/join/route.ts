@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { apiError, authenticatedFamily, parseBody } from '@/lib/api-helpers';
+import { apiError, authenticatedFamily, parseBody, routeHandler } from '@/lib/api-helpers';
 import { hearthInvites, hearthMemberships, hearths } from '@/lib/db/schema';
 import { eq, and, isNull, gt } from 'drizzle-orm';
 
@@ -11,10 +11,10 @@ const joinSchema = z.object({
   consentEvidenceSharing: z.boolean(),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
 
   const auth = await authenticatedFamily();
@@ -69,4 +69,4 @@ export async function POST(
     { hearthId: id, hearthName: hearth?.name ?? null, role: 'member' },
     { status: 201 }
   );
-}
+}, { route: 'POST /api/hearths/[id]/join' });

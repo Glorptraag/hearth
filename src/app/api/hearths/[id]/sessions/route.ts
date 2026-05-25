@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { apiError, parseBody } from '@/lib/api-helpers';
+import { apiError, parseBody, routeHandler } from '@/lib/api-helpers';
 import { hearthSessions, hearthMemberships, hearths } from '@/lib/db/schema';
 import { eq, and, gte, ne, desc, asc } from 'drizzle-orm';
 import { requireHearthMember, requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
 import { triggerSessionCreated } from '@/lib/notifications/triggers';
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -46,7 +46,7 @@ export async function GET(
     .limit(10);
 
   return NextResponse.json({ upcoming, recent });
-}
+}, { route: 'GET /api/hearths/[id]/sessions' });
 
 const createSessionSchema = z.object({
   title: z.string().min(1).max(200),
@@ -61,10 +61,10 @@ const createSessionSchema = z.object({
   prepNotes: z.string().optional(),
 });
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -112,4 +112,4 @@ export async function POST(
   }
 
   return NextResponse.json(session, { status: 201 });
-}
+}, { route: 'POST /api/hearths/[id]/sessions' });

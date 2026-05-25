@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { requireHearthCoordinator } from '@/lib/auth/hearth-helpers';
 import { hearthMemberships } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export async function DELETE(
+export const DELETE = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; familyId: string }> }
-) {
+) => {
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
 
@@ -41,4 +41,4 @@ export async function DELETE(
     .where(eq(hearthMemberships.id, target.id));
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'DELETE /api/hearths/[id]/members/[familyId]' });

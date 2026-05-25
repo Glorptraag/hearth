@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { db } from '@/lib/db';
-import { apiError } from '@/lib/api-helpers';
+import { apiError, routeHandler } from '@/lib/api-helpers';
 import { sessionEvidence } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireSessionAccess } from '@/lib/auth/hearth-helpers';
 
-export async function POST(
+export const POST = routeHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -46,12 +46,12 @@ export async function POST(
     .returning();
 
   return NextResponse.json(record, { status: 201 });
-}
+}, { route: 'POST /api/hearths/[id]/sessions/[sessionId]/evidence' });
 
-export async function GET(
+export const GET = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; sessionId: string }> }
-) {
+) => {
   const { id, sessionId } = await params;
   const { userId } = await auth();
   if (!userId) return apiError('Unauthorized', 401);
@@ -64,4 +64,4 @@ export async function GET(
   });
 
   return NextResponse.json(records);
-}
+}, { route: 'GET /api/hearths/[id]/sessions/[sessionId]/evidence' });

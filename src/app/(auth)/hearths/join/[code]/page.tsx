@@ -4,7 +4,23 @@ import { db } from '@/lib/db';
 import { hearthInvites, hearths, hearthMemberships } from '@/lib/db/schema';
 import { eq, and, gt, isNull } from 'drizzle-orm';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { safeLoad } from '@/lib/server/safe-load';
+import EmptyState from '@/components/ui/EmptyState';
+import { Lifebuoy } from '@/components/icons';
 import JoinClient from './JoinClient';
+
+function JoinErrorState({ code }: { code: string }) {
+  return (
+    <div className="mx-auto max-w-2xl px-lg py-2xl">
+      <EmptyState
+        icon={Lifebuoy}
+        heading="Couldn't load this invite"
+        body="Something went wrong on our side. Try again in a moment."
+        cta={{ label: 'Refresh', href: `/hearths/join/${code}` }}
+      />
+    </div>
+  );
+}
 
 export default async function JoinPage({
   params,
@@ -15,16 +31,39 @@ export default async function JoinPage({
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
-  const family = await getFamilyByClerkId(userId);
+  const familyResult = await safeLoad('hearths/join/[code]', () => getFamilyByClerkId(userId));
+  if (!familyResult.ok) return <JoinErrorState code={code} />;
+  const family = familyResult.data;
   if (!family) redirect('/onboarding');
 
-  const invite = await db.query.hearthInvites.findFirst({
-    where: and(
-      eq(hearthInvites.code, code),
-      isNull(hearthInvites.usedByFamilyId),
-      gt(hearthInvites.expiresAt, new Date()),
-    ),
+  const result = await safeLoad('hearths/join/[code]', async () => {
+    const invite = await db.query.hearthInvites.findFirst({
+      where: and(
+        eq(hearthInvites.code, code),
+        isNull(hearthInvites.usedByFamilyId),
+        gt(hearthInvites.expiresAt, new Date()),
+      ),
+    });
+
+    if (!invite) return { invite: null, existing: null, hearth: null };
+
+    const existing = await db.query.hearthMemberships.findFirst({
+      where: and(
+        eq(hearthMemberships.hearthId, invite.hearthId),
+        eq(hearthMemberships.familyId, family.id),
+        eq(hearthMemberships.status, 'active'),
+      ),
+    });
+
+    const hearth = await db.query.hearths.findFirst({
+      where: eq(hearths.id, invite.hearthId),
+    });
+
+    return { invite, existing, hearth };
   });
+
+  if (!result.ok) return <JoinErrorState code={code} />;
+  const { invite, existing, hearth } = result.data;
 
   if (!invite) {
     return (
@@ -48,21 +87,9 @@ export default async function JoinPage({
     );
   }
 
-  const existing = await db.query.hearthMemberships.findFirst({
-    where: and(
-      eq(hearthMemberships.hearthId, invite.hearthId),
-      eq(hearthMemberships.familyId, family.id),
-      eq(hearthMemberships.status, 'active'),
-    ),
-  });
-
   if (existing) {
     redirect(`/hearths/${invite.hearthId}`);
   }
-
-  const hearth = await db.query.hearths.findFirst({
-    where: eq(hearths.id, invite.hearthId),
-  });
 
   if (!hearth) {
     redirect('/dashboard');

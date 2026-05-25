@@ -14,119 +14,144 @@ import {
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, desc, gte, inArray } from 'drizzle-orm';
+import { safeLoad } from '@/lib/server/safe-load';
+import EmptyState from '@/components/ui/EmptyState';
+import { Lifebuoy } from '@/components/icons';
 import DashboardClient from './DashboardClient';
+
+function DashboardErrorState() {
+  return (
+    <div className="mx-auto max-w-2xl px-lg py-2xl">
+      <EmptyState
+        icon={Lifebuoy}
+        heading="Couldn't load your dashboard"
+        body="Something went wrong on our side. Try again in a moment — your learning data is safe."
+        cta={{ label: 'Refresh', href: '/dashboard' }}
+      />
+    </div>
+  );
+}
 
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
-  const family = await getFamilyByClerkId(userId);
+  const familyResult = await safeLoad('dashboard', () => getFamilyByClerkId(userId));
+  if (!familyResult.ok) return <DashboardErrorState />;
+  const family = familyResult.data;
   if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const today = new Date().toISOString().split('T')[0];
 
-  const [snapshot, recentEntries, todayPlanner, familyLearners, settings] = await Promise.all([
-    db.query.familyIntelligenceSnapshots.findFirst({
-      where: eq(familyIntelligenceSnapshots.familyId, family.id),
-    }),
-    db
+  const result = await safeLoad('dashboard', async () => {
+    const [snapshot, recentEntries, todayPlanner, familyLearners, settings] = await Promise.all([
+      db.query.familyIntelligenceSnapshots.findFirst({
+        where: eq(familyIntelligenceSnapshots.familyId, family.id),
+      }),
+      db
+        .select()
+        .from(learningEntries)
+        .where(eq(learningEntries.familyId, family.id))
+        .orderBy(desc(learningEntries.dateOccurred), desc(learningEntries.createdAt))
+        .limit(5),
+      db
+        .select()
+        .from(plannerEntries)
+        .where(and(eq(plannerEntries.familyId, family.id), eq(plannerEntries.date, today))),
+      db
+        .select()
+        .from(learners)
+        .where(eq(learners.familyId, family.id))
+        .orderBy(learners.displayOrder),
+      db.query.familySettings.findFirst({
+        where: eq(familySettings.familyId, family.id),
+      }),
+    ]);
+
+    const familyMemberships = await db
       .select()
-      .from(learningEntries)
-      .where(eq(learningEntries.familyId, family.id))
-      .orderBy(desc(learningEntries.dateOccurred), desc(learningEntries.createdAt))
-      .limit(5),
-    db
-      .select()
-      .from(plannerEntries)
-      .where(and(eq(plannerEntries.familyId, family.id), eq(plannerEntries.date, today))),
-    db
-      .select()
-      .from(learners)
-      .where(eq(learners.familyId, family.id))
-      .orderBy(learners.displayOrder),
-    db.query.familySettings.findFirst({
-      where: eq(familySettings.familyId, family.id),
-    }),
-  ]);
+      .from(hearthMemberships)
+      .where(and(eq(hearthMemberships.familyId, family.id), eq(hearthMemberships.status, 'active')));
+
+    const hearthData = familyMemberships.length > 0
+      ? await Promise.all(
+          familyMemberships.map(async (membership) => {
+            const [hearth, memberCount, nextSession] = await Promise.all([
+              db.query.hearths.findFirst({ where: eq(hearths.id, membership.hearthId) }),
+              db
+                .select()
+                .from(hearthMemberships)
+                .where(and(eq(hearthMemberships.hearthId, membership.hearthId), eq(hearthMemberships.status, 'active')))
+                .then((rows) => rows.length),
+              db
+                .select()
+                .from(hearthSessions)
+                .where(and(eq(hearthSessions.hearthId, membership.hearthId), gte(hearthSessions.date, today)))
+                .orderBy(hearthSessions.date)
+                .limit(1)
+                .then((rows) => rows[0] ?? null),
+            ]);
+            if (!hearth) return null;
+
+            const completedSessions = await db
+              .select({ id: hearthSessions.id })
+              .from(hearthSessions)
+              .where(and(
+                eq(hearthSessions.hearthId, hearth.id),
+                eq(hearthSessions.status, 'completed')
+              ));
+            const completedIds = completedSessions.map(s => s.id);
+
+            let pendingScaffoldCount = 0;
+            if (completedIds.length > 0) {
+              const attended = await db
+                .select({ sessionId: sessionAttendance.sessionId })
+                .from(sessionAttendance)
+                .where(and(
+                  eq(sessionAttendance.familyId, family.id),
+                  inArray(sessionAttendance.sessionId, completedIds)
+                ));
+              const attendedIds = attended.map(a => a.sessionId);
+
+              if (attendedIds.length > 0) {
+                const logged = await db
+                  .select({ sourceSessionId: learningEntries.sourceSessionId })
+                  .from(learningEntries)
+                  .where(and(
+                    eq(learningEntries.familyId, family.id),
+                    eq(learningEntries.source, 'hearth_session'),
+                    inArray(learningEntries.sourceSessionId, attendedIds)
+                  ));
+                const loggedIds = new Set(logged.map(l => l.sourceSessionId).filter(Boolean));
+
+                pendingScaffoldCount = attendedIds.filter(id => !loggedIds.has(id)).length;
+              }
+            }
+
+            return {
+              id: hearth.id,
+              name: hearth.name,
+              memberCount,
+              nextSession: nextSession
+                ? { id: nextSession.id, title: nextSession.title, date: nextSession.date }
+                : null,
+              pendingScaffoldCount,
+            };
+          })
+        )
+      : [];
+
+    const hearthCards = hearthData.filter((h): h is NonNullable<typeof h> => h !== null);
+
+    return { snapshot, recentEntries, todayPlanner, familyLearners, settings, hearthCards };
+  });
+
+  if (!result.ok) return <DashboardErrorState />;
+
+  const { snapshot, recentEntries, todayPlanner, familyLearners, settings, hearthCards } = result.data;
 
   const todayEntryCount = recentEntries.filter((e) => e.dateOccurred === today).length;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
-
-  // Hearth memberships
-  const familyMemberships = await db
-    .select()
-    .from(hearthMemberships)
-    .where(and(eq(hearthMemberships.familyId, family.id), eq(hearthMemberships.status, 'active')));
-
-  const hearthData = familyMemberships.length > 0
-    ? await Promise.all(
-        familyMemberships.map(async (membership) => {
-          const [hearth, memberCount, nextSession] = await Promise.all([
-            db.query.hearths.findFirst({ where: eq(hearths.id, membership.hearthId) }),
-            db
-              .select()
-              .from(hearthMemberships)
-              .where(and(eq(hearthMemberships.hearthId, membership.hearthId), eq(hearthMemberships.status, 'active')))
-              .then((rows) => rows.length),
-            db
-              .select()
-              .from(hearthSessions)
-              .where(and(eq(hearthSessions.hearthId, membership.hearthId), gte(hearthSessions.date, today)))
-              .orderBy(hearthSessions.date)
-              .limit(1)
-              .then((rows) => rows[0] ?? null),
-          ]);
-          if (!hearth) return null;
-
-          const completedSessions = await db
-            .select({ id: hearthSessions.id })
-            .from(hearthSessions)
-            .where(and(
-              eq(hearthSessions.hearthId, hearth.id),
-              eq(hearthSessions.status, 'completed')
-            ));
-          const completedIds = completedSessions.map(s => s.id);
-
-          let pendingScaffoldCount = 0;
-          if (completedIds.length > 0) {
-            const attended = await db
-              .select({ sessionId: sessionAttendance.sessionId })
-              .from(sessionAttendance)
-              .where(and(
-                eq(sessionAttendance.familyId, family.id),
-                inArray(sessionAttendance.sessionId, completedIds)
-              ));
-            const attendedIds = attended.map(a => a.sessionId);
-
-            if (attendedIds.length > 0) {
-              const logged = await db
-                .select({ sourceSessionId: learningEntries.sourceSessionId })
-                .from(learningEntries)
-                .where(and(
-                  eq(learningEntries.familyId, family.id),
-                  eq(learningEntries.source, 'hearth_session'),
-                  inArray(learningEntries.sourceSessionId, attendedIds)
-                ));
-              const loggedIds = new Set(logged.map(l => l.sourceSessionId).filter(Boolean));
-
-              pendingScaffoldCount = attendedIds.filter(id => !loggedIds.has(id)).length;
-            }
-          }
-
-          return {
-            id: hearth.id,
-            name: hearth.name,
-            memberCount,
-            nextSession: nextSession
-              ? { id: nextSession.id, title: nextSession.title, date: nextSession.date }
-              : null,
-            pendingScaffoldCount,
-          };
-        })
-      )
-    : [];
-
-  const hearthCards = hearthData.filter((h): h is NonNullable<typeof h> => h !== null);
 
   // Cascading dashboard state resolution
   type DashboardState = 'no-children' | 'no-entries' | 'returning-inactive' | 'active';

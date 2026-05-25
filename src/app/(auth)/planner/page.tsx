@@ -10,13 +10,31 @@ import {
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { addDays, startOfWeek, format } from 'date-fns';
+import { safeLoad } from '@/lib/server/safe-load';
+import EmptyState from '@/components/ui/EmptyState';
+import { Lifebuoy } from '@/components/icons';
 import PlannerClient from './PlannerClient';
+
+function PlannerErrorState() {
+  return (
+    <div className="mx-auto max-w-2xl px-lg py-2xl">
+      <EmptyState
+        icon={Lifebuoy}
+        heading="Couldn't load your planner"
+        body="Something went wrong on our side. Try again in a moment."
+        cta={{ label: 'Refresh', href: '/planner' }}
+      />
+    </div>
+  );
+}
 
 export default async function PlannerPage() {
   const { userId } = await auth();
   if (!userId) redirect('/sign-in');
 
-  const family = await getFamilyByClerkId(userId);
+  const familyResult = await safeLoad('planner', () => getFamilyByClerkId(userId));
+  if (!familyResult.ok) return <PlannerErrorState />;
+  const family = familyResult.data;
   if (!family || !family.onboardingComplete) redirect('/onboarding');
 
   const today = new Date();
@@ -27,31 +45,37 @@ export default async function PlannerPage() {
   const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
   const todayStr = format(today, 'yyyy-MM-dd');
 
-  const [weekEntries, familyLearners, snapshot, libraryItems] = await Promise.all([
-    db
-      .select()
-      .from(plannerEntries)
-      .where(
-        and(
-          eq(plannerEntries.familyId, family.id),
-          gte(plannerEntries.date, weekStartStr),
-          lte(plannerEntries.date, weekEndStr)
-        )
-      ),
-    db
-      .select()
-      .from(learners)
-      .where(eq(learners.familyId, family.id))
-      .orderBy(learners.displayOrder),
-    db.query.familyIntelligenceSnapshots.findFirst({
-      where: eq(familyIntelligenceSnapshots.familyId, family.id),
-    }),
-    db
-      .select({ id: familyLibrary.id })
-      .from(familyLibrary)
-      .where(eq(familyLibrary.familyId, family.id))
-      .limit(1),
-  ]);
+  const result = await safeLoad('planner', async () => {
+    const [weekEntries, familyLearners, snapshot, libraryItems] = await Promise.all([
+      db
+        .select()
+        .from(plannerEntries)
+        .where(
+          and(
+            eq(plannerEntries.familyId, family.id),
+            gte(plannerEntries.date, weekStartStr),
+            lte(plannerEntries.date, weekEndStr)
+          )
+        ),
+      db
+        .select()
+        .from(learners)
+        .where(eq(learners.familyId, family.id))
+        .orderBy(learners.displayOrder),
+      db.query.familyIntelligenceSnapshots.findFirst({
+        where: eq(familyIntelligenceSnapshots.familyId, family.id),
+      }),
+      db
+        .select({ id: familyLibrary.id })
+        .from(familyLibrary)
+        .where(eq(familyLibrary.familyId, family.id))
+        .limit(1),
+    ]);
+    return { weekEntries, familyLearners, snapshot, libraryItems };
+  });
+
+  if (!result.ok) return <PlannerErrorState />;
+  const { weekEntries, familyLearners, snapshot, libraryItems } = result.data;
 
   // Read structured recommendations from snapshot (populated by scoring engine)
   type SnapshotRec = { module_title: string; primary_reason: string; reason_text: string };

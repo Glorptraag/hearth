@@ -6,7 +6,7 @@ import { familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { rateLimit } from '@/lib/rate-limit';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { resolveCoachHintProvider } from '@/lib/logger/coaching/resolve';
 import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
 import type { SnapshotSignals } from '@/lib/logger/coaching/types';
@@ -18,7 +18,7 @@ const coachHintsSchema = z.object({
   observations: z.array(z.string()).default([]),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     console.warn('[coach-hints] retrieval provider failed:', err);
     return NextResponse.json([]);
   }
-}
+}, { route: 'POST /api/logger/coach-hints' });
 
 function deriveSnapshotSignals(
   learnerIds: string[],

@@ -7,7 +7,7 @@ import {
   learningEntries,
   learners,
 } from '@/lib/db/schema';
-import { authenticatedFamily, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { generateAnnotationDraft } from '@/lib/ai/annotation-draft';
@@ -28,7 +28,7 @@ type EnrichmentShape = { subjects_detected?: string[] } | null;
 // POST /api/report/[reportId]/samples/[sampleId]/draft
 // Generates a Haiku-drafted annotation for the selected entry. All four
 // fields are saved with source='ai_draft' so the UI can mark them.
-export async function POST(_request: NextRequest, { params }: Params) {
+export const POST = routeHandler(async (_request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -169,4 +169,4 @@ export async function POST(_request: NextRequest, { params }: Params) {
     .where(eq(workSamples.id, sampleId));
 
   return NextResponse.json({ annotation });
-}
+}, { route: 'POST /api/report/[reportId]/samples/[sampleId]/draft' });

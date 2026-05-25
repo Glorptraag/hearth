@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { complianceReports, workSamples, workSampleAnnotations } from '@/lib/db/schema';
-import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 
@@ -25,7 +25,7 @@ const annotationSchema = z.object({
 });
 
 // PATCH /api/report/[reportId]/samples/[sampleId] — upsert annotation
-export async function PATCH(request: NextRequest, { params }: Params) {
+export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -94,4 +94,4 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     .where(eq(workSamples.id, sampleId));
 
   return NextResponse.json({ sample: { ...sample, status: newStatus }, annotation });
-}
+}, { route: 'PATCH /api/report/[reportId]/samples/[sampleId]' });

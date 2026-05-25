@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedFamily, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { canAccessCommonsText } from '@/lib/entitlements';
 import { sanityClient } from '@/lib/sanity/client';
 import { COMMONS_TEXT_DETAIL_QUERY } from '@/lib/sanity/queries';
@@ -11,7 +11,7 @@ import { renderCommonsTextToPdf } from '@/lib/pdf/renderCommons';
  * Renders a commons text to PDF and returns it for download/print.
  * Entitlement-gated.
  */
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily({ rateLimitKey: 'commons-render', rateLimit: 20 });
   if ('error' in result) return result.error;
 
@@ -65,4 +65,4 @@ export async function GET(request: NextRequest) {
       'Cache-Control': 'private, max-age=86400', // 1 day — commons texts rarely change
     },
   });
-}
+}, { route: 'GET /api/commons/render' });

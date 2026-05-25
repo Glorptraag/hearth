@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedFamily } from '@/lib/api-helpers';
+import { authenticatedFamily, routeHandler } from '@/lib/api-helpers';
 import { getFamilyPackIds } from '@/lib/entitlements';
 import { sanityClient } from '@/lib/sanity/client';
 
@@ -14,7 +14,7 @@ import { sanityClient } from '@/lib/sanity/client';
  *   ?packId=X — filter to a specific pack
  *   ?sort=alpha|kind|pack — sort order (default: alpha)
  */
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily({ rateLimitKey: 'library-materials', rateLimit: 30 });
   if ('error' in result) return result.error;
 
@@ -211,4 +211,4 @@ export async function GET(request: NextRequest) {
     })),
     totalPrintablePages,
   });
-}
+}, { route: 'GET /api/library/materials' });

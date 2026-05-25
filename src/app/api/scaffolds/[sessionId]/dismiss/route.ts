@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { apiError, authenticatedFamily } from '@/lib/api-helpers';
+import { apiError, authenticatedFamily, routeHandler } from '@/lib/api-helpers';
 import {
   hearthSessions,
   sessionAttendance,
@@ -8,10 +8,10 @@ import {
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export async function POST(
+export const POST = routeHandler(async (
   _request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
-) {
+) => {
   const { sessionId } = await params;
 
   const result = await authenticatedFamily();
@@ -49,4 +49,4 @@ export async function POST(
   });
 
   return NextResponse.json({ success: true });
-}
+}, { route: 'POST /api/scaffolds/[sessionId]/dismiss' });

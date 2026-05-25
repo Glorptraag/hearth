@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { routeHandler } from '@/lib/api-helpers';
 
 const createdViaEnum = z.enum([
   'material',
@@ -76,7 +77,7 @@ const moduleInputSchema = z.object({
   createdVia: createdViaEnum,
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -151,4 +152,4 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: 'Failed to create module', detail: message }, { status: 500 });
   }
-}
+}, { route: 'POST /api/modules/publish' });

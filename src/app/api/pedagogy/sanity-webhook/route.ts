@@ -10,8 +10,9 @@ import {
   getLayerKey,
   type SanityPKBDocument,
 } from '@/lib/pedagogy/chunk-builder';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   // 1. Verify auth
   const secret = process.env.SANITY_WEBHOOK_SECRET;
   if (!secret) {
@@ -114,4 +115,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { route: 'POST /api/pedagogy/sanity-webhook' });

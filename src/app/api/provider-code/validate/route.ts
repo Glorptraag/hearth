@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { providerCodes } from '@/lib/db/schema';
 import { eq, isNull, and } from 'drizzle-orm';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function POST(req: NextRequest) {
+export const POST = routeHandler(async (req: NextRequest) => {
   let body: { code?: string };
   try {
     body = await req.json();
@@ -28,4 +29,4 @@ export async function POST(req: NextRequest) {
     valid: true,
     message: 'Code accepted — pricing will be adjusted at checkout.',
   });
-}
+}, { route: 'POST /api/provider-code/validate' });

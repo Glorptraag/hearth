@@ -8,7 +8,7 @@ import {
   learningEntries,
   learners,
 } from '@/lib/db/schema';
-import { authenticatedFamily, parseBody, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, parseBody, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, inArray } from 'drizzle-orm';
 import { generateProgressionSummary } from '@/lib/ai/annotation-draft';
@@ -29,7 +29,7 @@ const bodySchema = z.object({
 // Generates the early→late progression summary for one subject pair. Stored
 // on the late sample's annotation row. Refuses to overwrite if the parent
 // has already edited the summary (progressionSummaryEdited === true).
-export async function POST(request: NextRequest, { params }: Params) {
+export const POST = routeHandler(async (request: NextRequest, { params }: Params) => {
   const result = await authenticatedFamily();
   if ('error' in result) return result.error;
   const { userId, family } = result;
@@ -119,4 +119,4 @@ export async function POST(request: NextRequest, { params }: Params) {
     .returning();
 
   return NextResponse.json({ pair, summary, annotation: updated });
-}
+}, { route: 'POST /api/report/[reportId]/progression' });

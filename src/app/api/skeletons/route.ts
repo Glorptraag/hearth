@@ -2,8 +2,9 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity/client';
 import type { SkeletonRecord } from '@/lib/sanity/queries';
+import { routeHandler } from '@/lib/api-helpers';
 
-export async function GET(req: NextRequest) {
+export const GET = routeHandler(async (req: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -36,4 +37,4 @@ export async function GET(req: NextRequest) {
   } catch {
     return NextResponse.json([]);
   }
-}
+}, { route: 'GET /api/skeletons' });

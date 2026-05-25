@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedFamily, apiError } from '@/lib/api-helpers';
+import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { canAccessAsset, getUpsellPack } from '@/lib/entitlements';
 import { sanityClient } from '@/lib/sanity/client';
 import { ASSET_DETAIL_QUERY } from '@/lib/sanity/queries';
@@ -10,7 +10,7 @@ import { ASSET_DETAIL_QUERY } from '@/lib/sanity/queries';
  * Streams an asset file from Sanity CDN after entitlement check.
  * Never exposes raw Sanity CDN URLs to the client.
  */
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const result = await authenticatedFamily({ rateLimitKey: 'asset-download', rateLimit: 30 });
   if ('error' in result) return result.error;
 
@@ -65,4 +65,4 @@ export async function GET(request: NextRequest) {
       'Cache-Control': 'private, max-age=3600',
     },
   });
-}
+}, { route: 'GET /api/assets/download' });

@@ -8,6 +8,7 @@ import { format, differenceInDays, differenceInYears } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getJurisdiction } from '@/config/jurisdictions';
+import { routeHandler } from '@/lib/api-helpers';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
   english: { label: 'English', emoji: '📖' },
@@ -42,7 +43,7 @@ type AiEnrichment = {
   subjects_detected?: string[];
 } | null;
 
-export async function GET(request: NextRequest) {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -587,4 +588,4 @@ export async function GET(request: NextRequest) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
-}
+}, { route: 'GET /api/report/export' });

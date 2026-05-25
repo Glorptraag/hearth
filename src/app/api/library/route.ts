@@ -6,7 +6,7 @@ import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
-import { parseBody } from '@/lib/api-helpers';
+import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
 export interface LibraryItem {
@@ -20,7 +20,7 @@ export interface LibraryItem {
   moduleId: string;
 }
 
-export async function GET() {
+export const GET = routeHandler(async () => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -92,13 +92,13 @@ export async function GET() {
   });
 
   return NextResponse.json(items);
-}
+}, { route: 'GET /api/library' });
 
 const addPackSchema = z.object({
   sanityPackId: z.string().min(1),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -121,4 +121,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(record ?? { message: 'Already in library' }, { status: 201 });
-}
+}, { route: 'POST /api/library' });

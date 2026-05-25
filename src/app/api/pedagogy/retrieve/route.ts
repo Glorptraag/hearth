@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { retrievePedagogyChunks } from '@/lib/pedagogy/retrieval';
+import { routeHandler } from '@/lib/api-helpers';
 
 const retrievalSchema = z.object({
   pedagogyKey: z.string(),
@@ -12,7 +13,7 @@ const retrievalSchema = z.object({
   topN: z.number().min(1).max(20).optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = routeHandler(async (request: NextRequest) => {
   const secret = process.env.PEDAGOGY_RETRIEVAL_SECRET;
   if (!secret) {
     return NextResponse.json(
@@ -36,4 +37,4 @@ export async function POST(request: NextRequest) {
 
   const result = await retrievePedagogyChunks(parsed.data);
   return NextResponse.json(result);
-}
+}, { route: 'POST /api/pedagogy/retrieve' });

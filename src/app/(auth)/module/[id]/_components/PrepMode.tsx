@@ -5,6 +5,8 @@ import type { Module, ActivityOverlay, Activity } from './types';
 import { SETTING_ICON, ENERGY_ICON, PEDAGOGY_LABELS } from './constants';
 import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components/content/types';
 import { Check, Printer, Asterisk } from '@/components/icons';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import type { Indicators } from '@/lib/sanity/pack-indicators';
 
 export default function PrepMode({
   module,
@@ -14,6 +16,8 @@ export default function PrepMode({
   onResume,
   overlays,
   pedagogy,
+  indicators,
+  packState,
   onPrintMaterials,
 }: {
   module: Module;
@@ -23,6 +27,8 @@ export default function PrepMode({
   onResume?: () => void;
   overlays?: ActivityOverlay[];
   pedagogy?: string | null;
+  indicators?: Indicators;
+  packState?: { printablesDownloaded: boolean; kitOwned: boolean };
   onPrintMaterials?: () => void;
 }) {
   const approach = module.approaches?.[approachIdx];
@@ -46,6 +52,15 @@ export default function PrepMode({
         <p className="font-serif text-base italic text-text-secondary leading-relaxed">
           {module.targetUnderstanding}
         </p>
+        {indicators && (
+          <PackIndicators
+            context="detail"
+            printables={indicators.printables}
+            materials={indicators.materials}
+            state={packState}
+            className="mt-lg"
+          />
+        )}
       </div>
 
       {/* Understanding indicators */}

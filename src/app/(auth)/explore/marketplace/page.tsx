@@ -6,6 +6,7 @@ import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
 import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
 import { PackMaterialsList } from '@/components/content/PackMaterialsList';
+import { PackIndicators } from '@/components/ui/PackIndicators';
 import {
   Binoculars, Target, Books, MagnifyingGlass, Confetti, X,
   FlowerLotus, GraduationCap, Heart, Sparkle,
@@ -430,6 +431,12 @@ export default function MarketplacePage() {
                   {detailPack.description}
                 </p>
               )}
+
+              <PackIndicators
+                context="detail"
+                printables={detailPack.printables}
+                materials={detailPack.materials}
+              />
 
               {/* Creator */}
               <div>

@@ -1,8 +1,21 @@
+// Reusable projection for the pack/module indicators feature.
+// Derefs kitRef so the detail view can render contents + price without a second fetch.
+export const PACK_INDICATORS_PROJECTION = `
+  printables{ available, count },
+  materials{
+    mode,
+    description,
+    kitPriceAUD,
+    kitRef->{ _id, title, contents, priceAUD, stripePriceId }
+  }
+`;
+
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges),
-  assetCounts, commonsTextCount
+  assetCounts, commonsTextCount,
+  ${PACK_INDICATORS_PROJECTION}
 }`;
 
 // Single pack with full module tree
@@ -10,8 +23,10 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]
   ...,
   assetCounts,
   commonsTextCount,
+  ${PACK_INDICATORS_PROJECTION},
   modules[]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+    ${PACK_INDICATORS_PROJECTION},
     approaches[]->{
       _id, title, slug, modality,
       activities[]->{
@@ -29,6 +44,11 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]
 // Downloads go through /api/assets/download which checks entitlements.
 export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
   ...,
+  ${PACK_INDICATORS_PROJECTION},
+  "owningPack": *[_type == "pack" && references(^._id)][0]{
+    _id, title, slug,
+    ${PACK_INDICATORS_PROJECTION}
+  },
   approaches[]->{
     ...,
     activities[]->{
@@ -138,10 +158,25 @@ export const DLO_TIERS_QUERY = `*[_type == "discreteLearningObjective" && status
   tier
 } | order(_id asc)`;
 
+// Lightweight indicator fetch for Planner / Dashboard / any compact-card surface.
+// Returns the module's own printables/materials AND its owning pack's, so the
+// caller can apply resolveIndicators() inheritance client-side.
+export const MODULE_INDICATORS_QUERY = `*[_type == "module" && _id in $ids]{
+  _id,
+  ${PACK_INDICATORS_PROJECTION},
+  "owningPack": *[_type == "pack" && references(^._id)][0]{
+    _id,
+    ${PACK_INDICATORS_PROJECTION}
+  }
+}`;
+
 // Modules in family library (by pack IDs)
 export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
+  _id,
+  ${PACK_INDICATORS_PROJECTION},
   modules[]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+    ${PACK_INDICATORS_PROJECTION},
     approaches[]->{
       _id, title, modality,
       "activityCount": count(activities)

@@ -421,6 +421,18 @@ export type CreatedVia =
   | 'understanding'
   | 'editorial';
 
+interface PrintablesInput {
+  available: boolean;
+  count?: number;
+}
+
+interface MaterialsInput {
+  mode: 'none' | 'required' | 'ships-with';
+  description?: string;
+  kitRefId?: string;
+  kitPriceAUD?: number;
+}
+
 interface CreateModule {
   _id?: string;
   title: string;
@@ -436,6 +448,16 @@ interface CreateModule {
   status?: Status;
   authorFamilyId?: string;
   createdVia?: CreatedVia;
+  printables?: PrintablesInput;
+  materials?: MaterialsInput;
+}
+
+function buildMaterialsField(input: MaterialsInput): Record<string, unknown> {
+  const out: Record<string, unknown> = { mode: input.mode };
+  if (input.description) out.description = input.description;
+  if (input.kitRefId) out.kitRef = ref(input.kitRefId);
+  if (input.kitPriceAUD != null) out.kitPriceAUD = input.kitPriceAUD;
+  return out;
 }
 
 export async function createModule(input: CreateModule) {
@@ -456,6 +478,36 @@ export async function createModule(input: CreateModule) {
   if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
   if (input.authorFamilyId) doc.authorFamilyId = input.authorFamilyId;
   if (input.createdVia) doc.createdVia = input.createdVia;
+  if (input.printables) doc.printables = { ...input.printables };
+  if (input.materials) doc.materials = buildMaterialsField(input.materials);
+  return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
+}
+
+// ── Kit ──────────────────────────────────────────────────────────────────────
+
+interface CreateKit {
+  _id?: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  contents?: string[];
+  priceAUD?: number;
+  stripePriceId?: string;
+  status?: StatusExt;
+}
+
+export async function createKit(input: CreateKit) {
+  const doc: SanityDoc = {
+    _type: 'kit',
+    title: input.title,
+    slug: input.slug ? { _type: 'slug', current: input.slug } : autoSlug(input.title),
+    status: input.status ?? 'draft',
+  };
+  if (input._id) doc._id = input._id;
+  if (input.description) doc.description = input.description;
+  if (input.contents) doc.contents = input.contents;
+  if (input.priceAUD != null) doc.priceAUD = input.priceAUD;
+  if (input.stripePriceId) doc.stripePriceId = input.stripePriceId;
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -500,6 +552,8 @@ interface CreatePack {
   creator?: string;
   version?: string;
   status?: StatusExt;
+  printables?: PrintablesInput;
+  materials?: MaterialsInput;
 }
 
 export async function createPack(input: CreatePack) {
@@ -533,6 +587,8 @@ export async function createPack(input: CreatePack) {
   }
   if (input.worldview) doc.worldview = input.worldview;
   if (input.creator) doc.creator = input.creator;
+  if (input.printables) doc.printables = { ...input.printables };
+  if (input.materials) doc.materials = buildMaterialsField(input.materials);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 

@@ -16,6 +16,8 @@ import {
   ChatsCircle,
   Books,
 } from '@/components/icons';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import type { Printables, Materials } from '@/lib/sanity/pack-indicators';
 
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
@@ -56,6 +58,8 @@ export interface SanityPack {
   description?: string;
   assetCounts?: AssetCounts;
   commonsTextCount?: number;
+  printables?: Printables;
+  materials?: Materials;
 }
 
 function getCreatorIcon(type?: CreatorType): IconC {
@@ -191,6 +195,15 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
         <p className="font-sans text-[0.72rem] text-text-muted">
           {moduleCount} modules{ageStr ? ` · ${ageStr}` : ''}{moduleCount > 0 ? ` · ~${moduleCount * 3} weeks` : ''}
         </p>
+
+        {/* Pack indicators (printables / materials) */}
+        <PackIndicators
+          context="card"
+          printables={pack.printables}
+          materials={pack.materials}
+          withDivider
+          className="!px-0 !pb-0 -mx-1"
+        />
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-border-subtle">

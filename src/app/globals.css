@@ -36,6 +36,9 @@
   --color-ember-hover:    #E88F4E;
   --color-ember-glow:     rgba(217, 123, 58, 0.15);
   --color-ember-strong:   rgba(217, 123, 58, 0.25);
+  /* Quiet ember for the Pack Indicators informational layer (spec v1).
+     Same hue, alpha-based so it recedes against any surface. */
+  --color-ember-muted:    rgba(217, 123, 58, 0.55);
 
   /* ---------- Status palette (desaturated dusty per S9) ---------- */
   --color-sage:           #7BBF8A;
@@ -191,6 +194,8 @@
   --color-ember-hover:    #92400E;
   --color-ember-glow:     rgba(192, 86, 33, 0.10);
   --color-ember-strong:   rgba(192, 86, 33, 0.20);
+  /* Pack Indicators muted ember — lower alpha against the parchment surface */
+  --color-ember-muted:    rgba(192, 86, 33, 0.45);
 
   /* Status palette — desaturated for cream */
   --color-sage:           #5A9168;

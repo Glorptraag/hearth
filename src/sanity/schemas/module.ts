@@ -97,6 +97,67 @@ export const moduleSchema = defineType({
       },
     }),
     defineField({
+      name: 'printables',
+      title: 'Printables',
+      description:
+        'Module-level override. Leave unset to inherit the parent pack. Setting "available" here lets a module declare it differs from its pack.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'available',
+          title: 'Available',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'count',
+          title: 'Printable Count',
+          type: 'number',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'materials',
+      title: 'Materials',
+      description:
+        'Module-level override. Leave unset (or mode "none") to inherit the parent pack.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'mode',
+          title: 'Mode',
+          type: 'string',
+          initialValue: 'none',
+          options: {
+            list: [
+              { title: 'None — no special materials', value: 'none' },
+              { title: 'Required — family sources themselves', value: 'required' },
+              { title: 'Ships with kit', value: 'ships-with' },
+            ],
+          },
+        }),
+        defineField({
+          name: 'description',
+          title: 'Description',
+          type: 'text',
+          hidden: ({ parent }) => parent?.mode !== 'required',
+        }),
+        defineField({
+          name: 'kitRef',
+          title: 'Kit',
+          type: 'reference',
+          to: [{ type: 'kit' }],
+          hidden: ({ parent }) => parent?.mode !== 'ships-with',
+        }),
+        defineField({
+          name: 'kitPriceAUD',
+          title: 'Kit Price (AUD, denormalised)',
+          type: 'number',
+          hidden: ({ parent }) => parent?.mode !== 'ships-with',
+        }),
+      ],
+    }),
+    defineField({
       name: 'authorFamilyId',
       title: 'Author Family Id',
       description: 'Postgres family id when this module was built by a parent; null for Hearth editorial content.',

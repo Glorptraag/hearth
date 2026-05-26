@@ -3,6 +3,8 @@
 import type { Module, Mode } from './types';
 import { MODALITY_ICON, FALLBACK_PIN_ICON } from './constants';
 import { Check, ClipboardText, PencilSimple } from '@/components/icons';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import type { Indicators } from '@/lib/sanity/pack-indicators';
 
 interface ModuleSidebarProps {
   module: Module;
@@ -13,6 +15,8 @@ interface ModuleSidebarProps {
   onApproachSelect: (idx: number) => void;
   onModeChange: (mode: Mode) => void;
   onActivitySelect: (idx: number) => void;
+  indicators?: Indicators;
+  packState?: { printablesDownloaded: boolean; kitOwned: boolean };
 }
 
 export default function ModuleSidebar({
@@ -24,6 +28,8 @@ export default function ModuleSidebar({
   onApproachSelect,
   onModeChange,
   onActivitySelect,
+  indicators,
+  packState,
 }: ModuleSidebarProps) {
   const approach = module.approaches?.[selectedApproachIdx];
   const activities = approach?.activities ?? [];
@@ -47,6 +53,15 @@ export default function ModuleSidebar({
         <p className="font-serif text-sm italic text-text-secondary mt-xs truncate">
           {module.targetUnderstanding}
         </p>
+        {indicators && (
+          <PackIndicators
+            context="card-compact"
+            printables={indicators.printables}
+            materials={indicators.materials}
+            state={packState}
+            className="mt-sm"
+          />
+        )}
       </div>
 
       {/* Approach nav */}

@@ -28,6 +28,7 @@ import { bannedPhraseSet } from './bannedPhraseSet';
 import { moduleSkeleton } from './moduleSkeleton';
 import { asset } from './asset';
 import { commonsText } from './commonsText';
+import { kit } from './kit';
 
 export const schemaTypes = [
   // Pedagogical Knowledge Base
@@ -57,6 +58,7 @@ export const schemaTypes = [
   badge,
   asset,
   commonsText,
+  kit,
   activity,
   approach,
   moduleSchema,

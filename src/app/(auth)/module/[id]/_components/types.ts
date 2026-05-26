@@ -1,5 +1,7 @@
 // ─── Module Experience Types ─────────────────────────────────────────────────
 
+import type { Printables, Materials } from '@/lib/sanity/pack-indicators';
+
 export interface Material {
   name: string;
   alternative?: string;
@@ -95,6 +97,14 @@ export interface Module {
   subjects?: string[];
   capabilityThreads?: CapabilityThread[];
   badges?: Badge[];
+  printables?: Printables;
+  materials?: Materials;
+  owningPack?: {
+    _id: string;
+    title?: string;
+    printables?: Printables;
+    materials?: Materials;
+  } | null;
 }
 
 export interface Learner {

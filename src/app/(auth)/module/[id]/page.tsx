@@ -19,6 +19,7 @@ import { CommonsReader } from '@/components/content/CommonsReader';
 import { PrintSheet } from '@/components/content/PrintSheet';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
 import { isPrintableAssetKind, fetchPrintBundle, type AssetKind } from '@/components/content/types';
+import { resolveIndicators } from '@/lib/sanity/pack-indicators';
 
 export default function ModuleDetailPage() {
   const params = useParams();
@@ -42,6 +43,10 @@ export default function ModuleDetailPage() {
   const facilitateStartRef = useRef<number | null>(null);
   const [readerTextId, setReaderTextId] = useState<string | null>(null);
   const [showPrintSheet, setShowPrintSheet] = useState(false);
+  const [owningPackId, setOwningPackId] = useState<string | null>(null);
+  const [packState, setPackState] = useState<{ printablesDownloaded: boolean; kitOwned: boolean }>(
+    { printablesDownloaded: false, kitOwned: false },
+  );
 
   const handleAddCapture = useCallback((item: QuickCaptureItem) => {
     setQuickCaptures((prev) => [...prev, item]);
@@ -132,7 +137,9 @@ export default function ModuleDetailPage() {
               )
               .catch(() => [] as Array<{ _id: string }>);
             const owningPackIds = new Set(owningPacks.map((p) => p._id));
-            setHasAccess(libraryPackIds.some((pid) => owningPackIds.has(pid)));
+            const matchedPackId = libraryPackIds.find((pid) => owningPackIds.has(pid));
+            setHasAccess(!!matchedPackId);
+            if (matchedPackId) setOwningPackId(matchedPackId);
           }
         }
       }
@@ -183,6 +190,34 @@ export default function ModuleDetailPage() {
     }
     setMode('prep');
   }, [module, pedagogy]);
+
+  useEffect(() => {
+    if (!owningPackId) return;
+    let cancelled = false;
+    fetch(`/api/family-pack-state?packId=${encodeURIComponent(owningPackId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setPackState({
+          printablesDownloaded: !!data.printablesDownloaded,
+          kitOwned: !!data.kitOwned,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [owningPackId]);
+
+  const markPrintablesDownloaded = useCallback(() => {
+    if (!owningPackId || packState.printablesDownloaded) return;
+    setPackState((s) => ({ ...s, printablesDownloaded: true }));
+    fetch('/api/family-pack-state', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packId: owningPackId, printablesDownloaded: true }),
+    }).catch(() => {});
+  }, [owningPackId, packState.printablesDownloaded]);
 
   useEffect(() => {
     fetchModule();
@@ -278,15 +313,18 @@ export default function ModuleDetailPage() {
       .filter(Boolean)
       .map((i) => ({ id: i!.id, kind: i!.kind }));
 
-    return fetchPrintBundle(items, {
+    const result = await fetchPrintBundle(items, {
       copies: selection.copies,
       combine: selection.combine,
       coverTitle: module?.title,
     });
+    markPrintablesDownloaded();
+    return result;
   }
 
   function handleDownloadAsset(assetId: string) {
     window.open(`/api/assets/download?id=${assetId}`, '_blank');
+    markPrintablesDownloaded();
   }
 
   // ─── Loading / error / access states ──────────────────────────────────────────
@@ -356,6 +394,8 @@ export default function ModuleDetailPage() {
 
   // ─── Main layout ──────────────────────────────────────────────────────────────
 
+  const resolved = resolveIndicators(module.owningPack, module);
+
   return (
     <div className="lg:grid lg:grid-cols-[220px_1fr]">
       <ModuleSidebar
@@ -367,6 +407,8 @@ export default function ModuleDetailPage() {
         onApproachSelect={handleApproachSelect}
         onModeChange={handleModeChange}
         onActivitySelect={handleActivitySelect}
+        indicators={resolved}
+        packState={packState}
       />
 
       <div className="min-w-0">
@@ -414,6 +456,8 @@ export default function ModuleDetailPage() {
             approachIdx={selectedApproachIdx}
             overlays={overlays}
             pedagogy={pedagogy}
+            indicators={resolved}
+            packState={packState}
             onPrintMaterials={materialCount > 0 ? () => setShowPrintSheet(true) : undefined}
             onStart={() => {
               clearSession();

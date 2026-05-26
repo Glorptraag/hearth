@@ -1,6 +1,16 @@
 # Hearth Capabilities Connector
 ## Multi-Layer Learning Progression Architecture
 
+> **⚠️ Partial supersede notice (added 2026-05-26):**
+>
+> **Layer 4 (Discrete Learning Objectives mapped to AC9 codes) is historical, not the shipping plan.**
+>
+> - AU/QLD do not mandate a fine-grained DLO scheme for home education. The ~800–1200 AC9-coded DLOs envisaged in this doc would be self-imposed work, not a compliance requirement.
+> - Production ships a coarser DLO model: **3 tier bands per thread** (emerging / developing / demonstrating) = 171 docs in Sanity. See the Sanity `discreteLearningObjective` schema and `dlo.{threadCode}.{tier}` document IDs.
+> - The DLO tables below (M1-DLO-01 …, L5-DLO-01 …, etc.) are kept as a reference for *what fine-grain might look like* if we ever needed it. Do not seed them.
+> - Layers 1–3 (Achievement Standards, capability domains, capability threads) and Layer 5 (moments) are still accurate, except the domain count is now 15 (v2 substrate) rather than 8. See `src/lib/capability-universe-v2.ts`.
+> - The connector / galaxy-zoom UX language in this doc was largely subsumed by `docs/hearth-constellation-spec-v1.md`. Read that first.
+
 > **Status:** Architecture specification â€” companion to `hearth-capability-thread-library.md`
 > **Date:** 16 February 2026
 > **Purpose:** Define the full-depth capability system from Achievement Standards down to discrete learning objectives, with badge integration, parent assessment, galaxy zoom UX, and moment-to-capability mapping.

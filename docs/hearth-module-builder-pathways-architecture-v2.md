@@ -7,7 +7,7 @@
 > **Predecessor:** `module-builder-implementation-brief.md` (professional UbD 7-stage pipeline)
 > **Runner alignment:** `hearth-module-experience-v2.html`
 > **AI layer dependency:** `Hearth_AI_Intelligence_Layer_Architecture.md`
-> **Capability thread reference:** `hearth-capability-thread-library.md`
+> **Capability thread reference:** Sanity `capabilityThread` docs + `src/lib/capability-universe-v2.ts` (historical: `docs/archive/hearth-capability-thread-library.md`)
 > **Entry selector prototype:** `hearth-module-builder-v4.html` (to be updated for five-path layout)
 
 ---
@@ -1585,8 +1585,8 @@ The `createdVia` field enables valuable analytics:
 | `hearth-module-builder-pathways-architecture-v2.md` | **This document** |
 | `stress-test-scenarios.md` | 100-scenario stress test with routing analysis and findings |
 | `Hearth_AI_Intelligence_Layer_Architecture.md` | AI service architecture |
-| `hearth-capability-thread-library.md` | 57-thread taxonomy (audit social-emotional coverage) |
-| `hearth-capabilities-connector-architecture.md` | Constellation data model |
+| Sanity `capabilityThread` + `src/lib/capability-universe-v2.ts` | 57-thread taxonomy + 15-domain v2 grouping (historical: `docs/archive/hearth-capability-thread-library.md`) |
+| Sanity `capabilityDomain` + `discreteLearningObjective` | Constellation data model (historical: `docs/archive/hearth-capabilities-connector-architecture.md`) |
 | `Hearth_Module_Experience_UX_Flows.md` | Runner UX flows |
 
 ---

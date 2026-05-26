@@ -12,7 +12,7 @@ This is a status snapshot, not a spec or an audit-with-blockers. The earlier ver
 | Entity | Sanity production | Source of truth |
 |---|---|---|
 | Capability domains | 15 | `src/lib/capability-universe-v2.ts` + Sanity `capabilityDomain` docs |
-| Capability threads | 57 canonical + 17 orphan fixtures | `hearth-capability-thread-library.md` (contents only — domain grouping is in code) |
+| Capability threads | 57 canonical + 17 orphan fixtures | `docs/archive/hearth-capability-thread-library.md` (contents only — domain grouping is in code) |
 | DLOs (tier-band model) | 171 = 57 × 3 (emerging/developing/demonstrating) | Sanity `discreteLearningObjective` schema |
 | Badges | 2 (placeholder) | Sanity `badge` |
 | Strands | 0 (schema exists, unseeded) | Phase 2 |
@@ -21,9 +21,9 @@ This is a status snapshot, not a spec or an audit-with-blockers. The earlier ver
 
 ## What was *not* a real problem
 
-- **There is no missing "v2 architecture spec".** CLAUDE.md cited a doc that was never written. The citation was removed 2026-05-26 and repointed to the existing docs that *do* exist (`hearth-capability-thread-library.md` + `hearth-constellation-spec-v1.md`).
-- **There is no AU/QLD-mandated fine-grained DLO scheme.** The ~800–1200 AC9-coded DLO grain in `hearth-capabilities-connector-architecture.md` was a self-imposed model. The connector doc was banner-superseded 2026-05-26 — its Layer 4 is historical, not a backlog item.
-- **The 8-domain framing in `hearth-capability-thread-library.md` is stale, but the thread contents (57 threads, descriptors, tier definitions) are still canonical.** A banner was added 2026-05-26 so readers know to take the domain *grouping* from code.
+- **There is no missing "v2 architecture spec".** CLAUDE.md cited a doc that was never written. The citation was removed 2026-05-26 and repointed to the existing docs that *do* exist (`docs/archive/hearth-capability-thread-library.md` + `docs/archive/hearth-constellation-spec-v1.md`).
+- **There is no AU/QLD-mandated fine-grained DLO scheme.** The ~800–1200 AC9-coded DLO grain in `docs/archive/hearth-capabilities-connector-architecture.md` was a self-imposed model. The connector doc was banner-superseded 2026-05-26 — its Layer 4 is historical, not a backlog item.
+- **The 8-domain framing in `docs/archive/hearth-capability-thread-library.md` is stale, but the thread contents (57 threads, descriptors, tier definitions) are still canonical.** A banner was added 2026-05-26 so readers know to take the domain *grouping* from code.
 
 ## Three concrete data fixes (small, do-able, no spec required)
 

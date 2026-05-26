@@ -3,7 +3,7 @@
 > **Purpose:** Complete architecture specification for the cross-cutting intelligence layer that powers logger insights, recommendations, gap analysis, badge detection, dashboard messaging, and pedagogy-informed communication across all screens.
 > **Status:** Architecture specification — resolves Open Question #4 from `Hearth_System_Interaction_Map.md`
 > **Date:** March 2026
-> **Read first:** `Hearth_System_Interaction_Map.md`, `hearth-capabilities-connector-architecture.md`, `hearth-pedagogy-integration-framework.md`
+> **Read first:** `Hearth_System_Interaction_Map.md`, `hearth-pedagogy-integration-framework.md` (capability data model is in Sanity + `src/lib/capability-universe-v2.ts`; historical reference: `docs/archive/hearth-capabilities-connector-architecture.md`)
 > **Companion files:** `src/lib/db/schema.ts` (canonical data model), `03_CMS_Usage_Mapping.md` (Sanity vs PostgreSQL boundary)
 
 ---

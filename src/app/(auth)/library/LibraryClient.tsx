@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 import { Books, Sparkle } from '@/components/icons';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 
 interface LibraryItem {
   id: string;
@@ -14,6 +16,9 @@ interface LibraryItem {
   sanityPackId: string | null;
   sanityModuleId: string | null;
   moduleId: string;
+  printables?: Printables;
+  materials?: Materials;
+  assetCounts?: AssetCounts | null;
 }
 
 type Tab = 'packs' | 'materials';
@@ -178,18 +183,29 @@ function LibraryCard({ item }: { item: LibraryItem }) {
           </span>
         )}
       </div>
-      {subjects.length > 0 && (
-        <div className="flex flex-wrap gap-xs">
-          {subjects.map((s) => (
-            <span
-              key={s}
-              className={`font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${SUBJECT_CHIP[s] ?? 'bg-surface-raised text-text-muted'}`}
-            >
-              {SUBJECT_LABELS[s] ?? s}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="mt-sm flex items-center justify-between gap-sm">
+        {subjects.length > 0 ? (
+          <div className="flex flex-wrap gap-xs">
+            {subjects.map((s) => (
+              <span
+                key={s}
+                className={`font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${SUBJECT_CHIP[s] ?? 'bg-surface-raised text-text-muted'}`}
+              >
+                {SUBJECT_LABELS[s] ?? s}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span />
+        )}
+        <PackIndicators
+          context="card-compact"
+          printables={item.printables}
+          materials={item.materials}
+          assetCounts={item.assetCounts}
+          className="shrink-0"
+        />
+      </div>
     </div>
   );
 

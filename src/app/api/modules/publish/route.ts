@@ -56,6 +56,18 @@ const approachInputSchema = z.object({
   status: z.enum(['draft', 'published']).optional(),
 });
 
+const printablesSchema = z.object({
+  available: z.boolean(),
+  count: z.number().int().nonnegative().optional(),
+});
+
+const materialsSchema = z.object({
+  mode: z.enum(['none', 'required', 'ships-with']),
+  description: z.string().optional(),
+  kitRefId: z.string().optional(),
+  kitPriceAUD: z.number().nonnegative().optional(),
+});
+
 const moduleInputSchema = z.object({
   title: z.string().min(1),
   slug: z.string().optional(),
@@ -75,6 +87,8 @@ const moduleInputSchema = z.object({
   approaches: z.array(approachInputSchema).min(1),
   status: z.enum(['draft', 'published']).optional(),
   createdVia: createdViaEnum,
+  printables: printablesSchema.optional(),
+  materials: materialsSchema.optional(),
 });
 
 export const POST = routeHandler(async (request: NextRequest) => {
@@ -106,6 +120,8 @@ export const POST = routeHandler(async (request: NextRequest) => {
       status: data.status,
       authorFamilyId: family.id,
       createdVia: data.createdVia,
+      printables: data.printables,
+      materials: data.materials,
       approaches: data.approaches.map((app) => ({
         title: app.title,
         slug: app.slug,

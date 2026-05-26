@@ -6,6 +6,8 @@ import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
+import { PACK_INDICATORS_PROJECTION } from '@/lib/sanity/queries';
+import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
@@ -18,6 +20,9 @@ export interface LibraryItem {
   sanityPackId: string | null;
   sanityModuleId: string | null;
   moduleId: string;
+  printables?: Printables;
+  materials?: Materials;
+  assetCounts?: AssetCounts | null;
 }
 
 export const GET = routeHandler(async () => {
@@ -41,23 +46,33 @@ export const GET = routeHandler(async () => {
     .map((r) => r.sanityModuleId)
     .filter((v): v is string => !!v);
 
+  type PackMeta = {
+    _id: string;
+    title: string;
+    subjects: string[];
+    printables?: Printables;
+    materials?: Materials;
+    assetCounts?: AssetCounts | null;
+  };
+  type ModuleMeta = PackMeta & { authorFamilyId: string | null };
+
   const [packs, modules] = await Promise.all([
     packIds.length > 0
       ? sanityClient
-          .fetch<Array<{ _id: string; title: string; subjects: string[] }>>(
-            `*[_type == "pack" && _id in $ids]{ _id, title, subjects }`,
+          .fetch<PackMeta[]>(
+            `*[_type == "pack" && _id in $ids]{ _id, title, subjects, ${PACK_INDICATORS_PROJECTION} }`,
             { ids: packIds },
           )
-          .catch(() => [] as Array<{ _id: string; title: string; subjects: string[] }>)
-      : Promise.resolve([] as Array<{ _id: string; title: string; subjects: string[] }>),
+          .catch(() => [] as PackMeta[])
+      : Promise.resolve([] as PackMeta[]),
     moduleIds.length > 0
       ? sanityClient
-          .fetch<Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>>(
-            `*[_type == "module" && _id in $ids]{ _id, title, subjects, authorFamilyId }`,
+          .fetch<ModuleMeta[]>(
+            `*[_type == "module" && _id in $ids]{ _id, title, subjects, authorFamilyId, ${PACK_INDICATORS_PROJECTION} }`,
             { ids: moduleIds },
           )
-          .catch(() => [] as Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>)
-      : Promise.resolve([] as Array<{ _id: string; title: string; subjects: string[]; authorFamilyId: string | null }>),
+          .catch(() => [] as ModuleMeta[])
+      : Promise.resolve([] as ModuleMeta[]),
   ]);
 
   const packMap = new Map(packs.map((p) => [p._id, p]));
@@ -75,6 +90,9 @@ export const GET = routeHandler(async () => {
         sanityPackId: r.sanityPackId,
         sanityModuleId: null,
         moduleId: r.sanityPackId,
+        printables: meta?.printables,
+        materials: meta?.materials,
+        assetCounts: meta?.assetCounts,
       };
     }
     const id = r.sanityModuleId as string;
@@ -88,6 +106,9 @@ export const GET = routeHandler(async () => {
       sanityPackId: null,
       sanityModuleId: id,
       moduleId: id,
+      printables: meta?.printables,
+      materials: meta?.materials,
+      assetCounts: meta?.assetCounts,
     };
   });
 

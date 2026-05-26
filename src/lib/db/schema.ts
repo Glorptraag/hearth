@@ -314,6 +314,30 @@ export const entitlements = pgTable(
   ],
 );
 
+// ─── Family Pack State (Pack Indicators feature) ───
+// Per-family booleans for a pack: whether printables have been downloaded and
+// whether the family owns the kit. Read by Module Experience to switch the
+// indicator dot from ember-muted to sage. Spec: hearth-pack-indicators-spec-v1.
+
+export const familyPackState = pgTable(
+  'family_pack_state',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    sanityPackId: text('sanity_pack_id').notNull(),
+    printablesDownloaded: boolean('printables_downloaded').default(false).notNull(),
+    kitOwned: boolean('kit_owned').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('fps_family_pack_unique_idx').on(table.familyId, table.sanityPackId),
+    index('fps_family_idx').on(table.familyId),
+  ],
+);
+
 // ─── Module Drafts ───
 
 export const moduleDrafts = pgTable(

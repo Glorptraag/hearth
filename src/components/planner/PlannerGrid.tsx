@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import ModuleCard from './ModuleCard';
+import type { Indicators } from '@/lib/sanity/pack-indicators';
 
 interface Learner {
   id: string;
@@ -27,6 +28,7 @@ interface PlannerGridProps {
   today: string;
   isCurrentOrFutureWeek: boolean;
   moduleIdsWithMaterials?: Set<string>;
+  moduleIndicators?: Map<string, Indicators>;
   onAdd: (date: string, session: string) => void;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
@@ -57,6 +59,7 @@ export default function PlannerGrid({
   today,
   isCurrentOrFutureWeek,
   moduleIdsWithMaterials,
+  moduleIndicators,
   onAdd,
   onToggle,
   onDelete,
@@ -174,6 +177,7 @@ export default function PlannerGrid({
                   learners={learners}
                   isReadOnly={isReadOnly}
                   hasMaterials={!!(entry.moduleId && moduleIdsWithMaterials?.has(entry.moduleId))}
+                  indicators={entry.moduleId ? moduleIndicators?.get(entry.moduleId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onDragStart={setDraggingId}
@@ -226,6 +230,7 @@ export default function PlannerGrid({
                   learners={learners}
                   isReadOnly={isReadOnly}
                   hasMaterials={!!(entry.moduleId && moduleIdsWithMaterials?.has(entry.moduleId))}
+                  indicators={entry.moduleId ? moduleIndicators?.get(entry.moduleId) : undefined}
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onDragStart={setDraggingId}

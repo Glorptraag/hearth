@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import EmptyState from '@/components/ui/EmptyState';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import { sanityClient } from '@/lib/sanity/client';
+import { MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
+import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
 import {
   HandWaving,
   Plant,
@@ -229,6 +233,37 @@ export default function DashboardClient({
     [pedagogy, learnerNames, timeOfDay]
   );
 
+  // Pack indicators for today's planner cards (compact — no state in marketplace-style context).
+  const [moduleIndicators, setModuleIndicators] = useState<Map<string, Indicators>>(new Map());
+  useEffect(() => {
+    const moduleIds = [...new Set(todayPlanner.map((p) => p.moduleId).filter(Boolean))] as string[];
+    if (moduleIds.length === 0) return;
+    let cancelled = false;
+    sanityClient
+      .fetch<Array<{
+        _id: string;
+        printables?: Printables;
+        materials?: Materials;
+        assetCounts?: AssetCounts | null;
+        owningPack?: {
+          _id: string;
+          printables?: Printables;
+          materials?: Materials;
+          assetCounts?: AssetCounts | null;
+        } | null;
+      }>>(MODULE_INDICATORS_QUERY, { ids: moduleIds })
+      .then((rows) => {
+        if (cancelled) return;
+        const map = new Map<string, Indicators>();
+        for (const row of rows) map.set(row._id, resolveIndicators(row.owningPack, row));
+        setModuleIndicators(map);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [todayPlanner]);
+
   const todayEntries = recentEntries.filter(
     (e) => e.dateOccurred === new Date().toISOString().split('T')[0]
   );
@@ -389,21 +424,34 @@ export default function DashboardClient({
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
-                  {todayPlanner.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-                    >
-                      <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
-                        {item.title}
-                      </h3>
-                      {item.status && (
-                        <p className="font-sans text-[0.85rem] text-text-secondary mt-sm">
-                          Status: {item.status}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                  {todayPlanner.map((item) => {
+                    const ind = item.moduleId ? moduleIndicators.get(item.moduleId) : undefined;
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                      >
+                        <div className="flex items-start justify-between gap-md">
+                          <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
+                            {item.title}
+                          </h3>
+                          {ind && (
+                            <PackIndicators
+                              context="card-compact"
+                              printables={ind.printables}
+                              materials={ind.materials}
+                              className="mt-[6px] shrink-0"
+                            />
+                          )}
+                        </div>
+                        {item.status && (
+                          <p className="font-sans text-[0.85rem] text-text-secondary mt-sm">
+                            Status: {item.status}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 {todayPlanner.length > 0 && (() => {
                   const uniqueSubjects = Array.from(

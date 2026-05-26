@@ -12,6 +12,7 @@ import type {
   familyIntelligenceSnapshots,
   badgeAssessmentLogs,
   familyLibrary,
+  familyPackState,
   aiPipelineLogs,
   complianceReports,
   workSamples,
@@ -43,6 +44,7 @@ export type Notification = InferSelectModel<typeof notifications>;
 export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
 export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
 export type FamilyLibraryEntry = InferSelectModel<typeof familyLibrary>;
+export type FamilyPackState = InferSelectModel<typeof familyPackState>;
 export type AiPipelineLog = InferSelectModel<typeof aiPipelineLogs>;
 export type ComplianceReport = InferSelectModel<typeof complianceReports>;
 export type WorkSample = InferSelectModel<typeof workSamples>;

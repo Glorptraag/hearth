@@ -7,7 +7,8 @@ import BottomSheet from '@/components/planner/BottomSheet';
 import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { sanityClient } from '@/lib/sanity/client';
-import { MODULES_MATERIALS_BATCH_QUERY } from '@/lib/sanity/queries';
+import { MODULES_MATERIALS_BATCH_QUERY, MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
+import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
 import { fetchPrintBundle } from '@/components/content/types';
 import { isPrintableAssetKind, type AssetKind } from '@/components/content/types';
@@ -82,6 +83,7 @@ export default function PlannerClient({
     items: PrintableItem[];
   }
   const [moduleMaterials, setModuleMaterials] = useState<ModuleMaterials[]>([]);
+  const [moduleIndicators, setModuleIndicators] = useState<Map<string, Indicators>>(new Map());
 
   const weekDates = getWeekDates(weekStart);
   const todayDate = new Date(today + 'T12:00:00');
@@ -303,6 +305,42 @@ export default function PlannerClient({
     [moduleMaterials],
   );
 
+  // Fetch pack indicators (printables/materials) for modules planned this week.
+  useEffect(() => {
+    const moduleIds = [...new Set(entries.map((e) => e.moduleId).filter(Boolean))] as string[];
+    if (moduleIds.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setModuleIndicators(new Map());
+      return;
+    }
+    let cancelled = false;
+    sanityClient
+      .fetch<Array<{
+        _id: string;
+        printables?: Printables;
+        materials?: Materials;
+        assetCounts?: AssetCounts | null;
+        owningPack?: {
+          _id: string;
+          printables?: Printables;
+          materials?: Materials;
+          assetCounts?: AssetCounts | null;
+        } | null;
+      }>>(MODULE_INDICATORS_QUERY, { ids: moduleIds })
+      .then((rows) => {
+        if (cancelled) return;
+        const map = new Map<string, Indicators>();
+        for (const row of rows) {
+          map.set(row._id, resolveIndicators(row.owningPack, row));
+        }
+        setModuleIndicators(map);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [entries]);
+
   // Build print sheet groups — deduplicate across modules, group by day
   const printSheetGroups = useMemo(() => {
     const seenIds = new Set<string>();
@@ -450,6 +488,7 @@ export default function PlannerClient({
         today={today}
         isCurrentOrFutureWeek={isCurrentOrFutureWeek}
         moduleIdsWithMaterials={moduleIdsWithMaterials}
+        moduleIndicators={moduleIndicators}
         onAdd={handleOpenSheet}
         onToggle={handleToggle}
         onDelete={handleDelete}

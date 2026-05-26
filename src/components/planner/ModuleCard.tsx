@@ -1,4 +1,6 @@
 import { FilePdf, X } from '@/components/icons';
+import { PackIndicators } from '@/components/ui/PackIndicators';
+import type { Indicators } from '@/lib/sanity/pack-indicators';
 
 interface Learner {
   id: string;
@@ -18,6 +20,7 @@ interface ModuleCardProps {
   learners: Learner[];
   isReadOnly?: boolean;
   hasMaterials?: boolean;
+  indicators?: Indicators;
   onToggle: (id: string, currentStatus: string | null) => void;
   onDelete: (id: string) => void;
   onDragStart?: (id: string) => void;
@@ -59,6 +62,7 @@ export default function ModuleCard({
   learners,
   isReadOnly = false,
   hasMaterials = false,
+  indicators,
   onToggle,
   onDelete,
   onDragStart,
@@ -102,6 +106,14 @@ export default function ModuleCard({
             <span className="inline-flex text-text-muted" title="Has printable materials" aria-label="Has printable materials">
               <FilePdf size={14} aria-hidden="true" />
             </span>
+          )}
+          {indicators && (
+            <PackIndicators
+              context="card-compact"
+              printables={indicators.printables}
+              materials={indicators.materials}
+              className="ml-auto"
+            />
           )}
         </div>
 

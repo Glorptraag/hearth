@@ -161,6 +161,70 @@ export const pack = defineType({
     }),
     defineField({ name: 'version', title: 'Version', type: 'string', initialValue: '1.0.0' }),
     defineField({
+      name: 'printables',
+      title: 'Printables',
+      description:
+        'Surfaces the "this pack includes printables" indicator on cards and detail views. Leave unset to derive from assetCounts (any non-audio asset) — only set explicitly to override (force-on with a count, or force-off when assetCounts would lie). Child modules inherit when their own printables field is unset.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'available',
+          title: 'Available',
+          description: 'Explicit override. Leave blank to auto-detect from assetCounts.',
+          type: 'boolean',
+        }),
+        defineField({
+          name: 'count',
+          title: 'Printable Count',
+          description: 'Display hint only. Detail views show "N printable worksheets". Falls back to assetCounts.',
+          type: 'number',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'materials',
+      title: 'Materials',
+      description:
+        'Surfaces the materials indicator. "ships-with" requires kitRef; "required" optionally takes a description listing what the family needs to source. Child modules inherit when their own materials field is unset or mode === "none".',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'mode',
+          title: 'Mode',
+          type: 'string',
+          initialValue: 'none',
+          options: {
+            list: [
+              { title: 'None — no special materials', value: 'none' },
+              { title: 'Required — family sources themselves', value: 'required' },
+              { title: 'Ships with kit', value: 'ships-with' },
+            ],
+          },
+        }),
+        defineField({
+          name: 'description',
+          title: 'Description',
+          description: 'Plain-language list shown for required materials.',
+          type: 'text',
+          hidden: ({ parent }) => parent?.mode !== 'required',
+        }),
+        defineField({
+          name: 'kitRef',
+          title: 'Kit',
+          type: 'reference',
+          to: [{ type: 'kit' }],
+          hidden: ({ parent }) => parent?.mode !== 'ships-with',
+        }),
+        defineField({
+          name: 'kitPriceAUD',
+          title: 'Kit Price (AUD, denormalised)',
+          description: 'Optional override of kit.priceAUD for display.',
+          type: 'number',
+          hidden: ({ parent }) => parent?.mode !== 'ships-with',
+        }),
+      ],
+    }),
+    defineField({
       name: 'status',
       title: 'Status',
       type: 'string',

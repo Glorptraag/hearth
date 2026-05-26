@@ -164,19 +164,19 @@ export const pack = defineType({
       name: 'printables',
       title: 'Printables',
       description:
-        'Surfaces the "this pack includes printables" indicator on cards and detail views. Child modules inherit when their own printables field is unset.',
+        'Surfaces the "this pack includes printables" indicator on cards and detail views. Leave unset to derive from assetCounts (any non-audio asset) — only set explicitly to override (force-on with a count, or force-off when assetCounts would lie). Child modules inherit when their own printables field is unset.',
       type: 'object',
       fields: [
         defineField({
           name: 'available',
           title: 'Available',
+          description: 'Explicit override. Leave blank to auto-detect from assetCounts.',
           type: 'boolean',
-          initialValue: false,
         }),
         defineField({
           name: 'count',
           title: 'Printable Count',
-          description: 'Display hint only. Detail views show "N printable worksheets".',
+          description: 'Display hint only. Detail views show "N printable worksheets". Falls back to assetCounts.',
           type: 'number',
         }),
       ],

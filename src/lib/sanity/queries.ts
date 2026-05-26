@@ -1,5 +1,11 @@
 // Reusable projection for the pack/module indicators feature.
-// Derefs kitRef so the detail view can render contents + price without a second fetch.
+// - Derefs kitRef so the detail view can render contents + price without a
+//   second fetch.
+// - Pulls denormalised assetCounts so the indicator can derive
+//   `printables.available` when the editor hasn't explicitly authored it
+//   (see derivePrintablesFromAssetCounts in src/lib/sanity/pack-indicators.ts).
+//   GROQ ignores fields the document doesn't have (returns null), so projecting
+//   assetCounts on a module is harmless.
 export const PACK_INDICATORS_PROJECTION = `
   printables{ available, count },
   materials{
@@ -7,7 +13,8 @@ export const PACK_INDICATORS_PROJECTION = `
     description,
     kitPriceAUD,
     kitRef->{ _id, title, contents, priceAUD, stripePriceId }
-  }
+  },
+  assetCounts
 `;
 
 // Pack list for marketplace/activity discovery

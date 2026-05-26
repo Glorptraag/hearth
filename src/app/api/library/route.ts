@@ -7,7 +7,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACK_INDICATORS_PROJECTION } from '@/lib/sanity/queries';
-import type { Printables, Materials } from '@/lib/sanity/pack-indicators';
+import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 
@@ -22,6 +22,7 @@ export interface LibraryItem {
   moduleId: string;
   printables?: Printables;
   materials?: Materials;
+  assetCounts?: AssetCounts | null;
 }
 
 export const GET = routeHandler(async () => {
@@ -51,6 +52,7 @@ export const GET = routeHandler(async () => {
     subjects: string[];
     printables?: Printables;
     materials?: Materials;
+    assetCounts?: AssetCounts | null;
   };
   type ModuleMeta = PackMeta & { authorFamilyId: string | null };
 
@@ -90,6 +92,7 @@ export const GET = routeHandler(async () => {
         moduleId: r.sanityPackId,
         printables: meta?.printables,
         materials: meta?.materials,
+        assetCounts: meta?.assetCounts,
       };
     }
     const id = r.sanityModuleId as string;
@@ -105,6 +108,7 @@ export const GET = routeHandler(async () => {
       moduleId: id,
       printables: meta?.printables,
       materials: meta?.materials,
+      assetCounts: meta?.assetCounts,
     };
   });
 

@@ -100,14 +100,14 @@ export const moduleSchema = defineType({
       name: 'printables',
       title: 'Printables',
       description:
-        'Module-level override. Leave unset to inherit the parent pack. Setting "available" here lets a module declare it differs from its pack.',
+        'Module-level override. Leave unset to inherit the parent pack (which itself derives from assetCounts when not authored). Set "available" explicitly only when a module differs from its pack.',
       type: 'object',
       fields: [
         defineField({
           name: 'available',
           title: 'Available',
+          description: 'Explicit override. Leave blank to inherit from parent pack.',
           type: 'boolean',
-          initialValue: false,
         }),
         defineField({
           name: 'count',

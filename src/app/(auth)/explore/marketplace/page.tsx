@@ -436,6 +436,7 @@ export default function MarketplacePage() {
                 context="detail"
                 printables={detailPack.printables}
                 materials={detailPack.materials}
+                assetCounts={detailPack.assetCounts}
               />
 
               {/* Creator */}

@@ -10,7 +10,7 @@ import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
-import { resolveIndicators, type Indicators, type Printables, type Materials } from '@/lib/sanity/pack-indicators';
+import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
 import {
   HandWaving,
   Plant,
@@ -244,7 +244,13 @@ export default function DashboardClient({
         _id: string;
         printables?: Printables;
         materials?: Materials;
-        owningPack?: { _id: string; printables?: Printables; materials?: Materials } | null;
+        assetCounts?: AssetCounts | null;
+        owningPack?: {
+          _id: string;
+          printables?: Printables;
+          materials?: Materials;
+          assetCounts?: AssetCounts | null;
+        } | null;
       }>>(MODULE_INDICATORS_QUERY, { ids: moduleIds })
       .then((rows) => {
         if (cancelled) return;

@@ -196,13 +196,15 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
           {moduleCount} modules{ageStr ? ` · ${ageStr}` : ''}{moduleCount > 0 ? ` · ~${moduleCount * 3} weeks` : ''}
         </p>
 
-        {/* Pack indicators (printables / materials) */}
+        {/* Pack indicators (printables / materials).
+            Horizontal padding comes from the card body's p-4; CardRow only
+            adds its own pt-sm/pb-md vertical spacing + the top divider. */}
         <PackIndicators
           context="card"
           printables={pack.printables}
           materials={pack.materials}
+          assetCounts={pack.assetCounts}
           withDivider
-          className="!px-0 !pb-0 -mx-1"
         />
 
         {/* Footer */}

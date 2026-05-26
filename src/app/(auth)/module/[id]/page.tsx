@@ -324,7 +324,11 @@ export default function ModuleDetailPage() {
 
   function handleDownloadAsset(assetId: string) {
     window.open(`/api/assets/download?id=${assetId}`, '_blank');
-    markPrintablesDownloaded();
+    // Only flip `printables_downloaded` for actually-printable assets. Spec
+    // says "first PDF download" — audio narration or non-printable references
+    // would otherwise produce a false-positive "Printables downloaded" state.
+    const item = printSheetGroups.flatMap((g) => g.items).find((i) => i.id === assetId);
+    if (item?.isPrintable) markPrintablesDownloaded();
   }
 
   // ─── Loading / error / access states ──────────────────────────────────────────

@@ -1,11 +1,15 @@
 'use client';
 
 import type {
+  AssetCounts,
   Indicators,
   Materials,
   Printables,
 } from '@/lib/sanity/pack-indicators';
-import { hasAnyIndicator } from '@/lib/sanity/pack-indicators';
+import {
+  derivePrintablesFromAssetCounts,
+  hasAnyIndicator,
+} from '@/lib/sanity/pack-indicators';
 
 // Emoji glyphs per spec v1 — placeholders pending custom icon system.
 // They sit inline with the label, not as a replacement for the dot.
@@ -25,6 +29,12 @@ export interface PackIndicatorsState {
 interface PackIndicatorsProps {
   printables?: Printables;
   materials?: Materials;
+  /**
+   * Pack-level denormalised asset counts. Used as a fallback when
+   * `printables.available` isn't explicitly authored, so the indicator works
+   * on legacy content without per-pack manual toggling.
+   */
+  assetCounts?: AssetCounts | null;
   state?: PackIndicatorsState;
   context: PackIndicatorsContext;
   /** Render a top divider above the row. Only used in card context. */
@@ -35,18 +45,26 @@ interface PackIndicatorsProps {
 export function PackIndicators({
   printables,
   materials,
+  assetCounts,
   state,
   context,
   withDivider = false,
   className,
 }: PackIndicatorsProps) {
-  const indicators: Indicators = { printables, materials };
+  // Apply derivation fallback once at the entry point so every render path
+  // sees the same resolved printables value.
+  const resolvedPrintables: Printables | undefined =
+    printables?.available !== undefined
+      ? printables
+      : derivePrintablesFromAssetCounts(assetCounts);
+
+  const indicators: Indicators = { printables: resolvedPrintables, materials };
   if (!hasAnyIndicator(indicators)) return null;
 
   if (context === 'detail') {
     return (
       <DetailBlock
-        printables={printables}
+        printables={resolvedPrintables}
         materials={materials}
         state={state}
         className={className}
@@ -57,7 +75,7 @@ export function PackIndicators({
   if (context === 'card-compact') {
     return (
       <CompactDots
-        printables={printables}
+        printables={resolvedPrintables}
         materials={materials}
         state={state}
         className={className}
@@ -67,7 +85,7 @@ export function PackIndicators({
 
   return (
     <CardRow
-      printables={printables}
+      printables={resolvedPrintables}
       materials={materials}
       withDivider={withDivider}
       className={className}
@@ -75,7 +93,10 @@ export function PackIndicators({
   );
 }
 
-// ─── Card row (Marketplace card, Library card variant) ──────────────────────
+// ─── Card row (Marketplace card, etc.) ──────────────────────────────────────
+// Padding is vertical-only; consumers control horizontal padding via their
+// own card layout (Tailwind v4 lacks v3's `!` prefix override, so embedding
+// horizontal padding here would fight every card that doesn't want it).
 function CardRow({
   printables,
   materials,
@@ -91,7 +112,7 @@ function CardRow({
   return (
     <div
       className={[
-        'flex flex-wrap items-center gap-md px-lg pt-sm pb-md',
+        'flex flex-wrap items-center gap-md pt-sm pb-md',
         withDivider ? 'border-t border-border-subtle' : '',
         className ?? '',
       ]

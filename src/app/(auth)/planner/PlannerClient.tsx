@@ -8,7 +8,7 @@ import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULES_MATERIALS_BATCH_QUERY, MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
-import { resolveIndicators, type Indicators, type Printables, type Materials } from '@/lib/sanity/pack-indicators';
+import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
 import { fetchPrintBundle } from '@/components/content/types';
 import { isPrintableAssetKind, type AssetKind } from '@/components/content/types';
@@ -319,7 +319,13 @@ export default function PlannerClient({
         _id: string;
         printables?: Printables;
         materials?: Materials;
-        owningPack?: { _id: string; printables?: Printables; materials?: Materials } | null;
+        assetCounts?: AssetCounts | null;
+        owningPack?: {
+          _id: string;
+          printables?: Printables;
+          materials?: Materials;
+          assetCounts?: AssetCounts | null;
+        } | null;
       }>>(MODULE_INDICATORS_QUERY, { ids: moduleIds })
       .then((rows) => {
         if (cancelled) return;

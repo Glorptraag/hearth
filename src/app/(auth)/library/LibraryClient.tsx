@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 import { Books, Sparkle } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
-import type { Printables, Materials } from '@/lib/sanity/pack-indicators';
+import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 
 interface LibraryItem {
   id: string;
@@ -18,6 +18,7 @@ interface LibraryItem {
   moduleId: string;
   printables?: Printables;
   materials?: Materials;
+  assetCounts?: AssetCounts | null;
 }
 
 type Tab = 'packs' | 'materials';
@@ -201,6 +202,7 @@ function LibraryCard({ item }: { item: LibraryItem }) {
           context="card-compact"
           printables={item.printables}
           materials={item.materials}
+          assetCounts={item.assetCounts}
           className="shrink-0"
         />
       </div>

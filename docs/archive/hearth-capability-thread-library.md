@@ -1,6 +1,15 @@
 # Hearth Capability Thread Library
 ## Foundational Data Architecture for Learning Progression
 
+> **⚠️ Read this banner first (added 2026-05-26):**
+>
+> - **Thread contents below are canonical.** All 57 threads (L1–L9, M1–M9, S1–S6, H1–H6, P1–P5, PS1–PS7, C1–C7, EF1–EF8) match Sanity production.
+> - **Domain grouping below is stale.** This doc still describes 8 domains. Production runs the **15-domain v2 taxonomy** — see `src/lib/capability-universe-v2.ts` and Sanity `capabilityDomain` docs. Threads have been re-distributed across the 15 domains.
+> - **DLO model:** 3 tier bands per thread (emerging / developing / demonstrating), 171 docs total in Sanity. This is the only DLO grain that ships. The fine-grained AC9-mapped Layer 4 in `hearth-capabilities-connector-architecture.md` is **not** shipped and **not** planned — AU/QLD do not mandate that grain.
+> - **Substrate scaffolding only:** `strand`, `atomicCapability`, and `prerequisiteEdge` Sanity schemas exist but are unseeded. Treat as Phase 2.
+>
+> Do not rewrite this doc until thread *contents* change. Domain mapping lives in code.
+
 > **Status:** Phase A â€” Content Architecture (pre-implementation)
 > **Date:** 14 February 2026
 > **Purpose:** Define the complete capability thread library that powers the constellation visualization, scaffolding engine, observation tagging, and progression reporting.

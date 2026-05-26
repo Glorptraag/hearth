@@ -2,7 +2,7 @@
 
 **Component:** Portfolio / Learning Journey  
 **Prototype:** `hearth-portfolio-learning-journey.html`  
-**Related specs:** `Hearth_Dashboard_Our_Story_Content_Spec.md`, `hearth-capabilities-connector-architecture.md`, `hearth-heu-work-sample-curation-spec-v1.md`, `Hearth_AI_Intelligence_Layer_Architecture.md`  
+**Related specs:** `Hearth_Dashboard_Our_Story_Content_Spec.md`, `hearth-heu-work-sample-curation-spec-v1.md`, `Hearth_AI_Intelligence_Layer_Architecture.md` (capability data model: Sanity + `src/lib/capability-universe-v2.ts`; historical reference in `docs/archive/`)  
 **Architecture:** `Hearth_System_Interaction_Map.md` §3.6  
 **Date:** 2026-03-11  
 

@@ -55,7 +55,7 @@ docs/                # Architecture specs, design system docs
 | `docs/Hearth_System_Interaction_Map.md` | Cross-screen data flows, navigation |
 | `docs/hearth-data-architecture-overview-v1.md` | Sanity vs Postgres data boundaries |
 | `docs/hearth-pack-data-architecture-v1.md` | Content hierarchy: Pack → Module → Approach → Activity |
-| `docs/hearth-capability-universe-v2-architecture-spec-v1.md` | **Capability Universe v2 substrate (authoritative).** 15 domains × 4 stage-bands × strands × atomic capabilities; typed prerequisite graph; stage-tier badges; regulatory mappings on atoms. Read on any capability/thread/badge/observation/Constellation/HEU work. |
+| Capability threads / DLOs / Constellation | Source of truth lives in **Sanity** (`capabilityDomain`, `capabilityThread`, `discreteLearningObjective`) and **code** (`src/lib/capability-universe-v2.ts`, `src/types/capability-universe.ts`). 15 domains, 57 canonical threads, 171 DLOs (3 tier bands per thread: emerging/developing/demonstrating). AU/QLD do not mandate a finer-grained DLO scheme. When building learning modules and you need the full DLO contract per thread, read `docs/hearth-capability-dlo-reference.md` (derived snapshot from Sanity — regenerate when descriptors change). Historical reference docs live in `docs/archive/` — read those only if you need to understand the *origin* of the taxonomy, not to make changes. |
 | `docs/Hearth_AI_Intelligence_Layer_Architecture.md` | AI enrichment pipeline (Phase 6) |
 | `docs/alpha-readiness-pickup.md` | Current alpha-readiness status + honest caveats. Read first on any pilot-ops task. |
 | `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |

@@ -96,7 +96,7 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 |---|--------|---------------|------|------|-----------------|
 | 5 | **Portfolio / Learning Journey** | `hearth-portfolio-learning-journey-v2.html` | `hearth-portfolio-spec-v1.md` | Evidence gallery showing learning evolution over time | Thread-first default view with Evidence, Journey, and Milestone card types. Per-child filtered view with scaffolded progression display |
 | 6 | **HEU Compliance Report** | `hearth-report-screen-v2.html` | `hearth-report-interaction-spec.md`, `hearth-heu-work-sample-curation-spec-v1.md` (addendum) | Queensland HEU compliance documentation | Curriculum coverage %, work sample annotations, posture badge, export. Six-work-sample curation flow in addendum |
-| 7 | **Capabilities Constellation** | `hearth-capabilities-v4.html` (design prototype), `hearth-constellation-map-v2.jsx` (React DAG implementation) | `hearth-constellation-spec-v1.md` | Visual map of capability threads and growth patterns — 4-level zoom model | Level 1: domain overview. Level 2: thread view with DAG edges. Level 3: badge/DLO view. Level 4: moment detail with evidence trail. Per-child selector. Production target: unified `hearth-constellation-v4.jsx` merging both prototypes |
+| 7 | **Capabilities Constellation** | `hearth-capabilities-v4.html` (design prototype), `hearth-constellation-map-v2.jsx` (React DAG implementation) | `src/app/(auth)/our-story/capabilities/_constellation/` (live implementation; historical spec: `docs/archive/hearth-constellation-spec-v1.md`) | Visual map of capability threads and growth patterns — 4-level zoom model | Level 1: domain overview. Level 2: thread view with DAG edges. Level 3: badge/DLO view. Level 4: moment detail with evidence trail. Per-child selector. |
 | 8 | **Learner Profile** | `hearth-learner-profile-v2.html` | `hearth-learner-profile-spec.md` | Individual child identity portrait — who they are as a learner | Character, working style, interests. NOT progress tracking (that is Capabilities) |
 
 **Additional Our Story prototypes:** `hearth-our-story-hub-v2.html` (Our Story landing/hub page — "Emma's Story"). Spec: `Hearth_Dashboard_Our_Story_Content_Spec.md`
@@ -228,7 +228,7 @@ These are content instances using the Module Experience shell — not unique scr
 | `hearth-pedagogy-engine-spec-v1.md` | Pedagogy Engine — onboarding wizard, 6+1 philosophy model, values/practices selection, familyPedagogicalProfile data structure, settings view, skip/defer handling, demo activity preview |
 | `hearth-heu-work-sample-curation-spec-v1.md` | HEU work sample curation flow — addendum to report interaction spec. Candidate browsing, selection, annotation (parent/AI/hybrid), quality scoring, six-sample compliance check, export integration. Resolves System Interaction Map Open Question #6 |
 | `hearth-portfolio-spec-v1.md` | Portfolio / Learning Journey — thread-first default view, three card types (Evidence/Journey/Milestone), per-child filtered view, scaffolded progression, summary card with month picker, AI-generated journey observations, PDF export |
-| `hearth-constellation-spec-v1.md` | Capabilities Constellation — resolves dual-file ambiguity, defines canonical 4-level zoom model, per-child data flow, cross-domain edge rendering, badge proximity indicators, mobile adaptation, accessibility |
+| `docs/archive/hearth-constellation-spec-v1.md` | Capabilities Constellation — historical spec (4-level zoom model, per-child data flow, cross-domain edges, badge proximity). Live implementation in `src/app/(auth)/our-story/capabilities/_constellation/`. |
 | `hearth-badge-assessment-spec.md` | Badge Assessment secondary interface — post-log trigger, 3-5 confidence-building questions, award moment with secondhand delight, physical badge ordering. Resolves System Interaction Map Open Questions #1 and #2 |
 | `Hearth_Dashboard_Our_Story_Content_Spec.md` | Dashboard vs Our Story content differentiation spec |
 | `hearth-notification-system-spec.md` | Notification system design + integration spec |
@@ -262,8 +262,8 @@ These are content instances using the Module Experience shell — not unique scr
 | `hearth-module-builder-pathways-design-brief-v1.md` | Design brief for multi-pathway Module Builder build: shared patterns, per-pathway entry screens, divergence map, build sequence |
 | `hearth-documentation-traceability-map-v1.mermaid` | Component-to-documentation traceability graph — which docs govern which screens |
 | `hearth-pedagogy-integration-framework.md` | How pedagogy engine connects to all screens. **Architectural framing superseded by `hearth-pedagogy-system-architecture-v1.md` (2026-05-13).** Retained as historical reference for voice-per-philosophy detail. |
-| `hearth-capabilities-connector-architecture.md` | Capability thread data model and connection points |
-| `hearth-capability-thread-library.md` | Full 57-thread taxonomy across 8 domains |
+| `docs/archive/hearth-capabilities-connector-architecture.md` | Historical — capability thread data model. Layer 4 (AC9-mapped DLOs) not shipped, not planned. Live model: Sanity + `src/lib/capability-universe-v2.ts`. |
+| `docs/archive/hearth-capability-thread-library.md` | Historical — 57-thread taxonomy across 8 domains (production uses 15-domain v2 grouping in `src/lib/capability-universe-v2.ts`). |
 | `Hearth_Capabilities_Constellation_Design_Exploration.md` | Constellation visualization design sprint findings |
 | `Hearth_LMS_Content_Creation_Framework.md` | Three-layer content architecture |
 | `Hearth_LMS_Assessment_Engine_Framework.md` | Parent-controlled assessment with confidence-building |

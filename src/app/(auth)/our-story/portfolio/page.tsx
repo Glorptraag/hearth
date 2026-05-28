@@ -11,7 +11,7 @@ import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
   CalendarBlank, BookOpenText, Medal, Plant,
   MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
-  Flame, PencilSimple, Check, Sparkle, Camera, FilePdf,
+  Flame, PencilSimple, Check, Sparkle, FilePdf,
 } from '@/components/icons';
 import type { ComponentType as PortfolioComponentType } from 'react';
 

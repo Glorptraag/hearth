@@ -33,8 +33,11 @@ export const POST = routeHandler(
       return NextResponse.json({ error: 'Family not found' }, { status: 404 });
     }
 
+    // 5/hour per family — the real cost protection is the 24h `rebuiltAt`
+    // debounce below; this limiter is just a sub-debounce against tab thrash
+    // inside the 24h window. Each rebuild costs one Anthropic call per child.
     const limit = rateLimit(`snapshots-rebuild:${family.id}`, {
-      limit: 2,
+      limit: 5,
       windowMs: 60 * 60 * 1000,
     });
     if (!limit.success) {

@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { X, Tray, Flame, ClipboardText, Camera, Check, Sparkle } from '@/components/icons';
+import { X, Tray, Flame, Camera, Check, Sparkle } from '@/components/icons';
+import WorkSamplePill from '@/components/ui/WorkSamplePill';
 
 // ─── Types ───
 
@@ -395,9 +396,7 @@ export default function WorkSampleCuration({
                           </div>
                           <div className="flex flex-col items-end gap-xs shrink-0">
                             {entry.workSampleCandidate && (
-                              <span className="inline-flex items-center gap-xs rounded-full bg-sage/15 text-sage px-sm py-[1px] font-sans text-[10px] font-semibold">
-                                <ClipboardText size={10} aria-hidden="true" /> Work Sample
-                              </span>
+                              <WorkSamplePill size="sm" quality={entry.workSampleQuality} />
                             )}
                             {hasEvidence && (
                               <span className="inline-flex items-center gap-xs rounded-full bg-ember-glow text-ember px-sm py-[1px] font-sans text-[10px] font-semibold">

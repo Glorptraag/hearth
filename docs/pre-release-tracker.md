@@ -127,6 +127,7 @@ These are intentionally inert. Worth a line in the tracker so future audits don'
 | F7 | Editorial workbench: rich-block instruction picker (sayBlock / pauseNote / watchBlock) | TODO at `src/app/(admin)/admin/content/_components/editors/ActivityEditor.tsx:36-42` and `src/lib/content-studio/sanity-transform.ts:18-22` | 🤔 Useful post-pilot if editorial volume grows; plain-text emit works today. |
 | F8 | AI cost dashboard pricing hardcoded to Haiku 4.5 | `/api/admin/analytics/ai-cost/route.ts` `PRICING_PER_MTOK` | ⏳ Maintenance debt. Move pricing table to env or per-model config when the wired model changes. |
 | F9 | Badge assessment "compare" step UI | `src/app/(auth)/badges/assess/[id]/page.tsx` | ⏳ Step type exists; side-by-side compare UI stubbed. Post-pilot. |
+| F10 | Sonnet confidence retry on Haiku enrichment | `src/lib/ai/enrich.ts` (TODO at `callLLM`) | ⏳ Per AI Intelligence Layer spec §3.4. Deferred — Haiku confidence is acceptable in pilot. Re-evaluate if `confidence < 0.6` rate climbs in the AI cost dashboard. |
 
 ---
 

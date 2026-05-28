@@ -5,12 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
+import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import { getThreadName } from '@/lib/capability-threads';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
   CalendarBlank, BookOpenText, Medal, Plant,
   MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
-  Flame, PencilSimple, Check, Sparkle, Camera, FilePdf,
+  Flame, PencilSimple, Check, Sparkle, FilePdf,
 } from '@/components/icons';
 import type { ComponentType as PortfolioComponentType } from 'react';
 
@@ -616,6 +617,12 @@ export default function PortfolioPage() {
                                 </div>
                               )}
 
+                              {entry.workSampleCandidate && (
+                                <div className="mt-sm">
+                                  <WorkSamplePill size="sm" />
+                                </div>
+                              )}
+
                               {/* Discovery */}
                               {discovery && (
                                 <p className="font-serif text-sm italic text-text-secondary mt-sm leading-relaxed">
@@ -813,6 +820,12 @@ export default function PortfolioPage() {
                               {getThreadName(ct.thread_id)}
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {entry.workSampleCandidate && (
+                        <div className="mt-sm">
+                          <WorkSamplePill size="sm" />
                         </div>
                       )}
 

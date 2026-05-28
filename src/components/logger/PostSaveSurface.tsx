@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Check, Sparkle } from '@/components/icons';
+import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import type { AiEnrichment } from '@/types/enrichment';
 
 // Mirrors the taxonomy in src/lib/ai/enrich.ts. Kept local so this surface
@@ -139,8 +140,9 @@ function EnrichedBody({ enrichment }: { enrichment: AiEnrichment }) {
 
   const topThread = enrichment.capability_threads?.[0];
   const threadLabel = topThread ? THREAD_LABELS[topThread.thread_id] : null;
+  const workSampleFlagged = enrichment.work_sample?.flag === true;
 
-  if (!reflection && !threadLabel) return null;
+  if (!reflection && !threadLabel && !workSampleFlagged) return null;
 
   return (
     <div className="flex flex-col gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg">
@@ -157,6 +159,11 @@ function EnrichedBody({ enrichment }: { enrichment: AiEnrichment }) {
             <span className="text-ember">{threadLabel}</span> thread.
           </span>
         </p>
+      )}
+      {workSampleFlagged && (
+        <div>
+          <WorkSamplePill quality={enrichment.work_sample?.quality} />
+        </div>
       )}
     </div>
   );

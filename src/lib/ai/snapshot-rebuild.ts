@@ -30,7 +30,12 @@ import type {
   ThreadTrajectory, EvidenceQuality, SubjectBalance,
 } from '@/types/snapshot';
 
-type RebuildTrigger = 'entry_saved' | 'library_change' | 'settings_change' | 'manual';
+type RebuildTrigger =
+  | 'entry_saved'
+  | 'library_change'
+  | 'settings_change'
+  | 'manual'
+  | 'user_dashboard';
 
 export async function rebuildSnapshot(
   familyId: string,
@@ -405,7 +410,10 @@ export async function rebuildSnapshot(
       const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
       const monthEntries = childEntries.filter((e) => e.dateOccurred >= monthStart);
       let monthlyNarrative = '';
-      if (monthEntries.length > 0 && (trigger === 'entry_saved' || trigger === 'manual')) {
+      if (
+        monthEntries.length > 0 &&
+        (trigger === 'entry_saved' || trigger === 'manual' || trigger === 'user_dashboard')
+      ) {
         const monthSubjects = [...new Set(monthEntries.flatMap((e) => e.subjects ?? []))];
         const monthThreadNames = Object.entries(threadCounts)
           .filter(([, d]) => d.lastDate >= monthStart)

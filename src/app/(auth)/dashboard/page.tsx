@@ -182,7 +182,19 @@ export default async function DashboardPage() {
       evidenceCollected?: number;
     };
     recommendations?: Array<{ title: string; subject?: string }>;
+    children?: Record<string, { monthly_narrative?: string }>;
   };
+
+  // True when any child has a non-empty entry history (recentEntries proves it)
+  // but the snapshot's monthly narrative is missing. The Dashboard client uses
+  // this single boolean to fire a debounced background rebuild; we never leak
+  // narrative text into the client bundle.
+  const hasMissingNarrative =
+    recentEntries.length > 0 &&
+    familyLearners.some((l) => {
+      const text = snapshotData.children?.[l.id]?.monthly_narrative;
+      return !text || text.trim() === '';
+    });
 
   return (
     <DashboardClient
@@ -214,6 +226,7 @@ export default async function DashboardPage() {
       pedagogy={pedagogy}
       dashboardState={dashboardState}
       hearths={hearthCards}
+      hasMissingNarrative={hasMissingNarrative}
     />
   );
 }

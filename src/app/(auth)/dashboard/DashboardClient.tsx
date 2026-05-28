@@ -84,6 +84,7 @@ interface DashboardClientProps {
   pedagogy?: string;
   dashboardState?: DashboardState;
   hearths?: HearthItem[];
+  hasMissingNarrative?: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -215,7 +216,16 @@ export default function DashboardClient({
   pedagogy = 'eclectic',
   dashboardState = 'active',
   hearths,
+  hasMissingNarrative = false,
 }: DashboardClientProps) {
+  // Fire a debounced background snapshot rebuild when any child has a stale
+  // monthly narrative. The endpoint itself enforces a 24h debounce so a
+  // tab-thrash can't run up Anthropic spend.
+  useEffect(() => {
+    if (!hasMissingNarrative) return;
+    fetch('/api/snapshots/rebuild', { method: 'POST' }).catch(() => {});
+  }, [hasMissingNarrative]);
+
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
   const learnerNames = useMemo(() => learners.map((l) => l.name.split(' ')[0]), [learners]);

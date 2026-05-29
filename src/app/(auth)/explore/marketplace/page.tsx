@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
-import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
+import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
 import { PackMaterialsList } from '@/components/content/PackMaterialsList';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import {
@@ -71,14 +71,23 @@ export default function MarketplacePage() {
 
   const fetchData = useCallback(async () => {
     try {
+      // Each fetch is guarded independently so a failure in the library, entitlements
+      // or snapshot call can never prevent the packs grid from rendering.
       const [sanityPacks, libraryRes, entitlementsRes, snapshotRes] = await Promise.all([
-        sanityClient.fetch<SanityPack[]>(PACKS_QUERY),
-        fetch('/api/library'),
+        sanityClient.fetch<SanityPack[]>(PACKS_QUERY).catch(() => [] as SanityPack[]),
+        fetch('/api/library').catch(() => null),
         fetch('/api/entitlements').catch(() => null),
         fetch('/api/snapshot').catch(() => null),
       ]);
-      setPacks(sanityPacks ?? []);
-      if (libraryRes.ok) {
+      setPacks(
+        (sanityPacks ?? []).map((p) => ({
+          ...p,
+          subjects: (p.subjects ?? [])
+            .map(normalizeSubject)
+            .filter((s): s is Subject => s !== null),
+        })),
+      );
+      if (libraryRes?.ok) {
         const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
         setLibraryIds(new Set(library.filter((l) => l.kind === 'pack').map((l) => l.id)));
       }

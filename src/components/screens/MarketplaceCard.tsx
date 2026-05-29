@@ -91,6 +91,19 @@ const SUBJECT_META: Record<Subject, { label: string; hex: string; Icon: IconC }>
   languages:    { label: 'Languages',    hex: '#6B9B8B', Icon: ChatsCircle },
 };
 
+// Reconcile drifted subject values from authored content to the canonical enum.
+// e.g. the kindling pipeline emits "health-pe" where the app uses "hpe".
+const SUBJECT_ALIASES: Record<string, Subject> = {
+  'health-pe': 'hpe',
+};
+
+// Map a raw Sanity subject value to a known canonical Subject, or null if unrecognised.
+// Returning null (rather than throwing) keeps an unknown value from blanking the grid.
+export function normalizeSubject(raw: string): Subject | null {
+  const canonical = SUBJECT_ALIASES[raw] ?? raw;
+  return canonical in SUBJECT_META ? (canonical as Subject) : null;
+}
+
 function hexToRgb(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -112,7 +125,9 @@ interface MarketplaceCardProps {
 }
 
 export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary, onPurchase }: MarketplaceCardProps) {
-  const subjects = pack.subjects ?? [];
+  const subjects = (pack.subjects ?? [])
+    .map(normalizeSubject)
+    .filter((s): s is Subject => s !== null);
   const primary = subjects[0];
   const primaryMeta = primary ? SUBJECT_META[primary] : null;
   const primaryHex = primaryMeta?.hex ?? '#D97B3A';

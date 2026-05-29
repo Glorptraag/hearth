@@ -138,7 +138,7 @@ export default function AuthLayout({
             aria-label={`Hearth — home${unreadCount > 0 ? ` (${unreadCount} unread notifications)` : ''}`}
           >
             <Wordmark
-              iconHeight={40}
+              iconHeight={22}
               textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
               className="inline-flex items-center gap-md"
             />

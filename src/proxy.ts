@@ -22,7 +22,9 @@ const isPublicRoute = createRouteMatcher([
 
 const clerkHandler = clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    await auth.protect();
+    await auth.protect({
+      unauthenticatedUrl: new URL("/sign-in", req.url).toString(),
+    });
   }
 
   const response = NextResponse.next();

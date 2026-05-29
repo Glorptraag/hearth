@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// Canonical curriculum subject enum. Must match the modules publish route and the
+// app's SUBJECT_META map. Validating against it here stops drifted values (e.g. the
+// non-canonical "health-pe") from being written to Sanity via the editorial path.
+const subjectEnum = z.enum([
+  'english', 'mathematics', 'science', 'hass', 'arts', 'technologies', 'hpe', 'languages',
+]);
+
 const workbenchSchema = z.object({
   handOffFraming: z.string().min(1, 'Workbench hand-off framing required'),
   parentOffGuidance: z.string().min(1, 'Workbench parent-off guidance required'),
@@ -69,7 +76,7 @@ const moduleSchema = z.object({
     developing: z.string(),
     demonstrating: z.string(),
   }),
-  subjects: z.array(z.string()),
+  subjects: z.array(subjectEnum),
   ageRange: z.object({ min: z.number(), max: z.number() }),
   duration: z.object({ min: z.number(), max: z.number() }),
   capabilityThreadIds: z.array(z.string()),
@@ -99,7 +106,7 @@ export const packPublishSchema = z.object({
     keyPoints: z.array(z.string()),
     furtherReading: z.array(z.object({ _key: z.string(), title: z.string(), url: z.string() })),
   }),
-  subjects: z.array(z.string()),
+  subjects: z.array(subjectEnum),
   ageRange: z.object({ min: z.number(), max: z.number() }),
   termWeeks: z.number(),
   worldview: z.string(),

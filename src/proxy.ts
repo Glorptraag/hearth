@@ -18,6 +18,11 @@ const isPublicRoute = createRouteMatcher([
   "/privacy",
   "/api/invitations/validate",
   "/api/provider-code/validate",
+  // Sanity webhooks — these self-authenticate via SANITY_WEBHOOK_SECRET
+  // (Bearer header). They must bypass Clerk or the unauthenticated webhook
+  // request is 307-redirected to /sign-in and never reaches the handler.
+  "/api/revalidate/sanity",
+  "/api/pedagogy/sanity-webhook",
 ]);
 
 const clerkHandler = clerkMiddleware(async (auth, req) => {

@@ -59,8 +59,19 @@ function getWriteClient(): SanityClient {
 
 function lazy(getter: () => SanityClient): SanityClient {
   return new Proxy({} as SanityClient, {
-    get(_target, prop, receiver) {
-      return Reflect.get(getter() as object, prop, receiver);
+    get(_target, prop) {
+      const client = getter();
+      const value = Reflect.get(client as object, prop);
+      // @sanity/client v7 methods read private class fields (`#…`) off `this`.
+      // Returning the bare method would let callers invoke it as
+      // `sanityClient.fetch(...)` with `this` bound to THIS Proxy, which has no
+      // private fields → "Cannot read private member #… from an object whose
+      // class did not declare it". Bind methods to the real client so `this`
+      // is always the genuine instance. (Do NOT forward `receiver` to
+      // Reflect.get for the same reason.)
+      return typeof value === 'function'
+        ? (value as (...args: unknown[]) => unknown).bind(client)
+        : value;
     },
     has(_target, prop) {
       return prop in (getter() as object);

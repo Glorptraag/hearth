@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { MarketplaceCard, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
+import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
 import { PackMaterialsList } from '@/components/content/PackMaterialsList';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import {
@@ -59,7 +59,19 @@ function hexToRgb(hex: string): string {
 
 export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] }) {
   const { toast } = useToast();
-  const packs = initialPacks;
+  // Normalise drifted/aliased subject values so a stale subject can't blank
+  // the grid (the #102 fix). Runs client-side because normalizeSubject is a
+  // 'use client' export and cannot be called from the server component.
+  const packs = useMemo(
+    () =>
+      initialPacks.map((p) => ({
+        ...p,
+        subjects: (p.subjects ?? [])
+          .map(normalizeSubject)
+          .filter((s): s is Subject => s !== null),
+      })),
+    [initialPacks],
+  );
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);

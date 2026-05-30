@@ -1,17 +1,19 @@
 import { sanityFetch } from '@/lib/sanity/server-fetch';
 import { PACKS_QUERY } from '@/lib/sanity/queries';
-import { normalizeSubject, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
+import type { SanityPack } from '@/components/screens/MarketplaceCard';
 import { MarketplaceShell } from './MarketplaceShell';
 
 export default async function MarketplacePage() {
-  const sanityPacks = await sanityFetch<SanityPack[]>(PACKS_QUERY);
-  // Normalise drifted subject values server-side so a stale/aliased subject
-  // can never blank the grid (preserves the fix from #102).
-  const packs = (sanityPacks ?? []).map((p) => ({
-    ...p,
-    subjects: (p.subjects ?? [])
-      .map(normalizeSubject)
-      .filter((s): s is Subject => s !== null),
-  }));
+  // Subject normalisation (the #102 fix) happens inside MarketplaceShell:
+  // normalizeSubject lives in a 'use client' module and cannot be invoked
+  // from a server component. Keep the fetch defensive so a Sanity blip
+  // degrades to an empty grid rather than crashing the route (per the
+  // 2026-05-25 "a 5xx must not crash the page" rule).
+  let packs: SanityPack[] = [];
+  try {
+    packs = (await sanityFetch<SanityPack[]>(PACKS_QUERY)) ?? [];
+  } catch {
+    packs = [];
+  }
   return <MarketplaceShell initialPacks={packs} />;
 }

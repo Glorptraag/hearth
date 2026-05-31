@@ -39,18 +39,27 @@ export async function setup() {
     );
   }
 
-  // Belt-and-braces: require the branch name env var the script sets.
-  if (!process.env.NEON_TEST_BRANCH_ID) {
+  // Two supported flows: (a) the Neon orchestrator, which forks a branch and
+  // sets NEON_TEST_BRANCH_ID before spawning vitest; (b) a plain Postgres
+  // (local container / CI service) where the schema is applied by a migrate
+  // step and DATABASE_URL points at it directly. Only enforce the branch-id
+  // guard for the Neon flow — a Neon URL with no branch id means the
+  // orchestrator is broken and we'd otherwise run against a durable branch.
+  const isNeon = /neon\.tech/.test(url);
+  if (isNeon && !process.env.NEON_TEST_BRANCH_ID) {
     throw new Error(
-      'Expected NEON_TEST_BRANCH_ID env var. The test-branch script should set this. ' +
-        'If you see this error, the script is broken or vitest was invoked directly.'
+      'Expected NEON_TEST_BRANCH_ID env var for a Neon DATABASE_URL. The test-branch ' +
+        'script should set this. If you see this error, the script is broken or vitest ' +
+        'was invoked directly against Neon.'
     );
   }
 
-  // Log once so the test runner's output shows which branch we're on.
-  // Useful for CI debugging when tests fail.
+  // Log once so the test runner's output shows which DB we're on.
   const maskedUrl = url.replace(/:[^@]*@/, ':***@');
-  console.log(`[integration] Using Neon branch ${process.env.NEON_TEST_BRANCH_ID}`);
+  const target = isNeon
+    ? `Neon branch ${process.env.NEON_TEST_BRANCH_ID}`
+    : 'local/CI Postgres';
+  console.log(`[integration] Using ${target}`);
   console.log(`[integration] DATABASE_URL=${maskedUrl}`);
 }
 

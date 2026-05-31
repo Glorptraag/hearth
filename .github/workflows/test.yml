@@ -86,29 +86,44 @@ jobs:
           if-no-files-found: ignore
 
   # -------------------------------------------------------------------------
-  # Integration tests — ephemeral Neon branch per run.
+  # Integration tests — real Postgres, no Neon branch provisioning.
   #
-  # Secrets required:
-  #   NEON_API_KEY           (secret)   — API key with branch-management
-  #   NEON_PROJECT_ID        (variable) — identifier of the Neon project
-  #   NEON_PARENT_BRANCH_ID  (variable) — the permanently-empty `test-base`
-  #                                       branch to fork from (NOT prod/dev)
+  # Runs against a postgres:16 service container: no ~60s ephemeral-branch
+  # provisioning and no remote round-trip latency. Per-test isolation is
+  # transaction rollback (see vitest.integration.setup.ts). The schema is
+  # applied once by a `drizzle-kit migrate` step against the empty service DB
+  # (mirroring what the Neon orchestrator does before vitest).
   #
-  # The Neon GitHub integration auto-sets NEON_API_KEY and NEON_PROJECT_ID
-  # when installed. You must set NEON_PARENT_BRANCH_ID manually to the
-  # empty `test-base` branch's ID. The orchestrator forks from it and runs
-  # the full drizzle migration set against the ephemeral fork before tests
-  # (empty-base + migrate-the-fork) — so it must NOT point at prod or any
-  # branch carrying schema/data.
+  # The real-Neon path is still available on demand via
+  # `npm run test:integration` (scripts/neon-test-branch.mjs) for validating
+  # against an actual Neon branch — e.g. re-add it as a nightly/main-only job
+  # using the NEON_* secrets/vars documented in git history.
   # -------------------------------------------------------------------------
   integration:
     name: Integration tests
     runs-on: ubuntu-latest
-    # Only run if unit tests pass — saves CI budget and reduces noise.
+    # Only run if unit + typecheck pass — saves CI budget and reduces noise.
     needs: [unit, typecheck]
-    # Skip until secrets are set, so the job does not fail the workflow.
-    # Remove this condition once NEON_API_KEY is provisioned in the repo.
-    if: ${{ vars.NEON_PROJECT_ID != '' && vars.NEON_PARENT_BRANCH_ID != '' }}
+    services:
+      postgres:
+        # pgvector/pgvector (not stock postgres:16) — migration 0000 runs
+        # `CREATE EXTENSION IF NOT EXISTS vector` for the PKB embeddings table,
+        # which needs the extension files present. Same Postgres 16 underneath.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hearth_test
+        ports:
+          - 5432:5432
+        # Hold the job until Postgres is accepting connections.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hearth_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -117,15 +132,11 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Run integration tests against ephemeral Neon branch
-        run: npm run test:integration
-        env:
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_PARENT_BRANCH_ID: ${{ vars.NEON_PARENT_BRANCH_ID }}
-          # These are safe defaults; override as vars if your project differs.
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME || 'neondb' }}
-          NEON_ROLE_NAME: ${{ vars.NEON_ROLE_NAME || 'neondb_owner' }}
-          # Clerk/Anthropic/Sanity are MOCKED in integration tests — no real
-          # credentials needed. If you ever add E2E tests with real Clerk,
-          # create a separate workflow file for them.
+      # Build the full schema on the empty service DB from the migration set.
+      # DATABASE_URL is inherited from the job env above.
+      - name: Apply schema (drizzle-kit migrate)
+        run: npm run db:migrate
+
+      - name: Run integration tests (local Postgres)
+        # Clerk/Anthropic/Sanity are MOCKED — no real credentials needed.
+        run: npm run test:integration:only

@@ -94,6 +94,14 @@ export const learningEntries = pgTable(
     evidenceUrls: text('evidence_urls').array().default([]),
     source: text('source').notNull().default('logger'),
     sourceModuleId: text('source_module_id'),
+    // Sanity activity IDs the family engaged with during the session.
+    // Populated by the module-runner Log mode (quick-captures + completed
+    // activities) and by the Logger attach-to-module flow. Drives the
+    // declarative per-activity capability mapping written into thread_links.
+    sourceActivityIds: text('source_activity_ids').array().default([]),
+    // Which approach (modality) the parent picked when running the module.
+    // Useful for "which modality works for this child" reporting.
+    sourceApproachId: text('source_approach_id'),
     sourceProjectId: text('source_project_id'),
     sourceStageNumber: integer('source_stage_number'),
     sourceSessionId: uuid('source_session_id'),

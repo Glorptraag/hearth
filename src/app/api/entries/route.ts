@@ -13,6 +13,7 @@ import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
+import { buildThreadLinksFromActivities } from '@/lib/ai/thread-links';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
 import { rateLimit } from '@/lib/rate-limit';
@@ -76,6 +77,12 @@ const createEntrySchema = z.object({
   evidenceUrls: z.array(z.string()).optional(),
   source: z.enum(ENTRY_SOURCES).optional(),
   sourceModuleId: z.string().optional(),
+  // Sanity activity IDs the family engaged with. Populated by the module
+  // runner Log mode (and by the Logger attach-to-module flow via PATCH).
+  // Drives per-activity capability mapping in thread_links.
+  sourceActivityIds: z.array(z.string()).optional(),
+  // Which approach (modality) was picked in the runner.
+  sourceApproachId: z.string().optional(),
   sourceProjectId: z.string().optional(),
   sourceStageNumber: z.number().optional(),
   sourceSessionId: z.string().uuid().optional(),
@@ -146,6 +153,22 @@ export const POST = routeHandler(async (request: NextRequest) => {
       try {
         await enrichEntry({ entryId: entry.id, familyId: family.id });
         if (TAPE) console.log(`[enrich-tape] entryId=${entry.id} step=enrichEntry-done ts=${Date.now() - enrichStart}ms`);
+
+        // Declarative thread mapping from activity metadata (workstream E).
+        // Runs alongside Haiku's inferred capability_threads; the two layers
+        // complement each other. Best-effort — never blocks snapshot.
+        const activityIds = parsed.data.sourceActivityIds ?? [];
+        if (activityIds.length > 0) {
+          const threadLinks = await buildThreadLinksFromActivities(activityIds);
+          if (threadLinks.length > 0) {
+            await db
+              .update(learningEntries)
+              .set({ threadLinks, updatedAt: new Date() })
+              .where(eq(learningEntries.id, entry.id))
+              .catch((err) => console.error('[entries/POST] threadLinks write failed:', err));
+          }
+        }
+
         await rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
         if (TAPE) console.log(`[enrich-tape] entryId=${entry.id} step=snapshot-done ts=${Date.now() - enrichStart}ms`);
         // Identify on Clerk userId so the event joins with client-side

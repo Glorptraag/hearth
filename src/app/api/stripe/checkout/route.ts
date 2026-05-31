@@ -42,7 +42,9 @@ export const POST = routeHandler(async (request: NextRequest) => {
     availability?: 'included' | 'premium';
     stripePriceId?: string;
   } | null>(
-    `*[_type == "pack" && _id == $packId][0]{ _id, title, availability, stripePriceId }`,
+    // Sanity-gated: cannot initiate checkout on a draft pack.
+    // See src/lib/sanity/queries.ts header for invariant.
+    `*[_type == "pack" && _id == $packId && status == "published"][0]{ _id, title, availability, stripePriceId }`,
     { packId },
   );
 

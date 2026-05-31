@@ -110,6 +110,8 @@ export function buildEntry(overrides: Partial<LearningEntry> = {}): LearningEntr
     evidenceUrls: [],
     source: 'logger',
     sourceModuleId: null,
+    sourceActivityIds: [],
+    sourceApproachId: null,
     sourceProjectId: null,
     sourceStageNumber: null,
     sourceSessionId: null,

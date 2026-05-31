@@ -51,6 +51,9 @@ export type QAIssueFlat = QAIssue & {
 };
 
 // ─── All packs query ───
+// SANITY-GATING EXEMPT: this module powers the admin QA dashboard, which
+// MUST see drafts. Consumers are restricted to /api/admin/qa/* routes.
+// See src/lib/sanity/queries.ts header for the invariant.
 
 const ALL_PACKS_QUERY = /* groq */ `
 *[_type == "pack"] | order(_updatedAt desc) {

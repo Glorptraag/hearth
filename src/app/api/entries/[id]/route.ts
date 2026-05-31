@@ -43,6 +43,13 @@ const updateEntrySchema = z.object({
   source: z.enum(ENTRY_SOURCES).optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
   workSampleCandidate: z.boolean().optional(),
+  // Source-attach fields. Normally write-once at create-time, but the
+  // Logger's retrospective "attach to module" flow (workstream F) needs to
+  // back-fill these onto an already-saved entry. The narrow PATCH-write
+  // path is acceptable; other source fields stay create-only.
+  sourceModuleId: z.string().optional(),
+  sourceActivityIds: z.array(z.string()).optional(),
+  sourceApproachId: z.string().optional(),
 });
 
 export const PATCH = routeHandler(async (request: NextRequest, { params }: Params) => {

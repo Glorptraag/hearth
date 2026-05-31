@@ -26,7 +26,9 @@ export const POST = routeHandler(async () => {
   // Add Starter Collection to library (find it in Sanity)
   try {
     const starterPack = await sanityClient.fetch<{ _id: string } | null>(
-      `*[_type == "pack" && title match "Starter*"][0]{ _id }`
+      // Sanity-gated: only seed a published starter pack.
+      // See src/lib/sanity/queries.ts header for invariant.
+      `*[_type == "pack" && status == "published" && title match "Starter*"][0]{ _id }`
     );
 
     if (starterPack) {

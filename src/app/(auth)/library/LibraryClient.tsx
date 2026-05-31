@@ -6,6 +6,7 @@ import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 import { Books, Sparkle } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
+import type { LibraryModuleItem } from '@/app/api/library/modules/route';
 
 interface LibraryItem {
   id: string;
@@ -21,7 +22,7 @@ interface LibraryItem {
   assetCounts?: AssetCounts | null;
 }
 
-type Tab = 'packs' | 'materials';
+type Tab = 'modules' | 'packs' | 'materials';
 
 const SUBJECT_CHIP: Record<string, string> = {
   english:      'bg-domain-english/15 text-domain-english',
@@ -47,17 +48,21 @@ const SUBJECT_LABELS: Record<string, string> = {
 
 export default function LibraryClient() {
   const [items, setItems] = useState<LibraryItem[]>([]);
+  const [modules, setModules] = useState<LibraryModuleItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('packs');
+  // Modules is the default tab — typical family has 5 packs × 6 modules
+  // and modules are the unit a parent actually runs in a session.
+  const [tab, setTab] = useState<Tab>('modules');
 
   const fetchLibrary = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/library');
-      if (res.ok) {
-        const data = await res.json();
-        setItems(data);
-      }
+      const [itemsRes, modulesRes] = await Promise.all([
+        fetch('/api/library'),
+        fetch('/api/library/modules'),
+      ]);
+      if (itemsRes.ok) setItems(await itemsRes.json());
+      if (modulesRes.ok) setModules(await modulesRes.json());
     } finally {
       setLoading(false);
     }
@@ -92,43 +97,41 @@ export default function LibraryClient() {
           </Link>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — Modules first; it's the unit a parent runs.
+            Packs is secondary (provenance / kitting view). */}
         <div className="flex gap-lg mb-xl border-b border-border-subtle">
-          <button
-            onClick={() => setTab('packs')}
-            className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 border-b-2 ${
-              tab === 'packs'
-                ? 'text-ember border-ember'
-                : 'text-text-muted border-transparent hover:text-text-secondary'
-            }`}
-          >
-            Packs & Modules
-            {!loading && (
-              <span className="ml-xs font-sans text-[0.72rem] text-text-muted">
-                ({items.length})
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setTab('materials')}
-            className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 border-b-2 ${
-              tab === 'materials'
-                ? 'text-ember border-ember'
-                : 'text-text-muted border-transparent hover:text-text-secondary'
-            }`}
-          >
-            Materials
-          </button>
+          {([
+            { key: 'modules' as const, label: 'Modules', count: modules.length },
+            { key: 'packs' as const, label: 'Packs', count: items.filter((i) => i.kind === 'pack').length },
+            { key: 'materials' as const, label: 'Materials', count: null },
+          ]).map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 border-b-2 ${
+                tab === key
+                  ? 'text-ember border-ember'
+                  : 'text-text-muted border-transparent hover:text-text-secondary'
+              }`}
+            >
+              {label}
+              {!loading && count != null && (
+                <span className="ml-xs font-sans text-[0.72rem] text-text-muted">
+                  ({count})
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Content */}
-        {tab === 'packs' && (
+        {tab === 'modules' && (
           <>
             {loading ? (
               <div className="py-20 text-center">
                 <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
               </div>
-            ) : items.length === 0 ? (
+            ) : modules.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <span className="mb-md inline-flex text-text-secondary" aria-hidden="true">
                   <Books size={32} />
@@ -138,6 +141,40 @@ export default function LibraryClient() {
                 </h3>
                 <p className="font-sans text-sm text-text-secondary mb-lg max-w-xs">
                   Browse the marketplace to add packs, or build your own module from the Build screen.
+                </p>
+                <Link
+                  href="/explore/marketplace"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+                >
+                  Explore Marketplace
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+                {modules.map((m) => (
+                  <ModuleCard key={m.id} module={m} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === 'packs' && (
+          <>
+            {loading ? (
+              <div className="py-20 text-center">
+                <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
+              </div>
+            ) : packItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <span className="mb-md inline-flex text-text-secondary" aria-hidden="true">
+                  <Books size={32} />
+                </span>
+                <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
+                  No packs in your library
+                </h3>
+                <p className="font-sans text-sm text-text-secondary mb-lg max-w-xs">
+                  Browse the marketplace to add packs to your collection.
                 </p>
                 <Link
                   href="/explore/marketplace"
@@ -163,6 +200,52 @@ export default function LibraryClient() {
         )}
       </div>
     </div>
+  );
+}
+
+function ModuleCard({ module: m }: { module: LibraryModuleItem }) {
+  return (
+    <Link
+      href={`/module/${m.id}`}
+      className="group block bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+    >
+      <div className="flex items-start justify-between gap-sm mb-xs">
+        <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
+          {m.title}
+        </h3>
+        {m.isOwnBuilt && (
+          <span className="inline-flex items-center gap-xs font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sage/15 text-sage border border-sage/30 shrink-0">
+            <Sparkle size={10} aria-hidden="true" /> Yours
+          </span>
+        )}
+      </div>
+      {m.targetUnderstanding && (
+        <p className="font-serif text-sm text-text-secondary line-clamp-2 mb-sm">
+          {m.targetUnderstanding}
+        </p>
+      )}
+      <div className="mt-sm flex items-center justify-between gap-sm">
+        <div className="flex items-center gap-xs min-w-0">
+          {m.duration && (
+            <span className="font-sans text-[0.7rem] text-text-muted shrink-0">
+              {m.duration.min}–{m.duration.max} min
+            </span>
+          )}
+          {m.owningPack && (
+            <span className="font-sans text-[0.65rem] text-text-muted bg-surface-raised border border-border-subtle rounded-full px-1.5 py-0.5 truncate">
+              {m.owningPack.title}
+            </span>
+          )}
+        </div>
+        <PackIndicators
+          context="card-compact"
+          printables={m.printables}
+          materials={m.materials}
+          assetCounts={m.assetCounts}
+          className="shrink-0"
+        />
+      </div>
+    </Link>
   );
 }
 
@@ -209,12 +292,10 @@ function LibraryCard({ item }: { item: LibraryItem }) {
     </div>
   );
 
-  if (item.kind === 'module') {
-    return (
-      <Link href={`/module/${item.id}`} className="block">
-        {content}
-      </Link>
-    );
-  }
-  return content;
+  const href = item.kind === 'module' ? `/module/${item.id}` : `/pack/${item.id}`;
+  return (
+    <Link href={href} className="block">
+      {content}
+    </Link>
+  );
 }

@@ -9,12 +9,16 @@ export default function QuickCapture({
   captures,
   currentActivityIdx,
   currentActivityTitle,
+  currentActivityId,
   onAddCapture,
   onRemoveCapture,
 }: {
   captures: QuickCaptureItem[];
   currentActivityIdx: number;
   currentActivityTitle: string;
+  // Sanity activity _id — optional because legacy callers may not yet pass it.
+  // LogMode collects these into the entry's sourceActivityIds[].
+  currentActivityId?: string;
   onAddCapture: (item: QuickCaptureItem) => void;
   onRemoveCapture: (timestamp: number) => void;
 }) {
@@ -38,6 +42,7 @@ export default function QuickCapture({
       content: text,
       activityIdx: currentActivityIdx,
       activityTitle: currentActivityTitle,
+      activityId: currentActivityId,
       timestamp: Date.now(),
     });
     setNoteText('');
@@ -59,6 +64,7 @@ export default function QuickCapture({
           content: url,
           activityIdx: currentActivityIdx,
           activityTitle: currentActivityTitle,
+          activityId: currentActivityId,
           timestamp: Date.now(),
         });
       }

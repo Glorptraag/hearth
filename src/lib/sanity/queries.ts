@@ -1,3 +1,22 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// SANITY GATING INVARIANT (see deepwork plan: make-a-deepwork-plan-velvety-candy)
+//
+// Every runtime query that fetches `pack`, `module`, `activity`, `asset`,
+// `commonsText`, or `project` documents MUST filter by `status == "published"`.
+// Publishing in Sanity is the ONLY mechanism that makes content live; no repo
+// change should ever be required to flip availability.
+//
+// For dereferenced arrays (e.g. `pack.modules[]->`), filter BEFORE the deref:
+//   modules[@->status == "published"]->{...}
+// — never modules[]->{...} without the gate.
+//
+// Admin/editorial paths (src/app/(admin)/admin/content/*, src/lib/content-studio/*)
+// are intentionally exempt because they exist to QA drafts. Mark exempt callers
+// with a comment that references this invariant.
+//
+// A CI script (scripts/check-sanity-gating.mjs) enforces this on every PR.
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Reusable projection for the pack/module indicators feature.
 // - Derefs kitRef so the detail view can render contents + price without a
 //   second fetch.
@@ -19,24 +38,26 @@ export const PACK_INDICATORS_PROJECTION = `
 
 // Pack list for marketplace/activity discovery
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
-  _id, title, slug, description, subjects, ageRange, moduleCount, totalActivities,
+  _id, title, slug, description, subjects, ageRange,
+  "moduleCount": count(modules),
+  totalActivities,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges),
   assetCounts, commonsTextCount,
   ${PACK_INDICATORS_PROJECTION}
 }`;
 
 // Single pack with full module tree
-export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]{
+export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug && status == "published"][0]{
   ...,
   assetCounts,
   commonsTextCount,
   ${PACK_INDICATORS_PROJECTION},
-  modules[]->{
-    _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+  "modules": modules[@->status == "published"]->{
+    _id, title, slug, targetUnderstanding, subjects, ageRange, duration, status,
     ${PACK_INDICATORS_PROJECTION},
-    approaches[]->{
+    "approaches": approaches[@->status == "published"]->{
       _id, title, slug, modality,
-      activities[]->{
+      "activities": activities[@->status == "published"]->{
         _id, title, slug, summary, duration, setting, energyLevel,
         "assetCount": count(assets),
         "commonsTextCount": count(commonsTexts)
@@ -49,26 +70,26 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug][0]
 // Single module with approaches and activities
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
 // Downloads go through /api/assets/download which checks entitlements.
-export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
+export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status == "published"][0]{
   ...,
   ${PACK_INDICATORS_PROJECTION},
-  "owningPack": *[_type == "pack" && references(^._id)][0]{
+  "owningPack": *[_type == "pack" && status == "published" && references(^._id)][0]{
     _id, title, slug,
     ${PACK_INDICATORS_PROJECTION}
   },
-  approaches[]->{
+  "approaches": approaches[@->status == "published"]->{
     ...,
-    activities[]->{
+    "activities": activities[@->status == "published"]->{
       ...,
       capabilityThreads[]->{ _id, title, domain },
       enabledBadges[]->{ _id, title, emoji },
-      assets[]{
+      "assets": assets[@.asset->status == "published"]{
         _key, role, notes,
         asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
           "thumbnailUrl": thumbnail.asset->url
         }
       },
-      commonsTexts[]{
+      "commonsTexts": commonsTexts[@.text->status == "published"]{
         _key, role, presentationMode, notes,
         text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
           estimatedReadAloudMinutes, length, source, status
@@ -82,17 +103,17 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id][0]{
 
 // Single activity with full content
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
-export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id][0]{
+export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id && status == "published"][0]{
   ...,
   capabilityThreads[]->{ _id, title, domain },
   enabledBadges[]->{ _id, title, emoji },
-  assets[]{
+  "assets": assets[@.asset->status == "published"]{
     _key, role, notes,
     asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
       "thumbnailUrl": thumbnail.asset->url
     }
   },
-  commonsTexts[]{
+  "commonsTexts": commonsTexts[@.text->status == "published"]{
     _key, role, presentationMode, notes,
     text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
       estimatedReadAloudMinutes, length, source, status
@@ -111,9 +132,9 @@ export const OVERLAYS_BATCH_QUERY = `*[_type == "pedagogyOverlay" && activity._r
 }`;
 
 // Single project with all stages
-export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id][0]{
+export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id && status == "published"][0]{
   ...,
-  stages[]->{
+  "stages": stages[@->status == "published"]->{
     _id, title, slug, stageNumber, instructions, materials,
     estimatedDuration, artifactDescription, dependsOn, status
   } | order(stageNumber asc),
@@ -168,10 +189,10 @@ export const DLO_TIERS_QUERY = `*[_type == "discreteLearningObjective" && status
 // Lightweight indicator fetch for Planner / Dashboard / any compact-card surface.
 // Returns the module's own printables/materials AND its owning pack's, so the
 // caller can apply resolveIndicators() inheritance client-side.
-export const MODULE_INDICATORS_QUERY = `*[_type == "module" && _id in $ids]{
+export const MODULE_INDICATORS_QUERY = `*[_type == "module" && _id in $ids && status == "published"]{
   _id,
   ${PACK_INDICATORS_PROJECTION},
-  "owningPack": *[_type == "pack" && references(^._id)][0]{
+  "owningPack": *[_type == "pack" && status == "published" && references(^._id)][0]{
     _id,
     ${PACK_INDICATORS_PROJECTION}
   }
@@ -181,19 +202,19 @@ export const MODULE_INDICATORS_QUERY = `*[_type == "module" && _id in $ids]{
 export const LIBRARY_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
   _id,
   ${PACK_INDICATORS_PROJECTION},
-  modules[]->{
+  "modules": modules[@->status == "published"]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
     ${PACK_INDICATORS_PROJECTION},
-    approaches[]->{
+    "approaches": approaches[@->status == "published"]->{
       _id, title, modality,
-      "activityCount": count(activities)
+      "activityCount": count(activities[@->status == "published"])
     }
   }
 }`;
 
 // Scoring-ready modules for recommendation engine (includes capability thread slugs + energy levels)
 export const SCORING_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && status == "published"]{
-  modules[]->{
+  "modules": modules[@->status == "published"]->{
     _id, title, subjects,
     "capabilityThreadTitles": capabilityThreads[]->title,
     "averageEnergyLevel": approaches[0].activities[0]->energyLevel
@@ -206,11 +227,11 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
   title,
   description,
   subjects,
-  modules[]->{
+  "modules": modules[@->status == "published"]->{
     _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
-    approaches[]->{
+    "approaches": approaches[@->status == "published"]->{
       _id, title, modality,
-      "activityCount": count(activities)
+      "activityCount": count(activities[@->status == "published"])
     }
   }
 }`;
@@ -233,7 +254,7 @@ export const SCORING_OWN_MODULES_QUERY = `*[_type == "module" && status == "publ
 }`;
 
 // Single asset with full metadata
-export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id][0]{
+export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id && status == "published"][0]{
   ...,
   "fileUrl": file.asset->url,
   "thumbnailUrl": thumbnail.asset->url,
@@ -241,7 +262,7 @@ export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id][0]{
 }`;
 
 // Single commons text with full content
-export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id][0]{
+export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id && status == "published"][0]{
   ...,
   relatedAssets[]->{ _id, title, slug, kind },
   relatedTexts[]->{ _id, title, slug, kind }
@@ -249,40 +270,40 @@ export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id
 
 // All assets and commons texts for a set of activities (batch fetch for planner/module)
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
-export const ACTIVITIES_MATERIALS_QUERY = `*[_type == "activity" && _id in $ids]{
+export const ACTIVITIES_MATERIALS_QUERY = `*[_type == "activity" && _id in $ids && status == "published"]{
   _id, title,
-  assets[]{
+  "assets": assets[@.asset->status == "published"]{
     _key, role, notes,
     asset->{ _id, title, slug, kind, pageCount, description, printGuidance, status,
       "thumbnailUrl": thumbnail.asset->url
     }
   },
-  commonsTexts[]{
+  "commonsTexts": commonsTexts[@.text->status == "published"]{
     _key, role, presentationMode, notes,
     text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
   }
 }`;
 
-// Reverse lookup: which packs contain a given asset (for entitlement check)
-export const ASSET_ENTITLEMENT_QUERY = `*[_type == "pack" && references($assetId)]{ _id }`;
+// Reverse lookup: which published packs contain a given asset (for entitlement check)
+export const ASSET_ENTITLEMENT_QUERY = `*[_type == "pack" && status == "published" && references($assetId)]{ _id }`;
 
-// Reverse lookup: which packs contain a given commons text (for entitlement check)
-export const COMMONS_TEXT_ENTITLEMENT_QUERY = `*[_type == "pack" && references($textId)]{ _id }`;
+// Reverse lookup: which published packs contain a given commons text (for entitlement check)
+export const COMMONS_TEXT_ENTITLEMENT_QUERY = `*[_type == "pack" && status == "published" && references($textId)]{ _id }`;
 
 // Batch fetch materials for multiple modules (used by weekly planner print)
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
-export const MODULES_MATERIALS_BATCH_QUERY = `*[_type == "module" && _id in $ids]{
+export const MODULES_MATERIALS_BATCH_QUERY = `*[_type == "module" && _id in $ids && status == "published"]{
   _id, title,
-  approaches[]->{
-    activities[]->{
+  "approaches": approaches[@->status == "published"]->{
+    "activities": activities[@->status == "published"]->{
       _id, title,
-      assets[]{
+      "assets": assets[@.asset->status == "published"]{
         _key, role,
         asset->{ _id, title, slug, kind, pageCount, description, printGuidance, status,
           "thumbnailUrl": thumbnail.asset->url
         }
       },
-      commonsTexts[]{
+      "commonsTexts": commonsTexts[@.text->status == "published"]{
         _key, role, presentationMode,
         text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
       }
@@ -293,20 +314,20 @@ export const MODULES_MATERIALS_BATCH_QUERY = `*[_type == "module" && _id in $ids
 // Pack materials for marketplace preview and library view
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
 // Downloads go through /api/assets/download which checks entitlements.
-export const PACK_MATERIALS_QUERY = `*[_type == "pack" && _id == $packId][0]{
+export const PACK_MATERIALS_QUERY = `*[_type == "pack" && _id == $packId && status == "published"][0]{
   _id, title,
-  modules[]->{
+  "modules": modules[@->status == "published"]->{
     _id, title,
-    approaches[]->{
-      activities[]->{
+    "approaches": approaches[@->status == "published"]->{
+      "activities": activities[@->status == "published"]->{
         _id, title,
-        assets[]{
+        "assets": assets[@.asset->status == "published"]{
           _key, role, notes,
           asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
             "thumbnailUrl": thumbnail.asset->url
           }
         },
-        commonsTexts[]{
+        "commonsTexts": commonsTexts[@.text->status == "published"]{
           _key, role, presentationMode, notes,
           text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
         }

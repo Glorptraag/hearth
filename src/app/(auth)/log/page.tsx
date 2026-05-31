@@ -24,6 +24,14 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
+import {
+  DRAFT_KEY,
+  parseDraft,
+  serializeDraft,
+  shouldPersistDraft,
+  isRestorableDraft,
+  isStaleDraft,
+} from '@/lib/logger/draft';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 import type { ComponentType } from 'react';
 import {
@@ -440,56 +448,50 @@ export default function LogPage() {
   }, [scaffoldSessionId]);
 
   // ─── Draft auto-save (10s to localStorage) ───
-  const DRAFT_KEY = 'hearth:logger:draft';
   const [draftRestored, setDraftRestored] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const online = useOnlineStatus();
 
   // Restore draft on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-      const d = JSON.parse(raw);
-      // Hydrating draft state from localStorage on mount; each setter is gated on field presence.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (d.description) setDescription(d.description);
-      if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
-      if (d.discoveries) setDiscoveries(d.discoveries);
-      if (d.activityType) setActivityType(d.activityType);
-      if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
-      if (d.engagement) setEngagement(d.engagement);
-      if (d.whenDate) setWhenDate(d.whenDate);
-      if (d.duration) setDuration(d.duration);
-      if (d.location) setLocation(d.location);
-      if (d.observations?.length) setObservations(d.observations);
-      if (d.evidence?.length) setEvidence(d.evidence);
-      if (d.description || d.selectedLearners?.length) setDraftRestored(true);
+    const d = parseDraft(localStorage.getItem(DRAFT_KEY));
+    if (!d) return;
+    // Hydrating draft state from localStorage on mount; each setter is gated on field presence.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (d.description) setDescription(d.description);
+    if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
+    if (d.discoveries) setDiscoveries(d.discoveries);
+    if (d.activityType) setActivityType(d.activityType);
+    if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
+    if (d.engagement) setEngagement(d.engagement);
+    if (d.whenDate) setWhenDate(d.whenDate);
+    if (d.duration) setDuration(d.duration);
+    if (d.location) setLocation(d.location);
+    if (d.observations?.length) setObservations(d.observations);
+    if (d.evidence?.length) setEvidence(d.evidence);
+    if (isRestorableDraft(d)) setDraftRestored(true);
 
-      // If draft is stale (>4 hours old), trigger a draft_resume notification
-      const STALE_THRESHOLD = 4 * 60 * 60 * 1000;
-      if (d.savedAt && Date.now() - d.savedAt > STALE_THRESHOLD) {
-        const draftTitle = d.description?.slice(0, 40) || undefined;
-        fetch('/api/notifications/trigger', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'draft_resume', draftTitle }),
-        }).catch(() => {});
-      }
-    } catch { /* ignore corrupt draft */ }
+    // If draft is stale (>4 hours old), trigger a draft_resume notification
+    if (isStaleDraft(d, Date.now())) {
+      const draftTitle = d.description?.slice(0, 40) || undefined;
+      fetch('/api/notifications/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'draft_resume', draftTitle }),
+      }).catch(() => {});
+    }
   }, []);
 
   // Save draft every 10s
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!description && selectedLearners.length === 0) return;
+      if (!shouldPersistDraft({ description, selectedLearners })) return;
       const now = Date.now();
-      const draft = {
+      localStorage.setItem(DRAFT_KEY, serializeDraft({
         description, selectedLearners, discoveries, activityType,
         lessonSubjects, engagement, whenDate, duration, location,
-        observations, evidence, savedAt: now,
-      };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        observations, evidence,
+      }, now));
       setLastSavedAt(now);
     }, 10_000);
     return () => clearInterval(timer);

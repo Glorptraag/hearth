@@ -11,6 +11,7 @@ import { ActivityEditor } from './_components/editors/ActivityEditor';
 import { BadgeEditor } from './_components/editors/BadgeEditor';
 import { PromptDialog } from './_components/PromptDialog';
 import { ConfirmDialog } from './_components/ConfirmDialog';
+import { PublishDialog } from './_components/PublishDialog';
 import { Mountains, FileText, Note } from '@/components/icons';
 
 interface DraftListItem {
@@ -45,6 +46,9 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
   const [confirmTitle, setConfirmTitle] = useState('');
   const [confirmMessage, setConfirmMessage] = useState('');
   const confirmResolve = useRef<((val: boolean) => void) | null>(null);
+
+  // Publish dialog state
+  const [publishOpen, setPublishOpen] = useState(false);
 
   const doc = useMemo(() => getSelectedDoc(state, sel), [state, sel]);
 
@@ -109,6 +113,35 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const draftIdRef = useRef(draftId);
+  draftIdRef.current = draftId;
+
+  // Immediate save of the current state. Returns true on success. Used by the
+  // debounced autosave below and by the publish flow (which must flush before
+  // the server reads the saved draft from the DB).
+  const saveNow = useCallback(async (): Promise<boolean> => {
+    const id = draftIdRef.current;
+    if (!id) return false;
+    setSaveStatus('saving');
+    try {
+      const res = await fetch(`/api/admin/content/drafts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftData: stateRef.current }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSaveStatus('saved');
+        setLastSaved(new Date(data.updatedAt));
+        return true;
+      }
+      setSaveStatus('dirty');
+      return false;
+    } catch {
+      setSaveStatus('dirty');
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     if (!draftId) return;
@@ -121,24 +154,8 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
 
     setSaveStatus('dirty');
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      setSaveStatus('saving');
-      try {
-        const res = await fetch(`/api/admin/content/drafts/${draftId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ draftData: stateRef.current }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSaveStatus('saved');
-          setLastSaved(new Date(data.updatedAt));
-        } else {
-          setSaveStatus('dirty');
-        }
-      } catch {
-        setSaveStatus('dirty');
-      }
+    saveTimer.current = setTimeout(() => {
+      void saveNow();
     }, 1500);
 
     return () => {
@@ -232,6 +249,23 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
     }
     return '';
   }, [sel, doc, state]);
+
+  // ── Publish ──
+  // The publish endpoint operates on a single pack by index. Target the pack the
+  // author is currently inside, falling back to the first pack in the draft.
+  const publishPackIndex = useMemo(
+    () => (sel?.scope === 'pack' ? sel.pi : 0),
+    [sel],
+  );
+  const canPublish = Boolean(draftId) && state.packs.length > 0;
+
+  const handlePublished = useCallback(() => {
+    // Reflect the published state in the sidebar list and the pack document.
+    setDraftList((prev) =>
+      prev.map((d) => (d.id === draftId ? { ...d, status: 'published' } : d)),
+    );
+    dispatch({ type: 'SET_FIELD', path: ['packs', publishPackIndex, 'status'], value: 'published' });
+  }, [draftId, publishPackIndex]);
 
   // ── Field setter helper ──
   const setField = useCallback(
@@ -327,6 +361,15 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
                 className="px-3 py-1.5 text-xs font-sans text-red-400 hover:text-red-300 border border-red-900/30 rounded-[8px] transition-colors"
               >
                 Delete
+              </button>
+            )}
+            {canPublish && (
+              <button
+                type="button"
+                onClick={() => setPublishOpen(true)}
+                className="px-3.5 py-1.5 text-xs font-sans font-semibold bg-ember text-text-inverse rounded-[8px] hover:bg-ember-hover transition-colors duration-150"
+              >
+                Publish
               </button>
             )}
           </div>
@@ -458,6 +501,15 @@ export default function ContentStudioClient({ capabilityThreads, existingDrafts 
         danger
         onConfirm={handleConfirm}
         onCancel={handleConfirmCancel}
+      />
+      <PublishDialog
+        open={publishOpen}
+        pack={state.packs[publishPackIndex] ?? null}
+        packIndex={publishPackIndex}
+        draftId={draftId}
+        onClose={() => setPublishOpen(false)}
+        onSaveNow={saveNow}
+        onPublished={handlePublished}
       />
     </div>
   );

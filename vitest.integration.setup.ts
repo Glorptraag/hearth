@@ -58,9 +58,19 @@ async function truncateAll() {
   await db.execute(sql.raw(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE;`));
 }
 
+// Opt-in timing for the per-test isolation hook. Set HEARTH_TEST_TIMING=1 to
+// print how long isolation costs each test — the single biggest lever on
+// integration suite wall time. Silent by default; left in across refactors so
+// before/after numbers stay measurable.
+const TIMING = !!process.env.HEARTH_TEST_TIMING;
+
 beforeEach(async () => {
   vi.clearAllMocks();
+  const start = TIMING ? performance.now() : 0;
   await truncateAll();
+  if (TIMING) {
+    console.log(`[test-timing] isolation hook ${(performance.now() - start).toFixed(1)}ms`);
+  }
 });
 
 afterAll(async () => {

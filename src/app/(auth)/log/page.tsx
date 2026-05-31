@@ -38,6 +38,8 @@ import {
   derivePhotoEvidenceUrls,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
+import { SkeletonLoader } from './_components/LoggerSkeleton';
+import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 import type { ComponentType } from 'react';
 import {
@@ -145,175 +147,12 @@ const CHILD_COLORS: Record<string, { border: string; bg: string; text: string; r
 
 // ─── Skeleton Loader Component ───
 
-function SkeletonLoader() {
-  return (
-    <div className="relative">
-      {/* Header bar skeleton */}
-      <div className="sticky top-0 z-10 flex items-center gap-md border-b border-border-subtle bg-surface-panel px-md py-sm lg:px-lg">
-        <div className="flex-1 min-w-0">
-          <div className="h-6 w-2/3 rounded-md bg-surface-raised animate-pulse mb-sm" />
-          <div className="h-3 w-1/2 rounded-md bg-surface-raised animate-pulse hidden sm:block" />
-        </div>
-        <div className="flex items-center gap-sm">
-          <div className="h-10 w-10 rounded-full bg-surface-raised animate-pulse" />
-          <div className="hidden sm:block">
-            <div className="h-3 w-24 rounded-md bg-surface-raised animate-pulse mb-sm" />
-            <div className="h-3 w-20 rounded-md bg-surface-raised animate-pulse" />
-          </div>
-        </div>
-        <div className="h-9 w-20 rounded-md bg-surface-raised animate-pulse" />
-      </div>
-
-      <div className="flex-1 lg:flex">
-        {/* Left: Form skeleton */}
-        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
-          <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
-            {/* Section 1 skeleton */}
-            <section>
-              <div className="flex items-center gap-sm mb-md">
-                <div className="h-6 w-6 rounded-full bg-surface-raised animate-pulse shrink-0" />
-                <div className="h-3 w-32 rounded-md bg-surface-raised animate-pulse" />
-              </div>
-              <div className="flex flex-wrap gap-sm">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-9 w-32 rounded-full border border-border-subtle bg-surface-raised animate-pulse"
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* Section 2 skeleton */}
-            <section>
-              <div className="flex items-center gap-sm mb-md">
-                <div className="h-6 w-6 rounded-full bg-surface-raised animate-pulse shrink-0" />
-                <div className="h-3 w-32 rounded-md bg-surface-raised animate-pulse" />
-              </div>
-
-              {/* Textarea skeleton */}
-              <div className="mb-lg">
-                <div className="h-[100px] w-full rounded-lg border border-border-subtle bg-surface-raised animate-pulse mb-sm" />
-                <div className="flex items-center gap-xs">
-                  <div className="h-8 w-20 rounded-sm bg-surface-raised animate-pulse" />
-                </div>
-              </div>
-
-              {/* Activity type grid skeleton */}
-              <div className="mt-lg">
-                <div className="h-3 w-24 rounded-md bg-surface-raised animate-pulse mb-sm" />
-                <div className="grid grid-cols-4 gap-sm">
-                  {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 rounded-lg border border-border-subtle bg-surface-raised animate-pulse"
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Section 3 skeleton (engagement) */}
-            <section>
-              <div className="flex items-center gap-sm mb-md">
-                <div className="h-6 w-6 rounded-full bg-surface-raised animate-pulse shrink-0" />
-                <div className="h-3 w-32 rounded-md bg-surface-raised animate-pulse" />
-              </div>
-              <div className="h-16 w-full rounded-lg border border-border-subtle bg-surface-raised animate-pulse" />
-            </section>
-
-            {/* Section 4 skeleton (context) */}
-            <section>
-              <div className="flex items-center gap-sm mb-md">
-                <div className="h-6 w-6 rounded-full bg-surface-raised animate-pulse shrink-0" />
-                <div className="h-3 w-32 rounded-md bg-surface-raised animate-pulse" />
-              </div>
-              <div className="grid grid-cols-2 gap-sm">
-                {[...Array(2)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-20 rounded-lg border border-border-subtle bg-surface-raised animate-pulse"
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selectedBorder: string }> = {
   'child-sage': { dot: 'bg-child-sage', selectedBg: 'bg-child-sage/10', selectedBorder: 'border-child-sage/30' },
   'child-blue': { dot: 'bg-child-blue', selectedBg: 'bg-child-blue/10', selectedBorder: 'border-child-blue/30' },
   'child-violet': { dot: 'bg-child-violet', selectedBg: 'bg-child-violet/10', selectedBorder: 'border-child-violet/30' },
   'child-rose': { dot: 'bg-child-rose', selectedBg: 'bg-child-rose/10', selectedBorder: 'border-child-rose/30' },
 };
-
-function SectionIndicator({ number, done }: { number: number; done: boolean }) {
-  return (
-    <div
-      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
-        done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
-      }`}
-    >
-      {done ? <Check size={14} aria-hidden="true" /> : number}
-    </div>
-  );
-}
-
-function SectionHeader({ number, done, label, optional }: { number: number; done: boolean; label: string; optional?: string }) {
-  return (
-    <div className="flex items-center gap-sm mb-md">
-      <SectionIndicator number={number} done={done} />
-      <span className={`font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 ${done ? 'text-text-secondary' : 'text-text-muted'}`}>
-        {label}
-      </span>
-      {optional && (
-        <span className="ml-auto font-sans text-[0.625rem] text-text-muted opacity-60">{optional}</span>
-      )}
-    </div>
-  );
-}
-
-function CompletenessRing({ score }: { score: number }) {
-  const r = 16;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (score / 100) * circ;
-  const color = score >= 90 ? 'var(--color-sage)' : 'var(--color-ember)';
-
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r={r} fill="none" stroke="var(--color-border-subtle)" strokeWidth="3" />
-      <circle
-        cx="20"
-        cy="20"
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="3"
-        strokeDasharray={circ}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform="rotate(-90 20 20)"
-        className="transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-      />
-      <text
-        x="20"
-        y="20"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="var(--color-text-primary)"
-        fontSize="10"
-        fontFamily="var(--font-sans)"
-        fontWeight="600"
-      >
-        {score}
-      </text>
-    </svg>
-  );
-}
 
 export default function LogPage() {
   const { vocab, pedagogy } = usePedagogy();

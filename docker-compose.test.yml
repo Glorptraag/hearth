@@ -4,7 +4,9 @@
 # teardown — durability doesn't matter for tests, speed does.
 services:
   postgres:
-    image: postgres:16
+    # pgvector image (not stock postgres:16) — migration 0000 runs
+    # `CREATE EXTENSION IF NOT EXISTS vector` for the PKB embeddings table.
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

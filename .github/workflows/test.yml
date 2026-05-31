@@ -106,7 +106,10 @@ jobs:
     needs: [unit, typecheck]
     services:
       postgres:
-        image: postgres:16
+        # pgvector/pgvector (not stock postgres:16) — migration 0000 runs
+        # `CREATE EXTENSION IF NOT EXISTS vector` for the PKB embeddings table,
+        # which needs the extension files present. Same Postgres 16 underneath.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

@@ -118,30 +118,27 @@ export async function seedBasicFamily(
     clerkUserId: overrides.clerkUserId,
   });
 
-  const emma = await createLearner(db, {
-    familyId: family.id,
-    name: 'Emma',
-    dateOfBirth: '2017-06-15',
-  });
-  const liam = await createLearner(db, {
-    familyId: family.id,
-    name: 'Liam',
-    dateOfBirth: '2019-03-02',
-  });
+  // Batch the two learners into a single INSERT (one round-trip, not two).
+  // .returning() preserves values() order, so the destructure stays stable.
+  const [emma, liam] = await db
+    .insert(learners)
+    .values([
+      buildLearner({ familyId: family.id, name: 'Emma', dateOfBirth: '2017-06-15' }),
+      buildLearner({ familyId: family.id, name: 'Liam', dateOfBirth: '2019-03-02' }),
+    ])
+    .returning();
 
-  const entries: LearningEntry[] = [];
-  for (let i = 0; i < 10; i++) {
-    const learnerId = i % 2 === 0 ? emma.id : liam.id;
-    const iso = new Date(2026, 0, i + 1).toISOString().slice(0, 10);
-    entries.push(
-      await createEntry(db, {
-        familyId: family.id,
-        learnerIds: [learnerId],
-        title: `Moment ${i + 1}`,
-        dateOccurred: iso,
-      })
-    );
-  }
+  // Build all ten entry rows up front, then insert them in one round-trip
+  // instead of ten sequential awaits.
+  const entryRows = Array.from({ length: 10 }, (_, i) =>
+    buildEntry({
+      familyId: family.id,
+      learnerIds: [i % 2 === 0 ? emma.id : liam.id],
+      title: `Moment ${i + 1}`,
+      dateOccurred: new Date(2026, 0, i + 1).toISOString().slice(0, 10),
+    })
+  );
+  const entries = await db.insert(learningEntries).values(entryRows).returning();
 
   return { family, learners: { emma, liam }, entries };
 }
@@ -163,14 +160,16 @@ export async function seedBadgeThresholdScenario(db: Db) {
     observationThreshold: 3,
   });
 
-  for (let i = 0; i < 3; i++) {
-    await createEntry(db, {
+  // Batch the three threshold entries into one INSERT.
+  const thresholdRows = Array.from({ length: 3 }, (_, i) =>
+    buildEntry({
       familyId: family.id,
       learnerIds: [learners.emma.id],
       subjects: ['science'],
       title: `Threshold observation ${i + 1}`,
-    });
-  }
+    })
+  );
+  await db.insert(learningEntries).values(thresholdRows).returning();
 
   return { family, learners, badge };
 }

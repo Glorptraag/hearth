@@ -2,36 +2,13 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject, type CreatorType } from '@/components/screens/MarketplaceCard';
-import { PackMaterialsList } from '@/components/content/PackMaterialsList';
-import { PackIndicators } from '@/components/ui/PackIndicators';
+import { useRouter } from 'next/navigation';
+import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
 import {
-  Binoculars, Target, Books, MagnifyingGlass, Confetti, X,
-  FlowerLotus, GraduationCap, Heart, Sparkle,
+  Binoculars, Target, Books, MagnifyingGlass, Confetti,
 } from '@/components/icons';
-import type { ComponentType as MpComponentType } from 'react';
-
-type MpIconC = MpComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
-
-function getCreatorIcon(type?: CreatorType): MpIconC {
-  switch (type) {
-    case 'content-team': return FlowerLotus;
-    case 'educator':     return GraduationCap;
-    case 'parent':       return Heart;
-    default:             return Sparkle;
-  }
-}
-
-function getCreatorLabel(type?: CreatorType): string {
-  switch (type) {
-    case 'content-team': return 'Hearth Team';
-    case 'educator':     return 'Educator';
-    case 'parent':       return 'Parent Creator';
-    default:             return 'Creator';
-  }
-}
 
 // ─── Subject filter config ────────────────────────────────────────────────────
 
@@ -59,6 +36,7 @@ function hexToRgb(hex: string): string {
 
 export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] }) {
   const { toast } = useToast();
+  const router = useRouter();
   // Normalise drifted/aliased subject values so a stale subject can't blank
   // the grid (the #102 fix). Runs client-side because normalizeSubject is a
   // 'use client' export and cannot be called from the server component.
@@ -77,8 +55,6 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
-  const [detailPack, setDetailPack] = useState<SanityPack | null>(null);
-  const [showMaterials, setShowMaterials] = useState(false);
   const [gapSubjects, setGapSubjects] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -150,19 +126,30 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
 
   async function handleAddToLibrary(id: string) {
     setLibraryIds((prev) => new Set(prev).add(id));
-    try {
-      await fetch('/api/library', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sanityPackId: id }),
-      });
-      track('module_added_to_library');
-    } catch {
+    const rollback = () => {
       setLibraryIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
+    };
+    try {
+      const res = await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sanityPackId: id }),
+      });
+      if (!res.ok) {
+        rollback();
+        const body = await res.text().catch(() => '');
+        console.error('[marketplace] add-to-library failed', res.status, body);
+        toast(`Couldn't add to library (${res.status})`, 'error');
+        return;
+      }
+      track('module_added_to_library');
+    } catch (err) {
+      rollback();
+      console.error('[marketplace] add-to-library threw', err);
       toast("Couldn't add to library — please try again", 'error');
     }
   }
@@ -342,15 +329,25 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
             </p>
 
             {/* ── Content grid ── */}
+            {/* Card body navigates to /pack/[id] — single canonical pack
+                detail surface (workstream B). Inline Add / Get CTAs on the
+                card remain as fast-path actions and stop propagation. */}
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
                 {filtered.map((pack) => (
                   <div
                     key={pack._id}
-                    onClick={() => setDetailPack(pack)}
-                    role="button"
+                    onClick={() => router.push(`/pack/${pack._id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push(`/pack/${pack._id}`);
+                      }
+                    }}
+                    role="link"
                     tabIndex={0}
-                    className="cursor-pointer"
+                    aria-label={`Open ${pack.title}`}
+                    className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ember rounded-[16px]"
                   >
                     <MarketplaceCard
                       pack={pack}
@@ -391,175 +388,6 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
           </>
         )}
       </div>
-
-      {/* Pack detail modal */}
-      {detailPack && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
-          onClick={() => { setDetailPack(null); setShowMaterials(false); }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pack-detail-title"
-            tabIndex={-1}
-            className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-[0_24px_64px_rgba(0,0,0,0.7)]"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => { if (e.key === 'Escape') { setDetailPack(null); setShowMaterials(false); } }}
-          >
-            {/* Drag handle — mobile only */}
-            <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
-
-            {/* Ember top line */}
-            <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-ember opacity-70 hidden sm:block" />
-
-            {/* Header */}
-            <div className="px-xl pt-lg pb-md border-b border-border-subtle">
-              <div className="flex items-start justify-between gap-md">
-                <div className="flex-1">
-                  <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                    {detailPack.subjects?.slice(0, 2).join(' · ') ?? 'Learning Pack'}
-                  </p>
-                  <h2 id="pack-detail-title" className="font-serif text-xl font-semibold text-text-primary leading-snug">
-                    {detailPack.title}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => { setDetailPack(null); setShowMaterials(false); }}
-                  className="shrink-0 rounded-full border border-border-subtle p-xs text-text-muted hover:text-text-primary transition-colors duration-200"
-                  aria-label="Close"
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="px-xl py-lg space-y-lg">
-              {detailPack.description && (
-                <p className="font-serif text-sm leading-relaxed text-text-secondary">
-                  {detailPack.description}
-                </p>
-              )}
-
-              <PackIndicators
-                context="detail"
-                printables={detailPack.printables}
-                materials={detailPack.materials}
-                assetCounts={detailPack.assetCounts}
-              />
-
-              {/* Creator */}
-              <div>
-                <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  Creator
-                </p>
-                <div className="flex items-center gap-xs">
-                  <span className="inline-flex text-text-secondary" aria-hidden="true">
-                    {(() => {
-                      const CreatorIcon = getCreatorIcon(detailPack.creatorType);
-                      return <CreatorIcon size={14} />;
-                    })()}
-                  </span>
-                  <span className="font-serif text-sm text-text-primary">
-                    {detailPack.creator ?? 'Hearth Team'}
-                  </span>
-                  <span className="font-sans text-[10px] text-text-muted bg-surface-raised rounded-full px-xs py-[1px] border border-border-subtle">
-                    {getCreatorLabel(detailPack.creatorType)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Age range & duration */}
-              <div className="grid grid-cols-2 gap-md">
-                {detailPack.ageRange && (
-                  <div>
-                    <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                      Age Range
-                    </p>
-                    <p className="font-serif text-sm text-text-primary">
-                      {detailPack.ageRange.min}–{detailPack.ageRange.max} years
-                    </p>
-                  </div>
-                )}
-                {detailPack.moduleCount && (
-                  <div>
-                    <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                      Modules
-                    </p>
-                    <p className="font-serif text-sm text-text-primary">{detailPack.moduleCount}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Included Materials */}
-              {(() => {
-                const printCount = (detailPack.assetCounts?.total ?? 0) - (detailPack.assetCounts?.audio ?? 0);
-                const readCount = detailPack.commonsTextCount ?? 0;
-                const audioCount = detailPack.assetCounts?.audio ?? 0;
-                const hasMaterials = printCount > 0 || readCount > 0 || audioCount > 0;
-                if (!hasMaterials) return null;
-
-                const parts: string[] = [];
-                if (printCount > 0) parts.push(`${printCount} printable${printCount !== 1 ? 's' : ''}`);
-                if (readCount > 0) parts.push(`${readCount} reading${readCount !== 1 ? 's' : ''}`);
-                if (audioCount > 0) parts.push(`${audioCount} audio`);
-
-                return (
-                  <div>
-                    <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                      Included Materials
-                    </p>
-                    <p className="font-serif text-sm text-text-secondary mb-sm">
-                      {parts.join(' · ')}
-                    </p>
-                    <button
-                      onClick={() => setShowMaterials(true)}
-                      className="font-sans text-[0.8rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
-                    >
-                      View all materials →
-                    </button>
-                  </div>
-                );
-              })()}
-
-              {/* Action */}
-              <div className="pt-sm border-t border-border-subtle">
-                {libraryIds.has(detailPack._id) ? (
-                  <button
-                    disabled
-                    className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm cursor-default"
-                  >
-                    In Library
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      handleAddToLibrary(detailPack._id);
-                      setDetailPack(null);
-                    }}
-                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
-                  >
-                    Add to Library
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Materials push-over view */}
-            {showMaterials && (
-              <div className="absolute inset-0 bg-surface-panel rounded-t-[24px] sm:rounded-[16px] z-10 flex flex-col overflow-hidden">
-                <PackMaterialsList
-                  packId={detailPack._id}
-                  packTitle={detailPack.title}
-                  inLibrary={libraryIds.has(detailPack._id)}
-                  onBack={() => setShowMaterials(false)}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

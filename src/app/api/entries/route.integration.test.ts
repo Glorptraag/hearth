@@ -81,6 +81,54 @@ describe('POST /api/entries — real DB', () => {
   });
 });
 
+describe('POST /api/entries — activity-level source fields (workstream D)', () => {
+  it('persists sourceActivityIds and sourceApproachId from the module-runner Log mode', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Module: Rocks and density',
+        status: 'draft',
+        source: 'module_log',
+        sourceModuleId: 'module.rocks-density',
+        sourceApproachId: 'approach.kinesthetic',
+        sourceActivityIds: ['activity.observe', 'activity.test'],
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].sourceModuleId).toBe('module.rocks-density');
+    expect(rows[0].sourceApproachId).toBe('approach.kinesthetic');
+    expect(rows[0].sourceActivityIds).toEqual([
+      'activity.observe',
+      'activity.test',
+    ]);
+  });
+
+  it('defaults sourceActivityIds to [] when omitted', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', { title: 'Plain entry', status: 'draft' })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows[0].sourceActivityIds).toEqual([]);
+    expect(rows[0].sourceApproachId).toBeNull();
+  });
+});
+
 describe('GET /api/entries — cross-family isolation', () => {
   it('never returns another family’s entries', async () => {
     // Family A — the caller.

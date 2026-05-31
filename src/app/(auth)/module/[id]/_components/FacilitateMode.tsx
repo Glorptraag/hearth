@@ -451,6 +451,7 @@ export default function FacilitateMode({
               captures={quickCaptures ?? []}
               currentActivityIdx={externalActivityIdx ?? currentIdx}
               currentActivityTitle={current.title}
+              currentActivityId={current._id}
               onAddCapture={onAddCapture}
               onRemoveCapture={onRemoveCapture ?? (() => {})}
             />

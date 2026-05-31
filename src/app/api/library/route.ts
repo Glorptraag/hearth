@@ -60,7 +60,9 @@ export const GET = routeHandler(async () => {
     packIds.length > 0
       ? sanityClient
           .fetch<PackMeta[]>(
-            `*[_type == "pack" && _id in $ids]{ _id, title, subjects, ${PACK_INDICATORS_PROJECTION} }`,
+            // Gated by status == "published" per Sanity-gating invariant
+            // (see src/lib/sanity/queries.ts header).
+            `*[_type == "pack" && _id in $ids && status == "published"]{ _id, title, subjects, ${PACK_INDICATORS_PROJECTION} }`,
             { ids: packIds },
           )
           .catch(() => [] as PackMeta[])
@@ -68,7 +70,9 @@ export const GET = routeHandler(async () => {
     moduleIds.length > 0
       ? sanityClient
           .fetch<ModuleMeta[]>(
-            `*[_type == "module" && _id in $ids]{ _id, title, subjects, authorFamilyId, ${PACK_INDICATORS_PROJECTION} }`,
+            // Gated by status == "published" per Sanity-gating invariant
+            // (see src/lib/sanity/queries.ts header).
+            `*[_type == "module" && _id in $ids && status == "published"]{ _id, title, subjects, authorFamilyId, ${PACK_INDICATORS_PROJECTION} }`,
             { ids: moduleIds },
           )
           .catch(() => [] as ModuleMeta[])

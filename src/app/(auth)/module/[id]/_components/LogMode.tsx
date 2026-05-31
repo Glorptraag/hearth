@@ -11,11 +11,20 @@ export default function LogMode({
   sessionElapsed,
   quickCaptures,
   onRemoveCapture,
+  selectedApproachIdx,
+  completedActivityIdxs,
 }: {
   module: Module;
   sessionElapsed?: number;
   quickCaptures?: QuickCaptureItem[];
   onRemoveCapture?: (timestamp: number) => void;
+  // Index into module.approaches[] of the approach the parent picked.
+  // Used to derive sourceApproachId and to look up activity IDs from
+  // completedActivityIdxs.
+  selectedApproachIdx?: number;
+  // Indexes (into module.approaches[selectedApproachIdx].activities[]) of
+  // activities the parent stepped through to completion in Facilitate mode.
+  completedActivityIdxs?: number[];
 }) {
   const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -101,6 +110,23 @@ export default function LogMode({
         + (understandingSuffix ? `\n\nUnderstanding: ${understandingSuffix}` : '')
         + (sessionElapsed != null ? `\n\nSession duration: ${Math.floor(sessionElapsed / 60)}m ${sessionElapsed % 60}s` : '');
 
+      // Collect activity IDs touched this session:
+      //  - from quick captures (parent jotted a note while on this activity)
+      //  - from completed step indexes (parent advanced past this activity)
+      // Dedupe, preserve order seen.
+      const activityIdSet = new Set<string>();
+      for (const cap of quickCaptures ?? []) {
+        if (cap.activityId) activityIdSet.add(cap.activityId);
+      }
+      const approach = selectedApproachIdx != null
+        ? module.approaches?.[selectedApproachIdx]
+        : undefined;
+      for (const idx of completedActivityIdxs ?? []) {
+        const act = approach?.activities?.[idx];
+        if (act?._id) activityIdSet.add(act._id);
+      }
+      const sourceActivityIds = Array.from(activityIdSet);
+
       const body: Record<string, unknown> = {
         title: `Module: ${module.title}`,
         description: fullDescription,
@@ -113,6 +139,12 @@ export default function LogMode({
         sourceModuleId: module._id,
         status: 'complete',
       };
+      if (sourceActivityIds.length > 0) {
+        body.sourceActivityIds = sourceActivityIds;
+      }
+      if (approach?._id) {
+        body.sourceApproachId = approach._id;
+      }
       if (evidenceUrls.length > 0) {
         body.evidenceUrls = evidenceUrls;
       }

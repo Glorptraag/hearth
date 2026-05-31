@@ -85,21 +85,23 @@ export const GET = routeHandler(async (request: NextRequest) => {
       }>;
     }>;
   }>>(
-    `*[_type == "pack" && _id in $packIds]{
+    // Sanity-gated: only published packs/modules/approaches/activities/assets/texts.
+    // See src/lib/sanity/queries.ts header for invariant.
+    `*[_type == "pack" && _id in $packIds && status == "published"]{
       _id, title,
-      modules[]->{
+      "modules": modules[@->status == "published"]->{
         _id, title,
-        approaches[]->{
-          activities[]->{
+        "approaches": approaches[@->status == "published"]->{
+          "activities": activities[@->status == "published"]->{
             _id, title,
-            assets[]{
+            "assets": assets[@.asset->status == "published"]{
               _key, role, notes,
               asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
                 "fileUrl": file.asset->url,
                 "thumbnailUrl": thumbnail.asset->url
               }
             },
-            commonsTexts[]{
+            "commonsTexts": commonsTexts[@.text->status == "published"]{
               _key, role, presentationMode, notes,
               text->{ _id, title, slug, kind, tradition, estimatedReadAloudMinutes, length, source, status }
             }

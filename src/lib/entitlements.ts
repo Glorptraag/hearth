@@ -96,7 +96,9 @@ export async function checkBulkAccess(
  */
 export async function getUpsellPack(assetId: string): Promise<{ packId: string; packTitle: string; packSlug: string } | null> {
   const pack = await sanityClient.fetch<{ _id: string; title: string; slug: { current: string } } | null>(
-    `*[_type == "pack" && references($assetId)][0]{ _id, title, slug }`,
+    // Sanity-gated: upsell never reveals a draft pack.
+    // See src/lib/sanity/queries.ts header for invariant.
+    `*[_type == "pack" && status == "published" && references($assetId)][0]{ _id, title, slug }`,
     { assetId },
   );
 

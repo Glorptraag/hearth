@@ -56,6 +56,11 @@ jobs:
       # 500 and white-screen every client page that calls .json() on the
       # response (the 2026-05-25 incident class; see incident-runbook §7).
       - run: npm run check:route-handlers
+      # Enforces the Sanity-gating invariant — every runtime GROQ query
+      # over pack/module/activity/asset/commonsText/project must filter by
+      # status == "published". Otherwise drafts leak through library/
+      # marketplace/checkout. See scripts/check-sanity-gating.mjs header.
+      - run: npm run check:sanity-gating
 
   # -------------------------------------------------------------------------
   # Unit tests — everything mocked, fast, run in parallel with the others.

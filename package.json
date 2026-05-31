@@ -25,7 +25,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:check-drift": "node --env-file-if-exists=.env.local scripts/check-migration-drift.mjs",
     "db:check-schema": "node scripts/check-schema-vs-migrations.mjs",
-    "check:route-handlers": "node scripts/check-route-handlers.mjs"
+    "check:route-handlers": "node scripts/check-route-handlers.mjs",
+    "check:sanity-gating": "node scripts/check-sanity-gating.mjs",
+    "audit:published-packs": "node --env-file-if-exists=.env.local scripts/audit-published-packs.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

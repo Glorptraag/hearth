@@ -14,6 +14,7 @@ import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
+import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
 import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
@@ -323,6 +324,10 @@ export default function LogPage() {
   const scaffoldSessionId = searchParams.get('scaffold');
   const [scaffoldData, setScaffoldData] = useState<ScaffoldData | null>(null);
   const [showReflection, setShowReflection] = useState(false);
+  // Workstream F — after a non-scaffold Logger save, prompt the parent to
+  // attach the entry to a module they have in their library. Suppressed
+  // once per session if they pick "Skip".
+  const [attachEntryId, setAttachEntryId] = useState<string | null>(null);
 
   // ─── Data ───
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -783,7 +788,21 @@ export default function LogPage() {
       // screen — per the resolution doc, PostSaveSurface is where enrichment
       // is most crucial to surface. ReflectionModal layers on top for the
       // session-specific data capture.
-      if (scaffoldData) setShowReflection(true);
+      if (scaffoldData) {
+        setShowReflection(true);
+      } else if (savedEntryId) {
+        // Workstream F — offer to attach the entry to a library module.
+        // Suppressed for the rest of this session if the parent picked
+        // "Skip" on a previous save. Scaffolded entries already carry
+        // sourceSessionId; the attach flow is for free-text retrospectives.
+        let skipped = false;
+        try {
+          skipped = sessionStorage.getItem('hearth_skip_attach') === '1';
+        } catch {
+          /* sessionStorage may be unavailable; default to showing once */
+        }
+        if (!skipped) setAttachEntryId(savedEntryId);
+      }
 
       if (isThinEntry || !savedEntryId) {
         if (!scaffoldData) setToast({ type: 'success', message: 'Learning entry saved!' });
@@ -1696,6 +1715,24 @@ export default function LogPage() {
           onClose={() => setShowReflection(false)}
           onShared={() => setShowReflection(false)}
           onSkipped={() => setShowReflection(false)}
+        />
+      )}
+
+      {/* ─── Attach-to-module Modal (workstream F) ───
+          Retro-attaches the just-saved entry to a library module. PATCHes
+          sourceModuleId via /api/entries/[id]. Per-session skip flag. */}
+      {attachEntryId && (
+        <AttachToModuleModal
+          entryId={attachEntryId}
+          onClose={() => {
+            try {
+              sessionStorage.setItem('hearth_skip_attach', '1');
+            } catch {
+              /* ignore */
+            }
+            setAttachEntryId(null);
+          }}
+          onAttached={() => setAttachEntryId(null)}
         />
       )}
     </div>

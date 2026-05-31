@@ -5,6 +5,8 @@ import { eq } from 'drizzle-orm';
 import type { PackTree, SanityDoc } from './types';
 
 // ─── GROQ query for full pack hierarchy ───
+// SANITY-GATING EXEMPT: admin QA tree fetcher; must see drafts.
+// See src/lib/sanity/queries.ts header for the invariant.
 
 const PACK_TREE_QUERY = /* groq */ `
 *[_type == "pack" && _id == $packId][0]{

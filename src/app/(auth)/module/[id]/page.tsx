@@ -132,7 +132,9 @@ export default function ModuleDetailPage() {
           } else {
             const owningPacks = await sanityClient
               .fetch<Array<{ _id: string }>>(
-                `*[_type == "pack" && references($moduleId)]{_id}`,
+                // Sanity-gated: only published packs grant access.
+                // See src/lib/sanity/queries.ts header for invariant.
+                `*[_type == "pack" && status == "published" && references($moduleId)]{_id}`,
                 { moduleId: id },
               )
               .catch(() => [] as Array<{ _id: string }>);
@@ -537,6 +539,8 @@ export default function ModuleDetailPage() {
             sessionElapsed={sessionElapsed}
             quickCaptures={quickCaptures}
             onRemoveCapture={handleRemoveCapture}
+            selectedApproachIdx={selectedApproachIdx}
+            completedActivityIdxs={completedActivityIdxs}
           />
         )}
       </div>

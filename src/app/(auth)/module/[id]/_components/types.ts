@@ -134,5 +134,8 @@ export interface QuickCaptureItem {
   content: string;
   activityIdx: number;
   activityTitle: string;
+  // Sanity activity _id. Optional for forward-compatibility with old
+  // sessions that pre-date this field (LogMode dedupes against undefined).
+  activityId?: string;
   timestamp: number;
 }

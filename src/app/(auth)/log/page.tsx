@@ -32,6 +32,12 @@ import {
   isRestorableDraft,
   isStaleDraft,
 } from '@/lib/logger/draft';
+import {
+  deriveSubjects,
+  deriveEntryTitle,
+  derivePhotoEvidenceUrls,
+  isThinEntry,
+} from '@/lib/logger/entry-payload';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 import type { ComponentType } from 'react';
 import {
@@ -80,16 +86,6 @@ const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: LogIconC
   { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
 ];
 
-const ACTIVITY_SUBJECT_MAP: Record<string, string[]> = {
-  nature: ['science'],
-  cooking: ['mathematics', 'science'],
-  reading: ['english'],
-  art: ['arts'],
-  physical: ['hpe'],
-  social: ['hass'],
-  structured: [],
-  freeplay: [],
-};
 
 const SUBJECTS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
   { key: 'english',      label: 'English',      Icon: BookOpenText },
@@ -722,16 +718,11 @@ export default function LogPage() {
     if (!canSave || isSaving) return;
     setIsSaving(true);
 
-    const subjects =
-      activityType === 'structured'
-        ? lessonSubjects
-        : ACTIVITY_SUBJECT_MAP[activityType ?? ''] ?? [];
+    const subjects = deriveSubjects(activityType, lessonSubjects);
 
-    const evidenceUrls = evidence
-      .filter((e) => e.type === 'photo')
-      .map((e) => e.content);
+    const evidenceUrls = derivePhotoEvidenceUrls(evidence);
 
-    const title = description.slice(0, 60).trim() + (description.length > 60 ? '...' : '');
+    const title = deriveEntryTitle(description);
 
     try {
       const res = await fetch('/api/entries', {
@@ -770,21 +761,15 @@ export default function LogPage() {
 
       clearDraft();
 
-      // Heuristic for "thin" entry — three signals must all agree:
-      //   1. Short description (<60 chars)
-      //   2. No Guided observation chip details
-      //   3. No evidence
-      //   4. completeness score below "Strong" (55)
       // Thin entries skip the substantive second screen and keep the fast
-      // "Saved" toast (see spec §2 Item 2 density table). Per D-LPS-?:
-      // scoreCompleteness is the authoritative weighting (covers learners +
-      // engagement + observations + duration + location), so we anchor the
-      // heuristic to it rather than duplicating signal weights here.
-      const isThinEntry =
-        (description?.trim().length ?? 0) < 60 &&
-        Object.keys(observationDetails ?? {}).length === 0 &&
-        evidenceUrls.length === 0 &&
-        completeness < 55;
+      // "Saved" toast (see spec §2 Item 2 density table). See
+      // lib/logger/entry-payload.ts → isThinEntry for the four-signal rule.
+      const thinEntry = isThinEntry({
+        description,
+        observationDetails,
+        evidenceUrlCount: evidenceUrls.length,
+        completeness,
+      });
 
       // Scaffold (hearth session) entries also surface the post-save second
       // screen — per the resolution doc, PostSaveSurface is where enrichment
@@ -806,7 +791,7 @@ export default function LogPage() {
         if (!skipped) setAttachEntryId(savedEntryId);
       }
 
-      if (isThinEntry || !savedEntryId) {
+      if (thinEntry || !savedEntryId) {
         if (!scaffoldData) setToast({ type: 'success', message: 'Learning entry saved!' });
       } else {
         // Substantive entry → render the inline post-save second screen.

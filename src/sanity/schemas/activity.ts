@@ -220,7 +220,7 @@ export const activity = defineType({
       title: 'Workbench (parent-off addendum)',
       type: 'object',
       description:
-        'Optional. A parent-off addendum: child returns alone to material the parent has already introduced. See claude-kindling/design/workbench-specification.md.',
+        "Optional. A parent-off addendum: child returns alone to material the parent has already introduced. See the kindling repo's `design/workbench-specification.md`.",
       fields: [
         defineField({
           name: 'handOffFraming',

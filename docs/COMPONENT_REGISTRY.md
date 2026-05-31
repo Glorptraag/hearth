@@ -61,7 +61,7 @@
 |---|---|---|
 | **In-app editorial — family** | `src/app/(auth)/build/modules` (Module Builder UI) | `POST /api/modules/publish` — sets `authorFamilyId` |
 | **In-app editorial — admin** | `src/app/(admin)/admin/content` + `src/lib/content-studio/` | `POST /api/admin/content/publish` — accepts `workbench` shape, returns soft `workbenchFlags` |
-| **External authoring** | `claude-kindling/` — **separate git repo**, gitignored from this one (sibling checkout only) | `claude-kindling/library/build-mode/orchestrator.ts` CLI → direct Sanity mutations with deterministic IDs + `register/modules.jsonl` event trail. Used by Drew / Cowork to build official content packs from spec docs. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). Bypasses `/api/modules/publish` because that endpoint violates the editorial rule (auto-stamps `authorFamilyId`). |
+| **External authoring** | kindling repo — **separate git repo**, not part of this codebase (sibling checkout on Drew's machine) | kindling's `library/build-mode/orchestrator.ts` CLI → direct Sanity mutations with deterministic IDs + `register/modules.jsonl` event trail. Used by Drew / Cowork to build official content packs from spec docs. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). Bypasses `/api/modules/publish` because that endpoint violates the editorial rule (auto-stamps `authorFamilyId`). |
 
 ### Reference Implementation
 `hearth-dashboard-dark-v2.html` — current source of truth for all visual patterns. **Will be superseded by `hearth-dashboard-dark-v3.html` once v2 token system is applied (per Prompt B in `hearth-v2-claude-code-prompts.md`).** Until v3 lands, v2 remains canonical.

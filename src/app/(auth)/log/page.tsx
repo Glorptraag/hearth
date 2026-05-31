@@ -8,7 +8,6 @@ import { track } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
 import type { DraftInsight } from '@/lib/ai/draft-insight';
 import { usePedagogy } from '@/hooks/use-pedagogy';
-import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
@@ -40,6 +39,7 @@ import {
 } from '@/lib/logger/entry-payload';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
+import { EvidenceModal } from './_components/EvidenceModal';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 import type { ComponentType } from 'react';
 import {
@@ -1804,140 +1804,3 @@ function InsightsContent({
 
 // ─── Evidence Modal Component ───
 
-function EvidenceModal({
-  type,
-  onClose,
-  onSave,
-}: {
-  type: string;
-  onClose: () => void;
-  onSave: (item: EvidenceItem) => void;
-}) {
-  const [content, setContent] = useState('');
-  const [caption, setCaption] = useState('');
-  const [linkName, setLinkName] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
-  const selectedFileRef = useRef<File | null>(null);
-  const trapRef = useFocusTrap(true);
-
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    selectedFileRef.current = file;
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleSave = async () => {
-    if (type === 'photo' && selectedFileRef.current) {
-      setUploading(true);
-      try {
-        const formData = new FormData();
-        formData.append('file', selectedFileRef.current);
-        const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Upload failed' }));
-          alert(err.error ?? 'Upload failed. Please try again.');
-          return;
-        }
-        const { url } = await res.json();
-        onSave({ type: 'photo', content: url, caption });
-      } catch {
-        alert('Upload failed. Check your connection and try again.');
-        return;
-      } finally {
-        setUploading(false);
-      }
-    } else if (type === 'quote' && content.trim()) {
-      onSave({ type: 'quote', content: content.trim() });
-    } else if (type === 'note' && content.trim()) {
-      onSave({ type: 'note', content: content.trim() });
-    } else if (type === 'link' && (linkName.trim() || linkUrl.trim())) {
-      onSave({ type: 'link', content: linkName.trim(), name: linkName.trim(), url: linkUrl.trim() });
-    }
-  };
-
-  const titles: Record<string, string> = {
-    photo: 'Add Photo',
-    quote: "Child's Words",
-    note: 'Add Note',
-    link: 'Link Resource',
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
-      <div className="absolute inset-0 backdrop-modal" onClick={onClose} />
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
-        <div className="flex items-center justify-between mb-lg">
-          <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text-primary min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Close">
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {type === 'photo' && (
-          <div className="space-y-md">
-            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full rounded-md border-2 border-dashed border-border-medium p-xl text-center font-sans text-sm text-text-secondary hover:border-ember transition-all duration-200"
-            >
-              <span className="inline-flex items-center gap-xs"><Camera size={16} aria-hidden="true" /> {previewUrl ? 'Photo selected — tap to change' : 'Tap to select photo'}</span>
-            </button>
-            {previewUrl && (
-              // Local createObjectURL blob — no remote host to whitelist, no
-              // intrinsic size; next/image's required width/height don't fit.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewUrl} alt="Preview" className="w-full max-h-[200px] object-cover rounded-md" />
-            )}
-            <input
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Optional caption..."
-              className="w-full rounded-md border border-border-subtle bg-surface-raised p-sm font-serif text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none"
-            />
-          </div>
-        )}
-
-        {(type === 'quote' || type === 'note') && (
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={type === 'quote' ? "What did they say?" : "Your observation or note..."}
-            rows={4}
-            className="w-full rounded-md border border-border-subtle bg-surface-raised p-md font-serif text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none resize-y"
-            autoFocus
-          />
-        )}
-
-        {type === 'link' && (
-          <div className="space-y-md">
-            <input
-              value={linkName}
-              onChange={(e) => setLinkName(e.target.value)}
-              placeholder="Resource name..."
-              className="w-full rounded-md border border-border-subtle bg-surface-raised p-sm font-serif text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none"
-              autoFocus
-            />
-            <input
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https:// (optional)"
-              className="w-full rounded-md border border-border-subtle bg-surface-raised p-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none"
-            />
-          </div>
-        )}
-
-        <button
-          onClick={handleSave}
-          disabled={uploading}
-          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 min-h-[44px] disabled:opacity-40"
-        >
-          {uploading ? 'Uploading...' : 'Add Evidence'}
-        </button>
-      </div>
-    </div>
-  );
-}

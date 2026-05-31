@@ -13,7 +13,7 @@
 | Piece | Status | Where |
 |---|---|---|
 | `methodAffinity` field on module schema (Layer 6) | ✅ Done | `src/sanity/schemas/module.ts` — `pedagogies[]` + `interpretivePatterns[]` (Option 2 granularity) |
-| Forward-prescription guard in Bundle validation | ✅ Done | `claude-kindling/library/build-mode/bundle-validation.ts` (`checkForwardPrescription`) |
+| Forward-prescription guard in Bundle validation | ✅ Done | kindling repo, `library/build-mode/bundle-validation.ts` (`checkForwardPrescription`) |
 | `questionOverlay` within-module scope tightening | ✅ Done | `src/sanity/schemas/pedagogyLensBundle.ts` + system prompts |
 | Architecture decisions in log | ✅ Done | `docs/hearth-decisions-log-v1.md` C-PA1…C-PA5 |
 
@@ -59,7 +59,7 @@ interface LensAccumulatedSignals {
 **Backfill:** Run a one-off script that walks existing modules with `pedagogyLensBundles` and pulls Interpretive Pattern IDs out of the `corpusChunkIds[]` provenance. For the CM-only modules generated so far, this would populate `methodAffinity.pedagogies: ['charlotte_mason']` and `methodAffinity.interpretivePatterns: [...]` from the corpus chunks that drove generation.
 
 **Implementation files (when unblocked):**
-- `claude-kindling/library/build-mode/bundle-orchestrator.ts` — emit `methodAffinity` from the Lens Bundle generation pass alongside the bundle itself
+- kindling repo, `library/build-mode/bundle-orchestrator.ts` — emit `methodAffinity` from the Lens Bundle generation pass alongside the bundle itself
 - `scripts/backfill-method-affinity.ts` — one-off backfill from existing bundles
 
 ### Layer 7 — Tag-match recommender
@@ -101,7 +101,7 @@ ORDER BY score DESC
 
 The natural order for the next sessions:
 
-1. **PKB Wave 1 reframe** (Cowork-side work, in the `claude-kindling/` repo) — Practice Pattern → Interpretive Pattern rename + scope tightening + halving. CM corpus is the first to do. Output: ~8 stable Interpretive Pattern IDs per pedagogy with diagnostic shapes.
+1. **PKB Wave 1 reframe** (Cowork-side work, in the kindling repo) — Practice Pattern → Interpretive Pattern rename + scope tightening + halving. CM corpus is the first to do. Output: ~8 stable Interpretive Pattern IDs per pedagogy with diagnostic shapes.
 
 2. **Layer 5 enrichment pipeline** — extend `enrich.ts` to classify Logger entries against the Wave 1 Interpretive Patterns and emit signal block. Migration for the FIS column. Telemetry to confirm signals are accumulating.
 

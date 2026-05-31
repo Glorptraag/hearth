@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
@@ -36,8 +42,6 @@
     "vitest.integration.config.ts",
     "vitest.setup.ts",
     "vitest.integration.setup.ts",
-    "vitest.integration.globalSetup.ts",
-    "claude-kindling/**",
-    "scripts/run-bundle-job.ts"
+    "vitest.integration.globalSetup.ts"
   ]
 }

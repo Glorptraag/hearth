@@ -90,7 +90,7 @@ This change introduces the three-layer content model: **(1) pedagogy / (2) metho
 **Decision:** The Lens Bundle validation pipeline gains a forward-prescription guard alongside banned-phrase and cross-field similarity checks. Reject fields containing imperative forward-direction language that implies content the module doesn't contain — patterns like "next, switch to…", "tomorrow do…", "follow this with…", "a good next module is…". The tradition can caution, redirect within the moment, and point at existing structure — it cannot generate forward content paths. The `questionOverlay` field's scope is now explicit: "what to notice on the next encounter with this *same module's* content." Within-module, not cross-module.
 
 **Document of record:** `docs/hearth-pedagogy-system-architecture-v1.md` §6
-**Implementation:** `claude-kindling/library/build-mode/bundle-validation.ts` (`validateForwardPrescription`)
+**Implementation:** kindling repo, `library/build-mode/bundle-validation.ts` (`validateForwardPrescription`)
 **Date:** 2026-05-13
 
 ### C-PA5 — Lens loop closure (Layers 5/6/7) — accumulated signals × method affinity × tag-match

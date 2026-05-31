@@ -52,5 +52,3 @@ next-env.d.ts
 # archived docs (kept locally for reference; history preserved in git log)
 docs/archive/
 
-# claude-kindling — separate scratch project, lives in its own repo
-claude-kindling/

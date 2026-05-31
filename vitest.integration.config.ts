@@ -63,8 +63,13 @@ export default defineConfig({
   },
 
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    // Array form so order is explicit: the anchored `@/lib/db` rule must win
+    // over the general `@` rule. The `$` keeps it from matching `@/lib/db/schema`
+    // and other sub-paths — only the package entry is swapped for the
+    // transaction-scoped test client (see src/test/db-test-shim.ts).
+    alias: [
+      { find: /^@\/lib\/db$/, replacement: path.resolve(__dirname, './src/test/db-test-shim.ts') },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ],
   },
 });

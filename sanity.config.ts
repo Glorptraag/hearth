@@ -15,6 +15,10 @@ const PKB_LAYERS = [
 export default defineConfig({
   name: 'hearth-lms',
   title: 'Hearth LMS',
+  // Embedded Studio is mounted at /studio (src/app/studio/[[...tool]]). next-sanity
+  // needs this basePath so the Studio router resolves its own links instead of the
+  // app's routes — without it the desk navigation bounces back into the site.
+  basePath: '/studio',
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   plugins: [

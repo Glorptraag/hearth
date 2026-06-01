@@ -36,7 +36,7 @@ import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { WhoSection } from './_components/WhoSection';
-import { CHILD_COLORS } from './_components/childColors';
+import { EngagementSection } from './_components/EngagementSection';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
@@ -58,13 +58,6 @@ type EvidenceItem = {
   url?: string;
   name?: string;
 };
-
-const ENGAGEMENT_LEVELS = [
-  { value: 4, emoji: '😊', label: 'Loved it' },
-  { value: 3, emoji: '🙂', label: 'Engaged' },
-  { value: 2, emoji: '😐', label: 'Okay' },
-  { value: 1, emoji: '😕', label: 'Struggled' },
-];
 
 const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
 const WHERE_OPTIONS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
@@ -561,10 +554,6 @@ export default function LogPage() {
     }
   };
 
-  const getLearnerColors = (learnerId: string) => {
-    const learner = learners.find((l) => l.id === learnerId);
-    return CHILD_COLORS[learner?.colourToken ?? 'rose'] ?? CHILD_COLORS.rose;
-  };
 
 
   // ─── Render ───
@@ -774,51 +763,15 @@ export default function LogPage() {
           />
 
           {/* Section 3: How Engaged Were They? */}
-          <section>
-            <SectionHeader number={3} done={sectionDone[3]} label="How engaged were they?" optional="Rate each child" />
-            {selectedLearners.length === 0 ? (
-              <p className="font-serif text-sm italic text-text-muted">
-                Select children first
-              </p>
-            ) : (
-              <div className="space-y-sm">
-                {selectedLearners.map((id) => {
-                  const learner = learners.find((l) => l.id === id);
-                  if (!learner) return null;
-                  const colors = getLearnerColors(id);
-                  return (
-                    <div key={id} className={`flex items-center justify-between gap-md rounded-md border ${colors.border} ${colors.bg} px-md py-sm`}>
-                      <div className="flex items-center gap-sm">
-                        <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')} shrink-0`} />
-                        <span className="font-sans text-[0.875rem] font-semibold text-text-primary">{learner.name}</span>
-                      </div>
-                      <div className="flex gap-xs">
-                        {ENGAGEMENT_LEVELS.map((level) => {
-                          const selected = engagement[id] === level.value;
-                          return (
-                            <button
-                              key={level.value}
-                              onClick={() =>
-                                setEngagement((prev) => ({ ...prev, [id]: level.value }))
-                              }
-                              title={level.label}
-                              className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[var(--ease-default)] ${
-                                selected
-                                  ? `${colors.bg} ${colors.border} scale-110 opacity-100`
-                                  : 'bg-surface-body border-border-subtle opacity-60 hover:opacity-100 hover:border-border-medium hover:scale-105'
-                              }`}
-                            >
-                              {level.emoji}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          <EngagementSection
+            done={sectionDone[3]}
+            learners={learners}
+            selectedLearners={selectedLearners}
+            engagement={engagement}
+            onEngagementChange={(id, value) =>
+              setEngagement((prev) => ({ ...prev, [id]: value }))
+            }
+          />
 
           {/* Section 4: When & Where */}
           <section>

@@ -231,14 +231,14 @@ Non-obvious locations for features that come up often:
 ### Two configs, two extensions
 
 - **Unit** — `vitest.config.ts`, file pattern `*.test.{ts,tsx}`, environment jsdom, everything external mocked. Run: `npm test` (alias: `npm run test:unit`).
-- **Integration** — `vitest.integration.config.ts`, file pattern `*.integration.test.{ts,tsx}`, environment node, real Neon branch + real Drizzle, everything else still mocked. Run: `npm run test:integration` (orchestrator creates and tears down an ephemeral Neon branch per run).
+- **Integration** — `vitest.integration.config.ts`, file pattern `*.integration.test.{ts,tsx}`, environment node, **real Postgres** (local Docker container; `pgvector/pgvector:pg16`) + real Drizzle, everything else still mocked. Run: `npm run test:integration:local` (spins up the container, migrates, runs, tears down). Isolation is **transaction rollback** — each test runs inside `BEGIN…ROLLBACK` on a pinned `node-postgres` client, so nothing it writes survives. The `@/lib/db` import is aliased to `src/test/db-test-shim.ts` so handlers under test write through the same transaction. A Neon ephemeral-branch path (`npm run test:integration`) still exists for on-demand cloud validation but is not the default. See `docs/test-pilot-runbook.md`.
 
 Never collapse these into one config. Integration tests using mocks, or unit tests hitting a real DB, would both silently defeat the point.
 
 ### Mocks live in the setup files, not in individual tests
 
 - `vitest.setup.ts` registers Clerk v7 async mocks (`auth`, `currentUser`, `clerkClient`, `clerkMiddleware`, `createRouteMatcher`) plus Anthropic, Sanity, Blob, `next/headers`, `next/navigation`. Default state: signed-in owner of `TEST_FAMILY_ID`.
-- `vitest.integration.setup.ts` re-uses those mocks **and** truncates 31 user-data tables between tests. The DB itself is NOT mocked in integration — that is the whole point.
+- `vitest.integration.setup.ts` re-uses those mocks **and** wraps each test in a transaction it rolls back afterward (via `src/test/integration-db.ts`). The DB itself is NOT mocked in integration — that is the whole point.
 - **Clerk v7 is async.** Always `mockResolvedValue()`, never `mockReturnValue()`. Mocking `auth()` with a sync return is the #1 cause of "userId is undefined" failures.
 
 ### Per-test identity overrides — use the helpers
@@ -259,15 +259,16 @@ Do not hand-roll Clerk mock overrides inside a test file. Every ad-hoc override 
 
 ### When the schema changes
 
-Update these three places in lockstep (CI will usually catch a mismatch, but it's cheap to do proactively):
+Update these two places in lockstep (CI will usually catch a mismatch, but it's cheap to do proactively):
 
 1. `src/test/factories.ts` — `InferSelectModel` drift will surface in `tsc`, but default values still need updating.
 2. `src/test/db-factories.ts` — only if you add a new seeder for the new table.
-3. `vitest.integration.setup.ts` → `TABLES_TO_TRUNCATE` — **must list every table with user data**. A missing table leaks rows between tests; a non-existent table throws at `truncateAll()`.
+
+(No truncate list to maintain — rollback isolation means a new table is wiped automatically. New migrations are applied by `drizzle-kit migrate` against the fresh container before the suite runs.)
 
 ### CI
 
-`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (auto-skips if Neon vars are unset, so it stays green locally while the secrets get wired up). All jobs pinned Node 22.
+`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (stands up a `pgvector/pgvector:pg16` service container, applies the schema with `drizzle-kit migrate`, then runs the suite — no cloud credentials, always runs). All jobs pinned Node 22.
 
 ## Writing Sanity Content Programmatically
 

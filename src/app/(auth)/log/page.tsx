@@ -33,6 +33,7 @@ import {
   isThinEntry,
 } from '@/lib/logger/entry-payload';
 import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
+import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { EvidenceModal } from './_components/EvidenceModal';
@@ -513,28 +514,15 @@ export default function LogPage() {
       if (savedEntryId) activeEnrichmentEntryIdRef.current = savedEntryId;
       (async () => {
         if (savedEntryId) {
-          const POLL_INTERVAL_MS = 1500;
-          const POLL_TIMEOUT_MS = 30000;
-          const start = Date.now();
-          while (Date.now() - start < POLL_TIMEOUT_MS) {
-            // First check after 1.5s; enrichment is rarely ready sooner.
-            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-            if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-            try {
-              const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
-              if (!enrichedRes.ok) continue;
-              const enrichedEntry = await enrichedRes.json() as {
-                aiEnrichment?: AiEnrichment | null;
-              };
-              const enrichment = enrichedEntry?.aiEnrichment;
-              if (!enrichment) continue;
-              // Re-check the guard — the parent may have started a new entry
-              // while the fetch was in flight.
-              if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-
-              // Drive the post-save surface state machine. Pending → keep
-              // polling; enriched/failed → write final state and stop.
-              const status = enrichment.status;
+          // The poll's timing / in-flight guard / pending→terminal state
+          // machine lives in lib/logger/enrichment-poll.ts; the React
+          // state-mapping stays here behind onEnrichment.
+          await pollEntryEnrichment(savedEntryId, {
+            isCurrent: () => activeEnrichmentEntryIdRef.current === savedEntryId,
+            clearCurrent: () => {
+              activeEnrichmentEntryIdRef.current = null;
+            },
+            onEnrichment: (enrichment) => {
               setPostSave((prev) =>
                 prev && prev.entryId === savedEntryId ? { ...prev, enrichment } : prev
               );
@@ -554,31 +542,23 @@ export default function LogPage() {
                 setProfileNudge(nudge);
                 setInsightsExpanded(true);
               }
-              // Keep polling while status is 'pending' (the row exists but
-              // enrichment hasn't completed). Only break on a terminal state.
-              if (status === 'pending') continue;
-              activeEnrichmentEntryIdRef.current = null;
-              break;
-            } catch {
-              // transient — keep polling
-            }
-          }
-          if (activeEnrichmentEntryIdRef.current === savedEntryId) {
-            activeEnrichmentEntryIdRef.current = null;
-          }
-          // Poll timed out without a terminal status. Spec: "never a spinner
-          // that hangs." Resolve the surface to a failed view so the parent
-          // can exit; the DB row may still finish enriching later, and the
-          // Portfolio retry affordance covers that case.
-          setPostSave((prev) => {
-            if (!prev || prev.entryId !== savedEntryId) return prev;
-            if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
-              return prev;
-            }
-            return {
-              ...prev,
-              enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
-            };
+            },
+            // Poll timed out without a terminal status. Spec: "never a spinner
+            // that hangs." Resolve the surface to a failed view so the parent
+            // can exit; the DB row may still finish enriching later, and the
+            // Portfolio retry affordance covers that case.
+            onTimeout: () => {
+              setPostSave((prev) => {
+                if (!prev || prev.entryId !== savedEntryId) return prev;
+                if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
+                };
+              });
+            },
           });
         }
 

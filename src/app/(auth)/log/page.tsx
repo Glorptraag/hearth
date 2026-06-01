@@ -29,11 +29,10 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
-  deriveSubjects,
-  deriveEntryTitle,
-  derivePhotoEvidenceUrls,
+  buildEntrySavePayload,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
+import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { EvidenceModal } from './_components/EvidenceModal';
@@ -407,33 +406,33 @@ export default function LogPage() {
     if (!canSave || isSaving) return;
     setIsSaving(true);
 
-    const subjects = deriveSubjects(activityType, lessonSubjects);
-
-    const evidenceUrls = derivePhotoEvidenceUrls(evidence);
-
-    const title = deriveEntryTitle(description);
+    const payload = buildEntrySavePayload(
+      {
+        description,
+        dateOccurred: getDateOccurred(),
+        activityType,
+        lessonSubjects,
+        selectedLearners,
+        engagement,
+        discoveries,
+        evidence,
+        loggerMode,
+        observationDetails,
+      },
+      {
+        scaffoldSessionId: scaffoldData?.session.id,
+        projectSource: projectContext.source,
+        projectId: projectContext.projectId,
+        stageNumber: projectContext.stageNumber,
+      },
+    );
+    const evidenceUrls = payload.evidenceUrls;
 
     try {
       const res = await fetch('/api/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          dateOccurred: getDateOccurred(),
-          subjects,
-          learnerIds: selectedLearners,
-          engagementPerLearner: engagement,
-          discoveriesPerLearner: discoveries,
-          evidenceUrls,
-          observationDetails: loggerMode === 'guided' ? observationDetails : undefined,
-          mode: loggerMode,
-          source: scaffoldData ? 'hearth_session' : projectContext.source,
-          sourceSessionId: scaffoldData?.session.id,
-          projectId: projectContext.projectId,
-          stageNumber: projectContext.stageNumber,
-          status: 'complete',
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error('Save failed');
@@ -584,38 +583,13 @@ export default function LogPage() {
         }
 
         try {
-          const badgeResults = await Promise.all(
-            learnersToCheck.map(async (learnerId) => {
-              const r = await fetch('/api/badges/check-thresholds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ learnerId }),
-              });
-              if (!r.ok) return [];
-              const d = await r.json();
-              return ((d.badgeIds ?? []) as string[]).map((badgeId) => ({ badgeId, learnerId }));
-            })
+          const ready = await checkBadgeThresholds(learnersToCheck);
+          const badgeToast = buildBadgeReadyToast(
+            ready,
+            new Map(learners.map((l) => [l.id, l.name])),
           );
-          const ready = badgeResults.flat();
-          if (ready.length > 0) {
-            const learnerNameById = new Map(learners.map((l) => [l.id, l.name]));
-            const first = ready[0];
-            const rest = ready.slice(1);
-            const firstName = learnerNameById.get(first.learnerId) ?? '';
-            const queueParam =
-              rest.length > 0
-                ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
-                : '';
-            const positionParam = ready.length > 1 ? `&qn=1&qt=${ready.length}` : '';
-            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}${positionParam}`;
-            setToast({
-              type: 'badge',
-              message:
-                ready.length > 1
-                  ? `Hearth noticed something new — ${ready.length} quick checks ready.`
-                  : 'Hearth noticed something new. Quick check?',
-              action: { label: ready.length > 1 ? `Start (${ready.length})` : 'Now (2 min)', href },
-            });
+          if (badgeToast) {
+            setToast(badgeToast);
             setTimeout(() => setToast(null), 10000);
           }
         } catch {

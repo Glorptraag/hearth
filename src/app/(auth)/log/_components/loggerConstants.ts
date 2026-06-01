@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import {
   Leaf, CookingPot, BookOpen, Palette, SoccerBall, UsersThree, Note, Sparkle,
   BookOpenText, MathOperations, Atom, Globe, Cpu, PersonSimpleRun, ChatsCircle,
+  HouseLine, Tree, Bank, Monitor,
 } from '@/components/icons';
 
 /** Icon component shape used by the Logger's option catalogs. */
@@ -17,6 +18,17 @@ export const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: L
   { key: 'social',     label: 'Social',          Icon: UsersThree },
   { key: 'structured', label: 'Lesson',          Icon: Note },
   { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
+];
+
+/** Duration chips for Section 4. */
+export const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
+
+/** Where-it-happened chips for Section 4. */
+export const WHERE_OPTIONS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
+  { key: 'home',      label: 'Home',      Icon: HouseLine },
+  { key: 'outdoors',  label: 'Outdoors',  Icon: Tree },
+  { key: 'community', label: 'Community', Icon: Bank },
+  { key: 'online',    label: 'Online',    Icon: Monitor },
 ];
 
 /** Engagement-rating options for Section 3 (1–4, emoji + label). */

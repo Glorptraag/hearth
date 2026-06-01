@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { format, subDays, differenceInYears } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { generateReflectionPrompts, type ReflectionPrompt } from '@/lib/ai/keyword-matcher';
 import { track } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
 import { useLoggerDraft } from '@/hooks/use-logger-draft';
-import { useLearnersFetch, type LearnerRecord } from '@/hooks/use-learners-fetch';
+import { useLearnersFetch } from '@/hooks/use-learners-fetch';
 import { useScaffoldFetch, type ScaffoldData } from '@/hooks/use-scaffold-fetch';
 import { useLoggerModeAndSnapshot } from '@/hooks/use-logger-mode-and-snapshot';
 import { useKeywordMatch } from '@/hooks/use-keyword-match';
@@ -21,7 +21,6 @@ import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
-import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
 import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
 import type { AiEnrichment } from '@/types/enrichment';
@@ -36,6 +35,8 @@ import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-c
 import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
+import { WhoSection } from './_components/WhoSection';
+import { CHILD_COLORS } from './_components/childColors';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
@@ -51,7 +52,6 @@ import {
 
 type LogIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
-type Learner = LearnerRecord;
 
 type EvidenceItem = {
   type: 'photo' | 'quote' | 'note' | 'link';
@@ -121,13 +121,6 @@ const OBSERVATION_CATEGORIES = [
     chips: ['Proud of work', 'Joyful', 'Calm & settled', 'Frustrated → resolved', 'Surprised / delighted', 'Confident'],
   },
 ];
-
-const CHILD_COLORS: Record<string, { border: string; bg: string; text: string; ring: string }> = {
-  rose: { border: 'border-child-rose', bg: 'bg-child-rose/10', text: 'text-child-rose', ring: 'focus-within:ring-child-rose/30' },
-  blue: { border: 'border-child-blue', bg: 'bg-child-blue/10', text: 'text-child-blue', ring: 'focus-within:ring-child-blue/30' },
-  sage: { border: 'border-child-sage', bg: 'bg-child-sage/10', text: 'text-child-sage', ring: 'focus-within:ring-child-sage/30' },
-  amber: { border: 'border-amber-status', bg: 'bg-amber-status/10', text: 'text-amber-status', ring: 'focus-within:ring-amber-status/30' },
-};
 
 // ─── Skeleton Loader Component ───
 
@@ -598,8 +591,6 @@ export default function LogPage() {
     return CHILD_COLORS[learner?.colourToken ?? 'rose'] ?? CHILD_COLORS.rose;
   };
 
-  const getLearnerAge = (l: Learner) =>
-    l.dateOfBirth ? differenceInYears(new Date(), new Date(l.dateOfBirth)) : null;
 
   // ─── Render ───
   if (isLoadingLearners) {
@@ -770,52 +761,15 @@ export default function LogPage() {
         <div className="flex-1 overflow-y-auto px-md pt-lg pb-[220px] lg:py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
           {/* Section 1: Who Was Learning? */}
-          <section>
-            <SectionHeader number={1} done={sectionDone[1]} label="Who was learning?" />
-            <div className="flex flex-wrap gap-sm">
-              {learners.map((learner) => {
-                const selected = selectedLearners.includes(learner.id);
-                const colors = CHILD_COLORS[learner.colourToken ?? 'rose'] ?? CHILD_COLORS.rose;
-                const age = getLearnerAge(learner);
-                return (
-                  <button
-                    key={learner.id}
-                    onClick={() => toggleLearner(learner.id)}
-                    className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[var(--ease-default)] select-none ${
-                      selected
-                        ? `${colors.border} bg-ember-glow text-text-primary`
-                        : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
-                    }`}
-                  >
-                    <span className="text-base">{learner.shapeIcon}</span>
-                    <span>{learner.name}{age !== null ? `, ${age}` : ''}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {selectedLearners.length >= 2 && (
-              <label className="mt-sm flex items-center gap-sm font-sans text-sm text-text-secondary cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={togetherMode}
-                  onChange={(e) => setTogetherMode(e.target.checked)}
-                  className="accent-ember"
-                />
-                Learning together
-              </label>
-            )}
-            {/* (b) WatchForTodayStrip — shown below children when selected */}
-            {selectedLearners.length > 0 && (
-              <div className="mt-md">
-                <WatchForTodayStrip
-                  learners={learners
-                    .filter((l) => selectedLearners.includes(l.id))
-                    .map((l) => ({ id: l.id, name: l.name, colourToken: l.colourToken }))}
-                  snapshotData={snapshotData}
-                />
-              </div>
-            )}
-          </section>
+          <WhoSection
+            learners={learners}
+            selectedLearners={selectedLearners}
+            onToggleLearner={toggleLearner}
+            togetherMode={togetherMode}
+            onTogetherModeChange={setTogetherMode}
+            snapshotData={snapshotData}
+            done={sectionDone[1]}
+          />
 
           {/* Section 2: What Happened? */}
           <section>

@@ -24,7 +24,7 @@ import { PedagogyAttribution, type PedagogyAttributionSource } from '@/component
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
 import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
 import type { AiEnrichment } from '@/types/enrichment';
-import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/components/logger/ObservationChipDetail';
+import type { ChipDetailValue } from '@/components/logger/ObservationChipDetail';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
@@ -38,6 +38,7 @@ import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { WhoSection } from './_components/WhoSection';
 import { EngagementSection } from './_components/EngagementSection';
 import { WhenWhereSection } from './_components/WhenWhereSection';
+import { ObserveSection } from './_components/ObserveSection';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
@@ -59,38 +60,6 @@ type EvidenceItem = {
   name?: string;
 };
 
-
-const OBSERVATION_CATEGORIES = [
-  {
-    label: 'Engagement',
-    color: 'child-sage',
-    chips: ['Deeply focused', 'Curious', 'Enthusiastic', 'Reluctant at first', 'Easily distracted', 'Self-directed'],
-  },
-  {
-    label: 'Social',
-    color: 'child-blue',
-    chips: ['Worked alone', 'Collaborated', 'Led others', 'Asked for help', 'Taught someone', 'Negotiated / compromised'],
-  },
-  {
-    label: 'Thinking',
-    color: 'child-violet',
-    chips: ['Asked questions', 'Tried alternatives', 'Persisted through difficulty', 'Made connections', 'Self-corrected', 'Explained reasoning'],
-  },
-  {
-    label: 'Emotional',
-    color: 'child-rose',
-    chips: ['Proud of work', 'Joyful', 'Calm & settled', 'Frustrated → resolved', 'Surprised / delighted', 'Confident'],
-  },
-];
-
-// ─── Skeleton Loader Component ───
-
-const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selectedBorder: string }> = {
-  'child-sage': { dot: 'bg-child-sage', selectedBg: 'bg-child-sage/10', selectedBorder: 'border-child-sage/30' },
-  'child-blue': { dot: 'bg-child-blue', selectedBg: 'bg-child-blue/10', selectedBorder: 'border-child-blue/30' },
-  'child-violet': { dot: 'bg-child-violet', selectedBg: 'bg-child-violet/10', selectedBorder: 'border-child-violet/30' },
-  'child-rose': { dot: 'bg-child-rose', selectedBg: 'bg-child-rose/10', selectedBorder: 'border-child-rose/30' },
-};
 
 export default function LogPage() {
   const { vocab, pedagogy } = usePedagogy();
@@ -345,9 +314,18 @@ export default function LogPage() {
   };
 
   const toggleObservation = (chip: string) => {
+    const wasSelected = observations.includes(chip);
     setObservations((prev) =>
       prev.includes(chip) ? prev.filter((o) => o !== chip) : [...prev, chip]
     );
+    // Deselecting a chip clears any Guided-mode detail captured for it.
+    if (wasSelected) {
+      setObservationDetails((prev) => {
+        const next = { ...prev };
+        delete next[chip];
+        return next;
+      });
+    }
   };
 
   const getDateOccurred = useCallback(() => {
@@ -778,61 +756,17 @@ export default function LogPage() {
           />
 
           {/* Section 5: What Did You Observe? */}
-          <section>
-            <SectionHeader number={5} done={sectionDone[5]} label={vocab.logObserveLabel} />
-            <div className="space-y-md">
-              {OBSERVATION_CATEGORIES.map((cat) => {
-                const colorClasses = OBS_COLOR_CLASSES[cat.color] ?? OBS_COLOR_CLASSES['child-sage'];
-                return (
-                  <div key={cat.label}>
-                    <div className="flex items-center gap-sm mb-sm">
-                      <div className={`h-[8px] w-[8px] rounded-full ${colorClasses.dot}`} />
-                      <span className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
-                        {cat.label}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-xs">
-                      {cat.chips.map((chip) => {
-                        const sel = observations.includes(chip);
-                        return (
-                          <div key={chip}>
-                            <button
-                              onClick={() => {
-                                toggleObservation(chip);
-                                if (sel) {
-                                  setObservationDetails((prev) => {
-                                    const next = { ...prev };
-                                    delete next[chip];
-                                    return next;
-                                  });
-                                }
-                              }}
-                              className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
-                                sel
-                                  ? `${colorClasses.selectedBg} border ${colorClasses.selectedBorder} text-text-primary`
-                                  : 'border border-border-subtle text-text-secondary hover:border-border-medium'
-                              }`}
-                            >
-                              {chip}
-                            </button>
-                            {loggerMode === 'guided' && sel && DETAIL_CHIPS.has(chip) && (
-                              <ObservationChipDetail
-                                chip={chip}
-                                value={observationDetails[chip] ?? { detail: '' }}
-                                onChange={(val) =>
-                                  setObservationDetails((prev) => ({ ...prev, [chip]: val }))
-                                }
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          <ObserveSection
+            done={sectionDone[5]}
+            label={vocab.logObserveLabel}
+            observations={observations}
+            observationDetails={observationDetails}
+            onToggleObservation={toggleObservation}
+            onObservationDetailChange={(chip, value) =>
+              setObservationDetails((prev) => ({ ...prev, [chip]: value }))
+            }
+            isGuided={loggerMode === 'guided'}
+          />
 
           {/* Section 6: Evidence */}
           <section>

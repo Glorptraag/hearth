@@ -24,18 +24,25 @@ export async function setup() {
     );
   }
 
-  // Refuse to run if DATABASE_URL matches production. This is the "don't
-  // truncate prod by accident" safety net. Customize the check to match
-  // whatever identifies your prod DB (host, branch name, etc).
+  // Refuse to run if DATABASE_URL points at production. This is the "don't
+  // truncate prod by accident" safety net. The integration suite ROLLBACKs
+  // everything it writes, but a misconfigured URL could still run migrations
+  // or churn the prod connection — so we hard-stop first.
+  //
+  // PROD_ENDPOINT is the Neon compute-endpoint id of the production branch.
+  // A substring match also catches the pooled host (…-pooler.<region>…),
+  // which shares the same endpoint id.
+  const PROD_ENDPOINT = 'ep-red-hat-a76y1fdq';
   const isProduction =
-    url.includes('ep-prod') || // Neon compute endpoint naming convention
+    url.includes(PROD_ENDPOINT) ||
     process.env.NEON_BRANCH_NAME === 'main' ||
     process.env.NODE_ENV === 'production';
 
   if (isProduction) {
     throw new Error(
       'Integration tests refuse to run against production. ' +
-        `DATABASE_URL looks like production: ${url.replace(/:[^@]*@/, ':***@')}`
+        `DATABASE_URL looks like production (${PROD_ENDPOINT}): ` +
+        url.replace(/:[^@]*@/, ':***@')
     );
   }
 

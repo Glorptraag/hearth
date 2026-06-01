@@ -19,8 +19,20 @@ export default defineConfig({
   // needs this basePath so the Studio router resolves its own links instead of the
   // app's routes — without it the desk navigation bounces back into the site.
   basePath: '/studio',
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  // The Next.js build inlines NEXT_PUBLIC_* vars, but the Sanity CLI bundler
+  // (hosted Studio at hearth.sanity.studio) only inlines SANITY_STUDIO_* vars —
+  // so the hosted bundle saw an undefined projectId ("Configuration must contain
+  // projectId"). Resolve in priority order, with the public project id/dataset as
+  // a hardcoded fallback so the hosted deploy always works. These are public
+  // (NEXT_PUBLIC_) identifiers, safe to commit — matches scripts/*.ts precedent.
+  projectId:
+    process.env.SANITY_STUDIO_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
+    'g5zhwbxg',
+  dataset:
+    process.env.SANITY_STUDIO_DATASET ||
+    process.env.NEXT_PUBLIC_SANITY_DATASET ||
+    'production',
   plugins: [
     structureTool({
       structure: (S) =>

@@ -2,8 +2,14 @@ import { defineCliConfig } from 'sanity/cli';
 
 export default defineCliConfig({
   api: {
-    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
+    projectId:
+      process.env.SANITY_STUDIO_PROJECT_ID ||
+      process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
+      'g5zhwbxg',
+    dataset:
+      process.env.SANITY_STUDIO_DATASET ||
+      process.env.NEXT_PUBLIC_SANITY_DATASET ||
+      'production',
   },
   // Hosted Studio lives at https://hearth.sanity.studio. Pinning the host +
   // appId here makes `sanity deploy` non-interactive (no hostname / app-id

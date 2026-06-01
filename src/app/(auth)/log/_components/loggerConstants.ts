@@ -20,6 +20,38 @@ export const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: L
   { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
 ];
 
+/** Observation chip categories for Section 5, grouped by lens with a colour key. */
+export const OBSERVATION_CATEGORIES = [
+  {
+    label: 'Engagement',
+    color: 'child-sage',
+    chips: ['Deeply focused', 'Curious', 'Enthusiastic', 'Reluctant at first', 'Easily distracted', 'Self-directed'],
+  },
+  {
+    label: 'Social',
+    color: 'child-blue',
+    chips: ['Worked alone', 'Collaborated', 'Led others', 'Asked for help', 'Taught someone', 'Negotiated / compromised'],
+  },
+  {
+    label: 'Thinking',
+    color: 'child-violet',
+    chips: ['Asked questions', 'Tried alternatives', 'Persisted through difficulty', 'Made connections', 'Self-corrected', 'Explained reasoning'],
+  },
+  {
+    label: 'Emotional',
+    color: 'child-rose',
+    chips: ['Proud of work', 'Joyful', 'Calm & settled', 'Frustrated → resolved', 'Surprised / delighted', 'Confident'],
+  },
+];
+
+/** Colour classes for the observation categories, keyed by `color`. */
+export const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selectedBorder: string }> = {
+  'child-sage': { dot: 'bg-child-sage', selectedBg: 'bg-child-sage/10', selectedBorder: 'border-child-sage/30' },
+  'child-blue': { dot: 'bg-child-blue', selectedBg: 'bg-child-blue/10', selectedBorder: 'border-child-blue/30' },
+  'child-violet': { dot: 'bg-child-violet', selectedBg: 'bg-child-violet/10', selectedBorder: 'border-child-violet/30' },
+  'child-rose': { dot: 'bg-child-rose', selectedBg: 'bg-child-rose/10', selectedBorder: 'border-child-rose/30' },
+};
+
 /** Duration chips for Section 4. */
 export const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
 

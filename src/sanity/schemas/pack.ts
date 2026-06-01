@@ -24,6 +24,7 @@ export const pack = defineType({
       title: 'Modules',
       type: 'array',
       of: [{ type: 'reference', to: [{ type: 'module' }] }],
+      validation: (r) => r.min(1).error('A pack needs at least one module to publish'),
     }),
     defineField({
       name: 'badges',
@@ -145,6 +146,16 @@ export const pack = defineType({
       title: 'Stripe Price ID',
       type: 'string',
       hidden: ({ document }) => document?.availability !== 'premium',
+      // Included packs carry no transactional UI (architecture §7), so they need
+      // no price. Premium packs do — required only in that case.
+      validation: (r) =>
+        r.custom((value, context) => {
+          const doc = context.document as { availability?: string } | undefined;
+          if (doc?.availability === 'premium' && !value) {
+            return 'Premium packs need a Stripe Price ID';
+          }
+          return true;
+        }),
     }),
     defineField({ name: 'creator', title: 'Creator', type: 'string' }),
     defineField({

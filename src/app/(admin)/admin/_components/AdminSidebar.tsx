@@ -29,7 +29,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/admin',              label: 'Dashboard',   Icon: House,         exact: true },
   { href: '/admin/invitations',  label: 'Invitations', Icon: ClipboardText },
-  { href: '/admin/content',      label: 'Content',     Icon: Books },
+  { href: '/studio',             label: 'Content (Sanity)', Icon: Books },
   { href: '/admin/content/qa',   label: 'Content QA',  Icon: CheckCircle,   indent: true },
   { href: '/admin/families',     label: 'Families',    Icon: UsersThree },
   { href: '/admin/analytics',    label: 'Analytics',   Icon: ChartBar },

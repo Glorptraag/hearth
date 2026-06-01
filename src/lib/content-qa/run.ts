@@ -1,5 +1,5 @@
 import { sanityClient } from '@/lib/sanity/client';
-import { fetchPackTree, mergeWithDrafts } from './tree';
+import { fetchPackTree } from './tree';
 import { checkDocument } from './rules';
 import { checkBrokenRefs, checkOrphans, checkDuplicateSlugs, checkCountDrift } from './integrity';
 import { getCached, setCached } from './cache';
@@ -80,8 +80,7 @@ export async function fetchAllPackSummaries(): Promise<PackSummary[]> {
 
   for (const pack of packs) {
     const tree = await fetchPackTree(pack._id);
-    const merged = await mergeWithDrafts(tree);
-    const result = runFullCheck(merged);
+    const result = runFullCheck(tree);
 
     const activityCount = ((pack.modules ?? []) as SanityDoc[]).reduce(
       (sum: number, m: SanityDoc) =>
@@ -119,10 +118,9 @@ export async function fetchPackDetail(packId: string): Promise<PackDetail | null
   const cached = getCached<PackDetail>(`qa:pack:${packId}`);
   if (cached) return cached;
 
-  const rawTree = await fetchPackTree(packId);
-  if (!rawTree.pack) return null;
+  const merged = await fetchPackTree(packId);
+  if (!merged.pack) return null;
 
-  const merged = await mergeWithDrafts(rawTree);
   const allIssues = runFullCheck(merged);
 
   // Build tree structure
@@ -264,8 +262,7 @@ export async function fetchAllIssues(): Promise<QAIssueFlat[]> {
   const now = new Date().toISOString();
 
   for (const pack of packs) {
-    const rawTree = await fetchPackTree(pack._id);
-    const merged = await mergeWithDrafts(rawTree);
+    const merged = await fetchPackTree(pack._id);
     const result = runFullCheck(merged);
     const allDocs = buildDocMap(merged);
 

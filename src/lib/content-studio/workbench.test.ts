@@ -83,6 +83,35 @@ describe('packPublishSchema — workbench fields', () => {
   });
 });
 
+describe('packPublishSchema — stripePriceId is conditional on availability', () => {
+  it('accepts an included pack with no Stripe price (architecture §7 — no freemium UI)', () => {
+    const pack = makePack({ activityWb: null });
+    pack.availability = 'included';
+    pack.stripePriceId = '';
+    const result = packPublishSchema.safeParse(pack);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a premium pack with no Stripe price', () => {
+    const pack = makePack({ activityWb: null });
+    pack.availability = 'premium';
+    pack.stripePriceId = '';
+    const result = packPublishSchema.safeParse(pack);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path.join('.') === 'stripePriceId')).toBe(true);
+    }
+  });
+
+  it('accepts a premium pack that carries a Stripe price', () => {
+    const pack = makePack({ activityWb: null });
+    pack.availability = 'premium';
+    pack.stripePriceId = 'price_123';
+    const result = packPublishSchema.safeParse(pack);
+    expect(result.success).toBe(true);
+  });
+});
+
 describe('workbenchIdResolutionFlags', () => {
   it('flags an activity workbenchId not declared on the pack', () => {
     const flags = workbenchIdResolutionFlags({

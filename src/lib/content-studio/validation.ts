@@ -97,28 +97,41 @@ const badgeSchema = z.object({
   status: z.enum(['draft', 'published']),
 });
 
-export const packPublishSchema = z.object({
-  title: z.string().min(1, 'Pack title required'),
-  description: z.string().min(1, 'Pack description required'),
-  intro: z.object({
-    title: z.string(),
-    body: z.string(),
-    keyPoints: z.array(z.string()),
-    furtherReading: z.array(z.object({ _key: z.string(), title: z.string(), url: z.string() })),
-  }),
-  subjects: z.array(subjectEnum),
-  ageRange: z.object({ min: z.number(), max: z.number() }),
-  termWeeks: z.number(),
-  worldview: z.string(),
-  availability: z.string(),
-  stripePriceId: z.string(),
-  creator: z.string(),
-  version: z.string(),
-  modules: z.array(moduleSchema).min(1, 'At least one module per pack'),
-  badges: z.array(badgeSchema),
-  workbenches: z.array(workbenchPackSchema).optional(),
-  status: z.string(),
-});
+export const packPublishSchema = z
+  .object({
+    title: z.string().min(1, 'Pack title required'),
+    description: z.string().min(1, 'Pack description required'),
+    intro: z.object({
+      title: z.string(),
+      body: z.string(),
+      keyPoints: z.array(z.string()),
+      furtherReading: z.array(z.object({ _key: z.string(), title: z.string(), url: z.string() })),
+    }),
+    subjects: z.array(subjectEnum),
+    ageRange: z.object({ min: z.number(), max: z.number() }),
+    termWeeks: z.number(),
+    worldview: z.string(),
+    availability: z.string(),
+    // Membership-included packs carry no transactional UI (architecture §7 — no
+    // freemium language), so they need no Stripe price. Only premium packs do —
+    // enforced by the refine below rather than a blanket required-string.
+    stripePriceId: z.string().optional(),
+    creator: z.string(),
+    version: z.string(),
+    modules: z.array(moduleSchema).min(1, 'At least one module per pack'),
+    badges: z.array(badgeSchema),
+    workbenches: z.array(workbenchPackSchema).optional(),
+    status: z.string(),
+  })
+  .superRefine((pack, ctx) => {
+    if (pack.availability === 'premium' && !pack.stripePriceId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stripePriceId'],
+        message: 'Premium packs require a Stripe price ID',
+      });
+    }
+  });
 
 // ─── Soft validation flags (addendum §5) ─────────────────────────────────────
 // These are content-pattern heuristics. They surface likely contract violations

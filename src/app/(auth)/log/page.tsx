@@ -37,6 +37,7 @@ import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { WhoSection } from './_components/WhoSection';
 import { EngagementSection } from './_components/EngagementSection';
+import { WhenWhereSection } from './_components/WhenWhereSection';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
@@ -44,7 +45,6 @@ import { WhatSection } from './_components/WhatSection';
 import type { LogIconC } from './_components/loggerConstants';
 import {
   Note, Sparkle,
-  HouseLine, Tree, Bank, Monitor,
   Check, WifiSlash, NotePencil, ClipboardText,
   Camera, ChatCircle, LinkSimple, X, Lightbulb,
   ChatCircleText,
@@ -59,13 +59,6 @@ type EvidenceItem = {
   name?: string;
 };
 
-const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
-const WHERE_OPTIONS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
-  { key: 'home',      label: 'Home',      Icon: HouseLine },
-  { key: 'outdoors',  label: 'Outdoors',  Icon: Tree },
-  { key: 'community', label: 'Community', Icon: Bank },
-  { key: 'online',    label: 'Online',    Icon: Monitor },
-];
 
 const OBSERVATION_CATEGORIES = [
   {
@@ -774,70 +767,15 @@ export default function LogPage() {
           />
 
           {/* Section 4: When & Where */}
-          <section>
-            <SectionHeader number={4} done={sectionDone[4]} label="When & Where" />
-            <div className="flex flex-wrap gap-md">
-              {/* When */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">When</p>
-                <div className="flex flex-wrap gap-xs">
-                  {(['today', 'yesterday', 'earlier'] as const).map((w) => (
-                    <button
-                      key={w}
-                      onClick={() => setWhenDate(w)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        whenDate === w
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      {w.charAt(0).toUpperCase() + w.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Duration</p>
-                <div className="flex flex-wrap gap-xs">
-                  {DURATION_OPTIONS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDuration(duration === d ? null : d)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        duration === d
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Where */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Where</p>
-                <div className="flex flex-wrap gap-xs">
-                  {WHERE_OPTIONS.map((w) => (
-                    <button
-                      key={w.key}
-                      onClick={() => setLocation(location === w.key ? null : w.key)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        location === w.key
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      <span className="inline-flex items-center gap-xs"><w.Icon size={14} aria-hidden="true" /> {w.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+          <WhenWhereSection
+            done={sectionDone[4]}
+            whenDate={whenDate}
+            onWhenDateChange={setWhenDate}
+            duration={duration}
+            onDurationChange={setDuration}
+            location={location}
+            onLocationChange={setLocation}
+          />
 
           {/* Section 5: What Did You Observe? */}
           <section>

@@ -19,6 +19,14 @@ export const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: L
   { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
 ];
 
+/** Engagement-rating options for Section 3 (1–4, emoji + label). */
+export const ENGAGEMENT_LEVELS = [
+  { value: 4, emoji: '😊', label: 'Loved it' },
+  { value: 3, emoji: '🙂', label: 'Engaged' },
+  { value: 2, emoji: '😐', label: 'Okay' },
+  { value: 1, emoji: '😕', label: 'Struggled' },
+];
+
 /** Lesson-subject chips shown when the activity type is 'structured'. */
 export const SUBJECTS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
   { key: 'english',      label: 'English',      Icon: BookOpenText },

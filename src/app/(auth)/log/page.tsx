@@ -6,6 +6,7 @@ import { format, subDays, differenceInYears } from 'date-fns';
 import { matchKeywords, generateReflectionPrompts, type KeywordMatchResult, type ReflectionPrompt, type SnapshotSignals } from '@/lib/ai/keyword-matcher';
 import { track } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
+import { useLoggerDraft } from '@/hooks/use-logger-draft';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
@@ -22,14 +23,7 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import type { CoachHint } from '@/lib/logger/coaching/types';
 import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
-import {
-  DRAFT_KEY,
-  parseDraft,
-  serializeDraft,
-  shouldPersistDraft,
-  isRestorableDraft,
-  isStaleDraft,
-} from '@/lib/logger/draft';
+import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
   deriveSubjects,
   deriveEntryTitle,
@@ -282,61 +276,44 @@ export default function LogPage() {
   }, [scaffoldSessionId]);
 
   // ─── Draft auto-save (10s to localStorage) ───
-  const [draftRestored, setDraftRestored] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  // The autosave + restore + clear wiring lives in useLoggerDraft (the React
+  // side of `lib/logger/draft.ts`). We memo the draft state so the hook's
+  // autosave timer only restarts when a field actually changes — preserving
+  // the original deps-driven `useEffect` cadence.
+  const draftState = useMemo<LoggerDraftFields>(() => ({
+    description,
+    selectedLearners,
+    discoveries,
+    activityType,
+    lessonSubjects,
+    engagement,
+    whenDate,
+    duration,
+    location,
+    observations,
+    evidence,
+  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
+
+  const { draftRestored, dismissDraftRestored, lastSavedAt, clearDraft } = useLoggerDraft({
+    state: draftState,
+    onRestore: useCallback((d) => {
+      // Each setter is gated on the corresponding field's presence — same shape
+      // as the original inline restore effect.
+      if (d.description) setDescription(d.description);
+      if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
+      if (d.discoveries) setDiscoveries(d.discoveries);
+      if (d.activityType) setActivityType(d.activityType);
+      if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
+      if (d.engagement) setEngagement(d.engagement);
+      if (d.whenDate) setWhenDate(d.whenDate);
+      if (d.duration) setDuration(d.duration);
+      if (d.location) setLocation(d.location);
+      if (d.observations?.length) setObservations(d.observations);
+      if (d.evidence?.length) setEvidence(d.evidence);
+    }, []),
+  });
+
   const online = useOnlineStatus();
-
-  // Restore draft on mount
-  useEffect(() => {
-    const d = parseDraft(localStorage.getItem(DRAFT_KEY));
-    if (!d) return;
-    // Hydrating draft state from localStorage on mount; each setter is gated on field presence.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (d.description) setDescription(d.description);
-    if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
-    if (d.discoveries) setDiscoveries(d.discoveries);
-    if (d.activityType) setActivityType(d.activityType);
-    if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
-    if (d.engagement) setEngagement(d.engagement);
-    if (d.whenDate) setWhenDate(d.whenDate);
-    if (d.duration) setDuration(d.duration);
-    if (d.location) setLocation(d.location);
-    if (d.observations?.length) setObservations(d.observations);
-    if (d.evidence?.length) setEvidence(d.evidence);
-    if (isRestorableDraft(d)) setDraftRestored(true);
-
-    // If draft is stale (>4 hours old), trigger a draft_resume notification
-    if (isStaleDraft(d, Date.now())) {
-      const draftTitle = d.description?.slice(0, 40) || undefined;
-      fetch('/api/notifications/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'draft_resume', draftTitle }),
-      }).catch(() => {});
-    }
-  }, []);
-
-  // Save draft every 10s
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!shouldPersistDraft({ description, selectedLearners })) return;
-      const now = Date.now();
-      localStorage.setItem(DRAFT_KEY, serializeDraft({
-        description, selectedLearners, discoveries, activityType,
-        lessonSubjects, engagement, whenDate, duration, location,
-        observations, evidence,
-      }, now));
-      setLastSavedAt(now);
-    }, 10_000);
-    return () => clearInterval(timer);
-  }, [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
-
-  // Clear draft on successful save
-  const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_KEY);
-    setLastSavedAt(null);
-    setDraftRestored(false);
-  }, []);
 
   // ─── AI Insights ───
   // Two tiers: instant keyword matcher for fast feedback, debounced Haiku
@@ -861,7 +838,7 @@ export default function LogPage() {
         <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">
           <p className="inline-flex items-center gap-xs font-sans text-[11px] text-text-secondary"><NotePencil size={14} aria-hidden="true" /> Draft restored from your last session</p>
           <button
-            onClick={() => setDraftRestored(false)}
+            onClick={dismissDraftRestored}
             className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-200"
           >
             Dismiss

@@ -34,21 +34,20 @@ import {
 import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
 import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
-import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
+import { CompletenessRing } from './_components/SectionHeader';
 import { WhoSection } from './_components/WhoSection';
 import { EngagementSection } from './_components/EngagementSection';
 import { WhenWhereSection } from './_components/WhenWhereSection';
 import { ObserveSection } from './_components/ObserveSection';
+import { EvidenceSection } from './_components/EvidenceSection';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 import { WhatSection } from './_components/WhatSection';
-import type { LogIconC } from './_components/loggerConstants';
 import {
-  Note, Sparkle,
+  Sparkle,
   Check, WifiSlash, NotePencil, ClipboardText,
-  Camera, ChatCircle, LinkSimple, X, Lightbulb,
-  ChatCircleText,
+  Lightbulb,
 } from '@/components/icons';
 
 
@@ -769,64 +768,14 @@ export default function LogPage() {
           />
 
           {/* Section 6: Evidence */}
-          <section>
-            <SectionHeader number={6} done={sectionDone[6]} label="Evidence" optional="Optional" />
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
-              {([
-                { key: 'photo', Icon: Camera,     label: 'Add Photo' },
-                { key: 'quote', Icon: ChatCircle, label: "Child's Words" },
-                { key: 'note',  Icon: Note,       label: 'Add Note' },
-                { key: 'link',  Icon: LinkSimple, label: 'Link Resource' },
-              ] as ReadonlyArray<{ key: string; Icon: LogIconC; label: string }>).map((tool) => {
-                const hasItems = evidence.some((e) => e.type === tool.key);
-                return (
-                  <button
-                    key={tool.key}
-                    onClick={() => setEvidenceModal(tool.key)}
-                    className={`flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm transition-all duration-200 min-h-[44px] ${
-                      hasItems
-                        ? 'border-sage bg-sage/5 text-sage'
-                        : 'border-dashed border-border-medium text-text-secondary hover:border-ember hover:text-text-primary'
-                    }`}
-                  >
-                    <span className="inline-flex" aria-hidden="true"><tool.Icon size={22} /></span>
-                    <span className="text-xs">{tool.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Evidence items */}
-            {evidence.length > 0 && (
-              <div className="space-y-sm">
-                {evidence.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-sm rounded-md border border-border-subtle bg-surface-raised p-sm"
-                  >
-                    <span className="font-sans text-xs font-medium uppercase tracking-wider text-text-muted bg-surface-hover rounded px-xs py-[2px]">
-                      {item.type}
-                    </span>
-                    <span className="flex-1 font-serif text-sm text-text-secondary truncate">
-                      {item.type === 'photo'
-                        ? item.caption || 'Photo'
-                        : item.type === 'link'
-                          ? item.name || item.url || 'Link'
-                          : item.content.slice(0, 60)}
-                    </span>
-                    <button
-                      onClick={() => setEvidence((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-text-muted hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
-                      aria-label="Remove evidence item"
-                    >
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <EvidenceSection
+            done={sectionDone[6]}
+            evidence={evidence}
+            onOpenTool={setEvidenceModal}
+            onRemoveEvidence={(index) =>
+              setEvidence((prev) => prev.filter((_, idx) => idx !== index))
+            }
+          />
           </div>
         </div>
 

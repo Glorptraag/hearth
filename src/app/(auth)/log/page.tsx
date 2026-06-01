@@ -3,10 +3,16 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays, differenceInYears } from 'date-fns';
-import { matchKeywords, generateReflectionPrompts, type KeywordMatchResult, type ReflectionPrompt, type SnapshotSignals } from '@/lib/ai/keyword-matcher';
+import { generateReflectionPrompts, type ReflectionPrompt } from '@/lib/ai/keyword-matcher';
 import { track } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
 import { useLoggerDraft } from '@/hooks/use-logger-draft';
+import { useLearnersFetch, type LearnerRecord } from '@/hooks/use-learners-fetch';
+import { useScaffoldFetch, type ScaffoldData } from '@/hooks/use-scaffold-fetch';
+import { useLoggerModeAndSnapshot } from '@/hooks/use-logger-mode-and-snapshot';
+import { useKeywordMatch } from '@/hooks/use-keyword-match';
+import { useCoachHints } from '@/hooks/use-coach-hints';
+import { useCompletenessUi } from '@/hooks/use-completeness-ui';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
@@ -20,8 +26,6 @@ import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
 import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
 import type { AiEnrichment } from '@/types/enrichment';
 import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/components/logger/ObservationChipDetail';
-import type { CoachHint } from '@/lib/logger/coaching/types';
-import type { SnapshotData } from '@/types/snapshot';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
@@ -47,20 +51,7 @@ import {
 
 type LogIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
-type ScaffoldData = {
-  session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
-  evidence: Array<{ id: string; fileUrl: string; fileType: string | null; caption: string | null }>;
-  observations: Array<{ id: string; observationText: string; targetLearnerId: string; evidenceIds: string[] }>;
-  attendingLearnerIds: string[];
-};
-
-type Learner = {
-  id: string;
-  name: string;
-  dateOfBirth: string | null;
-  shapeIcon: string | null;
-  colourToken: string | null;
-};
+type Learner = LearnerRecord;
 
 type EvidenceItem = {
   type: 'photo' | 'quote' | 'note' | 'link';
@@ -158,7 +149,6 @@ export default function LogPage() {
 
   // ─── Scaffold (from Hearth session) ───
   const scaffoldSessionId = searchParams.get('scaffold');
-  const [scaffoldData, setScaffoldData] = useState<ScaffoldData | null>(null);
   const [showReflection, setShowReflection] = useState(false);
   // Workstream F — after a non-scaffold Logger save, prompt the parent to
   // attach the entry to a module they have in their library. Suppressed
@@ -166,17 +156,9 @@ export default function LogPage() {
   const [attachEntryId, setAttachEntryId] = useState<string | null>(null);
 
   // ─── Data ───
-  const [learners, setLearners] = useState<Learner[]>([]);
-  const [isLoadingLearners, setIsLoadingLearners] = useState(true);
-  useEffect(() => {
-    // Guarded: a 5xx from /api/learners must NOT crash Logger via JSON-parse
-    // SyntaxError. See incident 2026-05-25 (missing migration 0016).
-    fetch('/api/learners')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
-      .then((data) => { if (Array.isArray(data)) setLearners(data); })
-      .catch(() => { /* degrade to empty learners; learner picker shows empty state */ })
-      .finally(() => setIsLoadingLearners(false));
-  }, []);
+  // /api/learners is guarded inside useLearnersFetch — a 5xx must NOT crash
+  // the Logger via a JSON-parse SyntaxError (incident 2026-05-25).
+  const { learners, isLoading: isLoadingLearners } = useLearnersFetch();
 
   // ─── Form state ───
   const [showBatch, setShowBatch] = useState(false);
@@ -195,12 +177,7 @@ export default function LogPage() {
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
   // ─── Guided Mode state ───
-  type LoggerMode = 'guided' | 'quick';
-  const [loggerMode, setLoggerMode] = useState<LoggerMode>('quick');
   const [observationDetails, setObservationDetails] = useState<Record<string, ChipDetailValue>>({});
-  const [coachHints, setCoachHints] = useState<CoachHint[]>([]);
-  const [snapshotData, setSnapshotData] = useState<SnapshotData | null>(null);
-  const [snapshotSignals, setSnapshotSignals] = useState<SnapshotSignals | null>(null);
   const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
   const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
   const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
@@ -219,61 +196,19 @@ export default function LogPage() {
   // starts typing again (see the new-entry clearing effect below).
   const activeEnrichmentEntryIdRef = useRef<string | null>(null);
 
-  // (a) Resolve logger mode on mount: fetch family entry count + loggerDefaultMode.
-  // Default to Guided if count < 20 and no manual override.
-  useEffect(() => {
-    (async () => {
-      try {
-        const [famRes, snapRes] = await Promise.all([
-          fetch('/api/family'),
-          fetch('/api/snapshot'),
-        ]);
-        if (famRes.ok) {
-          const fam = await famRes.json() as {
-            loggerDefaultMode?: string | null;
-            entryCount?: number;
-          };
-          if (fam.loggerDefaultMode === 'guided' || fam.loggerDefaultMode === 'quick') {
-            setLoggerMode(fam.loggerDefaultMode);
-          } else {
-            setLoggerMode((fam.entryCount ?? 0) < 20 ? 'guided' : 'quick');
-          }
-        }
-        if (snapRes.ok) {
-          const wrapper = await snapRes.json() as { snapshotData: SnapshotData | null } | null;
-          const snap = wrapper?.snapshotData ?? null;
-          setSnapshotData(snap);
-          if (snap?.children) {
-            const perChild: SnapshotSignals['perChild'] = {};
-            for (const [id, child] of Object.entries(snap.children)) {
-              const active = (child.active_threads ?? []).map((t) => t.thread_id);
-              const quiet = child.gap_analysis?.suggested_focus_threads ?? [];
-              perChild[id] = { active, quiet };
-            }
-            setSnapshotSignals({
-              perChild,
-              onboarding: (snap.family?.total_entries ?? 0) < 20,
-            });
-          }
-        }
-      } catch { /* non-critical — mode stays quick, no snapshot */ }
-    })();
-  }, []);
+  const { loggerMode, setLoggerMode, snapshotData, snapshotSignals } =
+    useLoggerModeAndSnapshot();
 
-  // Fetch scaffold data when navigating from a hearth session
-  useEffect(() => {
-    if (!scaffoldSessionId) return;
-    fetch(`/api/scaffolds/${scaffoldSessionId}`)
-      .then(res => res.ok ? res.json() : null)
-      .then((data: ScaffoldData | null) => {
-        if (!data) return;
-        setScaffoldData(data);
-        setDescription(data.session.sharedRecord ?? data.session.description ?? '');
-        if (data.session.location) setLocation(data.session.location);
-        if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
-      })
-      .catch(() => {});
-  }, [scaffoldSessionId]);
+  // Scaffold data pre-fills description / location / attending learners when
+  // the parent navigates from a hearth session. onLoad fires exactly once.
+  const scaffoldData = useScaffoldFetch({
+    scaffoldSessionId,
+    onLoad: useCallback((data: ScaffoldData) => {
+      setDescription(data.session.sharedRecord ?? data.session.description ?? '');
+      if (data.session.location) setLocation(data.session.location);
+      if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
+    }, []),
+  });
 
   // ─── Draft auto-save (10s to localStorage) ───
   // The autosave + restore + clear wiring lives in useLoggerDraft (the React
@@ -320,9 +255,6 @@ export default function LogPage() {
   // draft-insight for warmer reflective copy + better thread detection.
   // The Haiku call only fires when description length ≥ 50 chars; the hook
   // enforces a 20-call-per-session client cap (decision B — firm caps).
-  const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const selectedChildNames = useMemo(
     () =>
       learners
@@ -331,19 +263,7 @@ export default function LogPage() {
     [learners, selectedLearners]
   );
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (description.length < 10) {
-      // Reset stale keyword match when input shrinks below threshold; cleanup-style state reset.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setKeywordMatch(null);
-      return;
-    }
-    debounceRef.current = setTimeout(() => {
-      setKeywordMatch(matchKeywords(description, selectedChildNames));
-    }, 1500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [description, selectedChildNames]);
+  const keywordMatch = useKeywordMatch(description, selectedChildNames);
 
   const { insight: aiInsight, loading: aiLoading } = useDraftInsight(
     description,
@@ -389,40 +309,12 @@ export default function LogPage() {
   }, [keywordMatch, description, selectedLearners, learners, engagement, discoveries, observations, activityType, snapshotSignals]);
 
   // ─── Coach hints (debounced fetch) ───
-  const coachHintsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
-    if (description.length < 20 || selectedLearners.length === 0) {
-      // Reset stale coach hints when input shrinks below threshold; cleanup-style state reset.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCoachHints([]);
-      return;
-    }
-    const controller = new AbortController();
-    coachHintsDebounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/logger/coach-hints', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            learnerIds: selectedLearners,
-            activityType,
-            description,
-            observations,
-          }),
-          signal: controller.signal,
-        });
-        if (!controller.signal.aborted && res.ok) {
-          const hints = await res.json() as CoachHint[];
-          if (!controller.signal.aborted) setCoachHints(hints);
-        }
-      } catch { /* aborted or non-critical */ }
-    }, 1200);
-    return () => {
-      if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
-      controller.abort();
-    };
-  }, [description, activityType, selectedLearners, observations]);
+  const coachHints = useCoachHints({
+    description,
+    selectedLearners,
+    activityType,
+    observations,
+  });
 
   // ─── UI state ───
   const [isSaving, setIsSaving] = useState(false);
@@ -461,39 +353,21 @@ export default function LogPage() {
     [selectedLearners, description, activityType, engagement, duration, location, observations, evidence]
   );
 
-  const completenessLabel = useMemo(() => {
-    if (completeness >= 90) return 'Excellent';
-    if (completeness >= 70) return 'Great';
-    if (completeness >= 55) return 'Strong';
-    if (completeness >= 40) return 'Good';
-    if (completeness >= 20) return 'Basic';
-    return 'Getting Started';
-  }, [completeness]);
-
-  const completenessHint = useMemo(() => {
-    if (completeness >= 90) return 'Ready to save';
-    if (completeness >= 70) return 'Add evidence for richer record';
-    if (completeness >= 55) return 'Add observations';
-    if (completeness >= 40) return 'Rate engagement for each child';
-    if (completeness >= 20) return 'Describe what happened';
-    return 'Select who was learning';
-  }, [completeness]);
+  const {
+    label: completenessLabel,
+    hint: completenessHint,
+    missingItems,
+  } = useCompletenessUi({
+    completeness,
+    loggerMode,
+    selectedLearners,
+    description,
+    activityType,
+    engagement,
+    observations,
+  });
 
   const canSave = canSaveEntry(completeness, loggerMode);
-
-  // Concrete checklist of what's still missing before the entry can be saved.
-  // Surfaced prominently in the mobile save bar so the parent never has to
-  // guess why Save is disabled.
-  const missingItems = useMemo(() => {
-    const items: string[] = [];
-    if (selectedLearners.length === 0) items.push('Pick who was learning');
-    if (description.trim().length <= 20) items.push('Describe what happened');
-    if (loggerMode === 'guided' && !activityType) items.push('Choose an activity');
-    if (selectedLearners.length > 0 && !selectedLearners.some((id) => engagement[id]))
-      items.push('Rate engagement');
-    if (observations.length === 0) items.push('Add an observation');
-    return items;
-  }, [selectedLearners, description, activityType, engagement, observations, loggerMode]);
 
   // Fire `logger_completed_50pct` exactly once per Logger session, the
   // moment completeness first crosses the save threshold. Useful for
@@ -628,7 +502,9 @@ export default function LogPage() {
       setObservations([]);
       setEvidence([]);
       setObservationDetails({});
-      setCoachHints([]);
+      // coachHints clear automatically — the hook resets to [] when the
+      // description shrinks below threshold (which the setDescription('')
+      // above triggers).
       setProfileNudge(null);
       setPedagogySources([]);
 

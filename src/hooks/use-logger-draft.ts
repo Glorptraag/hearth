@@ -59,6 +59,19 @@ export type UseLoggerDraftReturn = {
  *
  * `onRestore` is captured into a ref so the mount effect can run exactly once
  * without listing the caller's callback identity in its dep array.
+ *
+ * Design notes (logged 2026-06-01 during the refactor):
+ *  - The autosave timer is *idle-driven*, not "every 10 s of wall-clock". The
+ *    original deps-driven `useEffect` cleared and recreated the interval on
+ *    every field change, so the write only fires after 10 s with no field
+ *    edits. Preserved here by requiring the caller to pass a memoised
+ *    `state` object (so the hook's `[state]` dep changes exactly when a
+ *    draftable field changes). If a future change wants "every 10 s
+ *    regardless of idle", swap this for a ref-driven once-on-mount interval.
+ *  - `onRestore` is wrapped at the call site with `useCallback(…, [])` even
+ *    though identity stability isn't strictly required (we capture into a
+ *    ref). Keeping the stable identity makes the hook contract easier to
+ *    reason about and avoids future "why does this restore twice?" puzzles.
  */
 export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLoggerDraftReturn {
   const [draftRestored, setDraftRestored] = useState(false);

@@ -29,11 +29,11 @@ import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/com
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
-  deriveSubjects,
-  deriveEntryTitle,
-  derivePhotoEvidenceUrls,
+  buildEntrySavePayload,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
+import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
+import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
 import { EvidenceModal } from './_components/EvidenceModal';
@@ -407,33 +407,33 @@ export default function LogPage() {
     if (!canSave || isSaving) return;
     setIsSaving(true);
 
-    const subjects = deriveSubjects(activityType, lessonSubjects);
-
-    const evidenceUrls = derivePhotoEvidenceUrls(evidence);
-
-    const title = deriveEntryTitle(description);
+    const payload = buildEntrySavePayload(
+      {
+        description,
+        dateOccurred: getDateOccurred(),
+        activityType,
+        lessonSubjects,
+        selectedLearners,
+        engagement,
+        discoveries,
+        evidence,
+        loggerMode,
+        observationDetails,
+      },
+      {
+        scaffoldSessionId: scaffoldData?.session.id,
+        projectSource: projectContext.source,
+        projectId: projectContext.projectId,
+        stageNumber: projectContext.stageNumber,
+      },
+    );
+    const evidenceUrls = payload.evidenceUrls;
 
     try {
       const res = await fetch('/api/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          dateOccurred: getDateOccurred(),
-          subjects,
-          learnerIds: selectedLearners,
-          engagementPerLearner: engagement,
-          discoveriesPerLearner: discoveries,
-          evidenceUrls,
-          observationDetails: loggerMode === 'guided' ? observationDetails : undefined,
-          mode: loggerMode,
-          source: scaffoldData ? 'hearth_session' : projectContext.source,
-          sourceSessionId: scaffoldData?.session.id,
-          projectId: projectContext.projectId,
-          stageNumber: projectContext.stageNumber,
-          status: 'complete',
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error('Save failed');
@@ -514,28 +514,15 @@ export default function LogPage() {
       if (savedEntryId) activeEnrichmentEntryIdRef.current = savedEntryId;
       (async () => {
         if (savedEntryId) {
-          const POLL_INTERVAL_MS = 1500;
-          const POLL_TIMEOUT_MS = 30000;
-          const start = Date.now();
-          while (Date.now() - start < POLL_TIMEOUT_MS) {
-            // First check after 1.5s; enrichment is rarely ready sooner.
-            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-            if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-            try {
-              const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
-              if (!enrichedRes.ok) continue;
-              const enrichedEntry = await enrichedRes.json() as {
-                aiEnrichment?: AiEnrichment | null;
-              };
-              const enrichment = enrichedEntry?.aiEnrichment;
-              if (!enrichment) continue;
-              // Re-check the guard — the parent may have started a new entry
-              // while the fetch was in flight.
-              if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-
-              // Drive the post-save surface state machine. Pending → keep
-              // polling; enriched/failed → write final state and stop.
-              const status = enrichment.status;
+          // The poll's timing / in-flight guard / pending→terminal state
+          // machine lives in lib/logger/enrichment-poll.ts; the React
+          // state-mapping stays here behind onEnrichment.
+          await pollEntryEnrichment(savedEntryId, {
+            isCurrent: () => activeEnrichmentEntryIdRef.current === savedEntryId,
+            clearCurrent: () => {
+              activeEnrichmentEntryIdRef.current = null;
+            },
+            onEnrichment: (enrichment) => {
               setPostSave((prev) =>
                 prev && prev.entryId === savedEntryId ? { ...prev, enrichment } : prev
               );
@@ -555,67 +542,34 @@ export default function LogPage() {
                 setProfileNudge(nudge);
                 setInsightsExpanded(true);
               }
-              // Keep polling while status is 'pending' (the row exists but
-              // enrichment hasn't completed). Only break on a terminal state.
-              if (status === 'pending') continue;
-              activeEnrichmentEntryIdRef.current = null;
-              break;
-            } catch {
-              // transient — keep polling
-            }
-          }
-          if (activeEnrichmentEntryIdRef.current === savedEntryId) {
-            activeEnrichmentEntryIdRef.current = null;
-          }
-          // Poll timed out without a terminal status. Spec: "never a spinner
-          // that hangs." Resolve the surface to a failed view so the parent
-          // can exit; the DB row may still finish enriching later, and the
-          // Portfolio retry affordance covers that case.
-          setPostSave((prev) => {
-            if (!prev || prev.entryId !== savedEntryId) return prev;
-            if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
-              return prev;
-            }
-            return {
-              ...prev,
-              enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
-            };
+            },
+            // Poll timed out without a terminal status. Spec: "never a spinner
+            // that hangs." Resolve the surface to a failed view so the parent
+            // can exit; the DB row may still finish enriching later, and the
+            // Portfolio retry affordance covers that case.
+            onTimeout: () => {
+              setPostSave((prev) => {
+                if (!prev || prev.entryId !== savedEntryId) return prev;
+                if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
+                };
+              });
+            },
           });
         }
 
         try {
-          const badgeResults = await Promise.all(
-            learnersToCheck.map(async (learnerId) => {
-              const r = await fetch('/api/badges/check-thresholds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ learnerId }),
-              });
-              if (!r.ok) return [];
-              const d = await r.json();
-              return ((d.badgeIds ?? []) as string[]).map((badgeId) => ({ badgeId, learnerId }));
-            })
+          const ready = await checkBadgeThresholds(learnersToCheck);
+          const badgeToast = buildBadgeReadyToast(
+            ready,
+            new Map(learners.map((l) => [l.id, l.name])),
           );
-          const ready = badgeResults.flat();
-          if (ready.length > 0) {
-            const learnerNameById = new Map(learners.map((l) => [l.id, l.name]));
-            const first = ready[0];
-            const rest = ready.slice(1);
-            const firstName = learnerNameById.get(first.learnerId) ?? '';
-            const queueParam =
-              rest.length > 0
-                ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
-                : '';
-            const positionParam = ready.length > 1 ? `&qn=1&qt=${ready.length}` : '';
-            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}${positionParam}`;
-            setToast({
-              type: 'badge',
-              message:
-                ready.length > 1
-                  ? `Hearth noticed something new — ${ready.length} quick checks ready.`
-                  : 'Hearth noticed something new. Quick check?',
-              action: { label: ready.length > 1 ? `Start (${ready.length})` : 'Now (2 min)', href },
-            });
+          if (badgeToast) {
+            setToast(badgeToast);
             setTimeout(() => setToast(null), 10000);
           }
         } catch {

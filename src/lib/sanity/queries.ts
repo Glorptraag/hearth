@@ -10,8 +10,8 @@
 //   modules[@->status == "published"]->{...}
 // — never modules[]->{...} without the gate.
 //
-// Admin/editorial paths (src/app/(admin)/admin/content/*, src/lib/content-studio/*)
-// are intentionally exempt because they exist to QA drafts. Mark exempt callers
+// The admin QA path (src/app/(admin)/admin/content/qa/*, src/lib/content-qa/*)
+// is intentionally exempt because it exists to QA drafts. Mark exempt callers
 // with a comment that references this invariant.
 //
 // A CI script (scripts/check-sanity-gating.mjs) enforces this on every PR.

@@ -35,6 +35,7 @@ export const approach = defineType({
       title: 'Activities',
       type: 'array',
       of: [{ type: 'reference', to: [{ type: 'activity' }] }],
+      validation: (r) => r.min(1).error('An approach needs at least one activity to publish'),
     }),
     defineField({
       name: 'status',

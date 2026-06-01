@@ -7,7 +7,6 @@ import Link from 'next/link';
 const BREADCRUMB_MAP: Record<string, string> = {
   '/admin': 'Dashboard',
   '/admin/invitations': 'Invitations',
-  '/admin/content': 'Content Studio',
   '/admin/content/qa': 'Content QA',
   '/admin/families': 'Families',
   '/admin/analytics': 'Analytics',

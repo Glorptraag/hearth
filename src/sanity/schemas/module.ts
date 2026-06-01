@@ -46,6 +46,7 @@ export const moduleSchema = defineType({
       title: 'Approaches',
       type: 'array',
       of: [{ type: 'reference', to: [{ type: 'approach' }] }],
+      validation: (r) => r.min(1).error('A module needs at least one approach to publish'),
     }),
     defineField({
       name: 'subjects',

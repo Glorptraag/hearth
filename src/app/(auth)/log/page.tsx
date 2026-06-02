@@ -14,6 +14,11 @@ import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
 import { ContextualProposals, type AttachContext } from '@/components/log/ContextualProposals';
+import {
+  initOfflineQueue,
+  onUploadResolved,
+  processFileUploadQueue,
+} from '@/lib/offline-queue';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
 import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
@@ -35,6 +40,7 @@ import {
   deriveSubjects,
   deriveEntryTitle,
   derivePhotoEvidenceUrlsLegacy,
+  deriveEvidenceRows,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
@@ -177,6 +183,58 @@ export default function LogPage() {
   // and sourceApproachId so the logged entry inherits the run / plan / pack
   // link without the parent needing to use AttachToModuleModal post-save.
   const [attached, setAttached] = useState<AttachContext | null>(null);
+
+  // Task 2.7: initialise the offline queue and listen for upload-resolved
+  // events so any `local://` placeholders get swapped for real remote URLs
+  // as soon as the queue drains. Pre-save: swap in the evidence form state.
+  // Post-save: if we already POSTed the entry with a placeholder, PATCH the
+  // evidence row's content URL via the post-save map built below.
+  const pendingEvidenceMapRef = useRef<Map<string, string>>(new Map());
+  useEffect(() => {
+    initOfflineQueue();
+    const unsubscribe = onUploadResolved((event) => {
+      setEvidence((prev) =>
+        prev.map((item) => {
+          if (item.content !== event.localId) return item;
+          const existingMeta = (item.metadata ?? {}) as Record<string, unknown>;
+          return {
+            ...item,
+            content: event.remoteUrl,
+            metadata: {
+              ...existingMeta,
+              ...(event.remoteMetadata ?? {}),
+              pending_upload: undefined,
+            },
+          };
+        }),
+      );
+      // Post-save patch: if the saved entry tracked an evidence row id for
+      // this localId, swap server-side too.
+      const evidenceId = pendingEvidenceMapRef.current.get(event.localId);
+      if (evidenceId) {
+        fetch(`/api/evidence/${evidenceId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: event.remoteUrl,
+            metadata: event.remoteMetadata ?? {},
+            mergeMetadata: true,
+          }),
+        })
+          .then((res) => {
+            if (res.ok) pendingEvidenceMapRef.current.delete(event.localId);
+          })
+          .catch(() => {
+            // Leave the map entry — next resolve attempt will retry the PATCH.
+          });
+      }
+    });
+    // Kick a drain immediately in case we mounted online with a stale queue.
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      void processFileUploadQueue();
+    }
+    return unsubscribe;
+  }, []);
 
   // ─── Data ───
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -567,6 +625,18 @@ export default function LogPage() {
 
     const evidenceUrls = derivePhotoEvidenceUrlsLegacy(evidence);
 
+    // Task 2.7: also send the new structured evidence array so the server
+    // writes learning_entry_evidence rows. Photos still dual-write to
+    // evidenceUrls (legacy) for the deprecation window.
+    const evidenceRows = deriveEvidenceRows(
+      evidence.map((e) => ({
+        kind: e.type,
+        content: e.content,
+        caption: e.caption,
+        metadata: e.metadata,
+      })),
+    );
+
     const title = deriveEntryTitle(description);
 
     try {
@@ -582,6 +652,7 @@ export default function LogPage() {
           engagementPerLearner: engagement,
           discoveriesPerLearner: discoveries,
           evidenceUrls,
+          evidence: evidenceRows.length > 0 ? evidenceRows : undefined,
           observationDetails: loggerMode === 'guided' ? observationDetails : undefined,
           mode: loggerMode,
           source: scaffoldData ? 'hearth_session' : projectContext.source,
@@ -603,6 +674,29 @@ export default function LogPage() {
 
       const savedEntry = await res.json().catch(() => ({})) as { id?: string };
       const savedEntryId = savedEntry?.id;
+
+      // Task 2.7: build the localId → evidenceId map so post-save URL swaps
+      // can PATCH the right row. Only fetches when at least one piece of
+      // evidence was saved with a `local://` placeholder.
+      const pendingContents = evidence
+        .filter((e) => typeof e.content === 'string' && e.content.startsWith('local://'))
+        .map((e) => e.content);
+      if (savedEntryId && pendingContents.length > 0) {
+        fetch(`/api/entries/${savedEntryId}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data: { evidence?: Array<{ id: string; content: string }> } | null) => {
+            if (!data?.evidence) return;
+            for (const row of data.evidence) {
+              if (row.content && row.content.startsWith('local://')) {
+                pendingEvidenceMapRef.current.set(row.content, row.id);
+              }
+            }
+          })
+          .catch(() => {
+            // Best-effort. If the GET fails, the in-memory map stays empty
+            // and post-save swaps fall back to the in-flight form path only.
+          });
+      }
 
       track('entry_created', {
         source: scaffoldData ? 'hearth_session' : projectContext.source ?? 'retro',

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Icon } from '@phosphor-icons/react';
 import { Camera, Quotes, PencilSimple, LinkSimple, Microphone } from '@/components/icons';
+import { enqueueFileUpload } from '@/lib/offline-queue';
 
 export type CaptureItem = {
   type: 'photo' | 'quote' | 'note' | 'link' | 'audio';
@@ -186,11 +187,45 @@ export function CaptureTray({
   const handleSave = async () => {
     if (activeTab === 'photo' && selectedFileRef.current) {
       setUploading(true);
+      const file = selectedFileRef.current;
+      // Offline path — don't even try the fetch; queue immediately and let
+      // the parent save with a `local://` placeholder. Re-online auto-drains
+      // via initOfflineQueue's `online` listener.
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const { localId } = enqueueFileUpload(file, '/api/evidence/upload', 'photo');
+        await onCapture({
+          type: 'photo',
+          content: localId,
+          caption: caption || undefined,
+          metadata: { pending_upload: true },
+        });
+        setPreviewUrl('');
+        setCaption('');
+        selectedFileRef.current = null;
+        if (fileRef.current) fileRef.current.value = '';
+        setUploading(false);
+        return;
+      }
       try {
         const form = new FormData();
-        form.append('file', selectedFileRef.current);
+        form.append('file', file);
         const res = await fetch('/api/evidence/upload', { method: 'POST', body: form });
         if (!res.ok) {
+          if (res.status >= 500) {
+            // Transient — queue and let the resolver swap in the URL later.
+            const { localId } = enqueueFileUpload(file, '/api/evidence/upload', 'photo');
+            await onCapture({
+              type: 'photo',
+              content: localId,
+              caption: caption || undefined,
+              metadata: { pending_upload: true },
+            });
+            setPreviewUrl('');
+            setCaption('');
+            selectedFileRef.current = null;
+            if (fileRef.current) fileRef.current.value = '';
+            return;
+          }
           const err = await res.json().catch(() => ({ error: 'Upload failed' }));
           alert(err.error ?? 'Upload failed. Please try again.');
           return;
@@ -202,7 +237,18 @@ export function CaptureTray({
         selectedFileRef.current = null;
         if (fileRef.current) fileRef.current.value = '';
       } catch {
-        alert('Upload failed. Check your connection and try again.');
+        // Network error — queue.
+        const { localId } = enqueueFileUpload(file, '/api/evidence/upload', 'photo');
+        await onCapture({
+          type: 'photo',
+          content: localId,
+          caption: caption || undefined,
+          metadata: { pending_upload: true },
+        });
+        setPreviewUrl('');
+        setCaption('');
+        selectedFileRef.current = null;
+        if (fileRef.current) fileRef.current.value = '';
       } finally {
         setUploading(false);
       }
@@ -211,13 +257,41 @@ export function CaptureTray({
 
     if (activeTab === 'audio' && audioBlob) {
       setUploading(true);
+      const durationMs = recordStartRef.current
+        ? Date.now() - recordStartRef.current
+        : 0;
+      const mimeType = audioBlob.type;
+      // Offline → queue immediately.
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const { localId } = enqueueFileUpload(
+          audioBlob,
+          '/api/evidence/audio-upload',
+          'audio',
+          { durationMs, mimeType },
+        );
+        await onCapture({
+          type: 'audio',
+          content: localId,
+          caption: caption || undefined,
+          metadata: { durationMs, mimeType, pending_upload: true },
+        });
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+        setAudioBlob(null);
+        setAudioPreviewUrl('');
+        setRecordingDuration(0);
+        recordStartRef.current = 0;
+        setCaption('');
+        setUploading(false);
+        return;
+      }
       try {
-        const { url, durationMs, mimeType } = await uploadAudioBlob(audioBlob);
+        const { url, durationMs: serverDurationMs, mimeType: serverMimeType } =
+          await uploadAudioBlob(audioBlob);
         await onCapture({
           type: 'audio',
           content: url,
           caption: caption || undefined,
-          metadata: { durationMs, mimeType },
+          metadata: { durationMs: serverDurationMs, mimeType: serverMimeType },
         });
         if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
         setAudioBlob(null);
@@ -226,7 +300,25 @@ export function CaptureTray({
         recordStartRef.current = 0;
         setCaption('');
       } catch {
-        alert('Audio upload failed. Check your connection and try again.');
+        // Network failure — queue and surface placeholder.
+        const { localId } = enqueueFileUpload(
+          audioBlob,
+          '/api/evidence/audio-upload',
+          'audio',
+          { durationMs, mimeType },
+        );
+        await onCapture({
+          type: 'audio',
+          content: localId,
+          caption: caption || undefined,
+          metadata: { durationMs, mimeType, pending_upload: true },
+        });
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+        setAudioBlob(null);
+        setAudioPreviewUrl('');
+        setRecordingDuration(0);
+        recordStartRef.current = 0;
+        setCaption('');
       } finally {
         setUploading(false);
       }

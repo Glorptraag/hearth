@@ -13,6 +13,7 @@ export default function LogMode({
   onRemoveCapture,
   selectedApproachIdx,
   completedActivityIdxs,
+  runId,
 }: {
   module: Module;
   sessionElapsed?: number;
@@ -25,6 +26,9 @@ export default function LogMode({
   // Indexes (into module.approaches[selectedApproachIdx].activities[]) of
   // activities the parent stepped through to completion in Facilitate mode.
   completedActivityIdxs?: number[];
+  // The module_runs row id for this session. Carried from FacilitateMode
+  // via parent state; included in the entry POST body (task 2.8).
+  runId?: string | null;
 }) {
   const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);

@@ -26,6 +26,7 @@ export default function FacilitateMode({
   pedagogy,
   onFinish,
   onPause,
+  onDoneForNow,
   initialChunkIdx = 0,
   onChunkChange,
   sessionStartTime,
@@ -43,6 +44,8 @@ export default function FacilitateMode({
   practicePatterns?: PracticePattern[];
   onFinish: () => void;
   onPause?: () => void;
+  // open_ended only: "Done for now" — stays in prep without finishing the run
+  onDoneForNow?: () => void;
   initialChunkIdx?: number;
   onChunkChange?: (idx: number) => void;
   sessionStartTime: number;
@@ -402,7 +405,7 @@ export default function FacilitateMode({
         {/* Navigation */}
         <div className="fixed bottom-20 left-0 right-0 lg:left-[220px] px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
           <div className="flex gap-sm">
-            {onPause && (
+            {onPause && module.sessionType !== 'open_ended' && (
               <button
                 onClick={onPause}
                 className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
@@ -411,12 +414,31 @@ export default function FacilitateMode({
               </button>
             )}
             {isLast ? (
-              <button
-                onClick={onFinish}
-                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
-              >
-                Finish & Log →
-              </button>
+              module.sessionType === 'open_ended' ? (
+                <>
+                  {onDoneForNow && (
+                    <button
+                      onClick={onDoneForNow}
+                      className="flex-1 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+                    >
+                      Done for now
+                    </button>
+                  )}
+                  <button
+                    onClick={onFinish}
+                    className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
+                  >
+                    Wrap up & Log →
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={onFinish}
+                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
+                >
+                  Finish & Log →
+                </button>
+              )
             ) : (
               <button
                 onClick={() => {

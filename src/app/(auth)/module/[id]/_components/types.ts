@@ -92,6 +92,7 @@ export interface Module {
   _id: string;
   title: string;
   targetUnderstanding: string;
+  sessionType?: 'sustained' | 'open_ended';
   understandingIndicators?: { emerging?: string; developing?: string; demonstrating?: string };
   approaches?: Approach[];
   subjects?: string[];

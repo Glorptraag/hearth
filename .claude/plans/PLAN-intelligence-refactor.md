@@ -406,10 +406,10 @@ Phases gate at boundaries: Phase 2 starts after Phase 1 is fully green; Phase 4 
 | 1.4 | ✅ | T1 |
 | 1.5 | ✅ | T1 |
 | 1.6 | ✅ | T1 (script + execution) |
-| 2.1 | ⬜ |  |
-| 2.2 | ⬜ |  |
-| 2.3 | ⬜ |  |
-| 2.4 | ⬜ |  |
+| 2.1 | ✅ | T1 |
+| 2.2 | ✅ | T1 |
+| 2.3 | ✅ | T2 |
+| 2.4 | ✅ | T2 |
 | 2.5 | ⬜ |  |
 | 2.6 | ⬜ |  |
 | 2.7 | ⬜ |  |

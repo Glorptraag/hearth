@@ -448,35 +448,43 @@ Phases gate at boundaries: Phase 2 starts after Phase 1 is fully green; Phase 4 
 
 Each terminal: paste once. The session will read the plan + status file, claim a task, run gates, do the work, update status, and pick the next task in its column.
 
+**Worktree coordination.** The canonical status file lives at the absolute path
+`/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/status-intelligence-refactor.json`
+in the **main** repo (branch `refactor/intelligence`). All four terminals read
+and write that one file regardless of which worktree they're cd'd into. Each
+worktree's local `.claude/plans/status-intelligence-refactor.json` is a stale
+snapshot from when the worktree branch was created — ignore it. Same rule for
+the PLAN file (Status table updates go to the canonical PLAN.md).
+
 ### Terminal 1 (Opus — architecture spine)
-> Read `.claude/plans/PLAN-intelligence-refactor.md` and `.claude/plans/status-intelligence-refactor.json`.
+> Read `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/PLAN-intelligence-refactor.md` and `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/status-intelligence-refactor.json` (canonical copies in the main repo, not your worktree's local copies).
 > You are Terminal T1. Pick the next pending task in column T1 of the Parallel Execution Guide.
 > Before starting: confirm every task in your task's `Gate` line shows status "done" in status-intelligence-refactor.json. If not, pick a later task in your column that has no unmet gates, or pause and report blocking.
 > Execute the task per its Description and Files list. Honor `Done when`.
-> When done: set the task's status to "done", add the ISO timestamp and "T1" as completed_by in status-intelligence-refactor.json, and update the Status table in PLAN-intelligence-refactor.md to ✅.
+> When done: set the task's status to "done", add the ISO timestamp and "T1" as completed_by in the canonical status JSON, and update the Status table in the canonical PLAN.md to ✅.
 > Then pick the next task in column T1 and repeat.
 
 ### Terminal 2 (Sonnet — schema + API parallel work)
-> Read `.claude/plans/PLAN-intelligence-refactor.md` and `.claude/plans/status-intelligence-refactor.json`.
+> Read `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/PLAN-intelligence-refactor.md` and `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/status-intelligence-refactor.json` (canonical copies in the main repo, not your worktree's local copies).
 > You are Terminal T2. Pick the next pending task in column T2 of the Parallel Execution Guide.
 > Before starting: confirm every task in your task's `Gate` line shows status "done" in status-intelligence-refactor.json. If not, pick a later task in your column that has no unmet gates, or pause and report blocking.
 > Execute the task per its Description and Files list. Honor `Done when`.
-> When done: set the task's status to "done", add the ISO timestamp and "T2" as completed_by in status-intelligence-refactor.json, and update the Status table in PLAN-intelligence-refactor.md to ✅.
+> When done: set the task's status to "done", add the ISO timestamp and "T2" as completed_by in the canonical status JSON, and update the Status table in the canonical PLAN.md to ✅.
 > Then pick the next task in column T2 and repeat.
 
 ### Terminal 3 (Sonnet — extractions + SQL routes)
-> Read `.claude/plans/PLAN-intelligence-refactor.md` and `.claude/plans/status-intelligence-refactor.json`.
+> Read `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/PLAN-intelligence-refactor.md` and `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/status-intelligence-refactor.json` (canonical copies in the main repo, not your worktree's local copies).
 > You are Terminal T3. Pick the next pending task in column T3 of the Parallel Execution Guide.
 > Before starting: confirm every task in your task's `Gate` line shows status "done" in status-intelligence-refactor.json. If not, pick a later task in your column that has no unmet gates, or pause and report blocking.
 > Execute the task per its Description and Files list. Honor `Done when`.
-> When done: set the task's status to "done", add the ISO timestamp and "T3" as completed_by in status-intelligence-refactor.json, and update the Status table in PLAN-intelligence-refactor.md to ✅.
+> When done: set the task's status to "done", add the ISO timestamp and "T3" as completed_by in the canonical status JSON, and update the Status table in the canonical PLAN.md to ✅.
 > Then pick the next task in column T3 and repeat.
 
 ### Terminal 4 (Sonnet — phase-end test sweeps)
-> Read `.claude/plans/PLAN-intelligence-refactor.md` and `.claude/plans/status-intelligence-refactor.json`.
+> Read `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/PLAN-intelligence-refactor.md` and `/Users/drewdouglas/Desktop/Codebases/hearth/.claude/plans/status-intelligence-refactor.json` (canonical copies in the main repo, not your worktree's local copies).
 > You are Terminal T4. Your tasks are the phase-end test sweeps: 2.9, 4.8, and any future test-sweep tasks added.
 > Watch status-intelligence-refactor.json. When all gates for your next sweep task are met, claim it and run.
-> When done: set the task's status to "done", add the ISO timestamp and "T4" as completed_by in status-intelligence-refactor.json, and update the Status table in PLAN-intelligence-refactor.md to ✅.
+> When done: set the task's status to "done", add the ISO timestamp and "T4" as completed_by in the canonical status JSON, and update the Status table in the canonical PLAN.md to ✅.
 
 ---
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { QuickCaptureItem } from './_components/types';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
@@ -24,7 +24,13 @@ import { resolveIndicators } from '@/lib/sanity/pack-indicators';
 export default function ModuleDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  // When a planner row routes the parent into a module run, the planner sends
+  // ?plannerEntryId=<uuid>. We forward it into the entry POST at LogMode save
+  // time so the planner ↔ logger loop closes (Task 2.8). Null when launched
+  // from anywhere other than the planner.
+  const plannerEntryId = searchParams.get('plannerEntryId');
 
   const [module, setModule] = useState<Module | null>(null);
   const [loading, setLoading] = useState(true);
@@ -612,6 +618,7 @@ export default function ModuleDetailPage() {
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
             runId={runId}
+            plannerEntryId={plannerEntryId}
           />
         )}
       </div>

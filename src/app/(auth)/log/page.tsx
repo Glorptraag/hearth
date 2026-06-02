@@ -13,6 +13,7 @@ import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
+import { ContextualProposals, type AttachContext } from '@/components/log/ContextualProposals';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
 import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
@@ -171,6 +172,11 @@ export default function LogPage() {
   // attach the entry to a module they have in their library. Suppressed
   // once per session if they pick "Skip".
   const [attachEntryId, setAttachEntryId] = useState<string | null>(null);
+  // Task 2.6: pre-save attach context from ContextualProposals. When set,
+  // the entry POST body carries sourceModuleId, moduleRunId, plannerEntryId,
+  // and sourceApproachId so the logged entry inherits the run / plan / pack
+  // link without the parent needing to use AttachToModuleModal post-save.
+  const [attached, setAttached] = useState<AttachContext | null>(null);
 
   // ─── Data ───
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -582,6 +588,13 @@ export default function LogPage() {
           sourceSessionId: scaffoldData?.session.id,
           projectId: projectContext.projectId,
           stageNumber: projectContext.stageNumber,
+          // Task 2.6 — proactive attach context. Each field is omitted when
+          // its corresponding attached.* is undefined so the route's Zod
+          // schema treats them as absent rather than nulled-out.
+          sourceModuleId: attached?.moduleId,
+          moduleRunId: attached?.moduleRunId,
+          plannerEntryId: attached?.plannerEntryId,
+          sourceApproachId: attached?.sourceApproachId,
           status: 'complete',
         }),
       });
@@ -963,6 +976,12 @@ export default function LogPage() {
         {/* ─── Left: Capture Form ─── */}
         <div className="flex-1 overflow-y-auto px-md pt-lg pb-[220px] lg:py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
+          {/* Task 2.6 — proactive attach banner above the form. */}
+          <ContextualProposals
+            attached={attached}
+            onAttach={(ctx) => setAttached(ctx)}
+            onClear={() => setAttached(null)}
+          />
           {/* Section 1: Who Was Learning? */}
           <section>
             <SectionHeader number={1} done={sectionDone[1]} label="Who was learning?" />

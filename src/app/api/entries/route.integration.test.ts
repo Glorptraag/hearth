@@ -9,7 +9,13 @@ import { NextRequest } from 'next/server';
 import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { familyMembers, learningEntries } from '@/lib/db/schema';
+import {
+  familyMembers,
+  learningEntries,
+  learningEntryEvidence,
+  moduleRuns,
+  plannerEntries,
+} from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { GET, POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../vitest.setup';
@@ -126,6 +132,123 @@ describe('POST /api/entries — activity-level source fields (workstream D)', ()
       .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
     expect(rows[0].sourceActivityIds).toEqual([]);
     expect(rows[0].sourceApproachId).toBeNull();
+  });
+});
+
+describe('POST /api/entries — evidence persistence (2.1 + 2.7)', () => {
+  it('persists all five evidence kinds into learning_entry_evidence', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Five-kind capture session',
+        status: 'complete',
+        evidence: [
+          { kind: 'photo', content: 'https://blob/a.jpg', caption: 'Sunset' },
+          { kind: 'quote', content: 'I made a magnet circuit', caption: null },
+          { kind: 'note', content: 'Spent 20 minutes on connections' },
+          { kind: 'link', content: 'https://example.com/coils' },
+          {
+            kind: 'audio',
+            content: 'https://blob/rec.webm',
+            metadata: { durationMs: 5200, mimeType: 'audio/webm' },
+          },
+        ],
+      }),
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { id: string; evidence: Array<{ kind: string }> };
+
+    const rows = await db
+      .select()
+      .from(learningEntryEvidence)
+      .where(eq(learningEntryEvidence.entryId, body.id));
+    expect(rows).toHaveLength(5);
+    expect(rows.map((r) => r.kind).sort()).toEqual(['audio', 'link', 'note', 'photo', 'quote']);
+
+    // Audio metadata should survive the round-trip.
+    const audio = rows.find((r) => r.kind === 'audio');
+    expect(audio?.metadata).toMatchObject({ durationMs: 5200, mimeType: 'audio/webm' });
+
+    // Legacy dual-write: photo URLs should also land in evidence_urls.
+    const [entry] = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.id, body.id));
+    expect(entry.evidenceUrls).toContain('https://blob/a.jpg');
+  });
+
+  it('accepts local:// placeholders for pending uploads with metadata flag', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Offline capture',
+        status: 'complete',
+        evidence: [
+          {
+            kind: 'photo',
+            content: 'local://abc-123',
+            metadata: { pending_upload: true },
+          },
+        ],
+      }),
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { id: string };
+
+    const [row] = await db
+      .select()
+      .from(learningEntryEvidence)
+      .where(eq(learningEntryEvidence.entryId, body.id));
+    expect(row.content).toBe('local://abc-123');
+    expect((row.metadata as Record<string, unknown>)?.pending_upload).toBe(true);
+  });
+});
+
+describe('POST /api/entries — module_run + planner linkage (2.8)', () => {
+  it('persists moduleRunId and plannerEntryId when provided', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const [run] = await db
+      .insert(moduleRuns)
+      .values({
+        familyId: TEST_FAMILY_ID,
+        sanityModuleId: 'mod-link-test',
+        state: 'active',
+        sessionType: 'sustained',
+      })
+      .returning();
+
+    const [planner] = await db
+      .insert(plannerEntries)
+      .values({
+        familyId: TEST_FAMILY_ID,
+        date: '2026-06-03',
+        title: 'Magnet exploration',
+      })
+      .returning();
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Linked entry',
+        status: 'complete',
+        moduleRunId: run.id,
+        plannerEntryId: planner.id,
+      }),
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { id: string };
+
+    const [entry] = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.id, body.id));
+    expect(entry.moduleRunId).toBe(run.id);
+    expect(entry.plannerEntryId).toBe(planner.id);
   });
 });
 

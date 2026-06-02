@@ -105,7 +105,7 @@ All 19 screens confirmed built as of March 2026. Phase 1 MVP complete. Design sy
 
 | # | Screen | Canonical File | Spec | Role | Key Interactions |
 |---|--------|---------------|------|------|-----------------|
-| 9 | **Retrospective Logger v3** | `hearth-logger-workspace-v3.html` | `hearth-logger-spec-v1.md` | Core interaction — capture spontaneous learning after it happens | Two-column workspace: tap-driven form (left) + live AI insights (right). Completeness gate at 50%. Per-child differentiation with color-coded engagement emojis + per-child discovery fields keyed by learner_id. Voice input via Web Speech API (en-AU). **Post-save second screen:** `PostSaveSurface` (`src/components/logger/PostSaveSurface.tsx`) — inline morph, three density branches (thin / substantive-pending / substantive-enriched / failed). Source: `hearth-logger-post-save-resolution-v1.md` §2 Item 2; decisions D-LPS-1..7. |
+| 9 | **Retrospective Logger v3** | `hearth-logger-workspace-v3.html` | `hearth-logger-spec-v1.md` | Core interaction — capture spontaneous learning after it happens | Two-column workspace: tap-driven form (left) + live AI insights (right). Completeness gate at 50%. Per-child differentiation with color-coded engagement emojis + per-child discovery fields keyed by learner_id. Voice input via Web Speech API (en-AU). **Post-save second screen:** `PostSaveSurface` (`src/components/logger/PostSaveSurface.tsx`) — inline morph, three density branches (thin / substantive-pending / substantive-enriched / failed). Source: `hearth-logger-post-save-resolution-v1.md` §2 Item 2; decisions D-LPS-1..7. **Implementation (refactored 2026-06):** `src/app/(auth)/log/page.tsx` is a thin composition root — state in `src/hooks/use-logger-*`, save/derivation logic in `src/lib/logger/{entry-payload,badge-check,enrichment-poll,draft,completeness}.ts` (unit-tested), and the six form sections in `src/app/(auth)/log/_components/{Who,What,Engagement,WhenWhere,Observe,Evidence}Section.tsx` (+ `loggerConstants.ts`, `childColors.ts`). See CLAUDE.md → "Logger screen architecture". |
 
 #### Nav Group: Explore / Build
 
@@ -355,6 +355,8 @@ These files have been superseded. Candidates for removal to reduce project file 
 | Phase 3 Scale | Planned | 500+ families |
 
 ---
+
+*Registry updated 1 June 2026 — Logger god-component refactor complete (PRs #110–114, #120, #122–129): `src/app/(auth)/log/page.tsx` decomposed from a ~1566-line monolith into a thin composition root (~958 lines). Phases: (1–2) pure logic → `src/lib/logger/*` + presentational → `_components/`; (3) state → seven `src/hooks/use-logger-*` hooks; (4) save orchestration (`buildEntrySavePayload`, `checkBadgeThresholds`/`buildBadgeReadyToast`, `pollEntryEnrichment`) → tested lib; (5) the six form sections (Who / What / Engagement / When&Where / Observe / Evidence) → `_components/` with shared `loggerConstants.ts` + `childColors.ts`. Behaviour preserved verbatim; +unit tests, all CI green. See CLAUDE.md → "Logger screen architecture".*
 
 *Registry updated 9 May 2026 — Editorial workbench shipped (PR #37, commit `2493d5e`): optional `workbench` on activity schema + `workbenches` array on pack schema per `workbench-claude-code-addendum`. `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts` adds `WorkbenchDraft` + `WorkbenchPackDraft` with Zod schemas and soft-flag helpers (id resolution, restrictive/duration/completion language, word cap). `/api/admin/content/publish` returns `workbenchFlags` alongside published ids (non-blocking). `/api/modules/publish` unchanged.*
 

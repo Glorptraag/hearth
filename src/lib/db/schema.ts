@@ -105,6 +105,12 @@ export const learningEntries = pgTable(
     sourceProjectId: text('source_project_id'),
     sourceStageNumber: integer('source_stage_number'),
     sourceSessionId: uuid('source_session_id'),
+    // Links the entry back to the module_runs row produced when the parent
+    // entered Facilitate. Nullable — free-form Logger entries have no run.
+    moduleRunId: uuid('module_run_id').references((): import('drizzle-orm/pg-core').AnyPgColumn => moduleRuns.id),
+    // Links the entry to the planner item the parent was acting on, if any.
+    // Closes the "did the plan happen?" loop.
+    plannerEntryId: uuid('planner_entry_id').references(() => plannerEntries.id),
     status: text('status').notNull().default('draft'),
     observationDetails: jsonb('observation_details').default({}),
     aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
@@ -280,17 +286,103 @@ export const familyLibrary = pgTable(
     sanityPackId: text('sanity_pack_id'),
     sanityModuleId: text('sanity_module_id'),
     addedAt: timestamp('added_at').defaultNow(),
+    // Soft-delete timestamp. NULL = active in library. Set on DELETE
+    // /api/library/[id]; cleared on re-add to restore. Partial unique
+    // indexes below filter on `removed_at IS NULL` so re-adds succeed.
+    removedAt: timestamp('removed_at'),
   },
   (table) => [
     uniqueIndex('fl_family_pack_unique_idx')
       .on(table.familyId, table.sanityPackId)
-      .where(sql`${table.sanityPackId} IS NOT NULL`),
+      .where(sql`${table.sanityPackId} IS NOT NULL AND ${table.removedAt} IS NULL`),
     uniqueIndex('fl_family_module_unique_idx')
       .on(table.familyId, table.sanityModuleId)
-      .where(sql`${table.sanityModuleId} IS NOT NULL`),
+      .where(sql`${table.sanityModuleId} IS NOT NULL AND ${table.removedAt} IS NULL`),
     check(
       'fl_pack_xor_module',
       sql`(${table.sanityPackId} IS NOT NULL) <> (${table.sanityModuleId} IS NOT NULL)`,
+    ),
+  ]
+);
+
+// ─── Runtime Sessions & Evidence ───
+// module_runs tracks an in-flight or completed module session — a parent's
+// pass through a module's Facilitate phase. State machine:
+//   active → paused (open_ended only) | finished (sustained) | abandoned
+// learning_entries.moduleRunId links a logged entry back to the run that
+// produced it. Abandonment is derived at read time (no cron).
+
+export const moduleRuns = pgTable(
+  'module_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .references(() => families.id)
+      .notNull(),
+    sanityModuleId: text('sanity_module_id').notNull(),
+    // Which approach (modality) the parent picked when starting. May be null
+    // if the parent enters Facilitate without selecting one.
+    approachId: text('approach_id'),
+    learnerIds: uuid('learner_ids').array().default([]),
+    state: text('state').notNull().default('active'),
+    // Mirrors Sanity module.sessionType for query speed — open_ended runs
+    // are long-lived and resumable; sustained runs have a clean start/finish.
+    sessionType: text('session_type').notNull().default('sustained'),
+    startedAt: timestamp('started_at').notNull().defaultNow(),
+    lastActiveAt: timestamp('last_active_at').notNull().defaultNow(),
+    finishedAt: timestamp('finished_at'),
+    // Per-run materials checklist: {[materialKey]: {haveIt, source?}}.
+    // Populated from PrepMode and persisted via PATCH /api/module-runs/[id].
+    materialsState: jsonb('materials_state').default({}),
+    // Optional client hint — e.g. 'phone', 'tablet'. For cross-device
+    // resume telemetry; not enforced.
+    device: text('device'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [
+    index('mr_family_state_idx').on(table.familyId, table.state),
+    index('mr_family_module_idx').on(table.familyId, table.sanityModuleId),
+    check(
+      'mr_state_check',
+      sql`${table.state} IN ('active','paused','finished','abandoned')`,
+    ),
+    check(
+      'mr_session_type_check',
+      sql`${table.sessionType} IN ('sustained','open_ended')`,
+    ),
+  ]
+);
+
+// One row per piece of evidence captured for a learning entry. Replaces the
+// learning_entries.evidenceUrls text[] (kept dual-write through a 2-cycle
+// deprecation window — cleanup tracked at PLAN-intelligence-refactor.md
+// risks section). Supports five kinds: photo, quote, note, link, audio.
+//   photo  → content = Blob URL (Vercel Blob)
+//   quote  → content = quoted text
+//   note   → content = freeform text
+//   link   → content = URL
+//   audio  → content = Blob URL, metadata = { durationMs, mimeType }
+// Caption is optional across all kinds.
+
+export const learningEntryEvidence = pgTable(
+  'learning_entry_evidence',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entryId: uuid('entry_id')
+      .references(() => learningEntries.id, { onDelete: 'cascade' })
+      .notNull(),
+    kind: text('kind').notNull(),
+    content: text('content').notNull(),
+    caption: text('caption'),
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('lee_entry_idx').on(table.entryId),
+    check(
+      'lee_kind_check',
+      sql`${table.kind} IN ('photo','quote','note','link','audio')`,
     ),
   ]
 );

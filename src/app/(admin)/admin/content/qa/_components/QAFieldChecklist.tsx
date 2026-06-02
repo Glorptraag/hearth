@@ -14,7 +14,7 @@ interface Props {
 
 export default function QAFieldChecklist({ docId, docTitle, docType, completeness, errors, warnings, onClose }: Props) {
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-[400px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[400px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
       <div className="flex items-center justify-between border-b border-border-subtle px-lg py-md">
         <h3 className="font-sans text-[0.85rem] font-semibold text-text-primary">
           Field Checklist

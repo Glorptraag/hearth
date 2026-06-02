@@ -223,7 +223,7 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-border-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-3 border-t border-border-subtle">
           {isMembership ? (
             <span className="font-sans text-[0.68rem] font-medium text-sage bg-sage/10 border border-sage/20 px-2.5 py-1 rounded-full whitespace-nowrap">
               Included with membership

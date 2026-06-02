@@ -360,10 +360,10 @@ export function TableDLOs({
             key={dlo.id}
             type="button"
             onClick={() => onDrillDown(dlo)}
-            className="grid w-full grid-cols-[48px_1fr_200px_120px] items-center gap-md px-lg py-md text-left border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
+            className="grid w-full grid-cols-[40px_1fr_auto] gap-sm px-md py-sm sm:grid-cols-[48px_1fr_200px_120px] sm:gap-md sm:px-lg sm:py-md items-center text-left border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
           >
             <span className="inline-flex justify-center text-[1.6rem] leading-none" style={{ color: tierColor }}>{dlo.glyph}</span>
-            <div>
+            <div className="min-w-0">
               <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
               <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
                 {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
@@ -374,7 +374,7 @@ export function TableDLOs({
                 {dlo.status === 'confirmed' ? 'Confirmed' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
               </span>
             </div>
-            <div className="text-right font-sans text-[0.78rem] text-text-muted">→ moments</div>
+            <div className="hidden sm:block text-right font-sans text-[0.78rem] text-text-muted">→ moments</div>
           </button>
         );
       })}

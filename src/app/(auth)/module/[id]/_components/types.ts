@@ -131,8 +131,12 @@ export interface ActivityOverlay {
 export type Mode = 'approach-pick' | 'prep' | 'facilitate' | 'log';
 
 export interface QuickCaptureItem {
-  type: 'note' | 'photo';
+  type: 'note' | 'photo' | 'quote' | 'link' | 'audio';
   content: string;
+  // Optional metadata depending on type:
+  //  photo/audio  → caption
+  //  link         → caption = display name (content = URL)
+  caption?: string;
   activityIdx: number;
   activityTitle: string;
   // Sanity activity _id. Optional for forward-compatibility with old

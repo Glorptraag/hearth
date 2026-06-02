@@ -8,7 +8,8 @@ import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components
 import { Timer, Lightbulb, Eye, Asterisk, Camera, X, CaretDown } from '@/components/icons';
 import { HearthPortableText } from './PortableTextRenderer';
 import SessionTimer from './SessionTimer';
-import QuickCapture from './QuickCapture';
+import { CaptureTray } from '@/components/log/CaptureTray';
+import type { CaptureItem } from '@/components/log/CaptureTray';
 
 type PracticePattern = {
   _id: string;
@@ -459,24 +460,51 @@ export default function FacilitateMode({
 
       {/* Right guidance panel — desktop only */}
       <aside className="hidden xl:block bg-surface-panel border-l border-border-subtle sticky top-0 h-dvh overflow-y-auto p-lg space-y-xl">
-        {/* Quick Capture */}
+        {/* Capture */}
         {onAddCapture && (
           <div>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-md pb-sm border-b border-border-subtle">
-              Quick Capture {quickCaptures && quickCaptures.length > 0 && (
+              Capture {quickCaptures && quickCaptures.length > 0 && (
                 <span className="ml-sm bg-ember text-text-inverse rounded-full px-sm py-[1px] text-[10px] font-semibold">
                   {quickCaptures.length}
                 </span>
               )}
             </p>
-            <QuickCapture
-              captures={quickCaptures ?? []}
-              currentActivityIdx={externalActivityIdx ?? currentIdx}
-              currentActivityTitle={current.title}
-              currentActivityId={current._id}
-              onAddCapture={onAddCapture}
-              onRemoveCapture={onRemoveCapture ?? (() => {})}
+            <CaptureTray
+              onCapture={(item: CaptureItem) => {
+                onAddCapture({
+                  type: item.type as 'note' | 'photo' | 'quote' | 'link' | 'audio',
+                  content: item.content,
+                  caption: item.caption,
+                  activityIdx: externalActivityIdx ?? currentIdx,
+                  activityTitle: current.title,
+                  activityId: current._id,
+                  timestamp: Date.now(),
+                });
+              }}
+              saveLabel="Capture"
             />
+            {quickCaptures && quickCaptures.length > 0 && (
+              <div className="mt-sm space-y-xs pt-xs border-t border-border-subtle">
+                {quickCaptures.map((cap) => (
+                  <div key={cap.timestamp} className="flex items-start gap-xs bg-surface-raised rounded-md p-xs border border-border-subtle">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-sans text-[10px] text-text-muted truncate">{cap.activityTitle}</p>
+                      <p className="font-serif text-xs text-text-secondary line-clamp-2">{cap.content}</p>
+                    </div>
+                    {onRemoveCapture && (
+                      <button
+                        onClick={() => onRemoveCapture(cap.timestamp)}
+                        className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-200"
+                        aria-label="Remove capture"
+                      >
+                        <X size={12} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -639,23 +667,28 @@ export default function FacilitateMode({
       {onAddCapture && (
         <div className="fixed bottom-32 right-4 xl:hidden z-20">
           {mobileCapture && (
-            <div className="absolute bottom-14 right-0 w-72 mb-sm">
-              <QuickCapture
-                captures={quickCaptures ?? []}
-                currentActivityIdx={externalActivityIdx ?? currentIdx}
-                currentActivityTitle={current.title}
-                onAddCapture={(item) => {
-                  onAddCapture(item);
+            <div className="absolute bottom-14 right-0 w-72 mb-sm bg-surface-panel rounded-lg border border-border-subtle p-md shadow-float">
+              <CaptureTray
+                onCapture={(item: CaptureItem) => {
+                  onAddCapture({
+                    type: item.type as 'note' | 'photo' | 'quote' | 'link' | 'audio',
+                    content: item.content,
+                    caption: item.caption,
+                    activityIdx: externalActivityIdx ?? currentIdx,
+                    activityTitle: current.title,
+                    activityId: current._id,
+                    timestamp: Date.now(),
+                  });
                   setMobileCapture(false);
                 }}
-                onRemoveCapture={onRemoveCapture ?? (() => {})}
+                saveLabel="Capture"
               />
             </div>
           )}
           <button
             onClick={() => setMobileCapture((v) => !v)}
             className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
-            aria-label="Quick capture"
+            aria-label="Capture"
           >
             {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}
             {!mobileCapture && quickCaptures && quickCaptures.length > 0 && (

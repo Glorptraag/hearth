@@ -410,11 +410,11 @@ Phases gate at boundaries: Phase 2 starts after Phase 1 is fully green; Phase 4 
 | 2.2 | ✅ | T1 |
 | 2.3 | ✅ | T2 |
 | 2.4 | ✅ | T2 |
-| 2.5 | ⬜ |  |
-| 2.6 | ⬜ |  |
-| 2.7 | ⬜ |  |
-| 2.8 | ⬜ |  |
-| 2.9 | ⬜ |  |
+| 2.5 | ✅ | T2 (CaptureTray merged with T1 audio) |
+| 2.6 | ✅ | main-session |
+| 2.7 | ✅ | main-session |
+| 2.8 | ✅ | main-session |
+| 2.9 | ✅ | main-session |
 | 3.1 | ⬜ |  |
 | 3.2 | ⬜ |  |
 | 3.3 | ⬜ |  |

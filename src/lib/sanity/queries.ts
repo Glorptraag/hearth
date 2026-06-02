@@ -238,7 +238,8 @@ export const SCORING_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
   "modules": modules[@->status == "published"]->{
     _id, title, subjects,
     "capabilityThreadTitles": capabilityThreads[]->title,
-    "averageEnergyLevel": approaches[0].activities[0]->energyLevel
+    "averageEnergyLevel": approaches[0].activities[0]->energyLevel,
+    methodAffinity
   }
 }`;
 
@@ -271,7 +272,8 @@ export const DISCOVERY_OWN_MODULES_QUERY = `*[_type == "module" && status == "pu
 export const SCORING_OWN_MODULES_QUERY = `*[_type == "module" && status == "published" && authorFamilyId == $familyId]{
   _id, title, subjects,
   "capabilityThreadTitles": capabilityThreads[]->title,
-  "averageEnergyLevel": approaches[0]->activities[0]->energyLevel
+  "averageEnergyLevel": approaches[0]->activities[0]->energyLevel,
+  methodAffinity
 }`;
 
 // Single asset with full metadata

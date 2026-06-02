@@ -417,7 +417,7 @@ Phases gate at boundaries: Phase 2 starts after Phase 1 is fully green; Phase 4 
 | 2.9 | ✅ | main-session |
 | 3.1 | ✅ | T2 |
 | 3.2 | ✅ | T2 |
-| 3.3 | ⬜ |  |
+| 3.3 | ✅ | main-session |
 | 3.4 | ✅ | T2 |
 | 3.5 | ⬜ |  |
 | 3.6 | ⬜ |  |

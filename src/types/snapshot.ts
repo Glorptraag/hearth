@@ -22,7 +22,12 @@ export interface SnapshotActiveThread {
 
 // ─── Recommendations (Phase 2) ───
 
-export type RecommendationReason = 'spark_match' | 'gap_fill' | 'repeat_value' | 'energy_match';
+export type RecommendationReason =
+  | 'spark_match'
+  | 'gap_fill'
+  | 'repeat_value'
+  | 'energy_match'
+  | 'pedagogy_match';
 
 export interface SnapshotRecommendation {
   module_id: string;

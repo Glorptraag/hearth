@@ -33,7 +33,7 @@ import {
 import {
   deriveSubjects,
   deriveEntryTitle,
-  derivePhotoEvidenceUrls,
+  derivePhotoEvidenceUrlsLegacy,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
@@ -69,11 +69,12 @@ type Learner = {
 };
 
 type EvidenceItem = {
-  type: 'photo' | 'quote' | 'note' | 'link';
+  type: 'photo' | 'quote' | 'note' | 'link' | 'audio';
   content: string;
   caption?: string;
   url?: string;
   name?: string;
+  metadata?: Record<string, unknown>;
 };
 
 const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
@@ -558,7 +559,7 @@ export default function LogPage() {
 
     const subjects = deriveSubjects(activityType, lessonSubjects);
 
-    const evidenceUrls = derivePhotoEvidenceUrls(evidence);
+    const evidenceUrls = derivePhotoEvidenceUrlsLegacy(evidence);
 
     const title = deriveEntryTitle(description);
 
@@ -1332,6 +1333,7 @@ export default function LogPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
               {([
                 { key: 'photo', Icon: Camera,     label: 'Add Photo' },
+                { key: 'audio', Icon: Microphone, label: 'Record Audio' },
                 { key: 'quote', Icon: ChatCircle, label: "Child's Words" },
                 { key: 'note',  Icon: Note,       label: 'Add Note' },
                 { key: 'link',  Icon: LinkSimple, label: 'Link Resource' },

@@ -190,6 +190,8 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`
 - **Progress indicators:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`.
 - **Reduced motion:** `@media (prefers-reduced-motion: reduce)` zeroes all animation/transition durations in `globals.css`.
 - **Nav blur backgrounds:** Use `var(--color-surface-nav-blur)` for frosted nav overlays.
+- **Horizontal-scroll guard:** `html, body` carry `overflow-x: clip` in `globals.css` — a mobile safety net so no element can introduce a sideways page scroll on 320–768px. `clip` (not `hidden`) is deliberate: it preserves `position: sticky`. Do not remove it. Genuine horizontal scrollers (carousels, the planner week-grid) must own their own `overflow-x-auto` wrapper rather than relying on the page.
+- **Hiding carousel scrollbars:** Use the `.scrollbar-none` utility (defined in `globals.css`). Do not re-inline `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`.
 
 ## Architecture Principles — Do Not Violate
 
@@ -357,3 +359,5 @@ Do not span multiple phases in one session.
 - Creating duplicate child color maps instead of importing `LEARNER_COLOUR_MAP` from `LearnerAvatar.tsx`
 - Using `text-white` on colored backgrounds instead of `text-surface-body` or `text-text-inverse` (exception: danger confirm buttons)
 - Hardcoding `data-theme="dark"` — theme is managed by the inline script and `useTheme()` hook
+- Re-inlining `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden` instead of the `.scrollbar-none` utility
+- Fixed-width (`w-[NNNpx]`) or fixed grid tracks (`grid-cols-[…px…]`) that apply at the mobile base without a responsive prefix or an `overflow-x-auto` wrapper — they clip/overflow on phones. Gate them behind `sm:`/`lg:` or pair fixed slide-overs with `w-full max-w-[NNNpx]`

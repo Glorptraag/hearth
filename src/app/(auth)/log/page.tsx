@@ -33,7 +33,7 @@ import {
 import {
   deriveSubjects,
   deriveEntryTitle,
-  derivePhotoEvidenceUrls,
+  derivePhotoEvidenceUrlsLegacy,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
@@ -558,7 +558,7 @@ export default function LogPage() {
 
     const subjects = deriveSubjects(activityType, lessonSubjects);
 
-    const evidenceUrls = derivePhotoEvidenceUrls(evidence);
+    const evidenceUrls = derivePhotoEvidenceUrlsLegacy(evidence);
 
     const title = deriveEntryTitle(description);
 

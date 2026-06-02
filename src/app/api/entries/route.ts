@@ -8,7 +8,7 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { learningEntries } from '@/lib/db/schema';
+import { learningEntries, learningEntryEvidence } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
@@ -66,6 +66,13 @@ const observationDetailSchema = z.object({
   durationMin: z.number().int().positive().optional(),
 });
 
+const evidenceItemSchema = z.object({
+  kind: z.enum(['photo', 'quote', 'note', 'link', 'audio']),
+  content: z.string().min(1),
+  caption: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
 const createEntrySchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -75,6 +82,10 @@ const createEntrySchema = z.object({
   engagementPerLearner: z.record(z.string(), z.number().min(1).max(4)).optional(),
   discoveriesPerLearner: z.record(z.string(), z.string()).optional(),
   evidenceUrls: z.array(z.string()).optional(),
+  // Structured evidence rows — replaces evidenceUrls long-term.
+  // When present, photo URLs are dual-written into evidenceUrls for
+  // backward-compat (cleanup target: 2-cycle deprecation window).
+  evidence: z.array(evidenceItemSchema).optional(),
   source: z.enum(ENTRY_SOURCES).optional(),
   sourceModuleId: z.string().optional(),
   // Sanity activity IDs the family engaged with. Populated by the module
@@ -86,6 +97,10 @@ const createEntrySchema = z.object({
   sourceProjectId: z.string().optional(),
   sourceStageNumber: z.number().optional(),
   sourceSessionId: z.string().uuid().optional(),
+  // Module run FK — set when entry originates from a Facilitate session.
+  moduleRunId: z.string().uuid().optional(),
+  // Planner entry FK — set when entry fulfils a planned activity.
+  plannerEntryId: z.string().uuid().optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
   observationDetails: z.record(z.string(), observationDetailSchema).optional(),
   mode: z.enum(['guided', 'quick']).optional(),
@@ -114,27 +129,56 @@ export const POST = routeHandler(async (request: NextRequest) => {
   if ('error' in result) return result.error;
   const parsed = result;
 
-  const { mode, ...entryData } = parsed.data;
+  const { mode, evidence: evidenceItems, ...entryData } = parsed.data;
 
   // Log mode for telemetry (informational only — not gated server-side)
   if (mode) {
     console.log(JSON.stringify({ event: 'entry_save', mode, familyId: family.id }));
   }
 
+  // Dual-write: when structured evidence is provided, populate legacy
+  // evidenceUrls with photo URLs so existing reads keep working.
+  // Cleanup target: drop once all reads migrate to learning_entry_evidence.
+  if (evidenceItems?.length) {
+    const photoUrls = evidenceItems.filter((e) => e.kind === 'photo').map((e) => e.content);
+    if (photoUrls.length > 0) {
+      entryData.evidenceUrls = [...(entryData.evidenceUrls ?? []), ...photoUrls];
+    }
+  }
+
   const willEnrich = parsed.data.status === 'complete';
-  const [entry] = await db
-    .insert(learningEntries)
-    .values({
-      familyId: family.id,
-      ...entryData,
-      // Seed enrichment with pending status so the Logger post-save surface
-      // can distinguish "in flight" from "never ran" while the after() job
-      // runs. Overwritten by enrichEntry on success / by the catch on failure.
-      ...(willEnrich
-        ? { aiEnrichment: { status: 'pending' as const, startedAt: new Date().toISOString() } }
-        : {}),
-    })
-    .returning();
+
+  // Single transaction: insert entry → insert evidence rows.
+  const { entry, evidenceRows } = await db.transaction(async (tx) => {
+    const [insertedEntry] = await tx
+      .insert(learningEntries)
+      .values({
+        familyId: family.id,
+        ...entryData,
+        ...(willEnrich
+          ? { aiEnrichment: { status: 'pending' as const, startedAt: new Date().toISOString() } }
+          : {}),
+      })
+      .returning();
+
+    let insertedEvidence: typeof learningEntryEvidence.$inferSelect[] = [];
+    if (evidenceItems?.length) {
+      insertedEvidence = await tx
+        .insert(learningEntryEvidence)
+        .values(
+          evidenceItems.map((e) => ({
+            entryId: insertedEntry.id,
+            kind: e.kind,
+            content: e.content,
+            caption: e.caption ?? null,
+            metadata: e.metadata ?? {},
+          }))
+        )
+        .returning();
+    }
+
+    return { entry: insertedEntry, evidenceRows: insertedEvidence };
+  });
 
   // Async AI enrichment — does not block the response.
   // CRITICAL: wrap in `after()` so Vercel serverless keeps the function
@@ -215,5 +259,5 @@ export const POST = routeHandler(async (request: NextRequest) => {
     });
   }
 
-  return NextResponse.json(entry, { status: 201 });
+  return NextResponse.json({ ...entry, evidence: evidenceRows }, { status: 201 });
 }, { route: 'POST /api/entries' });

@@ -12,6 +12,19 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
     ],
   },
+  // Task 5.1 — /explore/activities was the legacy library-scoped catalog
+  // browser; that function moved into Library Browse tab in Phase 4.6.
+  // 308 (permanent) keeps any saved bookmark resolving + signals to search
+  // engines that the canonical home shifted.
+  async redirects() {
+    return [
+      {
+        source: '/explore/activities',
+        destination: '/library?tab=browse',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 // Sentry is wired via instrumentation.ts / instrumentation-client.ts. This

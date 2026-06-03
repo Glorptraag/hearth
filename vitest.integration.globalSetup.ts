@@ -24,33 +24,49 @@ export async function setup() {
     );
   }
 
-  // Refuse to run if DATABASE_URL matches production. This is the "don't
-  // truncate prod by accident" safety net. Customize the check to match
-  // whatever identifies your prod DB (host, branch name, etc).
+  // Refuse to run if DATABASE_URL points at production. This is the "don't
+  // truncate prod by accident" safety net. The integration suite ROLLBACKs
+  // everything it writes, but a misconfigured URL could still run migrations
+  // or churn the prod connection — so we hard-stop first.
+  //
+  // PROD_ENDPOINT is the Neon compute-endpoint id of the production branch.
+  // A substring match also catches the pooled host (…-pooler.<region>…),
+  // which shares the same endpoint id.
+  const PROD_ENDPOINT = 'ep-red-hat-a76y1fdq';
   const isProduction =
-    url.includes('ep-prod') || // Neon compute endpoint naming convention
+    url.includes(PROD_ENDPOINT) ||
     process.env.NEON_BRANCH_NAME === 'main' ||
     process.env.NODE_ENV === 'production';
 
   if (isProduction) {
     throw new Error(
       'Integration tests refuse to run against production. ' +
-        `DATABASE_URL looks like production: ${url.replace(/:[^@]*@/, ':***@')}`
+        `DATABASE_URL looks like production (${PROD_ENDPOINT}): ` +
+        url.replace(/:[^@]*@/, ':***@')
     );
   }
 
-  // Belt-and-braces: require the branch name env var the script sets.
-  if (!process.env.NEON_TEST_BRANCH_ID) {
+  // Two supported flows: (a) the Neon orchestrator, which forks a branch and
+  // sets NEON_TEST_BRANCH_ID before spawning vitest; (b) a plain Postgres
+  // (local container / CI service) where the schema is applied by a migrate
+  // step and DATABASE_URL points at it directly. Only enforce the branch-id
+  // guard for the Neon flow — a Neon URL with no branch id means the
+  // orchestrator is broken and we'd otherwise run against a durable branch.
+  const isNeon = /neon\.tech/.test(url);
+  if (isNeon && !process.env.NEON_TEST_BRANCH_ID) {
     throw new Error(
-      'Expected NEON_TEST_BRANCH_ID env var. The test-branch script should set this. ' +
-        'If you see this error, the script is broken or vitest was invoked directly.'
+      'Expected NEON_TEST_BRANCH_ID env var for a Neon DATABASE_URL. The test-branch ' +
+        'script should set this. If you see this error, the script is broken or vitest ' +
+        'was invoked directly against Neon.'
     );
   }
 
-  // Log once so the test runner's output shows which branch we're on.
-  // Useful for CI debugging when tests fail.
+  // Log once so the test runner's output shows which DB we're on.
   const maskedUrl = url.replace(/:[^@]*@/, ':***@');
-  console.log(`[integration] Using Neon branch ${process.env.NEON_TEST_BRANCH_ID}`);
+  const target = isNeon
+    ? `Neon branch ${process.env.NEON_TEST_BRANCH_ID}`
+    : 'local/CI Postgres';
+  console.log(`[integration] Using ${target}`);
   console.log(`[integration] DATABASE_URL=${maskedUrl}`);
 }
 

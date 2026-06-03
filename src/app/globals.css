@@ -331,6 +331,18 @@
 .delay-4 { animation-delay: 0.4s; opacity: 0; }
 
 /* Base styles */
+/* Horizontal-scroll safety net — guarantees no element can introduce a
+   sideways page scroll on mobile (320–768px). `clip` (not `hidden`) is
+   deliberate: `hidden` would make the body a scroll container and break the
+   `position: sticky` filter bars (e.g. Explore › Activities). Per-component
+   horizontal scrollers (carousels with their own `overflow-x-auto`) are
+   unaffected — they scroll within their own box. */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   background-color: var(--color-surface-body);
   color: var(--color-text-primary);
@@ -370,6 +382,18 @@ body::after {
   --admin-row-height: 40px;
   --admin-table-cell-padding: 8px 12px;
   --admin-section-gap: 16px;
+}
+
+/* Hide scrollbars on horizontal carousels (Editor's Picks, filter pills, etc.)
+   without removing scroll capability. Referenced as `scrollbar-none` across the
+   marketplace, notifications, and portfolio carousels — previously undefined,
+   so the bars rendered. Matches the inline form used elsewhere
+   (`[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Reduced motion — respect user preference */

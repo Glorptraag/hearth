@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
     "test:integration": "node --env-file-if-exists=.env.test.local --env-file-if-exists=.env.local scripts/neon-test-branch.mjs",
     "test:integration:only": "vitest run --config vitest.integration.config.ts",
+    "test:integration:local": "docker compose -f docker-compose.test.yml up -d --wait && (export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/hearth_test && npm run db:migrate && npm run test:integration:only); status=$?; docker compose -f docker-compose.test.yml down; exit $status",
     "test:all": "npm run test:unit && npm run test:integration",
     "test:e2e": "playwright test",
     "seed:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/seed-sample-packs/index.ts",
@@ -64,6 +65,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/jspdf": "^1.3.3",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.2",
@@ -73,6 +75,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "jsdom": "^29.0.1",
+    "pg": "^8.21.0",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"

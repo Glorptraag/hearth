@@ -19,6 +19,9 @@
  */
 import type { DraftEvidenceItem } from './draft';
 
+/** Logger mode — mirrors `useLoggerModeAndSnapshot`'s `LoggerMode` without a hook dependency. */
+export type LoggerSaveMode = 'guided' | 'quick';
+
 /**
  * Activity type → Australian Curriculum subject keys. Structured lessons bypass
  * this map and use the parent's explicit lesson-subject selection instead.
@@ -116,4 +119,86 @@ export function isThinEntry(input: {
     input.evidenceUrlCount === 0 &&
     input.completeness < THIN_ENTRY_COMPLETENESS
   );
+}
+
+/** Form state read by the save handler to assemble the `/api/entries` body. */
+export interface EntrySaveForm {
+  description: string;
+  /** Pre-formatted `yyyy-MM-dd` (the page resolves the today/yesterday/earlier picker). */
+  dateOccurred: string;
+  activityType: string | null;
+  lessonSubjects: string[];
+  selectedLearners: string[];
+  engagement: Record<string, number>;
+  discoveries: Record<string, string>;
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content'>>;
+  loggerMode: LoggerSaveMode;
+  observationDetails: Record<string, unknown>;
+}
+
+/** Save-time context not held in the form: scaffold session + project provenance. */
+export interface EntrySaveContext {
+  /** The Hearth-session id when logging from a scaffold, else undefined. */
+  scaffoldSessionId: string | undefined;
+  /** `projectContext.source` — overridden to 'hearth_session' when scaffolded. */
+  projectSource: string;
+  projectId: string | undefined;
+  stageNumber: string | undefined;
+}
+
+/** The POST body sent to `/api/entries` on save. */
+export interface EntrySavePayload {
+  title: string;
+  description: string;
+  dateOccurred: string;
+  subjects: string[];
+  learnerIds: string[];
+  engagementPerLearner: Record<string, number>;
+  discoveriesPerLearner: Record<string, string>;
+  evidenceUrls: string[];
+  observationDetails: Record<string, unknown> | undefined;
+  mode: LoggerSaveMode;
+  source: string;
+  sourceSessionId: string | undefined;
+  projectId: string | undefined;
+  stageNumber: string | undefined;
+  status: 'complete';
+}
+
+/**
+ * Assemble the full `/api/entries` POST body from form state + save context.
+ *
+ * Composes the field derivations (`deriveSubjects` / `deriveEntryTitle` /
+ * `derivePhotoEvidenceUrls`) and applies the two context rules that were inline
+ * in `handleSave`:
+ *   - a scaffolded entry reports `source: 'hearth_session'` and carries the
+ *     session id; otherwise the project-context source/ids pass through;
+ *   - Guided-mode observation details are included only in Guided mode (Quick
+ *     mode sends `undefined`).
+ *
+ * Extracted verbatim from `app/(auth)/log/page.tsx` so the saved entry's shape
+ * is pinned under test.
+ */
+export function buildEntrySavePayload(
+  form: EntrySaveForm,
+  ctx: EntrySaveContext,
+): EntrySavePayload {
+  const isScaffold = ctx.scaffoldSessionId !== undefined;
+  return {
+    title: deriveEntryTitle(form.description),
+    description: form.description,
+    dateOccurred: form.dateOccurred,
+    subjects: deriveSubjects(form.activityType, form.lessonSubjects),
+    learnerIds: form.selectedLearners,
+    engagementPerLearner: form.engagement,
+    discoveriesPerLearner: form.discoveries,
+    evidenceUrls: derivePhotoEvidenceUrls(form.evidence),
+    observationDetails: form.loggerMode === 'guided' ? form.observationDetails : undefined,
+    mode: form.loggerMode,
+    source: isScaffold ? 'hearth_session' : ctx.projectSource,
+    sourceSessionId: ctx.scaffoldSessionId,
+    projectId: ctx.projectId,
+    stageNumber: ctx.stageNumber,
+    status: 'complete',
+  };
 }

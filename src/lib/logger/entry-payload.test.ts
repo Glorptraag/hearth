@@ -6,6 +6,9 @@ import {
   derivePhotoEvidenceUrlsLegacy,
   deriveEvidenceRows,
   isThinEntry,
+  buildEntrySavePayload,
+  type EntrySaveForm,
+  type EntrySaveContext,
 } from './entry-payload';
 
 describe('deriveSubjects', () => {
@@ -123,5 +126,71 @@ describe('isThinEntry', () => {
 
   it('treats undefined observation details as empty', () => {
     expect(isThinEntry({ ...thin, observationDetails: undefined })).toBe(true);
+  });
+});
+
+describe('buildEntrySavePayload', () => {
+  const baseForm: EntrySaveForm = {
+    description: 'Built a marble run and tested ramps',
+    dateOccurred: '2026-06-01',
+    activityType: 'cooking',
+    lessonSubjects: [],
+    selectedLearners: ['L1', 'L2'],
+    engagement: { L1: 4, L2: 3 },
+    discoveries: { L1: 'gravity' },
+    evidence: [
+      { type: 'photo', content: 'https://img/1' },
+      { type: 'note', content: 'ignored' },
+    ],
+    loggerMode: 'quick',
+    observationDetails: { L1: { chip: 'focused' } },
+  };
+  const baseCtx: EntrySaveContext = {
+    scaffoldSessionId: undefined,
+    projectSource: 'logger',
+    projectId: undefined,
+    stageNumber: undefined,
+  };
+
+  it('composes the derived fields (title, subjects, evidence URLs)', () => {
+    const p = buildEntrySavePayload(baseForm, baseCtx);
+    expect(p.title).toBe('Built a marble run and tested ramps');
+    expect(p.subjects).toEqual(['mathematics', 'science']); // cooking
+    expect(p.evidenceUrls).toEqual(['https://img/1']); // photos only
+    expect(p.status).toBe('complete');
+  });
+
+  it('passes form fields straight through', () => {
+    const p = buildEntrySavePayload(baseForm, baseCtx);
+    expect(p.learnerIds).toEqual(['L1', 'L2']);
+    expect(p.engagementPerLearner).toEqual({ L1: 4, L2: 3 });
+    expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' });
+    expect(p.dateOccurred).toBe('2026-06-01');
+    expect(p.mode).toBe('quick');
+  });
+
+  it('omits observation details in Quick mode and includes them in Guided mode', () => {
+    expect(buildEntrySavePayload(baseForm, baseCtx).observationDetails).toBeUndefined();
+    const guided = buildEntrySavePayload({ ...baseForm, loggerMode: 'guided' }, baseCtx);
+    expect(guided.observationDetails).toEqual({ L1: { chip: 'focused' } });
+  });
+
+  it('uses the project-context source/ids when not scaffolded', () => {
+    const p = buildEntrySavePayload(baseForm, {
+      scaffoldSessionId: undefined,
+      projectSource: 'project',
+      projectId: 'proj-1',
+      stageNumber: '2',
+    });
+    expect(p.source).toBe('project');
+    expect(p.sourceSessionId).toBeUndefined();
+    expect(p.projectId).toBe('proj-1');
+    expect(p.stageNumber).toBe('2');
+  });
+
+  it("reports source 'hearth_session' and carries the session id when scaffolded", () => {
+    const p = buildEntrySavePayload(baseForm, { ...baseCtx, scaffoldSessionId: 'sess-9' });
+    expect(p.source).toBe('hearth_session');
+    expect(p.sourceSessionId).toBe('sess-9');
   });
 });

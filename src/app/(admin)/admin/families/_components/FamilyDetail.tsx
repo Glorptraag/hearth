@@ -107,7 +107,7 @@ export default function FamilyDetail({ data, loading, onClose }: Props) {
   if (!data && !loading) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-[440px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[440px] border-l border-border-subtle bg-surface-panel shadow-float overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-subtle px-lg py-md">
         <h3 className="font-sans text-[0.85rem] font-semibold text-text-primary">

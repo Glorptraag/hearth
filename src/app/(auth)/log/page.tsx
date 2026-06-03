@@ -2,10 +2,17 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { format, subDays, differenceInYears } from 'date-fns';
-import { matchKeywords, generateReflectionPrompts, type KeywordMatchResult, type ReflectionPrompt, type SnapshotSignals } from '@/lib/ai/keyword-matcher';
+import { format, subDays } from 'date-fns';
+import { generateReflectionPrompts, type ReflectionPrompt } from '@/lib/ai/keyword-matcher';
 import { track } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
+import { useLoggerDraft } from '@/hooks/use-logger-draft';
+import { useLearnersFetch } from '@/hooks/use-learners-fetch';
+import { useScaffoldFetch, type ScaffoldData } from '@/hooks/use-scaffold-fetch';
+import { useLoggerModeAndSnapshot } from '@/hooks/use-logger-mode-and-snapshot';
+import { useKeywordMatch } from '@/hooks/use-keyword-match';
+import { useCoachHints } from '@/hooks/use-coach-hints';
+import { useCompletenessUi } from '@/hooks/use-completeness-ui';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
@@ -20,60 +27,36 @@ import {
   processFileUploadQueue,
 } from '@/lib/offline-queue';
 import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
-import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
 import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
 import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
 import type { AiEnrichment } from '@/types/enrichment';
-import { ObservationChipDetail, DETAIL_CHIPS, type ChipDetailValue } from '@/components/logger/ObservationChipDetail';
-import type { CoachHint } from '@/lib/logger/coaching/types';
-import type { SnapshotData } from '@/types/snapshot';
+import type { ChipDetailValue } from '@/components/logger/ObservationChipDetail';
 import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
+import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
-  DRAFT_KEY,
-  parseDraft,
-  serializeDraft,
-  shouldPersistDraft,
-  isRestorableDraft,
-  isStaleDraft,
-} from '@/lib/logger/draft';
-import {
-  deriveSubjects,
-  deriveEntryTitle,
-  derivePhotoEvidenceUrlsLegacy,
+  buildEntrySavePayload,
   deriveEvidenceRows,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
+import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
+import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
-import { SectionHeader, CompletenessRing } from './_components/SectionHeader';
+import { CompletenessRing } from './_components/SectionHeader';
+import { WhoSection } from './_components/WhoSection';
+import { EngagementSection } from './_components/EngagementSection';
+import { WhenWhereSection } from './_components/WhenWhereSection';
+import { ObserveSection } from './_components/ObserveSection';
+import { EvidenceSection } from './_components/EvidenceSection';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { InsightsContent } from './_components/InsightsContent';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
-import type { ComponentType } from 'react';
+import { WhatSection } from './_components/WhatSection';
 import {
-  Leaf, CookingPot, BookOpen, Palette, SoccerBall, UsersThree, Note, Sparkle,
-  BookOpenText, MathOperations, Atom, Globe, Cpu, PersonSimpleRun, ChatsCircle,
-  HouseLine, Tree, Bank, Monitor,
-  Check, WifiSlash, NotePencil, ClipboardText, Microphone, ChatCircleDots,
-  Camera, ChatCircle, LinkSimple, X, Lightbulb,
-  ChatCircleText,
+  Sparkle,
+  Check, WifiSlash, NotePencil, ClipboardText,
+  Lightbulb,
 } from '@/components/icons';
 
-type LogIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
-
-type ScaffoldData = {
-  session: { id: string; title: string; description: string | null; date: string; location: string | null; sharedRecord: string | null; hearthId: string; hearthName: string | null };
-  evidence: Array<{ id: string; fileUrl: string; fileType: string | null; caption: string | null }>;
-  observations: Array<{ id: string; observationText: string; targetLearnerId: string; evidenceIds: string[] }>;
-  attendingLearnerIds: string[];
-};
-
-type Learner = {
-  id: string;
-  name: string;
-  dateOfBirth: string | null;
-  shapeIcon: string | null;
-  colourToken: string | null;
-};
 
 type EvidenceItem = {
   type: 'photo' | 'quote' | 'note' | 'link' | 'audio';
@@ -84,82 +67,6 @@ type EvidenceItem = {
   metadata?: Record<string, unknown>;
 };
 
-const ACTIVITY_TYPES: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
-  { key: 'nature',     label: 'Nature Study',    Icon: Leaf },
-  { key: 'cooking',    label: 'Kitchen Science', Icon: CookingPot },
-  { key: 'reading',    label: 'Reading',         Icon: BookOpen },
-  { key: 'art',        label: 'Creative Arts',   Icon: Palette },
-  { key: 'physical',   label: 'Physical',        Icon: SoccerBall },
-  { key: 'social',     label: 'Social',          Icon: UsersThree },
-  { key: 'structured', label: 'Lesson',          Icon: Note },
-  { key: 'freeplay',   label: 'Free Play',       Icon: Sparkle },
-];
-
-
-const SUBJECTS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
-  { key: 'english',      label: 'English',      Icon: BookOpenText },
-  { key: 'mathematics',  label: 'Maths',        Icon: MathOperations },
-  { key: 'science',      label: 'Science',      Icon: Atom },
-  { key: 'hass',         label: 'HASS',         Icon: Globe },
-  { key: 'arts',         label: 'Arts',         Icon: Palette },
-  { key: 'technologies', label: 'Technologies', Icon: Cpu },
-  { key: 'hpe',          label: 'HPE',          Icon: PersonSimpleRun },
-  { key: 'languages',    label: 'Languages',    Icon: ChatsCircle },
-];
-
-const ENGAGEMENT_LEVELS = [
-  { value: 4, emoji: '😊', label: 'Loved it' },
-  { value: 3, emoji: '🙂', label: 'Engaged' },
-  { value: 2, emoji: '😐', label: 'Okay' },
-  { value: 1, emoji: '😕', label: 'Struggled' },
-];
-
-const DURATION_OPTIONS = ['~5 min', '~15 min', '~30 min', '1 hr+'];
-const WHERE_OPTIONS: ReadonlyArray<{ key: string; label: string; Icon: LogIconC }> = [
-  { key: 'home',      label: 'Home',      Icon: HouseLine },
-  { key: 'outdoors',  label: 'Outdoors',  Icon: Tree },
-  { key: 'community', label: 'Community', Icon: Bank },
-  { key: 'online',    label: 'Online',    Icon: Monitor },
-];
-
-const OBSERVATION_CATEGORIES = [
-  {
-    label: 'Engagement',
-    color: 'child-sage',
-    chips: ['Deeply focused', 'Curious', 'Enthusiastic', 'Reluctant at first', 'Easily distracted', 'Self-directed'],
-  },
-  {
-    label: 'Social',
-    color: 'child-blue',
-    chips: ['Worked alone', 'Collaborated', 'Led others', 'Asked for help', 'Taught someone', 'Negotiated / compromised'],
-  },
-  {
-    label: 'Thinking',
-    color: 'child-violet',
-    chips: ['Asked questions', 'Tried alternatives', 'Persisted through difficulty', 'Made connections', 'Self-corrected', 'Explained reasoning'],
-  },
-  {
-    label: 'Emotional',
-    color: 'child-rose',
-    chips: ['Proud of work', 'Joyful', 'Calm & settled', 'Frustrated → resolved', 'Surprised / delighted', 'Confident'],
-  },
-];
-
-const CHILD_COLORS: Record<string, { border: string; bg: string; text: string; ring: string }> = {
-  rose: { border: 'border-child-rose', bg: 'bg-child-rose/10', text: 'text-child-rose', ring: 'focus-within:ring-child-rose/30' },
-  blue: { border: 'border-child-blue', bg: 'bg-child-blue/10', text: 'text-child-blue', ring: 'focus-within:ring-child-blue/30' },
-  sage: { border: 'border-child-sage', bg: 'bg-child-sage/10', text: 'text-child-sage', ring: 'focus-within:ring-child-sage/30' },
-  amber: { border: 'border-amber-status', bg: 'bg-amber-status/10', text: 'text-amber-status', ring: 'focus-within:ring-amber-status/30' },
-};
-
-// ─── Skeleton Loader Component ───
-
-const OBS_COLOR_CLASSES: Record<string, { dot: string; selectedBg: string; selectedBorder: string }> = {
-  'child-sage': { dot: 'bg-child-sage', selectedBg: 'bg-child-sage/10', selectedBorder: 'border-child-sage/30' },
-  'child-blue': { dot: 'bg-child-blue', selectedBg: 'bg-child-blue/10', selectedBorder: 'border-child-blue/30' },
-  'child-violet': { dot: 'bg-child-violet', selectedBg: 'bg-child-violet/10', selectedBorder: 'border-child-violet/30' },
-  'child-rose': { dot: 'bg-child-rose', selectedBg: 'bg-child-rose/10', selectedBorder: 'border-child-rose/30' },
-};
 
 export default function LogPage() {
   const { vocab, pedagogy } = usePedagogy();
@@ -172,7 +79,6 @@ export default function LogPage() {
 
   // ─── Scaffold (from Hearth session) ───
   const scaffoldSessionId = searchParams.get('scaffold');
-  const [scaffoldData, setScaffoldData] = useState<ScaffoldData | null>(null);
   const [showReflection, setShowReflection] = useState(false);
   // Workstream F — after a non-scaffold Logger save, prompt the parent to
   // attach the entry to a module they have in their library. Suppressed
@@ -237,17 +143,9 @@ export default function LogPage() {
   }, []);
 
   // ─── Data ───
-  const [learners, setLearners] = useState<Learner[]>([]);
-  const [isLoadingLearners, setIsLoadingLearners] = useState(true);
-  useEffect(() => {
-    // Guarded: a 5xx from /api/learners must NOT crash Logger via JSON-parse
-    // SyntaxError. See incident 2026-05-25 (missing migration 0016).
-    fetch('/api/learners')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
-      .then((data) => { if (Array.isArray(data)) setLearners(data); })
-      .catch(() => { /* degrade to empty learners; learner picker shows empty state */ })
-      .finally(() => setIsLoadingLearners(false));
-  }, []);
+  // /api/learners is guarded inside useLearnersFetch — a 5xx must NOT crash
+  // the Logger via a JSON-parse SyntaxError (incident 2026-05-25).
+  const { learners, isLoading: isLoadingLearners } = useLearnersFetch();
 
   // ─── Form state ───
   const [showBatch, setShowBatch] = useState(false);
@@ -266,12 +164,7 @@ export default function LogPage() {
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
   // ─── Guided Mode state ───
-  type LoggerMode = 'guided' | 'quick';
-  const [loggerMode, setLoggerMode] = useState<LoggerMode>('quick');
   const [observationDetails, setObservationDetails] = useState<Record<string, ChipDetailValue>>({});
-  const [coachHints, setCoachHints] = useState<CoachHint[]>([]);
-  const [snapshotData, setSnapshotData] = useState<SnapshotData | null>(null);
-  const [snapshotSignals, setSnapshotSignals] = useState<SnapshotSignals | null>(null);
   const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
   const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
   const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
@@ -290,127 +183,65 @@ export default function LogPage() {
   // starts typing again (see the new-entry clearing effect below).
   const activeEnrichmentEntryIdRef = useRef<string | null>(null);
 
-  // (a) Resolve logger mode on mount: fetch family entry count + loggerDefaultMode.
-  // Default to Guided if count < 20 and no manual override.
-  useEffect(() => {
-    (async () => {
-      try {
-        const [famRes, snapRes] = await Promise.all([
-          fetch('/api/family'),
-          fetch('/api/snapshot'),
-        ]);
-        if (famRes.ok) {
-          const fam = await famRes.json() as {
-            loggerDefaultMode?: string | null;
-            entryCount?: number;
-          };
-          if (fam.loggerDefaultMode === 'guided' || fam.loggerDefaultMode === 'quick') {
-            setLoggerMode(fam.loggerDefaultMode);
-          } else {
-            setLoggerMode((fam.entryCount ?? 0) < 20 ? 'guided' : 'quick');
-          }
-        }
-        if (snapRes.ok) {
-          const wrapper = await snapRes.json() as { snapshotData: SnapshotData | null } | null;
-          const snap = wrapper?.snapshotData ?? null;
-          setSnapshotData(snap);
-          if (snap?.children) {
-            const perChild: SnapshotSignals['perChild'] = {};
-            for (const [id, child] of Object.entries(snap.children)) {
-              const active = (child.active_threads ?? []).map((t) => t.thread_id);
-              const quiet = child.gap_analysis?.suggested_focus_threads ?? [];
-              perChild[id] = { active, quiet };
-            }
-            setSnapshotSignals({
-              perChild,
-              onboarding: (snap.family?.total_entries ?? 0) < 20,
-            });
-          }
-        }
-      } catch { /* non-critical — mode stays quick, no snapshot */ }
-    })();
-  }, []);
+  const { loggerMode, setLoggerMode, snapshotData, snapshotSignals } =
+    useLoggerModeAndSnapshot();
 
-  // Fetch scaffold data when navigating from a hearth session
-  useEffect(() => {
-    if (!scaffoldSessionId) return;
-    fetch(`/api/scaffolds/${scaffoldSessionId}`)
-      .then(res => res.ok ? res.json() : null)
-      .then((data: ScaffoldData | null) => {
-        if (!data) return;
-        setScaffoldData(data);
-        setDescription(data.session.sharedRecord ?? data.session.description ?? '');
-        if (data.session.location) setLocation(data.session.location);
-        if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
-      })
-      .catch(() => {});
-  }, [scaffoldSessionId]);
+  // Scaffold data pre-fills description / location / attending learners when
+  // the parent navigates from a hearth session. onLoad fires exactly once.
+  const scaffoldData = useScaffoldFetch({
+    scaffoldSessionId,
+    onLoad: useCallback((data: ScaffoldData) => {
+      setDescription(data.session.sharedRecord ?? data.session.description ?? '');
+      if (data.session.location) setLocation(data.session.location);
+      if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
+    }, []),
+  });
 
   // ─── Draft auto-save (10s to localStorage) ───
-  const [draftRestored, setDraftRestored] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  // The autosave + restore + clear wiring lives in useLoggerDraft (the React
+  // side of `lib/logger/draft.ts`). We memo the draft state so the hook's
+  // autosave timer only restarts when a field actually changes — preserving
+  // the original deps-driven `useEffect` cadence.
+  const draftState = useMemo<LoggerDraftFields>(() => ({
+    description,
+    selectedLearners,
+    discoveries,
+    activityType,
+    lessonSubjects,
+    engagement,
+    whenDate,
+    duration,
+    location,
+    observations,
+    evidence,
+  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
+
+  const { draftRestored, dismissDraftRestored, lastSavedAt, clearDraft } = useLoggerDraft({
+    state: draftState,
+    onRestore: useCallback((d) => {
+      // Each setter is gated on the corresponding field's presence — same shape
+      // as the original inline restore effect.
+      if (d.description) setDescription(d.description);
+      if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
+      if (d.discoveries) setDiscoveries(d.discoveries);
+      if (d.activityType) setActivityType(d.activityType);
+      if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
+      if (d.engagement) setEngagement(d.engagement);
+      if (d.whenDate) setWhenDate(d.whenDate);
+      if (d.duration) setDuration(d.duration);
+      if (d.location) setLocation(d.location);
+      if (d.observations?.length) setObservations(d.observations);
+      if (d.evidence?.length) setEvidence(d.evidence);
+    }, []),
+  });
+
   const online = useOnlineStatus();
-
-  // Restore draft on mount
-  useEffect(() => {
-    const d = parseDraft(localStorage.getItem(DRAFT_KEY));
-    if (!d) return;
-    // Hydrating draft state from localStorage on mount; each setter is gated on field presence.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (d.description) setDescription(d.description);
-    if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
-    if (d.discoveries) setDiscoveries(d.discoveries);
-    if (d.activityType) setActivityType(d.activityType);
-    if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
-    if (d.engagement) setEngagement(d.engagement);
-    if (d.whenDate) setWhenDate(d.whenDate);
-    if (d.duration) setDuration(d.duration);
-    if (d.location) setLocation(d.location);
-    if (d.observations?.length) setObservations(d.observations);
-    if (d.evidence?.length) setEvidence(d.evidence);
-    if (isRestorableDraft(d)) setDraftRestored(true);
-
-    // If draft is stale (>4 hours old), trigger a draft_resume notification
-    if (isStaleDraft(d, Date.now())) {
-      const draftTitle = d.description?.slice(0, 40) || undefined;
-      fetch('/api/notifications/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'draft_resume', draftTitle }),
-      }).catch(() => {});
-    }
-  }, []);
-
-  // Save draft every 10s
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!shouldPersistDraft({ description, selectedLearners })) return;
-      const now = Date.now();
-      localStorage.setItem(DRAFT_KEY, serializeDraft({
-        description, selectedLearners, discoveries, activityType,
-        lessonSubjects, engagement, whenDate, duration, location,
-        observations, evidence,
-      }, now));
-      setLastSavedAt(now);
-    }, 10_000);
-    return () => clearInterval(timer);
-  }, [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
-
-  // Clear draft on successful save
-  const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_KEY);
-    setLastSavedAt(null);
-    setDraftRestored(false);
-  }, []);
 
   // ─── AI Insights ───
   // Two tiers: instant keyword matcher for fast feedback, debounced Haiku
   // draft-insight for warmer reflective copy + better thread detection.
   // The Haiku call only fires when description length ≥ 50 chars; the hook
   // enforces a 20-call-per-session client cap (decision B — firm caps).
-  const [keywordMatch, setKeywordMatch] = useState<KeywordMatchResult | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const selectedChildNames = useMemo(
     () =>
       learners
@@ -419,19 +250,7 @@ export default function LogPage() {
     [learners, selectedLearners]
   );
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (description.length < 10) {
-      // Reset stale keyword match when input shrinks below threshold; cleanup-style state reset.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setKeywordMatch(null);
-      return;
-    }
-    debounceRef.current = setTimeout(() => {
-      setKeywordMatch(matchKeywords(description, selectedChildNames));
-    }, 1500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [description, selectedChildNames]);
+  const keywordMatch = useKeywordMatch(description, selectedChildNames);
 
   const { insight: aiInsight, loading: aiLoading } = useDraftInsight(
     description,
@@ -477,40 +296,12 @@ export default function LogPage() {
   }, [keywordMatch, description, selectedLearners, learners, engagement, discoveries, observations, activityType, snapshotSignals]);
 
   // ─── Coach hints (debounced fetch) ───
-  const coachHintsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
-    if (description.length < 20 || selectedLearners.length === 0) {
-      // Reset stale coach hints when input shrinks below threshold; cleanup-style state reset.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCoachHints([]);
-      return;
-    }
-    const controller = new AbortController();
-    coachHintsDebounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/logger/coach-hints', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            learnerIds: selectedLearners,
-            activityType,
-            description,
-            observations,
-          }),
-          signal: controller.signal,
-        });
-        if (!controller.signal.aborted && res.ok) {
-          const hints = await res.json() as CoachHint[];
-          if (!controller.signal.aborted) setCoachHints(hints);
-        }
-      } catch { /* aborted or non-critical */ }
-    }, 1200);
-    return () => {
-      if (coachHintsDebounceRef.current) clearTimeout(coachHintsDebounceRef.current);
-      controller.abort();
-    };
-  }, [description, activityType, selectedLearners, observations]);
+  const coachHints = useCoachHints({
+    description,
+    selectedLearners,
+    activityType,
+    observations,
+  });
 
   // ─── UI state ───
   const [isSaving, setIsSaving] = useState(false);
@@ -549,39 +340,21 @@ export default function LogPage() {
     [selectedLearners, description, activityType, engagement, duration, location, observations, evidence]
   );
 
-  const completenessLabel = useMemo(() => {
-    if (completeness >= 90) return 'Excellent';
-    if (completeness >= 70) return 'Great';
-    if (completeness >= 55) return 'Strong';
-    if (completeness >= 40) return 'Good';
-    if (completeness >= 20) return 'Basic';
-    return 'Getting Started';
-  }, [completeness]);
-
-  const completenessHint = useMemo(() => {
-    if (completeness >= 90) return 'Ready to save';
-    if (completeness >= 70) return 'Add evidence for richer record';
-    if (completeness >= 55) return 'Add observations';
-    if (completeness >= 40) return 'Rate engagement for each child';
-    if (completeness >= 20) return 'Describe what happened';
-    return 'Select who was learning';
-  }, [completeness]);
+  const {
+    label: completenessLabel,
+    hint: completenessHint,
+    missingItems,
+  } = useCompletenessUi({
+    completeness,
+    loggerMode,
+    selectedLearners,
+    description,
+    activityType,
+    engagement,
+    observations,
+  });
 
   const canSave = canSaveEntry(completeness, loggerMode);
-
-  // Concrete checklist of what's still missing before the entry can be saved.
-  // Surfaced prominently in the mobile save bar so the parent never has to
-  // guess why Save is disabled.
-  const missingItems = useMemo(() => {
-    const items: string[] = [];
-    if (selectedLearners.length === 0) items.push('Pick who was learning');
-    if (description.trim().length <= 20) items.push('Describe what happened');
-    if (loggerMode === 'guided' && !activityType) items.push('Choose an activity');
-    if (selectedLearners.length > 0 && !selectedLearners.some((id) => engagement[id]))
-      items.push('Rate engagement');
-    if (observations.length === 0) items.push('Add an observation');
-    return items;
-  }, [selectedLearners, description, activityType, engagement, observations, loggerMode]);
 
   // Fire `logger_completed_50pct` exactly once per Logger session, the
   // moment completeness first crosses the save threshold. Useful for
@@ -605,9 +378,18 @@ export default function LogPage() {
   };
 
   const toggleObservation = (chip: string) => {
+    const wasSelected = observations.includes(chip);
     setObservations((prev) =>
       prev.includes(chip) ? prev.filter((o) => o !== chip) : [...prev, chip]
     );
+    // Deselecting a chip clears any Guided-mode detail captured for it.
+    if (wasSelected) {
+      setObservationDetails((prev) => {
+        const next = { ...prev };
+        delete next[chip];
+        return next;
+      });
+    }
   };
 
   const getDateOccurred = useCallback(() => {
@@ -621,13 +403,32 @@ export default function LogPage() {
     if (!canSave || isSaving) return;
     setIsSaving(true);
 
-    const subjects = deriveSubjects(activityType, lessonSubjects);
+    const payload = buildEntrySavePayload(
+      {
+        description,
+        dateOccurred: getDateOccurred(),
+        activityType,
+        lessonSubjects,
+        selectedLearners,
+        engagement,
+        discoveries,
+        evidence,
+        loggerMode,
+        observationDetails,
+      },
+      {
+        scaffoldSessionId: scaffoldData?.session.id,
+        projectSource: projectContext.source,
+        projectId: projectContext.projectId,
+        stageNumber: projectContext.stageNumber,
+      },
+    );
+    const evidenceUrls = payload.evidenceUrls;
 
-    const evidenceUrls = derivePhotoEvidenceUrlsLegacy(evidence);
-
-    // Task 2.7: also send the new structured evidence array so the server
-    // writes learning_entry_evidence rows. Photos still dual-write to
-    // evidenceUrls (legacy) for the deprecation window.
+    // Task 2.7: structured evidence rows (5-kind) sent alongside the legacy
+    // evidenceUrls. Photos still dual-write to evidenceUrls through the
+    // deprecation window. Computed here rather than inside buildEntrySavePayload
+    // so the latter's pinned contract stays untouched.
     const evidenceRows = deriveEvidenceRows(
       evidence.map((e) => ({
         kind: e.type,
@@ -637,36 +438,21 @@ export default function LogPage() {
       })),
     );
 
-    const title = deriveEntryTitle(description);
-
     try {
       const res = await fetch('/api/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
-          description,
-          dateOccurred: getDateOccurred(),
-          subjects,
-          learnerIds: selectedLearners,
-          engagementPerLearner: engagement,
-          discoveriesPerLearner: discoveries,
-          evidenceUrls,
-          evidence: evidenceRows.length > 0 ? evidenceRows : undefined,
-          observationDetails: loggerMode === 'guided' ? observationDetails : undefined,
-          mode: loggerMode,
-          source: scaffoldData ? 'hearth_session' : projectContext.source,
-          sourceSessionId: scaffoldData?.session.id,
-          projectId: projectContext.projectId,
-          stageNumber: projectContext.stageNumber,
-          // Task 2.6 — proactive attach context. Each field is omitted when
-          // its corresponding attached.* is undefined so the route's Zod
-          // schema treats them as absent rather than nulled-out.
-          sourceModuleId: attached?.moduleId,
-          moduleRunId: attached?.moduleRunId,
-          plannerEntryId: attached?.plannerEntryId,
-          sourceApproachId: attached?.sourceApproachId,
-          status: 'complete',
+          ...payload,
+          // Task 2.7: structured evidence rows alongside legacy evidenceUrls.
+          ...(evidenceRows.length > 0 ? { evidence: evidenceRows } : {}),
+          // Task 2.6 — proactive attach context. Each field omitted when
+          // attached.* is undefined so the route's Zod schema treats them
+          // as absent rather than nulled-out.
+          ...(attached?.moduleId ? { sourceModuleId: attached.moduleId } : {}),
+          ...(attached?.moduleRunId ? { moduleRunId: attached.moduleRunId } : {}),
+          ...(attached?.plannerEntryId ? { plannerEntryId: attached.plannerEntryId } : {}),
+          ...(attached?.sourceApproachId ? { sourceApproachId: attached.sourceApproachId } : {}),
         }),
       });
 
@@ -759,7 +545,9 @@ export default function LogPage() {
       setObservations([]);
       setEvidence([]);
       setObservationDetails({});
-      setCoachHints([]);
+      // coachHints clear automatically — the hook resets to [] when the
+      // description shrinks below threshold (which the setDescription('')
+      // above triggers).
       setProfileNudge(null);
       setPedagogySources([]);
 
@@ -769,28 +557,15 @@ export default function LogPage() {
       if (savedEntryId) activeEnrichmentEntryIdRef.current = savedEntryId;
       (async () => {
         if (savedEntryId) {
-          const POLL_INTERVAL_MS = 1500;
-          const POLL_TIMEOUT_MS = 30000;
-          const start = Date.now();
-          while (Date.now() - start < POLL_TIMEOUT_MS) {
-            // First check after 1.5s; enrichment is rarely ready sooner.
-            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-            if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-            try {
-              const enrichedRes = await fetch(`/api/entries/${savedEntryId}`);
-              if (!enrichedRes.ok) continue;
-              const enrichedEntry = await enrichedRes.json() as {
-                aiEnrichment?: AiEnrichment | null;
-              };
-              const enrichment = enrichedEntry?.aiEnrichment;
-              if (!enrichment) continue;
-              // Re-check the guard — the parent may have started a new entry
-              // while the fetch was in flight.
-              if (activeEnrichmentEntryIdRef.current !== savedEntryId) break;
-
-              // Drive the post-save surface state machine. Pending → keep
-              // polling; enriched/failed → write final state and stop.
-              const status = enrichment.status;
+          // The poll's timing / in-flight guard / pending→terminal state
+          // machine lives in lib/logger/enrichment-poll.ts; the React
+          // state-mapping stays here behind onEnrichment.
+          await pollEntryEnrichment(savedEntryId, {
+            isCurrent: () => activeEnrichmentEntryIdRef.current === savedEntryId,
+            clearCurrent: () => {
+              activeEnrichmentEntryIdRef.current = null;
+            },
+            onEnrichment: (enrichment) => {
               setPostSave((prev) =>
                 prev && prev.entryId === savedEntryId ? { ...prev, enrichment } : prev
               );
@@ -810,67 +585,34 @@ export default function LogPage() {
                 setProfileNudge(nudge);
                 setInsightsExpanded(true);
               }
-              // Keep polling while status is 'pending' (the row exists but
-              // enrichment hasn't completed). Only break on a terminal state.
-              if (status === 'pending') continue;
-              activeEnrichmentEntryIdRef.current = null;
-              break;
-            } catch {
-              // transient — keep polling
-            }
-          }
-          if (activeEnrichmentEntryIdRef.current === savedEntryId) {
-            activeEnrichmentEntryIdRef.current = null;
-          }
-          // Poll timed out without a terminal status. Spec: "never a spinner
-          // that hangs." Resolve the surface to a failed view so the parent
-          // can exit; the DB row may still finish enriching later, and the
-          // Portfolio retry affordance covers that case.
-          setPostSave((prev) => {
-            if (!prev || prev.entryId !== savedEntryId) return prev;
-            if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
-              return prev;
-            }
-            return {
-              ...prev,
-              enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
-            };
+            },
+            // Poll timed out without a terminal status. Spec: "never a spinner
+            // that hangs." Resolve the surface to a failed view so the parent
+            // can exit; the DB row may still finish enriching later, and the
+            // Portfolio retry affordance covers that case.
+            onTimeout: () => {
+              setPostSave((prev) => {
+                if (!prev || prev.entryId !== savedEntryId) return prev;
+                if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
+                };
+              });
+            },
           });
         }
 
         try {
-          const badgeResults = await Promise.all(
-            learnersToCheck.map(async (learnerId) => {
-              const r = await fetch('/api/badges/check-thresholds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ learnerId }),
-              });
-              if (!r.ok) return [];
-              const d = await r.json();
-              return ((d.badgeIds ?? []) as string[]).map((badgeId) => ({ badgeId, learnerId }));
-            })
+          const ready = await checkBadgeThresholds(learnersToCheck);
+          const badgeToast = buildBadgeReadyToast(
+            ready,
+            new Map(learners.map((l) => [l.id, l.name])),
           );
-          const ready = badgeResults.flat();
-          if (ready.length > 0) {
-            const learnerNameById = new Map(learners.map((l) => [l.id, l.name]));
-            const first = ready[0];
-            const rest = ready.slice(1);
-            const firstName = learnerNameById.get(first.learnerId) ?? '';
-            const queueParam =
-              rest.length > 0
-                ? `&queue=${rest.map((r) => `${r.badgeId}:${r.learnerId}`).join(',')}`
-                : '';
-            const positionParam = ready.length > 1 ? `&qn=1&qt=${ready.length}` : '';
-            const href = `/badges/assess/${first.badgeId}?learner=${first.learnerId}&name=${encodeURIComponent(firstName)}${queueParam}${positionParam}`;
-            setToast({
-              type: 'badge',
-              message:
-                ready.length > 1
-                  ? `Hearth noticed something new — ${ready.length} quick checks ready.`
-                  : 'Hearth noticed something new. Quick check?',
-              action: { label: ready.length > 1 ? `Start (${ready.length})` : 'Now (2 min)', href },
-            });
+          if (badgeToast) {
+            setToast(badgeToast);
             setTimeout(() => setToast(null), 10000);
           }
         } catch {
@@ -894,13 +636,7 @@ export default function LogPage() {
     }
   };
 
-  const getLearnerColors = (learnerId: string) => {
-    const learner = learners.find((l) => l.id === learnerId);
-    return CHILD_COLORS[learner?.colourToken ?? 'rose'] ?? CHILD_COLORS.rose;
-  };
 
-  const getLearnerAge = (l: Learner) =>
-    l.dateOfBirth ? differenceInYears(new Date(), new Date(l.dateOfBirth)) : null;
 
   // ─── Render ───
   if (isLoadingLearners) {
@@ -969,7 +705,7 @@ export default function LogPage() {
         <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">
           <p className="inline-flex items-center gap-xs font-sans text-[11px] text-text-secondary"><NotePencil size={14} aria-hidden="true" /> Draft restored from your last session</p>
           <button
-            onClick={() => setDraftRestored(false)}
+            onClick={dismissDraftRestored}
             className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-200"
           >
             Dismiss
@@ -1077,428 +813,87 @@ export default function LogPage() {
             onClear={() => setAttached(null)}
           />
           {/* Section 1: Who Was Learning? */}
-          <section>
-            <SectionHeader number={1} done={sectionDone[1]} label="Who was learning?" />
-            <div className="flex flex-wrap gap-sm">
-              {learners.map((learner) => {
-                const selected = selectedLearners.includes(learner.id);
-                const colors = CHILD_COLORS[learner.colourToken ?? 'rose'] ?? CHILD_COLORS.rose;
-                const age = getLearnerAge(learner);
-                return (
-                  <button
-                    key={learner.id}
-                    onClick={() => toggleLearner(learner.id)}
-                    className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[var(--ease-default)] select-none ${
-                      selected
-                        ? `${colors.border} bg-ember-glow text-text-primary`
-                        : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
-                    }`}
-                  >
-                    <span className="text-base">{learner.shapeIcon}</span>
-                    <span>{learner.name}{age !== null ? `, ${age}` : ''}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {selectedLearners.length >= 2 && (
-              <label className="mt-sm flex items-center gap-sm font-sans text-sm text-text-secondary cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={togetherMode}
-                  onChange={(e) => setTogetherMode(e.target.checked)}
-                  className="accent-ember"
-                />
-                Learning together
-              </label>
-            )}
-            {/* (b) WatchForTodayStrip — shown below children when selected */}
-            {selectedLearners.length > 0 && (
-              <div className="mt-md">
-                <WatchForTodayStrip
-                  learners={learners
-                    .filter((l) => selectedLearners.includes(l.id))
-                    .map((l) => ({ id: l.id, name: l.name, colourToken: l.colourToken }))}
-                  snapshotData={snapshotData}
-                />
-              </div>
-            )}
-          </section>
+          <WhoSection
+            learners={learners}
+            selectedLearners={selectedLearners}
+            onToggleLearner={toggleLearner}
+            togetherMode={togetherMode}
+            onTogetherModeChange={setTogetherMode}
+            snapshotData={snapshotData}
+            done={sectionDone[1]}
+          />
 
           {/* Section 2: What Happened? */}
-          <section>
-            <SectionHeader number={2} done={sectionDone[2]} label={vocab.logWhatLabel} />
-
-            {/* 2a: Description */}
-            <div className="mb-lg">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={vocab.logWhatPlaceholder}
-                rows={4}
-                className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-200 resize-y"
-              />
-              <div className="mt-sm flex items-center gap-xs">
-                <button
-                  onClick={isRecording ? stopVoiceInput : startVoiceInput}
-                  className={`flex items-center gap-xs rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium transition-all duration-200 ${
-                    isRecording
-                      ? 'bg-ember-glow border border-ember text-ember animate-pulse'
-                      : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-xs"><Microphone size={14} aria-hidden="true" /> {isRecording ? 'Recording…' : 'Voice'}</span>
-                </button>
-                <span className="ml-auto font-sans text-[0.6875rem] text-text-muted">
-                  {description.length > 0 ? `${description.length}` : ''}
-                </span>
-              </div>
-            </div>
-
-            {/* 2b: Per-child discoveries */}
-            <div className="mb-lg space-y-md">
-              {selectedLearners.length === 0 ? (
-                <p className="font-serif text-sm italic text-text-muted">
-                  Select learners above...
-                </p>
-              ) : (
-                <><div className="flex items-center gap-md my-xl">
-                  <div className="flex-1 h-px bg-border-subtle" />
-                  <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-text-muted">Individual Discoveries</span>
-                  <div className="flex-1 h-px bg-border-subtle" />
-                </div>
-                {selectedLearners.map((id) => {
-                  const learner = learners.find((l) => l.id === id);
-                  if (!learner) return null;
-                  const colors = getLearnerColors(id);
-                  return (
-                    <div
-                      key={id}
-                      className={`rounded-md border ${colors.border} p-md ${colors.ring} ring-1 ring-transparent transition-all duration-200`}
-                    >
-                      <label className={`flex items-center gap-sm font-sans text-[0.75rem] font-semibold ${colors.text} mb-sm`}>
-                        <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')}`} />
-                        What did {learner.name} notice or discover?
-                      </label>
-                      <textarea
-                        value={discoveries[id] ?? ''}
-                        onChange={(e) =>
-                          setDiscoveries((prev) => ({ ...prev, [id]: e.target.value }))
-                        }
-                        placeholder="Something they said, wondered about, or figured out..."
-                        rows={2}
-                        className="w-full min-h-[70px] rounded-md border border-border-subtle bg-surface-body p-sm font-serif text-[0.9375rem] text-text-primary leading-[1.6] placeholder:text-text-muted focus:outline-none focus:border-ember focus:shadow-focus resize-y"
-                      />
-                      {(() => {
-                        const engLevel = engagement[id];
-                        const discLen = (discoveries[id] ?? '').length;
-                        if (!engLevel || discLen > 20) return null;
-                        const hints: Record<number, string> = {
-                          4: `What specifically delighted ${learner.name}? Something they said or did?`,
-                          3: `What stood out about how ${learner.name} engaged?`,
-                          2: `Was anything unclear or uninteresting to ${learner.name}?`,
-                          1: `What made this hard for ${learner.name}? Did they push through or step away?`,
-                        };
-                        return (
-                          <p className="mt-xs inline-flex items-start gap-xs font-sans text-[11px] text-ember/60 italic">
-                            <ChatCircleDots size={12} className="mt-[2px] shrink-0" aria-hidden="true" /> {hints[engLevel]}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                  );
-                })}
-                </>
-              )}
-            </div>
-
-            {/* 2c: Activity type grid */}
-            <div className="mt-lg">
-              <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">
-                Activity type
-              </p>
-              <div className="grid grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-sm">
-                {ACTIVITY_TYPES.map((type) => {
-                  const selected = activityType === type.key;
-                  return (
-                    <button
-                      key={type.key}
-                      onClick={() => setActivityType(selected ? null : type.key)}
-                      className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
-                        selected
-                          ? 'border-ember bg-ember-glow text-text-primary'
-                          : 'border-border-subtle bg-surface-body text-text-secondary hover:border-border-medium hover:bg-surface-raised'
-                      }`}
-                    >
-                      <span className="inline-flex" aria-hidden="true"><type.Icon size={22} /></span>
-                      <span className="text-center leading-tight">{type.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Lesson subject picker */}
-            {activityType === 'structured' && (
-              <div className="mt-md">
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary mb-sm">
-                  Which subjects?
-                </p>
-                <div className="flex flex-wrap gap-sm">
-                  {SUBJECTS.map((s) => {
-                    const sel = lessonSubjects.includes(s.key);
-                    return (
-                      <button
-                        key={s.key}
-                        onClick={() =>
-                          setLessonSubjects((prev) =>
-                            sel ? prev.filter((x) => x !== s.key) : [...prev, s.key]
-                          )
-                        }
-                        className={`flex items-center gap-xs rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
-                          sel
-                            ? 'bg-ember-glow border border-ember text-text-primary'
-                            : 'border border-border-subtle text-text-secondary hover:border-border-medium'
-                        }`}
-                      >
-                        <span className="inline-flex items-center gap-xs"><s.Icon size={14} aria-hidden="true" /> {s.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </section>
+          <WhatSection
+            label={vocab.logWhatLabel}
+            placeholder={vocab.logWhatPlaceholder}
+            done={sectionDone[2]}
+            description={description}
+            onDescriptionChange={setDescription}
+            isRecording={isRecording}
+            onStartVoice={startVoiceInput}
+            onStopVoice={stopVoiceInput}
+            learners={learners}
+            selectedLearners={selectedLearners}
+            discoveries={discoveries}
+            onDiscoveryChange={(id, value) =>
+              setDiscoveries((prev) => ({ ...prev, [id]: value }))
+            }
+            engagement={engagement}
+            activityType={activityType}
+            onActivityTypeChange={setActivityType}
+            lessonSubjects={lessonSubjects}
+            onToggleLessonSubject={(key) =>
+              setLessonSubjects((prev) =>
+                prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
+              )
+            }
+          />
 
           {/* Section 3: How Engaged Were They? */}
-          <section>
-            <SectionHeader number={3} done={sectionDone[3]} label="How engaged were they?" optional="Rate each child" />
-            {selectedLearners.length === 0 ? (
-              <p className="font-serif text-sm italic text-text-muted">
-                Select children first
-              </p>
-            ) : (
-              <div className="space-y-sm">
-                {selectedLearners.map((id) => {
-                  const learner = learners.find((l) => l.id === id);
-                  if (!learner) return null;
-                  const colors = getLearnerColors(id);
-                  return (
-                    <div key={id} className={`flex items-center justify-between gap-md rounded-md border ${colors.border} ${colors.bg} px-md py-sm`}>
-                      <div className="flex items-center gap-sm">
-                        <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')} shrink-0`} />
-                        <span className="font-sans text-[0.875rem] font-semibold text-text-primary">{learner.name}</span>
-                      </div>
-                      <div className="flex gap-xs">
-                        {ENGAGEMENT_LEVELS.map((level) => {
-                          const selected = engagement[id] === level.value;
-                          return (
-                            <button
-                              key={level.value}
-                              onClick={() =>
-                                setEngagement((prev) => ({ ...prev, [id]: level.value }))
-                              }
-                              title={level.label}
-                              className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[var(--ease-default)] ${
-                                selected
-                                  ? `${colors.bg} ${colors.border} scale-110 opacity-100`
-                                  : 'bg-surface-body border-border-subtle opacity-60 hover:opacity-100 hover:border-border-medium hover:scale-105'
-                              }`}
-                            >
-                              {level.emoji}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          <EngagementSection
+            done={sectionDone[3]}
+            learners={learners}
+            selectedLearners={selectedLearners}
+            engagement={engagement}
+            onEngagementChange={(id, value) =>
+              setEngagement((prev) => ({ ...prev, [id]: value }))
+            }
+          />
 
           {/* Section 4: When & Where */}
-          <section>
-            <SectionHeader number={4} done={sectionDone[4]} label="When & Where" />
-            <div className="flex flex-wrap gap-md">
-              {/* When */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">When</p>
-                <div className="flex flex-wrap gap-xs">
-                  {(['today', 'yesterday', 'earlier'] as const).map((w) => (
-                    <button
-                      key={w}
-                      onClick={() => setWhenDate(w)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        whenDate === w
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      {w.charAt(0).toUpperCase() + w.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Duration</p>
-                <div className="flex flex-wrap gap-xs">
-                  {DURATION_OPTIONS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDuration(duration === d ? null : d)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        duration === d
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Where */}
-              <div className="flex-1 min-w-[140px]">
-                <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Where</p>
-                <div className="flex flex-wrap gap-xs">
-                  {WHERE_OPTIONS.map((w) => (
-                    <button
-                      key={w.key}
-                      onClick={() => setLocation(location === w.key ? null : w.key)}
-                      className={`rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-all duration-200 ${
-                        location === w.key
-                          ? 'bg-ember-glow border border-ember text-text-primary'
-                          : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-                      }`}
-                    >
-                      <span className="inline-flex items-center gap-xs"><w.Icon size={14} aria-hidden="true" /> {w.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+          <WhenWhereSection
+            done={sectionDone[4]}
+            whenDate={whenDate}
+            onWhenDateChange={setWhenDate}
+            duration={duration}
+            onDurationChange={setDuration}
+            location={location}
+            onLocationChange={setLocation}
+          />
 
           {/* Section 5: What Did You Observe? */}
-          <section>
-            <SectionHeader number={5} done={sectionDone[5]} label={vocab.logObserveLabel} />
-            <div className="space-y-md">
-              {OBSERVATION_CATEGORIES.map((cat) => {
-                const colorClasses = OBS_COLOR_CLASSES[cat.color] ?? OBS_COLOR_CLASSES['child-sage'];
-                return (
-                  <div key={cat.label}>
-                    <div className="flex items-center gap-sm mb-sm">
-                      <div className={`h-[8px] w-[8px] rounded-full ${colorClasses.dot}`} />
-                      <span className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
-                        {cat.label}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-xs">
-                      {cat.chips.map((chip) => {
-                        const sel = observations.includes(chip);
-                        return (
-                          <div key={chip}>
-                            <button
-                              onClick={() => {
-                                toggleObservation(chip);
-                                if (sel) {
-                                  setObservationDetails((prev) => {
-                                    const next = { ...prev };
-                                    delete next[chip];
-                                    return next;
-                                  });
-                                }
-                              }}
-                              className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
-                                sel
-                                  ? `${colorClasses.selectedBg} border ${colorClasses.selectedBorder} text-text-primary`
-                                  : 'border border-border-subtle text-text-secondary hover:border-border-medium'
-                              }`}
-                            >
-                              {chip}
-                            </button>
-                            {loggerMode === 'guided' && sel && DETAIL_CHIPS.has(chip) && (
-                              <ObservationChipDetail
-                                chip={chip}
-                                value={observationDetails[chip] ?? { detail: '' }}
-                                onChange={(val) =>
-                                  setObservationDetails((prev) => ({ ...prev, [chip]: val }))
-                                }
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          <ObserveSection
+            done={sectionDone[5]}
+            label={vocab.logObserveLabel}
+            observations={observations}
+            observationDetails={observationDetails}
+            onToggleObservation={toggleObservation}
+            onObservationDetailChange={(chip, value) =>
+              setObservationDetails((prev) => ({ ...prev, [chip]: value }))
+            }
+            isGuided={loggerMode === 'guided'}
+          />
 
           {/* Section 6: Evidence */}
-          <section>
-            <SectionHeader number={6} done={sectionDone[6]} label="Evidence" optional="Optional" />
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-sm mb-md">
-              {([
-                { key: 'photo', Icon: Camera,     label: 'Add Photo' },
-                { key: 'audio', Icon: Microphone, label: 'Record Audio' },
-                { key: 'quote', Icon: ChatCircle, label: "Child's Words" },
-                { key: 'note',  Icon: Note,       label: 'Add Note' },
-                { key: 'link',  Icon: LinkSimple, label: 'Link Resource' },
-              ] as ReadonlyArray<{ key: string; Icon: LogIconC; label: string }>).map((tool) => {
-                const hasItems = evidence.some((e) => e.type === tool.key);
-                return (
-                  <button
-                    key={tool.key}
-                    onClick={() => setEvidenceModal(tool.key)}
-                    className={`flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm transition-all duration-200 min-h-[44px] ${
-                      hasItems
-                        ? 'border-sage bg-sage/5 text-sage'
-                        : 'border-dashed border-border-medium text-text-secondary hover:border-ember hover:text-text-primary'
-                    }`}
-                  >
-                    <span className="inline-flex" aria-hidden="true"><tool.Icon size={22} /></span>
-                    <span className="text-xs">{tool.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Evidence items */}
-            {evidence.length > 0 && (
-              <div className="space-y-sm">
-                {evidence.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-sm rounded-md border border-border-subtle bg-surface-raised p-sm"
-                  >
-                    <span className="font-sans text-xs font-medium uppercase tracking-wider text-text-muted bg-surface-hover rounded px-xs py-[2px]">
-                      {item.type}
-                    </span>
-                    <span className="flex-1 font-serif text-sm text-text-secondary truncate">
-                      {item.type === 'photo'
-                        ? item.caption || 'Photo'
-                        : item.type === 'link'
-                          ? item.name || item.url || 'Link'
-                          : item.content.slice(0, 60)}
-                    </span>
-                    <button
-                      onClick={() => setEvidence((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-text-muted hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
-                      aria-label="Remove evidence item"
-                    >
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <EvidenceSection
+            done={sectionDone[6]}
+            evidence={evidence}
+            onOpenTool={setEvidenceModal}
+            onRemoveEvidence={(index) =>
+              setEvidence((prev) => prev.filter((_, idx) => idx !== index))
+            }
+          />
           </div>
         </div>
 

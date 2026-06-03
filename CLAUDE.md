@@ -190,6 +190,8 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`
 - **Progress indicators:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`.
 - **Reduced motion:** `@media (prefers-reduced-motion: reduce)` zeroes all animation/transition durations in `globals.css`.
 - **Nav blur backgrounds:** Use `var(--color-surface-nav-blur)` for frosted nav overlays.
+- **Horizontal-scroll guard:** `html, body` carry `overflow-x: clip` in `globals.css` — a mobile safety net so no element can introduce a sideways page scroll on 320–768px. `clip` (not `hidden`) is deliberate: it preserves `position: sticky`. Do not remove it. Genuine horizontal scrollers (carousels, the planner week-grid) must own their own `overflow-x-auto` wrapper rather than relying on the page.
+- **Hiding carousel scrollbars:** Use the `.scrollbar-none` utility (defined in `globals.css`). Do not re-inline `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`.
 
 ## Architecture Principles — Do Not Violate
 
@@ -222,6 +224,7 @@ Non-obvious locations for features that come up often:
 | Mobile bottom nav | `src/components/nav/` — 5-tab (Home/Story/Log/Plan/Explore). Plan + Explore are trayed tabs (anchored vertical tray above bar). Single source of truth: `navConfig.ts`. Mounted from `src/app/(auth)/layout.tsx`. Spec: `docs/hearth-mobile-bottom-nav-spec-v1.md`. |
 | Editorial workbench (admin publish) | `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts`. Optional `workbench` on activities + `workbenches` on packs. Soft-flag helpers (`workbenchIdResolutionFlags`, `workbenchContentFlags`) surface non-blocking validation in `/api/admin/content/publish` response. `/api/modules/publish` is unchanged (parent path). |
 | Logger offline minimum | `useOnlineStatus()` hook + offline banner on `/log`. 10s autosave to `localStorage`; save-failure toast distinguishes offline from server error. Full PWA / sync queue stays Phase 2. |
+| Logger screen architecture | `/log` (`src/app/(auth)/log/page.tsx`) is a thin composition root wiring hooks + section components — **not** a monolith (decomposed from ~1566 lines over refactor phases 1–5, 2026-06; behaviour preserved verbatim). **State hooks** (`src/hooks/use-logger-*`): `useLoggerDraft`, `useLearnersFetch`, `useScaffoldFetch`, `useLoggerModeAndSnapshot`, `useKeywordMatch`, `useCoachHints`, `useCompletenessUi`. **Save/derivation logic** (`src/lib/logger/`, all unit-tested): `entry-payload` (`buildEntrySavePayload`, `isThinEntry`, subject/title/evidence derivations), `badge-check` (`checkBadgeThresholds`, `buildBadgeReadyToast`), `enrichment-poll` (`pollEntryEnrichment`), `draft`, `completeness`. **Form sections** (`src/app/(auth)/log/_components/`): `WhoSection`, `WhatSection`, `EngagementSection`, `WhenWhereSection`, `ObserveSection`, `EvidenceSection` + `EvidenceModal`, `InsightsContent`, `SectionHeader`; shared option catalogs in `loggerConstants.ts`, child colours in `childColors.ts`. `handleSave` stays in the page as the orchestrator but delegates payload-build / badge-check / enrichment-poll to the tested lib. |
 | Noisy-family detection | Daily retention cron runs `detectNoisyFamilies()`. Above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) → `admin_audit_log` row + Sentry breadcrumb. |
 
 ## Testing
@@ -231,14 +234,14 @@ Non-obvious locations for features that come up often:
 ### Two configs, two extensions
 
 - **Unit** — `vitest.config.ts`, file pattern `*.test.{ts,tsx}`, environment jsdom, everything external mocked. Run: `npm test` (alias: `npm run test:unit`).
-- **Integration** — `vitest.integration.config.ts`, file pattern `*.integration.test.{ts,tsx}`, environment node, real Neon branch + real Drizzle, everything else still mocked. Run: `npm run test:integration` (orchestrator creates and tears down an ephemeral Neon branch per run).
+- **Integration** — `vitest.integration.config.ts`, file pattern `*.integration.test.{ts,tsx}`, environment node, **real Postgres** (local Docker container; `pgvector/pgvector:pg16`) + real Drizzle, everything else still mocked. Run: `npm run test:integration:local` (spins up the container, migrates, runs, tears down). Isolation is **transaction rollback** — each test runs inside `BEGIN…ROLLBACK` on a pinned `node-postgres` client, so nothing it writes survives. The `@/lib/db` import is aliased to `src/test/db-test-shim.ts` so handlers under test write through the same transaction. A Neon ephemeral-branch path (`npm run test:integration`) still exists for on-demand cloud validation but is not the default. See `docs/test-pilot-runbook.md`.
 
 Never collapse these into one config. Integration tests using mocks, or unit tests hitting a real DB, would both silently defeat the point.
 
 ### Mocks live in the setup files, not in individual tests
 
 - `vitest.setup.ts` registers Clerk v7 async mocks (`auth`, `currentUser`, `clerkClient`, `clerkMiddleware`, `createRouteMatcher`) plus Anthropic, Sanity, Blob, `next/headers`, `next/navigation`. Default state: signed-in owner of `TEST_FAMILY_ID`.
-- `vitest.integration.setup.ts` re-uses those mocks **and** truncates 31 user-data tables between tests. The DB itself is NOT mocked in integration — that is the whole point.
+- `vitest.integration.setup.ts` re-uses those mocks **and** wraps each test in a transaction it rolls back afterward (via `src/test/integration-db.ts`). The DB itself is NOT mocked in integration — that is the whole point.
 - **Clerk v7 is async.** Always `mockResolvedValue()`, never `mockReturnValue()`. Mocking `auth()` with a sync return is the #1 cause of "userId is undefined" failures.
 
 ### Per-test identity overrides — use the helpers
@@ -259,15 +262,16 @@ Do not hand-roll Clerk mock overrides inside a test file. Every ad-hoc override 
 
 ### When the schema changes
 
-Update these three places in lockstep (CI will usually catch a mismatch, but it's cheap to do proactively):
+Update these two places in lockstep (CI will usually catch a mismatch, but it's cheap to do proactively):
 
 1. `src/test/factories.ts` — `InferSelectModel` drift will surface in `tsc`, but default values still need updating.
 2. `src/test/db-factories.ts` — only if you add a new seeder for the new table.
-3. `vitest.integration.setup.ts` → `TABLES_TO_TRUNCATE` — **must list every table with user data**. A missing table leaks rows between tests; a non-existent table throws at `truncateAll()`.
+
+(No truncate list to maintain — rollback isolation means a new table is wiped automatically. New migrations are applied by `drizzle-kit migrate` against the fresh container before the suite runs.)
 
 ### CI
 
-`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (auto-skips if Neon vars are unset, so it stays green locally while the secrets get wired up). All jobs pinned Node 22.
+`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (stands up a `pgvector/pgvector:pg16` service container, applies the schema with `drizzle-kit migrate`, then runs the suite — no cloud credentials, always runs). All jobs pinned Node 22.
 
 ## Writing Sanity Content Programmatically
 
@@ -356,3 +360,5 @@ Do not span multiple phases in one session.
 - Creating duplicate child color maps instead of importing `LEARNER_COLOUR_MAP` from `LearnerAvatar.tsx`
 - Using `text-white` on colored backgrounds instead of `text-surface-body` or `text-text-inverse` (exception: danger confirm buttons)
 - Hardcoding `data-theme="dark"` — theme is managed by the inline script and `useTheme()` hook
+- Re-inlining `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden` instead of the `.scrollbar-none` utility
+- Fixed-width (`w-[NNNpx]`) or fixed grid tracks (`grid-cols-[…px…]`) that apply at the mobile base without a responsive prefix or an `overflow-x-auto` wrapper — they clip/overflow on phones. Gate them behind `sm:`/`lg:` or pair fixed slide-overs with `w-full max-w-[NNNpx]`

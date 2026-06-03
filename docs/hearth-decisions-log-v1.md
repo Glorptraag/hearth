@@ -117,7 +117,7 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Decision:** The second screen is an inline morph (not an overlay, not a sheet) so capture → seen reads as one continuous act. Exit is parent-controlled — "Back to Dashboard" / "Log Another" — no auto-dismiss on the substantive screen. The confirmation renders instantly on save; the enrichment (reflection prompt + connection observation) fades in as the single Haiku call returns. While the call is in flight an honest interim state ("Reading this moment…") resolves into either depth or failure — never a spinner that hangs. Poll timeout is 30s; on timeout the surface resolves to failed and the Portfolio retry affordance becomes the path forward.
 
 **Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2
-**Implementation:** `src/components/logger/PostSaveSurface.tsx`; poll loop in `src/app/(auth)/log/page.tsx`
+**Implementation:** `src/components/logger/PostSaveSurface.tsx`; poll loop in `src/lib/logger/enrichment-poll.ts` (`pollEntryEnrichment`), wired from `handleSave` in `src/app/(auth)/log/page.tsx`
 **Date:** 2026-05-18
 
 ### D-LPS-3 — Three density states; thin entries keep the fast overlay
@@ -125,7 +125,7 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Decision:** Honest Density applies to parent time, not just to AI output. Three density states are supported: thin entries (short description, no Guided chips, no evidence) get the existing fast "Moment Saved ✨" toast unchanged and a quick exit; substantive enriched entries get the full second screen; substantive failed entries get the honest recoverable failure surface. The screen earns weight only when the entry did.
 
 **Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 2 density table
-**Implementation:** thin-entry heuristic in `handleSave` (Logger page) — short description + no observation chips + no evidence
+**Implementation:** thin-entry heuristic in `isThinEntry` (`src/lib/logger/entry-payload.ts`, unit-tested), called from `handleSave` (Logger page) — short description + no observation chips + no evidence
 **Date:** 2026-05-18
 
 ### D-LPS-4 — No forward prescription on the post-save screen

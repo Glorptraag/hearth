@@ -435,12 +435,12 @@ Phases gate at boundaries: Phase 2 starts after Phase 1 is fully green; Phase 4 
 | 5.1 | ✅ | main-session |
 | 5.2 | ✅ | main-session |
 | 5.3 | ✅ | main-session |
-| 6.1 | ⬜ |  |
-| 6.2 | ⬜ |  |
-| 6.3 | ⬜ |  |
-| 6.4 | ⬜ |  |
-| 6.5 | ⬜ |  |
-| 6.6 | ⬜ |  |
+| 6.1 | ✅ | main-session |
+| 6.2 | ✅ | main-session |
+| 6.3 | ⏸️ deferred |  |
+| 6.4 | ⏸️ deferred |  |
+| 6.5 | ✅ | main-session |
+| 6.6 | ✅ | main-session |
 
 ---
 

@@ -136,9 +136,19 @@ export const GET = routeHandler(async (request: NextRequest) => {
   return NextResponse.json(items);
 }, { route: 'GET /api/library' });
 
-const addPackSchema = z.object({
-  sanityPackId: z.string().min(1),
-});
+// POST accepts either a pack OR a module — exactly one must be provided.
+// Used for first-time add AND restore-from-soft-delete (the latter clears
+// removedAt on the existing row rather than inserting a new one, preserving
+// rowId + original addedAt). Spec: Task 4.7.
+const addOrRestoreSchema = z
+  .object({
+    sanityPackId: z.string().min(1).optional(),
+    sanityModuleId: z.string().min(1).optional(),
+  })
+  .refine(
+    (d) => Boolean(d.sanityPackId) !== Boolean(d.sanityModuleId),
+    { message: 'Provide exactly one of sanityPackId or sanityModuleId' },
+  );
 
 export const POST = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
@@ -147,21 +157,24 @@ export const POST = routeHandler(async (request: NextRequest) => {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
-  const result = await parseBody(request, addPackSchema);
+  const result = await parseBody(request, addOrRestoreSchema);
   if ('error' in result) return result.error;
 
-  // Re-add semantics: if a soft-deleted row exists for this pack, restore it
-  // (clear removedAt). Otherwise insert new. The partial unique index on
-  // (familyId, sanityPackId) WHERE removedAt IS NULL ensures only one
-  // active row per pack, so onConflictDoNothing remains correct for the
-  // insert path.
+  const isPack = !!result.data.sanityPackId;
+  const targetIdColumn = isPack ? familyLibrary.sanityPackId : familyLibrary.sanityModuleId;
+  const targetId = (result.data.sanityPackId ?? result.data.sanityModuleId) as string;
+
+  // Re-add / restore semantics: if a soft-deleted row exists for this
+  // pack/module, restore it (clear removedAt). Otherwise insert new. The
+  // partial unique index `... WHERE removed_at IS NULL` guarantees at most
+  // one active row, so onConflictDoNothing is safe.
   const existing = await db
     .select()
     .from(familyLibrary)
     .where(
       and(
         eq(familyLibrary.familyId, family.id),
-        eq(familyLibrary.sanityPackId, result.data.sanityPackId),
+        eq(targetIdColumn, targetId),
       ),
     )
     .limit(1);
@@ -171,11 +184,8 @@ export const POST = routeHandler(async (request: NextRequest) => {
   const active = existing.find((e) => e.removedAt === null);
 
   if (active) {
-    // Already in library — idempotent re-add, no rebuild needed.
-    record = active;
+    record = active; // already in library — idempotent
   } else if (softDeleted) {
-    // Restore the soft-deleted row instead of inserting a new one — keeps
-    // history (addedAt, original rowId) intact.
     [record] = await db
       .update(familyLibrary)
       .set({ removedAt: null })
@@ -184,7 +194,11 @@ export const POST = routeHandler(async (request: NextRequest) => {
   } else {
     [record] = await db
       .insert(familyLibrary)
-      .values({ familyId: family.id, sanityPackId: result.data.sanityPackId })
+      .values(
+        isPack
+          ? { familyId: family.id, sanityPackId: targetId }
+          : { familyId: family.id, sanityModuleId: targetId },
+      )
       .onConflictDoNothing()
       .returning();
   }

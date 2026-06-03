@@ -52,6 +52,11 @@ export default function ModuleDetailPage() {
   const [owningPackId, setOwningPackId] = useState<string | null>(null);
   // module_runs integration — tracks the current run id across facilitate/log
   const [runId, setRunId] = useState<string | null>(null);
+  // Hydrated from /api/module-runs/[id] when a run becomes active or resumes,
+  // so PrepMode's checklist starts in the right state across sessions. Task 4.4.
+  const [runMaterialsState, setRunMaterialsState] = useState<
+    Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }> | undefined
+  >(undefined);
   const patchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [packState, setPackState] = useState<{ printablesDownloaded: boolean; kitOwned: boolean }>(
     { printablesDownloaded: false, kitOwned: false },
@@ -95,8 +100,22 @@ export default function ModuleDetailPage() {
 
   function clearRunId() {
     setRunId(null);
+    setRunMaterialsState(undefined);
     try { localStorage.removeItem(RUN_ID_KEY); } catch { /* ignore */ }
   }
+
+  // Hydrate runMaterialsState from the run row whenever runId changes. Used
+  // by PrepMode (Task 4.4) so a resumed run shows the parent's prior ticks.
+  useEffect(() => {
+    if (!runId) return;
+    fetch(`/api/module-runs?state=active`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: Array<{ id: string; materialsState?: Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }> }>) => {
+        const row = rows.find((r) => r.id === runId);
+        if (row?.materialsState) setRunMaterialsState(row.materialsState);
+      })
+      .catch(() => {});
+  }, [runId]);
 
   function startRun(sessionType: 'sustained' | 'open_ended', approachId?: string) {
     fetch('/api/module-runs', {
@@ -523,6 +542,8 @@ export default function ModuleDetailPage() {
             pedagogy={pedagogy}
             indicators={resolved}
             packState={packState}
+            runId={runId}
+            initialMaterialsState={runMaterialsState}
             onPrintMaterials={materialCount > 0 ? () => setShowPrintSheet(true) : undefined}
             onStart={() => {
               clearSession();

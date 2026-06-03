@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACK_INDICATORS_PROJECTION } from '@/lib/sanity/queries';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
@@ -20,22 +20,31 @@ export interface LibraryItem {
   sanityPackId: string | null;
   sanityModuleId: string | null;
   moduleId: string;
+  /** family_library row UUID — the soft-delete target. */
+  rowId: string;
+  /** ISO timestamp when the row was added (used by ContextualProposals recently-added). */
+  addedAt: string | null;
+  /** ISO timestamp when the row was soft-deleted; null for active rows. */
+  removedAt: string | null;
   printables?: Printables;
   materials?: Materials;
   assetCounts?: AssetCounts | null;
 }
 
-export const GET = routeHandler(async () => {
+export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
+  const includeRemoved = request.nextUrl.searchParams.get('includeRemoved') === 'true';
+
+  const baseCondition = eq(familyLibrary.familyId, family.id);
   const records = await db
     .select()
     .from(familyLibrary)
-    .where(eq(familyLibrary.familyId, family.id));
+    .where(includeRemoved ? baseCondition : and(baseCondition, isNull(familyLibrary.removedAt)));
 
   if (records.length === 0) return NextResponse.json([]);
 
@@ -83,6 +92,8 @@ export const GET = routeHandler(async () => {
   const moduleMap = new Map(modules.map((m) => [m._id, m]));
 
   const items: LibraryItem[] = records.map((r) => {
+    const addedAt = r.addedAt?.toISOString() ?? null;
+    const removedAt = r.removedAt?.toISOString() ?? null;
     if (r.sanityPackId) {
       const meta = packMap.get(r.sanityPackId);
       return {
@@ -94,6 +105,9 @@ export const GET = routeHandler(async () => {
         sanityPackId: r.sanityPackId,
         sanityModuleId: null,
         moduleId: r.sanityPackId,
+        rowId: r.id,
+        addedAt,
+        removedAt,
         printables: meta?.printables,
         materials: meta?.materials,
         assetCounts: meta?.assetCounts,
@@ -110,6 +124,9 @@ export const GET = routeHandler(async () => {
       sanityPackId: null,
       sanityModuleId: id,
       moduleId: id,
+      rowId: r.id,
+      addedAt,
+      removedAt,
       printables: meta?.printables,
       materials: meta?.materials,
       assetCounts: meta?.assetCounts,
@@ -133,13 +150,46 @@ export const POST = routeHandler(async (request: NextRequest) => {
   const result = await parseBody(request, addPackSchema);
   if ('error' in result) return result.error;
 
-  const [record] = await db
-    .insert(familyLibrary)
-    .values({ familyId: family.id, sanityPackId: result.data.sanityPackId })
-    .onConflictDoNothing()
-    .returning();
+  // Re-add semantics: if a soft-deleted row exists for this pack, restore it
+  // (clear removedAt). Otherwise insert new. The partial unique index on
+  // (familyId, sanityPackId) WHERE removedAt IS NULL ensures only one
+  // active row per pack, so onConflictDoNothing remains correct for the
+  // insert path.
+  const existing = await db
+    .select()
+    .from(familyLibrary)
+    .where(
+      and(
+        eq(familyLibrary.familyId, family.id),
+        eq(familyLibrary.sanityPackId, result.data.sanityPackId),
+      ),
+    )
+    .limit(1);
 
-  if (record) {
+  let record: typeof familyLibrary.$inferSelect | undefined;
+  const softDeleted = existing.find((e) => e.removedAt !== null);
+  const active = existing.find((e) => e.removedAt === null);
+
+  if (active) {
+    // Already in library — idempotent re-add, no rebuild needed.
+    record = active;
+  } else if (softDeleted) {
+    // Restore the soft-deleted row instead of inserting a new one — keeps
+    // history (addedAt, original rowId) intact.
+    [record] = await db
+      .update(familyLibrary)
+      .set({ removedAt: null })
+      .where(eq(familyLibrary.id, softDeleted.id))
+      .returning();
+  } else {
+    [record] = await db
+      .insert(familyLibrary)
+      .values({ familyId: family.id, sanityPackId: result.data.sanityPackId })
+      .onConflictDoNothing()
+      .returning();
+  }
+
+  if (record && !active) {
     rebuildSnapshot(family.id, 'library_change').catch((err) =>
       console.error('[library POST] Snapshot rebuild failed:', err)
     );

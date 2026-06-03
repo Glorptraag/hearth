@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
-import { Books, Sparkle, Play, CalendarBlank } from '@/components/icons';
+import { Books, Sparkle, Play, CalendarBlank, X } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { LibraryModuleItem } from '@/app/api/library/modules/route';
@@ -20,6 +20,8 @@ interface LibraryItem {
   sanityPackId: string | null;
   sanityModuleId: string | null;
   moduleId: string;
+  /** family_library row UUID — used by soft-delete (DELETE /api/library/[id]). */
+  rowId: string;
   printables?: Printables;
   materials?: Materials;
   assetCounts?: AssetCounts | null;
@@ -282,6 +284,13 @@ export default function LibraryClient() {
                     key={item.id}
                     item={item}
                     rollup={item.sanityPackId ? packRollupByPackId.get(item.sanityPackId) : undefined}
+                    onRemove={async () => {
+                      if (!confirm(`Remove "${item.title}" from your library? You can restore it any time.`)) {
+                        return;
+                      }
+                      await fetch(`/api/library/${item.rowId}`, { method: 'DELETE' }).catch(() => {});
+                      fetchLibrary();
+                    }}
                   />
                 ))}
               </div>
@@ -364,13 +373,34 @@ function ModuleCard({ module: m, status }: { module: LibraryModuleItem; status?:
   );
 }
 
-function LibraryCard({ item, rollup }: { item: LibraryItem; rollup?: { inFlight: number; planned: number } }) {
+function LibraryCard({
+  item,
+  rollup,
+  onRemove,
+}: {
+  item: LibraryItem;
+  rollup?: { inFlight: number; planned: number };
+  onRemove?: () => Promise<void>;
+}) {
   const subjects = item.subjects ?? [];
   const content = (
     <div
       className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-gentle)]" />
+      {onRemove && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void onRemove();
+          }}
+          className="absolute top-sm right-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-quick)] inline-flex items-center justify-center w-7 h-7 rounded-full border border-border-subtle bg-surface-panel text-text-muted hover:border-red-400 hover:text-red-400"
+          aria-label={`Remove ${item.title} from library`}
+        >
+          <X size={12} aria-hidden="true" />
+        </button>
+      )}
       <div className="flex items-start justify-between gap-sm mb-sm">
         <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
           {item.title}

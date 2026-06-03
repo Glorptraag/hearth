@@ -52,3 +52,8 @@ next-env.d.ts
 # archived docs (kept locally for reference; history preserved in git log)
 docs/archive/
 
+
+# Sibling repos / build output (added 2026-06-03 — caught during Phase 2)
+claude-kindling/
+.sanity/
+dist/

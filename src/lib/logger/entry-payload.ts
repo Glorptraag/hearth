@@ -59,11 +59,42 @@ export function deriveEntryTitle(description: string): string {
   return description.slice(0, 60).trim() + (description.length > 60 ? '...' : '');
 }
 
-/** The persisted evidence URLs are the photo evidence's content only. */
-export function derivePhotoEvidenceUrls(
+/**
+ * Legacy: extract photo URLs for the `evidenceUrls` text[] column.
+ * Kept for backward-compat during the 2-cycle deprecation window.
+ * Cleanup target: remove once all reads migrate to `learning_entry_evidence`.
+ */
+export function derivePhotoEvidenceUrlsLegacy(
   evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content'>>,
 ): string[] {
   return evidence.filter((e) => e.type === 'photo').map((e) => e.content);
+}
+
+/** @deprecated Use derivePhotoEvidenceUrlsLegacy — alias kept for in-flight callers. */
+export const derivePhotoEvidenceUrls = derivePhotoEvidenceUrlsLegacy;
+
+export type EvidenceRowInput = {
+  kind: 'photo' | 'quote' | 'note' | 'link' | 'audio';
+  content: string;
+  caption?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Map the client-side evidence array into rows ready for
+ * `learning_entry_evidence` insertion. Each row gets a normalised
+ * shape — null caption, empty metadata object — so callers don't have
+ * to default at the insert site.
+ */
+export function deriveEvidenceRows(
+  evidence: ReadonlyArray<EvidenceRowInput>,
+): Array<{ kind: string; content: string; caption: string | null; metadata: Record<string, unknown> }> {
+  return evidence.map((e) => ({
+    kind: e.kind,
+    content: e.content,
+    caption: e.caption ?? null,
+    metadata: e.metadata ?? {},
+  }));
 }
 
 /**

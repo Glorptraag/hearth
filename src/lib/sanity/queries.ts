@@ -98,7 +98,28 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
     }
   },
   capabilityThreads[]->{ _id, title, domain, description },
-  badges[]->{ _id, title, emoji, criteriaSummary }
+  badges[]->{ _id, title, emoji, criteriaSummary },
+  pedagogyLensBundles[]{ pedagogyKey, lens{ perspective, facilitatorTips, languageFrame, watchFor }, methodAffinity },
+  methodologyOverlays[]{ practiceKey, overlay{ before, during, after, materialAdaptations } }
+}`;
+
+// Lightweight module listing for library browse and marketplace.
+// Returns the module with enough context to render a card and to run
+// scoreModules (subjects, ageRange, modality summary, sessionType,
+// capabilityThreads for gap matching, and lens bundles for pedagogy scoring).
+export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published"]{
+  _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
+  sessionType, availability, status,
+  ${PACK_INDICATORS_PROJECTION},
+  "approachCount": count(approaches),
+  "modalities": approaches[@->status == "published"]->modality,
+  capabilityThreads[]->{ _id, title, domain },
+  badges[]->{ _id, title, emoji },
+  pedagogyLensBundles[]{ pedagogyKey, methodAffinity },
+  methodologyOverlays[]{ practiceKey },
+  "owningPack": *[_type == "pack" && status == "published" && references(^._id)][0]{
+    _id, title, slug
+  }
 }`;
 
 // Single activity with full content
@@ -217,7 +238,8 @@ export const SCORING_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
   "modules": modules[@->status == "published"]->{
     _id, title, subjects,
     "capabilityThreadTitles": capabilityThreads[]->title,
-    "averageEnergyLevel": approaches[0].activities[0]->energyLevel
+    "averageEnergyLevel": approaches[0].activities[0]->energyLevel,
+    methodAffinity
   }
 }`;
 
@@ -250,7 +272,8 @@ export const DISCOVERY_OWN_MODULES_QUERY = `*[_type == "module" && status == "pu
 export const SCORING_OWN_MODULES_QUERY = `*[_type == "module" && status == "published" && authorFamilyId == $familyId]{
   _id, title, subjects,
   "capabilityThreadTitles": capabilityThreads[]->title,
-  "averageEnergyLevel": approaches[0]->activities[0]->energyLevel
+  "averageEnergyLevel": approaches[0]->activities[0]->energyLevel,
+  methodAffinity
 }`;
 
 // Single asset with full metadata

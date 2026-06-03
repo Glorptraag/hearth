@@ -97,6 +97,61 @@ export const moduleSchema = defineType({
         ],
       },
     }),
+    // ─── Phase 1 (Intelligence refactor): run shape, preview, availability ───
+    // Distinguishes the two run lifecycles a module supports. `sustained` is
+    // a clean start-finish session (e.g. a 45-minute baking lab). `open_ended`
+    // is a drop-and-pickup practice that stays resumable across days (e.g.
+    // a nature journal, sketchbook practice). Backfilled to `sustained` for
+    // every existing module — hand-flag the open-ended candidates via Studio
+    // (or scripts/data/open-ended-modules.json). Spec: PLAN-intelligence-refactor.md Q2.
+    defineField({
+      name: 'sessionType',
+      title: 'Session Type',
+      type: 'string',
+      initialValue: 'sustained',
+      options: {
+        list: [
+          { title: 'Active sustained session', value: 'sustained' },
+          { title: 'Open-ended drop-and-pickup', value: 'open_ended' },
+        ],
+      },
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'idleDaysBeforeAutoClose',
+      title: 'Idle days before auto-close',
+      description:
+        'After this many days of inactivity, an active run is treated as abandoned by the Library status board. Default 14 for sustained; leave null for open_ended (never auto-closes).',
+      type: 'number',
+      initialValue: 14,
+      hidden: ({ parent }) => parent?.sessionType === 'open_ended',
+    }),
+    // Surfaces a single activity in Marketplace as a preview-before-add.
+    // The activity must already exist within one of this module's approaches.
+    defineField({
+      name: 'previewActivityRef',
+      title: 'Preview Activity',
+      description:
+        'Optional. One activity from this module to show as a Marketplace preview-before-add.',
+      type: 'reference',
+      to: [{ type: 'activity' }],
+    }),
+    // Mirrors pack.availability for standalone modules. Modules nested inside
+    // a pack inherit the pack's availability — this field is only consulted
+    // for modules that surface in Marketplace on their own.
+    defineField({
+      name: 'availability',
+      title: 'Availability (standalone modules)',
+      description:
+        'Only used when the module is sold as a standalone in Marketplace. Modules inside a pack inherit the pack availability.',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Membership included', value: 'included' },
+          { title: 'Premium (Stripe)', value: 'premium' },
+        ],
+      },
+    }),
     defineField({
       name: 'printables',
       title: 'Printables',

@@ -3,7 +3,8 @@ import {
   ACTIVITY_SUBJECT_MAP,
   deriveSubjects,
   deriveEntryTitle,
-  derivePhotoEvidenceUrls,
+  derivePhotoEvidenceUrlsLegacy,
+  deriveEvidenceRows,
   isThinEntry,
   buildEntrySavePayload,
   type EntrySaveForm,
@@ -55,9 +56,9 @@ describe('deriveEntryTitle', () => {
   });
 });
 
-describe('derivePhotoEvidenceUrls', () => {
+describe('derivePhotoEvidenceUrlsLegacy', () => {
   it('keeps only photo content, in order', () => {
-    const urls = derivePhotoEvidenceUrls([
+    const urls = derivePhotoEvidenceUrlsLegacy([
       { type: 'photo', content: 'a.jpg' },
       { type: 'quote', content: 'a wise thing' },
       { type: 'photo', content: 'b.jpg' },
@@ -67,8 +68,31 @@ describe('derivePhotoEvidenceUrls', () => {
   });
 
   it('returns an empty array when there is no photo evidence', () => {
-    expect(derivePhotoEvidenceUrls([{ type: 'note', content: 'n' }])).toEqual([]);
-    expect(derivePhotoEvidenceUrls([])).toEqual([]);
+    expect(derivePhotoEvidenceUrlsLegacy([{ type: 'note', content: 'n' }])).toEqual([]);
+    expect(derivePhotoEvidenceUrlsLegacy([])).toEqual([]);
+  });
+});
+
+describe('deriveEvidenceRows', () => {
+  it('maps all five evidence kinds into normalised row shapes', () => {
+    const input = [
+      { kind: 'photo' as const, content: 'https://blob/a.jpg', caption: 'Sunset painting' },
+      { kind: 'quote' as const, content: 'The world is flat', caption: undefined },
+      { kind: 'note' as const, content: 'Struggled with fractions' },
+      { kind: 'link' as const, content: 'https://example.com', metadata: { title: 'Reference' } },
+      { kind: 'audio' as const, content: 'https://blob/rec.webm', metadata: { durationMs: 5200, mimeType: 'audio/webm' } },
+    ];
+    const rows = deriveEvidenceRows(input);
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toEqual({ kind: 'photo', content: 'https://blob/a.jpg', caption: 'Sunset painting', metadata: {} });
+    expect(rows[1]).toEqual({ kind: 'quote', content: 'The world is flat', caption: null, metadata: {} });
+    expect(rows[2]).toEqual({ kind: 'note', content: 'Struggled with fractions', caption: null, metadata: {} });
+    expect(rows[3]).toEqual({ kind: 'link', content: 'https://example.com', caption: null, metadata: { title: 'Reference' } });
+    expect(rows[4]).toEqual({ kind: 'audio', content: 'https://blob/rec.webm', caption: null, metadata: { durationMs: 5200, mimeType: 'audio/webm' } });
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(deriveEvidenceRows([])).toEqual([]);
   });
 });
 

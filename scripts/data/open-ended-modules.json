@@ -1,0 +1,4 @@
+{
+  "_comment": "Editorial list of module slugs to backfill with sessionType='open_ended'. Every module in Sanity that ISN'T in this list gets sessionType='sustained' (the conservative default). Look up slugs in Sanity Studio → Module → Slug field. Seed candidates from PLAN-intelligence-refactor.md Q2: nature journal, sketchbook practice, instrument practice, garden observations.",
+  "slugs": []
+}

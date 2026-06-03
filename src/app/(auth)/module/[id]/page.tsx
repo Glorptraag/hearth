@@ -432,7 +432,7 @@ export default function ModuleDetailPage() {
           icon={Wrench}
           heading="This module isn't ready to run"
           body={runnerError}
-          cta={{ label: 'Browse activities', href: '/explore/activities' }}
+          cta={{ label: 'Browse activities', href: '/library?tab=browse' }}
         />
       </div>
     );
@@ -445,7 +445,7 @@ export default function ModuleDetailPage() {
           icon={Wrench}
           heading="Module not available"
           body="This module may have been removed or is temporarily unavailable. Your learning data is safe."
-          cta={{ label: 'Browse activities', href: '/explore/activities' }}
+          cta={{ label: 'Browse activities', href: '/library?tab=browse' }}
         />
       </div>
     );

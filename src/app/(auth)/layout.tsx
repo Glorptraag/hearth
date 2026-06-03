@@ -51,7 +51,9 @@ const PRIMARY_NAV: ReadonlyArray<NavRowConfig> = [
     Icon: Compass,
     tray: [
       { href: "/library", label: "Library", Icon: Books },
-      { href: "/explore/activities", label: "Explore", Icon: Compass },
+      // Browse moved into Library tab in Phase 4.6; nav now points at the
+      // canonical home. Old /explore/activities 308s here per Task 5.1.
+      { href: "/library?tab=browse", label: "Browse", Icon: Compass },
       { href: "/explore/marketplace", label: "Marketplace", Icon: Storefront },
     ],
   },
@@ -65,7 +67,7 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/log") return pathname === "/log";
   if (href === "/planner") return pathname.startsWith("/planner");
   if (href === "/library") return pathname.startsWith("/library");
-  if (href === "/explore/activities") return pathname === "/explore/activities";
+  if (href === "/library?tab=browse") return pathname === "/library";
   if (href === "/explore/marketplace") return pathname.startsWith("/explore/marketplace");
   if (href === "/settings") return pathname === "/settings";
   if (href === "/notifications") return pathname === "/notifications";

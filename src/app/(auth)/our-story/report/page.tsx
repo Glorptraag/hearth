@@ -628,7 +628,7 @@ export default function ReportPage() {
                         {GAP_ACTIONS[g.key] ?? 'Log an activity in this area'}
                       </p>
                       <Link
-                        href={`/explore/activities?subject=${g.key}`}
+                        href={`/library?tab=browse&subject=${g.key}`}
                         className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
                       >
                         Explore →
@@ -666,7 +666,7 @@ export default function ReportPage() {
                         {g.count === 0 ? 'No entries yet' : `Only ${g.count} entr${g.count === 1 ? 'y' : 'ies'} logged`}
                       </p>
                       <Link
-                        href={`/explore/activities?subject=${g.key}`}
+                        href={`/library?tab=browse&subject=${g.key}`}
                         className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
                       >
                         Browse Activities →
@@ -745,7 +745,7 @@ export default function ReportPage() {
                       {g.count === 0 ? 'No entries yet' : `${g.count} entr${g.count === 1 ? 'y' : 'ies'}`}
                     </span>
                     <Link
-                      href={`/explore/activities?subject=${g.key}`}
+                      href={`/library?tab=browse&subject=${g.key}`}
                       className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
                     >
                       Explore →

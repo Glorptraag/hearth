@@ -74,7 +74,9 @@ const evidenceItemSchema = z.object({
 });
 
 const createEntrySchema = z.object({
-  title: z.string().min(1),
+  // Optional + coalesced below: a description-less Quick log has no title to
+  // send, and a blank title must never reject a parent's logged learning.
+  title: z.string().optional(),
   description: z.string().optional(),
   dateOccurred: z.string().optional(),
   subjects: z.array(z.enum(SUBJECTS)).optional(),
@@ -129,7 +131,11 @@ export const POST = routeHandler(async (request: NextRequest) => {
   if ('error' in result) return result.error;
   const parsed = result;
 
-  const { mode, evidence: evidenceItems, ...entryData } = parsed.data;
+  const { mode, evidence: evidenceItems, title, ...entryData } = parsed.data;
+
+  // Guarantee a non-empty title for every caller (Logger Quick logs, module
+  // runner, import). Falls back to the description head, then a generic label.
+  const safeTitle = title?.trim() || entryData.description?.trim().slice(0, 60) || 'Learning entry';
 
   // Log mode for telemetry (informational only — not gated server-side)
   if (mode) {
@@ -154,6 +160,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
       .insert(learningEntries)
       .values({
         familyId: family.id,
+        title: safeTitle,
         ...entryData,
         ...(willEnrich
           ? { aiEnrichment: { status: 'pending' as const, startedAt: new Date().toISOString() } }

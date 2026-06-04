@@ -83,8 +83,11 @@ export const POST = routeHandler(async (request: NextRequest) => {
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    // Graceful degradation by design (see docs/deployment-runbook.md). The dev
+    // reason stays in the server log; parents see a friendly message instead.
+    console.error('[evidence/upload] BLOB_READ_WRITE_TOKEN not set — photo uploads disabled in this environment');
     return NextResponse.json(
-      { error: 'Evidence storage not configured. Set BLOB_READ_WRITE_TOKEN in environment.' },
+      { error: 'Photo uploads aren’t available right now. Please try again later.' },
       { status: 503 }
     );
   }

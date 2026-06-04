@@ -58,6 +58,9 @@ export default function ModuleDetailPage() {
     Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }> | undefined
   >(undefined);
   const patchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards against a duplicate POST while the run-create request is in flight
+  // (the run-on-prep effect + onStart can both fire before runId resolves).
+  const creatingRunRef = useRef(false);
   const [packState, setPackState] = useState<{ printablesDownloaded: boolean; kitOwned: boolean }>(
     { printablesDownloaded: false, kitOwned: false },
   );
@@ -118,6 +121,8 @@ export default function ModuleDetailPage() {
   }, [runId]);
 
   function startRun(sessionType: 'sustained' | 'open_ended', approachId?: string) {
+    if (creatingRunRef.current || runId) return;
+    creatingRunRef.current = true;
     fetch('/api/module-runs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -130,7 +135,8 @@ export default function ModuleDetailPage() {
           try { localStorage.setItem(RUN_ID_KEY, run.id); } catch { /* ignore */ }
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { creatingRunRef.current = false; });
   }
 
   function patchRunActivity(currentRunId: string) {
@@ -143,6 +149,19 @@ export default function ModuleDetailPage() {
       }).catch(() => {});
     }, 2000);
   }
+
+  // Create the run as soon as Prep opens (run-on-prep) so the materials
+  // checklist persists immediately via PATCH instead of being stranded in
+  // component state until Start. The localStorage check avoids racing the
+  // resume-reattach effect (which restores runId from a saved session).
+  useEffect(() => {
+    if (mode !== 'prep' || runId || !module) return;
+    try { if (localStorage.getItem(RUN_ID_KEY)) return; } catch { /* ignore */ }
+    const approach = module.approaches?.[selectedApproachIdx];
+    startRun(module.sessionType ?? 'sustained', approach?._id);
+    // startRun reads current component state each render; deps cover its inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, runId, module, selectedApproachIdx]);
 
   const handleModeChange = useCallback((newMode: Mode) => {
     if (newMode === 'log' && facilitateStartRef.current) {

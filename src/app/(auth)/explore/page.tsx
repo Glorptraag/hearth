@@ -53,6 +53,8 @@ export default function ExplorePage() {
 
   useEffect(() => {
     let cancelled = false;
+    // Fetch-on-mount loading flag; the async body below resolves it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
     (async () => {

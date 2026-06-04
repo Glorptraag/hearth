@@ -64,13 +64,18 @@ export default function PrepMode({
     initialMaterialsState ?? {},
   );
   const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Capture the latest state in a ref so the debounced flush always reads
-  // the freshest value regardless of when its closure was created.
+  // Capture the latest state in a ref so the debounced flush always reads the
+  // freshest value regardless of when its closure was created. Synced via an
+  // effect — refs must not be written during render.
   const stateRef = useRef(materialsState);
-  stateRef.current = materialsState;
-
-  // Re-hydrate when the run changes (e.g. resume of a prior session).
   useEffect(() => {
+    stateRef.current = materialsState;
+  }, [materialsState]);
+
+  // Re-hydrate when the run changes (e.g. resume of a prior session). Guarded
+  // so a fresh run (no saved state) doesn't clobber pre-Start ticks.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialMaterialsState) setMaterialsState(initialMaterialsState);
   }, [runId, initialMaterialsState]);
 
@@ -111,8 +116,6 @@ export default function PrepMode({
   }, [runId]);
 
   const requiredMaterials = aggregated.filter((m) => m.required);
-  const allRequiredReady = requiredMaterials.length > 0 &&
-    requiredMaterials.every((m) => materialsState[m.key]?.haveIt === true);
 
   return (
     <div className="px-md py-xl max-w-2xl mx-auto pb-32">
@@ -277,12 +280,6 @@ export default function PrepMode({
               );
             })}
           </div>
-          {!runId && requiredMaterials.length > 0 && (
-            <p className="mt-md font-sans text-xs text-text-muted">
-              Ticks save locally until you start the session — they&rsquo;ll travel into the
-              run once you tap Start.
-            </p>
-          )}
         </div>
       )}
 

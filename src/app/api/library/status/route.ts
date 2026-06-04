@@ -57,9 +57,27 @@ export interface LibraryStatusItem {
   materialsReady: boolean | null;
 }
 
+/**
+ * Per-module status, keyed by sanityModuleId. Unlike `items` (one aggregate
+ * per library row — a pack row leaves sanityModuleId null), this exposes a
+ * status for every individual module the family can run, INCLUDING modules
+ * inherited from packs. The "In use" tab maps modules → status through this.
+ */
+export interface LibraryModuleStatus {
+  sanityModuleId: string;
+  status: LibraryStatus;
+  lastActivityAt: string | null;
+  openRunId: string | null;
+  plannedDates: string[];
+  runCount: number;
+  materialsReady: boolean | null;
+}
+
 export interface LibraryStatusResponse {
   /** Sorted: in_flight first, then planned, recently_used, abandoned, untouched. */
   items: LibraryStatusItem[];
+  /** Per-module statuses (incl. pack-nested modules). Keyed by sanityModuleId. */
+  moduleStatuses: LibraryModuleStatus[];
   /** Quick rollup so the surface can render counts without re-tallying. */
   counts: Record<LibraryStatus, number>;
 }
@@ -106,6 +124,7 @@ export const GET = routeHandler(async () => {
   if (libraryRows.length === 0) {
     return NextResponse.json<LibraryStatusResponse>({
       items: [],
+      moduleStatuses: [],
       counts: { in_flight: 0, planned: 0, recently_used: 0, abandoned: 0, untouched: 0 },
     });
   }
@@ -158,6 +177,7 @@ export const GET = routeHandler(async () => {
     }));
     return NextResponse.json<LibraryStatusResponse>({
       items,
+      moduleStatuses: [],
       counts: tally(items),
     });
   }
@@ -230,20 +250,25 @@ export const GET = routeHandler(async () => {
     if (!prev || e.dateOccurred > prev) recentByModule.set(e.sourceModuleId, e.dateOccurred);
   }
 
-  const items: LibraryStatusItem[] = libraryRows.map((r) => {
-    // Collect every moduleId relevant to this library row.
-    const moduleIdsForRow: string[] = [];
-    if (r.sanityModuleId) moduleIdsForRow.push(r.sanityModuleId);
-    if (r.sanityPackId) moduleIdsForRow.push(...(packToModuleIds.get(r.sanityPackId) ?? []));
-
-    // Aggregate signals across the row's modules.
+  // Aggregate the three signal sources across a set of module IDs into a
+  // single derived status. Used for BOTH per-row aggregates (a pack row spans
+  // all its modules) and per-module statuses (one module each).
+  type Derived = {
+    status: LibraryStatus;
+    lastActivityAt: string | null;
+    openRunId: string | null;
+    plannedDates: string[];
+    runCount: number;
+    materialsReady: boolean | null;
+  };
+  const deriveForModules = (moduleIds: string[], untouchedFallback: string | null): Derived => {
     let openRun: (typeof runs)[number] | null = null;
     let openRunIsStale = false;
     const plannedDates: string[] = [];
     let lastEntryDate: string | null = null;
     let runCount = 0;
 
-    for (const mid of moduleIdsForRow) {
+    for (const mid of moduleIds) {
       const rs = runsByModule.get(mid) ?? [];
       runCount += rs.length;
       for (const run of rs) {
@@ -276,7 +301,7 @@ export const GET = routeHandler(async () => {
       lastActivityAt = lastEntryDate;
     } else {
       status = 'untouched';
-      lastActivityAt = r.addedAt?.toISOString() ?? null;
+      lastActivityAt = untouchedFallback;
     }
 
     // materialsReady: true when openRun.materialsState has at least one entry
@@ -291,11 +316,6 @@ export const GET = routeHandler(async () => {
     }
 
     return {
-      rowId: r.id,
-      kind: r.sanityPackId ? ('pack' as const) : ('module' as const),
-      sanityPackId: r.sanityPackId,
-      sanityModuleId: r.sanityModuleId,
-      addedAt: r.addedAt?.toISOString() ?? null,
       status,
       lastActivityAt,
       openRunId: openRun?.id ?? null,
@@ -303,7 +323,32 @@ export const GET = routeHandler(async () => {
       runCount,
       materialsReady,
     };
+  };
+
+  const items: LibraryStatusItem[] = libraryRows.map((r) => {
+    // Collect every moduleId relevant to this library row.
+    const moduleIdsForRow: string[] = [];
+    if (r.sanityModuleId) moduleIdsForRow.push(r.sanityModuleId);
+    if (r.sanityPackId) moduleIdsForRow.push(...(packToModuleIds.get(r.sanityPackId) ?? []));
+
+    const derived = deriveForModules(moduleIdsForRow, r.addedAt?.toISOString() ?? null);
+
+    return {
+      rowId: r.id,
+      kind: r.sanityPackId ? ('pack' as const) : ('module' as const),
+      sanityPackId: r.sanityPackId,
+      sanityModuleId: r.sanityModuleId,
+      addedAt: r.addedAt?.toISOString() ?? null,
+      ...derived,
+    };
   });
+
+  // Per-module statuses for every module in the inventory (pack-nested
+  // included) so the "In use" tab can resolve a status for each module card.
+  const moduleStatuses: LibraryModuleStatus[] = allModuleIdList.map((mid) => ({
+    sanityModuleId: mid,
+    ...deriveForModules([mid], null),
+  }));
 
   // Sort by status priority then by lastActivityAt desc.
   items.sort((a, b) => {
@@ -318,6 +363,7 @@ export const GET = routeHandler(async () => {
 
   return NextResponse.json<LibraryStatusResponse>({
     items,
+    moduleStatuses,
     counts: tally(items),
   });
 }, { route: 'GET /api/library/status' });

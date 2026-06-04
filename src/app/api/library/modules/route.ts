@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { PACK_INDICATORS_PROJECTION } from '@/lib/sanity/queries';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
@@ -67,10 +67,14 @@ export const GET = routeHandler(async () => {
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
 
+  // Active rows only — a removed pack/module must drop out of Browse and the
+  // Logger module picker (matches /api/library + /api/library/status, which
+  // both filter removedAt). Recently-Removed is the only surface that asks
+  // for soft-deleted rows.
   const records = await db
     .select()
     .from(familyLibrary)
-    .where(eq(familyLibrary.familyId, family.id));
+    .where(and(eq(familyLibrary.familyId, family.id), isNull(familyLibrary.removedAt)));
 
   if (records.length === 0) return NextResponse.json([]);
 

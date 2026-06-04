@@ -55,14 +55,15 @@ const AGE_BANDS = [
 
 type SortMode = 'relevance' | 'newest' | 'alphabetical';
 
-export function BrowseTab() {
+export function BrowseTab({ initialSubjects = [] }: { initialSubjects?: string[] }) {
   const [modules, setModules] = useState<LibraryModuleItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters — `subjects` seeds from any ?subject= deep link (Library passes it
+  // in and re-keys this component when the link changes).
   const [query, setQuery] = useState('');
-  const [subjects, setSubjects] = useState<Set<string>>(new Set());
+  const [subjects, setSubjects] = useState<Set<string>>(() => new Set(initialSubjects));
   const [modalities, setModalities] = useState<Set<string>>(new Set());
   const [ageBandIdx, setAgeBandIdx] = useState<number | null>(null);
   const [sessionType, setSessionType] = useState<'sustained' | 'open_ended' | null>(null);

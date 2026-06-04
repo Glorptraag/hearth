@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 import { Books, Sparkle, Play, CalendarBlank, X } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { LibraryModuleItem } from '@/app/api/library/modules/route';
-import type { LibraryStatus, LibraryStatusResponse } from '@/app/api/library/status/route';
+import type { LibraryStatus, LibraryStatusResponse, LibraryModuleStatus } from '@/app/api/library/status/route';
 import { BrowseTab } from './_components/BrowseTab';
 import { RecentlyRemovedDrawer } from './_components/RecentlyRemovedDrawer';
 
@@ -65,14 +66,39 @@ const SUBJECT_LABELS: Record<string, string> = {
   languages: 'Languages',
 };
 
+function isTab(v: string | null): v is Tab {
+  return v === 'modules' || v === 'packs' || v === 'materials' || v === 'browse';
+}
+
 export default function LibraryClient() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [modules, setModules] = useState<LibraryModuleItem[]>([]);
   const [status, setStatus] = useState<LibraryStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   // Modules (in use) is the default tab — typical family has 5 packs × 6
   // modules and modules are the unit a parent actually runs in a session.
-  const [tab, setTab] = useState<Tab>('modules');
+  // Initial tab derives from ?tab= so redirected users (legacy
+  // /explore/activities → /library?tab=browse) and Browse deep-links land on
+  // the right tab instead of always defaulting to "In use".
+  const tabParam = searchParams.get('tab');
+  const [tab, setTab] = useState<Tab>(isTab(tabParam) ? tabParam : 'modules');
+
+  // ?subject=<key>[,<key>] seeds the Browse subject filters for report deep
+  // links (/library?tab=browse&subject=science). Keying BrowseTab on it means
+  // a fresh subject link re-applies even if Browse is already mounted.
+  const subjectParam = searchParams.get('subject');
+  const browseInitialSubjects = useMemo(
+    () => (subjectParam ? subjectParam.split(',').map((s) => s.trim()).filter(Boolean) : []),
+    [subjectParam],
+  );
+
+  // Sync the tab to ?tab= on client navigations that change the query without
+  // remounting (e.g. the desktop nav "Browse" link while already on /library).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isTab(tabParam)) setTab(tabParam);
+  }, [tabParam]);
   // Task 4.7 — Recently-Removed drawer state.
   const [removedDrawerOpen, setRemovedDrawerOpen] = useState(false);
 
@@ -100,12 +126,15 @@ export default function LibraryClient() {
 
   const packItems = items.filter((i) => i.kind === 'pack');
 
-  // moduleId → status item lookup so cards can render badges without
-  // re-querying. Used for both standalone and pack-nested modules.
+  // moduleId → per-module status lookup so cards can render badges without
+  // re-querying. Built from `moduleStatuses` (not `items`) because a pack row
+  // in `items` carries the aggregate under a null sanityModuleId — its nested
+  // modules only have statuses in `moduleStatuses`. Using `items` here is what
+  // dropped pack-inherited modules out of the "In use" tab.
   const statusByModuleId = useMemo(() => {
-    const map = new Map<string, NonNullable<typeof status>['items'][number]>();
-    for (const item of status?.items ?? []) {
-      if (item.sanityModuleId) map.set(item.sanityModuleId, item);
+    const map = new Map<string, LibraryModuleStatus>();
+    for (const ms of status?.moduleStatuses ?? []) {
+      map.set(ms.sanityModuleId, ms);
     }
     return map;
   }, [status]);
@@ -304,7 +333,12 @@ export default function LibraryClient() {
           />
         )}
 
-        {tab === 'browse' && <BrowseTab />}
+        {tab === 'browse' && (
+          <BrowseTab
+            key={`browse-${subjectParam ?? ''}`}
+            initialSubjects={browseInitialSubjects}
+          />
+        )}
       </div>
       <RecentlyRemovedDrawer
         open={removedDrawerOpen}

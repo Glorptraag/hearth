@@ -59,13 +59,10 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
 
   const fetchData = useCallback(async () => {
     try {
-      // Task 6.1 — route Family Fit through the dedicated /api/snapshot/gaps
-      // subview rather than re-aggregating client-side from the raw snapshot.
-      // Cleaner data shape, cross-learner aggregate handled server-side.
-      const [libraryRes, entitlementsRes, gapsRes] = await Promise.all([
+      const [libraryRes, entitlementsRes, snapshotRes] = await Promise.all([
         fetch('/api/library'),
         fetch('/api/entitlements').catch(() => null),
-        fetch('/api/snapshot/gaps').catch(() => null),
+        fetch('/api/snapshot').catch(() => null),
       ]);
       if (libraryRes.ok) {
         const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
@@ -75,16 +72,17 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
         const owned: string[] = await entitlementsRes.json();
         setOwnedIds(new Set(owned));
       }
-      if (gapsRes?.ok) {
-        const gaps = (await gapsRes.json()) as {
-          allLearnersUnderserved: string[];
-          someLearnersUnderserved: string[];
-        };
-        // Surface both family-wide and any-learner gaps — packs covering
-        // either get the Family Fit chip in the existing badge logic.
-        setGapSubjects(
-          Array.from(new Set([...(gaps.allLearnersUnderserved ?? []), ...(gaps.someLearnersUnderserved ?? [])])),
-        );
+      // Extract gap subjects from snapshot
+      if (snapshotRes?.ok) {
+        const snap = await snapshotRes.json();
+        const children = snap?.snapshotData?.children ?? {};
+        const allGaps = new Set<string>();
+        for (const child of Object.values(children) as Array<{ gap_analysis?: { underserved_subjects?: string[] } }>) {
+          for (const s of child?.gap_analysis?.underserved_subjects ?? []) {
+            allGaps.add(s);
+          }
+        }
+        setGapSubjects([...allGaps]);
       }
     } finally {
       setLoading(false);

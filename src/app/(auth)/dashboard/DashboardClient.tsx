@@ -591,7 +591,7 @@ export default function DashboardClient({
               {snapshot.recommendations[0].title}
             </p>
             <Link
-              href={`${basePath}/library?tab=browse`}
+              href={`${basePath}/explore/activities`}
               className="font-sans text-[0.8rem] font-medium text-sage hover:underline inline-flex items-center gap-xs"
             >
               See suggestions →

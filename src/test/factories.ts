@@ -29,8 +29,6 @@ import {
   badgeDefinitions,
   plannerEntries,
   familyIntelligenceSnapshots,
-  moduleRuns,
-  learningEntryEvidence,
 } from '@/lib/db/schema';
 import { TEST_FAMILY_ID, TEST_USER_ID } from '../../vitest.setup';
 
@@ -40,8 +38,6 @@ export type LearningEntry = InferSelectModel<typeof learningEntries>;
 export type BadgeDefinition = InferSelectModel<typeof badgeDefinitions>;
 export type PlannerEntry = InferSelectModel<typeof plannerEntries>;
 export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
-export type ModuleRun = InferSelectModel<typeof moduleRuns>;
-export type LearningEntryEvidence = InferSelectModel<typeof learningEntryEvidence>;
 
 const EPOCH = new Date('2026-01-01T00:00:00Z');
 const EPOCH_DATE = '2026-01-01'; // PostgreSQL `date` columns round-trip as ISO strings
@@ -119,8 +115,6 @@ export function buildEntry(overrides: Partial<LearningEntry> = {}): LearningEntr
     sourceProjectId: null,
     sourceStageNumber: null,
     sourceSessionId: null,
-    moduleRunId: null,
-    plannerEntryId: null,
     status: 'draft',
     observationDetails: {},
     aiEnrichment: null,
@@ -193,41 +187,6 @@ export function buildSnapshot(
     snapshotVersion: 1,
     createdAt: EPOCH,
     updatedAt: EPOCH,
-    ...overrides,
-  };
-}
-
-export function buildModuleRun(overrides: Partial<ModuleRun> = {}): ModuleRun {
-  return {
-    id: overrides.id ?? randomUUID(),
-    familyId: TEST_FAMILY_ID,
-    sanityModuleId: 'mod-test-001',
-    approachId: null,
-    learnerIds: [],
-    state: 'active',
-    sessionType: 'sustained',
-    startedAt: EPOCH,
-    lastActiveAt: EPOCH,
-    finishedAt: null,
-    materialsState: {},
-    device: null,
-    createdAt: EPOCH,
-    updatedAt: EPOCH,
-    ...overrides,
-  };
-}
-
-export function buildEvidence(
-  overrides: Partial<LearningEntryEvidence> = {}
-): LearningEntryEvidence {
-  return {
-    id: overrides.id ?? randomUUID(),
-    entryId: overrides.entryId ?? randomUUID(),
-    kind: 'note',
-    content: 'Built a paperclip-and-magnet circuit.',
-    caption: null,
-    metadata: {},
-    createdAt: EPOCH,
     ...overrides,
   };
 }

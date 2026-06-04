@@ -8,7 +8,6 @@ type PedagogyVocabulary = ReturnType<typeof getPedagogyVocabulary>;
 
 interface PedagogyState {
   pedagogy: Pedagogy;
-  pedagogyValues: string[];
   pedagogyPractices: string[];
 }
 
@@ -16,13 +15,12 @@ let cachedState: PedagogyState | null = null;
 
 export function usePedagogy(): {
   pedagogy: Pedagogy;
-  pedagogyValues: string[];
   pedagogyPractices: string[];
   vocab: PedagogyVocabulary;
   loading: boolean;
 } {
   const [state, setState] = useState<PedagogyState>(
-    cachedState ?? { pedagogy: 'eclectic', pedagogyValues: [], pedagogyPractices: [] },
+    cachedState ?? { pedagogy: 'eclectic', pedagogyPractices: [] },
   );
   const [loading, setLoading] = useState(!cachedState);
 
@@ -33,7 +31,6 @@ export function usePedagogy(): {
       .then((data) => {
         const next: PedagogyState = {
           pedagogy: (data?.pedagogyPreference ?? 'eclectic') as Pedagogy,
-          pedagogyValues: Array.isArray(data?.pedagogyValues) ? data.pedagogyValues : [],
           pedagogyPractices: Array.isArray(data?.pedagogyPractices) ? data.pedagogyPractices : [],
         };
         cachedState = next;
@@ -45,7 +42,6 @@ export function usePedagogy(): {
 
   return {
     pedagogy: state.pedagogy,
-    pedagogyValues: state.pedagogyValues,
     pedagogyPractices: state.pedagogyPractices,
     vocab: getPedagogyVocabulary(state.pedagogy),
     loading,

@@ -20,12 +20,11 @@ export const DRAFT_KEY = 'hearth:logger:draft';
 export const DRAFT_STALE_MS = 4 * 60 * 60 * 1000;
 
 export type DraftEvidenceItem = {
-  type: 'photo' | 'quote' | 'note' | 'link' | 'audio';
+  type: 'photo' | 'quote' | 'note' | 'link';
   content: string;
   caption?: string;
   url?: string;
   name?: string;
-  metadata?: Record<string, unknown>;
 };
 
 /** The persisted draft shape — the Logger form fields plus a save timestamp. */

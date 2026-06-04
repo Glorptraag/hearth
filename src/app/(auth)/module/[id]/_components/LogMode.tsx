@@ -13,8 +13,6 @@ export default function LogMode({
   onRemoveCapture,
   selectedApproachIdx,
   completedActivityIdxs,
-  runId,
-  plannerEntryId,
 }: {
   module: Module;
   sessionElapsed?: number;
@@ -27,14 +25,6 @@ export default function LogMode({
   // Indexes (into module.approaches[selectedApproachIdx].activities[]) of
   // activities the parent stepped through to completion in Facilitate mode.
   completedActivityIdxs?: number[];
-  // Note: runId + plannerEntryId props documented below.
-  // The module_runs row id for this session. Carried from FacilitateMode
-  // via parent state; included in the entry POST body (task 2.8).
-  runId?: string | null;
-  // The planner_entries row id, if the parent launched this run from a
-  // planner item. Read from ?plannerEntryId search param at page level and
-  // included in the entry POST body so the planner ↔ logger loop closes.
-  plannerEntryId?: string | null;
 }) {
   const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -157,15 +147,6 @@ export default function LogMode({
       }
       if (evidenceUrls.length > 0) {
         body.evidenceUrls = evidenceUrls;
-      }
-      // Task 2.8: link the entry back to the module_runs row and (if the
-      // parent launched this from a planner item) the planner_entries row.
-      // Both are nullable FKs on learning_entries.
-      if (runId) {
-        body.moduleRunId = runId;
-      }
-      if (plannerEntryId) {
-        body.plannerEntryId = plannerEntryId;
       }
       const res = await fetch('/api/entries', {
         method: 'POST',

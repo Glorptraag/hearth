@@ -1,24 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Module, ActivityOverlay, Activity } from './types';
 import { SETTING_ICON, ENERGY_ICON, PEDAGOGY_LABELS } from './constants';
 import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components/content/types';
 import { Check, Printer, Asterisk } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
-import { aggregateModuleMaterials, type ModuleSource } from '@/lib/sanity/materials-aggregate';
-
-/**
- * Per-run materials checklist state — keyed by material slug, persisted into
- * module_runs.materialsState via PATCH (Task 4.4). When `runId` is null
- * (parent hasn't entered Facilitate yet) the checklist falls back to local
- * state so the parent can prep before starting; the next session start picks
- * it up via the run's initial state.
- */
-type MaterialsState = Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }>;
-
-const PATCH_DEBOUNCE_MS = 400;
 
 export default function PrepMode({
   module,
@@ -31,8 +19,6 @@ export default function PrepMode({
   indicators,
   packState,
   onPrintMaterials,
-  runId,
-  initialMaterialsState,
 }: {
   module: Module;
   approachIdx: number;
@@ -44,75 +30,14 @@ export default function PrepMode({
   indicators?: Indicators;
   packState?: { printablesDownloaded: boolean; kitOwned: boolean };
   onPrintMaterials?: () => void;
-  /** module_runs row id when a run is active; null pre-Start. */
-  runId?: string | null;
-  /** Hydrated from the run's materialsState; empty when starting fresh. */
-  initialMaterialsState?: MaterialsState;
 }) {
   const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
+  const firstActivityMaterials = activities[0]?.materials ?? [];
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
 
-  // Aggregated materials across every activity in every approach — dedup
-  // and required-OR handled by the helper. Memo on module identity so the
-  // checklist key set is stable across rerenders.
-  const aggregated = useMemo(
-    () => aggregateModuleMaterials(module as ModuleSource),
-    [module],
-  );
-
-  const [materialsState, setMaterialsState] = useState<MaterialsState>(
-    initialMaterialsState ?? {},
-  );
-  const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Capture the latest state in a ref so the debounced flush always reads
-  // the freshest value regardless of when its closure was created.
-  const stateRef = useRef(materialsState);
-  stateRef.current = materialsState;
-
-  // Re-hydrate when the run changes (e.g. resume of a prior session).
-  useEffect(() => {
-    if (initialMaterialsState) setMaterialsState(initialMaterialsState);
-  }, [runId, initialMaterialsState]);
-
-  const flushPatch = () => {
-    if (!runId) return;
-    fetch(`/api/module-runs/${runId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ materialsState: stateRef.current }),
-    }).catch(() => {
-      // Best-effort. Stale state is recoverable on next tick.
-    });
-  };
-
-  const toggleCheck = (key: string) => {
-    setMaterialsState((prev) => {
-      const existing = prev[key];
-      const next: MaterialsState = {
-        ...prev,
-        [key]: { haveIt: !existing?.haveIt, source: existing?.source },
-      };
-      return next;
-    });
-    if (!runId) return;
-    if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
-    patchTimerRef.current = setTimeout(flushPatch, PATCH_DEBOUNCE_MS);
-  };
-
-  // Flush on unmount so a quick toggle-then-leave doesn't lose state.
-  useEffect(() => {
-    return () => {
-      if (patchTimerRef.current) {
-        clearTimeout(patchTimerRef.current);
-        flushPatch();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runId]);
-
-  const requiredMaterials = aggregated.filter((m) => m.required);
-  const allRequiredReady = requiredMaterials.length > 0 &&
-    requiredMaterials.every((m) => materialsState[m.key]?.haveIt === true);
+  const toggleCheck = (key: string) =>
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <div className="px-md py-xl max-w-2xl mx-auto pb-32">
@@ -228,39 +153,33 @@ export default function PrepMode({
         </div>
       )}
 
-      {/* Materials checklist — per-run, persists into module_runs.materialsState */}
-      {aggregated.length > 0 && (
+      {/* Materials checklist */}
+      {firstActivityMaterials.length > 0 && (
         <div className="mb-xl bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card">
-          <div className="flex items-baseline justify-between mb-md">
-            <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest">
-              Gather First
-            </h2>
-            <span className="font-sans text-xs text-text-muted">
-              {requiredMaterials.filter((m) => materialsState[m.key]?.haveIt).length}/
-              {requiredMaterials.length} required
-            </span>
-          </div>
+          <h2 className="font-sans text-sm font-semibold text-text-secondary uppercase tracking-widest mb-md">
+            Gather First — Materials for Activity 1
+          </h2>
           <div className="space-y-sm">
-            {aggregated.map((mat) => {
-              const isChecked = materialsState[mat.key]?.haveIt === true;
+            {firstActivityMaterials.map((mat, i) => {
+              const key = `mat-${i}`;
               return (
                 <button
-                  key={mat.key}
-                  onClick={() => toggleCheck(mat.key)}
+                  key={key}
+                  onClick={() => toggleCheck(key)}
                   className="flex items-center gap-sm w-full text-left group"
                 >
                   <span
                     className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center transition-all duration-200 ${
-                      isChecked
+                      checked[key]
                         ? 'bg-ember border-ember text-text-inverse'
                         : 'border-border-medium bg-transparent'
                     }`}
                   >
-                    {isChecked && <Check size={12} aria-hidden="true" />}
+                    {checked[key] && <Check size={12} aria-hidden="true" />}
                   </span>
                   <span
                     className={`font-serif text-sm transition-colors duration-200 ${
-                      isChecked ? 'text-text-muted line-through' : 'text-text-primary'
+                      checked[key] ? 'text-text-muted line-through' : 'text-text-primary'
                     }`}
                   >
                     {mat.name}
@@ -277,12 +196,6 @@ export default function PrepMode({
               );
             })}
           </div>
-          {!runId && requiredMaterials.length > 0 && (
-            <p className="mt-md font-sans text-xs text-text-muted">
-              Ticks save locally until you start the session — they&rsquo;ll travel into the
-              run once you tap Start.
-            </p>
-          )}
         </div>
       )}
 

@@ -1,15 +1,10 @@
-import { Camera, ChatCircle, Note, LinkSimple, Microphone, X } from '@/components/icons';
+import { Camera, ChatCircle, Note, LinkSimple, X } from '@/components/icons';
 import { SectionHeader } from './SectionHeader';
 import type { LogIconC } from './loggerConstants';
 import type { DraftEvidenceItem } from '@/lib/logger/draft';
 
-// Note: 'audio' was added by Phase 2 (Task 2.2 — full audio capture via
-// MediaRecorder, persisted as a learning_entry_evidence row). Kept in the
-// same shape as the other tools so the EvidenceModal/CaptureTray composition
-// picks it up automatically.
 const EVIDENCE_TOOLS: ReadonlyArray<{ key: string; Icon: LogIconC; label: string }> = [
   { key: 'photo', Icon: Camera,     label: 'Add Photo' },
-  { key: 'audio', Icon: Microphone, label: 'Record Audio' },
   { key: 'quote', Icon: ChatCircle, label: "Child's Words" },
   { key: 'note',  Icon: Note,       label: 'Add Note' },
   { key: 'link',  Icon: LinkSimple, label: 'Link Resource' },

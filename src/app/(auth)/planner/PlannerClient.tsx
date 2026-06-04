@@ -458,7 +458,7 @@ export default function PlannerClient({
               </p>
               <p className="font-sans text-xs text-text-muted">
                 Tap + in any session to add an activity, or browse the{' '}
-                <a href={`${basePath}/library?tab=browse`} className="text-ember hover:underline">activity library</a>.
+                <a href={`${basePath}/explore/activities`} className="text-ember hover:underline">activity library</a>.
               </p>
             </>
           ) : (

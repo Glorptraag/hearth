@@ -28,10 +28,6 @@ export interface LibraryModuleItem {
   subjects: string[];
   targetUnderstanding: string | null;
   duration: { min: number; max: number } | null;
-  ageRange: { min: number; max: number } | null;
-  sessionType: 'sustained' | 'open_ended' | null;
-  /** Deduped list of approach modalities — drives the Browse modality filter (4.6). */
-  modalities: string[];
   isOwnBuilt: boolean;
   owningPack: { id: string; title: string } | null;
   printables?: Printables;
@@ -45,9 +41,6 @@ type ModuleMeta = {
   subjects?: string[];
   targetUnderstanding?: string;
   duration?: { min: number; max: number };
-  ageRange?: { min: number; max: number };
-  sessionType?: 'sustained' | 'open_ended' | null;
-  modalities?: string[];
   printables?: Printables;
   materials?: Materials;
   assetCounts?: AssetCounts | null;
@@ -84,16 +77,14 @@ export const GET = routeHandler(async () => {
   const packQuery = `*[_type == "pack" && _id in $ids && status == "published"]{
     _id, title,
     "modules": modules[@->status == "published"]->{
-      _id, title, subjects, targetUnderstanding, duration, ageRange, sessionType,
-      "modalities": approaches[@->status == "published"]->modality,
+      _id, title, subjects, targetUnderstanding, duration,
       ${PACK_INDICATORS_PROJECTION}
     }
   }`;
 
   // Own-built modules: standalone, no owning pack.
   const ownModuleQuery = `*[_type == "module" && _id in $ids && status == "published"]{
-    _id, title, subjects, targetUnderstanding, duration, ageRange, sessionType, authorFamilyId,
-    "modalities": approaches[@->status == "published"]->modality,
+    _id, title, subjects, targetUnderstanding, duration, authorFamilyId,
     ${PACK_INDICATORS_PROJECTION}
   }`;
 
@@ -113,13 +104,6 @@ export const GET = routeHandler(async () => {
   const items: LibraryModuleItem[] = [];
   const seen = new Set<string>();
 
-  const dedupeModalities = (raw: string[] | undefined | null): string[] => {
-    if (!raw) return [];
-    const out = new Set<string>();
-    for (const m of raw) if (m) out.add(m);
-    return Array.from(out);
-  };
-
   for (const pack of packs) {
     for (const m of pack.modules ?? []) {
       if (seen.has(m._id)) continue; // dedupe across packs that share a module
@@ -130,9 +114,6 @@ export const GET = routeHandler(async () => {
         subjects: m.subjects ?? [],
         targetUnderstanding: m.targetUnderstanding ?? null,
         duration: m.duration ?? null,
-        ageRange: m.ageRange ?? null,
-        sessionType: m.sessionType ?? null,
-        modalities: dedupeModalities(m.modalities),
         isOwnBuilt: false,
         owningPack: { id: pack._id, title: pack.title },
         printables: m.printables,
@@ -151,9 +132,6 @@ export const GET = routeHandler(async () => {
       subjects: m.subjects ?? [],
       targetUnderstanding: m.targetUnderstanding ?? null,
       duration: m.duration ?? null,
-      ageRange: m.ageRange ?? null,
-      sessionType: m.sessionType ?? null,
-      modalities: dedupeModalities(m.modalities),
       isOwnBuilt: m.authorFamilyId === family.id,
       owningPack: null,
       printables: m.printables,

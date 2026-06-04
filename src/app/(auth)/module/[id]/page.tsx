@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { QuickCaptureItem } from './_components/types';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
@@ -24,13 +24,7 @@ import { resolveIndicators } from '@/lib/sanity/pack-indicators';
 export default function ModuleDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const id = params.id as string;
-  // When a planner row routes the parent into a module run, the planner sends
-  // ?plannerEntryId=<uuid>. We forward it into the entry POST at LogMode save
-  // time so the planner ↔ logger loop closes (Task 2.8). Null when launched
-  // from anywhere other than the planner.
-  const plannerEntryId = searchParams.get('plannerEntryId');
 
   const [module, setModule] = useState<Module | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,14 +44,6 @@ export default function ModuleDetailPage() {
   const [readerTextId, setReaderTextId] = useState<string | null>(null);
   const [showPrintSheet, setShowPrintSheet] = useState(false);
   const [owningPackId, setOwningPackId] = useState<string | null>(null);
-  // module_runs integration — tracks the current run id across facilitate/log
-  const [runId, setRunId] = useState<string | null>(null);
-  // Hydrated from /api/module-runs/[id] when a run becomes active or resumes,
-  // so PrepMode's checklist starts in the right state across sessions. Task 4.4.
-  const [runMaterialsState, setRunMaterialsState] = useState<
-    Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }> | undefined
-  >(undefined);
-  const patchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [packState, setPackState] = useState<{ printablesDownloaded: boolean; kitOwned: boolean }>(
     { printablesDownloaded: false, kitOwned: false },
   );
@@ -72,7 +58,6 @@ export default function ModuleDetailPage() {
 
   const STORAGE_KEY = `hearth_module_${id}_session`;
   const START_TIME_KEY = `hearth_module_${id}_start`;
-  const RUN_ID_KEY = `hearth_module_${id}_run_id`;
 
   function persistChunk(chunkIdx: number) {
     setSavedChunkIdx(chunkIdx);
@@ -83,8 +68,6 @@ export default function ModuleDetailPage() {
       return Array.from(next);
     });
     try { localStorage.setItem(STORAGE_KEY, String(chunkIdx)); } catch { /* ignore */ }
-    // Debounced PATCH to keep lastActiveAt fresh as parent progresses through activities.
-    if (runId) patchRunActivity(runId);
   }
 
   function clearSession() {
@@ -96,52 +79,6 @@ export default function ModuleDetailPage() {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(START_TIME_KEY);
     } catch { /* ignore */ }
-  }
-
-  function clearRunId() {
-    setRunId(null);
-    setRunMaterialsState(undefined);
-    try { localStorage.removeItem(RUN_ID_KEY); } catch { /* ignore */ }
-  }
-
-  // Hydrate runMaterialsState from the run row whenever runId changes. Used
-  // by PrepMode (Task 4.4) so a resumed run shows the parent's prior ticks.
-  useEffect(() => {
-    if (!runId) return;
-    fetch(`/api/module-runs?state=active`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows: Array<{ id: string; materialsState?: Record<string, { haveIt: boolean; source?: 'kit' | 'home' | 'sub' }> }>) => {
-        const row = rows.find((r) => r.id === runId);
-        if (row?.materialsState) setRunMaterialsState(row.materialsState);
-      })
-      .catch(() => {});
-  }, [runId]);
-
-  function startRun(sessionType: 'sustained' | 'open_ended', approachId?: string) {
-    fetch('/api/module-runs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sanityModuleId: id, approachId, learnerIds: [], sessionType }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((run) => {
-        if (run?.id) {
-          setRunId(run.id);
-          try { localStorage.setItem(RUN_ID_KEY, run.id); } catch { /* ignore */ }
-        }
-      })
-      .catch(() => {});
-  }
-
-  function patchRunActivity(currentRunId: string) {
-    if (patchDebounceRef.current) clearTimeout(patchDebounceRef.current);
-    patchDebounceRef.current = setTimeout(() => {
-      fetch(`/api/module-runs/${currentRunId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lastActiveAt: new Date().toISOString() }),
-      }).catch(() => {});
-    }, 2000);
   }
 
   const handleModeChange = useCallback((newMode: Mode) => {
@@ -298,21 +235,6 @@ export default function ModuleDetailPage() {
           setCompletedActivityIdxs(Array.from({ length: idx }, (_, i) => i));
         }
       }
-      // Resume run: reattach to an existing active run if localStorage has one.
-      const savedRunId = localStorage.getItem(`hearth_module_${id}_run_id`);
-      if (savedRunId) {
-        fetch('/api/module-runs?state=active')
-          .then((r) => (r.ok ? r.json() : []))
-          .then((runs: Array<{ id: string }>) => {
-            if (runs.some((r) => r.id === savedRunId)) {
-              // eslint-disable-next-line react-hooks/set-state-in-effect
-              setRunId(savedRunId);
-            } else {
-              try { localStorage.removeItem(`hearth_module_${id}_run_id`); } catch { /* ignore */ }
-            }
-          })
-          .catch(() => {});
-      }
     } catch { /* ignore */ }
   }, [fetchModule, id]);
 
@@ -432,7 +354,7 @@ export default function ModuleDetailPage() {
           icon={Wrench}
           heading="This module isn't ready to run"
           body={runnerError}
-          cta={{ label: 'Browse activities', href: '/library?tab=browse' }}
+          cta={{ label: 'Browse activities', href: '/explore/activities' }}
         />
       </div>
     );
@@ -445,7 +367,7 @@ export default function ModuleDetailPage() {
           icon={Wrench}
           heading="Module not available"
           body="This module may have been removed or is temporarily unavailable. Your learning data is safe."
-          cta={{ label: 'Browse activities', href: '/library?tab=browse' }}
+          cta={{ label: 'Browse activities', href: '/explore/activities' }}
         />
       </div>
     );
@@ -542,19 +464,12 @@ export default function ModuleDetailPage() {
             pedagogy={pedagogy}
             indicators={resolved}
             packState={packState}
-            runId={runId}
-            initialMaterialsState={runMaterialsState}
             onPrintMaterials={materialCount > 0 ? () => setShowPrintSheet(true) : undefined}
             onStart={() => {
               clearSession();
               const now = Date.now();
               facilitateStartRef.current = now;
               try { localStorage.setItem(START_TIME_KEY, String(now)); } catch { /* ignore */ }
-              // Start a new module run if no active run exists for this module.
-              if (!runId) {
-                const approach = module?.approaches?.[selectedApproachIdx];
-                startRun(module?.sessionType ?? 'sustained', approach?._id);
-              }
               setMode('facilitate');
             }}
             savedChunkIdx={savedChunkIdx}
@@ -588,16 +503,9 @@ export default function ModuleDetailPage() {
               if (facilitateStartRef.current) {
                 setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
               }
-              // Transition sustained run to finished; open_ended wrap-up also finishes.
-              if (runId) {
-                fetch(`/api/module-runs/${runId}/finish`, { method: 'POST' }).catch(() => {});
-                clearRunId();
-              }
               setMode('log');
             }}
             onPause={() => {
-              // sustained: pause goes back to prep. PATCH lastActiveAt but don't change state.
-              if (runId) patchRunActivity(runId);
               setMode('prep');
               fetch('/api/notifications/trigger', {
                 method: 'POST',
@@ -609,11 +517,6 @@ export default function ModuleDetailPage() {
                 }),
               }).catch(() => {});
             }}
-            onDoneForNow={module.sessionType === 'open_ended' ? () => {
-              // open_ended "done for now" — run stays active for next session.
-              if (runId) patchRunActivity(runId);
-              setMode('prep');
-            } : undefined}
             initialChunkIdx={savedChunkIdx}
             onChunkChange={persistChunk}
             // Ref is seeded before this branch renders (see facilitateStart effect
@@ -638,8 +541,6 @@ export default function ModuleDetailPage() {
             onRemoveCapture={handleRemoveCapture}
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
-            runId={runId}
-            plannerEntryId={plannerEntryId}
           />
         )}
       </div>

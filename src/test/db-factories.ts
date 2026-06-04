@@ -23,9 +23,6 @@ import {
   badgeDefinitions,
   plannerEntries,
   familyIntelligenceSnapshots,
-  moduleRuns,
-  learningEntryEvidence,
-  familyLibrary,
 } from '@/lib/db/schema';
 import {
   buildFamily,
@@ -34,16 +31,12 @@ import {
   buildBadgeDefinition,
   buildPlannerEntry,
   buildSnapshot,
-  buildModuleRun,
-  buildEvidence,
   type Family,
   type Learner,
   type LearningEntry,
   type BadgeDefinition,
   type PlannerEntry,
   type FamilyIntelligenceSnapshot,
-  type ModuleRun,
-  type LearningEntryEvidence,
 } from './factories';
 
 // The repo exports a single concrete `db` from `@/lib/db`. Callers pass it in
@@ -103,32 +96,6 @@ export async function createSnapshot(
   return result[0];
 }
 
-/**
- * Insert a module_runs row. Defaults to a sustained active run.
- * For the open-ended drop-and-pickup variant, pass `{ sessionType: 'open_ended' }`.
- */
-export async function createModuleRun(
-  db: Db,
-  overrides: Partial<ModuleRun> = {}
-): Promise<ModuleRun> {
-  const row = buildModuleRun(overrides);
-  const result = await db.insert(moduleRuns).values(row).returning();
-  return result[0];
-}
-
-/**
- * Insert a learning_entry_evidence row. `entryId` is required via overrides
- * (the FK has no sensible default that won't violate the FK constraint).
- */
-export async function createEvidence(
-  db: Db,
-  overrides: Partial<LearningEntryEvidence> & { entryId: string }
-): Promise<LearningEntryEvidence> {
-  const row = buildEvidence(overrides);
-  const result = await db.insert(learningEntryEvidence).values(row).returning();
-  return result[0];
-}
-
 // ---------------------------------------------------------------------------
 // Scenario seeders — complete test scenarios in one call.
 // These are the "common case" shortcuts. A test that just wants "a family
@@ -174,56 +141,6 @@ export async function seedBasicFamily(
   const entries = await db.insert(learningEntries).values(entryRows).returning();
 
   return { family, learners: { emma, liam }, entries };
-}
-
-/**
- * Seed a family with one learner, an in-library module, an active module run,
- * and one quick-capture evidence row attached to a draft entry. Useful for
- * tests that need a "in-flight session" state without setting it up by hand.
- */
-export async function seedActiveModuleRun(
-  db: Db,
-  overrides: { familyId?: string; clerkUserId?: string; sanityModuleId?: string } = {}
-) {
-  const family = await createFamily(db, {
-    id: overrides.familyId,
-    clerkUserId: overrides.clerkUserId,
-  });
-  const learner = await createLearner(db, { familyId: family.id, name: 'Test Child' });
-
-  const sanityModuleId = overrides.sanityModuleId ?? 'mod-test-active-run';
-
-  // family_library row for the module so the run reflects "in your library"
-  await db.insert(familyLibrary).values({
-    familyId: family.id,
-    sanityPackId: null,
-    sanityModuleId,
-  });
-
-  const run = await createModuleRun(db, {
-    familyId: family.id,
-    sanityModuleId,
-    learnerIds: [learner.id],
-    state: 'active',
-    sessionType: 'sustained',
-  });
-
-  const entry = await createEntry(db, {
-    familyId: family.id,
-    learnerIds: [learner.id],
-    moduleRunId: run.id,
-    sourceModuleId: sanityModuleId,
-    status: 'draft',
-    title: 'Mid-session capture',
-  });
-
-  const evidence = await createEvidence(db, {
-    entryId: entry.id,
-    kind: 'note',
-    content: 'Child noticed two magnets repelling.',
-  });
-
-  return { family, learner, run, entry, evidence };
 }
 
 /**

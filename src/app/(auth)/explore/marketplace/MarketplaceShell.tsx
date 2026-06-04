@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
 import {
-  Binoculars, Target, Books, MagnifyingGlass, Confetti,
+  Binoculars, Target, Books, MagnifyingGlass, Confetti, Sparkle,
 } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
+import type { MarketplaceSearchHit } from '@/app/api/marketplace/search/route';
 
 // ─── Subject filter config ────────────────────────────────────────────────────
 
@@ -32,11 +33,34 @@ function hexToRgb(hex: string): string {
 
 // ─── Shell ──────────────────────────────────────────────────────────────────
 // Packs are fetched server-side (tagged, cache-revalidated) and passed in;
-// per-family state (library, entitlements, snapshot gaps) is fetched here.
+// per-family state (library, entitlements, snapshot gaps) is fetched here
+// in live mode and seeded directly via props in demo mode (no Clerk, no DB).
 
-export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] }) {
+export type MarketplaceShellProps = {
+  initialPacks: SanityPack[];
+  /** 'live' fetches family state; 'demo' uses the seeds below. Default 'live'. */
+  mode?: 'live' | 'demo';
+  /** '' for the live app; '/demo' for the unauthenticated demo. */
+  basePath?: string;
+  /** Demo-mode seed for "in library" pack ids. */
+  initialLibraryIds?: string[];
+  /** Demo-mode seed for owned/entitled pack ids. */
+  initialOwnedIds?: string[];
+  /** Demo-mode seed for snapshot gap subjects driving Family Fit. */
+  initialGapSubjects?: string[];
+};
+
+export function MarketplaceShell({
+  initialPacks,
+  mode = 'live',
+  basePath = '',
+  initialLibraryIds,
+  initialOwnedIds,
+  initialGapSubjects,
+}: MarketplaceShellProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const isDemo = mode === 'demo';
   // Normalise drifted/aliased subject values so a stale subject can't blank
   // the grid (the #102 fix). Runs client-side because normalizeSubject is a
   // 'use client' export and cannot be called from the server component.
@@ -50,12 +74,19 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
       })),
     [initialPacks],
   );
-  const [loading, setLoading] = useState(true);
+  // Demo mode is fully hydrated from props — no loading flash.
+  const [loading, setLoading] = useState(!isDemo);
   const [search, setSearch] = useState('');
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
-  const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
-  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
-  const [gapSubjects, setGapSubjects] = useState<string[]>([]);
+  const [libraryIds, setLibraryIds] = useState<Set<string>>(
+    () => new Set(isDemo ? (initialLibraryIds ?? []) : [])
+  );
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(
+    () => new Set(isDemo ? (initialOwnedIds ?? []) : [])
+  );
+  const [gapSubjects, setGapSubjects] = useState<string[]>(
+    isDemo ? (initialGapSubjects ?? []) : []
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -91,7 +122,71 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    // Demo seeds the per-family state via props; skip the live fetch trio.
+    if (isDemo) return;
+    fetchData();
+  }, [fetchData, isDemo]);
+
+  // ── Search across packs AND standalone modules ───────────────────────────
+  // The input drives /api/marketplace/search (Sanity `match` over both types).
+  // While empty we fall back to the curated pack browse below; with a query we
+  // render API hits so standalone modules — invisible to the local pack
+  // filter — actually surface. Debounced to keep keystrokes cheap.
+  const [searchHits, setSearchHits] = useState<MarketplaceSearchHit[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchHits(null);
+      return;
+    }
+    // Demo mode has no /api/marketplace/search — synthesise hits locally from
+    // the seeded pack list so the input still surfaces something. Standalone
+    // module search isn't exercised in demo (no module shop).
+    if (isDemo) {
+      const needle = q.toLowerCase();
+      const hits: MarketplaceSearchHit[] = packs
+        .filter((p) =>
+          p.title.toLowerCase().includes(needle) ||
+          (p.description ?? '').toLowerCase().includes(needle) ||
+          (p.creator ?? '').toLowerCase().includes(needle)
+        )
+        .map((p) => ({
+          kind: 'pack' as const,
+          id: p._id,
+          title: p.title,
+          description: p.description ?? '',
+          subjects: p.subjects ?? [],
+        }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchHits(hits);
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSearching(true);
+    const handle = setTimeout(() => {
+      fetch(`/api/marketplace/search?q=${encodeURIComponent(q)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { hits?: MarketplaceSearchHit[] } | null) => setSearchHits(data?.hits ?? []))
+        .catch(() => setSearchHits([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [search, isDemo, packs]);
+
+  const packsById = useMemo(() => new Map(packs.map((p) => [p._id, p] as const)), [packs]);
+  const hasQuery = search.trim().length >= 2;
+
+  // The search API doesn't take a subject — apply the active pill client-side
+  // so the subject filter stays meaningful in search results too.
+  const visibleHits = useMemo(() => {
+    const hits = searchHits ?? [];
+    if (!activeSubject) return hits;
+    return hits.filter((h) => (h.subjects ?? []).includes(activeSubject));
+  }, [searchHits, activeSubject]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -109,6 +204,10 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
   async function handlePurchase(id: string) {
     const pack = packs.find((p) => p._id === id);
     if (!pack?.stripePriceId) return;
+    if (isDemo) {
+      toast('Demo mode — checkout is disabled.', 'info');
+      return;
+    }
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -128,6 +227,9 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
 
   async function handleAddToLibrary(id: string) {
     setLibraryIds((prev) => new Set(prev).add(id));
+    // In demo the optimistic update is the whole interaction — no fetch,
+    // no analytics, no rollback path (nothing can fail).
+    if (isDemo) return;
     const rollback = () => {
       setLibraryIds((prev) => {
         const next = new Set(prev);
@@ -164,7 +266,7 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
         {/* ── Top nav ── */}
         <div className="flex items-center justify-between pb-lg mb-lg border-b border-border-subtle">
           <Link
-            href="/dashboard"
+            href={`${basePath}/dashboard`}
             className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-200"
           >
             ← Dashboard
@@ -199,7 +301,7 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search packs, modules, or creators…"
+            placeholder="Search packs and modules…"
             className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-[36px] pr-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
           />
         </div>
@@ -240,6 +342,74 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
         {loading ? (
           <div className="py-20 text-center">
             <p className="font-sans text-sm text-text-muted animate-pulse">Loading packs…</p>
+          </div>
+        ) : hasQuery ? (
+          /* ── Search results (packs + standalone modules) ── */
+          <div className="space-y-lg">
+            {searching && searchHits === null ? (
+              <div className="py-20 text-center">
+                <p className="font-sans text-sm text-text-muted animate-pulse">Searching…</p>
+              </div>
+            ) : visibleHits.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <span className="mb-4 inline-flex text-text-secondary" aria-hidden="true">
+                  <Binoculars size={32} />
+                </span>
+                <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
+                  No packs or modules match “{search.trim()}”
+                </h3>
+                <p className="font-sans text-sm text-text-secondary mb-6 max-w-xs">
+                  Try a different word, or clear the search to browse all packs.
+                </p>
+                <button
+                  onClick={() => setSearch('')}
+                  className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200"
+                >
+                  Clear search
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="font-sans text-[0.75rem] text-text-muted">
+                  {visibleHits.length} result{visibleHits.length === 1 ? '' : 's'} for “{search.trim()}”
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
+                  {visibleHits.map((hit) => {
+                    if (hit.kind === 'pack') {
+                      const full = packsById.get(hit.id);
+                      if (full) {
+                        return (
+                          <div
+                            key={`pack-${hit.id}`}
+                            onClick={() => router.push(`${basePath}/pack/${hit.id}`)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                router.push(`${basePath}/pack/${hit.id}`);
+                              }
+                            }}
+                            role="link"
+                            tabIndex={0}
+                            aria-label={`Open ${full.title}`}
+                            className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ember rounded-[16px]"
+                          >
+                            <MarketplaceCard
+                              pack={full}
+                              inLibrary={libraryIds.has(hit.id)}
+                              owned={ownedIds.has(hit.id)}
+                              onAddToLibrary={handleAddToLibrary}
+                              onPurchase={handlePurchase}
+                            />
+                          </div>
+                        );
+                      }
+                      return <HitCard key={`pack-${hit.id}`} hit={hit} href={`${basePath}/pack/${hit.id}`} />;
+                    }
+                    return <HitCard key={`module-${hit.id}`} hit={hit} href={`${basePath}/module/${hit.id}`} />;
+                  })}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -339,11 +509,11 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
                 {filtered.map((pack) => (
                   <div
                     key={pack._id}
-                    onClick={() => router.push(`/pack/${pack._id}`)}
+                    onClick={() => router.push(`${basePath}/pack/${pack._id}`)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        router.push(`/pack/${pack._id}`);
+                        router.push(`${basePath}/pack/${pack._id}`);
                       }
                     }}
                     role="link"
@@ -391,5 +561,45 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
         )}
       </div>
     </div>
+  );
+}
+
+// Lean result card for search hits we can't render as a full MarketplaceCard:
+// standalone modules, and the rare pack not in the server-loaded set. Click
+// routes to the canonical detail surface (/module/[id] or /pack/[id]).
+function HitCard({ hit, href }: { hit: MarketplaceSearchHit; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="group block bg-surface-panel rounded-[16px] border border-border-subtle p-lg hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+    >
+      <div className="mb-sm">
+        <span className="inline-flex items-center gap-xs font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-surface-raised text-text-muted border border-border-subtle">
+          {hit.kind === 'module' ? (
+            <>
+              <Sparkle size={10} aria-hidden="true" /> Module
+            </>
+          ) : (
+            'Pack'
+          )}
+        </span>
+      </div>
+      <h3 className="font-serif text-[1rem] font-semibold text-text-primary mb-xs">{hit.title}</h3>
+      {hit.description && (
+        <p className="font-serif text-sm text-text-secondary line-clamp-2 mb-sm">{hit.description}</p>
+      )}
+      {hit.subjects.length > 0 && (
+        <div className="flex flex-wrap gap-xs">
+          {hit.subjects.slice(0, 3).map((s) => (
+            <span
+              key={s}
+              className="font-sans text-[0.65rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-surface-raised text-text-muted"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+    </Link>
   );
 }

@@ -1,111 +1,57 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { differenceInYears } from 'date-fns';
-import { ChildSelector } from '@/components/ui/child-selector';
-import LearnerAvatar from '@/components/ui/LearnerAvatar';
+import OurStoryHubClient from '@/components/our-story/OurStoryHubClient';
 import { mockLearners, mockOurStoryLearners } from '../mock-data';
 
-export default function DemoOurStoryHub() {
-  const [selectedId, setSelectedId] = useState('1');
+/**
+ * Demo wrapper for the canonical Our Story hub.
+ * Pure cosmetic surface: no auth, no fetches — feeds the live Client a
+ * seeded learner list + per-learner stats map drawn from mock-data.
+ *
+ * Schema bridge: mockLearners has {displayOrder} but no {createdAt}; the
+ * Client only reads createdAt for the "Learning since {month yyyy}" line,
+ * so we synthesise one per learner from mockOurStoryLearners.learningSince.
+ */
 
-  const selected = mockLearners.find((l) => l.id === selectedId);
-  const selectedProfile = mockOurStoryLearners.find((l) => l.id === selectedId);
+const learnersForHub = mockLearners.map((l) => {
+  const profile = mockOurStoryLearners.find((p) => p.id === l.id);
+  const createdAt = profile?.learningSince
+    ? new Date(`${profile.learningSince} 1`).toISOString()
+    : null;
+  return {
+    id: l.id,
+    name: l.name,
+    dateOfBirth: l.dateOfBirth,
+    shapeIcon: l.shapeIcon,
+    colourToken: l.colourToken,
+    createdAt,
+  };
+});
 
-  if (!selected || !selectedProfile) return null;
+const statsByLearner = Object.fromEntries(
+  mockOurStoryLearners.map((p) => [
+    p.id,
+    {
+      portfolioTotal: p.portfolioTotal,
+      portfolioThisTerm: p.portfolioThisTerm,
+      capabilityThreadsActive: p.capabilityThreadsActive,
+      capabilityNearMilestone: p.capabilityNearMilestone,
+      // Mock thumbs are emoji strings, not URLs — the hub's <img src> would
+      // 404. Empty array triggers the "No evidence captured yet" copy, which
+      // reads cleanly for a demo viewer who hasn't logged anything.
+      recentEvidence: [] as string[],
+    },
+  ])
+);
 
-  const age = differenceInYears(new Date(), new Date(selected.dateOfBirth));
-  const learningStartYear = new Date().getFullYear() - (selectedId.charCodeAt(0) % 3 + 1);
-
+export default function DemoOurStoryPage() {
   return (
-    <div className="mx-auto max-w-4xl px-md py-lg lg:py-2xl">
-      {/* Child Selector */}
-      <ChildSelector learners={mockLearners} selectedId={selectedId} onChange={setSelectedId} />
-
-      {/* Selected Child Header */}
-      <div className="mt-2xl mb-3xl flex flex-col items-center text-center">
-        <LearnerAvatar name={selected.name} colourToken={selected.colourToken} size="lg" />
-        <h1 className="mt-lg font-serif text-3xl font-semibold text-text-primary tracking-[-0.02em]">
-          {selected.name}
-        </h1>
-        <p className="mt-xs font-sans text-sm text-text-muted">
-          {age} years old • Learning since {learningStartYear}
-        </p>
-      </div>
-
-      {/* Term Summary */}
-      <div className="mb-3xl rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card">
-        <p className="font-serif text-text-secondary">{selectedProfile.termSummary}</p>
-      </div>
-
-      {/* Navigation Cards Grid */}
-      <div className="mb-3xl grid grid-cols-1 gap-lg sm:grid-cols-2">
-        <Link
-          href={`/demo/our-story/portfolio?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-        >
-          <div className="mb-md text-3xl" aria-hidden="true">📷</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}&apos;s Portfolio</h3>
-          <p className="font-sans text-xs text-text-muted mb-md">
-            {selectedProfile.portfolioThisTerm} evidence items this term
-          </p>
-          <div className="text-ember font-sans text-sm font-semibold">View portfolio →</div>
-        </Link>
-
-        <Link
-          href={`/demo/our-story/report?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-        >
-          <div className="mb-md text-3xl" aria-hidden="true">📄</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">Learning Report</h3>
-          <p className="font-sans text-xs text-text-muted mb-md">
-            {selectedProfile.heuSamplesReady} of 6 work samples ready
-          </p>
-          <div className="text-ember font-sans text-sm font-semibold">View report →</div>
-        </Link>
-
-        <Link
-          href={`/demo/our-story/capabilities?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-        >
-          <div className="mb-md text-3xl" aria-hidden="true">🌟</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">Capabilities</h3>
-          <p className="font-sans text-xs text-text-muted mb-md">
-            {selectedProfile.capabilityThreadsActive} threads active
-          </p>
-          <div className="text-ember font-sans text-sm font-semibold">View capabilities →</div>
-        </Link>
-
-        <Link
-          href={`/demo/our-story/learner/${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-        >
-          <div className="mb-md text-3xl" aria-hidden="true">💡</div>
-          <h3 className="mb-sm font-serif font-semibold text-text-primary">About {selected.name}</h3>
-          <p className="font-sans text-xs text-text-muted mb-md">
-            Interests, strengths & learning style
-          </p>
-          <div className="text-ember font-sans text-sm font-semibold">View profile →</div>
-        </Link>
-      </div>
-
-      {/* Recent Evidence Strip */}
-      <div>
-        <p className="mb-md font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
-          Recent Evidence
-        </p>
-        <div className="flex gap-md overflow-x-auto pb-md">
-          {selectedProfile.evidenceThumbs.map((emoji, idx) => (
-            <div
-              key={idx}
-              className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-2xl shadow-card"
-            >
-              {emoji}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <OurStoryHubClient
+      mode="demo"
+      basePath="/demo"
+      initialLearners={learnersForHub}
+      initialStatsByLearner={statsByLearner}
+      initialFamilyState="QLD"
+    />
   );
 }

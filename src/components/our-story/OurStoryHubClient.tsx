@@ -46,6 +46,22 @@ type LearnerStats = {
   recentEvidence: string[];
 };
 
+export type OurStoryHubClientProps = {
+  /**
+   * 'live' fetches /api/{settings,learners,entries,capabilities}; 'demo' uses
+   * the props below and short-circuits every fetch. Defaults to 'live'.
+   */
+  mode?: 'live' | 'demo';
+  /** '' for the live app; '/demo' for the unauthenticated demo. */
+  basePath?: string;
+  /** Demo-mode seed for the learner list (skips /api/learners). */
+  initialLearners?: Learner[];
+  /** Demo-mode per-learner stats map keyed by learner id. */
+  initialStatsByLearner?: Record<string, LearnerStats>;
+  /** Demo-mode family state code; drives the jurisdiction copy. */
+  initialFamilyState?: string | null;
+};
+
 // ─── Colour config ────────────────────────────────────────────────────────────
 
 type ChildColorConfig = {
@@ -86,35 +102,63 @@ const DEFAULT_COLORS = CHILD_COLORS.rose;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function OurStoryHubClient() {
+export default function OurStoryHubClient({
+  mode = 'live',
+  basePath = '',
+  initialLearners,
+  initialStatsByLearner,
+  initialFamilyState = null,
+}: OurStoryHubClientProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
-  const [learners, setLearners] = useState<Learner[]>([]);
-  const [selectedId, setSelectedId] = useState<string>('');
-  const [stats, setStats] = useState<LearnerStats | null>(null);
-  const [statsLearnerId, setStatsLearnerId] = useState<string>('');
-  const [loadingLearners, setLoadingLearners] = useState(true);
-  const [familyState, setFamilyState] = useState<string | null>(null);
+  const isDemo = mode === 'demo';
+
+  const seededLearners = initialLearners ?? [];
+  const [learners, setLearners] = useState<Learner[]>(isDemo ? seededLearners : []);
+  const [selectedId, setSelectedId] = useState<string>(
+    isDemo ? (seededLearners[0]?.id ?? '') : ''
+  );
+  const initialStatsForFirst = isDemo
+    ? (initialStatsByLearner?.[seededLearners[0]?.id ?? ''] ?? null)
+    : null;
+  const [stats, setStats] = useState<LearnerStats | null>(initialStatsForFirst);
+  const [statsLearnerId, setStatsLearnerId] = useState<string>(
+    isDemo ? (seededLearners[0]?.id ?? '') : ''
+  );
+  // In demo mode the learner list is already known — skip the loading frame.
+  const [loadingLearners, setLoadingLearners] = useState(!isDemo);
+  const [familyState, setFamilyState] = useState<string | null>(initialFamilyState);
 
   const handleChildSelect = (id: string) => {
     setSelectedId(id);
+    // In demo mode also rotate the cached stats synchronously so the hub
+    // never flashes empty cards on selection change (no fetch effect to
+    // backfill them).
+    if (isDemo) {
+      const next = initialStatsByLearner?.[id] ?? null;
+      setStats(next);
+      setStatsLearnerId(id);
+    }
     router.replace(`${pathname}?child=${id}`, { scroll: false });
   };
 
   // Fetch family settings once (for jurisdiction config).
   // All fetches in this client are guarded: a 5xx must NOT crash the hub
   // via SyntaxError on r.json(). See incident 2026-05-25.
+  // Demo mode short-circuits — initialFamilyState is the seed.
   useEffect(() => {
+    if (isDemo) return;
     fetch('/api/settings')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`settings ${r.status}`))))
       .then((data) => {
         if (data?.state) setFamilyState(data.state);
       })
       .catch(() => {});
-  }, []);
+  }, [isDemo]);
 
-  // Fetch learner list once
+  // Fetch learner list once. Demo mode uses initialLearners instead.
   useEffect(() => {
+    if (isDemo) return;
     fetch('/api/learners')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`learners ${r.status}`))))
       .then((data) => {
@@ -125,11 +169,12 @@ export default function OurStoryHubClient() {
       })
       .catch(() => { /* leave learners empty; hub stays usable */ })
       .finally(() => setLoadingLearners(false));
-  }, []);
+  }, [isDemo]);
 
-  // Fetch per-learner stats when selection changes
+  // Fetch per-learner stats when selection changes. Demo mode reads the seed.
   useEffect(() => {
     if (!selectedId) return;
+    if (isDemo) return;
     const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
 
     const jsonOr = <T,>(fallback: T) => (r: Response) =>
@@ -174,7 +219,7 @@ export default function OurStoryHubClient() {
         setStats(null);
         setStatsLearnerId(selectedId);
       });
-  }, [selectedId]);
+  }, [selectedId, isDemo]);
 
   if (loadingLearners) {
     return (
@@ -306,7 +351,7 @@ export default function OurStoryHubClient() {
               Log your first learning moment and watch {learner.name}&rsquo;s story come to life.
             </p>
             <a
-              href="/log"
+              href={`${basePath}/log`}
               className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Log a moment
@@ -318,7 +363,7 @@ export default function OurStoryHubClient() {
       {/* Nav cards */}
       <div className="mb-2xl grid grid-cols-2 gap-lg">
         <NavCard
-          href="/our-story/portfolio"
+          href={`${basePath}/our-story/portfolio`}
           Icon={FolderOpen}
           title="Portfolio"
           stat1={statsLearnerId !== selectedId ? '—' : `${stats?.portfolioTotal ?? 0} entries`}
@@ -330,14 +375,14 @@ export default function OurStoryHubClient() {
         />
 
         <NavCard
-          href="/our-story/report"
+          href={`${basePath}/our-story/report`}
           Icon={FileText}
           title={getJurisdiction(familyState).reportScreenTitle}
           stat1={getJurisdiction(familyState).reportTier === 'cd_level' ? 'Compliance view' : 'Learning summary'}
         />
 
         <NavCard
-          href="/our-story/capabilities"
+          href={`${basePath}/our-story/capabilities`}
           Icon={Sparkle}
           title="Capabilities"
           stat1={statsLearnerId !== selectedId ? '—' : `${stats?.capabilityThreadsActive ?? 0} threads active`}
@@ -352,7 +397,7 @@ export default function OurStoryHubClient() {
         />
 
         <NavCard
-          href={`/our-story/learner/${learner.id}`}
+          href={`${basePath}/our-story/learner/${learner.id}`}
           Icon={User}
           title="Learner Profile"
           stat1={`Who ${learner.name} is`}
@@ -364,7 +409,7 @@ export default function OurStoryHubClient() {
         <div className="mb-md flex items-center justify-between">
           <h2 className="font-serif text-base font-semibold text-text-primary">Recent Evidence</h2>
           <Link
-            href="/our-story/portfolio"
+            href={`${basePath}/our-story/portfolio`}
             className="font-sans text-xs font-medium text-ember transition-colors duration-200 ease-[var(--ease-default)] hover:text-ember-hover"
           >
             See all →

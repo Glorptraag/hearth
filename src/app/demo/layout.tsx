@@ -11,6 +11,7 @@ import { DesktopCommunityRow } from "@/components/nav/DesktopCommunityRow";
 import { PRIMARY_NAV, isDesktopNavActive } from "@/components/nav/desktopNavConfig";
 import { stripBasePath } from "@/components/nav/navConfig";
 import { Bell, Gear, Moon, Sun } from "@/components/icons";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const BASE_PATH = "/demo";
 
@@ -192,7 +193,7 @@ export default function DemoLayout({
         {/* Main content. Bottom padding clears the mobile nav (~72px) plus the
             iOS home-indicator safe area on notched devices. lg: drops it. */}
         <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-0">
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </main>
       </div>
 

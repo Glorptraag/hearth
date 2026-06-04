@@ -1,113 +1,59 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import DomainChip from '@/components/ui/DomainChip';
+import { MarketplaceShell } from '@/app/(auth)/explore/marketplace/MarketplaceShell';
+import type { SanityPack, Subject } from '@/components/screens/MarketplaceCard';
 import { mockPacks } from '../../mock-data';
 
-const SUBJECTS = [
+/**
+ * Demo wrapper for the canonical Marketplace shell.
+ * Pure cosmetic surface: no auth, no Sanity fetch, no Stripe checkout — the
+ * Shell receives mock packs mapped onto the SanityPack shape and runs in
+ * `mode="demo"` so every /api/* fetch is short-circuited.
+ *
+ * mockPacks uses {id, imageEmoji, moduleCount, status} which doesn't match
+ * SanityPack ({_id, creator, totalActivities, availability, …}). Map only
+ * the fields the Shell actually consumes; the rest are optional.
+ */
+
+const SUBJECT_VOCAB: ReadonlyArray<Subject> = [
   'english', 'mathematics', 'science', 'hass',
   'arts', 'technologies', 'hpe', 'languages',
-] as const;
+];
 
-export default function DemoMarketplace() {
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+function asSubjects(arr: readonly string[]): Subject[] {
+  return arr.filter((s): s is Subject => (SUBJECT_VOCAB as readonly string[]).includes(s));
+}
 
-  function toggleSubject(s: string) {
-    setSelectedSubjects((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-  }
+const demoPacks: SanityPack[] = mockPacks.map((p) => ({
+  _id: p.id,
+  title: p.title,
+  creator: 'Hearth Content Team',
+  creatorType: 'content-team' as const,
+  subjects: asSubjects(p.subjects),
+  ageRange: p.ageRange,
+  moduleCount: p.moduleCount,
+  description: p.description,
+  availability: 'included' as const,
+}));
 
-  const filtered = useMemo(() => {
-    if (selectedSubjects.length === 0) return mockPacks;
-    return mockPacks.filter((p) =>
-      p.subjects.some((s) => selectedSubjects.includes(s))
-    );
-  }, [selectedSubjects]);
+// Seed the chrome so the demo viewer sees the real interactions: one pack
+// already saved (so the library badge shows "1"), nothing owned, and a
+// Family Fit hint pointing at a subject not well-served by the seeded
+// learners' logged moments (the Family Fit banner only renders when this
+// list is non-empty).
+const demoLibraryIds = [demoPacks[0]?._id].filter((x): x is string => !!x);
+const demoOwnedIds: string[] = [];
+const demoGapSubjects: string[] = ['languages'];
 
+export default function DemoMarketplacePage() {
   return (
-    <div className="mx-auto max-w-5xl px-md py-xl">
-      {/* Header + tabs */}
-      <div className="mb-lg">
-        <h1 className="font-serif text-2xl font-semibold text-text-primary tracking-[-0.02em] mb-md">
-          Marketplace
-        </h1>
-        <div className="flex gap-lg border-b border-border-subtle">
-          <Link
-            href="/demo/explore/activities"
-            className="pb-sm font-sans text-sm font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
-          >
-            My Library
-          </Link>
-          <span className="pb-sm font-sans text-sm font-semibold text-ember border-b-2 border-ember">
-            Marketplace
-          </span>
-        </div>
-      </div>
-
-      {/* Subject filters */}
-      <div className="mb-xl flex flex-wrap gap-sm">
-        {SUBJECTS.map((s) => (
-          <button
-            key={s}
-            onClick={() => toggleSubject(s)}
-            className={`transition-opacity duration-200 ${
-              selectedSubjects.length === 0 || selectedSubjects.includes(s)
-                ? 'opacity-100'
-                : 'opacity-40'
-            }`}
-          >
-            <DomainChip subject={s} size="sm" showEmoji />
-          </button>
-        ))}
-      </div>
-
-      {/* Pack grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-lg">
-        {filtered.map((p) => (
-          <div
-            key={p.id}
-            className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
-          >
-            <div className="flex items-start gap-lg">
-              <span className="text-4xl">{p.imageEmoji}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-serif text-lg font-semibold text-text-primary mb-sm">
-                  {p.title}
-                </h3>
-                <p className="font-serif text-sm text-text-secondary leading-relaxed mb-md line-clamp-3">
-                  {p.description}
-                </p>
-                <div className="flex flex-wrap gap-xs mb-md">
-                  {p.subjects.map((s) => (
-                    <DomainChip key={s} subject={s} size="sm" />
-                  ))}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-md font-sans text-xs text-text-muted">
-                    <span>Ages {p.ageRange.min}–{p.ageRange.max}</span>
-                    <span>{p.moduleCount} modules</span>
-                  </div>
-                  <span className="rounded-full bg-sage/20 px-md py-xs font-sans text-xs font-semibold text-sage">
-                    Included with membership
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Bottom CTA */}
-      <div className="mt-xl bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card text-center">
-        <p className="font-serif text-base text-text-primary mb-sm">
-          More packs coming soon
-        </p>
-        <p className="font-serif text-sm text-text-secondary">
-          We&apos;re building new content every month.
-        </p>
-      </div>
-    </div>
+    <MarketplaceShell
+      initialPacks={demoPacks}
+      mode="demo"
+      basePath="/demo"
+      initialLibraryIds={demoLibraryIds}
+      initialOwnedIds={demoOwnedIds}
+      initialGapSubjects={demoGapSubjects}
+    />
   );
 }

@@ -62,13 +62,13 @@ describe('MobileBottomNav', () => {
     fireEvent.click(planTab);
     expect(planTab).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getAllByRole('menuitem')).toHaveLength(4);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
   });
 
-  it('Explore tray contains 4 menuitems when opened', () => {
+  it('Explore tray contains 3 menuitems when opened', () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: /Explore menu/i }));
-    expect(screen.getAllByRole('menuitem')).toHaveLength(4);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
   });
 
   it('tapping the same trayed tab again starts closing the tray', () => {
@@ -84,11 +84,11 @@ describe('MobileBottomNav', () => {
   it('tapping a different trayed tab swaps which tray is shown', () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: /Plan menu/i }));
-    // Plan tray's first row is HEU Curation (top, indexFromBottom=3).
-    expect(screen.getByRole('menuitem', { name: /HEU Curation/i })).toBeInTheDocument();
+    // Plan tray's first row is Badge Creator (top, indexFromBottom=2).
+    expect(screen.getByRole('menuitem', { name: /Badge Creator/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Explore menu/i }));
-    expect(screen.queryByRole('menuitem', { name: /HEU Curation/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Pedagogy Engine/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Badge Creator/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Capabilities/i })).toBeInTheDocument();
   });
 
   it('Escape closes an open tray', () => {

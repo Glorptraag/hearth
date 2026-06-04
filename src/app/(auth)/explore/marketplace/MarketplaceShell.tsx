@@ -161,11 +161,9 @@ export function MarketplaceShell({
           description: p.description ?? '',
           subjects: p.subjects ?? [],
         }));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchHits(hits);
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearching(true);
     const handle = setTimeout(() => {
       fetch(`/api/marketplace/search?q=${encodeURIComponent(q)}`)
@@ -271,7 +269,10 @@ export function MarketplaceShell({
           >
             ← Dashboard
           </Link>
-          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200 cursor-pointer">
+          <Link
+            href={`${basePath}/library`}
+            className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200"
+          >
             <Books size={16} aria-hidden="true" />
             <span>My Library</span>
             {libraryCount > 0 && (
@@ -279,7 +280,7 @@ export function MarketplaceShell({
                 {libraryCount}
               </span>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* ── Page header ── */}

@@ -47,7 +47,7 @@ import { WhatSection } from './_components/WhatSection';
 import {
   Sparkle,
   Check, WifiSlash, NotePencil, ClipboardText,
-  Lightbulb,
+  Lightbulb, CaretDown,
 } from '@/components/icons';
 
 
@@ -823,12 +823,17 @@ export default function LogPage() {
         )}
         <button
           onClick={() => setInsightsExpanded(!insightsExpanded)}
-          className="w-full flex items-center justify-center gap-sm border-t border-border-subtle bg-surface-panel px-md py-sm"
+          aria-expanded={insightsExpanded}
+          className="w-full flex items-center justify-center gap-xs border-t border-border-subtle bg-surface-panel px-md py-sm"
         >
-          <div className="h-[4px] w-[32px] rounded-full bg-border-medium" />
           <span className="font-sans text-xs font-medium text-text-secondary">
             {insightsExpanded ? 'Hide' : 'Show'} Insights
           </span>
+          <CaretDown
+            size={14}
+            aria-hidden="true"
+            className={`text-text-secondary transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${insightsExpanded ? '' : 'rotate-180'}`}
+          />
         </button>
 
         {/* Save bar — primary action anchored at the bottom on mobile */}

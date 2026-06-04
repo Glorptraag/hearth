@@ -12,7 +12,7 @@ const LOGOS = [
 ] as const;
 
 const ROTATE_MS = 5 * 60 * 1000;
-const ASPECT = 1;
+const ASPECT = 458 / 370;
 
 export interface WordmarkProps {
   className?: string;

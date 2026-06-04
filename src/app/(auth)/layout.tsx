@@ -205,7 +205,7 @@ export default function AuthLayout({
       </nav>
 
       {/* Mobile top header — hidden at lg */}
-      <div className="flex flex-1 flex-col lg:ml-[240px]">
+      <div className="flex flex-1 flex-col min-w-0 lg:ml-[240px]">
         <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
           <Link href="/dashboard" className="inline-flex items-center" aria-label="Hearth — home">
             <Wordmark
@@ -234,7 +234,7 @@ export default function AuthLayout({
 
         {/* Main content. Bottom padding clears the mobile nav (~72px) plus the
             iOS home-indicator safe area on notched devices. lg: drops it. */}
-        <main className="flex-1 overflow-y-auto pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-0">
+        <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-0">
           <ToastProvider>{children}</ToastProvider>
         </main>
       </div>

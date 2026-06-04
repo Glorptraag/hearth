@@ -205,7 +205,7 @@ export default function DemoLayout({
       </nav>
 
       {/* Mobile top header — hidden at lg */}
-      <div className="flex flex-1 flex-col lg:ml-[240px]">
+      <div className="flex flex-1 flex-col min-w-0 lg:ml-[240px]">
         <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden mt-[32px]">
           <span className="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]">
             Hearth
@@ -230,7 +230,7 @@ export default function DemoLayout({
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto pb-[72px] lg:pb-0">{children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto pb-[72px] lg:pb-0">{children}</main>
       </div>
 
       {/* Mobile bottom nav — hidden at lg */}

@@ -192,6 +192,7 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`
 - **Nav blur backgrounds:** Use `var(--color-surface-nav-blur)` for frosted nav overlays.
 - **Horizontal-scroll guard:** `html, body` carry `overflow-x: clip` in `globals.css` — a mobile safety net so no element can introduce a sideways page scroll on 320–768px. `clip` (not `hidden`) is deliberate: it preserves `position: sticky`. Do not remove it. Genuine horizontal scrollers (carousels, the planner week-grid) must own their own `overflow-x-auto` wrapper rather than relying on the page.
 - **Hiding carousel scrollbars:** Use the `.scrollbar-none` utility (defined in `globals.css`). Do not re-inline `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`.
+- **Flex layout columns need `min-w-0`:** The shell content column and `<main>` in `(auth)/layout.tsx` (mirrored in `demo`/`dev-preview`) carry `min-w-0`. A flex item defaults to `min-width: auto`, so without this a horizontal `overflow-x-auto` scroller (e.g. an Editor's Picks carousel) stretches the whole column past the viewport on iOS — the page then lays out wide and the `overflow-x: clip` guard merely *clips* it. Keep `min-w-0` on any flex item that contains, or is an ancestor of, a horizontal scroller or long text.
 
 ## Architecture Principles — Do Not Violate
 

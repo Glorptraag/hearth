@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChildSelector } from '@/components/ui/child-selector';
 import DomainChip from '@/components/ui/DomainChip';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { TrendUp } from '@/components/icons';
 import { mockLearners, mockCapabilities, mockOurStoryLearners } from '../../mock-data';
 
 const DOMAIN_ORDER = ['english', 'mathematics', 'science', 'hass', 'arts', 'technologies', 'hpe', 'languages'];
@@ -89,7 +90,11 @@ export default function DemoCapabilities() {
                     >
                       <div className="mb-md flex items-start justify-between">
                         <h4 className="font-serif font-semibold text-text-primary flex-1">{thread.threadName}</h4>
-                        {thread.recentGrowth && <span className="text-sage" aria-hidden="true">📈</span>}
+                        {thread.recentGrowth && (
+                          <span className="text-sage" aria-label="Recent growth">
+                            <TrendUp size={18} weight="regular" />
+                          </span>
+                        )}
                       </div>
 
                       {/* Tier Badge */}

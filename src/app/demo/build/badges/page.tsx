@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Medal } from '@/components/icons';
 
 export default function BadgeCreatorPage() {
   return (
@@ -21,7 +22,9 @@ export default function BadgeCreatorPage() {
       {/* Info card */}
       <div className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card">
         <div className="flex gap-lg items-start">
-          <div className="text-4xl flex-shrink-0" aria-hidden="true">🏆</div>
+          <span className="flex h-[48px] w-[48px] flex-shrink-0 items-center justify-center rounded-md bg-surface-raised text-ember">
+            <Medal size={28} weight="regular" />
+          </span>
           <div className="space-y-md">
             <h2 className="font-serif font-semibold text-text-primary">
               Create custom badges to celebrate your family&apos;s unique achievements

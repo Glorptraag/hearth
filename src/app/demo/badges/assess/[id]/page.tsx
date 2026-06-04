@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Confetti } from '@/components/icons';
 import { mockBadges, mockLearners } from '@/app/demo/mock-data';
 
 type Step = 'intro' | 'questions' | 'decision' | 'celebration';
@@ -207,8 +208,9 @@ export default function BadgeAssessmentPage() {
         {passesThreshold ? (
           <div className="text-center space-y-lg">
             <div className="text-6xl">{badge.emoji}</div>
-            <h1 className="font-serif text-xl font-semibold text-sage">
-              🎉 {selectedLearner.name} is ready!
+            <h1 className="flex items-center justify-center gap-sm font-serif text-xl font-semibold text-sage">
+              <Confetti size={22} weight="fill" />
+              {selectedLearner.name} is ready!
             </h1>
             <p className="font-serif text-text-secondary">
               They consistently demonstrate the capabilities needed for this badge.
@@ -299,8 +301,9 @@ export default function BadgeAssessmentPage() {
             {badge.emoji}
           </div>
 
-          <h1 className="font-serif text-2xl font-semibold text-text-primary">
-            🎊 Badge Awarded!
+          <h1 className="flex items-center justify-center gap-sm font-serif text-2xl font-semibold text-text-primary">
+            <Confetti size={28} weight="fill" />
+            Badge Awarded!
           </h1>
           <p className="font-serif text-text-secondary">
             {selectedLearner.name} earned <strong>{badge.title}</strong>

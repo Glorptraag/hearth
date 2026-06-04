@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import DomainChip from '@/components/ui/DomainChip';
+import { MagnifyingGlass } from '@/components/icons';
 import { mockModules } from '../../mock-data';
 
 const SUBJECTS = [
@@ -75,13 +76,16 @@ export default function DemoActivities() {
       </div>
 
       {/* Search */}
-      <div className="mb-md">
+      <div className="mb-md relative">
+        <span className="pointer-events-none absolute left-md top-1/2 -translate-y-1/2 text-text-muted">
+          <MagnifyingGlass size={18} weight="regular" />
+        </span>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍  Search modules..."
-          className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-200"
+          placeholder="Search modules…"
+          className="w-full bg-surface-raised border border-border-subtle rounded-md pl-[44px] pr-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         />
       </div>
 
@@ -154,7 +158,9 @@ export default function DemoActivities() {
         </div>
       ) : (
         <div className="flex flex-col items-center py-3xl text-center">
-          <span className="text-4xl mb-md" aria-hidden="true">🔍</span>
+          <span className="mb-md flex h-[56px] w-[56px] items-center justify-center rounded-full bg-surface-raised text-text-muted">
+            <MagnifyingGlass size={28} weight="regular" />
+          </span>
           <p className="font-serif text-lg text-text-primary mb-sm">
             No modules match your filters
           </p>

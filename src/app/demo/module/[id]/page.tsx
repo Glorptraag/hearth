@@ -2,11 +2,27 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import DomainChip from '@/components/ui/DomainChip';
 import { mockModules, mockOverlays } from '@/app/demo/mock-data';
 import { ActivityCard } from '@/components/screens/ActivityCard';
+import {
+  HandsClapping,
+  Eye,
+  Ear,
+  BookOpen,
+  Target,
+  Confetti,
+} from '@/components/icons';
 import type { Pedagogy } from '@/types';
+
+type ModalityIcon = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
+const MODALITY_ICON: Record<string, ModalityIcon> = {
+  kinesthetic: HandsClapping,
+  visual: Eye,
+  auditory: Ear,
+  reading: BookOpen,
+};
 
 const PEDAGOGY_OPTIONS: { value: Pedagogy; label: string }[] = [
   { value: 'eclectic', label: 'Eclectic' },
@@ -76,12 +92,14 @@ export default function ModuleExperiencePage() {
     setCheckedObservations(newSet);
   };
 
-  const modalityEmoji: Record<string, string> = {
-    kinesthetic: '🤲',
-    visual: '👁',
-    auditory: '👂',
-    reading: '📖',
-  };
+  function ModalityIcon({ modality, size = 22 }: { modality: string; size?: number }) {
+    const Icon = MODALITY_ICON[modality] ?? Target;
+    return (
+      <span className="text-ember" aria-hidden="true">
+        <Icon size={size} weight="regular" />
+      </span>
+    );
+  }
 
   // Mode 1: Approach Selection
   if (mode === 'select') {
@@ -132,8 +150,8 @@ export default function ModuleExperiencePage() {
                 className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
               >
                 <div className="flex items-start gap-md">
-                  <div className="text-2xl">
-                    {modalityEmoji[approach.modality] || '🎯'}
+                  <div className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-md bg-surface-raised">
+                    <ModalityIcon modality={approach.modality} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-serif font-semibold text-text-primary mb-xs">
@@ -203,8 +221,8 @@ export default function ModuleExperiencePage() {
         {/* Approach title + modality */}
         <div className="gap-md flex flex-col">
           <div className="flex items-center gap-md">
-            <span className="text-2xl">
-              {modalityEmoji[selectedApproach.modality] || '🎯'}
+            <span className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-md bg-surface-raised">
+              <ModalityIcon modality={selectedApproach.modality} />
             </span>
             <div>
               <h1 className="font-serif text-2xl font-semibold text-text-primary">
@@ -426,7 +444,9 @@ export default function ModuleExperiencePage() {
       <div className="flex-1 flex flex-col items-center justify-center px-md py-xl gap-lg max-w-2xl mx-auto">
         {/* Celebration */}
         <div className="text-center space-y-lg">
-          <div className="text-7xl" aria-hidden="true">🎉</div>
+          <div className="flex justify-center text-ember" aria-hidden="true">
+            <Confetti size={72} weight="fill" />
+          </div>
           <h1 className="font-serif text-2xl font-semibold text-text-primary">
             Session complete!
           </h1>

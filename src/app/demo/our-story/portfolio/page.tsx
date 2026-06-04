@@ -1,13 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ComponentType } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import LearnerAvatar from '@/components/ui/LearnerAvatar';
 import DomainChip, { DOMAIN_LABELS } from '@/components/ui/DomainChip';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { Camera, PaintBrushBroad, Note, FileText } from '@/components/icons';
 import { mockLearners, mockPortfolioEntries } from '../../mock-data';
+
+const EVIDENCE_TYPE_ICON: Record<string, ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>> = {
+  photo: Camera,
+  artwork: PaintBrushBroad,
+  note: Note,
+};
 
 export default function DemoPortfolio() {
   const searchParams = useSearchParams();
@@ -144,7 +151,12 @@ export default function DemoPortfolio() {
                       <span className="font-sans text-xs text-text-muted">
                         {format(parseISO(entry.dateOccurred), 'd MMM yyyy')}
                       </span>
-                      <span className="text-lg">{entry.evidenceType === 'photo' ? '📷' : entry.evidenceType === 'artwork' ? '🎨' : entry.evidenceType === 'note' ? '📓' : '📄'}</span>
+                      <span className="text-text-muted" aria-label={`${entry.evidenceType} evidence`}>
+                        {(() => {
+                          const Icon = EVIDENCE_TYPE_ICON[entry.evidenceType] ?? FileText;
+                          return <Icon size={18} weight="regular" />;
+                        })()}
+                      </span>
                     </div>
                   </div>
 

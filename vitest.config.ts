@@ -15,6 +15,13 @@ export default defineConfig({
     name: 'unit',
     setupFiles: ['./vitest.setup.ts'],
     environment: 'jsdom',
+    // jsdom defaults to an opaque origin (about:blank), which makes
+    // localStorage throw "SecurityError: localStorage is not available for
+    // opaque origins". Setting a URL gives the doc a real origin so tests
+    // that touch localStorage / sessionStorage just work.
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
     globals: true,
 
     // Only discover unit tests. Integration tests use a different extension

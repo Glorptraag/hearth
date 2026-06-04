@@ -90,12 +90,39 @@ export default function LogPage() {
   // link without the parent needing to use AttachToModuleModal post-save.
   const [attached, setAttached] = useState<AttachContext | null>(null);
 
+  // localId → saved evidence-row id, so a post-save upload-resolved event can
+  // PATCH the right row's content URL. Populated at save time; drained by the
+  // offline-queue effect declared after the evidence form state.
+  const pendingEvidenceMapRef = useRef<Map<string, string>>(new Map());
+
+  // ─── Data ───
+  // /api/learners is guarded inside useLearnersFetch — a 5xx must NOT crash
+  // the Logger via a JSON-parse SyntaxError (incident 2026-05-25).
+  const { learners, isLoading: isLoadingLearners } = useLearnersFetch();
+
+  // ─── Form state ───
+  const [showBatch, setShowBatch] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
+  const [togetherMode, setTogetherMode] = useState(false);
+  const [description, setDescription] = useState('');
+  const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
+  const [activityType, setActivityType] = useState<string | null>(null);
+  const [lessonSubjects, setLessonSubjects] = useState<string[]>([]);
+  const [engagement, setEngagement] = useState<Record<string, number>>({});
+  const [whenDate, setWhenDate] = useState<'today' | 'yesterday' | 'earlier'>('today');
+  const [duration, setDuration] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [observations, setObservations] = useState<string[]>([]);
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
   // Task 2.7: initialise the offline queue and listen for upload-resolved
   // events so any `local://` placeholders get swapped for real remote URLs
   // as soon as the queue drains. Pre-save: swap in the evidence form state.
   // Post-save: if we already POSTed the entry with a placeholder, PATCH the
-  // evidence row's content URL via the post-save map built below.
-  const pendingEvidenceMapRef = useRef<Map<string, string>>(new Map());
+  // evidence row's content URL via the post-save map below. Declared after
+  // the evidence state so `setEvidence` is bound before this effect closes
+  // over it (React Compiler manual-memoization invariant).
   useEffect(() => {
     initOfflineQueue();
     const unsubscribe = onUploadResolved((event) => {
@@ -141,27 +168,6 @@ export default function LogPage() {
     }
     return unsubscribe;
   }, []);
-
-  // ─── Data ───
-  // /api/learners is guarded inside useLearnersFetch — a 5xx must NOT crash
-  // the Logger via a JSON-parse SyntaxError (incident 2026-05-25).
-  const { learners, isLoading: isLoadingLearners } = useLearnersFetch();
-
-  // ─── Form state ───
-  const [showBatch, setShowBatch] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
-  const [togetherMode, setTogetherMode] = useState(false);
-  const [description, setDescription] = useState('');
-  const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
-  const [activityType, setActivityType] = useState<string | null>(null);
-  const [lessonSubjects, setLessonSubjects] = useState<string[]>([]);
-  const [engagement, setEngagement] = useState<Record<string, number>>({});
-  const [whenDate, setWhenDate] = useState<'today' | 'yesterday' | 'earlier'>('today');
-  const [duration, setDuration] = useState<string | null>(null);
-  const [location, setLocation] = useState<string | null>(null);
-  const [observations, setObservations] = useState<string[]>([]);
-  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
   // ─── Guided Mode state ───
   const [observationDetails, setObservationDetails] = useState<Record<string, ChipDetailValue>>({});

@@ -7,7 +7,7 @@
  *
  * Task 6.6.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, type Mock } from 'vitest';
 import { NextRequest } from 'next/server';
 import { asSignedOut, asUser } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
@@ -62,7 +62,9 @@ describe('GET /api/marketplace/search', () => {
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
 
     const { sanityClient } = await import('@/lib/sanity/client');
-    const fetchMock = vi.mocked(sanityClient.fetch);
+    // sanityClient.fetch is a typed overload; the bare Mock cast lets the
+    // resolved-value helpers accept plain GROQ result arrays in this test.
+    const fetchMock = sanityClient.fetch as unknown as Mock;
     fetchMock
       .mockResolvedValueOnce([
         {

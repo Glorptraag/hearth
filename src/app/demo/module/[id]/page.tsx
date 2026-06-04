@@ -24,6 +24,17 @@ const MODALITY_ICON: Record<string, ModalityIcon> = {
   reading: BookOpen,
 };
 
+// Module-scoped so it isn't recreated every render (a component declared inside
+// render resets its state each pass — react-hooks/static-components).
+function ModalityGlyph({ modality, size = 22 }: { modality: string; size?: number }) {
+  const Icon = MODALITY_ICON[modality] ?? Target;
+  return (
+    <span className="text-ember" aria-hidden="true">
+      <Icon size={size} weight="regular" />
+    </span>
+  );
+}
+
 const PEDAGOGY_OPTIONS: { value: Pedagogy; label: string }[] = [
   { value: 'eclectic', label: 'Eclectic' },
   { value: 'charlotte_mason', label: 'Charlotte Mason' },
@@ -92,14 +103,6 @@ export default function ModuleExperiencePage() {
     setCheckedObservations(newSet);
   };
 
-  function ModalityIcon({ modality, size = 22 }: { modality: string; size?: number }) {
-    const Icon = MODALITY_ICON[modality] ?? Target;
-    return (
-      <span className="text-ember" aria-hidden="true">
-        <Icon size={size} weight="regular" />
-      </span>
-    );
-  }
 
   // Mode 1: Approach Selection
   if (mode === 'select') {
@@ -151,7 +154,7 @@ export default function ModuleExperiencePage() {
               >
                 <div className="flex items-start gap-md">
                   <div className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-md bg-surface-raised">
-                    <ModalityIcon modality={approach.modality} />
+                    <ModalityGlyph modality={approach.modality} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-serif font-semibold text-text-primary mb-xs">
@@ -222,7 +225,7 @@ export default function ModuleExperiencePage() {
         <div className="gap-md flex flex-col">
           <div className="flex items-center gap-md">
             <span className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-md bg-surface-raised">
-              <ModalityIcon modality={selectedApproach.modality} />
+              <ModalityGlyph modality={selectedApproach.modality} />
             </span>
             <div>
               <h1 className="font-serif text-2xl font-semibold text-text-primary">

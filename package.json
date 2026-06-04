@@ -34,7 +34,9 @@
     "db:check-schema": "node scripts/check-schema-vs-migrations.mjs",
     "check:route-handlers": "node scripts/check-route-handlers.mjs",
     "check:sanity-gating": "node scripts/check-sanity-gating.mjs",
-    "audit:published-packs": "node --env-file-if-exists=.env.local scripts/audit-published-packs.mjs"
+    "audit:published-packs": "node --env-file-if-exists=.env.local scripts/audit-published-packs.mjs",
+    "audit:content-readiness": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/audit-content-readiness/index.ts",
+    "retract:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/retract-packs/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

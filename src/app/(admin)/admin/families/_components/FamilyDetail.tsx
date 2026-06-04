@@ -136,7 +136,7 @@ export default function FamilyDetail({ data, loading, onClose }: Props) {
               <>
                 <Row label="State" value={data.settings.state} />
                 <Row label="Pedagogy" value={data.settings.pedagogyPreference} />
-                <Row label="HEU Reg #" value={data.settings.registrationNumber} />
+                <Row label="Registration #" value={data.settings.registrationNumber} />
                 <Row label="Next report" value={formatDate(data.settings.nextReportDate)} />
               </>
             )}

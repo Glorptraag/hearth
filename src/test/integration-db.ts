@@ -68,3 +68,16 @@ export function getTestDb(): NodePgDatabase<typeof schema> {
   }
   return dbInstance;
 }
+
+/**
+ * Raw pinned pg.Client for SAVEPOINT control in the test shim. Production code
+ * never touches this — only the db-test-shim's nested-transaction wrapper
+ * (which substitutes SAVEPOINT for the BEGIN/COMMIT that would otherwise close
+ * the per-test isolation transaction). Throws if not connected.
+ */
+export function getRawClient(): Client {
+  if (!client) {
+    throw new Error('Test DB not connected — call connectTestDb() in beforeAll.');
+  }
+  return client;
+}

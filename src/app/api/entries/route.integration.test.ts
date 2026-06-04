@@ -63,6 +63,40 @@ describe('POST /api/entries — real DB', () => {
     expect(rows[0].familyId).toBe(TEST_FAMILY_ID);
   });
 
+  it('accepts a title-less Quick log and derives a title (no "Failed to save")', async () => {
+    // Regression: a tap-only Quick log sends no title. The server must coalesce
+    // a non-empty title instead of 400ing the parent's logged learning.
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', { description: 'Counted to twenty on the stairs', status: 'draft' })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].title).toBe('Counted to twenty on the stairs');
+  });
+
+  it('accepts an entry with neither title nor description (generic fallback)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(jsonReq('http://x/api/entries', { status: 'draft' }));
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].title).toBe('Learning entry');
+  });
+
   it('rejects writes from a viewer role with 403', async () => {
     // Owner is someone else; the test user is only a viewer member, so the
     // route's checkWritePermission should refuse the write.

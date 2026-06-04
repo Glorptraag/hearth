@@ -59,6 +59,31 @@ export function deriveEntryTitle(description: string): string {
   return description.slice(0, 60).trim() + (description.length > 60 ? '...' : '');
 }
 
+const SUBJECT_TITLE_LABEL: Record<string, string> = {
+  english: 'English',
+  mathematics: 'Maths',
+  science: 'Science',
+  hass: 'HASS',
+  arts: 'Arts',
+  technologies: 'Technologies',
+  hpe: 'HPE',
+  languages: 'Languages',
+};
+
+/**
+ * A human-readable title for entries with no typed description — a normal Quick
+ * log is tap-only (child + activity + engagement + observation chips) and never
+ * touches the description field. Without this the title would be empty and the
+ * /api/entries `title.min(1)` check rejects the save ("Failed to save"), losing
+ * the parent's logged learning. Prefers the first subject, else the date.
+ */
+export function deriveFallbackTitle(subjects: string[], dateOccurred: string): string {
+  if (subjects.length > 0) {
+    return `${SUBJECT_TITLE_LABEL[subjects[0]] ?? subjects[0]} learning`;
+  }
+  return dateOccurred ? `Learning on ${dateOccurred}` : 'Learning entry';
+}
+
 /**
  * Legacy: extract photo URLs for the `evidenceUrls` text[] column.
  * Kept for backward-compat during the 2-cycle deprecation window.
@@ -184,11 +209,15 @@ export function buildEntrySavePayload(
   ctx: EntrySaveContext,
 ): EntrySavePayload {
   const isScaffold = ctx.scaffoldSessionId !== undefined;
+  const subjects = deriveSubjects(form.activityType, form.lessonSubjects);
+  // Never ship an empty title — a description-less Quick log would otherwise be
+  // rejected by the server's title.min(1) check.
+  const title = deriveEntryTitle(form.description) || deriveFallbackTitle(subjects, form.dateOccurred);
   return {
-    title: deriveEntryTitle(form.description),
+    title,
     description: form.description,
     dateOccurred: form.dateOccurred,
-    subjects: deriveSubjects(form.activityType, form.lessonSubjects),
+    subjects,
     learnerIds: form.selectedLearners,
     engagementPerLearner: form.engagement,
     discoveriesPerLearner: form.discoveries,

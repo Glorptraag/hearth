@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useToast } from '@/hooks/use-toast';
 import { X, Camera } from '@/components/icons';
 import type { DraftEvidenceItem as EvidenceItem } from '@/lib/logger/draft';
 
@@ -19,6 +20,7 @@ export function EvidenceModal({
   onClose: () => void;
   onSave: (item: EvidenceItem) => void;
 }) {
+  const { toast } = useToast();
   const [content, setContent] = useState('');
   const [caption, setCaption] = useState('');
   const [linkName, setLinkName] = useState('');
@@ -44,14 +46,14 @@ export function EvidenceModal({
         formData.append('file', selectedFileRef.current);
         const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Upload failed' }));
-          alert(err.error ?? 'Upload failed. Please try again.');
+          const err = await res.json().catch(() => ({ error: 'Upload failed. Please try again.' }));
+          toast(err.error ?? 'Upload failed. Please try again.', 'error');
           return;
         }
         const { url } = await res.json();
         onSave({ type: 'photo', content: url, caption });
       } catch {
-        alert('Upload failed. Check your connection and try again.');
+        toast('Upload failed. Check your connection and try again.', 'error');
         return;
       } finally {
         setUploading(false);

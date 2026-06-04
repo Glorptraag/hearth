@@ -26,6 +26,16 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Hearth",
   description: "Homeschool learning management for Australian families",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export default async function RootLayout({

@@ -24,11 +24,14 @@
 
   /* ---------- Text ---------- */
   --color-text-primary:   #E8DFD4;
-  --color-text-secondary: #9B8B7E;
-  /* v2 spec value is #6B5D52 — we deliberately keep #726458 (3.15:1 on panel)
-     as a documented WCAG override. See hearth-canonical-design-tokens-v1.md
-     Appendix A and CLAUDE.md. */
-  --color-text-muted:     #726458;
+  /* Brightened from #9B8B7E (~5.5:1) → ~7:1 on panel after alpha feedback that
+     secondary copy blended into the dark background. */
+  --color-text-secondary: #B0A094;
+  /* Brightened from #726458 (3.15:1) → ~4.1:1 on panel for the same reason.
+     Still the dimmest text token (kept below secondary) so the type hierarchy
+     holds. v2 spec value was #6B5D52; see hearth-canonical-design-tokens-v1.md
+     Appendix A and CLAUDE.md token-exception note. */
+  --color-text-muted:     #877565;
   --color-text-inverse:   #15110D;
 
   /* ---------- Ember (action only — S11/S13) ---------- */

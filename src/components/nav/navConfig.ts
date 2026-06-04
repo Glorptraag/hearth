@@ -7,10 +7,8 @@ import {
   Compass,
   Stack,
   Medal,
-  ClipboardText,
   Storefront,
   Sparkle,
-  Plant,
 } from '@/components/icons';
 
 export type NavIcon = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
@@ -64,9 +62,8 @@ export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
     label: 'Plan',
     Icon: CalendarBlank,
     destinations: [
-      { href: '/heu', label: 'HEU Curation', Icon: ClipboardText },
-      { href: '/badges', label: 'Badge Creator', Icon: Medal },
-      { href: '/module', label: 'Module Builder', Icon: Stack },
+      { href: '/build/badges', label: 'Badge Creator', Icon: Medal },
+      { href: '/build/modules', label: 'Module Builder', Icon: Stack },
       { href: '/planner', label: 'Weekly Planner', Icon: CalendarBlank },
     ],
   },
@@ -76,7 +73,6 @@ export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
     label: 'Explore',
     Icon: Compass,
     destinations: [
-      { href: '/pedagogy', label: 'Pedagogy Engine', Icon: Plant },
       { href: '/our-story/capabilities', label: 'Capabilities', Icon: Sparkle },
       { href: '/explore/marketplace', label: 'Marketplace', Icon: Storefront },
       { href: '/explore/activities', label: 'Activity Discovery', Icon: Compass },

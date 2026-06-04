@@ -7,6 +7,7 @@ import { LEARNER_COLOURS, type Pedagogy } from '@/types';
 import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
 import { track } from '@/lib/analytics/posthog';
 import { Plant } from '@/components/icons';
+import { JURISDICTIONS, getJurisdiction } from '@/config/jurisdictions';
 
 const SHAPE_OPTIONS = ['🌟', '🦋', '🌿', '🔥', '🌊', '🎨'];
 
@@ -46,6 +47,8 @@ export default function OnboardingPage() {
   // so a user's edit (including clearing it) is never clobbered.
   const [familyName, setFamilyName] = useState('');
   const [familyNameTouched, setFamilyNameTouched] = useState(false);
+  // Australian state/territory — drives reporting copy + compliance dates.
+  const [state, setState] = useState('');
   const [children, setChildren] = useState<ChildDraft[]>([emptyChild(0)]);
 
   useEffect(() => {
@@ -71,6 +74,10 @@ export default function OnboardingPage() {
     setError('');
 
     // Validate
+    if (!state) {
+      setError('Select your state or territory.');
+      return;
+    }
     const validChildren = children.filter((c) => c.name.trim());
     if (validChildren.length === 0) {
       setError('Add at least one child with a name.');
@@ -79,6 +86,17 @@ export default function OnboardingPage() {
 
     setSaving(true);
     try {
+      // Persist the state/territory so reporting copy + compliance dates match.
+      const stateRes = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state }),
+      });
+      if (!stateRes.ok) {
+        setError('Could not save your state. Please try again.');
+        return;
+      }
+
       // Family name is optional — only PATCH when the user supplied a value
       // to override the Clerk-derived default already on the family row.
       const trimmedFamilyName = familyName.trim();
@@ -262,6 +280,32 @@ export default function OnboardingPage() {
             <h1 className="font-serif text-2xl font-semibold text-text-primary text-center">
               Your Family
             </h1>
+
+            {/* State / Territory — drives reporting copy + compliance dates */}
+            <div>
+              <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs block">
+                Your State or Territory
+              </label>
+              <select
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full rounded-[6px] border border-border-subtle bg-surface-panel px-md py-sm font-serif text-text-primary focus:border-ember focus:outline-none transition-colors duration-200 [color-scheme:dark]"
+              >
+                <option value="" disabled>
+                  Select your state or territory
+                </option>
+                {Object.values(JURISDICTIONS).map((j) => (
+                  <option key={j.id} value={j.id} className="bg-surface-panel">
+                    {j.label} ({j.abbreviation})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-xs font-sans text-xs text-text-muted">
+                {state
+                  ? `Reports will be tailored for the ${getJurisdiction(state).regulatoryBody} (${getJurisdiction(state).regulatoryBodyShort}).`
+                  : 'We use this to match your reports to your state’s home-education requirements.'}
+              </p>
+            </div>
 
             {/* Family name — optional override; defaults to Clerk surname */}
             <div>

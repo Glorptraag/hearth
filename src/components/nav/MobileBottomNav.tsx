@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { NAV_TABS, isDirectTabActive, type TrayId } from './navConfig';
+import { buildNav, isDirectTabActive, stripBasePath, type TrayId } from './navConfig';
 import { NavTab } from './NavTab';
 import { LogButton } from './LogButton';
 import { TrayedTab } from './TrayedTab';
@@ -22,10 +22,16 @@ type TrayState =
  * Owns one piece of state — the tray phase machine. Route changes auto-clear
  * the tray (immediate, no animation) so the user never returns to a screen
  * with a tray still visually open.
+ *
+ * `basePath` lets the same nav drive the live app (`''`) and the unauthenticated
+ * demo (`'/demo'`): every href is prefixed, and active-state comparison runs on
+ * the path with `basePath` stripped back off.
  */
-export function MobileBottomNav() {
+export function MobileBottomNav({ basePath = '' }: { basePath?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const tabs = buildNav(basePath);
+  const localPath = stripBasePath(pathname, basePath);
   const [tray, setTray] = useState<TrayState>({ phase: 'closed' });
   const trayedTabRefs = useRef<Partial<Record<TrayId, HTMLButtonElement | null>>>({});
 
@@ -108,8 +114,8 @@ export function MobileBottomNav() {
 
       {/* The tray itself. Stays mounted through 'closing' so exit animation can play. */}
       {activeTrayId && (() => {
-        const trayConfig = NAV_TABS.find(
-          (t): t is Extract<(typeof NAV_TABS)[number], { kind: 'trayed' }> =>
+        const trayConfig = tabs.find(
+          (t): t is Extract<(typeof tabs)[number], { kind: 'trayed' }> =>
             t.kind === 'trayed' && t.id === activeTrayId,
         );
         if (!trayConfig) return null;
@@ -132,7 +138,7 @@ export function MobileBottomNav() {
         className="fixed bottom-0 left-0 right-0 z-[100] grid grid-cols-5 items-end bg-surface-body px-xs pt-sm lg:hidden"
         style={{ paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))' }}
       >
-        {NAV_TABS.map((tab) => {
+        {tabs.map((tab) => {
           if (tab.kind === 'direct') {
             return (
               <NavTab
@@ -140,7 +146,7 @@ export function MobileBottomNav() {
                 href={tab.href}
                 label={tab.label}
                 Icon={tab.Icon}
-                active={isDirectTabActive(pathname, tab.href)}
+                active={isDirectTabActive(localPath, stripBasePath(tab.href, basePath))}
                 onNavigate={closeImmediate}
               />
             );

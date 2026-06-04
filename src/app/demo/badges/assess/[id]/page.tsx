@@ -295,7 +295,7 @@ export default function BadgeAssessmentPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-md py-xl gap-lg max-w-2xl mx-auto">
         <div className="text-center space-y-lg">
           {/* Badge with glow effect */}
-          <div className="text-7xl filter drop-shadow-[0_0_20px_rgba(217,123,58,0.5)] animate-pulse">
+          <div className="inline-block rounded-full text-7xl shadow-ember-strong animate-pulse">
             {badge.emoji}
           </div>
 

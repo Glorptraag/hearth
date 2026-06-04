@@ -51,42 +51,66 @@ export type TrayedTabConfig = {
 export type NavTabConfig = DirectTab | LogTab | TrayedTabConfig;
 
 /**
- * The five tabs of the parent-facing mobile bottom nav, in render order
+ * Builds the five tabs of the parent-facing mobile bottom nav, in render order
  * (Home | Story | Log | Plan | Explore). Single source of truth for the IA.
+ *
+ * `basePath` prefixes every `href` and `destinations[].href` so the same nav can
+ * drive the live app (`''`) and the unauthenticated demo (`'/demo'`). Active-state
+ * comparison runs on the *unprefixed* path — strip `basePath` from `usePathname()`
+ * via {@link stripBasePath} before calling {@link isDirectTabActive}.
  */
-export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
-  { kind: 'direct', id: 'home', label: 'Home', href: '/dashboard', Icon: House },
-  { kind: 'direct', id: 'story', label: 'Story', href: '/our-story', Icon: BookOpenText },
-  { kind: 'log', id: 'log', label: 'Log', href: '/log', Icon: PencilSimpleLine },
-  {
-    kind: 'trayed',
-    id: 'plan',
-    label: 'Plan',
-    Icon: CalendarBlank,
-    destinations: [
-      { href: '/heu', label: 'HEU Curation', Icon: ClipboardText },
-      { href: '/badges', label: 'Badge Creator', Icon: Medal },
-      { href: '/module', label: 'Module Builder', Icon: Stack },
-      { href: '/planner', label: 'Weekly Planner', Icon: CalendarBlank },
-    ],
-  },
-  {
-    kind: 'trayed',
-    id: 'explore',
-    label: 'Explore',
-    Icon: Compass,
-    destinations: [
-      { href: '/pedagogy', label: 'Pedagogy Engine', Icon: Plant },
-      { href: '/our-story/capabilities', label: 'Capabilities', Icon: Sparkle },
-      { href: '/explore/marketplace', label: 'Marketplace', Icon: Storefront },
-      { href: '/explore/activities', label: 'Activity Discovery', Icon: Compass },
-    ],
-  },
-];
+export function buildNav(basePath = ''): ReadonlyArray<NavTabConfig> {
+  const p = (href: string) => `${basePath}${href}`;
+  return [
+    { kind: 'direct', id: 'home', label: 'Home', href: p('/dashboard'), Icon: House },
+    { kind: 'direct', id: 'story', label: 'Story', href: p('/our-story'), Icon: BookOpenText },
+    { kind: 'log', id: 'log', label: 'Log', href: p('/log'), Icon: PencilSimpleLine },
+    {
+      kind: 'trayed',
+      id: 'plan',
+      label: 'Plan',
+      Icon: CalendarBlank,
+      destinations: [
+        { href: p('/heu'), label: 'HEU Curation', Icon: ClipboardText },
+        { href: p('/badges'), label: 'Badge Creator', Icon: Medal },
+        { href: p('/module'), label: 'Module Builder', Icon: Stack },
+        { href: p('/planner'), label: 'Weekly Planner', Icon: CalendarBlank },
+      ],
+    },
+    {
+      kind: 'trayed',
+      id: 'explore',
+      label: 'Explore',
+      Icon: Compass,
+      destinations: [
+        { href: p('/pedagogy'), label: 'Pedagogy Engine', Icon: Plant },
+        { href: p('/our-story/capabilities'), label: 'Capabilities', Icon: Sparkle },
+        { href: p('/explore/marketplace'), label: 'Marketplace', Icon: Storefront },
+        { href: p('/explore/activities'), label: 'Activity Discovery', Icon: Compass },
+      ],
+    },
+  ];
+}
+
+/** Canonical live nav (no basePath prefix). */
+export const NAV_TABS: ReadonlyArray<NavTabConfig> = buildNav('');
+
+/**
+ * Strips a route-group `basePath` off a pathname so the nav's active-state
+ * matchers (which know only canonical `/dashboard`, `/our-story`, … paths) work
+ * identically under `/demo`. `'/demo/log'` → `'/log'`; `'/demo'` → `'/'`.
+ */
+export function stripBasePath(pathname: string, basePath = ''): string {
+  if (!basePath) return pathname;
+  if (pathname === basePath) return '/';
+  if (pathname.startsWith(`${basePath}/`)) return pathname.slice(basePath.length);
+  return pathname;
+}
 
 /**
  * Active-state matchers for direct tabs. `Story` covers the entire `/our-story`
- * subtree because the Capabilities tray destination lives under it.
+ * subtree because the Capabilities tray destination lives under it. Operates on
+ * the unprefixed path — pass a {@link stripBasePath} result in demo mode.
  */
 export function isDirectTabActive(pathname: string, href: string): boolean {
   if (href === '/dashboard') return pathname === '/dashboard';

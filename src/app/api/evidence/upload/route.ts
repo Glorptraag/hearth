@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import { routeHandler } from '@/lib/api-helpers';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 async function compressIfImage(
   file: File

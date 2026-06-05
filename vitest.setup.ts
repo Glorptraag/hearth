@@ -15,52 +15,6 @@ import { vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
 // ---------------------------------------------------------------------------
-// localStorage polyfill — works around a Node 26 + jsdom 29 + vitest 4
-// collision. Node 26 ships an experimental `localStorage` global that's
-// undefined unless --localstorage-file is set; this undefined shadows the
-// jsdom window's localStorage in the vitest worker, so any test that does
-// `localStorage.clear()` throws TypeError. We install a minimal in-memory
-// Storage on globalThis (and mirror onto window) so tests behave the same
-// across Node 22 (CI) and Node 26+ (local).
-//
-// Safe to remove once vitest 4 + jsdom resolve the shadowing OR the project
-// pins Node ≤ 22.
-// ---------------------------------------------------------------------------
-if (typeof globalThis !== 'undefined' && !(globalThis as { localStorage?: Storage }).localStorage) {
-  class MemoryStorage implements Storage {
-    private store = new Map<string, string>();
-    get length() {
-      return this.store.size;
-    }
-    clear() {
-      this.store.clear();
-    }
-    getItem(key: string) {
-      return this.store.has(key) ? (this.store.get(key) as string) : null;
-    }
-    key(index: number) {
-      return Array.from(this.store.keys())[index] ?? null;
-    }
-    removeItem(key: string) {
-      this.store.delete(key);
-    }
-    setItem(key: string, value: string) {
-      this.store.set(key, String(value));
-    }
-  }
-  const storage = new MemoryStorage();
-  Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true });
-  Object.defineProperty(globalThis, 'sessionStorage', { value: new MemoryStorage(), configurable: true });
-  if (typeof window !== 'undefined') {
-    try {
-      Object.defineProperty(window, 'localStorage', { value: storage, configurable: true });
-    } catch {
-      /* read-only on some jsdom builds — ignore */
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Test identity constants — exported so tests and factories use the same IDs
 // ---------------------------------------------------------------------------
 export const TEST_USER_ID = 'user_test_default';

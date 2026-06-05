@@ -76,7 +76,7 @@ export default function DemoLayout({
   const unreadCount = 4;
 
   return (
-    <div className="flex min-h-dvh bg-surface-body">
+    <div className="flex h-dvh overflow-hidden bg-surface-body">
       {/* Demo banner — fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-md bg-surface-panel/95 backdrop-blur-sm border-b border-border-subtle px-md py-xs">
         <span className="font-sans text-xs text-text-secondary">
@@ -206,7 +206,7 @@ export default function DemoLayout({
 
       {/* Mobile top header — hidden at lg */}
       <div className="flex flex-1 flex-col min-w-0 lg:ml-[240px]">
-        <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden mt-[32px]">
+        <header className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden mt-[32px]">
           <span className="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]">
             Hearth
           </span>
@@ -229,12 +229,12 @@ export default function DemoLayout({
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-y-auto pb-[72px] lg:pb-0">{children}</main>
-      </div>
+        {/* Main content — the only scroll container on mobile (shell stays at
+            viewport height; the bottom nav below is an in-flow sibling). */}
+        <main className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain">{children}</main>
 
-      {/* Mobile bottom nav — hidden at lg */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm lg:hidden">
+        {/* Mobile bottom nav — in-flow sibling of the scroll area, hidden at lg */}
+        <nav className="relative z-50 shrink-0 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm lg:hidden">
         {BOTTOM_NAV_ITEMS.map((item) => {
           const active = isActiveBottom(pathname, item.href);
           return (
@@ -265,7 +265,8 @@ export default function DemoLayout({
             </Link>
           );
         })}
-      </nav>
+        </nav>
+      </div>
     </div>
   );
 }

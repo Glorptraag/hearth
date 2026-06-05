@@ -307,8 +307,8 @@ export default function WorkSampleCuration({
   const isComplete = filledFields === 4;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm">
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="w-full max-w-[640px] max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="w-full max-w-[640px] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="sticky top-0 z-10 bg-surface-body border-b border-border-subtle px-lg py-md flex items-center justify-between">
           <div>
@@ -584,6 +584,7 @@ export default function WorkSampleCuration({
             </div>
           )}
         </div>
+        <div aria-hidden="true" className="h-[env(safe-area-inset-bottom,0px)]" />
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ export function AttachToModuleModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
       onClick={onClose}
     >
       <div
@@ -89,7 +89,7 @@ export function AttachToModuleModal({
         aria-modal="true"
         aria-labelledby="attach-modal-title"
         tabIndex={-1}
-        className="relative w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-float"
+        className="relative w-full max-w-md max-h-[90dvh] flex flex-col overflow-hidden rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-float"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
@@ -134,7 +134,7 @@ export function AttachToModuleModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-xl pb-md space-y-xs">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-xl pb-md space-y-xs">
           {loading ? (
             <p className="font-sans text-sm text-text-muted py-md text-center animate-pulse">
               Loading your library…
@@ -186,6 +186,7 @@ export function AttachToModuleModal({
             Skip — just a logged moment
           </button>
         </div>
+        <div aria-hidden="true" className="h-[env(safe-area-inset-bottom,0px)]" />
       </div>
     </div>
   );

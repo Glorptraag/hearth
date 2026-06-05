@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { useToast } from '@/hooks/use-toast';
+import { compressImageFile } from '@/lib/images/compress-image';
 import { X, Camera } from '@/components/icons';
 import type { DraftEvidenceItem as EvidenceItem } from '@/lib/logger/draft';
 
@@ -43,7 +44,8 @@ export function EvidenceModal({
       setUploading(true);
       try {
         const formData = new FormData();
-        formData.append('file', selectedFileRef.current);
+        const fileToUpload = await compressImageFile(selectedFileRef.current);
+        formData.append('file', fileToUpload);
         const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: 'Upload failed. Please try again.' }));

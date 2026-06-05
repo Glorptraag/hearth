@@ -272,7 +272,7 @@ Update these two places in lockstep (CI will usually catch a mismatch, but it's 
 
 ### CI
 
-`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (stands up a `pgvector/pgvector:pg16` service container, applies the schema with `drizzle-kit migrate`, then runs the suite — no cloud credentials, always runs). All jobs pinned Node 22.
+`.github/workflows/test.yml` runs four parallel jobs on every PR and push to main: **lint** (continue-on-error until debt clears), **typecheck**, **unit**, **integration** (stands up a `pgvector/pgvector:pg16` service container, applies the schema with `drizzle-kit migrate`, then runs the suite — no cloud credentials, always runs). All jobs run Node 24 (LTS), selected from `.nvmrc` via `actions/setup-node`'s `node-version-file`; the runtime is also declared in `package.json` `engines.node` (`24.x`), which Vercel honors.
 
 ## Writing Sanity Content Programmatically
 

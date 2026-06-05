@@ -159,7 +159,7 @@ export function PrintSheet({
   const copiesOptions = defaultCopies <= 1 ? [] : Array.from({ length: Math.min(defaultCopies + 1, 5) }, (_, i) => i + 1);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center">
+    <div className="fixed inset-0 z-[200] flex items-end lg:items-center lg:justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 backdrop-modal transition-opacity duration-200"
@@ -173,7 +173,7 @@ export function PrintSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="print-sheet-title"
-        className="relative z-10 w-full max-h-[85dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-float flex flex-col transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+        className="relative z-10 w-full max-h-[90dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-float flex flex-col transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
       >
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-sm lg:hidden">
@@ -248,7 +248,7 @@ export function PrintSheet({
         </div>
 
         {/* Item list */}
-        <div className="flex-1 overflow-y-auto px-lg py-md">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-lg py-md">
           {/* Select all */}
           <div className="flex items-center justify-between mb-md">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -347,6 +347,7 @@ export function PrintSheet({
             </button>
           </div>
         </div>
+        <div aria-hidden="true" className="h-[env(safe-area-inset-bottom,0px)]" />
       </div>
     </div>
   );

@@ -201,7 +201,7 @@ function PreviewModal({
   const trapRef = useFocusTrap(true);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center backdrop-modal px-0 sm:px-md"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal px-0 sm:px-md"
       onClick={onClose}
     >
       <div
@@ -209,7 +209,7 @@ function PreviewModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="preview-modal-title"
-        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-float p-xl max-h-[85vh] overflow-y-auto"
+        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-float p-xl max-h-[90dvh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
@@ -302,6 +302,7 @@ function PreviewModal({
             + Planner
           </button>
         </div>
+        <div aria-hidden="true" className="h-[env(safe-area-inset-bottom,0px)]" />
       </div>
     </div>
   );

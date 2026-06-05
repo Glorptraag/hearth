@@ -52,8 +52,8 @@ export function EvidenceModal({
           toast(err.error ?? 'Upload failed. Please try again.', 'error');
           return;
         }
-        const { url } = await res.json();
-        onSave({ type: 'photo', content: url, caption });
+        const { pathname } = await res.json();
+        onSave({ type: 'photo', content: pathname, caption });
       } catch {
         toast('Upload failed. Check your connection and try again.', 'error');
         return;
@@ -77,9 +77,9 @@ export function EvidenceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center">
       <div className="absolute inset-0 backdrop-modal" onClick={onClose} />
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         <div className="flex items-center justify-between mb-lg">
           <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Close">
@@ -147,6 +147,9 @@ export function EvidenceModal({
         >
           {uploading ? 'Uploading...' : 'Add Evidence'}
         </button>
+        {/* Reserve space for the iOS home indicator so the action button
+            clears it on the bottom-sheet (mobile) layout. */}
+        <div aria-hidden className="h-[env(safe-area-inset-bottom,0px)]" />
       </div>
     </div>
   );

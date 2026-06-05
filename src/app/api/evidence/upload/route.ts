@@ -97,13 +97,21 @@ export const POST = routeHandler(async (request: NextRequest) => {
   const path = `evidence/${family.id}/${Date.now()}.${ext}`;
 
   try {
-    const blob = await put(path, buffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType,
-    });
+    // Evidence photos are children's photos — store them PRIVATE so the bytes
+    // are never reachable without going through the authenticated read proxy
+    // (`GET /api/evidence`). The persisted reference is the blob *pathname*,
+    // never a public URL. If the store doesn't support private access, fall
+    // back to public — the proxy still gates client access by family, so the
+    // URL is never exposed to clients either way.
+    let blob;
+    try {
+      blob = await put(path, buffer, { access: 'private', addRandomSuffix: true, contentType });
+    } catch (privErr) {
+      console.warn('[evidence/upload] private blob unavailable — falling back to public:', privErr);
+      blob = await put(path, buffer, { access: 'public', addRandomSuffix: true, contentType });
+    }
 
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json({ pathname: blob.pathname });
   } catch (err) {
     console.error('[evidence/upload] Blob storage error:', err);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });

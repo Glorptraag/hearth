@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import type { QuickCaptureItem } from './types';
 import { PencilSimple, Camera, Microphone, X } from '@/components/icons';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
+import { evidenceSrc } from '@/lib/evidence';
 
 export default function QuickCapture({
   captures,
@@ -58,10 +59,10 @@ export default function QuickCapture({
       form.append('file', file);
       const res = await fetch('/api/evidence/upload', { method: 'POST', body: form });
       if (res.ok) {
-        const { url } = (await res.json()) as { url: string };
+        const { pathname } = (await res.json()) as { pathname: string };
         onAddCapture({
           type: 'photo',
-          content: url,
+          content: pathname,
           activityIdx: currentActivityIdx,
           activityTitle: currentActivityTitle,
           activityId: currentActivityId,
@@ -157,7 +158,7 @@ export default function QuickCapture({
                   // and the layout uses max-h flow rather than a sized box —
                   // next/image's required width/height/fill don't fit here.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={cap.content} alt="Capture" className="mt-xs rounded max-h-12 object-cover" />
+                  <img src={evidenceSrc(cap.content)} alt="Capture" className="mt-xs rounded max-h-12 object-cover" />
                 ) : (
                   <p className="font-serif text-xs text-text-secondary line-clamp-2">{cap.content}</p>
                 )}

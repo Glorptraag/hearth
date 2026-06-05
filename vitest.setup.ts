@@ -272,6 +272,9 @@ vi.mock('@vercel/blob', () => ({
   })),
   del: vi.fn(async () => {}),
   list: vi.fn(async () => ({ blobs: [] })),
+  // Authenticated read proxy reads private blobs via get(); default to
+  // not-found so route tests opt in explicitly.
+  get: vi.fn(async () => null),
 }));
 
 // ---------------------------------------------------------------------------

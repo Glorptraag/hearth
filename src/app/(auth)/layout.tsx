@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { Wordmark } from "@/components/ui/Wordmark";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
 import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
+import { SettingsMenu } from "@/components/nav/SettingsMenu";
 import {
   CalendarBlank,
   PencilSimpleLine,
@@ -251,17 +252,7 @@ export default function AuthLayout({
                 </span>
               )}
             </Link>
-            <Link
-              href="/settings"
-              aria-label="Settings"
-              className={`flex h-[36px] w-[36px] items-center justify-center rounded-md transition-all duration-200 ease-[var(--ease-default)] ${
-                isActive(pathname, "/settings")
-                  ? "bg-surface-raised text-ember"
-                  : "text-text-muted hover:bg-ember-glow hover:text-text-primary"
-              }`}
-            >
-              <Gear size={18} aria-hidden="true" />
-            </Link>
+            <SettingsMenu />
           </div>
         </header>
 

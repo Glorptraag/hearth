@@ -67,6 +67,8 @@ type Props = {
   reportYear: number;
   sample: WorkSampleData | null;
   learnerName: string;
+  /** Jurisdiction reporting body, e.g. "Home Education Unit" (QLD) — drives copy. */
+  reportingBody: string;
   onSampleChanged: () => void;
   onClose: () => void;
 };
@@ -112,6 +114,7 @@ export default function WorkSampleCuration({
   reportYear,
   sample,
   learnerName,
+  reportingBody,
   onSampleChanged,
   onClose,
 }: Props) {
@@ -537,7 +540,7 @@ export default function WorkSampleCuration({
                     These annotations haven&rsquo;t been reviewed yet.
                   </p>
                   <p className="font-sans text-[11px] text-text-secondary">
-                    The HEU expects your own observations. Edit each field to reflect what you actually saw, then confirm. If you&rsquo;re sure the draft is accurate as-is, tap Confirm again.
+                    The {reportingBody} expects your own observations. Edit each field to reflect what you actually saw, then confirm. If you&rsquo;re sure the draft is accurate as-is, tap Confirm again.
                   </p>
                 </div>
               )}

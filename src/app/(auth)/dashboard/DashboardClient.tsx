@@ -113,7 +113,10 @@ function getGreetingMessage(
   learnerNames: string[],
   todaySubjects: string[]
 ): { heading: string; message: string } {
-  const firstName = familyName.replace(/ Family$/, '');
+  // Show the family name exactly as the parent set it (onboarding stores the
+  // preferred form, e.g. "Douglas Family"). Don't strip the "Family" suffix —
+  // alpha testers expect "Good evening, Douglas Family", not "Douglas".
+  const displayName = familyName.trim();
   const names = learnerNames.length === 1
     ? learnerNames[0]
     : learnerNames.length === 2
@@ -128,14 +131,14 @@ function getGreetingMessage(
   if (timeOfDay === 'evening') {
     if (todayEntryCount > 0) {
       return {
-        heading: `A gentle close to the day, <strong>${firstName}</strong>.`,
+        heading: `A gentle close to the day, <strong>${displayName}</strong>.`,
         message: names
           ? `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} for ${names}${subjectNote}. A good day\u2019s learning.`
-          : `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} of learning${subjectNote}. The ${firstName} hearth has been busy.`,
+          : `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} of learning${subjectNote}. The ${displayName}’s hearth has been busy.`,
       };
     }
     return {
-      heading: `Good evening, <strong>${firstName}</strong>.`,
+      heading: `Good evening, <strong>${displayName}</strong>.`,
       message: "Quiet day. That\u2019s okay \u2014 every day counts. What did you notice today?",
     };
   }
@@ -143,14 +146,14 @@ function getGreetingMessage(
   if (timeOfDay === 'morning') {
     if (todayPlannerCount > 0) {
       return {
-        heading: `Good morning, <strong>${firstName}</strong>.`,
+        heading: `Good morning, <strong>${displayName}</strong>.`,
         message: names
           ? `${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned for ${names} today${subjectNote}. What will the day bring?`
           : `You have ${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned${subjectNote}. What will the day bring?`,
       };
     }
     return {
-      heading: `Good morning, <strong>${firstName}</strong>.`,
+      heading: `Good morning, <strong>${displayName}</strong>.`,
       message: names
         ? `Ready to learn with ${names} today. What will today look like?`
         : "What will today\u2019s learning look like?",
@@ -160,14 +163,14 @@ function getGreetingMessage(
   // afternoon
   if (todayEntryCount === 0) {
     return {
-      heading: `Good afternoon, <strong>${firstName}</strong>.`,
+      heading: `Good afternoon, <strong>${displayName}</strong>.`,
       message: names
         ? `Nothing logged for ${names} yet \u2014 capture what you\u2019ve been up to.`
         : "Nothing logged yet today \u2014 capture what you\u2019ve been up to.",
     };
   }
   return {
-    heading: `Good afternoon, <strong>${firstName}</strong>.`,
+    heading: `Good afternoon, <strong>${displayName}</strong>.`,
     message: names
       ? `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged for ${names} today${subjectNote}. Keep it up!`
       : `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged today${subjectNote}. Keep it up!`,

@@ -80,7 +80,7 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
   const { user } = useUser();
-  const familyName = user?.lastName ? `${user.lastName} Family` : "My Family";
+  const [familyNameFromDb, setFamilyNameFromDb] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hearths, setHearths] = useState<Array<{ id: string; name: string; pendingCount: number }>>([]);
 
@@ -120,6 +120,28 @@ export default function AuthLayout({
     }
     fetchHearths();
   }, []);
+
+  useEffect(() => {
+    async function fetchFamilyName() {
+      try {
+        const res = await fetch("/api/family");
+        if (res.ok) {
+          const data: { familyName?: string } = await res.json();
+          if (data.familyName) setFamilyNameFromDb(data.familyName);
+        }
+      } catch {
+        // silent — falls back to the Clerk-derived name below
+      }
+    }
+    fetchFamilyName();
+  }, []);
+
+  // Prefer the family name the parent set in onboarding (mirrors the dashboard).
+  // Ignore the literal "My Family" default so a Clerk surname can stand in.
+  const dbFamilyName =
+    familyNameFromDb && familyNameFromDb !== "My Family" ? familyNameFromDb : null;
+  const familyName =
+    dbFamilyName ?? (user?.lastName ? `${user.lastName} Family` : "My Family");
 
   const firstName = user?.firstName ?? "there";
   const initials = `${(user?.firstName ?? "H")[0]}${(user?.lastName ?? "")[0] ?? ""}`;
@@ -228,6 +250,17 @@ export default function AuthLayout({
                   <NotificationBadge count={unreadCount} />
                 </span>
               )}
+            </Link>
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              className={`flex h-[36px] w-[36px] items-center justify-center rounded-md transition-all duration-200 ease-[var(--ease-default)] ${
+                isActive(pathname, "/settings")
+                  ? "bg-surface-raised text-ember"
+                  : "text-text-muted hover:bg-ember-glow hover:text-text-primary"
+              }`}
+            >
+              <Gear size={18} aria-hidden="true" />
             </Link>
           </div>
         </header>

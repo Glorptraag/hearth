@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
@@ -344,11 +345,25 @@ const TABS: { id: Tab; label: string; Icon: TabIcon }[] = [
   { id: 'billing',       label: 'Subscription',       Icon: Diamond },
 ];
 
+const VALID_TABS = new Set<Tab>(TABS.map((t) => t.id));
+function isValidTab(value: string | null): value is Tab {
+  return value !== null && VALID_TABS.has(value as Tab);
+}
+
 export default function SettingsClient({
   initialSettings,
   initialChildren,
 }: SettingsClientProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  // Deep-link: the mobile header Settings menu links to /settings?tab=<id>.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    isValidTab(tabParam) ? tabParam : 'profile',
+  );
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync tab when the ?tab= deep-link changes
+    if (isValidTab(tabParam)) setActiveTab(tabParam);
+  }, [tabParam]);
   const [settings, setSettings] = useState(initialSettings);
   const [children, setChildren] = useState<Child[]>(initialChildren);
   const [saving, setSaving] = useState(false);

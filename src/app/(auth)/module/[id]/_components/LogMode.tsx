@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Module, Learner, QuickCaptureItem } from './types';
 import { ENGAGEMENT_EMOJI } from './constants';
 import { Camera, PencilSimple, X, Check } from '@/components/icons';
+import { evidenceSrc } from '@/lib/evidence';
 
 export default function LogMode({
   module,
@@ -202,7 +203,7 @@ export default function LogMode({
                     // and the layout uses max-h flow rather than a sized box —
                     // next/image's required width/height/fill don't fit here.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cap.content} alt="Capture" className="mt-xs rounded max-h-20 object-cover" />
+                    <img src={evidenceSrc(cap.content)} alt="Capture" className="mt-xs rounded max-h-20 object-cover" />
                   ) : (
                     <p className="font-serif text-sm text-text-primary">{cap.content}</p>
                   )}

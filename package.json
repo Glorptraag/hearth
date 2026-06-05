@@ -41,7 +41,7 @@
     "@sanity/image-url": "^2.0.3",
     "@sanity/vision": "^5.18.0",
     "@sentry/nextjs": "^10.49.0",
-    "@vercel/blob": "^2.3.2",
+    "@vercel/blob": "^2.4.0",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
     "jspdf": "^4.2.1",

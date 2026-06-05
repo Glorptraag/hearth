@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { differenceInYears, format, startOfMonth } from 'date-fns';
 import { getJurisdiction } from '@/config/jurisdictions';
+import { evidenceSrc } from '@/lib/evidence';
 import {
   BookOpenText,
   Sparkle,
@@ -382,7 +383,7 @@ export default function OurStoryHubClient() {
                 className="flex h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-200 ease-[var(--ease-default)] hover:scale-[1.02] hover:border-border-medium"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" className="h-full w-full object-cover" />
+                <img src={evidenceSrc(url)} alt="" className="h-full w-full object-cover" />
               </div>
             ))}
           </div>

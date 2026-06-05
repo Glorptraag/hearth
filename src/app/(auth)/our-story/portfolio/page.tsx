@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { evidenceSrc } from '@/lib/evidence';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
@@ -635,7 +636,7 @@ export default function PortfolioPage() {
                                 <div className="flex gap-xs mt-sm">
                                   {entry.evidenceUrls.slice(0, 3).map((url, i) => (
                                     <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                                      <Image src={url} alt="" fill sizes="48px" className="object-cover" />
+                                      <Image src={evidenceSrc(url)} alt="" fill sizes="48px" className="object-cover" unoptimized />
                                     </div>
                                   ))}
                                 </div>
@@ -695,8 +696,8 @@ export default function PortfolioPage() {
                                     <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
                                     <div className="flex flex-col gap-xs">
                                       {entry.evidenceUrls.map((url, i) => (
-                                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                          {url}
+                                        <a key={i} href={evidenceSrc(url)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                                          Photo {i + 1}
                                         </a>
                                       ))}
                                     </div>
@@ -841,7 +842,7 @@ export default function PortfolioPage() {
                         <div className="flex gap-xs mt-sm">
                           {entry.evidenceUrls.slice(0, 3).map((url, i) => (
                             <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                              <Image src={url} alt="" fill sizes="48px" className="object-cover" />
+                              <Image src={evidenceSrc(url)} alt="" fill sizes="48px" className="object-cover" unoptimized />
                             </div>
                           ))}
                         </div>
@@ -928,8 +929,8 @@ export default function PortfolioPage() {
                             <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
                             <div className="flex flex-col gap-xs">
                               {entry.evidenceUrls.map((url, i) => (
-                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                  {url}
+                                <a key={i} href={evidenceSrc(url)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                                  Photo {i + 1}
                                 </a>
                               ))}
                             </div>

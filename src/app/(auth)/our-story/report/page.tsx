@@ -847,6 +847,7 @@ export default function ReportPage() {
           reportYear={reportYear}
           sample={report.samples?.find((s) => s.slot === curationSlot.slotKey) ?? null}
           learnerName={learners.find((l) => l.id === selectedLearnerId)?.name ?? ''}
+          reportingBody={config.regulatoryBody}
           onSampleChanged={refreshReport}
           onClose={() => setCurationSlot(null)}
         />

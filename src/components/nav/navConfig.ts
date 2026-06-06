@@ -9,6 +9,7 @@ import {
   Medal,
   Storefront,
   Sparkle,
+  Books,
 } from '@/components/icons';
 
 export type NavIcon = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
@@ -74,6 +75,7 @@ export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
     Icon: Compass,
     destinations: [
       { href: '/our-story/capabilities', label: 'Capabilities', Icon: Sparkle },
+      { href: '/library', label: 'Library', Icon: Books },
       { href: '/explore/marketplace', label: 'Marketplace', Icon: Storefront },
       { href: '/explore/activities', label: 'Activity Discovery', Icon: Compass },
     ],

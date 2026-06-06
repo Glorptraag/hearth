@@ -11,19 +11,12 @@ import PostHogProvider from "@/components/analytics/PostHogProvider";
 import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
 import { SettingsMenu } from "@/components/nav/SettingsMenu";
 import {
-  CalendarBlank,
-  PencilSimpleLine,
-  BookOpenText,
-  Sparkle,
-  FileText,
-  Books,
-  Compass,
-  Storefront,
   Bell,
   Gear,
   CaretRight,
   UsersThree,
 } from "@/components/icons";
+import { NAV_TABS, type NavTabConfig } from "@/components/nav/navConfig";
 
 type NavIcon = ComponentType<{ size?: number; weight?: "regular" | "fill" }>;
 
@@ -35,28 +28,21 @@ type NavRowConfig = {
   tray?: ReadonlyArray<NavTrayItem>;
 };
 
-const PRIMARY_NAV: ReadonlyArray<NavRowConfig> = [
-  { label: "This Week", Icon: CalendarBlank, href: "/planner" },
-  { label: "Log", Icon: PencilSimpleLine, href: "/log" },
-  {
-    label: "Our Story",
-    Icon: BookOpenText,
-    href: "/our-story",
-    tray: [
-      { href: "/our-story/capabilities", label: "Capabilities", Icon: Sparkle },
-      { href: "/our-story/portfolio", label: "Portfolios", Icon: FileText },
-    ],
-  },
-  {
-    label: "Discover",
-    Icon: Compass,
-    tray: [
-      { href: "/library", label: "Library", Icon: Books },
-      { href: "/explore/activities", label: "Explore", Icon: Compass },
-      { href: "/explore/marketplace", label: "Marketplace", Icon: Storefront },
-    ],
-  },
-];
+function tabToNavRow(tab: NavTabConfig): NavRowConfig {
+  if (tab.kind === "trayed") {
+    return {
+      label: tab.label,
+      Icon: tab.Icon,
+      tray: tab.destinations.map((d) => ({ href: d.href, label: d.label, Icon: d.Icon })),
+    };
+  }
+  return { label: tab.label, Icon: tab.Icon, href: tab.href };
+}
+
+// The desktop sidebar derives its primary rows from the same NAV_TABS the mobile
+// bottom nav uses. navConfig.ts is the single source of truth for the IA, so the
+// two breakpoints can't drift — labels, items, and order all flow from there.
+const PRIMARY_NAV: ReadonlyArray<NavRowConfig> = NAV_TABS.map(tabToNavRow);
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -65,6 +51,8 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/our-story/portfolio") return pathname.startsWith("/our-story/portfolio");
   if (href === "/log") return pathname === "/log";
   if (href === "/planner") return pathname.startsWith("/planner");
+  if (href === "/build/badges") return pathname.startsWith("/build/badges");
+  if (href === "/build/modules") return pathname.startsWith("/build/modules");
   if (href === "/library") return pathname.startsWith("/library");
   if (href === "/explore/activities") return pathname === "/explore/activities";
   if (href === "/explore/marketplace") return pathname.startsWith("/explore/marketplace");

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -8,6 +8,11 @@ import { eq, and } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { attachEvidence } from '@/lib/evidence-db';
+import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+
+// Snapshot rebuild (fired in `after()` on mutating handlers) makes an Anthropic
+// call per child — give the serverless instance room past the response.
+export const maxDuration = 60;
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -94,6 +99,27 @@ export const PATCH = routeHandler(async (request: NextRequest, { params }: Param
     )
     .returning();
 
+  // Rebuild the Family Intelligence Snapshot only when a field the snapshot
+  // derives from changed. The snapshot's active_threads / subject counts come
+  // from complete entries grouped by learnerIds (see snapshot-rebuild.ts), and
+  // the monthly narrative buckets by dateOccurred — so a status/learner/subject/
+  // date edit can orphan or shift those aggregates. Skip the rebuild for cheap
+  // toggles (e.g. workSampleCandidate) so a portfolio star-tap doesn't fire an
+  // Anthropic call. `after()` keeps the serverless instance alive past the
+  // response (a bare promise gets killed when NextResponse returns).
+  const data = parsed.data;
+  const affectsSnapshot =
+    'status' in data || 'learnerIds' in data || 'subjects' in data || 'dateOccurred' in data;
+  if (affectsSnapshot) {
+    after(async () => {
+      try {
+        await rebuildSnapshot(family.id, 'entry_saved');
+      } catch (err) {
+        console.error('[entries/PATCH] snapshot rebuild error:', err);
+      }
+    });
+  }
+
   return NextResponse.json(updated);
 }, { route: 'PATCH /api/entries/[id]' });
 
@@ -134,6 +160,17 @@ export const DELETE = routeHandler(async (request: NextRequest, { params }: Para
         eq(learningEntries.familyId, family.id)
       )
     );
+
+  // Removing an entry can change what the snapshot aggregates, so refresh it —
+  // otherwise capability-thread chips outlive the entries that produced them.
+  // `after()` keeps the instance alive past the response for the Anthropic call.
+  after(async () => {
+    try {
+      await rebuildSnapshot(family.id, 'entry_saved');
+    } catch (err) {
+      console.error('[entries/DELETE] snapshot rebuild error:', err);
+    }
+  });
 
   return NextResponse.json({ success: true });
 }, { route: 'DELETE /api/entries/[id]' });

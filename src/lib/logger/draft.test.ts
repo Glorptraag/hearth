@@ -22,6 +22,7 @@ const baseFields = (overrides: Partial<LoggerDraftFields> = {}): LoggerDraftFiel
   location: null,
   observations: [],
   evidence: [],
+  observationDetails: {},
   ...overrides,
 });
 
@@ -63,6 +64,22 @@ describe('logger draft persistence', () => {
       const restored = parseDraft(serializeDraft(fields, 1_700_000_000_000));
 
       expect(restored).toEqual({ ...fields, savedAt: 1_700_000_000_000 });
+    });
+
+    it('round-trips Guided-mode observation-chip details (the observe pop-up notes)', () => {
+      const fields = baseFields({
+        description: 'Built an arch with blocks',
+        observations: ['Deeply focused'],
+        observationDetails: {
+          'Deeply focused': { detail: 'Kept rebuilding until the arch stood', durationMin: 30 },
+        },
+      });
+
+      const restored = parseDraft(serializeDraft(fields, 1_700_000_000_000));
+
+      expect(restored?.observationDetails).toEqual({
+        'Deeply focused': { detail: 'Kept rebuilding until the arch stood', durationMin: 30 },
+      });
     });
 
     it('returns null for absent storage', () => {

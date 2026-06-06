@@ -27,6 +27,17 @@ export type DraftEvidenceItem = {
   name?: string;
 };
 
+/**
+ * A single Guided-mode observation-chip detail — the free-text note (and
+ * optional duration) the parent types into the "What did you observe?" chip
+ * pop-up. Structurally identical to the UI's `ChipDetailValue`; defined here so
+ * the draft module owns its own data shape without a component dependency.
+ */
+export type DraftObservationDetail = {
+  detail: string;
+  durationMin?: number;
+};
+
 /** The persisted draft shape — the Logger form fields plus a save timestamp. */
 export type LoggerDraft = {
   description: string;
@@ -40,6 +51,12 @@ export type LoggerDraft = {
   location: string | null;
   observations: string[];
   evidence: DraftEvidenceItem[];
+  /**
+   * Guided-mode per-chip observation details, keyed by chip label. Persisted so
+   * the "What did you observe?" pop-up notes survive a draft save + reload —
+   * they were previously dropped because they were never part of the draft shape.
+   */
+  observationDetails: Record<string, DraftObservationDetail>;
   savedAt: number;
 };
 

@@ -20,6 +20,7 @@ const baseFields = (overrides: Partial<LoggerDraftFields> = {}): LoggerDraftFiel
   location: null,
   observations: [],
   evidence: [],
+  observationDetails: {},
   ...overrides,
 });
 

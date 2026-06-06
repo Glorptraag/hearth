@@ -149,7 +149,8 @@ export default function LogPage() {
     location,
     observations,
     evidence,
-  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence]);
+    observationDetails,
+  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence, observationDetails]);
 
   const { draftRestored, dismissDraftRestored, lastSavedAt, clearDraft } = useLoggerDraft({
     state: draftState,
@@ -167,6 +168,7 @@ export default function LogPage() {
       if (d.location) setLocation(d.location);
       if (d.observations?.length) setObservations(d.observations);
       if (d.evidence?.length) setEvidence(d.evidence);
+      if (d.observationDetails && Object.keys(d.observationDetails).length) setObservationDetails(d.observationDetails);
     }, []),
   });
 

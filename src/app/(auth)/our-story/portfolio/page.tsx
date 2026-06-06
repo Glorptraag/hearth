@@ -141,23 +141,12 @@ export default function PortfolioPage() {
   const [viewMode, setViewMode] = useState<'thread' | 'chronological'>('thread');
   const [monthlyNarrative, setMonthlyNarrative] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDesc, setEditDesc] = useState('');
-  const [savingEdit, setSavingEdit] = useState(false);
 
-  async function saveEntryEdit(id: string) {
-    setSavingEdit(true);
-    try {
-      await fetch(`/api/entries/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editTitle, description: editDesc }),
-      });
-      setEntries((prev) => prev.map((e) => e.id === id ? { ...e, title: editTitle, description: editDesc } : e));
-      setEditingId(null);
-    } finally {
-      setSavingEdit(false);
-    }
+  // EntryEditForm owns its own field state and the PATCH; the page only needs
+  // to fold the saved result back into the list and close the editor.
+  function applyEntryEdit(updated: Entry) {
+    setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    setEditingId(null);
   }
 
   // Honest, repeatable enrichment retry — same Haiku service the save path
@@ -648,43 +637,19 @@ export default function PortfolioPage() {
                               <div className="border-t border-border-subtle px-md py-sm space-y-sm">
                                 {/* Editable description */}
                                 {editingId === entry.id ? (
-                                  <div className="space-y-xs">
-                                    <input
-                                      value={editTitle}
-                                      onChange={(e) => setEditTitle(e.target.value)}
-                                      className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm font-semibold text-text-primary focus:border-ember focus:outline-none"
-                                      placeholder="Title"
-                                    />
-                                    <textarea
-                                      value={editDesc}
-                                      onChange={(e) => setEditDesc(e.target.value)}
-                                      rows={3}
-                                      className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none"
-                                      placeholder="Description"
-                                    />
-                                    <div className="flex gap-xs">
-                                      <button
-                                        onClick={() => saveEntryEdit(entry.id)}
-                                        disabled={savingEdit}
-                                        className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50"
-                                      >
-                                        {savingEdit ? 'Saving…' : 'Save'}
-                                      </button>
-                                      <button
-                                        onClick={() => setEditingId(null)}
-                                        className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
+                                  <EntryEditForm
+                                    entry={entry}
+                                    learners={learners}
+                                    onCancel={() => setEditingId(null)}
+                                    onSaved={applyEntryEdit}
+                                  />
                                 ) : (
                                   <div className="group relative">
                                     {entry.description && (
                                       <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
                                     )}
                                     <button
-                                      onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
+                                      onClick={() => setEditingId(entry.id)}
                                       className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
                                     >
                                       <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
@@ -853,27 +818,12 @@ export default function PortfolioPage() {
                     {isExpanded && (
                       <div className="border-t border-border-subtle px-md py-sm space-y-sm">
                         {editingId === entry.id ? (
-                          <div className="space-y-xs">
-                            <input
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm font-semibold text-text-primary focus:border-ember focus:outline-none"
-                              placeholder="Title"
-                            />
-                            <textarea
-                              value={editDesc}
-                              onChange={(e) => setEditDesc(e.target.value)}
-                              rows={3}
-                              className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none"
-                              placeholder="Description"
-                            />
-                            <div className="flex gap-xs">
-                              <button onClick={() => saveEntryEdit(entry.id)} disabled={savingEdit} className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50">
-                                {savingEdit ? 'Saving…' : 'Save'}
-                              </button>
-                              <button onClick={() => setEditingId(null)} className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200">Cancel</button>
-                            </div>
-                          </div>
+                          <EntryEditForm
+                            entry={entry}
+                            learners={learners}
+                            onCancel={() => setEditingId(null)}
+                            onSaved={applyEntryEdit}
+                          />
                         ) : (
                           <div>
                             {entry.description && (
@@ -917,7 +867,7 @@ export default function PortfolioPage() {
                               </p>
                             )}
                             <button
-                              onClick={() => { setEditingId(entry.id); setEditTitle(entry.title); setEditDesc(entry.description ?? ''); }}
+                              onClick={() => setEditingId(entry.id)}
                               className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
                             >
                               <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
@@ -1087,6 +1037,199 @@ export default function PortfolioPage() {
             )}
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+const ENGAGEMENT_LEVELS = [4, 3, 2, 1] as const;
+
+/**
+ * Inline editor for a saved portfolio entry. Beyond the original title +
+ * description, it exposes the high-value retrospective fields the backend PATCH
+ * already accepts — when (date), subjects, and per-learner engagement — so a
+ * mis-tagged moment can be corrected without re-logging it (BUG-04). Owns its
+ * own field state; mounts fresh per entry and hands the merged result back via
+ * onSaved (optimistic merge, mirroring the prior save path, so we don't depend
+ * on the raw DB row shape matching the portfolio's Entry view-model).
+ */
+function EntryEditForm({
+  entry,
+  learners,
+  onCancel,
+  onSaved,
+}: {
+  entry: Entry;
+  learners: Learner[];
+  onCancel: () => void;
+  onSaved: (updated: Entry) => void;
+}) {
+  const [title, setTitle] = useState(entry.title);
+  const [description, setDescription] = useState(entry.description ?? '');
+  const [dateOccurred, setDateOccurred] = useState((entry.dateOccurred ?? '').slice(0, 10));
+  const [subjects, setSubjects] = useState<string[]>(entry.subjects ?? []);
+  const [engagement, setEngagement] = useState<Record<string, number>>(entry.engagementPerLearner ?? {});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+
+  // Learners this entry involves — prefer the stored learnerIds, fall back to
+  // whoever already has an engagement score recorded.
+  const entryLearnerIds =
+    entry.learnerIds && entry.learnerIds.length > 0
+      ? entry.learnerIds
+      : Object.keys(entry.engagementPerLearner ?? {});
+
+  const toggleSubject = (key: string) =>
+    setSubjects((prev) => (prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]));
+
+  async function save() {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return; // title is required server-side (z.string().min(1))
+    setSaving(true);
+    setError(false);
+    try {
+      // Omit an empty date — the column is non-null and '' is not a valid date.
+      const body: Record<string, unknown> = {
+        title: trimmedTitle,
+        description,
+        subjects,
+        engagementPerLearner: engagement,
+      };
+      if (dateOccurred) body.dateOccurred = dateOccurred;
+      const res = await fetch(`/api/entries/${entry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        setError(true);
+        return;
+      }
+      onSaved({
+        ...entry,
+        title: trimmedTitle,
+        description,
+        subjects,
+        engagementPerLearner: engagement,
+        ...(dateOccurred ? { dateOccurred } : {}),
+      });
+    } catch {
+      // Network failure — keep the editor open and surface a retry hint rather
+      // than letting the entry silently look saved.
+      setError(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-md">
+      <div className="space-y-xs">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm font-semibold text-text-primary focus:border-ember focus:outline-none"
+          placeholder="Title"
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          className="w-full rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none"
+          placeholder="Description"
+        />
+      </div>
+
+      {/* When */}
+      <div>
+        <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">When</p>
+        <input
+          type="date"
+          value={dateOccurred}
+          onChange={(e) => setDateOccurred(e.target.value)}
+          className="rounded-md border border-border-subtle bg-surface-raised px-sm py-xs font-sans text-xs text-text-primary focus:border-ember focus:outline-none"
+        />
+      </div>
+
+      {/* Subjects */}
+      <div>
+        <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">Subjects</p>
+        <div className="flex flex-wrap gap-xs">
+          {Object.entries(SUBJECT_CONFIG).map(([key, cfg]) => {
+            const sel = subjects.includes(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleSubject(key)}
+                aria-pressed={sel}
+                className={`inline-flex min-h-[32px] items-center gap-xs rounded-full px-sm py-[3px] font-sans text-[10px] font-medium transition-all duration-200 ${
+                  sel ? `${cfg.color} border border-current` : 'border border-border-subtle text-text-muted hover:border-border-medium'
+                }`}
+              >
+                <cfg.Icon size={12} aria-hidden="true" /> {cfg.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Engagement per learner */}
+      {entryLearnerIds.length > 0 && (
+        <div>
+          <p className="mb-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">Engagement</p>
+          <div className="space-y-xs">
+            {entryLearnerIds.map((lid) => {
+              const learner = learners.find((l) => l.id === lid);
+              return (
+                <div key={lid} className="flex items-center gap-sm">
+                  <span className="w-[84px] shrink-0 truncate font-sans text-xs text-text-secondary">
+                    {learner?.name ?? 'Learner'}
+                  </span>
+                  <div className="flex gap-xs">
+                    {ENGAGEMENT_LEVELS.map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setEngagement((prev) => ({ ...prev, [lid]: level }))}
+                        aria-label={`Engagement level ${level} for ${learner?.name ?? 'learner'}`}
+                        aria-pressed={engagement[lid] === level}
+                        className={`flex h-8 w-8 items-center justify-center rounded-md border text-base transition-all duration-200 ${
+                          engagement[lid] === level
+                            ? 'border-ember bg-ember-glow'
+                            : 'border-border-subtle opacity-60 hover:border-border-medium hover:opacity-100'
+                        }`}
+                      >
+                        {ENGAGEMENT_EMOJI[level]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-sm pt-xs">
+        <button
+          onClick={save}
+          disabled={saving || !title.trim()}
+          className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+        >
+          Cancel
+        </button>
+        {error && (
+          <span role="status" className="font-sans text-xs text-red-400">
+            Couldn&rsquo;t save — please try again.
+          </span>
+        )}
       </div>
     </div>
   );

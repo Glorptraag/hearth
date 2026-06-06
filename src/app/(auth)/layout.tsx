@@ -237,9 +237,13 @@ export default function AuthLayout({
             />
           </Link>
           <div className="flex items-center gap-md">
-            <span className="font-sans text-sm text-text-secondary">
+            <Link
+              href="/settings?tab=profile"
+              aria-label={`${familyName} — family settings`}
+              className="max-w-[45vw] truncate font-sans text-sm text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:text-text-primary focus:outline-none focus-visible:text-text-primary"
+            >
               {familyName}
-            </span>
+            </Link>
             <Link
               href="/notifications"
               className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"

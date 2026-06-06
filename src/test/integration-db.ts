@@ -52,6 +52,12 @@ export async function endTestDb(): Promise<void> {
 /** Open a transaction on the pinned connection (beforeEach). */
 export async function beginTx(): Promise<void> {
   if (!client) throw new Error('Test DB not connected — call connectTestDb() in beforeAll.');
+  // Defensive recovery: if a stray post-response write slipped past the
+  // afterEach flush and left the pinned connection mid- or aborted-transaction,
+  // clear it so this test still BEGINs clean. ROLLBACK with no open transaction
+  // is a harmless no-op (Postgres warns, doesn't error). This is what stops a
+  // single escaped write from cascade-failing every subsequent test.
+  await client.query('ROLLBACK').catch(() => {});
   await client.query('BEGIN');
 }
 

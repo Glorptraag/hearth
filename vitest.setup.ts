@@ -134,20 +134,25 @@ vi.mock('@clerk/nextjs', () => {
 // imports the route handler directly and invokes POST(req) outside that
 // scope, so the real `after()` throws `NEXT_DYNAMIC_API_WRONG_CONTEXT`.
 //
-// We replace `after` with a no-op that runs the callback as a bare
-// fire-and-forget promise — fine for tests, which don't assert on the
-// post-response enrichment work anyway. NextRequest/NextResponse/etc.
-// are pulled from the real module so route construction still works.
+// We run the callback as a microtask AND record its promise on a globalThis
+// registry. The INTEGRATION harness (vitest.integration.setup.ts) flushes that
+// registry *inside* each test's transaction before rollback, so a route's
+// post-response DB write (enrichment, draft-resume notification, snapshot
+// rebuild) can't escape onto the shared pinned connection and abort a LATER
+// test — the cascade that turned the whole suite red. Unit tests ignore the
+// registry (everything's mocked; nothing to flush). globalThis (not a module
+// export) so the hoisted vi.mock factory can reference it without the
+// "cannot export hoisted variable" trap.
 // ---------------------------------------------------------------------------
 vi.mock('next/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next/server')>();
   return {
     ...actual,
     after: vi.fn((callback: () => void | Promise<void>) => {
-      // Fire-and-forget — same as the pre-after.ts pattern. Test env
-      // doesn't terminate the worker the way Vercel terminates a
-      // serverless instance, so this is safe.
-      void Promise.resolve().then(callback).catch(() => { /* silent */ });
+      const g = globalThis as typeof globalThis & { __hearthAfter?: Promise<unknown>[] };
+      (g.__hearthAfter ??= []).push(
+        Promise.resolve().then(callback).catch(() => { /* swallow — tracked only for test isolation */ }),
+      );
     }),
   };
 });

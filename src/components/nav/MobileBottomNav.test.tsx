@@ -65,10 +65,11 @@ describe('MobileBottomNav', () => {
     expect(screen.getAllByRole('menuitem')).toHaveLength(3);
   });
 
-  it('Explore tray contains 3 menuitems when opened', () => {
+  it('Explore tray contains 4 menuitems (incl. Library) when opened', () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: /Explore menu/i }));
-    expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(4);
+    expect(screen.getByRole('menuitem', { name: /Library/i })).toBeInTheDocument();
   });
 
   it('tapping the same trayed tab again starts closing the tray', () => {

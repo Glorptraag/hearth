@@ -77,23 +77,45 @@ export interface EvidencePayloadItem {
 }
 
 /**
- * Derive the dual-write evidence rows for `learning_entry_evidence`. A faithful
- * mirror of {@link derivePhotoEvidenceUrls} — photo evidence only, same order —
- * but carrying the `caption` that the flat `evidenceUrls` text[] has no room for.
- * Kept in lockstep with that column until it's retired. (Non-photo kinds aren't
- * persisted yet; that pre-existing gap is out of scope here.)
+ * Derive the dual-write evidence rows for `learning_entry_evidence` — every
+ * kind the parent captured, not just photos. `evidenceUrls` (via
+ * {@link derivePhotoEvidenceUrls}) stays photos-only for the dual-write window;
+ * this is the full-fidelity side that also persists quotes, notes, and links.
+ *
+ * Per-kind mapping (`content` is the column the table requires; `caption` is the
+ * optional human label):
+ *   - photo → content = blob ref, caption = optional photo caption;
+ *   - quote → content = the quoted text;
+ *   - note  → content = the freeform note;
+ *   - link  → content = the URL, caption = the resource name. The draft link
+ *     item carries `content`=name, `name`, and `url`; the URL becomes the row's
+ *     content and the name its caption (a name-only link keeps empty content).
+ *
+ * Empty quotes/notes and fully-empty links are dropped; captions are trimmed.
  */
-export function derivePhotoEvidenceRows(
-  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption'>>,
+export function deriveEvidenceRows(
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption' | 'url' | 'name'>>,
 ): EvidencePayloadItem[] {
-  return evidence
-    .filter((e) => e.type === 'photo')
-    .map((e) => {
+  const rows: EvidencePayloadItem[] = [];
+  for (const e of evidence) {
+    if (e.type === 'photo') {
       const caption = e.caption?.trim();
-      return caption
-        ? { kind: 'photo' as const, content: e.content, caption }
-        : { kind: 'photo' as const, content: e.content };
-    });
+      rows.push(
+        caption
+          ? { kind: 'photo', content: e.content, caption }
+          : { kind: 'photo', content: e.content },
+      );
+    } else if (e.type === 'quote' || e.type === 'note') {
+      const content = e.content?.trim();
+      if (content) rows.push({ kind: e.type, content });
+    } else if (e.type === 'link') {
+      const url = e.url?.trim() ?? '';
+      const name = (e.name ?? e.content)?.trim();
+      if (!url && !name) continue;
+      rows.push(name ? { kind: 'link', content: url, caption: name } : { kind: 'link', content: url });
+    }
+  }
+  return rows;
 }
 
 /**
@@ -130,7 +152,7 @@ export interface EntrySaveForm {
   selectedLearners: string[];
   engagement: Record<string, number>;
   discoveries: Record<string, string>;
-  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption'>>;
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption' | 'url' | 'name'>>;
   loggerMode: LoggerSaveMode;
   observationDetails: Record<string, unknown>;
 }
@@ -156,9 +178,9 @@ export interface EntrySavePayload {
   discoveriesPerLearner: Record<string, string>;
   evidenceUrls: string[];
   /**
-   * Full-fidelity evidence rows for the `learning_entry_evidence` dual-write.
-   * Mirrors `evidenceUrls` (photos, same order) but carries captions. Kept
-   * alongside the legacy column until it's retired.
+   * Full-fidelity evidence rows for the `learning_entry_evidence` dual-write —
+   * all kinds (photo/quote/note/link), carrying captions. `evidenceUrls` stays
+   * photos-only alongside this until that legacy column is retired.
    */
   evidence: EvidencePayloadItem[];
   observationDetails: Record<string, unknown> | undefined;
@@ -198,7 +220,7 @@ export function buildEntrySavePayload(
     engagementPerLearner: form.engagement,
     discoveriesPerLearner: form.discoveries,
     evidenceUrls: derivePhotoEvidenceUrls(form.evidence),
-    evidence: derivePhotoEvidenceRows(form.evidence),
+    evidence: deriveEvidenceRows(form.evidence),
     observationDetails: form.loggerMode === 'guided' ? form.observationDetails : undefined,
     mode: form.loggerMode,
     source: isScaffold ? 'hearth_session' : ctx.projectSource,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evidenceSrc, authorizeEvidenceRef, entryPhotoEvidence } from './evidence';
+import { evidenceSrc, authorizeEvidenceRef, entryPhotoEvidence, entryEvidence } from './evidence';
 
 describe('evidenceSrc', () => {
   it('returns empty string for nullish/empty refs', () => {
@@ -94,5 +94,43 @@ describe('entryPhotoEvidence', () => {
   it('returns an empty array when there is no evidence at all', () => {
     expect(entryPhotoEvidence({})).toEqual([]);
     expect(entryPhotoEvidence({ evidence: null, evidenceUrls: null })).toEqual([]);
+  });
+});
+
+describe('entryEvidence', () => {
+  it('returns every kind from the evidence rows, in row order', () => {
+    expect(
+      entryEvidence({
+        evidence: [
+          { kind: 'photo', content: 'a.jpg', caption: 'Tower' },
+          { kind: 'quote', content: 'I did it!', caption: null },
+          { kind: 'note', content: 'Long focus', caption: null },
+          { kind: 'link', content: 'https://abc.net.au', caption: 'ABC Splash' },
+        ],
+        // Legacy column is ignored once rows are present.
+        evidenceUrls: ['legacy.jpg'],
+      }),
+    ).toEqual([
+      { kind: 'photo', content: 'a.jpg', caption: 'Tower' },
+      { kind: 'quote', content: 'I did it!', caption: null },
+      { kind: 'note', content: 'Long focus', caption: null },
+      { kind: 'link', content: 'https://abc.net.au', caption: 'ABC Splash' },
+    ]);
+  });
+
+  it('falls back to evidenceUrls as photos for pre-migration entries', () => {
+    expect(entryEvidence({ evidence: [], evidenceUrls: ['a.jpg', 'b.jpg'] })).toEqual([
+      { kind: 'photo', content: 'a.jpg', caption: null },
+      { kind: 'photo', content: 'b.jpg', caption: null },
+    ]);
+    // evidence undefined behaves the same as empty.
+    expect(entryEvidence({ evidenceUrls: ['a.jpg'] })).toEqual([
+      { kind: 'photo', content: 'a.jpg', caption: null },
+    ]);
+  });
+
+  it('returns an empty array when there is no evidence at all', () => {
+    expect(entryEvidence({})).toEqual([]);
+    expect(entryEvidence({ evidence: null, evidenceUrls: null })).toEqual([]);
   });
 });

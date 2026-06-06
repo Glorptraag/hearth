@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { evidenceSrc } from '@/lib/evidence';
+import { evidenceSrc, entryPhotoEvidence } from '@/lib/evidence';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
@@ -75,6 +75,9 @@ type Entry = {
   engagementPerLearner: Record<string, number> | null;
   discoveriesPerLearner: Record<string, string> | null;
   evidenceUrls: string[] | null;
+  // Caption-carrying evidence rows (read side of the evidenceUrls dual-write).
+  // Prefer these via entryPhotoEvidence(); evidenceUrls is the legacy fallback.
+  evidence?: { kind: string; content: string; caption: string | null }[] | null;
   aiEnrichment: AiEnrichment;
   workSampleCandidate: boolean | null;
   status: string;
@@ -528,6 +531,7 @@ export default function PortfolioPage() {
                         const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
                           .filter((ct) => ct.confidence >= 0.5);
                         const cardType = getCardType(entry);
+                        const photos = entryPhotoEvidence(entry);
 
                         return (
                           <div
@@ -620,12 +624,12 @@ export default function PortfolioPage() {
                                 </p>
                               )}
 
-                              {/* Evidence thumbnails */}
-                              {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
+                              {/* Evidence thumbnails — caption doubles as alt text */}
+                              {photos.length > 0 && (
                                 <div className="flex gap-xs mt-sm">
-                                  {entry.evidenceUrls.slice(0, 3).map((url, i) => (
+                                  {photos.slice(0, 3).map((p, i) => (
                                     <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                                      <Image src={evidenceSrc(url)} alt="" fill sizes="48px" className="object-cover" unoptimized />
+                                      <Image src={evidenceSrc(p.ref)} alt={p.caption ?? ''} title={p.caption ?? undefined} fill sizes="48px" className="object-cover" unoptimized />
                                     </div>
                                   ))}
                                 </div>
@@ -656,13 +660,13 @@ export default function PortfolioPage() {
                                     </button>
                                   </div>
                                 )}
-                                {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
+                                {photos.length > 0 && (
                                   <div>
                                     <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
                                     <div className="flex flex-col gap-xs">
-                                      {entry.evidenceUrls.map((url, i) => (
-                                        <a key={i} href={evidenceSrc(url)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                          Photo {i + 1}
+                                      {photos.map((p, i) => (
+                                        <a key={i} href={evidenceSrc(p.ref)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                                          {p.caption ?? `Photo ${i + 1}`}
                                         </a>
                                       ))}
                                     </div>
@@ -717,6 +721,7 @@ export default function PortfolioPage() {
                 const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
                   .filter((ct) => ct.confidence >= 0.5);
                 const cardType = getCardType(entry);
+                const photos = entryPhotoEvidence(entry);
 
                 return (
                   <div
@@ -802,12 +807,12 @@ export default function PortfolioPage() {
                         </p>
                       )}
 
-                      {/* Evidence thumbnails */}
-                      {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
+                      {/* Evidence thumbnails — caption doubles as alt text */}
+                      {photos.length > 0 && (
                         <div className="flex gap-xs mt-sm">
-                          {entry.evidenceUrls.slice(0, 3).map((url, i) => (
+                          {photos.slice(0, 3).map((p, i) => (
                             <div key={i} className="relative h-[48px] w-[48px] rounded-sm bg-surface-raised overflow-hidden">
-                              <Image src={evidenceSrc(url)} alt="" fill sizes="48px" className="object-cover" unoptimized />
+                              <Image src={evidenceSrc(p.ref)} alt={p.caption ?? ''} title={p.caption ?? undefined} fill sizes="48px" className="object-cover" unoptimized />
                             </div>
                           ))}
                         </div>
@@ -874,13 +879,13 @@ export default function PortfolioPage() {
                             </button>
                           </div>
                         )}
-                        {entry.evidenceUrls && entry.evidenceUrls.length > 0 && (
+                        {photos.length > 0 && (
                           <div>
                             <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
                             <div className="flex flex-col gap-xs">
-                              {entry.evidenceUrls.map((url, i) => (
-                                <a key={i} href={evidenceSrc(url)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                  Photo {i + 1}
+                              {photos.map((p, i) => (
+                                <a key={i} href={evidenceSrc(p.ref)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                                  {p.caption ?? `Photo ${i + 1}`}
                                 </a>
                               ))}
                             </div>

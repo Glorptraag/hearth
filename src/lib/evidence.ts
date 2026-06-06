@@ -13,6 +13,31 @@
 /** The blob pathname prefix every evidence upload is stored under. */
 export const EVIDENCE_PREFIX = 'evidence';
 
+/** A photo for display: the stored blob ref plus its optional caption. */
+export interface PhotoEvidence {
+  /** Blob pathname or legacy public URL — pass through {@link evidenceSrc}. */
+  ref: string;
+  caption: string | null;
+}
+
+/**
+ * Normalise an entry's photo evidence for the portfolio, preferring the
+ * caption-carrying `learning_entry_evidence` rows and falling back to the
+ * legacy `evidenceUrls` text[] for entries saved before the dual-write. This is
+ * the read side of the migration — once `evidenceUrls` is retired the fallback
+ * branch (and the field) can be dropped.
+ */
+export function entryPhotoEvidence(entry: {
+  evidence?: { kind: string; content: string; caption: string | null }[] | null;
+  evidenceUrls?: string[] | null;
+}): PhotoEvidence[] {
+  const photoRows = entry.evidence?.filter((e) => e.kind === 'photo') ?? [];
+  if (photoRows.length > 0) {
+    return photoRows.map((e) => ({ ref: e.content, caption: e.caption }));
+  }
+  return (entry.evidenceUrls ?? []).map((ref) => ({ ref, caption: null }));
+}
+
 /**
  * Build the client-facing `src`/`href` for a stored evidence reference.
  * - Absolute URLs (legacy public blobs) render directly.

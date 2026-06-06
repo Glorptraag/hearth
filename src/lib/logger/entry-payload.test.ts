@@ -4,6 +4,7 @@ import {
   deriveSubjects,
   deriveEntryTitle,
   derivePhotoEvidenceUrls,
+  derivePhotoEvidenceRows,
   isThinEntry,
   buildEntrySavePayload,
   type EntrySaveForm,
@@ -72,6 +73,37 @@ describe('derivePhotoEvidenceUrls', () => {
   });
 });
 
+describe('derivePhotoEvidenceRows', () => {
+  it('mirrors the photo URLs but carries captions', () => {
+    const rows = derivePhotoEvidenceRows([
+      { type: 'photo', content: 'a.jpg', caption: 'Block tower' },
+      { type: 'quote', content: 'a wise thing' },
+      { type: 'photo', content: 'b.jpg' },
+    ]);
+    expect(rows).toEqual([
+      { kind: 'photo', content: 'a.jpg', caption: 'Block tower' },
+      { kind: 'photo', content: 'b.jpg' },
+    ]);
+  });
+
+  it('omits blank/whitespace-only captions and trims kept ones', () => {
+    expect(
+      derivePhotoEvidenceRows([
+        { type: 'photo', content: 'a.jpg', caption: '   ' },
+        { type: 'photo', content: 'b.jpg', caption: '  spaced  ' },
+      ]),
+    ).toEqual([
+      { kind: 'photo', content: 'a.jpg' },
+      { kind: 'photo', content: 'b.jpg', caption: 'spaced' },
+    ]);
+  });
+
+  it('returns an empty array when there is no photo evidence', () => {
+    expect(derivePhotoEvidenceRows([{ type: 'note', content: 'n' }])).toEqual([]);
+    expect(derivePhotoEvidenceRows([])).toEqual([]);
+  });
+});
+
 describe('isThinEntry', () => {
   const thin = {
     description: 'short',
@@ -115,7 +147,7 @@ describe('buildEntrySavePayload', () => {
     engagement: { L1: 4, L2: 3 },
     discoveries: { L1: 'gravity' },
     evidence: [
-      { type: 'photo', content: 'https://img/1' },
+      { type: 'photo', content: 'https://img/1', caption: 'Marble run' },
       { type: 'note', content: 'ignored' },
     ],
     loggerMode: 'quick',
@@ -133,6 +165,10 @@ describe('buildEntrySavePayload', () => {
     expect(p.title).toBe('Built a marble run and tested ramps');
     expect(p.subjects).toEqual(['mathematics', 'science']); // cooking
     expect(p.evidenceUrls).toEqual(['https://img/1']); // photos only
+    // Dual-write rows mirror the photo URLs but keep the caption.
+    expect(p.evidence).toEqual([
+      { kind: 'photo', content: 'https://img/1', caption: 'Marble run' },
+    ]);
     expect(p.status).toBe('complete');
   });
 

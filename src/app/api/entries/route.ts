@@ -11,6 +11,7 @@ import { db } from '@/lib/db';
 import { learningEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
+import { attachEvidence, writeEntryEvidence } from '@/lib/evidence-db';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { enrichEntry } from '@/lib/ai/enrich';
 import { buildThreadLinksFromActivities } from '@/lib/ai/thread-links';
@@ -58,7 +59,9 @@ export const GET = routeHandler(async (request: NextRequest) => {
     .limit(limit)
     .offset(offset);
 
-  return NextResponse.json(entries);
+  // Attach learning_entry_evidence rows (caption-carrying read side of the
+  // evidenceUrls dual-write). Consumers that only read evidenceUrls ignore it.
+  return NextResponse.json(await attachEvidence(entries));
 }, { route: 'GET /api/entries' });
 
 const observationDetailSchema = z.object({
@@ -75,6 +78,17 @@ const createEntrySchema = z.object({
   engagementPerLearner: z.record(z.string(), z.number().min(1).max(4)).optional(),
   discoveriesPerLearner: z.record(z.string(), z.string()).optional(),
   evidenceUrls: z.array(z.string()).optional(),
+  // Full-fidelity evidence rows for the learning_entry_evidence dual-write.
+  // Mirrors evidenceUrls (photos) but carries captions the text[] can't hold.
+  evidence: z
+    .array(
+      z.object({
+        kind: z.enum(['photo', 'quote', 'note', 'link', 'audio']),
+        content: z.string(),
+        caption: z.string().optional(),
+      }),
+    )
+    .optional(),
   source: z.enum(ENTRY_SOURCES).optional(),
   sourceModuleId: z.string().optional(),
   // Sanity activity IDs the family engaged with. Populated by the module
@@ -114,7 +128,9 @@ export const POST = routeHandler(async (request: NextRequest) => {
   if ('error' in result) return result.error;
   const parsed = result;
 
-  const { mode, ...entryData } = parsed.data;
+  // `evidence` is written to its own table (not a learning_entries column), so
+  // it's pulled out of the spread below.
+  const { mode, evidence: evidenceItems, ...entryData } = parsed.data;
 
   // Log mode for telemetry (informational only — not gated server-side)
   if (mode) {
@@ -135,6 +151,10 @@ export const POST = routeHandler(async (request: NextRequest) => {
         : {}),
     })
     .returning();
+
+  // Dual-write the caption-carrying evidence rows. evidenceUrls is already
+  // committed on the entry above, so this is best-effort (see evidence-db.ts).
+  await writeEntryEvidence(entry.id, evidenceItems, entryData.evidenceUrls);
 
   // Async AI enrichment — does not block the response.
   // CRITICAL: wrap in `after()` so Vercel serverless keeps the function

@@ -27,6 +27,11 @@ export type EntryEvidenceRow = InferSelectModel<typeof learningEntryEvidence>;
  * the column). When `items` is omitted, photo rows are synthesised from
  * `evidenceUrls` so every caller — including ones that only send the legacy
  * field — keeps the new table populated.
+ *
+ * `sortOrder` is the array index, pinning the parent's capture order so the
+ * read path (`attachEvidence`) can render it back deterministically — the rows
+ * share `created_at` (one batched INSERT), so position can't be recovered from
+ * `(created_at, id)` alone.
  */
 export async function writeEntryEvidence(
   entryId: string,
@@ -42,11 +47,12 @@ export async function writeEntryEvidence(
   if (rows.length === 0) return;
   try {
     await db.insert(learningEntryEvidence).values(
-      rows.map((e) => ({
+      rows.map((e, i) => ({
         entryId,
         kind: e.kind,
         content: e.content,
         caption: e.caption ?? null,
+        sortOrder: i,
       })),
     );
   } catch (err) {
@@ -56,7 +62,10 @@ export async function writeEntryEvidence(
 
 /**
  * Fetch `learning_entry_evidence` rows for a set of entries and attach them as
- * an `evidence` array, keyed by entry id. Ordered for stable rendering.
+ * an `evidence` array, keyed by entry id. Ordered by `sortOrder` (the parent's
+ * capture order) so the portfolio renders evidence in the order it was added;
+ * `(created_at, id)` are tiebreakers for pre-migration rows that all share
+ * `sortOrder = 0`.
  */
 export async function attachEvidence<T extends { id: string }>(
   entries: T[],
@@ -67,7 +76,11 @@ export async function attachEvidence<T extends { id: string }>(
     .select()
     .from(learningEntryEvidence)
     .where(inArray(learningEntryEvidence.entryId, ids))
-    .orderBy(asc(learningEntryEvidence.createdAt), asc(learningEntryEvidence.id));
+    .orderBy(
+      asc(learningEntryEvidence.sortOrder),
+      asc(learningEntryEvidence.createdAt),
+      asc(learningEntryEvidence.id),
+    );
 
   const byEntry = new Map<string, EntryEvidenceRow[]>();
   for (const row of rows) {

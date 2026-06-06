@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { evidenceSrc, entryPhotoEvidence } from '@/lib/evidence';
+import { evidenceSrc, entryPhotoEvidence, entryEvidence, type DisplayEvidence } from '@/lib/evidence';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
@@ -123,6 +123,57 @@ const DATE_FILTERS = [
 ] as const;
 
 const PAGE_SIZE = 20;
+
+/**
+ * The expanded card's "Evidence" section — renders every kind the parent
+ * captured. Photos and (http) links are action affordances (sans, ember
+ * anchors); quotes and notes are content the parent reads (serif). A link is
+ * only clickable when it is an http(s) URL; a name-only "link" (or a bare label)
+ * renders as plain text. Images are never rendered here — the collapsed card's
+ * thumbnail grid is the only place photos are shown as `<Image>`.
+ */
+function ExpandedEvidence({ items }: { items: DisplayEvidence[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
+      <div className="flex flex-col gap-sm">
+        {items.map((item, i) => {
+          if (item.kind === 'photo') {
+            return (
+              <a key={i} href={evidenceSrc(item.content)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                {item.caption ?? 'Photo'}
+              </a>
+            );
+          }
+          if (item.kind === 'link') {
+            const label = item.caption || item.content;
+            return /^https?:\/\//i.test(item.content) ? (
+              <a key={i} href={item.content} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
+                {label}
+              </a>
+            ) : (
+              <p key={i} className="font-sans text-xs text-text-secondary truncate">{label}</p>
+            );
+          }
+          if (item.kind === 'quote') {
+            return (
+              <p key={i} className="font-serif text-sm italic text-text-secondary leading-relaxed">
+                &ldquo;{item.content}&rdquo;
+              </p>
+            );
+          }
+          // note (and any future text-bearing kind)
+          return (
+            <p key={i} className="font-serif text-sm text-text-secondary leading-relaxed">
+              {item.content}
+            </p>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function PortfolioPage() {
   const { vocab } = usePedagogy();
@@ -660,18 +711,7 @@ export default function PortfolioPage() {
                                     </button>
                                   </div>
                                 )}
-                                {photos.length > 0 && (
-                                  <div>
-                                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
-                                    <div className="flex flex-col gap-xs">
-                                      {photos.map((p, i) => (
-                                        <a key={i} href={evidenceSrc(p.ref)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                          {p.caption ?? `Photo ${i + 1}`}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
+                                <ExpandedEvidence items={entryEvidence(entry)} />
                                 {entry.engagementPerLearner && Object.keys(entry.engagementPerLearner).length > 0 && (
                                   <div>
                                     <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Engagement</p>
@@ -879,18 +919,7 @@ export default function PortfolioPage() {
                             </button>
                           </div>
                         )}
-                        {photos.length > 0 && (
-                          <div>
-                            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Evidence</p>
-                            <div className="flex flex-col gap-xs">
-                              {photos.map((p, i) => (
-                                <a key={i} href={evidenceSrc(p.ref)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline truncate block">
-                                  {p.caption ?? `Photo ${i + 1}`}
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        <ExpandedEvidence items={entryEvidence(entry)} />
                         {entry.engagementPerLearner && Object.keys(entry.engagementPerLearner).length > 0 && (
                           <div>
                             <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Engagement</p>

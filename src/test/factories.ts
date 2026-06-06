@@ -227,6 +227,7 @@ export function buildEvidence(
     content: 'Built a paperclip-and-magnet circuit.',
     caption: null,
     metadata: {},
+    sortOrder: 0,
     createdAt: EPOCH,
     ...overrides,
   };

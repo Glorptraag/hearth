@@ -376,6 +376,11 @@ export const learningEntryEvidence = pgTable(
     content: text('content').notNull(),
     caption: text('caption'),
     metadata: jsonb('metadata').default({}),
+    // Display order within an entry, assigned from the evidence[] array index
+    // by writeEntryEvidence — the parent's capture order. Needed because all
+    // rows in one entry share created_at (a single batched INSERT), so the read
+    // path can't recover insertion order from (created_at, id) alone.
+    sortOrder: integer('sort_order').notNull().default(0),
     createdAt: timestamp('created_at').defaultNow(),
   },
   (table) => [

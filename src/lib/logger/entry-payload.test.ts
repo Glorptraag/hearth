@@ -4,7 +4,7 @@ import {
   deriveSubjects,
   deriveEntryTitle,
   derivePhotoEvidenceUrls,
-  derivePhotoEvidenceRows,
+  deriveEvidenceRows,
   isThinEntry,
   buildEntrySavePayload,
   type EntrySaveForm,
@@ -73,22 +73,38 @@ describe('derivePhotoEvidenceUrls', () => {
   });
 });
 
-describe('derivePhotoEvidenceRows', () => {
-  it('mirrors the photo URLs but carries captions', () => {
-    const rows = derivePhotoEvidenceRows([
-      { type: 'photo', content: 'a.jpg', caption: 'Block tower' },
-      { type: 'quote', content: 'a wise thing' },
-      { type: 'photo', content: 'b.jpg' },
-    ]);
-    expect(rows).toEqual([
+describe('deriveEvidenceRows', () => {
+  it('maps every kind into rows (photo/quote/note/link), in order', () => {
+    expect(
+      deriveEvidenceRows([
+        { type: 'photo', content: 'a.jpg', caption: 'Block tower' },
+        { type: 'quote', content: 'I made it taller!' },
+        { type: 'note', content: 'Worked for 40 minutes' },
+        { type: 'link', content: 'ABC Splash', name: 'ABC Splash', url: 'https://abc.net.au' },
+      ]),
+    ).toEqual([
       { kind: 'photo', content: 'a.jpg', caption: 'Block tower' },
-      { kind: 'photo', content: 'b.jpg' },
+      { kind: 'quote', content: 'I made it taller!' },
+      { kind: 'note', content: 'Worked for 40 minutes' },
+      { kind: 'link', content: 'https://abc.net.au', caption: 'ABC Splash' },
     ]);
   });
 
-  it('omits blank/whitespace-only captions and trims kept ones', () => {
+  it('stores a link URL as content; a URL-only link carries no caption', () => {
     expect(
-      derivePhotoEvidenceRows([
+      deriveEvidenceRows([{ type: 'link', content: '', name: '', url: 'https://x.test' }]),
+    ).toEqual([{ kind: 'link', content: 'https://x.test' }]);
+  });
+
+  it('keeps a name-only link (no URL) with empty content and the name as caption', () => {
+    expect(
+      deriveEvidenceRows([{ type: 'link', content: 'Library book', name: 'Library book', url: '' }]),
+    ).toEqual([{ kind: 'link', content: '', caption: 'Library book' }]);
+  });
+
+  it('omits blank/whitespace-only photo captions and trims kept ones', () => {
+    expect(
+      deriveEvidenceRows([
         { type: 'photo', content: 'a.jpg', caption: '   ' },
         { type: 'photo', content: 'b.jpg', caption: '  spaced  ' },
       ]),
@@ -98,9 +114,18 @@ describe('derivePhotoEvidenceRows', () => {
     ]);
   });
 
-  it('returns an empty array when there is no photo evidence', () => {
-    expect(derivePhotoEvidenceRows([{ type: 'note', content: 'n' }])).toEqual([]);
-    expect(derivePhotoEvidenceRows([])).toEqual([]);
+  it('drops empty quotes/notes and fully-empty links', () => {
+    expect(
+      deriveEvidenceRows([
+        { type: 'quote', content: '   ' },
+        { type: 'note', content: '' },
+        { type: 'link', content: '', name: '', url: '' },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('returns an empty array when there is no evidence', () => {
+    expect(deriveEvidenceRows([])).toEqual([]);
   });
 });
 
@@ -148,7 +173,7 @@ describe('buildEntrySavePayload', () => {
     discoveries: { L1: 'gravity' },
     evidence: [
       { type: 'photo', content: 'https://img/1', caption: 'Marble run' },
-      { type: 'note', content: 'ignored' },
+      { type: 'note', content: 'Stuck with it past frustration' },
     ],
     loggerMode: 'quick',
     observationDetails: { L1: { chip: 'focused' } },
@@ -164,10 +189,12 @@ describe('buildEntrySavePayload', () => {
     const p = buildEntrySavePayload(baseForm, baseCtx);
     expect(p.title).toBe('Built a marble run and tested ramps');
     expect(p.subjects).toEqual(['mathematics', 'science']); // cooking
-    expect(p.evidenceUrls).toEqual(['https://img/1']); // photos only
-    // Dual-write rows mirror the photo URLs but keep the caption.
+    expect(p.evidenceUrls).toEqual(['https://img/1']); // photos only (legacy column)
+    // The dual-write rows carry every kind (photo caption + the note), while
+    // evidenceUrls above stays photos-only for the dual-write window.
     expect(p.evidence).toEqual([
       { kind: 'photo', content: 'https://img/1', caption: 'Marble run' },
+      { kind: 'note', content: 'Stuck with it past frustration' },
     ]);
     expect(p.status).toBe('complete');
   });

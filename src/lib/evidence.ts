@@ -13,6 +13,16 @@
 /** The blob pathname prefix every evidence upload is stored under. */
 export const EVIDENCE_PREFIX = 'evidence';
 
+/**
+ * The evidence-bearing shape of a learning entry as the API returns it: the
+ * caption-carrying `learning_entry_evidence` rows (read side of the dual-write)
+ * plus the legacy `evidenceUrls` text[] fallback for pre-migration entries.
+ */
+export interface EntryEvidenceFields {
+  evidence?: { kind: string; content: string; caption: string | null }[] | null;
+  evidenceUrls?: string[] | null;
+}
+
 /** A photo for display: the stored blob ref plus its optional caption. */
 export interface PhotoEvidence {
   /** Blob pathname or legacy public URL — pass through {@link evidenceSrc}. */
@@ -21,21 +31,46 @@ export interface PhotoEvidence {
 }
 
 /**
- * Normalise an entry's photo evidence for the portfolio, preferring the
- * caption-carrying `learning_entry_evidence` rows and falling back to the
- * legacy `evidenceUrls` text[] for entries saved before the dual-write. This is
- * the read side of the migration — once `evidenceUrls` is retired the fallback
- * branch (and the field) can be dropped.
+ * Normalise an entry's PHOTO evidence for the portfolio's collapsed thumbnail
+ * grid, preferring the caption-carrying `learning_entry_evidence` rows and
+ * falling back to the legacy `evidenceUrls` text[] for entries saved before the
+ * dual-write. This is the read side of the migration — once `evidenceUrls` is
+ * retired the fallback branch (and the field) can be dropped. For the full set
+ * of kinds (quotes/notes/links too), see {@link entryEvidence}.
  */
-export function entryPhotoEvidence(entry: {
-  evidence?: { kind: string; content: string; caption: string | null }[] | null;
-  evidenceUrls?: string[] | null;
-}): PhotoEvidence[] {
+export function entryPhotoEvidence(entry: EntryEvidenceFields): PhotoEvidence[] {
   const photoRows = entry.evidence?.filter((e) => e.kind === 'photo') ?? [];
   if (photoRows.length > 0) {
     return photoRows.map((e) => ({ ref: e.content, caption: e.caption }));
   }
   return (entry.evidenceUrls ?? []).map((ref) => ({ ref, caption: null }));
+}
+
+/**
+ * A single piece of evidence for the portfolio's expanded view — ANY kind, so
+ * unlike {@link PhotoEvidence} it is not image-only. `content` holds the kind's
+ * payload: a photo's blob ref, a link's URL, or a quote/note's text. `caption`
+ * holds the human label — a photo caption or a link's resource name; it is null
+ * for quotes and notes (whose text already lives in `content`).
+ */
+export interface DisplayEvidence {
+  kind: string;
+  content: string;
+  caption: string | null;
+}
+
+/**
+ * Normalise ALL of an entry's evidence (photo/quote/note/link) for the
+ * portfolio's expanded view, preferring the `learning_entry_evidence` rows and
+ * falling back to `evidenceUrls` as photos for pre-migration entries (which
+ * never held anything but photos). The collapsed thumbnail grid stays
+ * photos-only via {@link entryPhotoEvidence}.
+ */
+export function entryEvidence(entry: EntryEvidenceFields): DisplayEvidence[] {
+  if (entry.evidence && entry.evidence.length > 0) {
+    return entry.evidence.map((e) => ({ kind: e.kind, content: e.content, caption: e.caption }));
+  }
+  return (entry.evidenceUrls ?? []).map((content) => ({ kind: 'photo', content, caption: null }));
 }
 
 /**

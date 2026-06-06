@@ -10,7 +10,7 @@ import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
 import { familyMembers, learningEntries, learningEntryEvidence } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { GET, POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../vitest.setup';
 
@@ -188,6 +188,56 @@ describe('POST /api/entries — evidence dual-write', () => {
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.kind === 'photo')).toBe(true);
     expect(rows.every((r) => r.caption === null)).toBe(true);
+  });
+
+  it('persists quote, note, and link evidence — not just photos', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Rich evidence',
+        status: 'draft',
+        evidenceUrls: ['evidence/fam/1.jpg'], // photos-only legacy column
+        evidence: [
+          { kind: 'photo', content: 'evidence/fam/1.jpg', caption: 'Self-portrait' },
+          { kind: 'quote', content: 'I drew myself!' },
+          { kind: 'note', content: 'Chose her own colours' },
+          { kind: 'link', content: 'https://abc.net.au', caption: 'ABC Splash' },
+        ],
+      })
+    );
+    expect(res.status).toBe(201);
+    const created = (await res.json()) as { id: string };
+
+    // sort_order pins the parent's capture order even though all four rows
+    // share created_at (one batched INSERT).
+    const rows = await db
+      .select()
+      .from(learningEntryEvidence)
+      .where(eq(learningEntryEvidence.entryId, created.id))
+      .orderBy(asc(learningEntryEvidence.sortOrder));
+    expect(rows).toHaveLength(4);
+    expect(rows.map((r) => r.kind)).toEqual(['photo', 'quote', 'note', 'link']);
+    expect(rows.map((r) => r.sortOrder)).toEqual([0, 1, 2, 3]);
+    expect(rows.find((r) => r.kind === 'quote')!.content).toBe('I drew myself!');
+    expect(rows.find((r) => r.kind === 'note')!.content).toBe('Chose her own colours');
+    const link = rows.find((r) => r.kind === 'link')!;
+    expect(link.content).toBe('https://abc.net.au');
+    expect(link.caption).toBe('ABC Splash');
+
+    // evidenceUrls stays photos-only through the dual-write window.
+    const [entryRow] = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.id, created.id));
+    expect(entryRow.evidenceUrls).toEqual(['evidence/fam/1.jpg']);
+
+    // GET attaches every kind, in capture order (driven by sort_order).
+    const listRes = await GET(getReq('http://x/api/entries'));
+    const list = (await listRes.json()) as Array<{ id: string; evidence: { kind: string }[] }>;
+    const entry = list.find((e) => e.id === created.id)!;
+    expect(entry.evidence.map((e) => e.kind)).toEqual(['photo', 'quote', 'note', 'link']);
   });
 });
 

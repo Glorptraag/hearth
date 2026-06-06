@@ -1070,6 +1070,7 @@ function EntryEditForm({
   const [subjects, setSubjects] = useState<string[]>(entry.subjects ?? []);
   const [engagement, setEngagement] = useState<Record<string, number>>(entry.engagementPerLearner ?? {});
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
 
   // Learners this entry involves — prefer the stored learnerIds, fall back to
   // whoever already has an engagement score recorded.
@@ -1082,21 +1083,40 @@ function EntryEditForm({
     setSubjects((prev) => (prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]));
 
   async function save() {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return; // title is required server-side (z.string().min(1))
     setSaving(true);
+    setError(false);
     try {
+      // Omit an empty date — the column is non-null and '' is not a valid date.
+      const body: Record<string, unknown> = {
+        title: trimmedTitle,
+        description,
+        subjects,
+        engagementPerLearner: engagement,
+      };
+      if (dateOccurred) body.dateOccurred = dateOccurred;
       const res = await fetch(`/api/entries/${entry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          dateOccurred,
-          subjects,
-          engagementPerLearner: engagement,
-        }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) return;
-      onSaved({ ...entry, title, description, dateOccurred, subjects, engagementPerLearner: engagement });
+      if (!res.ok) {
+        setError(true);
+        return;
+      }
+      onSaved({
+        ...entry,
+        title: trimmedTitle,
+        description,
+        subjects,
+        engagementPerLearner: engagement,
+        ...(dateOccurred ? { dateOccurred } : {}),
+      });
+    } catch {
+      // Network failure — keep the editor open and surface a retry hint rather
+      // than letting the entry silently look saved.
+      setError(true);
     } finally {
       setSaving(false);
     }
@@ -1191,10 +1211,10 @@ function EntryEditForm({
         </div>
       )}
 
-      <div className="flex gap-sm pt-xs">
+      <div className="flex items-center gap-sm pt-xs">
         <button
           onClick={save}
-          disabled={saving}
+          disabled={saving || !title.trim()}
           className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save'}
@@ -1205,6 +1225,11 @@ function EntryEditForm({
         >
           Cancel
         </button>
+        {error && (
+          <span role="status" className="font-sans text-xs text-red-400">
+            Couldn&rsquo;t save — please try again.
+          </span>
+        )}
       </div>
     </div>
   );

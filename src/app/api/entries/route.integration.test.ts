@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { familyMembers, learningEntries } from '@/lib/db/schema';
+import { familyMembers, learningEntries, learningEntryEvidence } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { GET, POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../vitest.setup';
@@ -126,6 +126,68 @@ describe('POST /api/entries — activity-level source fields (workstream D)', ()
       .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
     expect(rows[0].sourceActivityIds).toEqual([]);
     expect(rows[0].sourceApproachId).toBeNull();
+  });
+});
+
+describe('POST /api/entries — evidence dual-write', () => {
+  it('writes caption-carrying evidence rows that GET attaches', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Self-portrait',
+        status: 'draft',
+        evidenceUrls: ['evidence/fam/1.jpg'],
+        evidence: [
+          { kind: 'photo', content: 'evidence/fam/1.jpg', caption: 'Her first self-portrait' },
+        ],
+      })
+    );
+    expect(res.status).toBe(201);
+    const created = (await res.json()) as { id: string };
+
+    const rows = await db
+      .select()
+      .from(learningEntryEvidence)
+      .where(eq(learningEntryEvidence.entryId, created.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].kind).toBe('photo');
+    expect(rows[0].content).toBe('evidence/fam/1.jpg');
+    expect(rows[0].caption).toBe('Her first self-portrait');
+
+    // GET attaches the rows alongside the legacy evidenceUrls column.
+    const listRes = await GET(getReq('http://x/api/entries'));
+    const list = (await listRes.json()) as Array<{
+      id: string;
+      evidence: { caption: string | null }[];
+    }>;
+    const entry = list.find((e) => e.id === created.id)!;
+    expect(entry.evidence).toHaveLength(1);
+    expect(entry.evidence[0].caption).toBe('Her first self-portrait');
+  });
+
+  it('synthesises photo rows from evidenceUrls when evidence is omitted (legacy callers)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Legacy caller',
+        status: 'draft',
+        evidenceUrls: ['evidence/fam/a.jpg', 'evidence/fam/b.jpg'],
+      })
+    );
+    expect(res.status).toBe(201);
+    const created = (await res.json()) as { id: string };
+
+    const rows = await db
+      .select()
+      .from(learningEntryEvidence)
+      .where(eq(learningEntryEvidence.entryId, created.id));
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.kind === 'photo')).toBe(true);
+    expect(rows.every((r) => r.caption === null)).toBe(true);
   });
 });
 

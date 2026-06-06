@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evidenceSrc, authorizeEvidenceRef } from './evidence';
+import { evidenceSrc, authorizeEvidenceRef, entryPhotoEvidence } from './evidence';
 
 describe('evidenceSrc', () => {
   it('returns empty string for nullish/empty refs', () => {
@@ -47,5 +47,52 @@ describe('authorizeEvidenceRef', () => {
     expect(authorizeEvidenceRef('evidence/fam_1', 'fam_1')).toBeNull();
     expect(authorizeEvidenceRef(null, 'fam_1')).toBeNull();
     expect(authorizeEvidenceRef('', 'fam_1')).toBeNull();
+  });
+});
+
+describe('entryPhotoEvidence', () => {
+  it('prefers the caption-carrying evidence rows when present', () => {
+    expect(
+      entryPhotoEvidence({
+        evidence: [
+          { kind: 'photo', content: 'evidence/fam_1/1.jpg', caption: 'Block tower' },
+          { kind: 'photo', content: 'evidence/fam_1/2.jpg', caption: null },
+        ],
+        evidenceUrls: ['legacy.jpg'],
+      }),
+    ).toEqual([
+      { ref: 'evidence/fam_1/1.jpg', caption: 'Block tower' },
+      { ref: 'evidence/fam_1/2.jpg', caption: null },
+    ]);
+  });
+
+  it('keeps only photo rows, dropping other kinds', () => {
+    expect(
+      entryPhotoEvidence({
+        evidence: [
+          { kind: 'note', content: 'a note', caption: null },
+          { kind: 'photo', content: '1.jpg', caption: 'Caption' },
+        ],
+        evidenceUrls: [],
+      }),
+    ).toEqual([{ ref: '1.jpg', caption: 'Caption' }]);
+  });
+
+  it('falls back to evidenceUrls (no captions) for pre-migration entries', () => {
+    expect(
+      entryPhotoEvidence({ evidence: [], evidenceUrls: ['a.jpg', 'b.jpg'] }),
+    ).toEqual([
+      { ref: 'a.jpg', caption: null },
+      { ref: 'b.jpg', caption: null },
+    ]);
+    // evidence undefined behaves the same as empty.
+    expect(entryPhotoEvidence({ evidenceUrls: ['a.jpg'] })).toEqual([
+      { ref: 'a.jpg', caption: null },
+    ]);
+  });
+
+  it('returns an empty array when there is no evidence at all', () => {
+    expect(entryPhotoEvidence({})).toEqual([]);
+    expect(entryPhotoEvidence({ evidence: null, evidenceUrls: null })).toEqual([]);
   });
 });

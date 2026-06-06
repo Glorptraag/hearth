@@ -67,6 +67,36 @@ export function derivePhotoEvidenceUrls(
 }
 
 /**
+ * A `learning_entry_evidence` row as sent to `/api/entries` (the server fills
+ * `id`/`entryId`/`createdAt`). The `kind` mirrors the table's check constraint.
+ */
+export interface EvidencePayloadItem {
+  kind: 'photo' | 'quote' | 'note' | 'link' | 'audio';
+  content: string;
+  caption?: string;
+}
+
+/**
+ * Derive the dual-write evidence rows for `learning_entry_evidence`. A faithful
+ * mirror of {@link derivePhotoEvidenceUrls} — photo evidence only, same order —
+ * but carrying the `caption` that the flat `evidenceUrls` text[] has no room for.
+ * Kept in lockstep with that column until it's retired. (Non-photo kinds aren't
+ * persisted yet; that pre-existing gap is out of scope here.)
+ */
+export function derivePhotoEvidenceRows(
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption'>>,
+): EvidencePayloadItem[] {
+  return evidence
+    .filter((e) => e.type === 'photo')
+    .map((e) => {
+      const caption = e.caption?.trim();
+      return caption
+        ? { kind: 'photo' as const, content: e.content, caption }
+        : { kind: 'photo' as const, content: e.content };
+    });
+}
+
+/**
  * The "thin entry" heuristic. Four signals must all agree for an entry to skip
  * the substantive post-save second screen and keep the fast "Saved" toast:
  *   1. short description (<60 chars);
@@ -100,7 +130,7 @@ export interface EntrySaveForm {
   selectedLearners: string[];
   engagement: Record<string, number>;
   discoveries: Record<string, string>;
-  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content'>>;
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption'>>;
   loggerMode: LoggerSaveMode;
   observationDetails: Record<string, unknown>;
 }
@@ -125,6 +155,12 @@ export interface EntrySavePayload {
   engagementPerLearner: Record<string, number>;
   discoveriesPerLearner: Record<string, string>;
   evidenceUrls: string[];
+  /**
+   * Full-fidelity evidence rows for the `learning_entry_evidence` dual-write.
+   * Mirrors `evidenceUrls` (photos, same order) but carries captions. Kept
+   * alongside the legacy column until it's retired.
+   */
+  evidence: EvidencePayloadItem[];
   observationDetails: Record<string, unknown> | undefined;
   mode: LoggerSaveMode;
   source: string;
@@ -162,6 +198,7 @@ export function buildEntrySavePayload(
     engagementPerLearner: form.engagement,
     discoveriesPerLearner: form.discoveries,
     evidenceUrls: derivePhotoEvidenceUrls(form.evidence),
+    evidence: derivePhotoEvidenceRows(form.evidence),
     observationDetails: form.loggerMode === 'guided' ? form.observationDetails : undefined,
     mode: form.loggerMode,
     source: isScaffold ? 'hearth_session' : ctx.projectSource,

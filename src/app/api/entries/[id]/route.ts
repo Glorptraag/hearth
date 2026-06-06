@@ -7,6 +7,7 @@ import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
+import { attachEvidence } from '@/lib/evidence-db';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -28,7 +29,10 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
 
   if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  return NextResponse.json(entry);
+  // Attach caption-carrying learning_entry_evidence rows (read side of the
+  // evidenceUrls dual-write); the portfolio prefers these over evidenceUrls.
+  const [withEvidence] = await attachEvidence([entry]);
+  return NextResponse.json(withEvidence);
 }, { route: 'GET /api/entries/[id]' });
 
 const updateEntrySchema = z.object({

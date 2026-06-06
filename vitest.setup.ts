@@ -15,6 +15,16 @@ import { vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
 // ---------------------------------------------------------------------------
+// Sanity client config — `@/lib/sanity/client` throws a ConfigError if these
+// are unset (before it ever reaches the mocked @sanity/client below), which
+// would make any route that touches Sanity hard-fail in tests. Provide dummy
+// values so the *mocked* client constructs and returns its canned [] data.
+// `??=` so a real env (local .env) still wins.
+// ---------------------------------------------------------------------------
+process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ??= 'test';
+process.env.NEXT_PUBLIC_SANITY_DATASET ??= 'test';
+
+// ---------------------------------------------------------------------------
 // Test identity constants — exported so tests and factories use the same IDs
 // ---------------------------------------------------------------------------
 export const TEST_USER_ID = 'user_test_default';

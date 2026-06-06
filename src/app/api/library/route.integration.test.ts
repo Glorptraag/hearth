@@ -4,9 +4,19 @@
  *
  * Task 4.8.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { asUser } from '@/test/clerk-helpers';
+
+// The route fires rebuildSnapshot(...) fire-and-forget (not awaited). Under the
+// single-pinned-transaction integration harness that escaped async write runs
+// AFTER the test's transaction rolls back, hits an FK violation (family gone),
+// and aborts the shared connection — poisoning subsequent tests. Snapshot
+// rebuild has its own coverage; stub it to a no-op here so we test only the
+// library DB behaviour.
+vi.mock('@/lib/ai/snapshot-rebuild', () => ({
+  rebuildSnapshot: vi.fn(async () => {}),
+}));
 import { db } from '@/lib/db';
 import { createFamily } from '@/test/db-factories';
 import { familyLibrary } from '@/lib/db/schema';

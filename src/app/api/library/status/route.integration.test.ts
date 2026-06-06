@@ -53,6 +53,10 @@ describe('GET /api/library/status — status derivation', () => {
       learnerIds: [learner.id],
       state: 'active',
       sessionType: 'sustained',
+      // buildModuleRun defaults timestamps to EPOCH (2026-01-01), which is >14d
+      // stale → derives as 'abandoned'. An open run is in_flight only with
+      // recent activity, so set lastActiveAt to now for this assertion.
+      lastActiveAt: new Date(),
     });
 
     const res = await (GET as () => Promise<Response>)();

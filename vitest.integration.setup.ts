@@ -29,12 +29,39 @@ import { connectTestDb, beginTx, rollbackTx, endTestDb } from '@/test/integratio
 // before/after numbers stay measurable.
 const TIMING = !!process.env.HEARTH_TEST_TIMING;
 
+const afterRegistry = globalThis as typeof globalThis & { __hearthAfter?: Promise<unknown>[] };
+
+/**
+ * Flush every post-response async write the route scheduled — Next.js `after()`
+ * callbacks (tracked explicitly in __hearthAfter by the next/server mock) AND
+ * raw fire-and-forget `.then/.catch` promises (drained via macrotask yields) —
+ * so they all run NOW, inside the current test's transaction. Without this they
+ * resolve later, on the shared pinned connection, during a DIFFERENT test:
+ * their FK writes hit the rolled-back family, abort that transaction, and
+ * cascade-fail the whole worker. Flushing here keeps each test's async tail
+ * contained to its own (about-to-be-rolled-back) transaction.
+ */
+async function flushPostResponseWork(): Promise<void> {
+  for (let i = 0; i < 5; i++) {
+    if (afterRegistry.__hearthAfter?.length) {
+      await Promise.allSettled(afterRegistry.__hearthAfter.splice(0));
+    }
+    // Yield a macrotask so raw fire-and-forget chains advance a step, then
+    // re-check the registry. Stops early once nothing is pending.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    if (!afterRegistry.__hearthAfter?.length) break;
+  }
+}
+
 beforeAll(async () => {
   await connectTestDb();
 });
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  // Drop any post-response promises left pending from a prior test/file so the
+  // registry can't leak a stale write across the transaction boundary.
+  if (afterRegistry.__hearthAfter) afterRegistry.__hearthAfter.length = 0;
   const start = TIMING ? performance.now() : 0;
   await beginTx();
   if (TIMING) {
@@ -43,6 +70,9 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  // Settle the test's async tail INSIDE its transaction, then roll back so all
+  // of it — the test's writes and the flushed post-response writes — is discarded.
+  await flushPostResponseWork();
   await rollbackTx();
 });
 

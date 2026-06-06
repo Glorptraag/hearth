@@ -105,7 +105,7 @@ function ProjectOverview({
         }}
       >
         <a
-          href="/explore/activities"
+          href="/library?tab=browse"
           className="inline-flex items-center gap-xs font-sans text-[0.85rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 mb-lg"
         >
           ← Explore
@@ -499,7 +499,7 @@ export default function ProjectDetailPage() {
         <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">Project not found</h2>
         <p className="font-sans text-sm text-text-secondary mb-lg">This project may not exist or hasn&apos;t been published yet.</p>
         <button
-          onClick={() => router.push('/explore/activities')}
+          onClick={() => router.push('/library?tab=browse')}
           className="font-sans text-sm font-semibold px-md py-sm rounded-md border border-ember text-ember hover:bg-ember hover:text-text-inverse transition-all duration-200"
         >
           Browse Activities

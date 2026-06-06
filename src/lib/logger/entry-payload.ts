@@ -59,12 +59,19 @@ export function deriveEntryTitle(description: string): string {
   return description.slice(0, 60).trim() + (description.length > 60 ? '...' : '');
 }
 
-/** The persisted evidence URLs are the photo evidence's content only. */
-export function derivePhotoEvidenceUrls(
+/**
+ * Legacy: extract photo URLs for the `evidenceUrls` text[] column.
+ * Kept for backward-compat during the 2-cycle deprecation window.
+ * Cleanup target: remove once all reads migrate to `learning_entry_evidence`.
+ */
+export function derivePhotoEvidenceUrlsLegacy(
   evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content'>>,
 ): string[] {
   return evidence.filter((e) => e.type === 'photo').map((e) => e.content);
 }
+
+/** @deprecated Use derivePhotoEvidenceUrlsLegacy — alias kept for in-flight callers. */
+export const derivePhotoEvidenceUrls = derivePhotoEvidenceUrlsLegacy;
 
 /**
  * A `learning_entry_evidence` row as sent to `/api/entries` (the server fills
@@ -74,6 +81,9 @@ export interface EvidencePayloadItem {
   kind: 'photo' | 'quote' | 'note' | 'link' | 'audio';
   content: string;
   caption?: string;
+  // Audio carries { durationMs, mimeType }; offline photos may carry
+  // { pending_upload }. Persisted into learning_entry_evidence.metadata.
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -94,17 +104,28 @@ export interface EvidencePayloadItem {
  * Empty quotes/notes and fully-empty links are dropped; captions are trimmed.
  */
 export function deriveEvidenceRows(
-  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption' | 'url' | 'name'>>,
+  evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption' | 'url' | 'name' | 'metadata'>>,
 ): EvidencePayloadItem[] {
   const rows: EvidencePayloadItem[] = [];
   for (const e of evidence) {
     if (e.type === 'photo') {
       const caption = e.caption?.trim();
-      rows.push(
-        caption
-          ? { kind: 'photo', content: e.content, caption }
-          : { kind: 'photo', content: e.content },
-      );
+      rows.push({
+        kind: 'photo',
+        content: e.content,
+        ...(caption ? { caption } : {}),
+        ...(e.metadata ? { metadata: e.metadata } : {}),
+      });
+    } else if (e.type === 'audio') {
+      // Audio carries durationMs/mimeType (and pending_upload offline) in
+      // metadata — preserve it through to learning_entry_evidence.
+      const caption = e.caption?.trim();
+      rows.push({
+        kind: 'audio',
+        content: e.content,
+        ...(caption ? { caption } : {}),
+        ...(e.metadata ? { metadata: e.metadata } : {}),
+      });
     } else if (e.type === 'quote' || e.type === 'note') {
       const content = e.content?.trim();
       if (content) rows.push({ kind: e.type, content });

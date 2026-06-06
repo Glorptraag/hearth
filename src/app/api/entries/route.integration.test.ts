@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { familyMembers, learningEntries, learningEntryEvidence } from '@/lib/db/schema';
+import { familyMembers, learningEntries, learningEntryEvidence, moduleRuns, plannerEntries } from '@/lib/db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { GET, POST } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../vitest.setup';
@@ -270,5 +270,49 @@ describe('GET /api/entries — cross-family isolation', () => {
     expect(body.every((e) => e.familyId === TEST_FAMILY_ID)).toBe(true);
     expect(body.map((e) => e.title)).toContain('A — visible');
     expect(body.map((e) => e.title)).not.toContain('B — hidden');
+  });
+});
+
+describe('POST /api/entries — module_run + planner linkage (2.8)', () => {
+  it('persists moduleRunId and plannerEntryId when provided', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const [run] = await db
+      .insert(moduleRuns)
+      .values({
+        familyId: TEST_FAMILY_ID,
+        sanityModuleId: 'mod-link-test',
+        state: 'active',
+        sessionType: 'sustained',
+      })
+      .returning();
+
+    const [planner] = await db
+      .insert(plannerEntries)
+      .values({
+        familyId: TEST_FAMILY_ID,
+        date: '2026-06-03',
+        title: 'Magnet exploration',
+      })
+      .returning();
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Linked entry',
+        status: 'complete',
+        moduleRunId: run.id,
+        plannerEntryId: planner.id,
+      }),
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { id: string };
+
+    const [entry] = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.id, body.id));
+    expect(entry.moduleRunId).toBe(run.id);
+    expect(entry.plannerEntryId).toBe(planner.id);
   });
 });

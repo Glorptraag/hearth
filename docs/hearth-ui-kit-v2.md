@@ -75,7 +75,7 @@ Full spec with hex values, Tailwind mappings, and migration notes is in `hearth-
 ### Text
 ```
 --text-primary:    #E8DFD4   Headings, titles
---text-secondary:  #9B8B7E   Body, descriptions
+--text-secondary:  #B0A094   Body, descriptions
 --text-muted:      #6B5D52   Timestamps, metadata
 --text-inverse:    #0F0D0B   On ember/sage buttons
 ```

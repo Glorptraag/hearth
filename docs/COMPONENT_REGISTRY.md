@@ -27,7 +27,7 @@
 **Implementation deviations from spec:**
 - **Theme default convention:** v2.1 says gathering is default; this implementation keeps **dark as default** (`data-theme=""` or absent → dark; `data-theme="gathering"` → light) for production stability. Auto time-of-day switching covers the addendum's daytime intent. Documented in `CLAUDE.md`.
 - **Icon library:** S8 specifies Lucide; the implementation uses **Phosphor Icons** (`@phosphor-icons/react`) per S14. **Adopted across all UI surfaces 2026-05-01** (commit `64cd9df`). Same single-color stroke aesthetic and 24px grid.
-- **`--text-muted` value:** v2 spec is `#6B5D52`; implementation keeps WCAG-override `#726458` (3.15:1 on panel) per `hearth-canonical-design-tokens-v1.md` Appendix A.
+- **`--text-muted` value:** v2 spec is `#6B5D52`; implementation keeps WCAG-override `#877565` (~4.1:1 on panel, raised from `#726458`/3.15:1 in commit `4dfdd5b`) per `hearth-canonical-design-tokens-v1.md` Appendix A. Clears AA for large/bold text only; still short of the 4.5:1 normal-text AA threshold.
 
 **Pending v2 / v2.1 deliverables (not yet produced):**
 - `hearth-dashboard-dark-v3.html` — dark-mode reference HTML prototype (Prompt B output)

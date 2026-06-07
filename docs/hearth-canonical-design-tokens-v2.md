@@ -39,12 +39,12 @@ This document defines every design token in the Hearth system. No screen, compon
 
 ```css
 --text-primary:    #E8DFD4;   /* cream, primary readable content */
---text-secondary:  #9B8B7E;   /* muted tan, labels, secondary info */
+--text-secondary:  #B0A094;   /* muted tan, labels, secondary info */
 --text-muted:      #6B5D52;   /* metadata, timestamps, low-importance */
 --text-inverse:    #15110D;   /* text on ember surfaces */
 ```
 
-Contrast ratios held: text-primary on surface-body = 10.2:1 (AAA). text-secondary on surface-body = 4.8:1 (AA).
+Contrast ratios held: text-primary on surface-body = 10.2:1 (AAA). text-secondary on surface-body = 7.4:1 (AAA, raised from `#9B8B7E` in commit `4dfdd5b`).
 
 ---
 

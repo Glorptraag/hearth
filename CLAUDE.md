@@ -166,7 +166,7 @@ The v2.1 addendum specifies gathering as the default theme (`[data-theme="dark"]
 ### Token value exceptions (WCAG AA)
 
 Two token values deviate from the original design spec for accessibility:
-- Dark `--text-muted`: `#726458` (v2 spec is `#6B5D52`) — 3.15:1 on panel
+- Dark `--text-muted`: `#877565` (v2 spec is `#6B5D52`) — ~4.1:1 on panel, raised from `#726458` (3.15:1) in commit `4dfdd5b`. Clears WCAG AA for large/bold text (3:1) but still falls short of the 4.5:1 AA threshold for normal-size text.
 - Gathering `--text-inverse`: `#FFFFFF` (v2 spec is `#FDF6F0`) — keeps WCAG AA on ember backgrounds
 
 See `docs/hearth-canonical-design-tokens-v1.md` Appendix A for details.

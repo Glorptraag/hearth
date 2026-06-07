@@ -1,4 +1,4 @@
-<!-- Version: 1 | Date: 2026-04-20 | Changes: Initial deploy runbook for Vercel + Neon + Sanity + Clerk + Anthropic. Pilot-scale (10-20 families). Secrets stay in Vercel UI; migrations are manual per this runbook. -->
+<!-- Version: 2 | Date: 2026-06-06 | Changes: Migrations now run automatically in the Vercel build (`db:migrate:deploy` → drizzle-kit migrate, production-guarded, then drift-verified) before `next build`. Replaces the manual-from-laptop policy after the 2026-06-06 portfolio incident (prod drifted behind on 0023_evidence_sort_order). Manual path retained for risky migrations. | Version: 1 | Date: 2026-04-20 | Initial deploy runbook for Vercel + Neon + Sanity + Clerk + Anthropic. Pilot-scale (10-20 families). Secrets stay in Vercel UI. -->
 
 # Hearth — Deployment Runbook
 
@@ -9,7 +9,7 @@
 ## Decisions this runbook assumes
 
 - **Secrets live in the Vercel project UI** (not Doppler/1Password). If this changes later, update the Environment Variables section.
-- **Migrations run manually from the operator's laptop** before Vercel deploys the code that depends on them. CI does NOT run migrations.
+- **Migrations run automatically in the Vercel build** on every production deploy. `vercel.json` `buildCommand` is `npm run db:migrate:deploy && next build`: `db:migrate:deploy` (`scripts/deploy-migrate.mjs`) applies pending Drizzle migrations against the production `DATABASE_URL`, verifies no drift remains, and only then does `next build` run. A failed migration aborts the build, so a schema-behind deployment is never promoted. The manual laptop path (§1.4) is retained for risky migrations you want to stage first.
 - **One production branch: `main`.** Feature branches get Vercel preview deploys; PRs into main trigger the production pipeline.
 - **Single Vercel region.** The in-memory rate limiter (`src/lib/rate-limit.ts` fallback) is single-instance until Redis lands.
 
@@ -67,22 +67,32 @@ After populating, click **Redeploy** on the latest production deployment so it p
 - [ ] If the dataset is empty, run the seed scripts locally with `SANITY_API_TOKEN` set: `npx tsx src/scripts/seed-capability-threads.ts` (and any other seed scripts present). The `publish` API (`/api/modules/publish`) can also be driven manually for ad-hoc content.
 - [ ] **Rotate `SANITY_API_TOKEN` quarterly** (or immediately after a laptop loss). In Sanity Manage → API → Tokens → create new → revoke old. Update the Vercel env var.
 
-### 1.4 Database migrations (manual)
+### 1.4 Database migrations (automatic on deploy)
 
-Drizzle migrations live in `./drizzle/*.sql`. `drizzle.config.ts` reads `DATABASE_URL` from `.env.local`.
+Drizzle migrations live in `./drizzle/*.sql`. `drizzle.config.ts` reads `DATABASE_URL` (from Vercel's build env in production, or `.env.local` locally).
+
+**Default path — nothing to do.** Every production deploy runs `npm run db:migrate:deploy` before `next build` (see `vercel.json` `buildCommand`). That step:
+
+1. Skips unless `VERCEL_ENV === 'production'` — production is the only environment that auto-migrates. Only `main` auto-deploys (per `vercel.json`); the preview Neon branch DB (built for the constellations rebuild) is migrated by hand, so the guard keeps this step from touching it from a stray non-prod `vercel` build.
+2. Runs `drizzle-kit migrate` against the prod `DATABASE_URL`. Idempotent — drizzle tracks applied migrations in `drizzle.__drizzle_migrations`, so an up-to-date deploy is a near-no-op; only unapplied migrations run.
+3. Verifies with `check-migration-drift.mjs` that the live DB now matches the journal and every `schema.ts` table physically exists. Real drift aborts the build; a verifier connectivity blip is logged but non-fatal.
+
+If migrate fails, the build aborts and the previous working deployment stays promoted — the broken schema is never served. This is the guard that the 2026-06-06 incident lacked: `0023_evidence_sort_order` had been authored and merged but never applied to prod, so `GET /api/entries` 500'd and portfolios degraded to "Your story starts here".
+
+**Manual path — for risky migrations only.** Drops, `NOT NULL` on populated tables, and type changes should be staged before the deploy that depends on them:
 
 ```
 # From the operator's laptop, with .env.local pointing at the prod DB:
 npm run db:migrate
 
-# After it returns, confirm the journal matches:
+# Confirm the journal matches the live DB:
 npm run db:check-drift
 ```
 
 **Rules:**
 
-1. Run migrations **before** merging the PR that depends on them. Migrations are forward-compatible against the previous code, so there's no window where prod code crashes on missing columns.
-2. If a migration is risky (drops / NOT NULL on populated tables / type changes), copy it to a staging Neon branch first: `npx drizzle-kit migrate` with `DATABASE_URL` pointed at the branch, smoke-test the app against that branch, then run it on main.
+1. For an additive migration, just merge — the deploy applies it. Migrations are forward-compatible against the previous code, so there's no window where prod code crashes on missing columns.
+2. If a migration is risky (drops / NOT NULL on populated tables / type changes), copy it to a staging Neon branch first: `npx drizzle-kit migrate` with `DATABASE_URL` pointed at the branch, smoke-test the app against that branch, then merge and let the deploy apply it to main (or run `npm run db:migrate` against prod yourself just ahead of the merge).
 3. **Rollback** — `drizzle-kit` does not generate down-migrations. Roll back by writing a new forward migration that inverts the change, or by restoring from a Neon point-in-time snapshot (Neon dashboard → Branches → Restore).
 
 The `src/lib/db/migrations/*.sql` folder contains ad-hoc historical one-offs (e.g. `add_pedagogy_values_practices.sql`). New migrations should go through `drizzle-kit generate` + `migrate`, not that folder.
@@ -140,6 +150,7 @@ Smoke test, end-to-end:
 - [ ] Link the repo to the Vercel project (Import Git Repository).
 - [ ] Confirm the branch-to-env mapping in `vercel.json`: `main` deploys to prod, other branches are preview-only. (Already in the repo — don't edit.)
 - [ ] Trigger a deploy from `main` and watch the build log for:
+  - `[deploy-migrate]` lines confirming migrations applied (or "0 to apply") and the drift check passed, **before** the Next build output. If this step errors, the build aborts and the prior deployment stays live — fix the migration and redeploy.
   - No missing env var warnings.
   - Sentry source-map upload succeeded if `SENTRY_AUTH_TOKEN` is set.
   - Cron routes registered: Vercel → Project → Settings → Crons should show two entries (`/api/admin/retention` Sun 02:00 UTC, `/api/admin/invitations/expire` daily 20:00 UTC).
@@ -168,9 +179,10 @@ If anything fails, jump to [`docs/incident-runbook.md`](./incident-runbook.md).
 
 Short version — see §1.6 for the full smoke test, only run it after risky changes.
 
-- [ ] PR green on CI (typecheck + unit tests required; lint is non-blocking until the 22 pre-existing errors are cleared — see `.github/workflows/test.yml`).
-- [ ] If the PR adds a Drizzle migration, run `npm run db:migrate` against prod **before** merging.
-- [ ] After every merge that touched `drizzle/` or `src/lib/db/schema.ts`, run `npm run db:check-drift` against prod. Non-zero exit ⇒ migration was skipped; re-run `db:migrate` and verify before declaring the deploy stable. (This catches the failure mode that broke PR #60: code expected `learner_dlo_status`; prod never ran 0015.)
+- [ ] PR green on CI (typecheck + unit tests required; lint is non-blocking until the 22 pre-existing errors are cleared — see `.github/workflows/test.yml`). The typecheck job runs `npm run db:check-schema`, which fails the PR if a new `pgTable` in `schema.ts` has no `CREATE TABLE` migration — the pre-merge guard against "added a table, forgot the migration".
+- [ ] If the PR adds an **additive** Drizzle migration, just merge — the production deploy runs `db:migrate:deploy` and applies it before `next build`. No manual step.
+- [ ] If the PR adds a **risky** migration (drops / `NOT NULL` on populated tables / type changes), stage it per §1.4 rule 2 before merging.
+- [ ] After a deploy that touched `drizzle/` or `src/lib/db/schema.ts`, confirm the build log shows the `[deploy-migrate]` migrate + drift-check lines went green. For an extra check you can still run `npm run db:check-drift` against prod from your laptop. (The in-build verify already catches the failure mode that broke PR #60 — code expected `learner_dlo_status`; prod never ran 0015 — and the 2026-06-06 portfolio outage from the unapplied 0023.)
 - [ ] If the PR touches `/api/admin/retention` or `/api/admin/invitations/expire`, manually trigger both after deploy (step 1.6 #7) to make sure nothing regresses silently until the next cron tick.
 - [ ] If the PR touches AI enrichment (`src/lib/ai/*`), run step 1.6 #4 and then check `ai_pipeline_logs` for a fresh row.
 - [ ] Delete merged feature branches (or rely on GitHub auto-delete, per `docs/branch-hygiene.md`).

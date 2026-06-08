@@ -6,6 +6,7 @@ import type { Module, Learner, QuickCaptureItem } from './types';
 import { ENGAGEMENT_EMOJI } from './constants';
 import { Camera, PencilSimple, X, Check } from '@/components/icons';
 import { evidenceSrc } from '@/lib/evidence';
+import { deriveSourceActivityIds } from '@/lib/modules/completion';
 
 export default function LogMode({
   module,
@@ -24,7 +25,8 @@ export default function LogMode({
   // completedActivityIdxs.
   selectedApproachIdx?: number;
   // Indexes (into module.approaches[selectedApproachIdx].activities[]) of
-  // activities the parent stepped through to completion in Facilitate mode.
+  // activities the parent actually entered/viewed in Facilitate mode (includes
+  // the activity they ended on; excludes ones skipped past via a forward jump).
   completedActivityIdxs?: number[];
 }) {
   const router = useRouter();
@@ -111,22 +113,17 @@ export default function LogMode({
         + (understandingSuffix ? `\n\nUnderstanding: ${understandingSuffix}` : '')
         + (sessionElapsed != null ? `\n\nSession duration: ${Math.floor(sessionElapsed / 60)}m ${sessionElapsed % 60}s` : '');
 
-      // Collect activity IDs touched this session:
-      //  - from quick captures (parent jotted a note while on this activity)
-      //  - from completed step indexes (parent advanced past this activity)
-      // Dedupe, preserve order seen.
-      const activityIdSet = new Set<string>();
-      for (const cap of quickCaptures ?? []) {
-        if (cap.activityId) activityIdSet.add(cap.activityId);
-      }
+      // Resolve the activity IDs actually facilitated this session — from quick
+      // captures (note/photo jotted on an activity) and the visited/completed
+      // indexes. See deriveSourceActivityIds for the dedupe/order contract.
       const approach = selectedApproachIdx != null
         ? module.approaches?.[selectedApproachIdx]
         : undefined;
-      for (const idx of completedActivityIdxs ?? []) {
-        const act = approach?.activities?.[idx];
-        if (act?._id) activityIdSet.add(act._id);
-      }
-      const sourceActivityIds = Array.from(activityIdSet);
+      const sourceActivityIds = deriveSourceActivityIds({
+        activities: approach?.activities,
+        completedActivityIdxs,
+        quickCaptures,
+      });
 
       const body: Record<string, unknown> = {
         title: `Module: ${module.title}`,

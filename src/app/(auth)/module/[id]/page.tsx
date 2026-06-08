@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
+import { markActivityVisited } from '@/lib/modules/completion';
 import EmptyState from '@/components/ui/EmptyState';
 import { Wrench, Lock, ClipboardText, PencilSimple, Play, FilePdf } from '@/components/icons';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
@@ -62,11 +63,9 @@ export default function ModuleDetailPage() {
   function persistChunk(chunkIdx: number) {
     setSavedChunkIdx(chunkIdx);
     setCurrentActivityIdx(chunkIdx);
-    setCompletedActivityIdxs((prev) => {
-      const next = new Set(prev);
-      for (let i = 0; i < chunkIdx; i++) next.add(i);
-      return Array.from(next);
-    });
+    // Completion is "entered/viewed", not cursor range — mark the activity the
+    // parent advances to; skipped activities are never marked.
+    setCompletedActivityIdxs((prev) => markActivityVisited(prev, chunkIdx));
     try { localStorage.setItem(STORAGE_KEY, String(chunkIdx)); } catch { /* ignore */ }
   }
 
@@ -91,14 +90,25 @@ export default function ModuleDetailPage() {
   const handleActivitySelect = useCallback((idx: number) => {
     setCurrentActivityIdx(idx);
     setSavedChunkIdx(idx);
-    setCompletedActivityIdxs((prev) => {
-      const next = new Set(prev);
-      for (let i = 0; i < idx; i++) next.add(i);
-      return Array.from(next);
-    });
+    // Mark only the activity jumped to — jumping ahead must NOT mark the
+    // skipped-over activities as done (the old `i < idx` range did).
+    setCompletedActivityIdxs((prev) => markActivityVisited(prev, idx));
     try { localStorage.setItem(`hearth_module_${id}_session`, String(idx)); } catch { /* ignore */ }
     setMode('facilitate');
   }, [id]);
+
+  // Mark the current activity visited on entry into facilitate mode. The
+  // navigation handlers (persistChunk / handleActivitySelect) mark what the
+  // parent moves to; this covers the entry points that DON'T pass through them —
+  // Start (lands on activity 0) and Resume — so completion always reflects what
+  // was actually entered/viewed. The includes() guard makes the overlap a no-op.
+  useEffect(() => {
+    if (mode !== 'facilitate') return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCompletedActivityIdxs((prev) =>
+      prev.includes(currentActivityIdx) ? prev : markActivityVisited(prev, currentActivityIdx),
+    );
+  }, [mode, currentActivityIdx]);
 
   const fetchModule = useCallback(async () => {
     try {
@@ -504,6 +514,14 @@ export default function ModuleDetailPage() {
                 setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
               }
               setMode('log');
+            }}
+            // Mid-session "End & Log": routes to log mode the same way the sidebar
+            // does (handleModeChange, data-preserving), NOT the clearSession onFinish
+            // path. Capture the current activity first so a one-and-done session
+            // records it.
+            onEndAndLog={() => {
+              setCompletedActivityIdxs((prev) => markActivityVisited(prev, currentActivityIdx));
+              handleModeChange('log');
             }}
             onPause={() => {
               setMode('prep');

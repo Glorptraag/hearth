@@ -138,17 +138,20 @@ export default function ModuleSidebar({
                       : 'border-l-transparent hover:bg-ember-glow'
                   }`}
                 >
-                  {/* Numbered circle */}
+                  {/* Numbered circle. The active activity is also in the visited
+                      (completed) set, so isActive must win here — the current step
+                      shows its ember number; only activities left behind show the
+                      sage check. */}
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-sans font-semibold shrink-0 ${
-                      isCompleted
-                        ? 'bg-sage text-text-inverse'
-                        : isActive
+                      isActive
                         ? 'bg-ember text-text-inverse'
+                        : isCompleted
+                        ? 'bg-sage text-text-inverse'
                         : 'bg-surface-raised text-text-muted'
                     }`}
                   >
-                    {isCompleted ? <Check size={14} aria-hidden="true" /> : idx + 1}
+                    {!isActive && isCompleted ? <Check size={14} aria-hidden="true" /> : idx + 1}
                   </span>
                   <div className="flex-1 min-w-0 text-left">
                     <p className={`font-sans text-sm font-medium truncate ${

@@ -26,7 +26,9 @@ import {
   moduleRuns,
   learningEntryEvidence,
   familyLibrary,
+  facilitatorNotes,
 } from '@/lib/db/schema';
+import { encryptField } from '@/lib/crypto/field-encryption';
 import {
   buildFamily,
   buildLearner,
@@ -36,6 +38,7 @@ import {
   buildSnapshot,
   buildModuleRun,
   buildEvidence,
+  buildFacilitatorNote,
   type Family,
   type Learner,
   type LearningEntry,
@@ -44,6 +47,7 @@ import {
   type FamilyIntelligenceSnapshot,
   type ModuleRun,
   type LearningEntryEvidence,
+  type FacilitatorNote,
 } from './factories';
 
 // The repo exports a single concrete `db` from `@/lib/db`. Callers pass it in
@@ -126,6 +130,23 @@ export async function createEvidence(
 ): Promise<LearningEntryEvidence> {
   const row = buildEvidence(overrides);
   const result = await db.insert(learningEntryEvidence).values(row).returning();
+  return result[0];
+}
+
+/**
+ * Insert a facilitator_notes row. `learnerId` is required via overrides (the FK
+ * has no default that resolves). The note is encrypted at rest — `noteText`
+ * goes in through `encryptField`, matching how a real write path must store it.
+ */
+export async function createFacilitatorNote(
+  db: Db,
+  overrides: Partial<FacilitatorNote> & { learnerId: string }
+): Promise<FacilitatorNote> {
+  const row = buildFacilitatorNote(overrides);
+  const result = await db
+    .insert(facilitatorNotes)
+    .values({ ...row, noteText: encryptField(row.noteText) })
+    .returning();
   return result[0];
 }
 

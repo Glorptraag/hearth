@@ -24,6 +24,10 @@ import '@testing-library/jest-dom/vitest';
 process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ??= 'test';
 process.env.NEXT_PUBLIC_SANITY_DATASET ??= 'test';
 
+// Fixed 32-byte key so facilitator-note encryption (src/lib/crypto/field-encryption.ts)
+// round-trips in tests. `??=` so a real env still wins. Not a real secret.
+process.env.FACILITATOR_NOTES_ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString('base64');
+
 // ---------------------------------------------------------------------------
 // Test identity constants — exported so tests and factories use the same IDs
 // ---------------------------------------------------------------------------

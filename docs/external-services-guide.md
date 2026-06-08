@@ -419,6 +419,23 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 
 ---
 
+## 11. Facilitator-notes encryption key (internal secret — no external service)
+
+**What it is:** Not a vendor. A 32-byte (256-bit) symmetric key the app holds, used to encrypt **facilitator private notes** at rest with AES-256-GCM. Lives in `FACILITATOR_NOTES_ENCRYPTION_KEY`; the crypto lives in `src/lib/crypto/field-encryption.ts`.
+
+**What we use it for:** The spec (`docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md`, edge case E19) promises facilitator private notes are "encrypted; excluded from all exports and AI". The `facilitator_notes.note_text` column is `text`, so the value stored is a versioned token — `fenc1:<base64(iv‖authTag‖ciphertext)>` — rather than plaintext. The account-data export (`/api/account/export`) no longer emits these notes at all (nor the `profileData.facilitatorNotes` sub-field).
+
+**Operational rules:**
+- **Generate:** `openssl rand -base64 32`. Base64 (canonical) or 64-char hex both accepted; must decode to exactly 32 bytes.
+- **Set in Vercel BEFORE deploying** this change (Project → Settings → Environment Variables, Production + Preview). Then run the one-off backfill **once** against prod: `npm run db:encrypt-notes` (dry-run first with `-- --dry-run`). The backfill is idempotent — already-encrypted rows carry the `fenc1:` prefix and are skipped.
+- **Rotation:** rotating the key makes every already-encrypted note unreadable. Only rotate with a decrypt-with-old-key → re-encrypt-with-new-key plan. There is no rotation tooling yet.
+- **Missing-key behaviour:** reads of legacy (un-migrated, plaintext) rows tolerate the key being unset; the *encrypt* path throws a clear, notes-specific error. Unrelated features never crash on a missing key.
+- **Backups:** store this key in the same password manager / secret store as `CRON_SECRET` and the Clerk secret. Losing it = losing every encrypted note.
+
+**Hearth env vars from this:** `FACILITATOR_NOTES_ENCRYPTION_KEY`.
+
+---
+
 ## Cumulative cost — what alpha launch actually costs
 
 If everything stays on free tiers and Anthropic is the only paid line item:

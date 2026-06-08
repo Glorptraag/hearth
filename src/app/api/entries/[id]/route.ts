@@ -48,7 +48,15 @@ const updateEntrySchema = z.object({
   learnerIds: z.array(z.string().uuid()).optional(),
   engagementPerLearner: z.record(z.string(), z.number().min(1).max(4)).optional(),
   discoveriesPerLearner: z.record(z.string(), z.string()).optional(),
-  evidenceUrls: z.array(z.string()).optional(),
+  // NOTE: evidenceUrls is deliberately NOT accepted here. The create path
+  // (POST /api/entries) dual-writes evidence to both learning_entries.evidenceUrls
+  // and the caption-carrying learning_entry_evidence table (via writeEntryEvidence
+  // + deriveEvidenceRows). PATCH was never given that dual-write, so accepting
+  // evidenceUrls here would update the legacy column while leaving the new table
+  // stale — a silent desync the moment an "edit evidence/captions" UI lands.
+  // No caller PATCHes evidence today. Before re-adding this field, mirror the
+  // change into learning_entry_evidence (delete + re-insert through the same
+  // writeEntryEvidence path) — see src/lib/evidence-db.ts.
   source: z.enum(ENTRY_SOURCES).optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
   workSampleCandidate: z.boolean().optional(),

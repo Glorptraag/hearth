@@ -186,7 +186,7 @@ Once those three are done, this tracker can be deleted at pilot launch.
 
 **Process gaps identified.**
 
-1. Migrations were merged to `main` (PRs #73, #75) without `npm run db:migrate` being run first — runbook §2 violation. Mitigation: future migration-bearing PRs should either (a) run the migration before merging, or (b) have the migration script auto-run on Vercel deploy. Currently it's a manual step that's easy to forget.
+1. Migrations were merged to `main` (PRs #73, #75) without `npm run db:migrate` being run first — runbook §2 violation. Mitigation: future migration-bearing PRs should either (a) run the migration before merging, or (b) have the migration script auto-run on Vercel deploy. ✅ Resolved 2026-06-06 (option b): `vercel.json` `buildCommand` is now `npm run db:migrate:deploy && next build` — `scripts/deploy-migrate.mjs` applies pending migrations (production-guarded) and drift-verifies before the build, aborting the deploy on failure. This shipped only after the same gap recurred on 2026-06-06 (unapplied `0023_evidence_sort_order` → portfolio "Your story starts here"); see incident-runbook §2026-06-06.
 2. `scripts/check-migration-drift.mjs` had a tag-vs-hash comparison bug — root cause turned out to be that the `__drizzle_migrations.hash` column actually holds **two** formats in prod: rows 0..15 are tag names (legacy custom migrator), rows 16+ are SHA256(sql) (standard drizzle migrator, populated when the 3 missed migrations were applied during this incident). ✅ Fixed 2026-05-25 (`da3bf10`): checker now accepts either form per entry and reports clean against prod (`OK — 19 migrations applied in order`).
 
 **Remaining open follow-ups (chipped for spawn):**

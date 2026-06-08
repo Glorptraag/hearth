@@ -14,6 +14,7 @@ import { eq, and, desc, gte, lte, count, inArray } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import { entryThreadIds } from './thread-aggregation';
+import { detectMilestoneEntries } from './milestone-detect';
 import {
   triggerBadgeReady,
   triggerComplianceNudge,
@@ -82,6 +83,10 @@ export async function rebuildSnapshot(
 
     const childSnapshots: Record<string, unknown> = {};
     const pendingNotifications: unknown[] = [];
+    // Entries that crossed a tier/badge boundary, for the Portfolio "Milestone"
+    // card. Accumulated per child (a shared entry counts if it's a milestone for
+    // any child), reconciled onto each entry's aiEnrichment after the upsert.
+    const milestoneEntryIds = new Set<string>();
 
     // Load per-learner DLO state once for the whole family. Indexed by learner_id
     // so each child gets its own slice without an N+1.
@@ -426,6 +431,22 @@ export async function rebuildSnapshot(
         });
       }
 
+      // Milestone crossings for this child — reuses the same tier (>=4, >=8)
+      // and badge thresholds the snapshot computes above, attributed to the
+      // entry that first reached the boundary. Uses entryThreadIds() (inferred
+      // + declared, deduped) so a milestone always matches the threadCounts the
+      // tiers/badges are derived from.
+      const childMilestones = detectMilestoneEntries(
+        childEntries.map((e) => ({
+          id: e.id,
+          dateOccurred: e.dateOccurred,
+          createdAt: e.createdAt,
+          threadIds: entryThreadIds(e).map((t) => t.threadId),
+        })),
+        badges,
+      );
+      for (const id of childMilestones.keys()) milestoneEntryIds.add(id);
+
       childSnapshots[child.id] = {
         learner_id: child.id,
         name: child.name,
@@ -675,6 +696,29 @@ export async function rebuildSnapshot(
         rebuildTrigger: trigger,
         snapshotVersion: 1,
       });
+    }
+
+    // ─── Milestone markers (Portfolio sage "Milestone" card) ───
+    // Reconcile each entry's milestone_flag against the freshly computed crossing
+    // set. Idempotent: only flips that differ are written (steady state = zero
+    // writes). Post-upsert + best-effort so it can never block the snapshot.
+    try {
+      const milestoneWrites: Promise<unknown>[] = [];
+      for (const entry of allEntries) {
+        const enrichment = entry.aiEnrichment as (EnrichmentResult & { milestone_flag?: boolean }) | null;
+        const current = enrichment?.milestone_flag === true;
+        const desired = milestoneEntryIds.has(entry.id);
+        if (current === desired) continue;
+        milestoneWrites.push(
+          db
+            .update(learningEntries)
+            .set({ aiEnrichment: { ...(enrichment ?? {}), milestone_flag: desired }, updatedAt: now })
+            .where(eq(learningEntries.id, entry.id))
+        );
+      }
+      if (milestoneWrites.length > 0) await Promise.all(milestoneWrites);
+    } catch (err) {
+      console.error('[snapshotRebuild] milestone marker write failed:', err);
     }
 
     // Clean stale notifications before creating new ones

@@ -31,6 +31,7 @@ import {
   familyIntelligenceSnapshots,
   moduleRuns,
   learningEntryEvidence,
+  facilitatorNotes,
 } from '@/lib/db/schema';
 import { TEST_FAMILY_ID, TEST_USER_ID } from '../../vitest.setup';
 
@@ -42,6 +43,7 @@ export type PlannerEntry = InferSelectModel<typeof plannerEntries>;
 export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntelligenceSnapshots>;
 export type ModuleRun = InferSelectModel<typeof moduleRuns>;
 export type LearningEntryEvidence = InferSelectModel<typeof learningEntryEvidence>;
+export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
 
 const EPOCH = new Date('2026-01-01T00:00:00Z');
 const EPOCH_DATE = '2026-01-01'; // PostgreSQL `date` columns round-trip as ISO strings
@@ -94,6 +96,24 @@ export function buildLearner(overrides: Partial<Learner> = {}): Learner {
       stylePreferences: null,
       tierOverrides: null,
     },
+    createdAt: EPOCH,
+    updatedAt: EPOCH,
+    ...overrides,
+  };
+}
+
+/**
+ * Pure facilitator-note row. `noteText` is PLAINTEXT here — the pure factory
+ * mirrors the row shape for unit tests. The db-factory `createFacilitatorNote`
+ * encrypts it on the way into Postgres (private notes are encrypted at rest).
+ */
+export function buildFacilitatorNote(overrides: Partial<FacilitatorNote> = {}): FacilitatorNote {
+  return {
+    id: overrides.id ?? randomUUID(),
+    familyId: TEST_FAMILY_ID,
+    learnerId: overrides.learnerId ?? randomUUID(),
+    noteText: 'Private note: keep mornings unhurried.',
+    isPrivate: true,
     createdAt: EPOCH,
     updatedAt: EPOCH,
     ...overrides,

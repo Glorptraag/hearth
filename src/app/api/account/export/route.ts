@@ -8,7 +8,6 @@ import {
   badgeAwards,
   plannerEntries,
   familyLibrary,
-  facilitatorNotes,
 } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, inArray } from 'drizzle-orm';
@@ -30,7 +29,12 @@ export const GET = routeHandler(async () => {
     .where(eq(learners.familyId, familyId));
   const learnerIds = familyLearners.map((l) => l.id);
 
-  const [settings, entries, planner, library, notes, awards] =
+  // NOTE: facilitator private notes are intentionally NOT gathered here.
+  // Per the spec (hearth-ux-use-cases-logger-portfolio-capabilities-v1.md, E19)
+  // they are "encrypted; excluded from all exports and AI". They are stored
+  // encrypted at rest (src/lib/crypto/field-encryption.ts) and never decrypted
+  // into this download. See also the profileData redaction below.
+  const [settings, entries, planner, library, awards] =
     await Promise.all([
       db.query.familySettings.findFirst({
         where: eq(familySettings.familyId, familyId),
@@ -38,7 +42,6 @@ export const GET = routeHandler(async () => {
       db.select().from(learningEntries).where(eq(learningEntries.familyId, familyId)),
       db.select().from(plannerEntries).where(eq(plannerEntries.familyId, familyId)),
       db.select().from(familyLibrary).where(eq(familyLibrary.familyId, familyId)),
-      db.select().from(facilitatorNotes).where(eq(facilitatorNotes.familyId, familyId)),
       learnerIds.length > 0
         ? db.select().from(badgeAwards).where(inArray(badgeAwards.learnerId, learnerIds))
         : Promise.resolve([]),
@@ -59,12 +62,19 @@ export const GET = routeHandler(async () => {
           nextReportDate: settings.nextReportDate,
         }
       : null,
-    learners: familyLearners.map((l) => ({
-      id: l.id,
-      name: l.name,
-      dateOfBirth: l.dateOfBirth,
-      profileData: l.profileData,
-    })),
+    learners: familyLearners.map((l) => {
+      // Redact the private facilitator notes the UI writes into profileData
+      // (learners.profileData.facilitatorNotes) — same E19 "excluded from all
+      // exports" rule that drops the facilitator_notes table above.
+      const { facilitatorNotes: _redactedFacilitatorNotes, ...profileData } =
+        l.profileData ?? {};
+      return {
+        id: l.id,
+        name: l.name,
+        dateOfBirth: l.dateOfBirth,
+        profileData,
+      };
+    }),
     learningEntries: entries.map((e) => ({
       id: e.id,
       title: e.title,
@@ -88,11 +98,6 @@ export const GET = routeHandler(async () => {
       badgeDefinitionId: a.badgeDefinitionId,
       awardedAt: a.awardedAt,
       notes: a.notes,
-    })),
-    facilitatorNotes: notes.map((n) => ({
-      learnerId: n.learnerId,
-      noteText: n.noteText,
-      createdAt: n.createdAt,
     })),
     library: library.map((l) => ({
       sanityPackId: l.sanityPackId,

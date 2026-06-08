@@ -7,7 +7,12 @@
 import { describe, it, expect } from 'vitest';
 import { asUser, asSignedOut } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
-import { createFamily, createLearner, createEntry } from '@/test/db-factories';
+import {
+  createFamily,
+  createLearner,
+  createEntry,
+  createFacilitatorNote,
+} from '@/test/db-factories';
 import { GET } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../vitest.setup';
 
@@ -65,5 +70,40 @@ describe('GET /api/account/export — real DB', () => {
     expect(body.learners.map((l) => l.name)).toEqual(['Emma']);
     expect(body.learningEntries.map((e) => e.title)).toContain('A — visible');
     expect(body.learningEntries.map((e) => e.title)).not.toContain('B — hidden');
+  });
+
+  it('never includes facilitator private notes (E19: excluded from all exports)', async () => {
+    asUser({});
+    await createFamily(db, {
+      id: TEST_FAMILY_ID,
+      clerkUserId: TEST_USER_ID,
+      familyName: 'Alpha Family',
+    });
+    const learner = await createLearner(db, {
+      familyId: TEST_FAMILY_ID,
+      name: 'Emma',
+      // The other private-note surface: the JSON sub-field the profile UI writes.
+      profileData: { facilitatorNotes: 'SECRET-PROFILE-NOTE-do-not-export' },
+    });
+    const SECRET = 'SECRET-FACILITATOR-NOTE-do-not-export';
+    await createFacilitatorNote(db, { familyId: TEST_FAMILY_ID, learnerId: learner.id, noteText: SECRET });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+
+    const text = await res.text();
+    // The raw download must not carry either private-note surface, in plaintext
+    // OR ciphertext (the facilitator_notes table is encrypted at rest).
+    expect(text).not.toContain(SECRET);
+    expect(text).not.toContain('SECRET-PROFILE-NOTE-do-not-export');
+    expect(text).not.toContain('noteText');
+    expect(text).not.toContain('facilitatorNotes');
+
+    const body = JSON.parse(text) as {
+      facilitatorNotes?: unknown;
+      learners: Array<{ profileData: Record<string, unknown> }>;
+    };
+    expect(body.facilitatorNotes).toBeUndefined();
+    expect(body.learners[0].profileData).not.toHaveProperty('facilitatorNotes');
   });
 });

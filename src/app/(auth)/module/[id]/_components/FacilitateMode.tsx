@@ -25,6 +25,7 @@ export default function FacilitateMode({
   overlays,
   pedagogy,
   onFinish,
+  onEndAndLog,
   onPause,
   initialChunkIdx = 0,
   onChunkChange,
@@ -42,6 +43,7 @@ export default function FacilitateMode({
   pedagogy: string | null;
   practicePatterns?: PracticePattern[];
   onFinish: () => void;
+  onEndAndLog?: () => void;
   onPause?: () => void;
   initialChunkIdx?: number;
   onChunkChange?: (idx: number) => void;
@@ -411,6 +413,7 @@ export default function FacilitateMode({
               </button>
             )}
             {isLast ? (
+              // Last activity: "Finish & Log" is itself the end-and-log exit.
               <button
                 onClick={onFinish}
                 className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
@@ -418,18 +421,30 @@ export default function FacilitateMode({
                 Finish & Log →
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  const next = currentIdx + 1;
-                  setLocalCurrentIdx(next);
-                  setGuidanceOpen(false);
-                  setOverlayOpen(false);
-                  onChunkChange?.(next);
-                }}
-                className="flex-1 bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
-              >
-                Next Activity →
-              </button>
+              <>
+                {/* Persistent mid-session exit — "life happens", one-and-done logging.
+                    Ghost/secondary so "Next Activity" stays the single primary CTA. */}
+                {onEndAndLog && (
+                  <button
+                    onClick={onEndAndLog}
+                    className="shrink-0 rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+                  >
+                    End &amp; Log
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const next = currentIdx + 1;
+                    setLocalCurrentIdx(next);
+                    setGuidanceOpen(false);
+                    setOverlayOpen(false);
+                    onChunkChange?.(next);
+                  }}
+                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
+                >
+                  Next Activity →
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -509,7 +509,10 @@ export default function ModuleDetailPage() {
             pedagogy={pedagogy}
             practicePatterns={practicePatterns}
             onFinish={() => {
-              clearSession();
+              // Do NOT clear the session here — LogMode derives sourceActivityIds
+              // from completedActivityIdxs + quickCaptures. The reset runs after a
+              // successful save (see LogMode onSaved below); a fresh run is cleaned
+              // by PrepMode onStart's clearSession regardless.
               if (facilitateStartRef.current) {
                 setSessionElapsed(Math.floor((Date.now() - facilitateStartRef.current) / 1000));
               }
@@ -559,6 +562,7 @@ export default function ModuleDetailPage() {
             onRemoveCapture={handleRemoveCapture}
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
+            onSaved={clearSession}
           />
         )}
       </div>

@@ -8,6 +8,7 @@ import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import { getThreadName } from '@/lib/capability-threads';
+import { groupEntriesByTopThread, THREAD_DISPLAY_CONFIDENCE_FLOOR } from '@/lib/portfolio/thread-grouping';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
   CalendarBlank, BookOpenText, Medal, Plant,
@@ -57,8 +58,9 @@ type AiEnrichment = {
   curriculum_descriptors?: { code: string; confidence: number }[];
   subjects_detected?: string[];
   confidence?: number;
+  // Written at snapshot-rebuild time for entries that crossed a tier/badge
+  // boundary; drives the sage "Milestone" card (see getCardType).
   milestone_flag?: boolean;
-  suggested_thread?: string;
   journey_observation?: {
     text: string;
     trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
@@ -338,7 +340,7 @@ export default function PortfolioPage() {
     const monthThreadIds = new Set<string>();
     monthEntries.forEach((e) => {
       e.aiEnrichment?.capability_threads
-        ?.filter((ct) => ct.confidence >= 0.5)
+        ?.filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR)
         .forEach((ct) => monthThreadIds.add(ct.thread_id));
     });
     return { count: monthEntries.length, subjects: subjects.size, threads: monthThreadIds.size };
@@ -354,20 +356,13 @@ export default function PortfolioPage() {
     return 'evidence';
   };
 
-  const groupedAndSortedEntries = useMemo(() => {
-    const grouped = new Map<string, Entry[]>();
-
-    filteredEntries.forEach((entry) => {
-      const threadName = entry.aiEnrichment?.suggested_thread || 'Uncategorized';
-      if (!grouped.has(threadName)) {
-        grouped.set(threadName, []);
-      }
-      grouped.get(threadName)!.push(entry);
-    });
-
-    const sorted = Array.from(grouped.entries()).sort((a, b) => b[1].length - a[1].length);
-    return sorted;
-  }, [filteredEntries]);
+  // Group each entry under its highest-confidence capability thread (>= the
+  // display floor), mapped to a thread name. The old `suggested_thread` field
+  // was never written by enrichment, so every entry fell into "Uncategorized".
+  const groupedAndSortedEntries = useMemo(
+    () => groupEntriesByTopThread(filteredEntries),
+    [filteredEntries]
+  );
 
   const sortedChronological = useMemo(() => {
     return [...filteredEntries].sort((a, b) => new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime());
@@ -580,7 +575,7 @@ export default function PortfolioPage() {
                         const engValue = entry.engagementPerLearner?.[selectedLearnerId];
                         const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
                         const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
-                          .filter((ct) => ct.confidence >= 0.5);
+                          .filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR);
                         const cardType = getCardType(entry);
                         const photos = entryPhotoEvidence(entry);
 
@@ -759,7 +754,7 @@ export default function PortfolioPage() {
                 const engValue = entry.engagementPerLearner?.[selectedLearnerId];
                 const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
                 const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
-                  .filter((ct) => ct.confidence >= 0.5);
+                  .filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR);
                 const cardType = getCardType(entry);
                 const photos = entryPhotoEvidence(entry);
 

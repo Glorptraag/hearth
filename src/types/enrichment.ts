@@ -41,6 +41,12 @@ export type AiEnrichmentBody = {
   } | null;
   pedagogy_sources?: PedagogySource[];
   profile_nudge?: ProfileNudge | null;
+  // Milestone marker for the Portfolio sage "Milestone" card. Set at
+  // snapshot-rebuild time (see detectMilestoneEntries / snapshot-rebuild.ts)
+  // when this entry's capability mapping crossed an achievement boundary —
+  // a tier leap (thread reaches 4 → developing, 8 → demonstrating) or a badge
+  // threshold crossing. Absent/false on entries that never crossed.
+  milestone_flag?: boolean;
 };
 
 export type AiEnrichment = Partial<AiEnrichmentBody> & {

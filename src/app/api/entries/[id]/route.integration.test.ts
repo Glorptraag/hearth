@@ -102,6 +102,35 @@ describe('PATCH /api/entries/[id]', () => {
     expect(row?.title).toBe('A — edited');
   });
 
+  it('ignores evidenceUrls — the schema drops it, so the legacy column is never touched', async () => {
+    // PATCH has no learning_entry_evidence dual-write (only POST does), so it
+    // deliberately does not accept evidenceUrls. Zod strips the unknown field;
+    // the title still updates but evidence_urls stays exactly as seeded — no
+    // half-written desync against the new table.
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+    const entry = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Has evidence',
+      status: 'draft',
+      evidenceUrls: ['https://blob/original.jpg'],
+    });
+    asUser({});
+
+    const res = await PATCH(
+      patchReq(`http://x/api/entries/${entry.id}`, {
+        title: 'Edited',
+        evidenceUrls: ['https://blob/sneaky.jpg'],
+      }),
+      ctx(entry.id),
+    );
+    expect(res.status).toBe(200);
+    const row = await db.query.learningEntries.findFirst({ where: eq(learningEntries.id, entry.id) });
+    expect(row?.title).toBe('Edited');
+    expect(row?.evidenceUrls).toEqual(['https://blob/original.jpg']);
+  });
+
   it("cannot modify another family's entry — 404, row untouched", async () => {
     const { theirs } = await seedTwoFamilies();
     asUser({});

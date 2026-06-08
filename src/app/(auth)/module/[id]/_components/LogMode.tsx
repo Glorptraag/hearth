@@ -15,6 +15,7 @@ export default function LogMode({
   onRemoveCapture,
   selectedApproachIdx,
   completedActivityIdxs,
+  onSaved,
 }: {
   module: Module;
   sessionElapsed?: number;
@@ -28,6 +29,10 @@ export default function LogMode({
   // activities the parent actually entered/viewed in Facilitate mode (includes
   // the activity they ended on; excludes ones skipped past via a forward jump).
   completedActivityIdxs?: number[];
+  // Invoked after a successful POST /api/entries, before navigating away. The
+  // runner clears session state here (not on finish) so the sourceActivityIds
+  // derivation above still sees the completed activities and quick captures.
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -152,6 +157,7 @@ export default function LogMode({
         body: JSON.stringify(body),
       });
       if (res.ok) {
+        onSaved?.();
         router.push('/our-story/portfolio');
       }
     } finally {

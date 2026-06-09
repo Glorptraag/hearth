@@ -1,11 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect, notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { learners } from '@/lib/db/schema';
+import { learners, facilitatorNotes } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq } from 'drizzle-orm';
 import { differenceInYears } from 'date-fns';
 import { safeLoad } from '@/lib/server/safe-load';
+import { decryptField } from '@/lib/crypto/field-encryption';
 import EmptyState from '@/components/ui/EmptyState';
 import { Lifebuoy } from '@/components/icons';
 import LearnerProfileClient from './LearnerProfileClient';
@@ -51,6 +52,20 @@ export default async function LearnerProfilePage({ params }: Params) {
       ? differenceInYears(new Date(), new Date(learner.dateOfBirth))
       : null;
 
+  // Facilitator private notes live in their own encrypted table (E19), not in
+  // profileData. Read the row and decrypt for display. A failed load degrades
+  // to an empty note rather than taking down the whole portrait.
+  const noteResult = await safeLoad('our-story/learner/facilitator-note', () =>
+    db.query.facilitatorNotes.findFirst({
+      where: and(
+        eq(facilitatorNotes.learnerId, learner.id),
+        eq(facilitatorNotes.familyId, family.id)
+      ),
+    }),
+  );
+  const facilitatorNote =
+    noteResult.ok && noteResult.data ? decryptField(noteResult.data.noteText) : '';
+
   return (
     <LearnerProfileClient
       learner={{
@@ -68,6 +83,7 @@ export default async function LearnerProfilePage({ params }: Params) {
         }) ?? {},
       }}
       familyName={family.familyName}
+      facilitatorNote={facilitatorNote}
     />
   );
 }

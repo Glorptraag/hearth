@@ -17,7 +17,6 @@ interface ProfileData {
   notes?: string;
   tagline?: string | null;
   sparks?: Array<{ name: string; count?: number }>;
-  facilitatorNotes?: string | null;
   attentionWindowStart?: number | null;
   attentionWindowEnd?: number | null;
   preferredTimes?: string[] | null;
@@ -34,6 +33,9 @@ interface LearnerProfileClientProps {
     profileData: ProfileData;
   };
   familyName: string;
+  /** Decrypted facilitator private note (E19) — sourced from the encrypted
+   *  facilitator_notes table, never from profileData. */
+  facilitatorNote?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -139,6 +141,7 @@ function TagInput({
 export default function LearnerProfileClient({
   learner,
   familyName,
+  facilitatorNote = '',
 }: LearnerProfileClientProps) {
   const colour = COLOUR_MAP[learner.colourToken ?? ''] ?? DEFAULT_COLOUR;
   const { toast } = useToast();
@@ -160,9 +163,7 @@ export default function LearnerProfileClient({
   const [notes, setNotes] = useState(learner.profileData.notes ?? '');
   const [tagline, setTagline] = useState(learner.profileData.tagline ?? '');
   const [taglineEditing, setTaglineEditing] = useState(false);
-  const [facilitatorNotes, setFacilitatorNotes] = useState(
-    learner.profileData.facilitatorNotes ?? ''
-  );
+  const [facilitatorNotes, setFacilitatorNotes] = useState(facilitatorNote);
   const [facilitatorNotesEditing, setFacilitatorNotesEditing] = useState(false);
   const [attentionWindowStart, setAttentionWindowStart] = useState(
     learner.profileData.attentionWindowStart ?? 9
@@ -228,26 +229,35 @@ export default function LearnerProfileClient({
   async function save() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/learners/${learner.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profileData: {
-            about,
-            workingStyle,
-            interests,
-            strengths,
-            notes,
-            tagline,
-            facilitatorNotes,
-            attentionWindowStart,
-            attentionWindowEnd,
-            preferredTimes,
-            stylePreferences,
-          },
+      // Profile fields and the facilitator private note are two distinct stores:
+      // profileData (plaintext JSON) and the encrypted facilitator_notes table.
+      // Facilitator notes are NEVER written into profileData.
+      const [profileRes, notesRes] = await Promise.all([
+        fetch(`/api/learners/${learner.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profileData: {
+              about,
+              workingStyle,
+              interests,
+              strengths,
+              notes,
+              tagline,
+              attentionWindowStart,
+              attentionWindowEnd,
+              preferredTimes,
+              stylePreferences,
+            },
+          }),
         }),
-      });
-      if (!res.ok) throw new Error('Save failed');
+        fetch(`/api/learners/${learner.id}/facilitator-notes`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ noteText: facilitatorNotes }),
+        }),
+      ]);
+      if (!profileRes.ok || !notesRes.ok) throw new Error('Save failed');
       setEditing(false);
       toast(`${learner.name}'s portrait saved`);
     } catch {

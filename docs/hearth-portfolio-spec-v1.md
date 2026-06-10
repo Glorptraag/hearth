@@ -16,6 +16,8 @@ It serves two audiences simultaneously. For the parent, it provides emotional re
 
 The Portfolio is not an activity log. An activity log says "we did these things." The Portfolio says "here is how understanding evolved through these experiences." The scaffolded progression display is the mechanism that makes this distinction visible.
 
+**We'll know this works when:** a parent assembling her compliance report (journey Stage 4, `hearth-parent-journey-v1.md`) selects work samples from abundance rather than scrambling to create them — report-start→export duration shrinks term over term — and the day-7 onboarding-packet prompt ("generate the Portfolio export and read it; tell us what's missing") stops surfacing structural gaps in `hearth-research-log.md`.
+
 ### What the Portfolio Is Not
 
 The Portfolio does not launch new logging — it is purely retrospective. There is no "add evidence from here" flow that opens the Logger. The Portfolio does not duplicate the Capabilities Constellation (which visualises the thread graph and progression tiers); instead it provides the narrative evidence trail that the Constellation summarises. The Portfolio does not replace the HEU Report (which is compliance-focused); it accompanies it with a growth-focused lens.

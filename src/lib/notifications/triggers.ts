@@ -253,34 +253,34 @@ export async function triggerBadgeReady(
 }
 
 // ─── Trigger: compliance_nudge ───
-// Called from snapshot rebuild when HEU deadline is approaching
+// Called from snapshot rebuild when the jurisdiction's report deadline is approaching
 
 export async function triggerComplianceNudge(
   familyId: string,
-  heuStatus: { daysUntilDue: number; gapSubjects: string[] }
+  complianceStatus: { daysUntilDue: number; gapSubjects: string[] }
 ): Promise<boolean> {
-  if (heuStatus.daysUntilDue > 28) return false;
+  if (complianceStatus.daysUntilDue > 28) return false;
 
   const settings = await db.query.familySettings.findFirst({
     where: eq(familySettings.familyId, familyId),
   });
   const config = getJurisdiction(settings?.state ?? null);
 
-  const urgency = heuStatus.daysUntilDue <= 14 ? 'soon' : 'approaching';
+  const urgency = complianceStatus.daysUntilDue <= 14 ? 'soon' : 'approaching';
   const gapText =
-    heuStatus.gapSubjects.length > 0
-      ? ` ${heuStatus.gapSubjects.slice(0, 3).join(', ')} could use attention.`
+    complianceStatus.gapSubjects.length > 0
+      ? ` ${complianceStatus.gapSubjects.slice(0, 3).join(', ')} could use attention.`
       : '';
 
   return createNotification({
     familyId,
     type: 'compliance_nudge',
     tier: 'nudge',
-    title: `Your ${config.regulatoryBodyShort} ${config.reviewTerminology} is ${heuStatus.daysUntilDue <= 7 ? 'next week' : `${Math.ceil(heuStatus.daysUntilDue / 7)} weeks away`}`,
+    title: `Your ${config.regulatoryBodyShort} ${config.reviewTerminology} is ${complianceStatus.daysUntilDue <= 7 ? 'next week' : `${Math.ceil(complianceStatus.daysUntilDue / 7)} weeks away`}`,
     body: `Areas to review before your report.${gapText}`,
     bodyData: {
-      days_until_due: heuStatus.daysUntilDue,
-      gap_subjects: heuStatus.gapSubjects,
+      days_until_due: complianceStatus.daysUntilDue,
+      gap_subjects: complianceStatus.gapSubjects,
       urgency,
     },
     destinationRoute: '/our-story/report',
@@ -561,7 +561,7 @@ export async function cleanStaleNotifications(familyId: string): Promise<void> {
           break;
         }
         case 'compliance_nudge': {
-          // Stale if HEU report date has passed
+          // Stale if the jurisdiction's report date has passed
           const settings = await db.query.familySettings.findFirst({
             where: eq(familySettings.familyId, familyId),
           });

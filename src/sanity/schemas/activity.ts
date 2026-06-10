@@ -253,7 +253,7 @@ export const activity = defineType({
           title: 'Evidence Trail',
           type: 'text',
           description:
-            'What naturally accumulates that the parent can later notice. For HEU and passive evidence collection. 1–2 sentences.',
+            'What naturally accumulates that the parent can later notice. For compliance reporting and passive evidence collection. 1–2 sentences.',
           validation: (r) => r.required().max(300),
         }),
         defineField({

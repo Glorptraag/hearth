@@ -22,6 +22,8 @@ graph TD
         Marketplace["Marketplace (/explore/marketplace)"]
         Settings["Settings (/settings)"]
         Notifications["Notifications (/notifications)"]
+        BuildModules["Module Builder (/build/modules)"]
+        BuildBadges["Badge Creator (/build/badges)"]
     end
 
     Onboarding -- Complete --> Dashboard
@@ -36,7 +38,7 @@ graph TD
     %% Our Story Branching
     OurStory --> Portfolio["Portfolio (/our-story/portfolio)"]
     OurStory --> Capabilities["Capabilities (/our-story/capabilities)"]
-    OurStory --> HEUReport["HEU Report (/our-story/report)"]
+    OurStory --> ComplianceReport["Compliance Report (/our-story/report)"]
     OurStory --> LearnerProfile["Learner Profile (/our-story/learner/[id])"]
 
     %% Experience Engines
@@ -90,8 +92,10 @@ graph TD
 *   **`/dashboard`:** The central hub. Provides daily focus, recent activity, and quick access to logging.
 *   **`/planner`:** Weekly view for scheduling activities. Includes AI-driven recommendations based on "gaps" in learning threads.
 *   **`/log`:** The "Capture" interface. Optimized for the **5-Minute Rule**. Handles photo uploads, keyword matching, and badge assessment triggers.
-*   **`/our-story`:** The data-hub for a family's history. Branches to Portfolios, Capability Thread progress, and HEU Reports.
-*   **`/library`:** Family's saved packs and materials browser.
+*   **`/our-story`:** The data-hub for a family's history. Branches to Portfolios, Capability Thread progress, and the Compliance Report (jurisdiction-titled — "HEU Report" for QLD families, per `src/config/jurisdictions.ts`).
+*   **`/library`:** Family's saved packs and materials browser — status board (active / planned / stale), Browse tab, soft-delete with Recently Removed drawer.
+*   **`/build/modules`:** Module Builder (five-pathway authoring into Sanity via `/api/modules/publish`).
+*   **`/build/badges`:** Badge Creator.
 *   **`/explore/activities`:** The local library of Packs, Modules, and Projects.
 *   **`/explore/marketplace`:** The external repository for adding new content to the family library.
 
@@ -134,4 +138,4 @@ For every page listed above, we maintain high-detail documentation using the fol
 
 ---
 
-*Last updated: 12 April 2026*
+*Last updated: 10 June 2026 — added Build routes, library status-board description, generalized report naming to jurisdiction-titled Compliance Report. Mobile shell now includes the Settings downward tray (`src/components/nav/SettingsMenu.tsx`) alongside the 5-tab bottom nav. Previous update: 12 April 2026.*

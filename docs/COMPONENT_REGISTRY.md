@@ -3,7 +3,7 @@
 > **Purpose:** Single source of truth for every UI screen, its canonical file, status, and role.
 > **Rule:** Before proposing new work, check this file. Before creating a new screen, update this file.
 > **Cross-screen coherence:** `Hearth_System_Interaction_Map.md` is the canonical document for navigation flows, data relationships, and inter-screen dependencies.
-> **Last verified:** 9 May 2026
+> **Last verified:** 10 June 2026 (light pass — see footer; deep per-screen re-verification pending the v3 reference build)
 
 ---
 
@@ -373,3 +373,5 @@ These files have been superseded. Candidates for removal to reduce project file 
 *Registry updated 3 April 2026 — Community (Hearth) feature added: 3 screens, 5 components, 19 API routes, 8 tables. Update when adding or modifying screens.*
 
 *Registry updated 9 May 2026 — Phase 3 three-layer content composition (P+M Phase 3) landed at runtime. New runtime modules: `src/lib/pedagogy/lens-bundle-types.ts`, `src/lib/pedagogy/get-active-bundle-and-overlays.ts`. New surfaces: `src/components/logger/ModuleLensHints.tsx` (wired into Logger under module-link guard), `src/components/module/LensPrepHints.tsx`, `src/components/module/LensObservationCues.tsx`, and minimal `src/app/(auth)/constellation/page.tsx` (composite-weighted thread list — full interactive map is a follow-up phase, prototype: `prototypes/hearth-constellation-map-v2.jsx`). Module sidebar now renders lensStatus + methodologyStatus pills. Specs: `docs/hearth-pedagogy-lens-bundle-v1.md`, `docs/hearth-methodology-overlay-bundle-v1.md`, `docs/hearth-runtime-methodology-integration-brief-v1.md`.*
+
+*Registry updated 10 June 2026 (light pass) — Surfaces landed since the May verification: Library status board (`src/app/(auth)/library/_components/BrowseTab.tsx`, `RecentlyRemovedDrawer.tsx`, status logic in `/api/library/status`); mobile Settings downward tray (`src/components/nav/SettingsMenu.tsx` + `settings-menu.module.css`); evidence capture upgrades in `src/app/(auth)/log/_components/EvidenceModal.tsx` (client-side compression, private-blob read proxy via `/api/evidence`); module runner updates in `src/app/(auth)/module/[id]/_components/` (mid-session End & Log, completion tracking via `src/lib/modules/completion.ts`); Explore split into `/explore/activities` + `/explore/marketplace` (`MarketplaceShell.tsx`). Context for what was added vs reset in the June refactor incident: `docs/hearth-refactor-postmortem-v1.md`.*

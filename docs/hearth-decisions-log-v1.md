@@ -159,3 +159,17 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Document of record:** `docs/hearth-logger-post-save-resolution-v1.md` §2 Item 3
 **Implementation:** `src/app/api/entries/[id]/enrich/route.ts` (POST, parent-initiated, rate-limited, delegates to `enrichEntry`)
 **Date:** 2026-05-18
+
+---
+
+## Process
+
+### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention
+
+**Decision:** Pilot evidence is captured in an append-only research log (`docs/hearth-research-log.md`), and every confirmed user-reported bug gets a regression test at the appropriate layer (unit / integration / e2e per the test-pilot runbook) before the entry can be marked covered. Specs cite personas by name; personas (`docs/hearth-pilot-personas-v1.md`) are composites whose `[TO VALIDATE]` claims are cleared only by research-log evidence or captured profiles. The journey map (`docs/hearth-parent-journey-v1.md`) operationalizes the founding brief's anxiety→joy arc into stages with observable signals; instrumentation is added stage-hypothesis-first, not completionistically. Triage path: email / in-app feedback → R-entry → spec tag → test-gap check → fix PR links the R-number.
+
+**Rationale:** The 2026-04-25 pilot produced six findings, all infrastructure-level, five operator-found (research log R7) — the email-only channel under-captures family-level UX evidence, and nothing previously bound a user-reported bug to a test. This convention closes the loop from claim to evidence that the otherwise use-case-first spec corpus was missing.
+
+**Document of record:** `docs/hearth-research-log.md` (header: "The convention").
+**Companions:** `docs/hearth-pilot-personas-v1.md`, `docs/hearth-parent-journey-v1.md`
+**Date:** 2026-06-10

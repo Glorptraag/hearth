@@ -10,6 +10,7 @@ import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
+import { FeedbackButton } from '@/components/feedback/FeedbackModal';
 import EmptyState from '@/components/ui/EmptyState';
 import {
   House,
@@ -482,7 +483,10 @@ export default function SettingsClient({
 
   return (
     <div className="mx-auto max-w-[1100px] px-md py-xl">
-      <h1 className="mb-xl font-serif text-2xl font-semibold text-text-primary">Settings</h1>
+      <div className="mb-xl flex items-center justify-between gap-md">
+        <h1 className="font-serif text-2xl font-semibold text-text-primary">Settings</h1>
+        <FeedbackButton />
+      </div>
 
       {/* Tab bar — mobile only */}
       <div className="mb-xl flex overflow-x-auto border-b border-border-subtle pb-[1px] lg:hidden">

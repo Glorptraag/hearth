@@ -27,6 +27,8 @@ export type AnnotationDraftInput = {
   subjects: string[];
   subjectArea: string;
   termHalf: 'early' | 'late';
+  /** Family's regulator, e.g. "Home Education Unit (HEU)" — from src/config/jurisdictions.ts */
+  regulatoryLabel: string;
   subsequentEntries?: Array<{
     title: string;
     dateISO: string;
@@ -34,7 +36,9 @@ export type AnnotationDraftInput = {
   }>;
 };
 
-const ANNOTATION_SYSTEM = `You are drafting a homeschool parent's HEU (Home Education Unit) work-sample annotation in the parent's voice. Output ONLY valid JSON matching the schema below — no preamble, no markdown fences. The first character must be { and the last must be }.
+export const annotationSystem = (
+  regulatoryLabel: string,
+) => `You are drafting a homeschool parent's ${regulatoryLabel} work-sample annotation in the parent's voice. Output ONLY valid JSON matching the schema below — no preamble, no markdown fences. The first character must be { and the last must be }.
 
 OUTPUT SCHEMA:
 {
@@ -78,7 +82,7 @@ Draft the four annotation fields.`;
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 900,
-      system: ANNOTATION_SYSTEM,
+      system: annotationSystem(input.regulatoryLabel),
       messages: [{ role: 'user', content: userPrompt }],
     });
 

@@ -1,19 +1,30 @@
 # Hearth LMS — Project Status
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
-> **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. `production-readiness-tracker.md` for the disposable 30-step alpha pilot path.
-> **Last updated:** 9 May 2026
+> **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
+> **Last updated:** 10 June 2026
+> **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
 
-## Current Phase: Alpha Pilot Path (20 / 30 done)
+## Current Phase: Pilot Hardening (trackers closed; conceptual-gaps workstream active)
 
-**Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 103 API route files, 30 Drizzle tables, **19 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.
+**Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 100+ API route files, 38 Drizzle tables, **19 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.
 **Design system:** v2 + v2.1 token system **landed in code** 2026-05-01 (Fraunces + DM Sans, desaturated status palette, cream-tinted borders, motion tokens, gathering theme via `[data-theme]`). Phosphor icons adopted across all UI surfaces 2026-05-01.
 **Mobile UX:** Trayed bottom nav shipped 2026-05-06 — 5 tabs (Home/Story/Log/Plan/Explore) with anchored vertical trays for Plan + Explore.
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
-**Launch target:** 10-20 test families in Queensland, Australia.
+**Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (June 2026)
+
+- **Intelligence-refactor incident + recovery** (3–6 June) — A 35-task / 6-phase refactor merged ~3 June broke the working tree; reset to last-green base 5 June (`39ece6b`, PR #144), then features re-landed as small reviewed PRs with tests: foundation schema (`module_runs` + `learning_entry_evidence` + library soft-delete, `b5bbe60`), snapshot subview endpoints F1 (`4f6d0f2`), pedagogy-aware recommend scoring F2 (`29fdadc`), library status board + soft-delete + suggested-next F4 (`b81aee9`), marketplace search F6 (`b19887b`). Post-mortem + verified delta: `docs/hearth-refactor-postmortem-v1.md`. **Not everything was re-landed** — see Known Gaps.
+- **Children's-data privacy hardening** (5–9 June) — Evidence photos moved to private Vercel Blobs behind an authenticated read proxy (`/api/evidence`, PR #153); facilitator notes encrypted at rest with AES field encryption (`src/lib/crypto/field-encryption.ts`, `f1118c1`) and moved out of `profileData` into the dedicated encrypted `facilitator_notes` table (`aedda15`); account export updated accordingly.
+- **Evidence pipeline maturation** (5–6 June) — quote/note/link evidence kinds persisted to `learning_entry_evidence` (#165), photo captions dual-written (#162), client-side image compression before upload (#152), graceful photo-upload failure handling.
+- **Deploy-time migrations** (8 June, `2944303`) — Drizzle migrations now applied during the Vercel build (`scripts/deploy-migrate.mjs`), closing the schema-drift-on-deploy footgun. Deployment runbook v2 updated.
+- **Module runner fixes** (9 June) — mid-session "End & Log", corrected completion tracking (`src/lib/modules/completion.ts`), session reset after log save. Runner session state is still localStorage-only (see Known Gaps: ghost `module_runs` schema).
+- **Pilot polish sweep** (5–6 June) — mobile Settings tray (#150), real family name on dashboard (#148), bottom sheets lifted above mobile nav (#154, #145), dark-mode text contrast raised to WCAG-AA-adjacent (`4dfdd5b`), observe-notes draft persistence, desktop nav single-source-of-truth, onboarding state/territory capture (`5a07b3a`), HEU copy generalised toward jurisdiction config (`6f7a600`, `b8ea8b8`).
+- **Infra hygiene** (5–6 June) — Node 24 LTS standardised (#155), dead localStorage polyfill removed from test setup (#156), post-response async writes isolated in the integration harness (`63fa083`), snapshot rebuilt on entry edit/delete (`0fa65d4`).
 
 ### Recent Milestones (May 2026)
 
@@ -134,9 +145,9 @@
 
 ## Data Layer
 
-### PostgreSQL (Neon + Drizzle) — 30 tables
+### PostgreSQL (Neon + Drizzle) — 38 tables
 - **Identity:** `families`, `learners`, `familySettings`, `familyMembers`
-- **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance)
+- **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance, nullable `moduleRunId`/`plannerEntryId` FKs), `learningEntryEvidence` (photo/quote/note/link kinds), `moduleRuns` (schema present; persistence routes pending — see Known Gaps)
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
 - **Badges:** `badgeDefinitions`, `badgeAwards`, `badgeAssessmentLogs`
 - **Planner:** `plannerEntries`
@@ -177,21 +188,14 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 
 ## Immediate Priorities (ordered)
 
-> Living list lives in `docs/production-readiness-tracker.md` (20/30 done). The big rocks remaining:
+> The disposable alpha trackers are closed (archived in `docs/archive/`). Current priorities, post-recovery. **Sequenced execution plan for items 2–4: `docs/hearth-next-phase-plan-v1.md` (PR-A…PR-D). Deploy-facing/manual verification: `docs/hearth-local-runs-v1.md`.**
 
-0. **[ALPHA BLOCKER] Logger post-save enrichment surface** — Drew's diagnostic against family `b74e611c-157e-4408-a609-4c2a6ec98fcb` confirmed entries land with no enrichment surfacing. Root cause: undesigned post-save screen (Cause C); the form previously rendered a hardcoded toast with nowhere for enrichment to land. Three-item resolution specced in `docs/hearth-logger-post-save-resolution-v1.md` is built — see D-LPS-1…D-LPS-7 in `docs/hearth-decisions-log-v1.md`. **Sits on Priority #2 (core value loop Logger → Portfolio → HEU → Capabilities).** Does not reopen the one-call rule.
-0a. **System Interaction Map open question #13** ("gentle migration from retro logging to modules") — adjacent but not resolved by D-LPS-*. Flag only.
-
-1. **§1.6 first-deploy smoke test** (#5) — gated on a successful production build with full env, drizzle migrate, and Vercel deploy.
-2. **Verify `CRON_SECRET` header shape post-deploy** (#19).
-3. **Dry-run `/api/account/export` + `/api/account/delete`** (#21) — exercises the cascade-delete path against Neon prod branch.
-4. **Manual QA pedagogy wizard (onboarding + Settings re-run)** (#11) — never clicked through end-to-end.
-5. **Run Playwright `e2e/` specs against preview deploy** (#15).
-6. **HEU report export vs. actual QLD HEU template diff** (#23).
-7. **Editorial pass on three sample-pack drafts** (#26) — `First Term Foundations`, `Outdoor Naturalist`, `Storytellers` published as `status: 'draft'`; AC mapping required before flipping to published.
-8. **Neon PITR retention + restore drill** (#24).
-9. **Rotate `SANITY_API_TOKEN`; calendar quarterly** (#25).
-10. **Migrate rate limiter to Redis / Upstash** (#30) — design landed, do not implement until trigger conditions hit.
+1. **Conceptual-gaps workstream (in flight)** — truth-consolidated status docs (this update), UX research spine (`hearth-pilot-personas-v1.md`, `hearth-parent-journey-v1.md`, `hearth-research-log.md`), use-case-first spec retrofits, refactor post-mortem.
+2. **Pilot feedback loop** — research log live + lightweight in-app feedback capture (`/api/feedback` + Settings entry point) so pilot evidence lands somewhere structured and every confirmed bug gets a regression test at the right layer.
+3. **Jurisdiction decoupling (mild)** — finish the HEU stragglers: `compliance_status` snapshot key, jurisdiction-aware annotation prompt, remaining copy/labels. Config layer already covers all 8 states.
+4. **Refactor re-design** — the next structural pass is designed *from the refined use cases* once the research spine has real family data; entry criteria in `docs/hearth-refactor-postmortem-v1.md`. Do not salvage the old 35-task plan.
+5. **Editorial pass on three sample-pack drafts** — `First Term Foundations`, `Outdoor Naturalist`, `Storytellers` still `status: 'draft'`; AC mapping required before publish.
+6. **Ops cadence** — Neon PITR restore drill, quarterly `SANITY_API_TOKEN` rotation, Redis rate-limiter migration only when trigger conditions hit (`docs/redis-rate-limiter-plan.md`).
 
 ---
 
@@ -256,6 +260,8 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 ## Known Gaps
 
 ### Technical
+- **Ghost `module_runs` schema** — the `module_runs` table landed in the foundation re-land (`b5bbe60`) but the `/api/module-runs/*` routes from the original refactor were never re-landed; the module runner persists session state to `localStorage` only. Resolve by either landing the persistence routes or dropping the table. See `docs/hearth-refactor-postmortem-v1.md` delta table.
+- **Refactor delta not re-landed** — audio evidence capture (MediaRecorder + upload route), contextual log proposals, Sanity module `sessionType`/`idleDaysBeforeAutoClose`/`previewActivityRef` fields + backfill, IndexedDB blob persistence for the offline upload queue. All catalogued (with re-triaged backlog) in the post-mortem doc; re-design from refined use cases before re-landing.
 - **Payment processing (Stripe)** — STUBBED. API routes return 503. Marketplace UI renders but purchase flow is non-functional. Stripe package removed from dependencies. Revisit when ready to onboard paying families (Phase 3+). Requires: Stripe account, product/price IDs in Sanity, `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` env vars, restore `stripe` package and real implementations in `src/lib/stripe/client.ts`, `api/stripe/checkout`, `api/stripe/webhook`.
 - **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema). First-deploy smoke test still pending (#5 in tracker).
 - **Production error handling** — RESOLVED: `parseBody()` utility added, all JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
@@ -305,11 +311,11 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 
 ## Market Context
 
-- **Target:** Australian homeschool families, specifically Queensland HEU compliance
+- **Target:** Australian homeschool families across all 8 states/territories (pilot anchored in Queensland)
 - **Differentiator:** Retrospective logging + pedagogy-neutral content + automated compliance documentation
 - **Competitors:** Generic LMS platforms not designed for homeschool; manual compliance tracking via spreadsheets/folders
-- **Regulatory:** Queensland Home Education Unit requires documented learning plans, work samples, and curriculum coverage evidence
+- **Regulatory:** Every state/territory regulator (QLD HEU, NSW NESA, VIC VRQA, etc.) requires some combination of documented learning plans, work samples, and curriculum coverage evidence; per-jurisdiction terminology and cycles live in `src/config/jurisdictions.ts`
 
 ---
 
-*Updated 9 May 2026 — Added May milestones (workbench publish validation, mobile bottom nav, onboarding family-name fix, stale-doc audit, Phosphor icons, v2 + v2.1 design landing, production-readiness tracker). Refreshed routes (admin, public, demo). Bumped Sanity schema count from 10 to 19. Replaced "Known Merge Issue" + 7-item priority list with a 10-item view derived from the production-readiness tracker. Update this file when priorities shift or major decisions are made.*
+*Updated 10 June 2026 — Added June milestones (refactor incident + recovery, privacy hardening, evidence pipeline, deploy-time migrations, module runner, polish sweep, infra hygiene). Archived both closed alpha trackers to `docs/archive/`. Rewrote Immediate Priorities around the conceptual-gaps workstream. Table count 30 → 38. Generalised QLD-only framing to multi-jurisdiction. Added currency convention to header. Previous update: 9 May 2026.*

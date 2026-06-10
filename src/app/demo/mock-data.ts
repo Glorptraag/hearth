@@ -1628,11 +1628,13 @@ export const mockSnapshot = {
     newCapabilities: 2,
     evidenceCollected: 8,
   },
-  recommendations: [
-    { title: 'Try a poetry writing session', subject: 'english' },
-    { title: 'Revisit map skills with a local walk', subject: 'hass' },
-    { title: 'Archie is ready for simple multiplication', subject: 'mathematics' },
-  ],
+  recommendations: {
+    suggested_next: [
+      { module_id: 'demo-module-poetry', module_title: 'Poetry Afternoon', priority_score: 0.84, primary_reason: 'gap_fill' as const, reason_text: "Writing hasn't appeared this week", target_learner_ids: [] },
+      { module_id: 'demo-module-maps', module_title: 'Local Walk Map Skills', priority_score: 0.71, primary_reason: 'spark_match' as const, reason_text: "Builds on Archie's interest in exploring", target_learner_ids: [] },
+    ],
+    subject_balance: {},
+  },
   activeThreads: [
     { thread_id: 'scientific-thinking', observation_count: 12, suggested_tier: 'developing', last_evidence_date: today },
     { thread_id: 'mathematical-reasoning', observation_count: 8, suggested_tier: 'emerging', last_evidence_date: today },

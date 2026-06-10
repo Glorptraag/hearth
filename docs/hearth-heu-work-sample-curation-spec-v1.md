@@ -1,8 +1,10 @@
-# Hearth — HEU Work Sample Curation Flow Spec v1
+# Hearth — Compliance Work Sample Curation Flow Spec v1 (QLD/HEU-anchored)
 
 **Addendum to:** `hearth-report-interaction-spec.md` (Section 4: Required Work Samples Grid)
 **Resolves:** System Interaction Map Open Question #6 / Session F
 **Date:** 2026-03-11
+
+> **Jurisdiction framing (added 2026-06-10):** This spec was written against Queensland's HEU requirements and keeps "HEU" throughout as its worked example — the filename is retained for link stability. At runtime, all regulator names, report titles, and review terminology come from `src/config/jurisdictions.ts` (8 states/territories); the curation *flow* specified here is jurisdiction-independent. Where this doc says "HEU", read "the family's regulator". The runtime component threads `reportingBody` as a prop (`src/components/report/WorkSampleCuration.tsx`).
 
 ---
 

@@ -6,7 +6,9 @@ import {
   workSampleAnnotations,
   learningEntries,
   learners,
+  familySettings,
 } from '@/lib/db/schema';
+import { getJurisdiction } from '@/config/jurisdictions';
 import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
@@ -54,15 +56,19 @@ export const POST = routeHandler(async (_request: NextRequest, { params }: Param
   const meta = SLOT_META[sample.slot];
   if (!meta) return apiError(`Unknown slot ${sample.slot}`, 400);
 
-  const [entry, learner] = await Promise.all([
+  const [entry, learner, settings] = await Promise.all([
     db.query.learningEntries.findFirst({
       where: and(eq(learningEntries.id, sample.entryId), eq(learningEntries.familyId, family.id)),
     }),
     db.query.learners.findFirst({
       where: and(eq(learners.id, report.learnerId), eq(learners.familyId, family.id)),
     }),
+    db.query.familySettings.findFirst({
+      where: eq(familySettings.familyId, family.id),
+    }),
   ]);
   if (!entry || !learner) return apiError('Entry or learner missing', 404);
+  const jurisdiction = getJurisdiction(settings?.state ?? null);
 
   // Refuse to overwrite parent-authored text without explicit override
   const existing = await db.query.workSampleAnnotations.findFirst({
@@ -122,6 +128,7 @@ export const POST = routeHandler(async (_request: NextRequest, { params }: Param
     subjects: entry.subjects ?? [],
     subjectArea: subjectKey,
     termHalf: meta.termHalf,
+    regulatoryLabel: `${jurisdiction.regulatoryBody} (${jurisdiction.regulatoryBodyShort})`,
     subsequentEntries: followUps,
   });
 

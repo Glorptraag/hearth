@@ -267,7 +267,7 @@ export const ICON_REGISTRY = {
 
   // ── Our Story Hub ───────────────────────────────────────────
   'story.portfolio': { value: '📁', category: 'story', description: 'Portfolio nav card', reuse: 'low' },
-  'story.report':    { value: '📋', category: 'story', description: 'HEU Report nav card', reuse: 'low' },
+  'story.report':    { value: '📋', category: 'story', description: 'Compliance Report nav card (jurisdiction-titled)', reuse: 'low' },
   'story.learner':   { value: '👤', category: 'story', description: 'Learner Profile nav', reuse: 'low' },
 
   // ── Landing Page ────────────────────────────────────────────

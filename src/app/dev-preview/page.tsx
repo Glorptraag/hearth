@@ -2,12 +2,12 @@ import Link from 'next/link';
 
 const ROUTES = [
   { href: '/dev-preview/dashboard', label: 'Dashboard', emoji: '🏠', desc: 'Family hub with greeting, learner row, moments, stats' },
-  { href: '/dev-preview/our-story', label: 'Our Story Hub', emoji: '📖', desc: 'Per-child story hub with portfolio/capabilities/HEU nav' },
+  { href: '/dev-preview/our-story', label: 'Our Story Hub', emoji: '📖', desc: 'Per-child story hub with portfolio/capabilities/report nav' },
   { href: '/dev-preview/planner', label: 'Weekly Planner', emoji: '📅', desc: 'Week view with planned sessions' },
   { href: '/dev-preview/explore/activities', label: 'My Library', emoji: '📚', desc: 'Family\'s saved modules from marketplace' },
   { href: '/dev-preview/explore/marketplace', label: 'Marketplace', emoji: '🛒', desc: 'Browse packs (Sanity-powered when available)' },
   { href: '/dev-preview/notifications', label: 'Notifications', emoji: '🔔', desc: 'Notification centre with tier grouping' },
-  { href: '/dev-preview/settings', label: 'Settings', emoji: '⚙️', desc: 'Family profile, pedagogy, HEU, children' },
+  { href: '/dev-preview/settings', label: 'Settings', emoji: '⚙️', desc: 'Family profile, pedagogy, compliance, children' },
   { href: '/dev-preview/log', label: 'Logger', emoji: '✏️', desc: 'Placeholder — requires API' },
 ];
 

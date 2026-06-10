@@ -802,6 +802,32 @@ export const customThreads = pgTable(
   (table) => [index('ct_family_idx').on(table.familyId)]
 );
 
+// ─── Pilot feedback ───
+// In-app feedback capture: one row per submission. Triage convention: rows
+// get transcribed into docs/hearth-research-log.md (decisions log PR-1).
+
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .notNull()
+      .references(() => families.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    category: text('category').notNull(),
+    message: text('message').notNull(),
+    route: text('route'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('feedback_family_idx').on(table.familyId, table.createdAt),
+    check(
+      'feedback_category_check',
+      sql`${table.category} IN ('bug','idea','confusion','praise')`
+    ),
+  ]
+);
+
 // ─── DLO (Discrete Learning Objective) state ───
 
 export const learnerDloStatus = pgTable(

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
+import { getGentlePrompt } from '@/lib/dashboard/gentle-prompt';
+import type { SnapshotData as FamilySnapshot } from '@/types/snapshot';
 import EmptyState from '@/components/ui/EmptyState';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
@@ -60,7 +62,7 @@ interface SnapshotData {
     newCapabilities?: number;
     evidenceCollected?: number;
   };
-  recommendations?: Array<{ title: string; subject?: string }>;
+  recommendations?: FamilySnapshot['recommendations'];
 }
 
 type DashboardState = 'no-children' | 'no-entries' | 'returning-inactive' | 'active';
@@ -587,20 +589,24 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* Gentle Prompt */}
-        {snapshot.recommendations && snapshot.recommendations.length > 0 && (
-          <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(123,191,138,0.08)] p-lg mb-2xl">
-            <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
-              {snapshot.recommendations[0].title}
-            </p>
-            <Link
-              href={`${basePath}/explore/activities`}
-              className="font-sans text-[0.8rem] font-medium text-sage hover:underline inline-flex items-center gap-xs"
-            >
-              See suggestions →
-            </Link>
-          </div>
-        )}
+        {/* Gentle Prompt — content shape pinned by getGentlePrompt (research log R10) */}
+        {(() => {
+          const prompt = getGentlePrompt(snapshot.recommendations);
+          if (!prompt) return null;
+          return (
+            <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(123,191,138,0.08)] p-lg mb-2xl">
+              <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
+                {prompt.text} — &ldquo;{prompt.moduleTitle}&rdquo; could be a gentle next step.
+              </p>
+              <Link
+                href={`${basePath}/explore/activities`}
+                className="font-sans text-[0.8rem] font-medium text-sage hover:underline inline-flex items-center gap-xs"
+              >
+                See suggestions →
+              </Link>
+            </div>
+          );
+        })()}
 
         {/* Pedagogical Prompt */}
         {pedagogy !== 'eclectic' && (() => {

@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import type { SnapshotData as FamilySnapshot } from '@/types/snapshot';
 import { db } from '@/lib/db';
 import {
   familyIntelligenceSnapshots,
@@ -181,7 +182,7 @@ export default async function DashboardPage() {
       newCapabilities?: number;
       evidenceCollected?: number;
     };
-    recommendations?: Array<{ title: string; subject?: string }>;
+    recommendations?: FamilySnapshot['recommendations'];
     children?: Record<string, { monthly_narrative?: string }>;
   };
 

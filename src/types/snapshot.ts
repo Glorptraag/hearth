@@ -107,6 +107,24 @@ export interface DloStatusEntry {
 
 // ─── Family-wide snapshot ───
 
+export interface ComplianceStatus {
+  next_report_due: string | null;
+  days_until_due: number | null;
+  coverage_sufficient: boolean;
+}
+
+/**
+ * Dual-read for the 2026-06 jurisdiction rename: rebuilds now write
+ * `compliance_status`; snapshots persisted before the rename still carry
+ * `heu_status`. No SQL migration — stored JSONB is rewritten naturally on
+ * the family's next rebuild.
+ */
+export function getComplianceStatus(
+  family: Pick<SnapshotData['family'], 'compliance_status' | 'heu_status'> | null | undefined,
+): ComplianceStatus | null {
+  return family?.compliance_status ?? family?.heu_status ?? null;
+}
+
 export interface SnapshotData {
   family_id: string;
   rebuilt_at: string;
@@ -122,11 +140,9 @@ export interface SnapshotData {
       nudge_message: string | null;
       streak_count: number;
     };
-    heu_status: {
-      next_report_due: string | null;
-      days_until_due: number | null;
-      coverage_sufficient: boolean;
-    };
+    compliance_status: ComplianceStatus;
+    /** @deprecated Pre-2026-06 snapshots wrote this key; read via getComplianceStatus(). */
+    heu_status?: ComplianceStatus;
   };
   recommendations?: {
     suggested_next: SnapshotRecommendation[];

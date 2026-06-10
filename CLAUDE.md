@@ -61,6 +61,7 @@ docs/                # Architecture specs, design system docs
 | `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
 | `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
+| `docs/hearth-refactor-postmortem-v1.md` | **Read before proposing any multi-phase/structural work.** June 2026 refactor incident: what failed, the verified delta (incl. ghost `module_runs` schema), binding re-land pattern, and entry criteria for the next structural pass. |
 | `docs/test-pilot-runbook.md` | **Canonical testing setup.** Read before writing or running any test. |
 | `docs/hearth-research-log.md` | **Append-only pilot-evidence log.** Every user-reported finding lands here; every confirmed bug gets a regression test at the right layer (the convention lives in its header). Check before claiming a behaviour is or isn't a known issue. |
 | `docs/hearth-pilot-personas-v1.md` + `docs/hearth-parent-journey-v1.md` | Who Hearth serves (composite personas, `[TO VALIDATE]`-tagged) and the staged anxiety→joy journey with per-stage success signals. Read on any UX-facing task; cite personas by name in specs. |

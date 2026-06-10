@@ -86,6 +86,20 @@ First exercise of this log's binding rule: the pilot's one user-facing defect (R
 **Regression test:** `src/app/api/welcome/complete/route.integration.test.ts` (integration layer).
 **Date logged:** 2026-06-10.
 
+### R9 — Code audit (2026-06-10): `pedagogy_set` from onboarding never reaches PostHog.
+
+`PostHogProvider` (sole `initAnalytics()` caller) mounts only in the `(auth)` layout; the `(public)` onboarding page's `track('pedagogy_set', …)` hits the uninitialised early-return and silently drops. Stage-1 signal coverage in `hearth-parent-journey-v1.md` is therefore fictional for first-time onboarding — only Settings re-runs emit. Found during the instrumentation planning pass, not by a family (the event was never missed because it was never seen — instrumentation bugs are invisible by nature; this is the argument for funnel-shape sanity checks after each analytics deploy).
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 1 signal table.
+**Regression test:** none — gap (planned in next-phase PR-A: assert `initAnalytics` is reachable from the public layout; see `hearth-next-phase-plan-v1.md`).
+**Date logged:** 2026-06-10.
+
+### R10 — Code audit (2026-06-10): Dashboard "Gentle Prompt" card can never render.
+
+`DashboardClient` types `snapshot.recommendations` as an array, but the snapshot rebuild writes `{ suggested_next, subject_balance }` — `.length` is `undefined`, so the recommendations card has silently never shown for any scored snapshot. User-visible-on-fix, so the fix is deliberately held for a ship/hold decision (next-phase PR-D) rather than slipped into an unrelated PR mid-pilot.
+**Spec affected:** dashboard spec (recommendations surface); `hearth-parent-journey-v1.md` Stage 5 (a "noticing" surface that never noticed).
+**Regression test:** none — gap (PR-D will add: card renders from a scored-snapshot fixture).
+**Date logged:** 2026-06-10.
+
 ---
 
-*Next entry: R9. Append below; never edit above.*
+*Next entry: R11. Append below; never edit above.*

@@ -188,7 +188,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 
 ## Immediate Priorities (ordered)
 
-> The disposable alpha trackers are closed (archived in `docs/archive/`). Current priorities, post-recovery:
+> The disposable alpha trackers are closed (archived in `docs/archive/`). Current priorities, post-recovery. **Sequenced execution plan for items 2–4: `docs/hearth-next-phase-plan-v1.md` (PR-A…PR-D). Deploy-facing/manual verification: `docs/hearth-local-runs-v1.md`.**
 
 1. **Conceptual-gaps workstream (in flight)** — truth-consolidated status docs (this update), UX research spine (`hearth-pilot-personas-v1.md`, `hearth-parent-journey-v1.md`, `hearth-research-log.md`), use-case-first spec retrofits, refactor post-mortem.
 2. **Pilot feedback loop** — research log live + lightweight in-app feedback capture (`/api/feedback` + Settings entry point) so pilot evidence lands somewhere structured and every confirmed bug gets a regression test at the right layer.

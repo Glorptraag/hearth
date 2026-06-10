@@ -62,7 +62,7 @@ docs/                # Architecture specs, design system docs
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
 | `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
 | `docs/test-pilot-runbook.md` | **Canonical testing setup.** Read before writing or running any test. |
-| `docs/production-readiness-tracker.md` | Disposable 30-step path to alpha pilot. Trails reality by minutes — check `git log` first. |
+| `docs/PROJECT_STATUS.md` | **Single source of truth for project status + priorities.** Updated in the same PR as the work, or claims carry a "trails reality" caveat. The closed alpha trackers live in `docs/archive/`. |
 | `docs/external-services-guide.md` | All-in-one reference for every external service Hearth depends on (Clerk, Neon, Sanity, Anthropic, PostHog, Sentry, Vercel, Upstash) — rationale + alternatives. |
 | `docs/oncall-cheatsheet.md` | One-page on-call reference: dashboards, kill-switches, symptom→first-move table. |
 | `docs/hearth-icon-system-v1.md` | Phosphor icon rules — weight, size tokens (`--icon-xs..xl`), colour, placement, custom-mark specs. |

@@ -1,5 +1,5 @@
 <!-- Version: 2 | Date: 2026-04-21 | Changes: Rewrote as living status doc reflecting the wizard / analytics / cost-dashboard sprint; consolidated honest caveats + known limitations; original 19 Apr handover preserved in History section. -->
-<!-- Stale-caveat sweep: 2026-05-13 — caveats §8, §9 and the §16 list (Constellation L3, Portfolio card differentiation) were marked obsolete after audit verification against the code. See docs/pre-release-tracker.md §D. -->
+<!-- Stale-caveat sweep: 2026-05-13 — caveats §8, §9 and the §16 list (Constellation L3, Portfolio card differentiation) were marked obsolete after audit verification against the code. See docs/archive/pre-release-tracker.md §D. -->
 <!-- Incident-amplifier hardening: 2026-05-25 — PRs #78–#84 closed the white-screen-on-API-error class of failure. Every API route now returns JSON on error; every client `.json()` is guarded; drift checker gates deploys. See docs/incident-runbook.md §7. -->
 
 # Alpha-Readiness — Status
@@ -88,7 +88,7 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 7. **Review-step demo insights are hardcoded per-philosophy.** Matches
    spec (template synthesis acceptable for MVP, Haiku-generated
    synthesis is a Phase-2 polish item).
-8. ~~**Wizard does not persist partial progress.**~~ **[Superseded 2026-05-13]** Shipped per `production-readiness-tracker.md` #13 — `PedagogyWizard` reads/writes `hearth-pedagogy-wizard-draft` in localStorage on every state change.
+8. ~~**Wizard does not persist partial progress.**~~ **[Superseded 2026-05-13]** Shipped per `archive/production-readiness-tracker.md` #13 — `PedagogyWizard` reads/writes `hearth-pedagogy-wizard-draft` in localStorage on every state change.
 9. ~~**Review-step tab keyboard navigation is partial.**~~ **[Superseded 2026-05-13]** Shipped per tracker #14 — arrow-key cycling + Home/End handle WAI-ARIA APG.
 10. **Admin AI-cost pricing is hardcoded** to Haiku 4.5 rates ($0.80 /
     Mtok input, $4.00 / Mtok output) in `PRICING_PER_MTOK` inside
@@ -118,7 +118,7 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 16. **Phase-2 items from the original audit — partially out of date as of 2026-05-13:**
     - ~~Portfolio Journey/Milestone distinct card rendering~~ → **shipped.** Three colour treatments (coffee / ember / sage) live at `src/app/(auth)/our-story/portfolio/page.tsx:21-37`.
     - ~~Constellation L3 DLO panel~~ → **shipped end-to-end.** Verified at `src/app/(auth)/our-story/capabilities/page.tsx`. **Data source as of 2026-05-23:** Sanity-loaded `discreteLearningObjective` documents via `ALL_DLOS_QUERY` (page.tsx → ConstellationRoute → buildDLOs). Placeholder fallback removed from `topology.ts`; `dlo-descriptors.ts` is now seed-time-only. **All three follow-ups closed:** (1) `scripts/seed-dlos.ts` run against production 2026-05-23 — 171 docs = 57 threads × 3 tiers (PR #63, `c1c0336`); (2) per-DLO state shipped via migration `0015_dlo_state.sql` and `learner_dlo_state` table (`f1e287b` "Item 6", parent-confirm write path in `f084750`); (3) entry-to-DLO mapping live in Haiku enrichment with persistence at `src/lib/ai/dlo-persistence.ts` (`16821ca` end-to-end DLO generation + `c1c0336`).
-    - **Hub term summary AI narrative** → still falls back to template often; see `pre-release-tracker.md` F6.
+    - **Hub term summary AI narrative** → still falls back to template often; see `archive/pre-release-tracker.md` F6.
     - **Offline support (PWA / sync queue)** → still Phase 2 (#16 on the Interaction Map); see tracker F5.
 
 ---
@@ -128,10 +128,10 @@ fast-forward: `3025c40`, `4917d1b`, `1c28145`, `1d7f92e`, `0ecd263`,
 ### Gated on decisions (none of these have them yet)
 
 - Hub term summary: static template today, spec wants AI-generated
-  monthly growth copy. (Now also tracked as `pre-release-tracker.md` F6.)
+  monthly growth copy. (Now also tracked as `archive/pre-release-tracker.md` F6.)
 - ~~Portfolio Journey/Milestone distinct card rendering — architectural change.~~ **Shipped 2026-05-13 verification.**
 - ~~Constellation L3 DLO panel — architectural change.~~ **Shipped 2026-05-13 verification.**
-- Offline support — out of MVP per the original spec. (Now also tracked as `pre-release-tracker.md` F5.)
+- Offline support — out of MVP per the original spec. (Now also tracked as `archive/pre-release-tracker.md` F5.)
 
 ### Decision-free, ready to pick up
 

@@ -473,4 +473,4 @@ Quarterly (set a calendar reminder on the same day you rotate `SANITY_API_TOKEN`
 - [`docs/oncall-cheatsheet.md`](./oncall-cheatsheet.md) — what to click first mid-incident.
 - [`docs/incident-runbook.md`](./incident-runbook.md) — depth on each failure mode.
 - [`.env.example`](../.env.example) — authoritative list of every env var the app reads.
-- [`docs/production-readiness-tracker.md`](./production-readiness-tracker.md) — current status of #3 / #4 / #18 / #24 / #25 and the rest.
+- [`docs/archive/production-readiness-tracker.md`](./archive/production-readiness-tracker.md) — closed alpha tracker (historical record of #3 / #4 / #18 / #24 / #25 and the rest); current priorities live in `PROJECT_STATUS.md`.

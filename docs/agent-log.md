@@ -32,3 +32,15 @@ Type: Status check / log housekeeping
 - Risk level: None.
 - Notes for other agents: When multi-agent collaboration resumes, append entries here. For solo Claude Code sessions, the git log + `docs/production-readiness-tracker.md` are the load-bearing surfaces, and this file can stay quiet.
 
+---
+
+## [2026-06-10]
+
+Agent: Claude (Code)  
+Type: Status check / docs truth consolidation  
+
+- What changed: Both alpha trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) closed out and moved to `docs/archive/`. `PROJECT_STATUS.md` refreshed through 2026-06-09 and is now the single source of truth for project status (with a currency convention in its header).
+- Files affected: `docs/agent-log.md` (this entry), `docs/PROJECT_STATUS.md`, `docs/archive/*`.
+- Risk level: None (documentation only).
+- Notes for other agents: For solo Claude Code sessions, the git log + `docs/PROJECT_STATUS.md` are the load-bearing surfaces. The production-readiness tracker reference in the 2026-05-06 entry is historical — that tracker is archived.
+

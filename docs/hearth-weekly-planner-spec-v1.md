@@ -29,6 +29,8 @@ It is not a compliance tool. The HEU Report owns compliance. The Planner's subje
 
 It is not mandatory. Families who prefer pure retrospective logging (capture what happened, don't plan ahead) should never feel the Planner is required. The system works without it. But for families who like a light structure, the Planner makes the week visible and the logging pipeline frictionless.
 
+**We'll know this works when:** families who adopt the Planner complete the plan→log flip without duplicate entries (planned and logged are one record, §2.6), and families who *don't* adopt it show no retention penalty — planner adoption is a preference signal (journey Stage 5), never a health metric. Forward planning remaining a minority behaviour is an acceptable outcome, per the retrospective-first principle.
+
 ---
 
 ## 2. Design Decisions & Rationale

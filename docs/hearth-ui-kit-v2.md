@@ -54,6 +54,8 @@ Hearth has two emotional temperature modes sharing the same structural tokens:
 
 **Gathering mode:** Warm parchment. Family review, celebration, end-of-day sharing. Light surfaces, brown text, brown-tinted borders.
 
+**When the parent encounters each:** she normally never chooses — themes switch automatically by time of day (Gathering 6am–6pm, Dark 6pm–6am, managed by `useTheme()` in `src/hooks/use-theme.ts`). The intent: daytime use is bright-room, kids-around, glanceable (Gathering); the canonical end-of-day logging session — tea, couch, the founding brief's relief moment — gets the warm low-light register (Dark). A manual override exists (persisted to `localStorage` key `hearth-theme`) for parents whose rhythm doesn't match the clock, and it sticks until cleared. Design implication: every screen must hold up in both themes, because *which* theme a parent sees is a function of when her day allows her to open the app, not of which screen she's on.
+
 In Next.js: `data-theme="dark"` (default) or `data-theme="gathering"` on `<html>`. All color tokens are CSS custom properties that swap between themes. Structural tokens (spacing, radius, typography, transitions) are identical in both themes.
 
 See `hearth-canonical-design-tokens-v1.md` §2 for complete color definitions in both themes.

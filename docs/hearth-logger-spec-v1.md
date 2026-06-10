@@ -14,6 +14,8 @@ The Retrospective Logger is the most-used screen in Hearth. It captures learning
 
 This spec documents every field, interaction pattern, data flow, and edge case in the v2 workspace layout. It does not propose redesign; it codifies the existing prototype for unambiguous development.
 
+**We'll know this works when:** a parent's median time from opening `/log` to save is under 5 minutes (`entry_created` timing); she logs a second entry within 7 days of her first (the retention hinge, journey Stage 2→3); and enrichment surfaces after save are *seen*, not just produced (`hearth-parent-journey-v1.md` Stage 2 — instrumentation pending).
+
 ---
 
 ## 2. Design Decisions & Rationale
@@ -393,7 +395,7 @@ The minimum viable save path (reaching exactly 50) requires approximately: 1 chi
 
 ### 4.4 No Override
 
-There is no mechanism to save below 50%. The rationale: entries below the threshold lack sufficient data for the AI enrichment pipeline, and would produce incomplete portfolio entries, misleading curriculum coverage, and unreliable badge progress calculations. A low-quality entry that appears in an HEU report is worse than no entry at all.
+There is no mechanism to save below 50%. The rationale, framed as the parent outcome it protects: a below-threshold entry can't generate the translation that is the whole point of logging — it would land in her portfolio as a thin line that documents nothing, inflate her sense of curriculum coverage with evidence that wouldn't survive a regulator's reading, and quietly mis-count toward badges her child hasn't yet earned. The gate protects the parent's *own future confidence* in what her records say: when she opens the compliance report at renewal time (journey Stage 4), everything in it must be load-bearing. Mechanically: entries below the threshold lack sufficient data for the AI enrichment pipeline, and a low-quality entry that appears in a compliance report is worse than no entry at all.
 
 ---
 

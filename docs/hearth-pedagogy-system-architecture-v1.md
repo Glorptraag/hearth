@@ -66,6 +66,8 @@ Eclectic is not a separate corpus. It is multi-lens retrieval from the existing 
 
 ## 3. The Seven Layers
 
+**Why the parent cares (read this before the table).** None of these layers is visible to the parent as a layer. What she experiences is: the platform speaks her tradition's language when it reflects her day back to her (a Charlotte Mason family hears "narration," not "comprehension check"), and over months the catalogue quietly starts feeling *curated for how her family actually works* — without ever telling her what to do next. A first-year parent like Mei-Lin (`hearth-pilot-personas-v1.md`) gets fluency in a tradition she's still learning; a veteran like Bec gets a system that keeps up with thinking she already does. The seven layers below exist to deliver exactly that and nothing more — which is why the architecture forbids the system from scheduling, branching, or prescribing (C-PA1: the platform makes the thread visible; the parent pulls it).
+
 The methodology layer is implemented as seven distinct architectural layers, each doing one job. The layers communicate via well-defined interfaces (mostly the Family Intelligence Snapshot and the Sanity content schema). No layer reaches across boundaries.
 
 | # | Layer | Where it lives | Role |

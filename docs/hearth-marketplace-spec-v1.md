@@ -13,6 +13,8 @@ The Marketplace is where families discover, evaluate, and acquire content — pa
 
 This spec documents the complete browse → evaluate → acquire flow as designed in the prototype, filling the gaps the prototype cannot express: state transitions, data requirements, edge cases, mobile behaviour, and payment infrastructure.
 
+**We'll know this works when:** a family's time from browse to `module_added_to_library` reads as curation, not indecision (under 2 minutes to a decision, matching the Activity Discovery bar); added content actually gets *run* (library status board shows started, not shelf-ware); and no research-log entry ever quotes a family describing membership content in transactional terms — the "our bookshelf, not the bookshop" mental model (§2.6) holding is the real success state.
+
 ---
 
 ## 2. Design Decisions (with rationale)

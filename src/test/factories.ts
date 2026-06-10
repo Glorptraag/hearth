@@ -32,6 +32,7 @@ import {
   moduleRuns,
   learningEntryEvidence,
   facilitatorNotes,
+  feedback,
 } from '@/lib/db/schema';
 import { TEST_FAMILY_ID, TEST_USER_ID } from '../../vitest.setup';
 
@@ -44,6 +45,7 @@ export type FamilyIntelligenceSnapshot = InferSelectModel<typeof familyIntellige
 export type ModuleRun = InferSelectModel<typeof moduleRuns>;
 export type LearningEntryEvidence = InferSelectModel<typeof learningEntryEvidence>;
 export type FacilitatorNote = InferSelectModel<typeof facilitatorNotes>;
+export type Feedback = InferSelectModel<typeof feedback>;
 
 const EPOCH = new Date('2026-01-01T00:00:00Z');
 const EPOCH_DATE = '2026-01-01'; // PostgreSQL `date` columns round-trip as ISO strings
@@ -116,6 +118,19 @@ export function buildFacilitatorNote(overrides: Partial<FacilitatorNote> = {}): 
     isPrivate: true,
     createdAt: EPOCH,
     updatedAt: EPOCH,
+    ...overrides,
+  };
+}
+
+export function buildFeedback(overrides: Partial<Feedback> = {}): Feedback {
+  return {
+    id: overrides.id ?? randomUUID(),
+    familyId: TEST_FAMILY_ID,
+    userId: TEST_USER_ID,
+    category: 'idea',
+    message: 'It would help to reorder learners on the dashboard.',
+    route: '/dashboard',
+    createdAt: EPOCH,
     ...overrides,
   };
 }

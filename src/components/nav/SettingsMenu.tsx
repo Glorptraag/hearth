@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { List, House, UsersThree, Compass, ShieldCheck, Bell } from '@/components/icons';
+import { List, House, UsersThree, Compass, ShieldCheck, Bell, ChatCircleText } from '@/components/icons';
+import { FeedbackModal } from '@/components/feedback/FeedbackModal';
 import styles from './settings-menu.module.css';
 
 /**
@@ -27,6 +28,7 @@ type Phase = 'closed' | 'open' | 'closing';
 export function SettingsMenu() {
   const pathname = usePathname();
   const [phase, setPhase] = useState<Phase>('closed');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isOpen = phase === 'open';
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuId = 'mobile-settings-tray';
@@ -126,9 +128,32 @@ export function SettingsMenu() {
                 </span>
               </Link>
             ))}
+            <button
+              type="button"
+              role="menuitem"
+              data-state={phase === 'closing' ? 'closing' : 'open'}
+              style={{ '--row-index-from-top': SETTINGS_LINKS.length } as CSSProperties}
+              onClick={() => {
+                close();
+                setFeedbackOpen(true);
+              }}
+              className={`${styles['settings-row']} flex items-center justify-end gap-sm`}
+            >
+              <span className="rounded-full border border-border-subtle bg-surface-panel px-md py-xs font-sans text-[0.85rem] font-medium text-text-primary shadow-inset-highlight">
+                Send Feedback
+              </span>
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-surface-panel text-text-primary shadow-inset-highlight"
+                aria-hidden="true"
+              >
+                <ChatCircleText size={18} />
+              </span>
+            </button>
           </div>
         )}
       </div>
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   );
 }

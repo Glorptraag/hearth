@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import RecommendationChip from './RecommendationChip';
 import { Sun, SunHorizon } from '@/components/icons';
+import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 
 interface Learner {
   id: string;
@@ -15,6 +16,7 @@ interface Recommendation {
   title: string;
   subject?: string;
   reason?: string;
+  moduleId?: string;
 }
 
 interface CatalogItem {
@@ -255,7 +257,20 @@ export default function BottomSheet({
                   key={i}
                   title={r.title}
                   subject={r.subject}
-                  onAdd={handleSubmit}
+                  onAdd={(title) => {
+                    if (r.moduleId && r.reason) {
+                      void hashForAnalytics(r.moduleId).then((hash) => {
+                        track('recommendation_accepted', {
+                          surface: 'planner_sheet',
+                          action: 'planned',
+                          reason: r.reason!,
+                          module_id_hash: hash,
+                          rank: i,
+                        });
+                      });
+                    }
+                    void handleSubmit(title);
+                  }}
                 />
               ))}
             </div>

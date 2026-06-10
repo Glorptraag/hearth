@@ -15,7 +15,8 @@ import type { ChildSnapshot, SnapshotData, SnapshotRecommendation } from '@/type
 import { sanityClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import { getCachedThreads } from '@/lib/ai/sanity-thread-cache';
-import { scoreModules, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
+import { scoreModules, summariseReasonDistribution, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
+import { trackServer } from '@/lib/analytics/posthog-server';
 
 /**
  * GET /api/snapshot/next?limit=5
@@ -152,8 +153,24 @@ export const GET = routeHandler(async (req: NextRequest) => {
     pedagogyContext,
   );
 
+  // Track supply-side event — pedagogy-aware surface only (rebuild path omitted: no pedagogyContext there).
+  const slice = ranked.slice(0, Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT);
+  const dist = summariseReasonDistribution(slice);
+  void trackServer('recommendations_scored', family.id, {
+    surface: 'next',
+    pedagogy_key: pedagogyContext?.pedagogyKey ?? 'eclectic',
+    rec_count: dist.rec_count,
+    spark_match_count: dist.spark_match_count,
+    gap_fill_count: dist.gap_fill_count,
+    pedagogy_match_count: dist.pedagogy_match_count,
+    repeat_value_count: dist.repeat_value_count,
+    energy_match_count: dist.energy_match_count,
+    top_reason: dist.top_reason,
+    top_score: dist.top_score,
+  }, { familyId: family.id });
+
   return NextResponse.json<NextResponseBody>({
-    recommendations: ranked.slice(0, Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT),
+    recommendations: slice,
     pedagogyKey: pedagogyContext?.pedagogyKey ?? 'eclectic',
     in_library_count: modules.length,
   });

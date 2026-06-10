@@ -7,7 +7,8 @@ import { eq } from 'drizzle-orm';
 import { routeHandler } from '@/lib/api-helpers';
 import { sanityClient } from '@/lib/sanity/client';
 import type { ChildSnapshot, SnapshotRecommendation } from '@/types/snapshot';
-import { scoreModules, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
+import { scoreModules, summariseReasonDistribution, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
+import { trackServer } from '@/lib/analytics/posthog-server';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import { getCachedThreads } from '@/lib/ai/sanity-thread-cache';
 
@@ -140,8 +141,23 @@ export const GET = routeHandler(async (req: NextRequest) => {
     pedagogyContext,
   );
 
+  const slice = ranked.slice(0, Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT);
+  const dist = summariseReasonDistribution(slice);
+  void trackServer('recommendations_scored', family.id, {
+    surface: 'zero_state',
+    pedagogy_key: pedagogyContext.pedagogyKey,
+    rec_count: dist.rec_count,
+    spark_match_count: dist.spark_match_count,
+    gap_fill_count: dist.gap_fill_count,
+    pedagogy_match_count: dist.pedagogy_match_count,
+    repeat_value_count: dist.repeat_value_count,
+    energy_match_count: dist.energy_match_count,
+    top_reason: dist.top_reason,
+    top_score: dist.top_score,
+  }, { familyId: family.id });
+
   return NextResponse.json<ZeroStateResponse>({
-    recommendations: ranked.slice(0, Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT),
+    recommendations: slice,
     pedagogyKey: pedagogyContext.pedagogyKey,
     synthetic_sparks: Array.from(allInterests),
     has_signal: allInterests.size > 0,

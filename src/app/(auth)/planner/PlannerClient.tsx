@@ -35,6 +35,7 @@ interface Recommendation {
   title: string;
   subject?: string;
   reason?: string;
+  moduleId?: string;
 }
 
 interface PlannerClientProps {

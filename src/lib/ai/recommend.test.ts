@@ -5,8 +5,8 @@
  *   family — the pedagogy weight just doesn't boost it.
  */
 import { describe, it, expect } from 'vitest';
-import { scoreModules, type ScoringModule, type PedagogyContext } from './recommend';
-import type { ChildSnapshot } from '@/types/snapshot';
+import { scoreModules, summariseReasonDistribution, type ScoringModule, type PedagogyContext } from './recommend';
+import type { ChildSnapshot, SnapshotRecommendation } from '@/types/snapshot';
 
 function makeChild(overrides: Partial<ChildSnapshot> = {}): ChildSnapshot {
   return {
@@ -171,5 +171,60 @@ describe('scoreModules — pedagogy weight (Phase 3 / Q10)', () => {
     const ctx: PedagogyContext = { pedagogyKey: 'charlotte_mason', values: [], practices: [] };
     const ranked = scoreModules([mod], { 'child-1': child }, [], {}, new Set(), ctx);
     expect(ranked[0].reason_text).toMatch(/charlotte mason/i);
+  });
+});
+
+describe('summariseReasonDistribution', () => {
+  function makeRec(overrides: Partial<SnapshotRecommendation> = {}): SnapshotRecommendation {
+    return {
+      module_id: 'mod-1',
+      module_title: 'Test',
+      priority_score: 0.5,
+      primary_reason: 'spark_match',
+      reason_text: 'Builds on interest',
+      target_learner_ids: [],
+      ...overrides,
+    };
+  }
+
+  it('returns zero counts and default top_reason for empty list', () => {
+    const d = summariseReasonDistribution([]);
+    expect(d.rec_count).toBe(0);
+    expect(d.spark_match_count).toBe(0);
+    expect(d.top_score).toBe(0);
+    expect(d.top_reason).toBe('spark_match');
+  });
+
+  it('counts each reason correctly', () => {
+    const recs = [
+      makeRec({ primary_reason: 'spark_match', priority_score: 0.9 }),
+      makeRec({ primary_reason: 'gap_fill', priority_score: 0.7 }),
+      makeRec({ primary_reason: 'gap_fill', priority_score: 0.6 }),
+      makeRec({ primary_reason: 'pedagogy_match', priority_score: 0.5 }),
+    ];
+    const d = summariseReasonDistribution(recs);
+    expect(d.rec_count).toBe(4);
+    expect(d.spark_match_count).toBe(1);
+    expect(d.gap_fill_count).toBe(2);
+    expect(d.pedagogy_match_count).toBe(1);
+    expect(d.repeat_value_count).toBe(0);
+    expect(d.energy_match_count).toBe(0);
+  });
+
+  it('top_reason is the most frequent reason', () => {
+    const recs = [
+      makeRec({ primary_reason: 'gap_fill' }),
+      makeRec({ primary_reason: 'gap_fill' }),
+      makeRec({ primary_reason: 'spark_match' }),
+    ];
+    expect(summariseReasonDistribution(recs).top_reason).toBe('gap_fill');
+  });
+
+  it('top_score is the priority_score of the first rec (sorted desc)', () => {
+    const recs = [
+      makeRec({ priority_score: 0.85 }),
+      makeRec({ priority_score: 0.60 }),
+    ];
+    expect(summariseReasonDistribution(recs).top_score).toBe(0.85);
   });
 });

@@ -1,5 +1,54 @@
 import type { ChildSnapshot, SnapshotRecommendation, RecommendationReason } from '@/types/snapshot';
 
+// ─── Distribution summary ───
+
+export interface ReasonDistribution {
+  rec_count: number;
+  spark_match_count: number;
+  gap_fill_count: number;
+  pedagogy_match_count: number;
+  repeat_value_count: number;
+  energy_match_count: number;
+  top_reason: RecommendationReason;
+  top_score: number;
+}
+
+/**
+ * Summarise the reason distribution of a scored recommendation list.
+ * Pure function — no I/O. Recs must already be sorted by priority_score desc
+ * (scoreModules guarantees this), so recs[0].priority_score is top_score.
+ */
+export function summariseReasonDistribution(recs: SnapshotRecommendation[]): ReasonDistribution {
+  const counts: Record<RecommendationReason, number> = {
+    spark_match: 0,
+    gap_fill: 0,
+    pedagogy_match: 0,
+    repeat_value: 0,
+    energy_match: 0,
+  };
+  for (const rec of recs) counts[rec.primary_reason]++;
+
+  const ordered: RecommendationReason[] = [
+    'spark_match', 'gap_fill', 'pedagogy_match', 'repeat_value', 'energy_match',
+  ];
+  let topReason: RecommendationReason = 'spark_match';
+  let topCount = -1;
+  for (const r of ordered) {
+    if (counts[r] > topCount) { topCount = counts[r]; topReason = r; }
+  }
+
+  return {
+    rec_count: recs.length,
+    spark_match_count: counts.spark_match,
+    gap_fill_count: counts.gap_fill,
+    pedagogy_match_count: counts.pedagogy_match,
+    repeat_value_count: counts.repeat_value,
+    energy_match_count: counts.energy_match,
+    top_reason: topReason,
+    top_score: recs[0]?.priority_score ?? 0,
+  };
+}
+
 // ─── Types ───
 
 export interface ScoringModule {

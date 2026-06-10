@@ -14,6 +14,7 @@ import {
   Bell,
   MoonStars,
   X,
+  Sparkle,
 } from '@/components/icons';
 
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
@@ -46,30 +47,32 @@ const TIER_LEFT_ACCENT: Record<string, string> = {
 // Per-type icon following spec semantics (NotePencil = Resume,
 // Bell = Respond, ChatCircleDots = Reconnect, etc.)
 const TYPE_ICON: Record<string, IconC> = {
-  draft_resume:       NotePencil,
-  pause_ack:          NotePencil,
-  badge_ready:        MedalMilitary,
-  compliance_nudge:   ShieldCheck,
-  log_invitation:     Lightbulb,
-  prep_reminder:      CalendarBlank,
-  streak_prompt:      ChatCircleDots,
-  streak_celebration: Confetti,
-  weekly_digest:      ChartBar,
-  capability_growth:  Plant,
+  draft_resume:              NotePencil,
+  pause_ack:                 NotePencil,
+  badge_ready:               MedalMilitary,
+  compliance_nudge:          ShieldCheck,
+  log_invitation:            Lightbulb,
+  prep_reminder:             CalendarBlank,
+  streak_prompt:             ChatCircleDots,
+  streak_celebration:        Confetti,
+  weekly_digest:             ChartBar,
+  capability_growth:         Plant,
+  recommendations_refreshed: Sparkle,
 };
 
 // Default action labels per type (overridden by bodyData.actionLabel)
 const TYPE_ACTION_LABEL: Record<string, string> = {
-  draft_resume:      'Continue',
-  pause_ack:         'Pick Up',
-  badge_ready:       'Check Now',
-  compliance_nudge:  'View Report',
-  log_invitation:    'Log It',
-  prep_reminder:     'Get Ready',
-  streak_prompt:     'Quick Log',
-  streak_celebration:'View',
-  weekly_digest:     'View',
-  capability_growth: 'See Growth',
+  draft_resume:              'Continue',
+  pause_ack:                 'Pick Up',
+  badge_ready:               'Check Now',
+  compliance_nudge:          'View Report',
+  log_invitation:            'Log It',
+  prep_reminder:             'Get Ready',
+  streak_prompt:             'Quick Log',
+  streak_celebration:        'View',
+  weekly_digest:             'View',
+  capability_growth:         'See Growth',
+  recommendations_refreshed: 'See Suggestions',
 };
 
 export default function NotificationRow({

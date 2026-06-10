@@ -26,7 +26,8 @@ type NotificationType =
   | 'session_created'
   | 'session_completed'
   | 'observation_received'
-  | 'scaffold_expiring';
+  | 'scaffold_expiring'
+  | 'recommendations_refreshed';
 
 type NotificationTier = 'whisper' | 'nudge' | 'chime';
 
@@ -51,11 +52,12 @@ const TYPE_COOLDOWNS: Record<NotificationType, number> = {
   prep_reminder: 24 * 60 * 60 * 1000,      // 1 day
   streak_prompt: 5 * 24 * 60 * 60 * 1000,  // 5 days
   module_nudge: 14 * 24 * 60 * 60 * 1000,  // 2 weeks
-  hearth_invite: 14 * 24 * 60 * 60 * 1000,      // 14 days
-  session_created: 24 * 60 * 60 * 1000,          // 1 day
-  session_completed: 24 * 60 * 60 * 1000,        // 1 day
-  observation_received: 24 * 60 * 60 * 1000,     // 1 day
-  scaffold_expiring: 5 * 24 * 60 * 60 * 1000,    // 5 days
+  hearth_invite: 14 * 24 * 60 * 60 * 1000,           // 14 days
+  session_created: 24 * 60 * 60 * 1000,              // 1 day
+  session_completed: 24 * 60 * 60 * 1000,            // 1 day
+  observation_received: 24 * 60 * 60 * 1000,         // 1 day
+  scaffold_expiring: 5 * 24 * 60 * 60 * 1000,        // 5 days
+  recommendations_refreshed: 365 * 24 * 60 * 60 * 1000, // 365 days (one-time — flag also guards)
 };
 
 const DAILY_CAP = 4;
@@ -400,6 +402,60 @@ export async function triggerModuleNudge(
     },
     destinationRoute: '/explore/marketplace',
   });
+}
+
+// ─── Trigger: recommendations_refreshed ───
+// One-shot notice that the June-2026 scoring rebalance shifted suggestion
+// ordering for pre-existing families. Self-sunsets 2026-09-30.
+
+const REBALANCE_DATE = new Date('2026-06-06T00:00:00.000Z');
+const NOTICE_SUNSET = new Date('2026-09-30T00:00:00.000Z');
+
+export async function triggerRecommendationsRefreshNotice(
+  familyId: string,
+  hasSuggestedNext: boolean,
+): Promise<boolean> {
+  if (!hasSuggestedNext) return false;
+
+  const now = new Date();
+  if (now >= NOTICE_SUNSET) return false;
+
+  // Only families created before the rebalance see this.
+  const family = await db.query.families.findFirst({
+    where: eq(families.id, familyId),
+  });
+  if (!family?.createdAt || new Date(family.createdAt) >= REBALANCE_DATE) return false;
+
+  // One-time flag: if already set, skip. Gating declines must NOT burn the shot.
+  const settings = await db.query.familySettings.findFirst({
+    where: eq(familySettings.familyId, familyId),
+  });
+  const prefs = (settings?.notificationPrefs ?? {}) as Record<string, unknown>;
+  if (prefs.recommendationsShiftNoticeAt) return false;
+
+  const created = await createNotification({
+    familyId,
+    type: 'recommendations_refreshed',
+    tier: 'chime',
+    title: "We've gently tuned how suggestions are chosen",
+    body: "Suggested Next now leans a little toward how your family likes to learn. Sparks and gaps still lead the way — so if the order looks different this week, that's all it is.",
+    destinationRoute: '/explore/activities',
+  });
+
+  // Set flag ONLY when createNotification returns true (quiet hours / cap declines retry next rebuild).
+  if (created) {
+    const newPrefs = { ...prefs, recommendationsShiftNoticeAt: now.toISOString() };
+    if (settings) {
+      await db
+        .update(familySettings)
+        .set({ notificationPrefs: newPrefs })
+        .where(eq(familySettings.familyId, familyId));
+    } else {
+      await db.insert(familySettings).values({ familyId, notificationPrefs: newPrefs });
+    }
+  }
+
+  return created;
 }
 
 // ─── Community Triggers ───

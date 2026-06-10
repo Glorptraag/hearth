@@ -18,6 +18,7 @@ import {
   triggerComplianceNudge,
   triggerStreakPrompt,
   triggerModuleNudge,
+  triggerRecommendationsRefreshNotice,
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
@@ -743,6 +744,12 @@ export async function rebuildSnapshot(
         topSubjects,
       });
     }
+
+    // Recommendations refresh notice: one-shot for pre-rebalance families
+    await triggerRecommendationsRefreshNotice(
+      familyId,
+      (recommendations?.suggested_next.length ?? 0) > 0,
+    );
 
     if (rebuildDuration > 500) {
       console.warn(`[snapshotRebuild] SLOW family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);

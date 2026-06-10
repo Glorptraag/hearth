@@ -62,6 +62,8 @@ docs/                # Architecture specs, design system docs
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |
 | `docs/branch-hygiene.md` | Branch protection + GitHub auto-delete + stale-branch audit (`scripts/audit-stale-branches.mjs`). |
 | `docs/test-pilot-runbook.md` | **Canonical testing setup.** Read before writing or running any test. |
+| `docs/hearth-research-log.md` | **Append-only pilot-evidence log.** Every user-reported finding lands here; every confirmed bug gets a regression test at the right layer (the convention lives in its header). Check before claiming a behaviour is or isn't a known issue. |
+| `docs/hearth-pilot-personas-v1.md` + `docs/hearth-parent-journey-v1.md` | Who Hearth serves (composite personas, `[TO VALIDATE]`-tagged) and the staged anxiety→joy journey with per-stage success signals. Read on any UX-facing task; cite personas by name in specs. |
 | `docs/PROJECT_STATUS.md` | **Single source of truth for project status + priorities.** Updated in the same PR as the work, or claims carry a "trails reality" caveat. The closed alpha trackers live in `docs/archive/`. |
 | `docs/external-services-guide.md` | All-in-one reference for every external service Hearth depends on (Clerk, Neon, Sanity, Anthropic, PostHog, Sentry, Vercel, Upstash) — rationale + alternatives. |
 | `docs/oncall-cheatsheet.md` | One-page on-call reference: dashboards, kill-switches, symptom→first-move table. |

@@ -78,7 +78,7 @@ export default async function PlannerPage() {
   const { weekEntries, familyLearners, snapshot, libraryItems } = result.data;
 
   // Read structured recommendations from snapshot (populated by scoring engine)
-  type SnapshotRec = { module_title: string; primary_reason: string; reason_text: string };
+  type SnapshotRec = { module_id: string; module_title: string; primary_reason: string; reason_text: string };
   type ChildSnap = {
     name?: string;
     gap_analysis?: { underserved_subjects?: string[] };
@@ -91,7 +91,7 @@ export default async function PlannerPage() {
     recommendations?: { suggested_next?: SnapshotRec[]; subject_balance?: Record<string, string> };
   };
 
-  const recommendations: Array<{ title: string; subject?: string; reason?: string }> = [];
+  const recommendations: Array<{ title: string; subject?: string; reason?: string; moduleId?: string }> = [];
 
   const scored = snapshotData.recommendations?.suggested_next ?? [];
   if (scored.length > 0) {
@@ -100,6 +100,7 @@ export default async function PlannerPage() {
       recommendations.push({
         title: rec.reason_text || rec.module_title,
         reason: rec.primary_reason,
+        moduleId: rec.module_id,
       });
     }
   } else {

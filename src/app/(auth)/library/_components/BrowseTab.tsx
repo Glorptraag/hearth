@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Play, CalendarBlank, MagnifyingGlass, Compass, Books, Sparkle } from '@/components/icons';
 import type { LibraryModuleItem } from '@/app/api/library/modules/route';
 import type { NextResponseBody as SnapshotNextResponse } from '@/app/api/snapshot/next/route';
+import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 
 const SUBJECT_LABELS: Record<string, string> = {
   english: 'English',
@@ -68,8 +69,9 @@ export function BrowseTab() {
   const [sessionType, setSessionType] = useState<'sustained' | 'open_ended' | null>(null);
   const [sort, setSort] = useState<SortMode>('relevance');
 
-  // Pedagogy-aware ranking (relevance sort).
-  const [relevanceOrder, setRelevanceOrder] = useState<Map<string, number> | null>(null);
+  // Pedagogy-aware ranking (relevance sort). Carries rank + primary_reason for analytics.
+  interface RelevanceEntry { rank: number; reason: string }
+  const [relevanceOrder, setRelevanceOrder] = useState<Map<string, RelevanceEntry> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,8 +101,10 @@ export function BrowseTab() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data: SnapshotNextResponse | null) => {
         if (cancelled || !data) return;
-        const map = new Map<string, number>();
-        data.recommendations.forEach((r, i) => map.set(r.module_id, i));
+        const map = new Map<string, RelevanceEntry>();
+        data.recommendations.forEach((r, i) =>
+          map.set(r.module_id, { rank: i, reason: r.primary_reason }),
+        );
         setRelevanceOrder(map);
       })
       .catch(() => {
@@ -145,8 +149,8 @@ export function BrowseTab() {
       // Modules in the snapshot/next response come first in scored order;
       // remainder fall back to alphabetical.
       list.sort((a, b) => {
-        const ra = relevanceOrder.has(a.id) ? relevanceOrder.get(a.id)! : Infinity;
-        const rb = relevanceOrder.has(b.id) ? relevanceOrder.get(b.id)! : Infinity;
+        const ra = relevanceOrder.has(a.id) ? relevanceOrder.get(a.id)!.rank : Infinity;
+        const rb = relevanceOrder.has(b.id) ? relevanceOrder.get(b.id)!.rank : Infinity;
         if (ra !== rb) return ra - rb;
         return a.title.localeCompare(b.title);
       });
@@ -296,7 +300,11 @@ export function BrowseTab() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
           {sorted.map((m) => (
-            <BrowseModuleCard key={m.id} module={m} />
+            <BrowseModuleCard
+              key={m.id}
+              module={m}
+              relevanceEntry={sort === 'relevance' ? relevanceOrder?.get(m.id) ?? null : null}
+            />
           ))}
         </div>
       )}
@@ -340,7 +348,13 @@ function FilterChip({
   );
 }
 
-function BrowseModuleCard({ module: m }: { module: LibraryModuleItem }) {
+function BrowseModuleCard({
+  module: m,
+  relevanceEntry,
+}: {
+  module: LibraryModuleItem;
+  relevanceEntry: { rank: number; reason: string } | null;
+}) {
   const addToToday = async () => {
     const today = new Date().toISOString().slice(0, 10);
     await fetch('/api/planner', {
@@ -355,6 +369,16 @@ function BrowseModuleCard({ module: m }: { module: LibraryModuleItem }) {
     }).catch(() => {
       // Silent failure for now — surface improvements in a future cycle.
     });
+    if (relevanceEntry) {
+      const hash = await hashForAnalytics(m.id);
+      track('recommendation_accepted', {
+        surface: 'library_browse',
+        action: 'planned',
+        reason: relevanceEntry.reason,
+        module_id_hash: hash,
+        rank: relevanceEntry.rank,
+      });
+    }
   };
 
   return (
@@ -407,6 +431,19 @@ function BrowseModuleCard({ module: m }: { module: LibraryModuleItem }) {
       <div className="flex gap-xs">
         <Link
           href={`/module/${m.id}`}
+          onClick={() => {
+            if (relevanceEntry) {
+              void hashForAnalytics(m.id).then((hash) => {
+                track('recommendation_accepted', {
+                  surface: 'library_browse',
+                  action: 'started',
+                  reason: relevanceEntry.reason,
+                  module_id_hash: hash,
+                  rank: relevanceEntry.rank,
+                });
+              });
+            }
+          }}
           className="flex-1 inline-flex items-center justify-center gap-xs bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         >
           <Play size={14} aria-hidden="true" /> Start Now

@@ -92,7 +92,9 @@ export type HearthEvent =
   | 'pedagogy_set'
   | 'pack_purchased'
   | 'dlo.enrichment.completed'
-  | 'feedback_submitted';
+  | 'feedback_submitted'
+  | 'recommendations_scored'
+  | 'recommendation_accepted';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {
   if (!enabled || !initialised) return;

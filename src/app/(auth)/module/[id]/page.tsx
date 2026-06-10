@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
@@ -42,6 +43,7 @@ export default function ModuleDetailPage() {
   const [sessionElapsed, setSessionElapsed] = useState<number | undefined>(undefined);
   const [quickCaptures, setQuickCaptures] = useState<QuickCaptureItem[]>([]);
   const facilitateStartRef = useRef<number | null>(null);
+  const moduleIdHashRef = useRef<string | null>(null);
   const [readerTextId, setReaderTextId] = useState<string | null>(null);
   const [showPrintSheet, setShowPrintSheet] = useState(false);
   const [owningPackId, setOwningPackId] = useState<string | null>(null);
@@ -56,6 +58,10 @@ export default function ModuleDetailPage() {
   const handleRemoveCapture = useCallback((timestamp: number) => {
     setQuickCaptures((prev) => prev.filter((c) => c.timestamp !== timestamp));
   }, []);
+
+  useEffect(() => {
+    hashForAnalytics(id).then((h) => { moduleIdHashRef.current = h; }).catch(() => {});
+  }, [id]);
 
   const STORAGE_KEY = `hearth_module_${id}_session`;
   const START_TIME_KEY = `hearth_module_${id}_start`;
@@ -480,6 +486,7 @@ export default function ModuleDetailPage() {
               const now = Date.now();
               facilitateStartRef.current = now;
               try { localStorage.setItem(START_TIME_KEY, String(now)); } catch { /* ignore */ }
+              if (moduleIdHashRef.current) track('module_session_started', { module_id_hash: moduleIdHashRef.current });
               setMode('facilitate');
             }}
             savedChunkIdx={savedChunkIdx}
@@ -490,6 +497,7 @@ export default function ModuleDetailPage() {
                   facilitateStartRef.current = saved ? parseInt(saved, 10) : Date.now();
                 } catch { facilitateStartRef.current = Date.now(); }
               }
+              if (moduleIdHashRef.current) track('module_session_resumed', { module_id_hash: moduleIdHashRef.current, chunk_idx: savedChunkIdx });
               setMode('facilitate');
             }}
           />
@@ -562,7 +570,10 @@ export default function ModuleDetailPage() {
             onRemoveCapture={handleRemoveCapture}
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
-            onSaved={clearSession}
+            onSaved={() => {
+              if (moduleIdHashRef.current) track('module_session_logged', { module_id_hash: moduleIdHashRef.current });
+              clearSession();
+            }}
           />
         )}
       </div>

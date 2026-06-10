@@ -100,6 +100,13 @@ First exercise of this log's binding rule: the pilot's one user-facing defect (R
 **Regression test:** none — gap (PR-D will add: card renders from a scored-snapshot fixture).
 **Date logged:** 2026-06-10.
 
+### R11 — Convention applied (2026-06-10): R10 fixed and regression-tested.
+
+Drew approved shipping the Gentle Prompt fix mid-pilot ("users will want that change"). `getGentlePrompt()` (`src/lib/dashboard/gentle-prompt.ts`) is typed against the canonical `SnapshotData['recommendations']` shape, so the R10 bug class — UI reading a different shape than the rebuild writes — now fails compile, and `gentle-prompt.test.ts` pins the runtime contract (renders from a scored fixture, null on empty/absent/blank). Demo + dev-preview mocks migrated off the legacy array shape they had been quietly keeping alive.
+**Spec affected:** dashboard recommendations surface; journey Stage 5.
+**Regression test:** `src/lib/dashboard/gentle-prompt.test.ts` (unit layer).
+**Date logged:** 2026-06-10.
+
 ---
 
-*Next entry: R11. Append below; never edit above.*
+*Next entry: R12. Append below; never edit above.*

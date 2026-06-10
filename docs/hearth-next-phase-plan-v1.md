@@ -48,9 +48,9 @@ Per the decision brief: **drop both, with the zero-schema probe first or alongsi
 4. **Grep trap:** the `plannerEntryId` in `notifications/trigger/route.ts:36,90-96` is the planner-entries *PK in a request payload* — unrelated; must survive.
 5. **Reversal clause:** any research-log entry of a family reporting "I lost my place in a module", or probe events showing cross-device resume attempts, flips this to the wire-it path (endpoint sketch preserved in the decision analysis: POST create at PrepMode start, debounced PATCH heartbeat at `persistChunk`/`onPause`, server-side finish inside POST /api/entries when `moduleRunId` present).
 
-## PR-D — `fix(dashboard): render Gentle Prompt from snapshot recommendations object`
+## PR-D — `fix(dashboard): render Gentle Prompt from snapshot recommendations object` — ✅ SHIPPED
 
-The R10 shape mismatch. Small but **user-visible mid-pilot** — a card that never appeared starts appearing. Decision needed from Drew before landing: ship as-is (the card was always intended; spec'd behaviour) or hold until after the first pilot retro. Implementation is trivial once decided: type `recommendations` as the object, read `suggested_next`, regression test that the card renders from a scored snapshot fixture.
+**Decision (Drew, 2026-06-10): ship — "users will want that change."** Landed on the PR #175 branch same day. Implementation: pure `getGentlePrompt()` helper in `src/lib/dashboard/gentle-prompt.ts`, typed against the canonical `SnapshotData['recommendations']` so shape drift is a compile error; card renders `reason_text` + module title; demo/dev-preview mocks migrated to the rebuild shape (their planner pages now apply the same `suggested_next` mapping the real planner page uses). Regression tests in `gentle-prompt.test.ts` (research log R11 closes R10).
 
 ## Deferred (wait for stage evidence — do not build now)
 

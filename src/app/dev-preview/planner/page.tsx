@@ -21,7 +21,10 @@ export default function DevPreviewPlanner() {
         name: l.name,
         colourToken: l.colourToken,
       }))}
-      recommendations={mockSnapshot.recommendations}
+      recommendations={(mockSnapshot.recommendations?.suggested_next ?? []).map((r) => ({
+        title: r.reason_text || r.module_title,
+        reason: r.primary_reason,
+      }))}
       today={today}
     />
   );

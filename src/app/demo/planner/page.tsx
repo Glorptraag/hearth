@@ -6,7 +6,10 @@ export default function DemoPlanner() {
     <PlannerClient
       initialEntries={mockPlannerEntries}
       learners={mockLearners}
-      recommendations={mockSnapshot.recommendations ?? []}
+      recommendations={(mockSnapshot.recommendations?.suggested_next ?? []).map((r) => ({
+        title: r.reason_text || r.module_title,
+        reason: r.primary_reason,
+      }))}
       today={new Date().toISOString().split('T')[0]}
       basePath="/demo"
     />

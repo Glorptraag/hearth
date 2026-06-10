@@ -30,7 +30,7 @@ export type AiEnrichmentBody = {
     text: string;
     trigger: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
   } | null;
-  // HEU work-sample curation signal (spec §3.2). Written at enrichment time
+  // Compliance work-sample curation signal (spec §3.2). Written at enrichment time
   // so the Candidate Panel can rank candidates instead of falling back to
   // date+subject filtering. `work_sample.flag` mirrors learning_entries.work_sample_candidate;
   // `work_sample.quality` is 0.0-1.0. Both null on rows enriched before 2026-05.

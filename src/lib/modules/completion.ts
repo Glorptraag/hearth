@@ -4,7 +4,7 @@
  * An activity counts as completed once the parent has actually entered/viewed
  * it in facilitate mode — NOT by cursor position. That distinction matters
  * because completed activities become an entry's `sourceActivityIds`, which the
- * entries API turns into activity→capability-thread links (portfolio + HEU
+ * entries API turns into activity→capability-thread links (portfolio + compliance
  * signal). Cursor-based "everything strictly before the cursor" tracking
  * mis-recorded partial sessions three ways: the current activity was never
  * counted (one-and-done recorded zero), the last activity of a full run was

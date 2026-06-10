@@ -1,5 +1,7 @@
 # Hearth Report Screen â€” Function & Interaction Specification
 
+> **Jurisdiction framing (added 2026-06-10):** Written against the QLD/HEU reporting cycle as the worked example. Regulator names, report screen titles, review terminology, and date labels are jurisdiction-resolved at runtime via `src/config/jurisdictions.ts`; where this doc says "HEU", read "the family's regulator". The interaction model is jurisdiction-independent.
+
 ## Purpose
 
 The Report screen is the parent's honest self-assessment tool. Unlike the dashboard (which uses warm, opaque messaging to avoid creating anxiety), the Report screen assumes **voluntary opt-in** â€” a parent who opens this page is actively seeking detailed feedback on their compliance position. The tone shifts accordingly: direct, specific, data-rich, and actionable.

@@ -154,7 +154,7 @@ export default function WorkSampleCuration({
     return subjects.has(slot.area) || (slot.altArea ? subjects.has(slot.altArea) : false);
   });
 
-  // Sort: HEU candidates first (flag from write-time AI or manual parent
+  // Sort: compliance candidates first (flag from write-time AI or manual parent
   // override), then by AI quality score (0-1), then by evidence presence, then
   // by recency. Quality score lets the panel rank candidates even within a
   // tied flag bucket — pre-quality entries fall through to the evidence tier.

@@ -1,6 +1,6 @@
 # Hearth LMS — Claude Code Context
 
-> Homeschool learning management platform for Australian families. Queensland HEU compliance focus.
+> Homeschool learning management platform for Australian families. Multi-jurisdiction compliance (all 8 states/territories via `src/config/jurisdictions.ts`); QLD/HEU is the pilot anchor.
 > 10-20 test families target. Solo developer (Drew).
 
 ## Tech Stack

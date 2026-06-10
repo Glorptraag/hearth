@@ -602,7 +602,7 @@ export async function rebuildSnapshot(
       ? `${missingSubjects[0].charAt(0).toUpperCase() + missingSubjects[0].slice(1)} hasn't appeared this week`
       : null;
 
-    // HEU compliance
+    // Jurisdiction compliance (terminology per src/config/jurisdictions.ts)
     const nextReportDue = settings?.nextReportDate ?? null;
     const daysUntilDue = nextReportDue
       ? differenceInCalendarDays(new Date(nextReportDue), now)
@@ -642,7 +642,7 @@ export async function rebuildSnapshot(
           nudge_message: nudgeMessage,
           streak_count: streakCount,
         },
-        heu_status: {
+        compliance_status: {
           next_report_due: nextReportDue,
           days_until_due: daysUntilDue,
           coverage_sufficient: coverageSufficient,
@@ -701,7 +701,7 @@ export async function rebuildSnapshot(
       });
     }
 
-    // Compliance nudge: if HEU deadline approaching + coverage gaps
+    // Compliance nudge: if the jurisdiction's report deadline is approaching + coverage gaps
     if (daysUntilDue !== null && daysUntilDue <= 28) {
       const allChildGaps = Object.values(childSnapshots)
         .flatMap((cs) => {

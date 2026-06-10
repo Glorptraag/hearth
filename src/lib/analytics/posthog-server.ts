@@ -31,11 +31,11 @@ export async function trackServer(
 ) {
   if (!enabled) return;
   try {
-    const hashed = hashId(distinctId);
+    const hashed = hashForAnalytics(distinctId);
     // Same group concept as the client wrapper — pass familyId here
     // so two Clerk users on the same household roll up in funnels.
     const groups = options?.familyId
-      ? { family: hashId(options.familyId) }
+      ? { family: hashForAnalytics(options.familyId) }
       : undefined;
     const body = {
       api_key: PH_KEY,
@@ -57,7 +57,8 @@ export async function trackServer(
   }
 }
 
-function hashId(id: string): string {
+/** Synchronous server-side twin of the client's hashForAnalytics. */
+export function hashForAnalytics(id: string): string {
   return createHash('sha256').update(id).digest('hex').slice(0, 32);
 }
 

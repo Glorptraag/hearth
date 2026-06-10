@@ -40,6 +40,8 @@ export type UseLoggerDraftReturn = {
   dismissDraftRestored: () => void;
   /** Wall-clock ms of the most recent autosave write, or null. */
   lastSavedAt: number | null;
+  /** `savedAt` timestamp from the draft that was restored on mount, or null. Used to compute draft_age_ms on entry_created. */
+  draftSavedAt: number | null;
   /** Wipe persisted draft + reset banner/timestamp. Call after a successful save. */
   clearDraft: () => void;
 };
@@ -76,6 +78,7 @@ export type UseLoggerDraftReturn = {
 export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLoggerDraftReturn {
   const [draftRestored, setDraftRestored] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
 
   const onRestoreRef = useRef(onRestore);
   useEffect(() => {
@@ -89,6 +92,7 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     // Restoring banner state from localStorage on mount; gated on presence of restorable content.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isRestorableDraft(d)) setDraftRestored(true);
+    if (d.savedAt) setDraftSavedAt(d.savedAt);
     if (isStaleDraft(d, Date.now())) {
       const draftTitle = d.description?.slice(0, 40) || undefined;
       fetch('/api/notifications/trigger', {
@@ -117,5 +121,5 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
 
   const dismissDraftRestored = useCallback(() => setDraftRestored(false), []);
 
-  return { draftRestored, dismissDraftRestored, lastSavedAt, clearDraft };
+  return { draftRestored, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft };
 }

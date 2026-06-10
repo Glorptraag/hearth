@@ -44,7 +44,7 @@ export function initAnalytics() {
 export async function identifyUser(id: string) {
   if (!enabled || !initialised) return;
   try {
-    const hashed = await hashId(id);
+    const hashed = await hashForAnalytics(id);
     posthog.identify(hashed);
   } catch {
     // identification failure is non-fatal
@@ -60,7 +60,7 @@ export async function identifyUser(id: string) {
 export async function identifyFamily(familyId: string) {
   if (!enabled || !initialised) return;
   try {
-    const hashed = await hashId(familyId);
+    const hashed = await hashForAnalytics(familyId);
     posthog.group('family', hashed);
   } catch {
     // grouping failure is non-fatal
@@ -80,6 +80,7 @@ export type HearthEvent =
   | 'entry_created'
   | 'entry_enriched'
   | 'entry_enrich_retried'
+  | 'enrichment_viewed'
   | 'module_added_to_library'
   | 'badge_awarded'
   | 'badge_deferred'
@@ -101,13 +102,18 @@ export function track(event: HearthEvent, properties?: Record<string, string | n
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-async function hashId(id: string): Promise<string> {
+/**
+ * Hash an arbitrary string ID to 128 bits of SHA-256 hex. Exported so
+ * call-site code (e.g. the Logger) can hash entry IDs for funnel join keys.
+ * Same algorithm as the server-side twin in posthog-server.ts.
+ */
+export async function hashForAnalytics(id: string): Promise<string> {
   const buf = new TextEncoder().encode(id);
   const digest = await crypto.subtle.digest('SHA-256', buf);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
-    .slice(0, 32); // 128 bits of entropy is plenty for distinct family identity
+    .slice(0, 32);
 }
 
 /**

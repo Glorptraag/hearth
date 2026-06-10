@@ -19,7 +19,7 @@ import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
 import { triggerDraftResume } from '@/lib/notifications/triggers';
 import { rateLimit } from '@/lib/rate-limit';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
-import { trackServer } from '@/lib/analytics/posthog-server';
+import { trackServer, hashForAnalytics } from '@/lib/analytics/posthog-server';
 
 export const GET = routeHandler(async (request: NextRequest) => {
   const { userId } = await auth();
@@ -196,6 +196,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'ok',
+          entry_id: hashForAnalytics(entry.id),
         }, { familyId: family.id });
       } catch (err) {
         console.error('[entries/POST] AI pipeline error:', err);
@@ -220,6 +221,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
         trackServer('entry_enriched', userId, {
           duration_ms: Date.now() - enrichStart,
           status: 'error',
+          entry_id: hashForAnalytics(entry.id),
         }, { familyId: family.id });
       }
     });

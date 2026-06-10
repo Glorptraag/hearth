@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Check, Sparkle } from '@/components/icons';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import type { AiEnrichment } from '@/types/enrichment';
+import { useViewedOnce } from '@/hooks/use-viewed-once';
+import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 
 // Mirrors the taxonomy in src/lib/ai/enrich.ts. Kept local so this surface
 // doesn't have to reach into the route file for labels; the surface only
@@ -44,13 +47,60 @@ export type PostSaveSurfaceProps = {
   enrichment: AiEnrichment | null;
   evidenceCount: number;
   onLogAnother: () => void;
+  entryId?: string;
+  savedAtMs?: number;
+  scaffolded?: boolean;
 };
 
-export function PostSaveSurface({ enrichment, evidenceCount, onLogAnother }: PostSaveSurfaceProps) {
+export function PostSaveSurface({
+  enrichment,
+  evidenceCount,
+  onLogAnother,
+  entryId,
+  savedAtMs,
+  scaffolded,
+}: PostSaveSurfaceProps) {
   const status = enrichment?.status ?? 'pending';
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const hashedEntryIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!entryId) return;
+    hashForAnalytics(entryId).then((h) => { hashedEntryIdRef.current = h; }).catch(() => {});
+  }, [entryId]);
+
+  // Mirror EnrichedBody's non-null predicate so useViewedOnce is only enabled
+  // when the surface actually shows enrichment content to the parent.
+  const reflection =
+    status === 'enriched' && enrichment
+      ? enrichment.insight_suggestions?.[0]?.trim() ||
+        enrichment.journey_observation?.text?.trim() ||
+        null
+      : null;
+  const topThread = status === 'enriched' && enrichment ? enrichment.capability_threads?.[0] : undefined;
+  const threadLabel = topThread ? THREAD_LABELS[topThread.thread_id] : null;
+  const workSampleFlagged = Boolean(status === 'enriched' && enrichment?.work_sample?.flag === true);
+  const hasContent = Boolean(reflection || threadLabel || workSampleFlagged);
+
+  useViewedOnce(
+    surfaceRef,
+    () => {
+      const props: Record<string, string | number | boolean> = {
+        wait_ms: savedAtMs != null ? Math.round(Date.now() - savedAtMs) : 0,
+        had_insight: Boolean(reflection),
+        had_thread: Boolean(threadLabel),
+        had_work_sample: workSampleFlagged,
+        scaffolded: scaffolded ?? false,
+      };
+      if (hashedEntryIdRef.current) props.entry_id = hashedEntryIdRef.current;
+      track('enrichment_viewed', props);
+    },
+    { threshold: 0.5, dwellMs: 1000, enabled: status === 'enriched' && hasContent },
+  );
 
   return (
     <div
+      ref={surfaceRef}
       role="region"
       aria-label="Moment saved"
       className="hearth-modal-enter mx-auto flex max-w-2xl flex-col gap-lg px-md py-xl lg:px-lg"

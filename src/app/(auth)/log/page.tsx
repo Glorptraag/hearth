@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays } from 'date-fns';
 import { generateReflectionPrompts, type ReflectionPrompt } from '@/lib/ai/keyword-matcher';
-import { track } from '@/lib/analytics/posthog';
+import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 import { useDraftInsight } from '@/hooks/use-draft-insight';
 import { useLoggerDraft } from '@/hooks/use-logger-draft';
 import { useLearnersFetch } from '@/hooks/use-learners-fetch';
@@ -111,12 +111,18 @@ export default function LogPage() {
     entryId: string;
     evidenceCount: number;
     enrichment: AiEnrichment | null;
+    savedAtMs: number;
   } | null>(null);
 
   // Guard so an in-flight enrichment poll can't write post-save UI state into
   // a new entry. Holds the entryId being polled; cleared when the parent
   // starts typing again (see the new-entry clearing effect below).
   const activeEnrichmentEntryIdRef = useRef<string | null>(null);
+
+  // Tracks when the parent first typed anything in the current entry so we can
+  // report compose_ms on entry_created. Null until description becomes non-empty;
+  // reset in the post-save field-reset block alongside description.
+  const composeStartRef = useRef<number | null>(null);
 
   const { loggerMode, setLoggerMode, snapshotData, snapshotSignals } =
     useLoggerModeAndSnapshot();
@@ -152,7 +158,7 @@ export default function LogPage() {
     observationDetails,
   }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence, observationDetails]);
 
-  const { draftRestored, dismissDraftRestored, lastSavedAt, clearDraft } = useLoggerDraft({
+  const { draftRestored, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft } = useLoggerDraft({
     state: draftState,
     onRestore: useCallback((d) => {
       // Each setter is gated on the corresponding field's presence — same shape
@@ -196,6 +202,7 @@ export default function LogPage() {
 
   // Clear post-save insights when parent starts a new entry. Also invalidates
   // any in-flight enrichment poll so its setState calls become no-ops.
+  // Also captures the first-meaningful-interaction timestamp for compose_ms.
   useEffect(() => {
     if (description.length > 0) {
       activeEnrichmentEntryIdRef.current = null;
@@ -204,6 +211,9 @@ export default function LogPage() {
       setPostSaveInsights([]);
       setProfileNudge(null);
       setPedagogySources([]);
+      if (composeStartRef.current === null) {
+        composeStartRef.current = Date.now();
+      }
     }
   }, [description]);
 
@@ -373,15 +383,7 @@ export default function LogPage() {
 
       const savedEntry = await res.json().catch(() => ({})) as { id?: string };
       const savedEntryId = savedEntry?.id;
-
-      track('entry_created', {
-        source: scaffoldData ? 'hearth_session' : projectContext.source ?? 'retro',
-        learner_count: selectedLearners.length,
-        has_evidence: evidenceUrls.length > 0,
-        activity_type: activityType ?? 'none',
-      });
-
-      clearDraft();
+      const savedAtMs = Date.now();
 
       // Thin entries skip the substantive second screen and keep the fast
       // "Saved" toast (see spec §2 Item 2 density table). See
@@ -392,6 +394,34 @@ export default function LogPage() {
         evidenceUrlCount: evidenceUrls.length,
         completeness,
       });
+
+      const rawComposeMs =
+        composeStartRef.current !== null ? savedAtMs - composeStartRef.current : null;
+      const compose_ms =
+        rawComposeMs !== null
+          ? Math.round(Math.min(rawComposeMs, 4 * 60 * 60 * 1000) / 1000) * 1000
+          : null;
+
+      const entryIdHash = savedEntryId
+        ? await hashForAnalytics(savedEntryId).catch(() => null)
+        : null;
+
+      const entryCreatedProps: Record<string, string | number | boolean> = {
+        source: scaffoldData ? 'hearth_session' : projectContext.source ?? 'retro',
+        learner_count: selectedLearners.length,
+        has_evidence: evidenceUrls.length > 0,
+        activity_type: activityType ?? 'none',
+        thin: thinEntry,
+        resumed_from_draft: draftRestored,
+      };
+      if (entryIdHash) entryCreatedProps.entry_id = entryIdHash;
+      if (compose_ms !== null) entryCreatedProps.compose_ms = compose_ms;
+      if (draftRestored && draftSavedAt !== null) {
+        entryCreatedProps.draft_age_ms = Math.round(savedAtMs - draftSavedAt);
+      }
+      track('entry_created', entryCreatedProps);
+
+      clearDraft();
 
       // Scaffold (hearth session) entries also surface the post-save second
       // screen — per the resolution doc, PostSaveSurface is where enrichment
@@ -419,7 +449,7 @@ export default function LogPage() {
         // Substantive entry → render the inline post-save second screen.
         // Enrichment starts as null; the poll below populates it as the
         // server's after() job lands data.
-        setPostSave({ entryId: savedEntryId, evidenceCount: evidenceUrls.length, enrichment: null });
+        setPostSave({ entryId: savedEntryId, evidenceCount: evidenceUrls.length, enrichment: null, savedAtMs });
       }
       const learnersToCheck = [...selectedLearners];
       setSelectedLearners([]);
@@ -440,6 +470,7 @@ export default function LogPage() {
       // above triggers).
       setProfileNudge(null);
       setPedagogySources([]);
+      composeStartRef.current = null;
 
       // Poll for enrichment to complete (server runs it async after save).
       // Snapshot-rebuild also enqueues `badge_ready` notifications, so if the
@@ -544,6 +575,9 @@ export default function LogPage() {
           enrichment={postSave.enrichment}
           evidenceCount={postSave.evidenceCount}
           onLogAnother={() => setPostSave(null)}
+          entryId={postSave.entryId}
+          savedAtMs={postSave.savedAtMs}
+          scaffolded={Boolean(scaffoldData)}
         />
         {toast && (
           <div

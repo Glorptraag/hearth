@@ -38,11 +38,16 @@ export function asUser(params: {
   familyId?: string;
   role?: Role;
   email?: string;
+  /** Clerk profile name fields — onboarding derives the family name from lastName (research log R1). Pass null for a Clerk account with no surname. */
+  firstName?: string | null;
+  lastName?: string | null;
 }) {
   const userId = params.userId ?? TEST_USER_ID;
   const familyId = params.familyId ?? TEST_FAMILY_ID;
   const role = params.role ?? 'owner';
   const email = params.email ?? 'parent@example.com';
+  const firstName = params.firstName === undefined ? 'Test' : params.firstName;
+  const lastName = params.lastName === undefined ? 'Parent' : params.lastName;
 
   const mockAuth: MockAuth = {
     userId,
@@ -59,9 +64,9 @@ export function asUser(params: {
 
   const mockUser = {
     id: userId,
-    firstName: 'Test',
-    lastName: 'Parent',
-    fullName: 'Test Parent',
+    firstName,
+    lastName,
+    fullName: [firstName, lastName].filter(Boolean).join(' ') || null,
     emailAddresses: [{ id: 'email_1', emailAddress: email }],
     publicMetadata: { familyId, role },
     privateMetadata: {},

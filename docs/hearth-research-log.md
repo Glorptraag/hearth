@@ -19,7 +19,7 @@ Known places where real family behaviour outruns the test suite, as of 2026-06-1
 
 | Gap | Layer that should cover it | Status |
 |---|---|---|
-| Onboarding happy path (`/api/onboarding/complete`, `/api/welcome/complete`) | integration | **Open** — the one real UX bug of the pilot (R1) lived here, and it still has no integration test |
+| Onboarding happy path (`/api/onboarding/complete`, `/api/welcome/complete`) | integration | **Closed 2026-06-10** (R8) — `src/app/api/welcome/complete/route.integration.test.ts` covers the R1 family-name contract; `/api/onboarding/complete`'s Sanity starter-pack branch remains untested (non-blocking by design) |
 | Mobile browser behaviour (one-handed logging, soft-keyboard, PWA) | e2e (Playwright mobile profile) | **Open** — Playwright runs desktop-only; only co-facilitator flow has e2e at all |
 | Multi-session / multi-user auth (owner + editor in genuinely separate sessions) | e2e | **Open** — existing 45 e2e tests share one auth context |
 | Analytics payload fidelity (hashed IDs actually leave the client correctly) | unit | **Open** |
@@ -79,6 +79,13 @@ All six pilot findings (R1–R6) are infrastructure/config-level; five of six we
 **Regression test:** n/a — instrumentation finding.
 **Date logged:** 2026-06-10.
 
+### R8 — Convention applied (2026-06-10): R1 now has its regression test.
+
+First exercise of this log's binding rule: the pilot's one user-facing defect (R1, onboarding family-name) is now covered by `src/app/api/welcome/complete/route.integration.test.ts` — new family born `"<Surname> Family"`, no-surname fallback, whitespace surname, and the load-bearing case: an existing (parent-chosen) family name is never overwritten by the Clerk surname. `asUser()` in `@/test/clerk-helpers` gained `firstName`/`lastName` overrides so tests never hand-roll Clerk mocks.
+**Spec affected:** closes the R1 test gap; coverage-gap matrix row 1 updated.
+**Regression test:** `src/app/api/welcome/complete/route.integration.test.ts` (integration layer).
+**Date logged:** 2026-06-10.
+
 ---
 
-*Next entry: R8. Append below; never edit above.*
+*Next entry: R9. Append below; never edit above.*

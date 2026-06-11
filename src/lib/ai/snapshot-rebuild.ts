@@ -13,6 +13,7 @@ import {
 import { eq, and, desc, gte, lte, count, inArray } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
+import { entryThreadIds } from './thread-aggregation';
 import {
   triggerBadgeReady,
   triggerComplianceNudge,
@@ -107,7 +108,7 @@ export async function rebuildSnapshot(
       );
 
       const subjectCounts: Record<string, number> = {};
-      const threadCounts: Record<string, { count: number; lastDate: string; tier: string }> = {};
+      const threadCounts: Record<string, { count: number; lastDate: string; tier: string; inferred: number; declared: number }> = {};
       const descriptorSet = new Set<string>();
 
       for (const entry of childEntries) {
@@ -115,23 +116,26 @@ export async function rebuildSnapshot(
           subjectCounts[subj] = (subjectCounts[subj] ?? 0) + 1;
         }
 
+        for (const { threadId, inferred, declared } of entryThreadIds(entry)) {
+          const existing = threadCounts[threadId];
+          if (existing) {
+            existing.count++;
+            if (entry.dateOccurred > existing.lastDate) existing.lastDate = entry.dateOccurred;
+            if (inferred) existing.inferred++;
+            if (declared) existing.declared++;
+          } else {
+            threadCounts[threadId] = {
+              count: 1,
+              lastDate: entry.dateOccurred,
+              tier: 'emerging',
+              inferred: inferred ? 1 : 0,
+              declared: declared ? 1 : 0,
+            };
+          }
+        }
+
         const enrichment = entry.aiEnrichment as EnrichmentResult | null;
         if (enrichment) {
-          for (const thread of enrichment.capability_threads ?? []) {
-            const existing = threadCounts[thread.thread_id];
-            if (existing) {
-              existing.count++;
-              if (entry.dateOccurred > existing.lastDate) {
-                existing.lastDate = entry.dateOccurred;
-              }
-            } else {
-              threadCounts[thread.thread_id] = {
-                count: 1,
-                lastDate: entry.dateOccurred,
-                tier: 'emerging',
-              };
-            }
-          }
           for (const desc of enrichment.curriculum_descriptors ?? []) {
             descriptorSet.add(desc.code);
           }
@@ -290,18 +294,12 @@ export async function rebuildSnapshot(
 
         let recentCount = 0;
         for (const entry of recentWindow) {
-          const enrichment = entry.aiEnrichment as EnrichmentResult | null;
-          if (enrichment?.capability_threads?.some((t) => t.thread_id === threadId)) {
-            recentCount++;
-          }
+          if (entryThreadIds(entry).some((t) => t.threadId === threadId)) recentCount++;
         }
 
         let priorCount = 0;
         for (const entry of priorWindow) {
-          const enrichment = entry.aiEnrichment as EnrichmentResult | null;
-          if (enrichment?.capability_threads?.some((t) => t.thread_id === threadId)) {
-            priorCount++;
-          }
+          if (entryThreadIds(entry).some((t) => t.threadId === threadId)) priorCount++;
         }
 
         if (recentCount === 0) return 'plateau';
@@ -312,10 +310,7 @@ export async function rebuildSnapshot(
       // Evidence quality: average description_richness across last 5 entries for each thread
       function computeEvidenceQuality(threadId: string): EvidenceQuality {
         const threadEntries = childEntries
-          .filter((e) => {
-            const enrichment = e.aiEnrichment as EnrichmentResult | null;
-            return enrichment?.capability_threads?.some((t) => t.thread_id === threadId);
-          })
+          .filter((e) => entryThreadIds(e).some((t) => t.threadId === threadId))
           .slice(0, 5);
 
         if (threadEntries.length === 0) return 'weak';
@@ -368,6 +363,7 @@ export async function rebuildSnapshot(
             dlos_total: dlosTotal,
             trajectory: computeTrajectory(threadId),
             recent_evidence_quality: computeEvidenceQuality(threadId),
+            source_counts: { inferred: data.inferred, declared: data.declared },
           };
         })
         .sort((a, b) => b.observation_count - a.observation_count);
@@ -387,11 +383,8 @@ export async function rebuildSnapshot(
       const recentEntries = childEntries.filter((e) => e.dateOccurred >= sevenDaysAgo);
       const sparkCounts: Record<string, number> = {};
       for (const entry of recentEntries) {
-        const enrichment = entry.aiEnrichment as EnrichmentResult | null;
-        if (enrichment) {
-          for (const t of enrichment.capability_threads ?? []) {
-            sparkCounts[t.thread_id] = (sparkCounts[t.thread_id] ?? 0) + 1;
-          }
+        for (const { threadId } of entryThreadIds(entry)) {
+          sparkCounts[threadId] = (sparkCounts[threadId] ?? 0) + 1;
         }
       }
       const currentSparks = Object.entries(sparkCounts)
@@ -613,11 +606,8 @@ export async function rebuildSnapshot(
     // Compute weekly thread coverage for dashboard summary card
     const weekThreads = new Set<string>();
     for (const entry of weekEntries) {
-      const enrichment = entry.aiEnrichment as EnrichmentResult | null;
-      if (enrichment) {
-        for (const t of enrichment.capability_threads ?? []) {
-          weekThreads.add(t.thread_id);
-        }
+      for (const { threadId } of entryThreadIds(entry)) {
+        weekThreads.add(threadId);
       }
     }
     const weeklyThreadCoverage = Math.min(100, Math.round((weekThreads.size / 57) * 100));

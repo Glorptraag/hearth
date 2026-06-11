@@ -18,6 +18,7 @@ export interface SnapshotActiveThread {
   dlos_total: number;
   trajectory: ThreadTrajectory;
   recent_evidence_quality: EvidenceQuality;
+  source_counts?: { inferred: number; declared: number };
 }
 
 // ─── Recommendations (Phase 2) ───

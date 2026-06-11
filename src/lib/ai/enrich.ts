@@ -14,6 +14,7 @@ import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types'
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { validateDlos, persistDloLinks, type DloEnrichmentItem } from './dlo-persistence';
 import { trackServer } from '@/lib/analytics/posthog-server';
+import { VALID_THREAD_IDS } from './thread-aggregation';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -31,17 +32,6 @@ function extractJson(text: string): string {
   }
   return candidate.slice(firstBrace, lastBrace + 1);
 }
-
-const VALID_THREAD_IDS = new Set([
-  'L1','L2','L3','L4','L5','L6','L7','L8','L9',
-  'M1','M2','M3','M4','M5','M6','M7','M8','M9',
-  'S1','S2','S3','S4','S5','S6','S7',
-  'H1','H2','H3','H4','H5','H6',
-  'P1','P2','P3','P4','P5',
-  'PS1','PS2','PS3','PS4','PS5','PS6','PS7',
-  'C1','C2','C3','C4','C5','C6','C7',
-  'EF1','EF2','EF3','EF4','EF5','EF6','EF7','EF8',
-]);
 
 const AC9_CODE_PATTERN = /^AC9[A-Z]{1,4}\d{1,2}[A-Z]{1,3}\d{2}$/;
 

@@ -866,6 +866,8 @@ export const observationDloLinks = pgTable(
     tier: text('tier').notNull(),
     confidence: decimal('confidence'),
     rationale: text('rationale'),
+    provenance: text('provenance').notNull().default('inferred'),
+    claimedTier: text('claimed_tier'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

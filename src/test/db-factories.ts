@@ -27,7 +27,9 @@ import {
   learningEntryEvidence,
   familyLibrary,
   facilitatorNotes,
+  observationDloLinks,
 } from '@/lib/db/schema';
+import type { InferInsertModel } from 'drizzle-orm';
 import { encryptField } from '@/lib/crypto/field-encryption';
 import {
   buildFamily,
@@ -148,6 +150,26 @@ export async function createFacilitatorNote(
     .values({ ...row, noteText: encryptField(row.noteText) })
     .returning();
   return result[0];
+}
+
+/**
+ * Insert an observation_dlo_links row. `observationId` and `learnerId` are
+ * required — provide them via overrides. Defaults to provenance='inferred'.
+ */
+export async function createDloLink(
+  db: Db,
+  overrides: Pick<InferInsertModel<typeof observationDloLinks>, 'observationId' | 'learnerId' | 'dloId'> &
+    Partial<InferInsertModel<typeof observationDloLinks>>
+): Promise<InferInsertModel<typeof observationDloLinks> & { id: string }> {
+  const row: InferInsertModel<typeof observationDloLinks> = {
+    tier: 'emerging',
+    confidence: '0.7',
+    provenance: 'inferred',
+    claimedTier: null,
+    ...overrides,
+  };
+  const result = await db.insert(observationDloLinks).values(row).returning();
+  return result[0] as InferInsertModel<typeof observationDloLinks> & { id: string };
 }
 
 // ---------------------------------------------------------------------------

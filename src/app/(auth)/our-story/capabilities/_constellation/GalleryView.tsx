@@ -688,6 +688,13 @@ type GalleryMoment = {
   source: 'logger' | 'module';
   tier: 'emerging' | 'developing' | 'demonstrating' | null;
   rationale: string | null;
+  provenance: string | null;
+};
+
+const GALLERY_PROVENANCE_LABEL: Record<string, string> = {
+  inferred:  'Hearth noticed',
+  declared:  'From a module',
+  asserted:  'You confirmed',
 };
 
 const TIER_COLOR: Record<'emerging' | 'developing' | 'demonstrating', string> = {
@@ -715,7 +722,7 @@ export function GalleryMoments({
     // entries logged before observation_dlo_links existed.
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
       .then((r) => r.json())
-      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null }> }) => {
+      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null; provenance?: string | null }> }) => {
         if (cancelled) return;
         const evidence = Array.isArray(data?.evidence) ? data.evidence : [];
         if (evidence.length > 0) {
@@ -726,6 +733,7 @@ export function GalleryMoments({
             source: e.source === 'module' ? 'module' : 'logger',
             tier: e.tier === 'emerging' || e.tier === 'developing' || e.tier === 'demonstrating' ? e.tier : null,
             rationale: e.rationale ?? null,
+            provenance: e.provenance ?? null,
           }));
           setMoments(ms);
           return;
@@ -741,7 +749,7 @@ export function GalleryMoments({
               .map((e) => ({
                 id: e.id, title: e.title, date: e.dateOccurred,
                 source: e.source === 'module' ? 'module' : 'logger',
-                tier: null, rationale: null,
+                tier: null, rationale: null, provenance: null,
               }));
             setMoments(ms);
           })
@@ -849,6 +857,12 @@ export function GalleryMoments({
                   style={{ fontFamily: 'var(--font-serif)', fontSize: '11px', fill: 'var(--color-text-primary)' }}>
               {m.title.length > 38 ? `${m.title.slice(0, 36)}…` : m.title}
             </text>
+            {m.provenance && (
+              <text x={x} y={y + (m.source === 'logger' ? 38 : -28)} textAnchor="middle"
+                    style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', fill: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
+                {GALLERY_PROVENANCE_LABEL[m.provenance] ?? 'Hearth noticed'}
+              </text>
+            )}
             {isHovered && m.rationale && (
               <g pointerEvents="none">
                 <rect

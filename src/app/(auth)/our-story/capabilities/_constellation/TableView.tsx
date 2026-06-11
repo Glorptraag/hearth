@@ -398,6 +398,14 @@ type DloEvidence = {
   tier: 'emerging' | 'developing' | 'demonstrating';
   confidence: number | null;
   rationale: string | null;
+  provenance?: string | null;
+  claimedTier?: string | null;
+};
+
+const PROVENANCE_LABEL: Record<string, string> = {
+  inferred:  'Hearth noticed',
+  declared:  'From a module',
+  asserted:  'You confirmed',
 };
 
 const TIER_BADGE: Record<DloEvidence['tier'], { label: string; cls: string }> = {
@@ -465,6 +473,7 @@ export function TableMoments({
               <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Moment</th>
               <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Tier read</th>
               <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Why it counted</th>
+              <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Source</th>
               <th className="p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle">Confidence</th>
             </tr>
           </thead>
@@ -491,6 +500,11 @@ export function TableMoments({
                   </td>
                   <td className="p-md align-top font-serif italic text-sm text-text-secondary max-w-[42ch]">
                     {m.rationale ?? <span className="not-italic text-text-muted">—</span>}
+                  </td>
+                  <td className="p-md align-top">
+                    <span className="font-sans text-[0.72rem] text-text-muted">
+                      {PROVENANCE_LABEL[m.provenance ?? 'inferred'] ?? 'Hearth noticed'}
+                    </span>
                   </td>
                   <td className="p-md align-top font-sans text-sm text-text-muted">
                     {m.confidence != null ? `${Math.round(m.confidence * 100)}%` : '—'}

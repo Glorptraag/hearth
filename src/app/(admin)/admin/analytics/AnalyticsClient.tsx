@@ -5,6 +5,7 @@ import PackAdoptionFunnel from './_components/PackAdoptionFunnel';
 import ActivityHeatMap from './_components/ActivityHeatMap';
 import ThreadCoverageChart from './_components/ThreadCoverageChart';
 import AiCostPanel from './_components/AiCostPanel';
+import DloIntegrityPanel from './_components/DloIntegrityPanel';
 import {
   Package,
   Flame,
@@ -12,9 +13,10 @@ import {
   Compass,
   CurrencyDollar,
   WarningCircle,
+  CheckCircle,
 } from '@/components/icons';
 
-type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage' | 'ai-cost';
+type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage' | 'ai-cost' | 'dlo-integrity';
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 const TABS: { id: Tab; label: string; Icon: IconC }[] = [
@@ -23,6 +25,7 @@ const TABS: { id: Tab; label: string; Icon: IconC }[] = [
   { id: 'abandonment',     label: 'Abandonment',     Icon: TrendDown },
   { id: 'thread-coverage', label: 'Thread Coverage', Icon: Compass },
   { id: 'ai-cost',         label: 'AI Cost',         Icon: CurrencyDollar },
+  { id: 'dlo-integrity',   label: 'DLO Integrity',   Icon: CheckCircle },
 ];
 
 export default function AnalyticsClient() {
@@ -92,6 +95,15 @@ export default function AnalyticsClient() {
               description="Haiku spend split by write-time enrichment vs live draft insights. Refreshes on window change; no caching."
             />
             <AiCostPanel />
+          </>
+        )}
+        {activeTab === 'dlo-integrity' && (
+          <>
+            <SectionHeader
+              title="DLO Evidence Integrity"
+              description="Provenance distribution and tier-mismatch rate for observation_dlo_links. Mismatch = model's claimed tier differed from the Sanity-authoritative tier and was clamped."
+            />
+            <DloIntegrityPanel />
           </>
         )}
       </div>

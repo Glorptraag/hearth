@@ -10,7 +10,12 @@ vi.mock('@/lib/db', () => ({ db: {} }));
 vi.mock('../dlo-cache', () => ({
   getValidDlos: vi.fn(async () => ({
     ids: new Set(['dlo.M1.emerging', 'dlo.M1.developing', 'dlo.M1.demonstrating', 'dlo.S1.emerging']),
-    tierById: new Map(),
+    tierById: new Map<string, 'emerging' | 'developing' | 'demonstrating'>([
+      ['dlo.M1.emerging', 'emerging'],
+      ['dlo.M1.developing', 'developing'],
+      ['dlo.M1.demonstrating', 'demonstrating'],
+      ['dlo.S1.emerging', 'emerging'],
+    ]),
   })),
 }));
 
@@ -24,7 +29,7 @@ describe('validateDlos', () => {
       { dlo_id: 'dlo.M1.emerging', tier: 'emerging', confidence: 0.7, rationale: 'counted to 10' },
     ]);
     expect(out).toEqual([
-      { dlo_id: 'dlo.M1.emerging', tier: 'emerging', confidence: 0.7, rationale: 'counted to 10' },
+      { dlo_id: 'dlo.M1.emerging', tier: 'emerging', confidence: 0.7, rationale: 'counted to 10', claimed_tier: null },
     ]);
   });
 
@@ -68,5 +73,23 @@ describe('validateDlos', () => {
   it('returns [] for empty / non-array input', async () => {
     expect(await validateDlos(undefined)).toEqual([]);
     expect(await validateDlos([])).toEqual([]);
+  });
+
+  it('clamps tier to Sanity-authoritative and records claimed_tier on mismatch', async () => {
+    const out = await validateDlos([
+      { dlo_id: 'dlo.M1.emerging', tier: 'demonstrating', confidence: 0.9 },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].tier).toBe('emerging');        // clamped to Sanity value
+    expect(out[0].claimed_tier).toBe('demonstrating'); // original claim preserved
+  });
+
+  it('leaves claimed_tier null when tier matches the Sanity value', async () => {
+    const out = await validateDlos([
+      { dlo_id: 'dlo.M1.developing', tier: 'developing', confidence: 0.8 },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].tier).toBe('developing');
+    expect(out[0].claimed_tier).toBeNull();
   });
 });

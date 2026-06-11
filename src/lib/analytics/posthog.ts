@@ -92,6 +92,7 @@ export type HearthEvent =
   | 'pedagogy_set'
   | 'pack_purchased'
   | 'dlo.enrichment.completed'
+  | 'dlo.tier_mismatch'
   | 'feedback_submitted'
   | 'recommendations_scored'
   | 'recommendation_accepted';

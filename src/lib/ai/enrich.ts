@@ -502,6 +502,18 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
           },
           { familyId },
         );
+        const mismatches = validatedDlos.filter((d) => d.claimed_tier != null);
+        if (mismatches.length > 0) {
+          void trackServer(
+            'dlo.tier_mismatch',
+            familyId,
+            {
+              entry_id: entryId,
+              mismatch_count: mismatches.length,
+            },
+            { familyId },
+          );
+        }
       } catch (dloErr) {
         console.error('[enrichEntry] DLO persist failed:', dloErr);
       }

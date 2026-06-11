@@ -21,6 +21,8 @@ export type DloEnrichmentItem = {
   tier: 'emerging' | 'developing' | 'demonstrating';
   confidence: number;
   rationale?: string;
+  /** Set by validateDlos when the model's claimed tier differed from the Sanity-authoritative tier. */
+  claimed_tier?: string | null;
 };
 
 const MIN_CONFIDENCE = 0.4;
@@ -31,7 +33,7 @@ export async function validateDlos(
   raw: DloEnrichmentItem[] | undefined,
 ): Promise<DloEnrichmentItem[]> {
   if (!Array.isArray(raw) || raw.length === 0) return [];
-  const { ids } = await getValidDlos();
+  const { ids, tierById } = await getValidDlos();
   const seen = new Set<string>();
   const out: DloEnrichmentItem[] = [];
   for (const d of raw) {
@@ -41,11 +43,23 @@ export async function validateDlos(
     if (typeof d.confidence !== 'number' || d.confidence < MIN_CONFIDENCE) continue;
     if (seen.has(d.dlo_id)) continue;
     seen.add(d.dlo_id);
+
+    // Tier-coherence clamp: trust the Sanity-authoritative tier over the model's
+    // claim. When they disagree, record the model's claim as claimed_tier so the
+    // mismatch rate is visible in admin analytics. When they agree, claimed_tier
+    // is null (the common path).
+    const authoritative = tierById.get(d.dlo_id);
+    const tierMismatch = authoritative != null && authoritative !== d.tier;
+    const finalTier = tierMismatch
+      ? authoritative
+      : d.tier;
+
     out.push({
       dlo_id: d.dlo_id,
-      tier: d.tier,
+      tier: finalTier,
       confidence: Math.max(0, Math.min(1, d.confidence)),
       rationale: typeof d.rationale === 'string' ? d.rationale.slice(0, 500) : undefined,
+      claimed_tier: tierMismatch ? d.tier : null,
     });
     if (out.length >= MAX_DLOS_PER_ENTRY) break;
   }
@@ -57,8 +71,9 @@ export async function persistDloLinks(args: {
   learnerIds: string[];
   dlos: DloEnrichmentItem[];
   observedAt: Date;
+  provenance?: 'inferred' | 'declared' | 'asserted';
 }): Promise<void> {
-  const { entryId, learnerIds, dlos, observedAt } = args;
+  const { entryId, learnerIds, dlos, observedAt, provenance = 'inferred' } = args;
   if (dlos.length === 0 || learnerIds.length === 0) return;
 
   const rows = learnerIds.flatMap((learnerId) =>
@@ -69,6 +84,8 @@ export async function persistDloLinks(args: {
       tier: d.tier,
       confidence: String(d.confidence),
       rationale: d.rationale ?? null,
+      provenance,
+      claimedTier: d.claimed_tier ?? null,
     }))
   );
 

@@ -20,7 +20,11 @@ import { persistDloLinks } from '../dlo-persistence';
 vi.mock('../dlo-cache', () => ({
   getValidDlos: vi.fn(async () => ({
     ids: new Set(['dlo.M1.emerging', 'dlo.M1.developing', 'dlo.M1.demonstrating']),
-    tierById: new Map(),
+    tierById: new Map<string, 'emerging' | 'developing' | 'demonstrating'>([
+      ['dlo.M1.emerging', 'emerging'],
+      ['dlo.M1.developing', 'developing'],
+      ['dlo.M1.demonstrating', 'demonstrating'],
+    ]),
   })),
 }));
 
@@ -130,5 +134,45 @@ describe('INTEGRATION: persistDloLinks', () => {
       .where(eq(observationDloLinks.observationId, entry.id));
     expect(links).toHaveLength(2);
     expect(new Set(links.map((l) => l.learnerId))).toEqual(new Set([a.id, b.id]));
+  });
+
+  it('stores provenance=inferred by default and claimed_tier=null when tier is coherent', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    const entry = await createEntry(db, { familyId: family.id, learnerIds: [learner.id] });
+
+    await persistDloLinks({
+      entryId: entry.id,
+      learnerIds: [learner.id],
+      dlos: [{ dlo_id: 'dlo.M1.emerging', tier: 'emerging', confidence: 0.7 }],
+      observedAt: new Date(),
+    });
+
+    const [link] = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.observationId, entry.id));
+    expect(link.provenance).toBe('inferred');
+    expect(link.claimedTier).toBeNull();
+  });
+
+  it('stores claimed_tier when provenance=declared is passed', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    const entry = await createEntry(db, { familyId: family.id, learnerIds: [learner.id] });
+
+    await persistDloLinks({
+      entryId: entry.id,
+      learnerIds: [learner.id],
+      dlos: [{ dlo_id: 'dlo.M1.developing', tier: 'developing', confidence: 0.8 }],
+      observedAt: new Date(),
+      provenance: 'declared',
+    });
+
+    const [link] = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.observationId, entry.id));
+    expect(link.provenance).toBe('declared');
   });
 });

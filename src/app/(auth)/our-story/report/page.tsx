@@ -18,6 +18,7 @@ import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 import ProgressionConnector from '@/components/report/ProgressionConnector';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
+import { descriptorToSubject, type DeterministicCoverage } from '@/lib/report/deterministic-coverage';
 
 type Learner = {
   id: string;
@@ -88,6 +89,10 @@ type Settings = {
   createdAt: string;
 };
 
+type CoverageResponse =
+  | { mode: 'deterministic'; coverage: DeterministicCoverage }
+  | { mode: 'fallback' };
+
 const SUBJECT_CONFIG: Record<string, { label: string; Icon: ReportIconC }> = {
   english:      { label: 'English',      Icon: BookOpenText },
   mathematics:  { label: 'Mathematics',  Icon: MathOperations },
@@ -100,27 +105,6 @@ const SUBJECT_CONFIG: Record<string, { label: string; Icon: ReportIconC }> = {
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
-
-// Map AC9 curriculum descriptor code prefixes to subject keys
-const AC9_SUBJECT_MAP: Record<string, string> = {
-  AC9E: 'english',
-  AC9M: 'mathematics',
-  AC9S: 'science',
-  AC9HAS: 'hass',
-  AC9HI: 'hass',
-  AC9GE: 'hass',
-  AC9CI: 'hass',
-  AC9EB: 'hass',
-  AC9AR: 'arts',
-  AC9MU: 'arts',
-  AC9DR: 'arts',
-  AC9DA: 'arts',
-  AC9MA: 'arts',
-  AC9TD: 'technologies',
-  AC9TDI: 'technologies',
-  AC9HP: 'hpe',
-  AC9LA: 'languages',
-};
 
 const SUBJECT_DOMAIN_CLASSES: Record<string, { bar: string; pill: string; border: string }> = {
   english:      { bar: 'bg-domain-english',      pill: 'bg-domain-english/15 text-domain-english',           border: 'border-t-domain-english' },
@@ -170,13 +154,6 @@ const GAP_ACTIONS: Record<string, string> = {
   languages:    'Log any second-language exposure or practice',
 };
 
-function descriptorToSubject(code: string): string | null {
-  for (const [prefix, subject] of Object.entries(AC9_SUBJECT_MAP)) {
-    if (code.startsWith(prefix)) return subject;
-  }
-  return null;
-}
-
 export default function ReportPage() {
   const { vocab } = usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -186,6 +163,9 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
   const [curationSlot, setCurationSlot] = useState<WorkSampleSlot | null>(null);
+  // Deterministic curriculum coverage (WS-5). `null` until fetched, or whenever
+  // the framework has no authored mappings → render stays exactly as today.
+  const [coverage, setCoverage] = useState<CoverageResponse | null>(null);
 
   const config = useMemo(() => getJurisdiction(settings?.state ?? null), [settings?.state]);
   const isCdLevel = config.reportTier === 'cd_level';
@@ -253,6 +233,20 @@ export default function ReportPage() {
       });
   }, [selectedLearnerId, ensureReport]);
 
+  // Deterministic coverage (WS-5). Only a deterministic response is retained;
+  // a fallback response, a non-ok status, or any error leaves coverage null, so
+  // the page renders exactly today's LLM-derived curriculum coverage.
+  useEffect(() => {
+    if (!selectedLearnerId) return;
+    setCoverage(null);
+    fetch(`/api/report/coverage?learnerId=${selectedLearnerId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: CoverageResponse | null) => {
+        setCoverage(data && data.mode === 'deterministic' ? data : null);
+      })
+      .catch(() => setCoverage(null));
+  }, [selectedLearnerId]);
+
   // Timeline
   const dueDateStr = settings?.nextReportDate ?? null;
   const registeredStr = settings?.createdAt ?? null;
@@ -274,6 +268,9 @@ export default function ReportPage() {
 
   // Subject coverage
   const subjectCoverage = useMemo(() => {
+    // When deterministic coverage is available, curriculum codes come from the
+    // DLO→framework mapping; otherwise fall back to LLM-recalled descriptors.
+    const deterministic = coverage?.mode === 'deterministic' ? coverage.coverage : null;
     const entryCounts: Record<string, number> = {};
     const descriptorSets: Record<string, Set<string>> = {};
     ALL_SUBJECTS.forEach((s) => {
@@ -289,12 +286,14 @@ export default function ReportPage() {
       subjects.forEach((s) => {
         if (s in entryCounts) entryCounts[s]++;
       });
-      e.aiEnrichment?.curriculum_descriptors?.forEach((d) => {
-        const subj = descriptorToSubject(d.code);
-        if (subj && descriptorSets[subj]) {
-          descriptorSets[subj].add(d.code);
-        }
-      });
+      if (!deterministic) {
+        e.aiEnrichment?.curriculum_descriptors?.forEach((d) => {
+          const subj = descriptorToSubject(d.code);
+          if (subj && descriptorSets[subj]) {
+            descriptorSets[subj].add(d.code);
+          }
+        });
+      }
     });
 
     const total = entries.length || 1;
@@ -302,10 +301,12 @@ export default function ReportPage() {
       key,
       ...SUBJECT_CONFIG[key],
       count: entryCounts[key],
-      descriptors: descriptorSets[key].size,
+      descriptors: deterministic
+        ? (deterministic[key]?.codes.length ?? 0)
+        : descriptorSets[key].size,
       pct: Math.round((entryCounts[key] / total) * 100),
     }));
-  }, [entries]);
+  }, [entries, coverage]);
 
   const coveredSubjects = subjectCoverage.filter((s) => s.count > 0).length;
 

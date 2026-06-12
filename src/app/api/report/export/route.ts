@@ -9,6 +9,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { routeHandler } from '@/lib/api-helpers';
+import { getDeterministicCoverage } from '@/lib/report/coverage';
+import { descriptorToSubject, frameworkKeyForState } from '@/lib/report/deterministic-coverage';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
   english: { label: 'English', emoji: '📖' },
@@ -22,20 +24,6 @@ const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
-
-const AC9_SUBJECT_MAP: Record<string, string> = {
-  AC9E: 'english', AC9M: 'mathematics', AC9S: 'science',
-  AC9HAS: 'hass', AC9HI: 'hass', AC9GE: 'hass', AC9CI: 'hass', AC9EB: 'hass',
-  AC9AR: 'arts', AC9MU: 'arts', AC9DR: 'arts', AC9DA: 'arts', AC9MA: 'arts',
-  AC9TD: 'technologies', AC9TDI: 'technologies', AC9HP: 'hpe', AC9LA: 'languages',
-};
-
-function descriptorToSubject(code: string): string | null {
-  for (const [prefix, subject] of Object.entries(AC9_SUBJECT_MAP)) {
-    if (code.startsWith(prefix)) return subject;
-  }
-  return null;
-}
 
 type AiEnrichment = {
   capability_threads?: { thread_id: string; confidence: number }[];
@@ -85,6 +73,14 @@ export const GET = routeHandler(async (request: NextRequest) => {
     ? differenceInYears(now, new Date(learner.dateOfBirth))
     : null;
 
+  // Deterministic curriculum coverage (WS-5). When the family's framework has
+  // authored DLO→framework mappings, curriculum codes come from
+  // learner_dlo_status × the mapping — same history, same report. Otherwise
+  // `mode: 'fallback'` and we keep today's LLM-recalled descriptor path verbatim.
+  const frameworkKey = frameworkKeyForState(settings?.state ?? null);
+  const coverage = await getDeterministicCoverage({ learnerId, frameworkKey });
+  const isDeterministic = coverage.mode === 'deterministic';
+
   // Subject coverage
   const entryCounts: Record<string, number> = {};
   const descriptorSets: Record<string, Set<string>> = {};
@@ -97,11 +93,20 @@ export const GET = routeHandler(async (request: NextRequest) => {
       ...(enrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
     ]);
     subjects.forEach((s) => { if (s in entryCounts) entryCounts[s]++; });
-    enrichment?.curriculum_descriptors?.forEach((d) => {
-      const subj = descriptorToSubject(d.code);
-      if (subj && descriptorSets[subj]) descriptorSets[subj].add(d.code);
-    });
+    // Legacy path only — deterministic codes replace these below.
+    if (!isDeterministic) {
+      enrichment?.curriculum_descriptors?.forEach((d) => {
+        const subj = descriptorToSubject(d.code);
+        if (subj && descriptorSets[subj]) descriptorSets[subj].add(d.code);
+      });
+    }
   });
+
+  if (coverage.mode === 'deterministic') {
+    ALL_SUBJECTS.forEach((s) => {
+      descriptorSets[s] = new Set(coverage.coverage[s]?.codes ?? []);
+    });
+  }
 
   const total = entries.length || 1;
   const subjectCoverage = ALL_SUBJECTS.map((key) => ({

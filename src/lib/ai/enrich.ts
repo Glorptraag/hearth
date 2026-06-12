@@ -35,7 +35,7 @@ function extractJson(text: string): string {
 
 const AC9_CODE_PATTERN = /^AC9[A-Z]{1,4}\d{1,2}[A-Z]{1,3}\d{2}$/;
 
-const SYSTEM_PROMPT = `You are Hearth's learning entry enrichment engine. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation. Do NOT wrap the JSON in code fences (no \`\`\`json … \`\`\`). The first character of your response must be { and the last must be }.
+export const SYSTEM_PROMPT = `You are Hearth's learning entry enrichment engine. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation. Do NOT wrap the JSON in code fences (no \`\`\`json … \`\`\`). The first character of your response must be { and the last must be }.
 
 OUTPUT SCHEMA:
 {
@@ -187,7 +187,10 @@ async function assembleContext(entryId: string, familyId: string) {
   return { entry, settings, childRecords, activeThreads, recentEntries: recent };
 }
 
-async function buildUserPrompt(ctx: Awaited<ReturnType<typeof assembleContext>>): Promise<{ prompt: string; pedagogySources: PedagogySource[] }> {
+/** Exported for eval harness and unit tests — assembleContext stays private. */
+export type AssembledEnrichContext = Awaited<ReturnType<typeof assembleContext>>;
+
+export async function buildUserPrompt(ctx: AssembledEnrichContext): Promise<{ prompt: string; pedagogySources: PedagogySource[] }> {
   const { entry, settings, childRecords, activeThreads, recentEntries } = ctx;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 

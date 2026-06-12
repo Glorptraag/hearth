@@ -53,3 +53,18 @@ export function bustDloCache(): void {
   cached = null;
   cachedAt = 0;
 }
+
+/**
+ * Prime the in-memory cache directly, bypassing Sanity. For tests and the
+ * WS-3 eval harness only — production never calls this. Lets the eval feed
+ * descriptors from an in-repo fixture so it measures prompt-level effects
+ * without depending on the Sanity DLO seed (still parked behind a human gate).
+ */
+export function primeDloCache(data: {
+  ids: Set<string>;
+  tierById: Map<string, DloRow['tier']>;
+  descriptorById: Map<string, string>;
+}): void {
+  cached = data;
+  cachedAt = Date.now();
+}

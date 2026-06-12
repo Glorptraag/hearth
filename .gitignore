@@ -52,3 +52,6 @@ next-env.d.ts
 # archived docs (kept locally for reference; history preserved in git log)
 docs/archive/
 
+# transient eval-harness run artifacts (committed results live in the audit .md docs)
+docs/audits/_eval-dlo-run-*.json
+

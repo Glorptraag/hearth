@@ -13,8 +13,10 @@ import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { validateDlos, persistDloLinks, type DloEnrichmentItem } from './dlo-persistence';
+import { getValidDlos } from './dlo-cache';
 import { trackServer } from '@/lib/analytics/posthog-server';
-import { VALID_THREAD_IDS } from './thread-aggregation';
+import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
+import { sanityClient } from '@/lib/sanity/client';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -34,6 +36,10 @@ function extractJson(text: string): string {
 }
 
 const AC9_CODE_PATTERN = /^AC9[A-Z]{1,4}\d{1,2}[A-Z]{1,3}\d{2}$/;
+
+// Candidate-thread cap for DLO descriptor injection (WS-3). 10 threads × 3
+// tier descriptors ≈ 2k tokens — the budget guardrail from the plan.
+const MAX_CANDIDATE_THREADS = 10;
 
 export const SYSTEM_PROMPT = `You are Hearth's learning entry enrichment engine. Return ONLY valid JSON matching the schema below. No preamble, no markdown, no explanation. Do NOT wrap the JSON in code fences (no \`\`\`json … \`\`\`). The first character of your response must be { and the last must be }.
 
@@ -184,14 +190,53 @@ async function assembleContext(entryId: string, familyId: string) {
     .filter((e) => e.id !== entryId)
     .slice(0, 5);
 
-  return { entry, settings, childRecords, activeThreads, recentEntries: recent };
+  // Candidate threads for descriptor injection (WS-3):
+  //   = threads declared by entry.sourceActivityIds (resolved via Sanity GROQ,
+  //     same as thread-links.ts — NOT reading entry.threadLinks which is
+  //     fire-and-forget concurrent and may be empty at enrich time)
+  //   ∪ the child's active threads (already assembled above)
+  //   capped at 10 (descriptor injection budget ~2k tokens).
+  const activityIds = (entry.sourceActivityIds ?? []) as string[];
+  const declaredThreadIds: string[] = [];
+  if (activityIds.length > 0) {
+    try {
+      const activities = await sanityClient.fetch<Array<{ capabilityThreads?: Array<{ _id: string }> }>>(
+        `*[_type == "activity" && _id in $ids && status == "published"]{
+          capabilityThreads[]->{ _id }
+        }`,
+        { ids: activityIds },
+      );
+      const seen = new Set<string>();
+      for (const act of activities ?? []) {
+        for (const t of act.capabilityThreads ?? []) {
+          // normalizeThreadId strips the "capabilityThread." _id prefix and
+          // validates against the canonical 57-thread set (same as thread-links).
+          const bare = t?._id ? normalizeThreadId(t._id) : null;
+          if (bare && !seen.has(bare)) {
+            seen.add(bare);
+            declaredThreadIds.push(bare);
+          }
+        }
+      }
+    } catch {
+      // Best-effort; enrich must not fail if Sanity is slow
+    }
+  }
+
+  const activeThreadSet = new Set<string>(
+    Object.values(activeThreads).flat().filter((id) => VALID_THREAD_IDS.has(id)),
+  );
+  const merged = new Set<string>([...declaredThreadIds, ...activeThreadSet]);
+  const candidateThreadIds = [...merged].slice(0, MAX_CANDIDATE_THREADS);
+
+  return { entry, settings, childRecords, activeThreads, recentEntries: recent, candidateThreadIds };
 }
 
 /** Exported for eval harness and unit tests — assembleContext stays private. */
 export type AssembledEnrichContext = Awaited<ReturnType<typeof assembleContext>>;
 
 export async function buildUserPrompt(ctx: AssembledEnrichContext): Promise<{ prompt: string; pedagogySources: PedagogySource[] }> {
-  const { entry, settings, childRecords, activeThreads, recentEntries } = ctx;
+  const { entry, settings, childRecords, activeThreads, recentEntries, candidateThreadIds } = ctx;
   const pedagogy = settings?.pedagogyPreference ?? 'eclectic';
 
   const childrenLine = childRecords
@@ -266,13 +311,48 @@ export async function buildUserPrompt(ctx: AssembledEnrichContext): Promise<{ pr
     capabilityThreads: activeThreadList,
   });
 
+  // Build DLO descriptor block for candidate threads (WS-3).
+  // Injected into the USER prompt so the system prompt stays byte-identical
+  // (cache-control: ephemeral on system prompt preserves the prompt cache).
+  // Each candidate thread contributes its 3 tier descriptors (~150 tokens).
+  // assembleContext already caps candidateThreadIds; the slice here is a
+  // defensive guard so any caller of buildUserPrompt stays inside the budget.
+  let dloDescriptorBlock = '';
+  if ((candidateThreadIds ?? []).length > 0) {
+    try {
+      const { descriptorById } = await getValidDlos();
+      const lines: string[] = [];
+      for (const threadId of (candidateThreadIds ?? []).slice(0, MAX_CANDIDATE_THREADS)) {
+        const tiers = ['emerging', 'developing', 'demonstrating'] as const;
+        const tierLines = tiers
+          .map((t) => {
+            const dloId = `dlo.${threadId}.${t}`;
+            const desc = descriptorById.get(dloId);
+            return desc ? `  ${dloId}: ${desc}` : null;
+          })
+          .filter(Boolean);
+        if (tierLines.length > 0) {
+          lines.push(`${threadId}:\n${tierLines.join('\n')}`);
+        }
+      }
+      if (lines.length > 0) {
+        dloDescriptorBlock = `\nCANDIDATE DLO DESCRIPTORS (for discrete_learning_objectives mapping):
+Map to DLO ids from this list when they clearly apply. Ground your rationale in the descriptor text.
+DLO ids not in this list may still be used if the evidence strongly supports them, but prefer candidates.
+${lines.join('\n')}\n`;
+      }
+    } catch {
+      // Best-effort; enrich must not fail if descriptor fetch fails
+    }
+  }
+
   const prompt = `FAMILY CONTEXT:
 Children on this entry: ${childrenLine}
 Active threads:
 ${threadsLine}
 
 ${pedagogySection}
-
+${dloDescriptorBlock}
 RECENT ENTRIES (context):
 ${recentLine || '(none yet)'}
 

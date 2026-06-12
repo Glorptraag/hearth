@@ -4,38 +4,48 @@
  * DLO catalog only changes when Drew seeds new content, so a small staleness
  * window is fine.
  *
- * Returns the FULL set + a tier lookup. ALL_DLOS_QUERY filters to published
- * status so drafts can't leak through enrichment.
+ * Returns the FULL set + a tier lookup + descriptor text keyed by id.
+ * Descriptors are injected into the USER prompt (WS-3) so Haiku can assess
+ * observations against the actual descriptor text, not a reconstructed id pattern.
+ *
+ * ALL_DLOS_QUERY filters to published status so drafts can't leak through enrichment.
  */
 import { sanityClient } from '@/lib/sanity/client';
 
-const DLO_IDS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{ _id, tier }`;
+const DLO_IDS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{ _id, tier, descriptor }`;
 
-type DloRow = { _id: string; tier: 'emerging' | 'developing' | 'demonstrating' };
+type DloRow = { _id: string; tier: 'emerging' | 'developing' | 'demonstrating'; descriptor?: string };
 
 const CACHE_TTL = 10 * 60 * 1000;
-let cached: { ids: Set<string>; tierById: Map<string, DloRow['tier']> } | null = null;
+let cached: {
+  ids: Set<string>;
+  tierById: Map<string, DloRow['tier']>;
+  descriptorById: Map<string, string>;
+} | null = null;
 let cachedAt = 0;
 
 export async function getValidDlos(): Promise<{
   ids: Set<string>;
   tierById: Map<string, DloRow['tier']>;
+  descriptorById: Map<string, string>;
 }> {
   if (cached && Date.now() - cachedAt < CACHE_TTL) return cached;
   try {
     const rows = await sanityClient.fetch<DloRow[]>(DLO_IDS_QUERY);
     const ids = new Set<string>();
     const tierById = new Map<string, DloRow['tier']>();
+    const descriptorById = new Map<string, string>();
     for (const r of rows) {
       ids.add(r._id);
       tierById.set(r._id, r.tier);
+      if (r.descriptor) descriptorById.set(r._id, r.descriptor);
     }
-    cached = { ids, tierById };
+    cached = { ids, tierById, descriptorById };
     cachedAt = Date.now();
     return cached;
   } catch (err) {
     console.warn('[dlo-cache] Sanity fetch failed; returning empty set:', err);
-    return { ids: new Set(), tierById: new Map() };
+    return { ids: new Set(), tierById: new Map(), descriptorById: new Map() };
   }
 }
 

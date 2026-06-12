@@ -16,6 +16,12 @@ vi.mock('../dlo-cache', () => ({
       ['dlo.M1.demonstrating', 'demonstrating'],
       ['dlo.S1.emerging', 'emerging'],
     ]),
+    descriptorById: new Map<string, string>([
+      ['dlo.M1.emerging', 'Counts objects with one-to-one correspondence.'],
+      ['dlo.M1.developing', 'Uses skip counting purposefully.'],
+      ['dlo.M1.demonstrating', 'Composes and decomposes numbers flexibly.'],
+      ['dlo.S1.emerging', 'Makes simple observations about the world.'],
+    ]),
   })),
 }));
 

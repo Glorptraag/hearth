@@ -186,6 +186,26 @@ export const DLO_TIERS_QUERY = `*[_type == "discreteLearningObjective" && status
   tier
 } | order(_id asc)`;
 
+// DLO → regulatory-framework mappings for the deterministic coverage transposer
+// (WS-5). One row per published DLO; `regulatoryMappings` carries the verbatim
+// atomicCapability shape (frameworkKey/frameworkVersion/codes/reportTier/
+// contribution/evidenceWeight). The report/coverage path joins these against
+// `learner_dlo_status` keyed by the deterministic `dlo.{threadId}.{tier}` _id.
+// Separate from ALL_DLOS_QUERY (the constellation consumer) on purpose.
+export const DLO_MAPPINGS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{
+  _id,
+  tier,
+  "threadRef": thread._ref,
+  regulatoryMappings[]{
+    frameworkKey,
+    frameworkVersion,
+    codes,
+    reportTier,
+    contribution,
+    evidenceWeight
+  }
+} | order(_id asc)`;
+
 // Lightweight indicator fetch for Planner / Dashboard / any compact-card surface.
 // Returns the module's own printables/materials AND its owning pack's, so the
 // caller can apply resolveIndicators() inheritance client-side.

@@ -17,6 +17,7 @@ import { getValidDlos } from './dlo-cache';
 import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
 import { sanityClient } from '@/lib/sanity/client';
+import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -34,8 +35,6 @@ function extractJson(text: string): string {
   }
   return candidate.slice(firstBrace, lastBrace + 1);
 }
-
-const AC9_CODE_PATTERN = /^AC9[A-Z]{1,4}\d{1,2}[A-Z]{1,3}\d{2}$/;
 
 // Candidate-thread cap for DLO descriptor injection (WS-3). 10 threads × 3
 // tier descriptors ≈ 2k tokens — the budget guardrail from the plan.

@@ -252,6 +252,7 @@ export {
   Mountains,      // Content Studio brand mark
   CircleNotch,    // saving/in-progress spinner-like
   CurrencyDollar, // $ for AI-cost / billing tabs
+  Scales,         // tier-comparison (count-based vs DLO-derived) analytics tab
   Skull,          // pack-adoption funnel abandon (currently using TrendDown elsewhere)
 } from '@phosphor-icons/react';
 

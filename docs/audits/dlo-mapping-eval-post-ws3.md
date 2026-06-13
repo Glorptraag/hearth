@@ -11,6 +11,8 @@ This is a **controlled A/B**: both runs use the same harness, same golden set, s
 > **🕒 Truth pass (annotated 2026-06-13 — plan task A4):** The parenthetical *"production is pre-migration for DLOs; seeding is parked behind a human gate"* was **true at this eval's run-time** but is **stale now.** Production has since been seeded: **171 published DLO docs and 57 coded capability threads** (verified 2026-06-12). The hermetic A/B is unaffected — it sources descriptors from the in-repo fixture by design, never from Sanity or the DB — so the result stands exactly as recorded. The *regulatory-mapping* seed (`scripts/seed-dlo-mappings.ts`, now plan task B3) is a separate step that **remains** parked behind a human gate.
 
 > **⚠️ Gold labels need Drew's review (G3 gate).** The two regressions below are both `developing`-vs-`demonstrating` boundary calls on entries a reasonable reviewer could grade either way. Whether they are model errors or gold-label errors is exactly the editorial question for the gate. Review `scripts/data/dlo-golden-set.ts` before treating the delta as final.
+>
+> **✅ Resolved 2026-06-13 (Drew, G3 gate).** Gold labels held: gs-12 (`PS3.developing`) and gs-13 (`H1.developing`) are correct as written — the descriptor-grounded flips to `demonstrating` are **model over-reads**, not label errors. No label change, no re-run. Tracked follow-up: a "prefer the lower tier when the capability shows in only a single familiar context" prompt note to curb the same inflation on gs-06/gs-08.
 
 ---
 

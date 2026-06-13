@@ -6,6 +6,7 @@ import ActivityHeatMap from './_components/ActivityHeatMap';
 import ThreadCoverageChart from './_components/ThreadCoverageChart';
 import AiCostPanel from './_components/AiCostPanel';
 import DloIntegrityPanel from './_components/DloIntegrityPanel';
+import TierComparisonPanel from './_components/TierComparisonPanel';
 import {
   Package,
   Flame,
@@ -14,9 +15,17 @@ import {
   CurrencyDollar,
   WarningCircle,
   CheckCircle,
+  Scales,
 } from '@/components/icons';
 
-type Tab = 'pack-adoption' | 'activity-heat' | 'abandonment' | 'thread-coverage' | 'ai-cost' | 'dlo-integrity';
+type Tab =
+  | 'pack-adoption'
+  | 'activity-heat'
+  | 'abandonment'
+  | 'thread-coverage'
+  | 'ai-cost'
+  | 'dlo-integrity'
+  | 'tier-comparison';
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
 const TABS: { id: Tab; label: string; Icon: IconC }[] = [
@@ -26,6 +35,7 @@ const TABS: { id: Tab; label: string; Icon: IconC }[] = [
   { id: 'thread-coverage', label: 'Thread Coverage', Icon: Compass },
   { id: 'ai-cost',         label: 'AI Cost',         Icon: CurrencyDollar },
   { id: 'dlo-integrity',   label: 'DLO Integrity',   Icon: CheckCircle },
+  { id: 'tier-comparison', label: 'Tier Comparison', Icon: Scales },
 ];
 
 export default function AnalyticsClient() {
@@ -104,6 +114,15 @@ export default function AnalyticsClient() {
               description="Provenance distribution and tier-mismatch rate for observation_dlo_links. Mismatch = model's claimed tier differed from the Sanity-authoritative tier and was clamped."
             />
             <DloIntegrityPanel />
+          </>
+        )}
+        {activeTab === 'tier-comparison' && (
+          <>
+            <SectionHeader
+              title="Thread Tier Comparison (WS-4 prep)"
+              description="Per learner × thread: today's count-based tier beside the DLO-evidence-derived tier under the D-OS4 bar. Tune the bar below; deltas flag where the count ladder over-claims. Feeds the D-OS4 decision — no parent-facing change."
+            />
+            <TierComparisonPanel />
           </>
         )}
       </div>

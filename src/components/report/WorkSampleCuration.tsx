@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useToast } from '@/hooks/use-toast';
 import { X, Tray, Flame, Camera, Check, Sparkle } from '@/components/icons';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 
@@ -118,6 +119,8 @@ export default function WorkSampleCuration({
   onSampleChanged,
   onClose,
 }: Props) {
+  const { toast } = useToast();
+  const [browseAll, setBrowseAll] = useState(false);
   const [view, setView] = useState<'candidates' | 'annotate'>(
     sample?.entryId ? 'annotate' : 'candidates'
   );
@@ -140,8 +143,10 @@ export default function WorkSampleCuration({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trapRef = useFocusTrap(true);
 
-  // Filter entries to candidates for this slot
-  const candidates = entries.filter((e) => {
+  // Predicate: does this entry fall within the slot's report-year + term-half +
+  // subject window? Extracted so the candidate filter and the out-of-window
+  // warning chip can never drift apart.
+  const matchesSlotWindow = (e: Entry): boolean => {
     const d = new Date(e.dateOccurred + 'T00:00:00');
     if (d.getFullYear() !== reportYear) return false;
     const month = d.getMonth() + 1;
@@ -152,13 +157,20 @@ export default function WorkSampleCuration({
       ...(e.aiEnrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
     ]);
     return subjects.has(slot.area) || (slot.altArea ? subjects.has(slot.altArea) : false);
-  });
+  };
+
+  const candidates = entries.filter(matchesSlotWindow);
+  // Escape hatch: when the window-matched set is thin, the parent can browse the
+  // full entry list and still select a legitimately out-of-window or mistagged
+  // moment — the API has no term validation, so the pick persists. Out-of-window
+  // rows are flagged amber (a warning, not a block).
+  const displayedEntries = browseAll ? entries : candidates;
 
   // Sort: compliance candidates first (flag from write-time AI or manual parent
   // override), then by AI quality score (0-1), then by evidence presence, then
   // by recency. Quality score lets the panel rank candidates even within a
   // tied flag bucket — pre-quality entries fall through to the evidence tier.
-  const sortedCandidates = [...candidates].sort((a, b) => {
+  const sortedCandidates = [...displayedEntries].sort((a, b) => {
     if (a.workSampleCandidate && !b.workSampleCandidate) return -1;
     if (!a.workSampleCandidate && b.workSampleCandidate) return 1;
     const aq = a.workSampleQuality ?? -1;
@@ -172,41 +184,65 @@ export default function WorkSampleCuration({
 
   const selectedEntry = entries.find((e) => e.id === selectedEntryId) ?? null;
 
+  /** Pull the server's `{ error }` message off a non-OK response, if any. */
+  const errorMessage = async (res: Response): Promise<string | null> =>
+    res.json().then((b) => (b && typeof b.error === 'string' ? b.error : null)).catch(() => null);
+
   const handleSelect = async (entryId: string) => {
     const slotKey = sample?.slot ?? '';
+    if (!slotKey) {
+      toast("This slot isn't ready yet — reopen the report and try again.", 'error');
+      return;
+    }
     setSaving(true);
     try {
-      await fetch(`/api/report/${reportId}/samples`, {
+      const res = await fetch(`/api/report/${reportId}/samples`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slot: slotKey, entryId }),
       });
+      if (!res.ok) {
+        // e.g. 409 cross-slot conflict — surface the server's message and stay
+        // on the candidate list; do NOT fake the annotate transition.
+        toast((await errorMessage(res)) ?? "Couldn't select that sample — please try again.", 'error');
+        return;
+      }
       setSelectedEntryId(entryId);
       setView('annotate');
       onSampleChanged();
     } catch {
-      // ignore
+      toast("Couldn't select that sample — please try again.", 'error');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleRemove = async () => {
     const slotKey = sample?.slot ?? '';
+    if (!slotKey) {
+      toast("This slot isn't ready yet — reopen the report and try again.", 'error');
+      return;
+    }
     setSaving(true);
     try {
-      await fetch(`/api/report/${reportId}/samples`, {
+      const res = await fetch(`/api/report/${reportId}/samples`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slot: slotKey, entryId: null }),
       });
+      if (!res.ok) {
+        toast((await errorMessage(res)) ?? "Couldn't remove that sample — please try again.", 'error');
+        return;
+      }
       setSelectedEntryId(null);
       setAnnotationDraft({ observations: '', needsStrengths: '', adjustment: '', planning: '' });
       setView('candidates');
       onSampleChanged();
     } catch {
-      // ignore
+      toast("Couldn't remove that sample — please try again.", 'error');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   // Auto-save annotation with debounce
@@ -351,6 +387,26 @@ export default function WorkSampleCuration({
           {/* ─── Candidate List ─── */}
           {view === 'candidates' && (
             <div>
+              {/* Escape hatch + thin-candidate banner. Always offers the full
+                  list so a legitimately out-of-window moment is never unpickable. */}
+              {entries.length > 0 && (
+                <div className="mb-md flex items-center justify-between gap-sm rounded-lg border border-border-subtle bg-surface-raised px-md py-sm">
+                  <p className="font-sans text-xs text-text-secondary">
+                    {browseAll
+                      ? 'Showing all entries — amber-flagged ones fall outside this slot’s usual window.'
+                      : candidates.length < 6
+                        ? `Only ${candidates.length} entr${candidates.length === 1 ? 'y' : 'ies'} match this slot — you need 6 across the report. Browse all to pick any moment.`
+                        : 'Can’t find the right one? Browse all your entries.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setBrowseAll((v) => !v)}
+                    className="shrink-0 font-sans text-xs font-semibold text-ember hover:underline"
+                  >
+                    {browseAll ? 'Show matches only' : 'Browse all entries'}
+                  </button>
+                </div>
+              )}
               {sortedCandidates.length === 0 ? (
                 <div className="text-center py-xl">
                   <p className="mb-sm flex justify-center text-text-secondary" aria-hidden="true">
@@ -398,6 +454,11 @@ export default function WorkSampleCuration({
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-xs shrink-0">
+                            {browseAll && !matchesSlotWindow(entry) && (
+                              <span className="inline-flex items-center gap-xs rounded-full bg-amber-status/15 text-amber-status px-sm py-[1px] font-sans text-[10px] font-semibold whitespace-nowrap">
+                                Outside window
+                              </span>
+                            )}
                             {entry.workSampleCandidate && (
                               <WorkSamplePill size="sm" quality={entry.workSampleQuality} />
                             )}

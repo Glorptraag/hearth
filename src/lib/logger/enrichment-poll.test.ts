@@ -31,7 +31,7 @@ describe('pollEntryEnrichment', () => {
     await pollEntryEnrichment('e1', cb, { fetchImpl: fetchImpl as unknown as typeof fetch, sleep: noSleep });
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl).toHaveBeenCalledWith('/api/entries/e1');
+    expect(fetchImpl).toHaveBeenCalledWith('/api/entries/e1', { signal: expect.any(AbortSignal) });
     expect(cb.onEnrichment).toHaveBeenCalledWith(enrichment('enriched'));
     expect(cb.clearCurrent).toHaveBeenCalled();
     expect(cb.onTimeout).toHaveBeenCalledTimes(1); // always called; call site no-ops on terminal
@@ -76,6 +76,31 @@ describe('pollEntryEnrichment', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(cb.onEnrichment).not.toHaveBeenCalled();
     expect(cb.onTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts a hung request and still resolves to timeout (never hangs forever)', async () => {
+    const cb = makeCallbacks();
+    // A fetch that never settles on its own — only its abort signal can end it.
+    const fetchImpl = vi.fn((_url: string, init?: { signal?: AbortSignal }) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () =>
+          reject(new DOMException('aborted', 'AbortError')));
+      }),
+    );
+    let t = 0;
+    const now = () => (t += 1500) - 1500; // 0, 1500, 3000…
+    await pollEntryEnrichment('e1', cb, {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      sleep: noSleep,
+      now,
+      intervalMs: 1500,
+      timeoutMs: 3000,
+      requestTimeoutMs: 5, // tiny real timer so the hung request aborts fast
+    });
+
+    expect(fetchImpl).toHaveBeenCalled();
+    expect(cb.onEnrichment).not.toHaveBeenCalled();
+    expect(cb.onTimeout).toHaveBeenCalledTimes(1); // honest terminal state, no infinite spinner
   });
 
   it('resolves via timeout when the status never goes terminal', async () => {

@@ -57,6 +57,15 @@ describe('countBasedTier', () => {
     expect(countBasedTier(8, null)).toBe('demonstrating');
     expect(countBasedTier(8, undefined)).toBe('demonstrating');
   });
+
+  it('locks the canonical thresholds (snapshot-rebuild imports these — value lock)', () => {
+    // snapshot-rebuild.ts now derives tier via countBasedTier rather than its own
+    // inline ladder, so these are the single source of truth. This lock makes a
+    // silent threshold change break a test instead of drifting the snapshot.
+    expect(COUNT_TIER_THRESHOLDS).toEqual({ demonstrating: 8, developing: 4 });
+    expect(countBasedTier(7)).toBe('developing'); // just under demonstrating
+    expect(countBasedTier(3)).toBe('emerging'); // just under developing
+  });
 });
 
 describe('tierRank', () => {

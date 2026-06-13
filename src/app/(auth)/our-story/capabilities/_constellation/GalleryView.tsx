@@ -518,37 +518,14 @@ export function GalleryThreads({
 /* ─── Depth 3 : DLOs of one thread ─────────────────────────────────────
    Layout: three columns (emerging → developing → demonstrating), each stacking
    its DLOs vertically. n-DLOs-per-tier is supported — Sanity may publish any
-   number per tier. The moments pip-row sits beneath each column and is per-tier
-   (entry→DLO mapping is a future AI-enrichment step). */
+   number per tier. DLO status (confirmed / emerging / not-started) is read from
+   `learner_dlo_status` only — there is no separate per-column moments heuristic,
+   which would contradict the authoritative status shown on each node. */
 export function GalleryDLOs({
   snap, threadId, dlosByThread, onDrill,
 }: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrill: (d: SynthDLO) => void }) {
   const thread = THREADS_BY_ID[threadId];
   const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
-  const [momentsByTier, setMomentsByTier] = useState<Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>>>({
-    emerging: [], developing: [], demonstrating: [],
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
-      .then((r) => r.json())
-      .then((data: Array<{ source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
-        if (cancelled) return;
-        const buckets: Record<'emerging' | 'developing' | 'demonstrating', Array<{ source: 'logger' | 'module' }>> = {
-          emerging: [], developing: [], demonstrating: [],
-        };
-        for (const e of Array.isArray(data) ? data : []) {
-          const match = e.aiEnrichment?.capability_threads?.find((c) => c.thread_id === threadId);
-          if (!match || match.confidence < 0.5) continue;
-          const tier = match.confidence >= 0.8 ? 'demonstrating' : match.confidence >= 0.65 ? 'developing' : 'emerging';
-          buckets[tier].push({ source: e.source === 'module' ? 'module' : 'logger' });
-        }
-        setMomentsByTier(buckets);
-      })
-      .catch(() => { if (!cancelled) setMomentsByTier({ emerging: [], developing: [], demonstrating: [] }); });
-    return () => { cancelled = true; };
-  }, [snap.id, threadId]);
 
   const tierOrder: Array<'emerging' | 'developing' | 'demonstrating'> = ['emerging', 'developing', 'demonstrating'];
   const dlosByTier = useMemo(() => {
@@ -580,7 +557,7 @@ export function GalleryDLOs({
       preserveAspectRatio="xMidYMid meet"
     >
       <title id={`cap-dlos-title-${threadId}`}>{`Learning objectives for ${thread.name} — ${snap.name}`}</title>
-      <desc id={`cap-dlos-desc-${threadId}`}>{`Three columns left-to-right: emerging, developing, demonstrating. Each column lists the DLOs at that tier with a moments pip-row beneath.`}</desc>
+      <desc id={`cap-dlos-desc-${threadId}`}>{`Three columns left-to-right: emerging, developing, demonstrating. Each column lists the DLOs at that tier, each showing its observation status.`}</desc>
       <GalleryDefs />
       <text x={padL} y={28} className="cap-band-label">{thread.name}</text>
       <text x={padL} y={48} className="cap-band-meta">
@@ -648,34 +625,6 @@ export function GalleryDLOs({
           );
         });
       })}
-
-      {/* Per-column moments footer */}
-      {tierOrder.map((t, ci) => {
-        const cx = padL + ci * colWidth + colWidth / 2;
-        const ms = momentsByTier[t];
-        if (ms.length === 0) return null;
-        const max = Math.min(ms.length, 10);
-        const startX = cx - ((max - 1) * 10) / 2;
-        const footerY = H - 40;
-        return (
-          <g key={`moments-${t}`} aria-hidden>
-            {ms.slice(0, max).map((m, mi) => (
-              <circle
-                key={mi}
-                cx={startX + mi * 10}
-                cy={footerY}
-                r={3}
-                fill={m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)'}
-                opacity={0.85}
-              />
-            ))}
-            <text x={cx} y={footerY + 16} textAnchor="middle"
-                  style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fill: 'var(--color-text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              {ms.length} {ms.length === 1 ? 'moment' : 'moments'}
-            </text>
-          </g>
-        );
-      })}
     </svg>
   );
 }
@@ -691,6 +640,11 @@ type GalleryMoment = {
   provenance: string | null;
 };
 
+// Today the live pipeline only ever writes `inferred` provenance, so "Hearth
+// noticed" is the only label that renders — which is accurate, not misleading.
+// `declared`/`asserted` are kept ready for the Phase-3 provenance wiring (set
+// `declared` for module-sourced thread links, `asserted` on explicit parent
+// confirmation); until that lands they are intentionally unreachable, not dead.
 const GALLERY_PROVENANCE_LABEL: Record<string, string> = {
   inferred:  'Hearth noticed',
   declared:  'From a module',

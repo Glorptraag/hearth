@@ -12,8 +12,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { db } from '@/lib/db';
-import { familyIntelligenceSnapshots } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { familyIntelligenceSnapshots, learningEntries } from '@/lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
 import { rebuildSnapshot } from '../snapshot-rebuild';
 import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
@@ -195,5 +195,80 @@ describe('INTEGRATION: rebuildSnapshot — declared thread aggregation', () => {
     const s1 = child?.active_threads.find((t) => t.thread_id === 'S1');
     expect(s1).toBeDefined();
     expect(s1!.observation_count).toBe(2);
+  });
+});
+
+describe('INTEGRATION: rebuildSnapshot — milestone markers (P0-5)', () => {
+  /** Read a family's entries oldest→newest with their milestone_flag. */
+  async function entryFlags(familyId: string) {
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, familyId))
+      .orderBy(asc(learningEntries.dateOccurred));
+    return rows.map((r) => ({
+      date: r.dateOccurred,
+      flag: (r.aiEnrichment as { milestone_flag?: boolean } | null)?.milestone_flag === true,
+    }));
+  }
+
+  const l1Entry = (familyId: string, learnerId: string, dateOccurred: string) => ({
+    familyId,
+    learnerIds: [learnerId],
+    status: 'complete' as const,
+    dateOccurred,
+    aiEnrichment: {
+      status: 'enriched' as const,
+      capability_threads: [{ thread_id: 'L1', confidence: 0.9 }],
+    },
+  });
+
+  it('flags the entry that crosses the developing tier (4th L1 observation), not the earlier ones', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    for (const d of ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04']) {
+      await createEntry(db, l1Entry(family.id, learner.id, d));
+    }
+
+    await rebuildSnapshot(family.id, 'manual');
+
+    const flags = await entryFlags(family.id);
+    expect(flags.map((f) => f.flag)).toEqual([false, false, false, true]);
+  });
+
+  it('flags no entry when the count never reaches a tier boundary (3 observations)', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    for (const d of ['2026-02-01', '2026-02-02', '2026-02-03']) {
+      await createEntry(db, l1Entry(family.id, learner.id, d));
+    }
+
+    await rebuildSnapshot(family.id, 'manual');
+
+    const flags = await entryFlags(family.id);
+    expect(flags.every((f) => !f.flag)).toBe(true);
+  });
+
+  it('resets a stale milestone_flag:true on an entry that is no longer a crossing', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    // A lone L1 entry (count reaches 1 — no crossing) pre-stamped as a milestone.
+    await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [learner.id],
+      status: 'complete',
+      dateOccurred: '2026-03-01',
+      aiEnrichment: {
+        status: 'enriched',
+        capability_threads: [{ thread_id: 'L1', confidence: 0.9 }],
+        milestone_flag: true,
+      },
+    });
+
+    await rebuildSnapshot(family.id, 'manual');
+
+    const flags = await entryFlags(family.id);
+    expect(flags).toHaveLength(1);
+    expect(flags[0].flag).toBe(false); // reconciled back to false
   });
 });

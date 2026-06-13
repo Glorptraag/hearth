@@ -46,6 +46,9 @@ import type { ObservationTier } from '@/types/capability-universe';
 const LEARNER_CAP = 200;
 
 function clampInt(raw: string | null, fallback: number): number {
+  // Absent or blank → fallback. (Number(null) and Number('') are both 0, so we
+  // must guard before coercing, else a missing param silently becomes 0.)
+  if (raw === null || raw.trim() === '') return fallback;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return fallback;
   return Math.floor(n);

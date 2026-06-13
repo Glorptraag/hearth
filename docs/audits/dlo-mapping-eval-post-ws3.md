@@ -9,6 +9,8 @@
 This is a **controlled A/B**: both runs use the same harness, same golden set, same 2048-token ceiling, same 400 ms pacing, run back-to-back. The **only** variable is whether the `CANDIDATE DLO DESCRIPTORS` block is present in the user prompt. Descriptors are sourced from the in-repo fixture `scripts/data/dlo-descriptors.ts` (canonical text from `docs/hearth-capability-dlo-reference.md`) and primed into the dlo-cache — no Sanity, no DB. See the baseline doc for why (production is pre-migration for DLOs; seeding is parked behind a human gate).
 
 > **⚠️ Gold labels need Drew's review (G3 gate).** The two regressions below are both `developing`-vs-`demonstrating` boundary calls on entries a reasonable reviewer could grade either way. Whether they are model errors or gold-label errors is exactly the editorial question for the gate. Review `scripts/data/dlo-golden-set.ts` before treating the delta as final.
+>
+> **✅ Resolved 2026-06-13 (Drew, G3 gate).** Gold labels held: gs-12 (`PS3.developing`) and gs-13 (`H1.developing`) are correct as written — the descriptor-grounded flips to `demonstrating` are **model over-reads**, not label errors. No label change, no re-run. Tracked follow-up: a "prefer the lower tier when the capability shows in only a single familiar context" prompt note to curb the same inflation on gs-06/gs-08.
 
 ---
 

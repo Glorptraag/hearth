@@ -1,0 +1,58 @@
+{
+  "plan": "PLAN-outcomes-spine + PLAN-outcomes-spine-phase2",
+  "generated": "2026-06-11",
+  "phase2_generated": "2026-06-12",
+  "mode": "manual",
+  "tasks": {
+    "0.1": { "status": "done", "model": "sonnet", "size": "micro", "batch": "B0", "blocked_by": [], "completed_at": "2026-06-11T12:39:24Z", "completed_by": "T0" },
+    "0.2": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": [], "completed_at": "2026-06-11T12:39:24Z", "completed_by": "T0" },
+    "0.3": { "status": "done", "model": "sonnet", "size": "micro", "batch": "B0", "blocked_by": [], "completed_at": "2026-06-11T12:39:24Z", "completed_by": "T0" },
+    "1.1": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["G0"], "completed_at": "2026-06-11T23:10:00Z", "completed_by": "T1" },
+    "1.2": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["1.1"], "completed_at": "2026-06-11T23:10:00Z", "completed_by": "T1" },
+    "2.1": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["G1"], "completed_at": "2026-06-12T07:30:00Z", "completed_by": "T2" },
+    "2.2": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["2.1"], "completed_at": "2026-06-12T07:40:00Z", "completed_by": "T2" },
+    "2.3": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["2.1"], "completed_at": "2026-06-12T07:48:00Z", "completed_by": "T2" },
+    "2.4": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["2.2"], "completed_at": "2026-06-12T07:58:00Z", "completed_by": "T2" },
+    "3.1": { "status": "done", "model": "opus", "size": "standard", "batch": null, "blocked_by": ["G2"], "completed_at": "2026-06-12T14:20:00Z", "completed_by": "T3" },
+    "3.2": { "status": "done", "model": "opus", "size": "standard", "batch": null, "blocked_by": ["3.1"], "completed_at": "2026-06-12T14:20:00Z", "completed_by": "T3" },
+    "3.3": { "status": "done", "model": "opus", "size": "micro", "batch": null, "blocked_by": ["3.2"], "completed_at": "2026-06-12T14:20:00Z", "completed_by": "T3" },
+    "4.1": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["G3"], "completed_at": "2026-06-12T15:30:00Z", "completed_by": "T4" },
+    "4.2": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["G3"], "completed_at": "2026-06-12T15:30:00Z", "completed_by": "T4" },
+    "4.3": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["4.1", "4.2"], "completed_at": "2026-06-12T15:30:00Z", "completed_by": "T4" },
+    "4.4": { "status": "done", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["4.3"], "completed_at": "2026-06-12T15:30:00Z", "completed_by": "T4" },
+
+    "A1": { "status": "pending", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["HUMAN: approve re-point at dry-run report"], "note": "Stray-thread remediation: script + dry-run + gated execute + verify 57/0/0 + delete strays. Chip task_378f5f26. 2 ambiguous title mappings flagged for Drew.", "completed_at": null, "completed_by": null },
+    "A2": { "status": "pending", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["A1", "HUMAN: prod backfill approval"], "note": "Prod thread-links backfill (was P-1): dry-run -> --limit 10 -> full, then snapshot rebuilds for affected families.", "completed_at": null, "completed_by": null },
+    "A3": { "status": "pending", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["A2", "HUMAN: prod backfill approval"], "note": "DLO history backfill (was P-7; resolves D-OS3=yes per 3.3 eval). backfill-dlo-links.mjs ramp; watch AI-cost dashboard + noisy-family threshold.", "completed_at": null, "completed_by": null },
+    "A4": { "status": "done", "model": "sonnet", "size": "micro", "batch": null, "blocked_by": [], "note": "Annotated stale '0 DLOs in production' claim in both docs/audits/dlo-mapping-eval-*.md — original claim retained, marked true-at-runtime/stale-now with corrected figures (171 published DLOs + 57 coded threads verified 2026-06-12). Regulatory-mapping seed (B3) noted as still parked. Docs-only.", "completed_at": "2026-06-13T00:00:00Z", "completed_by": "A4" },
+
+    "B1": { "status": "done", "model": null, "size": "standard", "batch": null, "blocked_by": [], "note": "RESOLVED 2026-06-13 (Drew): keep gs-12 (PS3) and gs-13 (H1) at 'developing' — gold labels confirmed correct; the eval 'regressions' are model over-reads, not label errors. No re-run needed (labels unchanged). Tracked next lever (not done here): prompt note 'prefer the lower tier when the capability shows in only a single familiar context' to curb demonstrating-inflation on gs-06/gs-08.", "completed_at": "2026-06-13T00:00:00Z", "completed_by": "Drew (decision)" },
+    "B2": { "status": "pending", "model": "opus", "size": "standard", "batch": null, "blocked_by": [], "note": "Draft ac-v9-qld regulatoryMappings tranche 1 (observed pilot threads + Starter Pack threads). Codes verified against ACARA v9, AC9_CODE_PATTERN linted, PR for Drew review. NOT seeded.", "completed_at": null, "completed_by": null },
+    "B3": { "status": "parked", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["B2", "HUMAN: seed approval"], "note": "Run seed-dlo-mappings against prod Sanity (was P-2) -> report flips deterministic for QLD -> verify pilot-family report determinism -> regenerate hearth-capability-dlo-reference.md. Avoid mid-HEU-submission weeks.", "completed_at": null, "completed_by": null },
+
+    "C1": { "status": "pending", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": [], "note": "Admin tier-comparison panel (WS-4 prep): pure deriveThreadTierFromDlos lib with parameterised D-OS4 bar + admin route/panel showing count-based vs derived tier per learner x thread. No parent-facing change. Meaningful after A2/A3 data.", "completed_at": null, "completed_by": null },
+    "C2": { "status": "parked", "model": null, "size": "micro", "batch": null, "blocked_by": ["C1", "A2", "A3"], "note": "D-OS4 default ADOPTED 2026-06-13 (Drew): demonstrating = >=1 declared/asserted OR >=2 inferred on distinct days; thread tier = highest tier with sufficient evidence. C2 is now CONFIRM/tune this against C1's real-data comparison before C3 (no longer a blind decision).", "completed_at": null, "completed_by": null },
+    "C3": { "status": "parked", "model": "opus", "size": "standard", "batch": null, "blocked_by": ["C2"], "note": "WS-4 (was P-4): DLO-derived thread tiers, counts demoted, overrides preserved, fabricated dlos_confirmed deleted, one-time shift notice (recommendations_refreshed pattern). Fold in: drop claimedTier from parent-facing dlo-evidence response; reconcile snapshot AC9 prefix map with deterministic-coverage's.", "completed_at": null, "completed_by": null },
+
+    "D0": { "status": "done", "model": null, "size": "micro", "batch": null, "blocked_by": [], "note": "DECIDED 2026-06-13 (Drew): opportunity + corroboration. Completing a targeted activity logs an OPPORTUNITY; the DLO link becomes evidence only on a per-child Haiku signal or parent tap.", "completed_at": "2026-06-13T00:00:00Z", "completed_by": "Drew (decision)" },
+    "D1": { "status": "pending", "model": "opus", "size": "standard", "batch": null, "blocked_by": ["D0"], "note": "WS-6 (was P-5): activity capabilityTargets[{thread,tier}] schema, thread-links consumes declared tier (kills DEFAULT_TIER). Per D0: write OPPORTUNITY at declared (thread,tier), promote to evidence only on corroboration. Unblocked 2026-06-13.", "completed_at": null, "completed_by": null },
+    "D2": { "status": "parked", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": ["D1"], "note": "Workbench soft-flag for thread-less activities (120/274 today), kindling spec/orchestrator populates targets, Starter Pack content pass, regenerate DLO reference authoring guidance.", "completed_at": null, "completed_by": null },
+    "D3": { "status": "pending", "model": "sonnet", "size": "standard", "batch": null, "blocked_by": [], "note": "Per-learner DLO attribution (was P-6). DECIDED 2026-06-13 (Drew): gate links by per_child_signals — attach only to learners the enrichment named. Urgent if Hearth-group sessions scale. Unblocked 2026-06-13.", "completed_at": null, "completed_by": null },
+
+    "P-8": { "status": "parked", "model": null, "size": "standard", "batch": null, "blocked_by": ["D-OS5"], "note": "Post-run 'saw it' parent-assert tap. Deferred to pilot research (research log question).", "completed_at": null, "completed_by": null }
+  },
+  "human_gates": [
+    { "id": "GA1", "description": "Approve stray-thread re-point at the A1 dry-run report (incl. 2 ambiguous title mappings)", "blocks": ["A1-execute", "A2"] },
+    { "id": "GA2", "description": "Approve prod backfill runs (thread-links, then DLO history; ramp dry-run -> 10 -> full)", "blocks": ["A2", "A3"] },
+    { "id": "GB", "description": "Review B2 mapping PR, then approve B3 seed run", "blocks": ["B3"] },
+    { "id": "GC", "description": "D-OS4 demonstrating bar — default adopted 2026-06-13; remaining step is confirm/tune against C1's real-data comparison before C3", "status": "default adopted; data-confirm pending C1", "blocks": ["C3"] },
+    { "id": "GD", "description": "D-OS1 + D-OS2 decisions", "status": "resolved 2026-06-13", "blocks": ["D1", "D3"] }
+  ],
+  "decision_queue": [
+    { "id": "D-OS1", "question": "Does completing an activity with a declared target constitute DLO evidence at that tier, or an opportunity pending corroboration (Haiku per-child signal or parent tap)?", "recommendation": "Opportunity + cheap corroboration — protects the evidence bar", "confidence": "medium", "resolved": "2026-06-13", "resolution": "Opportunity + corroboration (per recommendation)", "blocks": ["D0", "D1"] },
+    { "id": "D-OS2", "question": "Per-learner DLO attribution: gate links by per_child_signals (only learners Haiku named), or keep copy-to-all until Hearth-group evidence ships?", "recommendation": "Gate by per_child_signals", "confidence": "medium", "resolved": "2026-06-13", "resolution": "Gate by per_child_signals — attach only to learners the enrichment named", "blocks": ["D3"] },
+    { "id": "D-OS3", "question": "Re-run enrichment over pre-WS-3 entries?", "recommendation": "YES — resolved by the 3.3 eval (P 0.589 / R 0.633, ~2.5k tok/entry Haiku). Executed as A3; final sign-off is the GA2 gate.", "confidence": "high", "blocks": ["A3"] },
+    { "id": "D-OS4", "question": "Exact 'demonstrating' bar: >=1 declared/asserted OR >=2 inferred on distinct days?", "recommendation": "As proposed; tune against the C1 comparison over real pilot data before C3", "confidence": "medium", "resolved": "2026-06-13", "resolution": "Proposed default adopted as build target; confirm/tune against C1 real-data comparison before C3 locks it", "blocks": ["C2", "C3"] },
+    { "id": "D-OS5", "question": "Is the post-run 'saw it' assert tap worth its friction (5-minute rule)?", "recommendation": "Validate with a real family before building (research log)", "confidence": "low", "blocks": ["P-8"] }
+  ]
+}

@@ -14,6 +14,8 @@ import { eq, and, desc, gte, lte, count, inArray } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import { entryThreadIds } from './thread-aggregation';
+import { countBasedTier } from './thread-tier';
+import type { ObservationTier } from '@/types/capability-universe';
 import { detectMilestoneEntries } from './milestone-detect';
 import {
   triggerBadgeReady,
@@ -147,24 +149,14 @@ export async function rebuildSnapshot(
         }
       }
 
-      // Compute tiers based on observation count
+      // Compute tiers based on observation count. The count→tier ladder and the
+      // lower-only parent override live in one place (thread-tier.ts →
+      // countBasedTier) so the snapshot and the admin tier-comparison can't drift.
       const tierOverrides = (child.profileData as Record<string, unknown>)?.tierOverrides as
         Record<string, { tier: string }> | null | undefined;
       for (const [threadId, data] of Object.entries(threadCounts)) {
-        if (data.count >= 8) data.tier = 'demonstrating';
-        else if (data.count >= 4) data.tier = 'developing';
-        else data.tier = 'emerging';
-
-        // Parent override takes precedence (can only lower, never raise)
-        const override = tierOverrides?.[threadId];
-        if (override) {
-          const tierRank = { emerging: 0, developing: 1, demonstrating: 2 };
-          const autoRank = tierRank[data.tier as keyof typeof tierRank] ?? 0;
-          const overrideRank = tierRank[override.tier as keyof typeof tierRank] ?? 0;
-          if (overrideRank < autoRank) {
-            data.tier = override.tier;
-          }
-        }
+        const override = tierOverrides?.[threadId]?.tier as ObservationTier | undefined;
+        data.tier = countBasedTier(data.count, override ?? null);
       }
 
       // Count AC V9 descriptors per subject from AI enrichment

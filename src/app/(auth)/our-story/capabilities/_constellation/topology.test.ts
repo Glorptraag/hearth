@@ -49,6 +49,32 @@ describe('topology', () => {
     expect(cols['L3']).toBeGreaterThan(cols['L1']);
   });
 
+  it('the thread prerequisite graph is acyclic (guards topoColumn against cycles)', () => {
+    // topoColumn silently returns column 0 on a prerequisite back-edge rather
+    // than throwing, so a cycle introduced into the static prereq data would
+    // mis-place nodes with no runtime signal. This guard fails loudly at CI
+    // time instead. DFS with a recursion stack; report the offending path.
+    const byId = new Map(ALL_THREADS.map((t) => [t.id, t]));
+    const onStack = new Set<string>();
+    const done = new Set<string>();
+    const findCycle = (id: string): string[] | null => {
+      if (onStack.has(id)) return [id]; // back-edge onto the current path
+      if (done.has(id)) return null;
+      onStack.add(id);
+      for (const p of byId.get(id)?.prereqs ?? []) {
+        const path = findCycle(p);
+        if (path) return [id, ...path];
+      }
+      onStack.delete(id);
+      done.add(id);
+      return null;
+    };
+    for (const t of ALL_THREADS) {
+      const cycle = findCycle(t.id);
+      expect(cycle, cycle ? `prereq cycle: ${cycle.join(' → ')}` : undefined).toBeNull();
+    }
+  });
+
   it('deriveThreadStates marks ghosts when all prereqs are active', () => {
     // L3 has prereqs L1 and L4. If both have a tier, L5 (downstream of L3) becomes ghost when itself unobserved.
     const tier = {

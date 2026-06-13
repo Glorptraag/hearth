@@ -1,7 +1,7 @@
 'use client';
 
 import './constellation.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChildSelector } from '@/components/ui/child-selector';
 import {
@@ -197,6 +197,19 @@ export function ConstellationRoute({
   const [view, setView] = useState<ViewMode>(initialView);
   const [depth, setDepth] = useState<Depth>(initialDepth);
   const [focus, setFocus] = useState<Focus>(initialFocus);
+
+  // Reset the drill to Level 1 when the parent switches child. Without this a
+  // deep drill into one child's thread/DLO/moments carries over to the next
+  // child — showing the wrong context and inviting cross-child comparison. The
+  // ref guards the first mount so a deep-linked URL (?d=4&focus=…) is preserved;
+  // only a *subsequent* learner change resets.
+  const prevLearnerId = useRef(learnerId);
+  useEffect(() => {
+    if (prevLearnerId.current === learnerId) return;
+    prevLearnerId.current = learnerId;
+    setDepth(1);
+    setFocus({ domain: null, thread: null, dlo: null });
+  }, [learnerId]);
 
   // Sync URL on changes
   useEffect(() => {

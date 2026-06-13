@@ -10,6 +10,8 @@
 
 > **Hermetic harness note:** the `g5zhwbxg/production` Sanity dataset is pre-migration for the capability layer (0 `discreteLearningObjective` docs; `capabilityThread` docs are UUID-keyed without codes). The eval therefore sources descriptors from the in-repo fixture `scripts/data/dlo-descriptors.ts` (canonical text from the DLO reference) and primes the dlo-cache directly — no Sanity, no DB. `--baseline` primes the cache empty so no descriptor block is built, reproducing the pre-WS-3 prompt exactly. Production DLO seeding remains parked behind a human gate (plan task P-2/P-3).
 
+> **🕒 Truth pass (annotated 2026-06-13 — plan task A4):** The production-state claim above — *"0 `discreteLearningObjective` docs; `capabilityThread` docs are UUID-keyed without codes"* — was **true at this eval's run-time** but is **stale now.** Production has since been seeded: **171 published DLO docs and 57 coded capability threads** (verified 2026-06-12). The original wording is left intact: it records the dataset state the hermetic harness was built around, and the eval result is unchanged either way — the harness deliberately never reads Sanity or the DB. Note that the *regulatory-mapping* seed (`scripts/seed-dlo-mappings.ts`, now plan task B3) is a separate step that **remains** parked behind a human gate.
+
 ---
 
 ## Aggregate results

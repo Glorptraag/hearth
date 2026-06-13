@@ -11,6 +11,7 @@ import { getJurisdiction } from '@/config/jurisdictions';
 import { routeHandler } from '@/lib/api-helpers';
 import { getDeterministicCoverage } from '@/lib/report/coverage';
 import { descriptorToSubject, frameworkKeyForState } from '@/lib/report/deterministic-coverage';
+import { resolveExportSlotData } from '@/lib/report/export-slots';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
   english: { label: 'English', emoji: '📖' },
@@ -200,37 +201,19 @@ export const GET = routeHandler(async (request: NextRequest) => {
 
     y = doc.lastAutoTable.finalY + 10;
 
-    // Work samples — 6-slot QLD structure
-    const reportYear = reportDueDate?.getFullYear() ?? now.getFullYear();
+    // Work samples — 6-slot QLD structure. Slots are PERSISTED-ONLY: a slot
+    // shows an entry only if the parent actually selected one (filled by the DB
+    // merge below). The export must never auto-match an entry the parent never
+    // chose into the compliance PDF — that diverged from the on-screen report
+    // and could put an unvetted sample in front of the regulator.
     const WORK_SAMPLE_SLOTS = [
-      { area: 'english', label: 'Early Writing', termHalf: 'early' as const },
-      { area: 'english', label: 'Later Writing', termHalf: 'late' as const },
-      { area: 'mathematics', label: 'Early Maths', termHalf: 'early' as const },
-      { area: 'mathematics', label: 'Later Maths', termHalf: 'late' as const },
-      { area: 'science', label: 'Early Science/HASS', termHalf: 'early' as const, altArea: 'hass' },
-      { area: 'science', label: 'Later Science/HASS', termHalf: 'late' as const, altArea: 'hass' },
+      { area: 'english', label: 'Early Writing' },
+      { area: 'english', label: 'Later Writing' },
+      { area: 'mathematics', label: 'Early Maths' },
+      { area: 'mathematics', label: 'Later Maths' },
+      { area: 'science', label: 'Early Science/HASS' },
+      { area: 'science', label: 'Later Science/HASS' },
     ];
-
-    const slotData = WORK_SAMPLE_SLOTS.map((slot) => {
-      const candidates = entries.filter((e) => {
-        const d = new Date(e.dateOccurred + 'T00:00:00');
-        if (d.getFullYear() !== reportYear) return false;
-        const month = d.getMonth() + 1;
-        const inHalf = slot.termHalf === 'early' ? month <= 6 : month >= 7;
-        if (!inHalf) return false;
-        const enrichment = e.aiEnrichment as AiEnrichment;
-        const subjectSet = new Set([
-          ...(e.subjects ?? []),
-          ...(enrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
-        ]);
-        return subjectSet.has(slot.area) || (slot.altArea ? subjectSet.has(slot.altArea) : false);
-      });
-      const match = candidates[0] ?? null;
-      const status = match
-        ? (match.evidenceUrls?.length ?? 0) > 0 ? 'Complete' : 'Partial'
-        : 'Empty';
-      return { ...slot, entryTitle: match?.title ?? '—', status };
-    });
 
     // Fetch DB-backed work samples with annotations (if report exists)
     const reportId = request.nextUrl.searchParams.get('reportId');
@@ -285,20 +268,12 @@ export const GET = routeHandler(async (request: NextRequest) => {
       }
     }
 
-    // Merge DB samples into work sample data
+    // Persisted-only slot resolution (see lib/report/export-slots): a slot is
+    // filled ONLY from its DB work-sample row, never auto-matched.
     const SLOT_KEY_MAP: Record<string, number> = {
       early_writing: 0, later_writing: 1, early_maths: 2, later_maths: 3, early_choice: 4, later_choice: 5,
     };
-    for (const dbs of dbSamples) {
-      const idx = SLOT_KEY_MAP[dbs.slot];
-      if (idx !== undefined && dbs.entryId) {
-        const entry = entries.find((e) => e.id === dbs.entryId);
-        if (entry) {
-          slotData[idx].entryTitle = entry.title ?? '—';
-          slotData[idx].status = dbs.annotation?.confirmedAt ? 'Confirmed' : 'Selected';
-        }
-      }
-    }
+    const slotData = resolveExportSlotData(WORK_SAMPLE_SLOTS, SLOT_KEY_MAP, dbSamples, entries);
 
     if (y > 240) { doc.addPage(); y = 20; }
     doc.setFontSize(12);

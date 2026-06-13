@@ -177,6 +177,137 @@ function ExpandedEvidence({ items }: { items: DisplayEvidence[] }) {
   );
 }
 
+/**
+ * The expanded-card body, shared by both Portfolio views (By Thread and
+ * Timeline). Extracting it guarantees the two views expose the SAME actions —
+ * the journey-observation callout, the honest "Generate now" recovery, the
+ * "reading…" pending line, and a *functional* work-sample toggle. Previously the
+ * Timeline button was a dead <span> and the Thread view lacked recovery/journey,
+ * so the views silently diverged depending on which one the parent landed on.
+ */
+export function ExpandedCardBody({
+  entry,
+  learners,
+  entriesFetchedAtMs,
+  editing,
+  onEdit,
+  onCancelEdit,
+  onSaved,
+  onRetryEnrichment,
+  onToggleWorkSample,
+}: {
+  entry: Entry;
+  learners: Learner[];
+  entriesFetchedAtMs: number;
+  editing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onSaved: (updated: Entry) => void;
+  onRetryEnrichment: () => void;
+  onToggleWorkSample: () => void;
+}) {
+  return (
+    <div className="border-t border-border-subtle px-md py-sm space-y-sm">
+      {editing ? (
+        <EntryEditForm
+          entry={entry}
+          learners={learners}
+          onCancel={onCancelEdit}
+          onSaved={onSaved}
+        />
+      ) : (
+        <div>
+          {entry.description && (
+            <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
+          )}
+          {entry.aiEnrichment?.journey_observation && (
+            <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
+              <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Journey Observation</p>
+              <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
+            </div>
+          )}
+          {(() => {
+            // Honest + recoverable: surface a quiet affordance when enrichment
+            // failed, or when a complete entry older than ~2 min still has no
+            // enrichment (legacy / stuck). Never a red banner — never alarming.
+            if (entry.status !== 'complete') return null;
+            const status = entry.aiEnrichment?.status;
+            const ageMs = entriesFetchedAtMs - new Date(entry.createdAt).getTime();
+            const looksStuck = !entry.aiEnrichment && ageMs > 2 * 60_000;
+            if (status !== 'failed' && !looksStuck) return null;
+            if (status === 'pending') return null;
+            return (
+              <div className="mt-sm flex items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm">
+                <p className="font-sans text-xs text-text-muted">
+                  Insights weren&rsquo;t generated for this moment.
+                </p>
+                <button
+                  type="button"
+                  onClick={onRetryEnrichment}
+                  className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                >
+                  Generate now
+                </button>
+              </div>
+            );
+          })()}
+          {entry.aiEnrichment?.status === 'pending' && (
+            <p className="mt-sm font-sans text-xs text-text-muted">
+              Reading this moment&hellip;
+            </p>
+          )}
+          <button
+            onClick={onEdit}
+            className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
+          >
+            <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
+          </button>
+        </div>
+      )}
+      <ExpandedEvidence items={entryEvidence(entry)} />
+      {entry.engagementPerLearner && Object.keys(entry.engagementPerLearner).length > 0 && (
+        <div>
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Engagement</p>
+          <div className="flex gap-sm">
+            {Object.entries(entry.engagementPerLearner).map(([learnerId, engLevel]) => {
+              const learner = learners.find((l) => l.id === learnerId);
+              return (
+                <div key={learnerId} className="flex items-center gap-xs">
+                  <span className="text-sm">{ENGAGEMENT_EMOJI[engLevel as keyof typeof ENGAGEMENT_EMOJI]}</span>
+                  <span className="font-sans text-xs text-text-muted">{learner?.name || learnerId}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-md mt-xs">
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleWorkSample(); }}
+          className={`font-sans text-[11px] font-semibold transition-colors duration-200 ${
+            entry.workSampleCandidate
+              ? 'text-sage hover:text-sage/80'
+              : 'text-text-muted hover:text-sage'
+          }`}
+        >
+          <span className="inline-flex items-center gap-xs">
+            <Check size={12} aria-hidden="true" />
+            {entry.workSampleCandidate ? 'Work sample' : 'Mark as work sample'}
+          </span>
+        </button>
+        {entry.sourceModuleId && (
+          <a
+            href={`/module/${entry.sourceModuleId}`}
+            className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+          >
+            <span className="inline-flex items-center gap-xs"><FilePdf size={12} aria-hidden="true" /> View activity materials</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PortfolioPage() {
   const { vocab } = usePedagogy();
   const [learners, setLearners] = useState<Learner[]>([]);
@@ -684,59 +815,17 @@ export default function PortfolioPage() {
 
                             {/* Expanded view */}
                             {isExpanded && (
-                              <div className="border-t border-border-subtle px-md py-sm space-y-sm">
-                                {/* Editable description */}
-                                {editingId === entry.id ? (
-                                  <EntryEditForm
-                                    entry={entry}
-                                    learners={learners}
-                                    onCancel={() => setEditingId(null)}
-                                    onSaved={applyEntryEdit}
-                                  />
-                                ) : (
-                                  <div className="group relative">
-                                    {entry.description && (
-                                      <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
-                                    )}
-                                    <button
-                                      onClick={() => setEditingId(entry.id)}
-                                      className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
-                                    >
-                                      <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
-                                    </button>
-                                  </div>
-                                )}
-                                <ExpandedEvidence items={entryEvidence(entry)} />
-                                {entry.engagementPerLearner && Object.keys(entry.engagementPerLearner).length > 0 && (
-                                  <div>
-                                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Engagement</p>
-                                    <div className="flex gap-sm">
-                                      {Object.entries(entry.engagementPerLearner).map(([learnerId, engLevel]) => {
-                                        const learner = learners.find((l) => l.id === learnerId);
-                                        return (
-                                          <div key={learnerId} className="flex items-center gap-xs">
-                                            <span className="text-sm">{ENGAGEMENT_EMOJI[engLevel as keyof typeof ENGAGEMENT_EMOJI]}</span>
-                                            <span className="font-sans text-xs text-text-muted">{learner?.name || learnerId}</span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); toggleWorkSampleCandidate(entry.id); }}
-                                  className={`mt-xs font-sans text-[11px] font-semibold transition-colors duration-200 ${
-                                    entry.workSampleCandidate
-                                      ? 'text-sage hover:text-sage/80'
-                                      : 'text-text-muted hover:text-sage'
-                                  }`}
-                                >
-                                  <span className="inline-flex items-center gap-xs">
-                                    <Check size={12} aria-hidden="true" />
-                                    {entry.workSampleCandidate ? 'Work sample' : 'Mark as work sample'}
-                                  </span>
-                                </button>
-                              </div>
+                              <ExpandedCardBody
+                                entry={entry}
+                                learners={learners}
+                                entriesFetchedAtMs={entriesFetchedAtMs}
+                                editing={editingId === entry.id}
+                                onEdit={() => setEditingId(entry.id)}
+                                onCancelEdit={() => setEditingId(null)}
+                                onSaved={applyEntryEdit}
+                                onRetryEnrichment={() => retryEnrichment(entry.id)}
+                                onToggleWorkSample={() => toggleWorkSampleCandidate(entry.id)}
+                              />
                             )}
                           </div>
                         );
@@ -856,95 +945,17 @@ export default function PortfolioPage() {
 
                     {/* Expanded view */}
                     {isExpanded && (
-                      <div className="border-t border-border-subtle px-md py-sm space-y-sm">
-                        {editingId === entry.id ? (
-                          <EntryEditForm
-                            entry={entry}
-                            learners={learners}
-                            onCancel={() => setEditingId(null)}
-                            onSaved={applyEntryEdit}
-                          />
-                        ) : (
-                          <div>
-                            {entry.description && (
-                              <p className="font-serif text-sm leading-relaxed text-text-secondary">{entry.description}</p>
-                            )}
-                            {entry.aiEnrichment?.journey_observation && (
-                              <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
-                                <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Journey Observation</p>
-                                <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
-                              </div>
-                            )}
-                            {(() => {
-                              // Honest + recoverable: surface a quiet affordance when
-                              // enrichment failed, or when a complete entry older than
-                              // ~2 min still has no enrichment (legacy / stuck). Never
-                              // a red banner — never alarming.
-                              if (entry.status !== 'complete') return null;
-                              const status = entry.aiEnrichment?.status;
-                              const ageMs = entriesFetchedAtMs - new Date(entry.createdAt).getTime();
-                              const looksStuck = !entry.aiEnrichment && ageMs > 2 * 60_000;
-                              if (status !== 'failed' && !looksStuck) return null;
-                              if (status === 'pending') return null;
-                              return (
-                                <div className="mt-sm flex items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm">
-                                  <p className="font-sans text-xs text-text-muted">
-                                    Insights weren&rsquo;t generated for this moment.
-                                  </p>
-                                  <button
-                                    type="button"
-                                    onClick={() => retryEnrichment(entry.id)}
-                                    className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
-                                  >
-                                    Generate now
-                                  </button>
-                                </div>
-                              );
-                            })()}
-                            {entry.aiEnrichment?.status === 'pending' && (
-                              <p className="mt-sm font-sans text-xs text-text-muted">
-                                Reading this moment&hellip;
-                              </p>
-                            )}
-                            <button
-                              onClick={() => setEditingId(entry.id)}
-                              className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
-                            >
-                              <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
-                            </button>
-                          </div>
-                        )}
-                        <ExpandedEvidence items={entryEvidence(entry)} />
-                        {entry.engagementPerLearner && Object.keys(entry.engagementPerLearner).length > 0 && (
-                          <div>
-                            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs">Engagement</p>
-                            <div className="flex gap-sm">
-                              {Object.entries(entry.engagementPerLearner).map(([learnerId, engLevel]) => {
-                                const learner = learners.find((l) => l.id === learnerId);
-                                return (
-                                  <div key={learnerId} className="flex items-center gap-xs">
-                                    <span className="text-sm">{ENGAGEMENT_EMOJI[engLevel as keyof typeof ENGAGEMENT_EMOJI]}</span>
-                                    <span className="font-sans text-xs text-text-muted">{learner?.name || learnerId}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-md mt-xs">
-                          <button className="font-sans text-[11px] font-semibold text-sage hover:text-sage/80 transition-colors duration-200">
-                            <span className="inline-flex items-center gap-xs"><Check size={12} aria-hidden="true" /> Mark as work sample</span>
-                          </button>
-                          {entry.sourceModuleId && (
-                            <a
-                              href={`/module/${entry.sourceModuleId}`}
-                              className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
-                            >
-                              <span className="inline-flex items-center gap-xs"><FilePdf size={12} aria-hidden="true" /> View activity materials</span>
-                            </a>
-                          )}
-                        </div>
-                      </div>
+                      <ExpandedCardBody
+                        entry={entry}
+                        learners={learners}
+                        entriesFetchedAtMs={entriesFetchedAtMs}
+                        editing={editingId === entry.id}
+                        onEdit={() => setEditingId(entry.id)}
+                        onCancelEdit={() => setEditingId(null)}
+                        onSaved={applyEntryEdit}
+                        onRetryEnrichment={() => retryEnrichment(entry.id)}
+                        onToggleWorkSample={() => toggleWorkSampleCandidate(entry.id)}
+                      />
                     )}
                   </div>
                 );

@@ -8,6 +8,8 @@
 
 This is a **controlled A/B**: both runs use the same harness, same golden set, same 2048-token ceiling, same 400 ms pacing, run back-to-back. The **only** variable is whether the `CANDIDATE DLO DESCRIPTORS` block is present in the user prompt. Descriptors are sourced from the in-repo fixture `scripts/data/dlo-descriptors.ts` (canonical text from `docs/hearth-capability-dlo-reference.md`) and primed into the dlo-cache — no Sanity, no DB. See the baseline doc for why (production is pre-migration for DLOs; seeding is parked behind a human gate).
 
+> **🕒 Truth pass (annotated 2026-06-13 — plan task A4):** The parenthetical *"production is pre-migration for DLOs; seeding is parked behind a human gate"* was **true at this eval's run-time** but is **stale now.** Production has since been seeded: **171 published DLO docs and 57 coded capability threads** (verified 2026-06-12). The hermetic A/B is unaffected — it sources descriptors from the in-repo fixture by design, never from Sanity or the DB — so the result stands exactly as recorded. The *regulatory-mapping* seed (`scripts/seed-dlo-mappings.ts`, now plan task B3) is a separate step that **remains** parked behind a human gate.
+
 > **⚠️ Gold labels need Drew's review (G3 gate).** The two regressions below are both `developing`-vs-`demonstrating` boundary calls on entries a reasonable reviewer could grade either way. Whether they are model errors or gold-label errors is exactly the editorial question for the gate. Review `scripts/data/dlo-golden-set.ts` before treating the delta as final.
 
 ---

@@ -7,9 +7,27 @@ import {
   deriveEvidenceRows,
   isThinEntry,
   buildEntrySavePayload,
+  coerceEntrySource,
   type EntrySaveForm,
   type EntrySaveContext,
 } from './entry-payload';
+
+describe('coerceEntrySource', () => {
+  it('keeps a valid entry source', () => {
+    expect(coerceEntrySource('logger')).toBe('logger');
+    expect(coerceEntrySource('module_log')).toBe('module_log');
+    expect(coerceEntrySource('project_stage')).toBe('project_stage');
+    expect(coerceEntrySource('hearth_session')).toBe('hearth_session');
+  });
+
+  it("falls back to 'logger' for an unknown, empty, or absent value", () => {
+    expect(coerceEntrySource('garbage')).toBe('logger');
+    expect(coerceEntrySource('retro')).toBe('logger');
+    expect(coerceEntrySource('')).toBe('logger');
+    expect(coerceEntrySource(null)).toBe('logger');
+    expect(coerceEntrySource(undefined)).toBe('logger');
+  });
+});
 
 describe('deriveSubjects', () => {
   it('uses the explicit lesson subjects for a structured lesson', () => {
@@ -206,6 +224,25 @@ describe('buildEntrySavePayload', () => {
     expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' });
     expect(p.dateOccurred).toBe('2026-06-01');
     expect(p.mode).toBe('quick');
+  });
+
+  it('drops engagement/discovery for a learner no longer selected (orphan purge)', () => {
+    // Select 3, rate all 3 + write discoveries, then deselect L3: the payload
+    // must carry only the two still-selected learners' per-child data, never the
+    // orphaned L3 rating (which would otherwise persist and reach enrichment).
+    const p = buildEntrySavePayload(
+      {
+        ...baseForm,
+        selectedLearners: ['L1', 'L2'],
+        engagement: { L1: 4, L2: 3, L3: 2 },
+        discoveries: { L1: 'gravity', L3: 'friction' },
+      },
+      baseCtx,
+    );
+    expect(p.engagementPerLearner).toEqual({ L1: 4, L2: 3 });
+    expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' });
+    expect(p.engagementPerLearner).not.toHaveProperty('L3');
+    expect(p.discoveriesPerLearner).not.toHaveProperty('L3');
   });
 
   it('omits observation details in Quick mode and includes them in Guided mode', () => {

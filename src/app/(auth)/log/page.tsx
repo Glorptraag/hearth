@@ -29,6 +29,7 @@ import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
 import type { LoggerDraftFields } from '@/lib/logger/draft';
 import {
   buildEntrySavePayload,
+  coerceEntrySource,
   isThinEntry,
 } from '@/lib/logger/entry-payload';
 import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
@@ -64,7 +65,7 @@ export default function LogPage() {
   const { vocab, pedagogy } = usePedagogy();
   const searchParams = useSearchParams();
   const projectContext = {
-    source: searchParams.get('source') ?? 'logger',
+    source: coerceEntrySource(searchParams.get('source')),
     projectId: searchParams.get('projectId') ?? undefined,
     stageNumber: searchParams.get('stageNumber') ?? undefined,
   };
@@ -298,7 +299,6 @@ export default function LogPage() {
     description,
     activityType,
     engagement,
-    observations,
   });
 
   const canSave = canSaveEntry(completeness, loggerMode);
@@ -319,9 +319,26 @@ export default function LogPage() {
 
   // ─── Handlers ───
   const toggleLearner = (id: string) => {
+    const wasSelected = selectedLearners.includes(id);
     setSelectedLearners((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
     );
+    // Deselecting a learner clears their per-child engagement + discovery so an
+    // orphaned rating can't linger in state, skew completeness, or be sent on
+    // save. Mirrors toggleObservation's detail purge. buildEntrySavePayload also
+    // filters to selectedLearners as the save-boundary guarantee.
+    if (wasSelected) {
+      setEngagement((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setDiscoveries((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
   };
 
   const toggleObservation = (chip: string) => {
@@ -407,7 +424,7 @@ export default function LogPage() {
         : null;
 
       const entryCreatedProps: Record<string, string | number | boolean> = {
-        source: scaffoldData ? 'hearth_session' : projectContext.source ?? 'retro',
+        source: scaffoldData ? 'hearth_session' : projectContext.source,
         learner_count: selectedLearners.length,
         has_evidence: evidenceUrls.length > 0,
         activity_type: activityType ?? 'none',

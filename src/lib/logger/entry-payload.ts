@@ -17,7 +17,19 @@
  * without mounting the Logger. The pass-through fields stay inline at the call
  * site — they carry no logic to protect.
  */
+import { ENTRY_SOURCES } from '@/types';
 import type { DraftEvidenceItem } from './draft';
+
+/**
+ * Coerce a raw `?source=` query value to a valid entry source. The server
+ * validates `source` against ENTRY_SOURCES (`z.enum`) and rejects anything else,
+ * so a stale or mistyped deep link like `?source=foo` would otherwise hard-fail
+ * an otherwise-valid save with a generic error. Unknown/absent values fall back
+ * to 'logger'.
+ */
+export function coerceEntrySource(raw: string | null | undefined): string {
+  return raw && (ENTRY_SOURCES as readonly string[]).includes(raw) ? raw : 'logger';
+}
 
 /** Logger mode — mirrors `useLoggerModeAndSnapshot`'s `LoggerMode` without a hook dependency. */
 export type LoggerSaveMode = 'guided' | 'quick';
@@ -57,6 +69,26 @@ export function deriveSubjects(activityType: string | null, lessonSubjects: stri
 /** Truncate the description into a 60-char title, appending an ellipsis if cut. */
 export function deriveEntryTitle(description: string): string {
   return description.slice(0, 60).trim() + (description.length > 60 ? '...' : '');
+}
+
+/**
+ * Restrict a per-learner record to the currently-selected learners. Deselecting
+ * a child after rating them leaves an orphaned `engagement`/`discoveries` key in
+ * form state (the toggle that removes the child does not, on its own, prune the
+ * map). This is the save-boundary guarantee that such orphans never persist to
+ * the entry or reach the enrichment prompt — without it a removed child's rating
+ * is written and fed to Haiku as a bare learner id.
+ */
+export function pickSelectedLearners<T>(
+  record: Record<string, T>,
+  selectedLearners: readonly string[],
+): Record<string, T> {
+  const allowed = new Set(selectedLearners);
+  const out: Record<string, T> = {};
+  for (const [id, value] of Object.entries(record)) {
+    if (allowed.has(id)) out[id] = value;
+  }
+  return out;
 }
 
 /** The persisted evidence URLs are the photo evidence's content only. */
@@ -217,8 +249,8 @@ export function buildEntrySavePayload(
     dateOccurred: form.dateOccurred,
     subjects: deriveSubjects(form.activityType, form.lessonSubjects),
     learnerIds: form.selectedLearners,
-    engagementPerLearner: form.engagement,
-    discoveriesPerLearner: form.discoveries,
+    engagementPerLearner: pickSelectedLearners(form.engagement, form.selectedLearners),
+    discoveriesPerLearner: pickSelectedLearners(form.discoveries, form.selectedLearners),
     evidenceUrls: derivePhotoEvidenceUrls(form.evidence),
     evidence: deriveEvidenceRows(form.evidence),
     observationDetails: form.loggerMode === 'guided' ? form.observationDetails : undefined,

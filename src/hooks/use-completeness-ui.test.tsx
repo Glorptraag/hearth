@@ -9,7 +9,6 @@ const baseArgs = (overrides: Partial<UseCompletenessUiArgs> = {}): UseCompletene
   description: '',
   activityType: null,
   engagement: {},
-  observations: [],
   ...overrides,
 });
 
@@ -49,7 +48,7 @@ describe('useCompletenessUi', () => {
   });
 
   describe('missingItems', () => {
-    it('lists every missing piece for an empty form', () => {
+    it('lists the missing basics for an empty form (never "Add an observation")', () => {
       const { result } = renderHook(() =>
         useCompletenessUi(baseArgs({ loggerMode: 'guided' })),
       );
@@ -57,8 +56,10 @@ describe('useCompletenessUi', () => {
         'Pick who was learning',
         'Describe what happened',
         'Choose an activity',
-        'Add an observation',
       ]);
+      // Observations contribute points but never gate a save — they must not be
+      // listed as a save blocker.
+      expect(result.current.missingItems).not.toContain('Add an observation');
     });
 
     it('omits "Choose an activity" in quick mode', () => {
@@ -68,20 +69,39 @@ describe('useCompletenessUi', () => {
       expect(result.current.missingItems).not.toContain('Choose an activity');
     });
 
-    it('drops items as fields become populated', () => {
+    it('clears the checklist once the entry is saveable (no false required items)', () => {
+      // A saveable quick entry (gate = 50) must show nothing missing — previously
+      // it still nagged "Add an observation".
       const { result } = renderHook(() =>
         useCompletenessUi(
           baseArgs({
+            completeness: 55,
+            loggerMode: 'quick',
             selectedLearners: ['l1'],
             description: 'A description well over the twenty char threshold',
-            activityType: 'nature',
             engagement: { l1: 3 },
-            observations: ['Curious'],
-            loggerMode: 'guided',
           }),
         ),
       );
       expect(result.current.missingItems).toEqual([]);
+    });
+
+    it('nudges for enrichment when basics are done but under the Guided gate', () => {
+      // Guided gate is 65; with only the basics the score sits below it. Rather
+      // than implying one item is required, surface a single soft nudge.
+      const { result } = renderHook(() =>
+        useCompletenessUi(
+          baseArgs({
+            completeness: 58,
+            loggerMode: 'guided',
+            selectedLearners: ['l1'],
+            description: 'A description well over the twenty char threshold',
+            activityType: 'nature',
+            engagement: { l1: 3 },
+          }),
+        ),
+      );
+      expect(result.current.missingItems).toEqual(['Add a little more detail to save']);
     });
 
     it('requires at least one engagement rating when learners are selected', () => {
@@ -91,7 +111,6 @@ describe('useCompletenessUi', () => {
             selectedLearners: ['l1', 'l2'],
             description: 'long enough description to clear the threshold',
             engagement: {},
-            observations: ['x'],
           }),
         ),
       );

@@ -16,6 +16,14 @@ import type { AiEnrichment } from '@/types/enrichment';
 export const ENRICHMENT_POLL_INTERVAL_MS = 1500;
 /** Give up after 30 s and resolve the surface to a failed view. */
 export const ENRICHMENT_POLL_TIMEOUT_MS = 30000;
+/**
+ * Per-request abort budget. Without it a single hung GET (a stuck connection on
+ * a flaky rural link) never settles, so the loop never re-checks the overall
+ * timeout and the post-save surface sits on the skeleton forever. An aborted
+ * request is treated as a transient failure — the loop continues until the
+ * overall timeout, honouring the spec's "never a spinner that hangs".
+ */
+export const ENRICHMENT_REQUEST_TIMEOUT_MS = 10000;
 
 export interface EnrichmentPollCallbacks {
   /**
@@ -40,6 +48,8 @@ export interface EnrichmentPollCallbacks {
 export interface EnrichmentPollOptions {
   intervalMs?: number;
   timeoutMs?: number;
+  /** Per-request abort budget (ms). A hung fetch is aborted and treated as transient. */
+  requestTimeoutMs?: number;
   fetchImpl?: typeof fetch;
   /** Injectable for tests; defaults to a real `setTimeout` delay. */
   sleep?: (ms: number) => Promise<void>;
@@ -65,6 +75,7 @@ export async function pollEntryEnrichment(
 ): Promise<void> {
   const intervalMs = opts.intervalMs ?? ENRICHMENT_POLL_INTERVAL_MS;
   const timeoutMs = opts.timeoutMs ?? ENRICHMENT_POLL_TIMEOUT_MS;
+  const requestTimeoutMs = opts.requestTimeoutMs ?? ENRICHMENT_REQUEST_TIMEOUT_MS;
   const fetchImpl = opts.fetchImpl ?? fetch;
   const sleep = opts.sleep ?? defaultSleep;
   const now = opts.now ?? Date.now;
@@ -73,8 +84,12 @@ export async function pollEntryEnrichment(
   while (now() - start < timeoutMs) {
     await sleep(intervalMs);
     if (!cb.isCurrent()) break;
+    // Bound each request: a hung GET is aborted so the loop can re-check the
+    // overall timeout instead of awaiting a promise that never settles.
+    const controller = new AbortController();
+    const reqTimer = setTimeout(() => controller.abort(), requestTimeoutMs);
     try {
-      const res = await fetchImpl(`/api/entries/${entryId}`);
+      const res = await fetchImpl(`/api/entries/${entryId}`, { signal: controller.signal });
       if (!res.ok) continue;
       const body = (await res.json()) as { aiEnrichment?: AiEnrichment | null };
       const enrichment = body?.aiEnrichment;
@@ -91,7 +106,9 @@ export async function pollEntryEnrichment(
       cb.clearCurrent();
       break;
     } catch {
-      // transient — keep polling
+      // transient (network error or per-request abort) — keep polling
+    } finally {
+      clearTimeout(reqTimer);
     }
   }
 

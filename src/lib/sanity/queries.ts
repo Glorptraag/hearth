@@ -107,7 +107,12 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
 // Returns the module with enough context to render a card and to run
 // scoreModules (subjects, ageRange, modality summary, sessionType,
 // capabilityThreads for gap matching, and lens bundles for pedagogy scoring).
-export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published"]{
+// CONTAINMENT: gated to modules that belong to at least one PUBLISHED pack.
+// Unpublishing a pack does NOT cascade — its modules stay published docs — so
+// without this gate a pulled-back pack's modules would leak into any browse
+// surface wired to this query. Currently unconsumed; keep the gate if wired.
+// See the SANITY GATING INVARIANT at the top of this file.
+export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published" && count(*[_type == "pack" && status == "published" && references(^._id)]) > 0]{
   _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
   sessionType, availability, status,
   ${PACK_INDICATORS_PROJECTION},
@@ -122,25 +127,14 @@ export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published"
   }
 }`;
 
-// Single activity with full content
-// NOTE: fileUrl intentionally excluded — this query runs client-side.
-export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id && status == "published"][0]{
-  ...,
-  capabilityThreads[]->{ _id, title, domain },
-  enabledBadges[]->{ _id, title, emoji },
-  "assets": assets[@.asset->status == "published"]{
-    _key, role, notes,
-    asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
-      "thumbnailUrl": thumbnail.asset->url
-    }
-  },
-  "commonsTexts": commonsTexts[@.text->status == "published"]{
-    _key, role, presentationMode, notes,
-    text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
-      estimatedReadAloudMinutes, length, source, status
-    }
-  }
-}`;
+// (Removed) ACTIVITY_DETAIL_QUERY — was an unused, document-direct activity
+// fetch gated only on the activity's own status. There is no /activity/[id]
+// route; activities are only ever reached inside the access-gated module
+// runner. It could not be pack-gated reliably (the activity→approach→module
+// back-refs are null on most live content), so it was a containment landmine
+// with no consumer. Any future standalone activity view must wrap an explicit
+// entitlement check like src/app/(auth)/module/[id] does — do not reintroduce
+// a bare document-status query. See the SANITY GATING INVARIANT above.
 
 // Pedagogy overlay for an activity + framework
 export const OVERLAY_QUERY = `*[_type == "pedagogyOverlay" && activity._ref == $activityId && framework == $framework][0]`;
@@ -243,20 +237,9 @@ export const SCORING_MODULES_QUERY = `*[_type == "pack" && _id in $packIds && st
   }
 }`;
 
-// All published modules with pack back-reference for explore/browse
-export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
-  _id,
-  title,
-  description,
-  subjects,
-  "modules": modules[@->status == "published"]->{
-    _id, title, slug, targetUnderstanding, subjects, ageRange, duration,
-    "approaches": approaches[@->status == "published"]->{
-      _id, title, modality,
-      "activityCount": count(activities[@->status == "published"])
-    }
-  }
-}`;
+// (Removed) ALL_MODULES_QUERY — unused and duplicated LIBRARY_MODULES_QUERY /
+// PACK_DETAIL_QUERY. It was pack-scoped (safe) but dead. Use the pack-scoped
+// queries above for explore/browse.
 
 // Own-authored standalone modules for Activity Discovery + Library
 // Private-by-default: only returns modules authored by the given family.

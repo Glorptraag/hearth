@@ -8,8 +8,10 @@
  *      Status mirrors evidence accumulated to date, not just this entry.
  *   3. Upsert learner_dlo_status.
  *
- * The same DLO applies to every learner the entry tags — Haiku doesn't
- * differentiate per-learner DLO mappings.
+ * Per-learner attribution (D-OS2): the caller decides *which* learners on the
+ * entry an objective belongs to before calling — DLO evidence is no longer
+ * copied to every tagged learner. Use gateLearnersByNamedSignals() to resolve
+ * the attributed set from the enrichment's per_child_signals.
  */
 import { db } from '@/lib/db';
 import { observationDloLinks, learnerDloStatus } from '@/lib/db/schema';
@@ -64,6 +66,37 @@ export async function validateDlos(
     if (out.length >= MAX_DLOS_PER_ENTRY) break;
   }
   return out;
+}
+
+/**
+ * D-OS2 (decided by Drew, 2026-06-13) — per-learner attribution gate.
+ *
+ * DLO evidence attaches ONLY to the learner(s) the enrichment actually named in
+ * `per_child_signals` — never copy-to-all. The rule:
+ *   - 0 or 1 learner on the entry → unambiguous (the lone child IS the subject),
+ *     so the gate is a no-op and that learner is attributed.
+ *   - ≥2 learners → strict gate: only learners named in per_child_signals are
+ *     attributed. If the enrichment named nobody, NOBODY is attributed — we
+ *     never fall back to copy-to-all (that is exactly what D-OS2 forbids; a
+ *     group session must not stamp a 5-year-old and a 13-year-old with the
+ *     same objective).
+ *
+ * Names are matched case-insensitively and trimmed, mirroring the
+ * per_child_signals filter in enrich.ts's validateEnrichment.
+ */
+export function gateLearnersByNamedSignals(args: {
+  learners: { id: string; name: string }[];
+  perChildSignals: Record<string, unknown> | null | undefined;
+}): string[] {
+  const { learners, perChildSignals } = args;
+  if (learners.length <= 1) return learners.map((l) => l.id);
+
+  const named = new Set(
+    Object.keys(perChildSignals ?? {}).map((n) => n.trim().toLowerCase()),
+  );
+  return learners
+    .filter((l) => named.has(l.name.trim().toLowerCase()))
+    .map((l) => l.id);
 }
 
 export async function persistDloLinks(args: {

@@ -8,7 +8,7 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { learningEntries, learningEntryEvidence } from '@/lib/db/schema';
+import { learningEntries, learningEntryEvidence, plannerEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
@@ -186,6 +186,22 @@ export const POST = routeHandler(async (request: NextRequest) => {
 
     return { entry: insertedEntry, evidenceRows: insertedEvidence };
   });
+
+  // Plan → run → log → done: if this completed entry was launched from a
+  // planner item (the runner forwards ?plannerEntryId into the save), flip
+  // that planner entry to `completed` so the card reflects reality without a
+  // manual toggle. Scoped to the family so a forged id can't touch another
+  // family's planner. Best-effort — never blocks the response.
+  if (parsed.data.plannerEntryId && parsed.data.status === 'complete') {
+    await db
+      .update(plannerEntries)
+      .set({ status: 'completed', updatedAt: new Date() })
+      .where(and(
+        eq(plannerEntries.id, parsed.data.plannerEntryId),
+        eq(plannerEntries.familyId, family.id),
+      ))
+      .catch((err) => console.error('[entries/POST] planner auto-complete failed:', err));
+  }
 
   // Async AI enrichment — does not block the response.
   // CRITICAL: wrap in `after()` so Vercel serverless keeps the function

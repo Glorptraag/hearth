@@ -1,4 +1,4 @@
-import { FilePdf, X } from '@/components/icons';
+import { FilePdf, X, Play } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
 
@@ -19,6 +19,7 @@ interface ModuleCardProps {
   };
   learners: Learner[];
   isReadOnly?: boolean;
+  basePath?: string;
   hasMaterials?: boolean;
   indicators?: Indicators;
   onToggle: (id: string, currentStatus: string | null) => void;
@@ -61,6 +62,7 @@ export default function ModuleCard({
   entry,
   learners,
   isReadOnly = false,
+  basePath = '',
   hasMaterials = false,
   indicators,
   onToggle,
@@ -151,6 +153,18 @@ export default function ModuleCard({
             {entry.title ?? 'Untitled'}
           </span>
         </button>
+
+        {/* Launch the runner — carries plannerEntryId so finishing the run
+            auto-completes this entry (learning_entries.plannerEntryId). */}
+        {entry.moduleId && !isReadOnly && !isComplete && (
+          <a
+            href={`${basePath}/module/${entry.moduleId}?plannerEntryId=${entry.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-xs flex items-center justify-center gap-xs rounded-[6px] border border-border-subtle bg-transparent py-[3px] font-sans text-[0.625rem] font-semibold text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-ember hover:text-ember"
+          >
+            <Play size={11} weight="fill" aria-hidden="true" /> Start
+          </a>
+        )}
 
         {/* Learner dots */}
         {entryLearners.length > 0 && (

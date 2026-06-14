@@ -30,7 +30,7 @@ interface BottomSheetProps {
   learners: Learner[];
   recommendations: Recommendation[];
   onClose: () => void;
-  onAdd: (entry: { date: string; title: string; learnerIds: string[]; session: string }) => Promise<void>;
+  onAdd: (entry: { date: string; title: string; learnerIds: string[]; session: string; moduleId?: string; subjects?: string[] }) => Promise<void>;
 }
 
 const COLOUR_CHIP: Record<string, string> = {
@@ -106,11 +106,11 @@ export default function BottomSheet({
     );
   }
 
-  async function handleSubmit(submittedTitle: string) {
+  async function handleSubmit(submittedTitle: string, moduleId?: string, subjects?: string[]) {
     if (!targetDate || !submittedTitle.trim()) return;
     setSaving(true);
     try {
-      await onAdd({ date: targetDate, title: submittedTitle.trim(), learnerIds: selectedLearners, session });
+      await onAdd({ date: targetDate, title: submittedTitle.trim(), learnerIds: selectedLearners, session, moduleId, subjects });
       onClose();
     } finally {
       setSaving(false);
@@ -255,7 +255,7 @@ export default function BottomSheet({
                   key={i}
                   title={r.title}
                   subject={r.subject}
-                  onAdd={handleSubmit}
+                  onAdd={(t) => handleSubmit(t, undefined, r.subject ? [r.subject] : undefined)}
                 />
               ))}
             </div>
@@ -289,7 +289,7 @@ export default function BottomSheet({
                   key={item.moduleId}
                   title={item.title}
                   subject={item.subjects[0]}
-                  onAdd={handleSubmit}
+                  onAdd={(t) => handleSubmit(t, item.moduleId, item.subjects)}
                 />
               ))}
             </div>

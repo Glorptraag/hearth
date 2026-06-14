@@ -125,7 +125,7 @@ export default function PlannerClient({
     setSheetOpen(true);
   }
 
-  async function handleAddEntry(payload: { date: string; title: string; learnerIds: string[]; session: string }) {
+  async function handleAddEntry(payload: { date: string; title: string; learnerIds: string[]; session: string; moduleId?: string; subjects?: string[] }) {
     const res = await fetch('/api/planner', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -487,6 +487,7 @@ export default function PlannerClient({
         learners={learners}
         today={today}
         isCurrentOrFutureWeek={isCurrentOrFutureWeek}
+        basePath={basePath}
         moduleIdsWithMaterials={moduleIdsWithMaterials}
         moduleIndicators={moduleIndicators}
         onAdd={handleOpenSheet}

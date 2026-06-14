@@ -18,6 +18,7 @@ import {
   PencilSimpleLine,
   Flame,
   UsersThree,
+  Play,
 } from '@/components/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -458,6 +459,14 @@ export default function DashboardClient({
                           <p className="font-sans text-[0.85rem] text-text-secondary mt-sm">
                             Status: {item.status}
                           </p>
+                        )}
+                        {item.moduleId && item.status !== 'completed' && (
+                          <Link
+                            href={`${basePath}/module/${item.moduleId}?plannerEntryId=${item.id}`}
+                            className="mt-md inline-flex items-center gap-xs rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+                          >
+                            <Play size={16} weight="fill" aria-hidden="true" /> Start session
+                          </Link>
                         )}
                       </div>
                     );

@@ -8,17 +8,16 @@ import type { PackTree } from './types';
 const PACK_TREE_QUERY = /* groq */ `
 *[_type == "pack" && _id == $packId][0]{
   _id, _type, _rev, _updatedAt,
-  title, slug, description, richTextIntro,
+  title, slug, description,
   "modules": modules[]{_key, _ref},
   moduleCount, totalActivities,
-  pricingId, stripePriceId, status,
+  stripePriceId, status,
   "expandedModules": modules[]->{
     _id, _type, _rev, _updatedAt,
     title, slug, description, targetUnderstanding,
     understandingIndicators,
     "approaches": approaches[]{_key, _ref},
-    "capabilityThreads": capabilityThreads[]{_key, _ref},
-    "pack": pack{_ref}
+    "capabilityThreads": capabilityThreads[]{_key, _ref}
   },
   "expandedApproaches": modules[]->approaches[]->{
     _id, _type, _rev, _updatedAt,
@@ -30,21 +29,17 @@ const PACK_TREE_QUERY = /* groq */ `
     _id, _type, _rev, _updatedAt,
     title, slug,
     instructions,
-    instructionsText,
     materials,
     facilitatorGuidance,
-    sessionMetadata,
     duration, setting, energyLevel,
     "capabilityThreads": capabilityThreads[]{_key, _ref},
-    subjects, subjectAreas,
     "approach": approach{_ref}
   },
   "expandedBadges": badges[]->{
     _id, _type, _rev, _updatedAt,
     title, slug, description,
-    criteria,
-    "connectedThreads": connectedThreads[]{_key, _ref},
-    "pack": pack{_ref}
+    criteriaSummary,
+    "capabilityThreads": capabilityThreads[]{_key, _ref}
   }
 }
 `;

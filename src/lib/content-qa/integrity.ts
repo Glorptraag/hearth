@@ -76,14 +76,18 @@ export function checkBrokenRefs(tree: PackTree): QAIssue[] {
 
 export function checkOrphans(tree: PackTree): QAIssue[] {
   const issues: QAIssue[] = [];
-  const packId = tree.pack?._id ?? '';
   const moduleIds = new Set(tree.modules.map((m) => m._id).filter(Boolean));
   const approachIds = new Set(tree.approaches.map((a) => a._id).filter(Boolean));
 
   for (const approach of tree.approaches) {
     const docId: string = approach._id ?? 'unknown';
     const moduleRef = refOf(approach.module);
-    if (!moduleRef || !moduleIds.has(moduleRef)) {
+    if (!moduleRef) {
+      // Reached via the pack's forward module->approaches chain, so a missing
+      // back-ref is a data gap (the external authoring pipeline omits
+      // approach.module), not a structural orphan — surface as a warning.
+      issues.push(docIssue('approach', docId, 'module', 'Approach is missing its module back-ref (approach.module unset)', 'warning'));
+    } else if (!moduleIds.has(moduleRef)) {
       issues.push(docIssue('approach', docId, 'module', `Orphan approach: module ref "${moduleRef}" not found in pack`));
     }
   }
@@ -91,18 +95,17 @@ export function checkOrphans(tree: PackTree): QAIssue[] {
   for (const activity of tree.activities) {
     const docId: string = activity._id ?? 'unknown';
     const approachRef = refOf(activity.approach);
-    if (!approachRef || !approachIds.has(approachRef)) {
+    if (!approachRef) {
+      issues.push(docIssue('activity', docId, 'approach', 'Activity is missing its approach back-ref (activity.approach unset)', 'warning'));
+    } else if (!approachIds.has(approachRef)) {
       issues.push(docIssue('activity', docId, 'approach', `Orphan activity: approach ref "${approachRef}" not found in pack`));
     }
   }
 
-  for (const badge of tree.badges) {
-    const docId: string = badge._id ?? 'unknown';
-    const packRef = refOf(badge.pack);
-    if (!packRef || packRef !== packId) {
-      issues.push(docIssue('badge', docId, 'pack', `Orphan badge: pack ref "${packRef}" does not match pack "${packId}"`));
-    }
-  }
+  // Badges have no `pack` back-ref in the schema — a pack references its badges
+  // via pack.badges[] (forward), so every badge in tree.badges is reached
+  // through the pack and cannot be a back-ref orphan. (The previous check read a
+  // non-existent badge.pack field and false-positived every badge.)
 
   return issues;
 }

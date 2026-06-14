@@ -15,7 +15,7 @@ import { db } from '@/lib/db';
 import { learnerDloStatus, observationDloLinks } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { persistDloLinks } from '../dlo-persistence';
+import { persistDloLinks, gateLearnersByNamedSignals } from '../dlo-persistence';
 
 vi.mock('../dlo-cache', () => ({
   getValidDlos: vi.fn(async () => ({
@@ -159,6 +159,57 @@ describe('INTEGRATION: persistDloLinks', () => {
       .where(eq(observationDloLinks.observationId, entry.id));
     expect(link.provenance).toBe('inferred');
     expect(link.claimedTier).toBeNull();
+  });
+
+  it('D-OS2: only the named learner on a multi-child entry gets DLO links/status', async () => {
+    // Mirrors the enrich.ts call site: gate by per_child_signals, then persist
+    // only the attributed learner(s). The unnamed sibling must get nothing.
+    const family = await createFamily(db);
+    const named = await createLearner(db, { familyId: family.id, name: 'Lily' });
+    const sibling = await createLearner(db, { familyId: family.id, name: 'Jake' });
+    const entry = await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [named.id, sibling.id],
+    });
+
+    const attributed = gateLearnersByNamedSignals({
+      learners: [
+        { id: named.id, name: 'Lily' },
+        { id: sibling.id, name: 'Jake' },
+      ],
+      // Enrichment named only Lily.
+      perChildSignals: { Lily: { engagement_score: 0.8, complexity_level: 'developing', notable: null } },
+    });
+    expect(attributed).toEqual([named.id]);
+
+    await persistDloLinks({
+      entryId: entry.id,
+      learnerIds: attributed,
+      dlos: [{ dlo_id: 'dlo.M1.developing', tier: 'developing', confidence: 0.7 }],
+      observedAt: new Date(),
+    });
+
+    const namedLinks = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.learnerId, named.id));
+    const siblingLinks = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.learnerId, sibling.id));
+    expect(namedLinks).toHaveLength(1);
+    expect(siblingLinks).toHaveLength(0);
+
+    const namedStatus = await db
+      .select()
+      .from(learnerDloStatus)
+      .where(eq(learnerDloStatus.learnerId, named.id));
+    const siblingStatus = await db
+      .select()
+      .from(learnerDloStatus)
+      .where(eq(learnerDloStatus.learnerId, sibling.id));
+    expect(namedStatus).toHaveLength(1);
+    expect(siblingStatus).toHaveLength(0);
   });
 
   it('stores claimed_tier when provenance=declared is passed', async () => {

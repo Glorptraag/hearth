@@ -93,6 +93,7 @@ export type HearthEvent =
   | 'pack_purchased'
   | 'dlo.enrichment.completed'
   | 'dlo.tier_mismatch'
+  | 'dlo.attribution.unnamed_multichild'
   | 'feedback_submitted'
   | 'recommendations_scored'
   | 'recommendation_accepted';

@@ -12,7 +12,7 @@ import { rebuildSnapshot } from './snapshot-rebuild';
 import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
-import { validateDlos, persistDloLinks, type DloEnrichmentItem } from './dlo-persistence';
+import { validateDlos, persistDloLinks, gateLearnersByNamedSignals, type DloEnrichmentItem } from './dlo-persistence';
 import { getValidDlos } from './dlo-cache';
 import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
@@ -564,11 +564,18 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
     const validatedDlos = await validateDlos(result.discrete_learning_objectives);
     validated.discrete_learning_objectives = validatedDlos;
-    if (validatedDlos.length > 0) {
+    // D-OS2: gate DLO evidence to the learner(s) the enrichment named in
+    // per_child_signals — never copy-to-all on a multi-child entry. A
+    // single-learner entry is unambiguous and attributes that learner.
+    const attributedLearnerIds = gateLearnersByNamedSignals({
+      learners: ctx.childRecords,
+      perChildSignals: validated.per_child_signals,
+    });
+    if (validatedDlos.length > 0 && attributedLearnerIds.length > 0) {
       try {
         await persistDloLinks({
           entryId,
-          learnerIds: ctx.entry.learnerIds ?? [],
+          learnerIds: attributedLearnerIds,
           dlos: validatedDlos,
           observedAt: new Date(),
         });
@@ -580,7 +587,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
           {
             entry_id: entryId,
             dlo_count: validatedDlos.length,
-            learner_count: (ctx.entry.learnerIds ?? []).length,
+            learner_count: attributedLearnerIds.length,
           },
           { familyId },
         );
@@ -599,6 +606,25 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       } catch (dloErr) {
         console.error('[enrichEntry] DLO persist failed:', dloErr);
       }
+    } else if (validatedDlos.length > 0 && ctx.childRecords.length > 1) {
+      // D-OS2 strict path: a multi-child entry produced DLOs but the
+      // enrichment named nobody in per_child_signals, so we attribute to
+      // nobody (never copy-to-all). Don't drop it silently — make it
+      // observable so we can tell "rule working" from "enrichment regressed".
+      tape('dlo-links-unattributed-multichild');
+      console.warn(
+        `[enrichEntry] DLOs produced but no named learner on multi-child entry — dropped per D-OS2. entryId=${entryId} dlo_count=${validatedDlos.length} learner_count=${ctx.childRecords.length}`,
+      );
+      void trackServer(
+        'dlo.attribution.unnamed_multichild',
+        familyId,
+        {
+          entry_id: entryId,
+          dlo_count: validatedDlos.length,
+          learner_count: ctx.childRecords.length,
+        },
+        { familyId },
+      );
     }
 
     tape('validation-done');

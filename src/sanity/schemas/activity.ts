@@ -207,7 +207,47 @@ export const activity = defineType({
       name: 'capabilityThreads',
       title: 'Capability Threads',
       type: 'array',
+      description:
+        'Legacy declarative thread list (no tier). Superseded by Capability Targets, which carry the author-declared tier. Kept during the WS-6 migration; populate Capability Targets on new content.',
       of: [{ type: 'reference', to: [{ type: 'capabilityThread' }] }],
+    }),
+    defineField({
+      name: 'capabilityTargets',
+      title: 'Capability Targets',
+      type: 'array',
+      description:
+        'What this activity is built to develop: a thread paired with the tier the author is targeting. Completing the activity logs an OPPORTUNITY at this (thread, tier) — it becomes observed evidence only when corroborated (a per-child signal or a parent tap).',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'thread',
+              title: 'Thread',
+              type: 'reference',
+              to: [{ type: 'capabilityThread' }],
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'tier',
+              title: 'Target Tier',
+              type: 'string',
+              initialValue: 'developing',
+              options: {
+                list: [
+                  { title: 'Emerging', value: 'emerging' },
+                  { title: 'Developing', value: 'developing' },
+                  { title: 'Demonstrating', value: 'demonstrating' },
+                ],
+              },
+              validation: (r) => r.required(),
+            }),
+          ],
+          preview: {
+            select: { title: 'thread.title', subtitle: 'tier' },
+          },
+        },
+      ],
     }),
     defineField({
       name: 'enabledBadges',

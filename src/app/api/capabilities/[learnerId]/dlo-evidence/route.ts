@@ -75,6 +75,9 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
     .where(and(
       eq(observationDloLinks.learnerId, learnerId),
       eq(observationDloLinks.dloId, dloId),
+      // Only observed evidence — uncorroborated declared opportunities (WS-6)
+      // are not evidence yet, so they never surface in the drill-down.
+      eq(observationDloLinks.evidenceState, 'observed'),
     ))
     .orderBy(desc(learningEntries.dateOccurred), desc(observationDloLinks.createdAt));
 

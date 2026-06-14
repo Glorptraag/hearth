@@ -322,6 +322,8 @@ interface CreateActivity {
   observationPrompts?: string[];
   reflectionPrompts?: string[];
   capabilityThreadIds?: string[];
+  /** WS-6 declarative targets: thread + the author-declared tier the activity develops. */
+  capabilityTargets?: Array<{ threadId: string; tier: 'emerging' | 'developing' | 'demonstrating' }>;
   badgeIds?: string[];
   workbench?: WorkbenchInput;
   status?: Status;
@@ -359,6 +361,13 @@ export async function createActivity(input: CreateActivity) {
   if (input.observationPrompts) doc.observationPrompts = input.observationPrompts;
   if (input.reflectionPrompts) doc.reflectionPrompts = input.reflectionPrompts;
   if (input.capabilityThreadIds) doc.capabilityThreads = keyedRefs(input.capabilityThreadIds);
+  if (input.capabilityTargets) {
+    doc.capabilityTargets = input.capabilityTargets.map((t) => ({
+      _key: key('tgt'),
+      thread: ref(t.threadId),
+      tier: t.tier,
+    }));
+  }
   if (input.badgeIds) doc.enabledBadges = keyedRefs(input.badgeIds);
   if (input.workbench) {
     const wb = input.workbench;

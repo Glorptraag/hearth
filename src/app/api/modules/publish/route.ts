@@ -43,6 +43,14 @@ const activityInputSchema = z.object({
   observationPrompts: z.array(z.string()).optional(),
   reflectionPrompts: z.array(z.string()).optional(),
   capabilityThreadIds: z.array(z.string()).optional(),
+  capabilityTargets: z
+    .array(
+      z.object({
+        threadId: z.string(),
+        tier: z.enum(['emerging', 'developing', 'demonstrating']),
+      }),
+    )
+    .optional(),
   badgeIds: z.array(z.string()).optional(),
   status: z.enum(['draft', 'published']).optional(),
 });
@@ -142,6 +150,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
           observationPrompts: act.observationPrompts,
           reflectionPrompts: act.reflectionPrompts,
           capabilityThreadIds: act.capabilityThreadIds,
+          capabilityTargets: act.capabilityTargets,
           badgeIds: act.badgeIds,
           status: act.status,
         })),

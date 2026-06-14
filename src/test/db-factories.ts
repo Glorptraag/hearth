@@ -166,6 +166,7 @@ export async function createDloLink(
     confidence: '0.7',
     provenance: 'inferred',
     claimedTier: null,
+    evidenceState: 'observed',
     ...overrides,
   };
   const result = await db.insert(observationDloLinks).values(row).returning();

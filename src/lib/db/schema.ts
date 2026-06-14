@@ -868,6 +868,10 @@ export const observationDloLinks = pgTable(
     rationale: text('rationale'),
     provenance: text('provenance').notNull().default('inferred'),
     claimedTier: text('claimed_tier'),
+    // 'opportunity' (a completed targeted activity declared this DLO, pending
+    // corroboration) vs 'observed' (counts as evidence). learner_dlo_status is
+    // rolled up from 'observed' rows only. See 0026_dlo_opportunity + dlo-persistence.ts.
+    evidenceState: text('evidence_state').notNull().default('observed'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

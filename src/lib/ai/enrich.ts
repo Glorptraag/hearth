@@ -12,7 +12,15 @@ import { rebuildSnapshot } from './snapshot-rebuild';
 import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import type { SnapshotSignals, ProfileNudge } from '@/lib/logger/coaching/types';
 import { familyIntelligenceSnapshots } from '@/lib/db/schema';
-import { validateDlos, persistDloLinks, gateLearnersByNamedSignals, type DloEnrichmentItem } from './dlo-persistence';
+import {
+  validateDlos,
+  persistDloLinks,
+  gateLearnersByNamedSignals,
+  persistDeclaredOpportunities,
+  corroborateDloOpportunities,
+  type DloEnrichmentItem,
+  type DeclaredTarget,
+} from './dlo-persistence';
 import { getValidDlos } from './dlo-cache';
 import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
@@ -197,11 +205,20 @@ async function assembleContext(entryId: string, familyId: string) {
   //   capped at 10 (descriptor injection budget ~2k tokens).
   const activityIds = (entry.sourceActivityIds ?? []) as string[];
   const declaredThreadIds: string[] = [];
+  // WS-6: author-declared (thread, tier) targets, for DLO opportunity writes.
+  const declaredTargets: DeclaredTarget[] = [];
+  const seenTargets = new Set<string>();
   if (activityIds.length > 0) {
     try {
-      const activities = await sanityClient.fetch<Array<{ capabilityThreads?: Array<{ _id: string }> }>>(
+      const activities = await sanityClient.fetch<
+        Array<{
+          capabilityThreads?: Array<{ _id: string }>;
+          capabilityTargets?: Array<{ tier?: string | null; thread?: { _id: string } | null }>;
+        }>
+      >(
         `*[_type == "activity" && _id in $ids && status == "published"]{
-          capabilityThreads[]->{ _id }
+          capabilityThreads[]->{ _id },
+          capabilityTargets[]{ tier, thread->{ _id } }
         }`,
         { ids: activityIds },
       );
@@ -216,6 +233,21 @@ async function assembleContext(entryId: string, familyId: string) {
             declaredThreadIds.push(bare);
           }
         }
+        for (const target of act.capabilityTargets ?? []) {
+          const bare = target?.thread?._id ? normalizeThreadId(target.thread._id) : null;
+          const tier = target?.tier;
+          if (!bare || (tier !== 'emerging' && tier !== 'developing' && tier !== 'demonstrating')) continue;
+          // A target's thread is also a candidate thread for descriptor injection.
+          if (!seen.has(bare)) {
+            seen.add(bare);
+            declaredThreadIds.push(bare);
+          }
+          const targetKey = `${bare}.${tier}`;
+          if (!seenTargets.has(targetKey)) {
+            seenTargets.add(targetKey);
+            declaredTargets.push({ threadId: bare, tier });
+          }
+        }
       }
     } catch {
       // Best-effort; enrich must not fail if Sanity is slow
@@ -228,7 +260,7 @@ async function assembleContext(entryId: string, familyId: string) {
   const merged = new Set<string>([...declaredThreadIds, ...activeThreadSet]);
   const candidateThreadIds = [...merged].slice(0, MAX_CANDIDATE_THREADS);
 
-  return { entry, settings, childRecords, activeThreads, recentEntries: recent, candidateThreadIds };
+  return { entry, settings, childRecords, activeThreads, recentEntries: recent, candidateThreadIds, declaredTargets };
 }
 
 /** Exported for eval harness and unit tests — assembleContext stays private. */
@@ -625,6 +657,45 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
         },
         { familyId },
       );
+    }
+
+    // Declarative DLO opportunities (WS-6 / D-OS1). A completed targeted activity
+    // logs an OPPORTUNITY at the author-declared (thread, tier) — NOT observed
+    // evidence. It only becomes evidence when corroborated by this entry's
+    // per-child Haiku signal (an inferred DLO with the same id) or, later, a
+    // parent tap. A bare completion never moves learner_dlo_status on its own,
+    // which is what protects the WS-4 / C3 evidence bar.
+    //
+    // Opportunities are written for every learner who did the activity — they
+    // aren't evidence, so this isn't the copy-to-all D-OS2 forbids. Promotion to
+    // evidence is gated to the D-OS2 attributed set (the learners the enrichment
+    // named), so an unnamed learner's opportunity stays pending until a parent
+    // tap (P-8) corroborates it.
+    const declaredTargets = ctx.declaredTargets ?? [];
+    const oppLearnerIds = ctx.entry.learnerIds ?? [];
+    if (declaredTargets.length > 0 && oppLearnerIds.length > 0) {
+      try {
+        await persistDeclaredOpportunities({
+          entryId,
+          learnerIds: oppLearnerIds,
+          targets: declaredTargets,
+          observedAt: new Date(),
+        });
+        // Tier-exact corroboration against Haiku's per-child signal, gated to the
+        // D-OS2 attributed (named) learner set — never promote evidence for a
+        // learner the enrichment didn't name.
+        const promoted = attributedLearnerIds.length > 0
+          ? await corroborateDloOpportunities({
+              entryId,
+              learnerIds: attributedLearnerIds,
+              signals: validatedDlos.map((d) => ({ dlo_id: d.dlo_id, confidence: d.confidence })),
+              observedAt: new Date(),
+            })
+          : 0;
+        tape(`dlo-opportunities-persisted promoted=${promoted}`);
+      } catch (oppErr) {
+        console.error('[enrichEntry] DLO opportunity persist failed:', oppErr);
+      }
     }
 
     tape('validation-done');

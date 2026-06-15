@@ -1,4 +1,4 @@
-import type { DocType, FieldRule, QAIssue, CompletenessResult, SanityDoc } from './types';
+import type { DocType, FieldRule, CrossFieldRule, QAIssue, CompletenessResult, SanityDoc } from './types';
 
 // ─── Known value sets (sourced from content-studio types) ───
 
@@ -313,6 +313,29 @@ export const completenessRules: Record<DocType, FieldRule[]> = {
   ],
 };
 
+// ─── Cross-field rules (verdict depends on more than one field) ───
+//
+// Soft, non-blocking signals that a single FieldRule can't express. They never
+// touch the completeness score and (at `warning` severity) only move a pack to
+// READY_WITH_WARNINGS — QA reports, it does not gate publish (Studio + the
+// Sanity schema guardrails do that).
+
+export const crossFieldRules: Partial<Record<DocType, CrossFieldRule[]>> = {
+  activity: [
+    {
+      // WS-6 / D1: `capabilityTargets` ({thread, tier}) is the authoring standard;
+      // `capabilityThreads` is the legacy fallback kept during migration. An
+      // activity that declares NEITHER offers the constellation nothing — flag it
+      // so a published-without-targets activity stops being silent. Field is set to
+      // capabilityTargets so the dashboard groups it under the new standard.
+      field: 'capabilityTargets',
+      severity: 'warning',
+      description: "activity declares no capability targets (won't contribute to the constellation)",
+      flagIf: (doc) => isEmptyArray(doc.capabilityThreads) && isEmptyArray(doc.capabilityTargets),
+    },
+  ],
+};
+
 // ─── Document checker ───
 
 function resolveActivityField(doc: SanityDoc, field: string): unknown {
@@ -396,6 +419,20 @@ export function checkDocument(doc: SanityDoc, docType: DocType): CompletenessRes
         });
       }
     }
+  }
+
+  // Cross-field rules: soft, non-blocking, and excluded from the completeness math.
+  for (const rule of crossFieldRules[docType] ?? []) {
+    if (!rule.flagIf(doc)) continue;
+    const issue: QAIssue = {
+      docType,
+      docId,
+      field: rule.field,
+      severity: rule.severity,
+      message: rule.description,
+      path: rule.field.split('.'),
+    };
+    (rule.severity === 'error' ? errors : warnings).push(issue);
   }
 
   const completeness = requiredTotal === 0 ? 100 : Math.round((requiredPassing / requiredTotal) * 100);

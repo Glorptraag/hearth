@@ -4,6 +4,7 @@
 
 > **Author hat:** UX Lead / UX Research
 > **Version:** v1 — 2026-06-08
+> **Revised:** 2026-06-14 — Logger gap reconciliation. Closed: cross-device drafts (UC-L-11/E9), multi-child fan-out comprehension (UC-L-03), image compression (E8 was PARTIAL), completeness grade-anxiety (UC-L-13), voice-unsupported fallback (UC-L-09/E7). Confirmed deferred with a recorded decision: audio capture (UC-L-06) and the offline sync queue (UC-L-10) — see D-LPS-10. Decisions D-LPS-8…11 in `hearth-decisions-log-v1.md`; evidence in `hearth-research-log.md`.
 > **Scope:** The three surfaces that form Hearth's evidence spine — the **Logger** (capture), the **Portfolio / Learning Journey** (reflection + compliance), and the **Capabilities Constellation** (growth model). These three are deliberately treated as one continuous experience because they are one continuous *data object* seen through three lenses.
 > **Grounding:** Every use case below is grounded in the live implementation (`src/app/(auth)/log`, `.../our-story/portfolio`, `.../our-story/report`, `.../our-story/capabilities`), the enrichment pipeline, and the canonical specs (`Hearth_System_Interaction_Map.md`, `hearth-data-architecture-overview-v1.md`, `hearth-heu-work-sample-curation-spec-v1.md`, `hearth-logger-post-save-resolution-v1.md`). Where a behaviour is spec'd-but-not-built it is flagged **[SPEC]**; where it is live it is flagged **[BUILT]**.
 
@@ -153,7 +154,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Postconditions:** One entry that will **fan out** — it appears in each child's Portfolio showing *only that child's* engagement and discovery (see UC-P-03), and can be selected as a work sample independently per child.
 - **Frequency / intensity:** Very common for multi-child families; medium load (per-child differentiation takes thought).
 - **Success signal:** Dan logs a shared morning once and trusts that each child's record is individually true.
-- **Friction / risk:** Per-child rows multiply the form. For 4+ kids the Engagement + Discoveries sections get long; the 5-minute rule strains. **[Risk]** Watch fan-out comprehension — parents may not realise one entry feeds N portfolios.
+- **Friction / risk:** Per-child rows multiply the form. For 4+ kids the Engagement + Discoveries sections get long; the 5-minute rule strains (Open-Q9, still open). ~~**[Risk]** Watch fan-out comprehension — parents may not realise one entry feeds N portfolios.~~ **[RESOLVED 2026-06-14 — BUILT]** Once 2+ children are selected, `WhoSection` shows a fan-out note ("Saved to each child's portfolio — rate engagement and add notes for each below"); the inert "Learning together" toggle was removed. Decision D-LPS-9; research log R-entry.
 - **Design rationale:** Siblings in the same activity have genuinely different experiences; collapsing them into one rating would make entries feel generic and false. The per-child split is what makes a multi-child entry *honest* rather than merely *efficient*.
 
 ---
@@ -269,7 +270,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Postconditions:** Description populated by speech.
 - **Frequency / intensity:** Situational; high value in exactly the moments typing is impossible.
 - **Success signal:** A usable description appears without a keyboard.
-- **Friction / risk:** AU-accent transcription accuracy; child names mangled. Append-not-overwrite is the right call but can produce run-ons.
+- **Friction / risk:** AU-accent transcription accuracy; child names mangled. Append-not-overwrite is the right call but can produce run-ons. **[2026-06-14 — BUILT]** The unsupported-browser path no longer fires a bare native `alert()`: it surfaces a themed toast ("Voice input needs Chrome or Edge.") via `onUnsupported`, and the mic button renders disabled with a tooltip so the limit is visible before the tap. Research log R-entry.
 - **Design rationale:** The 5-minute rule assumes free hands the parent often doesn't have; voice is the pressure-release valve for the hardest capture moments.
 
 ---
@@ -289,7 +290,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Postconditions:** No data loss across an offline interval.
 - **Frequency / intensity:** Common for the target geography; the trust-defining edge case.
 - **Success signal:** Mara closes the lid mid-log on a no-signal bushwalk and finds her draft intact that evening.
-- **Friction / risk:** **[SPEC gap]** Full PWA/offline *sync queue* is Phase 2 — today the safety net is `localStorage` draft + photo placeholder queue, not background submission. Save itself still needs connectivity.
+- **Friction / risk:** **[SPEC gap — deferred Phase 2; decision D-LPS-10]** The full PWA/offline *sync queue* is not built: no service worker, no background submission, and — correcting this doc — **no `local://` photo-placeholder queue either** (an offline photo-add fails outright; `EvidenceModal` traps the modal). Today's only safety net is the `localStorage` draft (now also mirrored to Postgres for cross-device pickup — UC-L-11). Save itself still needs connectivity. A real fix needs a service worker + IndexedDB blob queue.
 - **Design rationale:** For a Queensland rural user base, offline tolerance isn't a nicety — it's the difference between a trusted tool and an abandoned one.
 
 ---
@@ -304,7 +305,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Postconditions:** No re-typing.
 - **Frequency / intensity:** Frequent (interruption is the norm); near-zero load.
 - **Success signal:** The parent never re-enters the same description twice.
-- **Friction / risk:** Device-locked (`localStorage`). A draft started on the phone won't appear on the tablet. **[Open]** Postgres-backed cross-device draft is a recommended Phase 2 upgrade.
+- **Friction / risk:** ~~Device-locked (`localStorage`). A draft started on the phone won't appear on the tablet. **[Open]** Postgres-backed cross-device draft is a recommended Phase 2 upgrade.~~ **[RESOLVED 2026-06-14 — BUILT]** Drafts now sync cross-device via a per-user Postgres mirror (`/api/logger/draft`), hybrid with `localStorage` (offline-first): the local write stays primary, a best-effort `PUT` mirrors it, and on mount the newer of {local, server} wins (`pickNewerDraft`), with a 7-day read-time expiry. A draft started on the phone surfaces on the tablet. Decision D-LPS-8; logger-spec §Open-Q#3.
 - **Design rationale:** Homeschool logging happens in 30-second windows between interruptions; resilience to interruption *is* the feature.
 
 ---
@@ -332,7 +333,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Postconditions:** Parent always knows the cheapest path to a saveable entry.
 - **Frequency / intensity:** Continuous, ambient.
 - **Success signal:** No parent ever wonders "why can't I save?"
-- **Friction / risk:** A percentage can read as a grade. Copy and colour (ember < 90, sage ≥ 90) must signal *readiness*, not *worth*.
+- **Friction / risk:** A percentage can read as a grade. **[2026-06-14 — hardened]** The ring now signals readiness, not worth: once the entry is saveable it turns sage and shows a ✓ (the raw number only shows *while still building*), and `aria-valuetext` reads "Ready to save" / the next action rather than a bare "55". Colour flips at the *save gate* (50 quick / 65 guided), not at 90. Scoring (`completeness.ts`) is unchanged. Decision D-LPS-11.
 - **Design rationale:** This is wayfinding, not scoring. It converts an open-ended form into a guided, bounded task — the operational backbone of the 5-minute rule.
 
 ---
@@ -754,9 +755,9 @@ The trust loop. Every AI/network failure has an honest, recoverable surface. **H
 | E4 | Logger | Enrichment timeout (30s) | Honest "couldn't draw insights" — never an infinite spinner | BUILT |
 | E5 | Logger | Offline at save | Error toast; `localStorage` draft preserved; retry on reconnect | BUILT |
 | E6 | Logger | Stale draft (>4h) | Restore banner + `draft_resume` notification | BUILT |
-| E7 | Logger | Voice unsupported | Alert + inert button | BUILT |
-| E8 | Logger | Large/non-image photo | `accept=image/*`; client resize before encode | PARTIAL |
-| E9 | Logger | Cross-device draft | Device-locked `localStorage` only | OPEN |
+| E7 | Logger | Voice unsupported | Themed toast (`onUnsupported`) + disabled mic w/ tooltip | BUILT (2026-06-14; was Alert + inert) |
+| E8 | Logger | Large/non-image photo | `accept=image/*`; client-side `compressImageFile` before upload | BUILT (2026-06-14; was PARTIAL) |
+| E9 | Logger | Cross-device draft | Per-user Postgres mirror, hybrid w/ `localStorage` (last-write-wins, 7-day expiry) | BUILT (2026-06-14; was OPEN — D-LPS-8) |
 | E10 | Portfolio | No entries / filtered-empty | Distinct empty states ("Your story starts here" / "Nothing logged this period") | BUILT |
 | E11 | Portfolio | Multi-child entry | Appears per child, shows only that child's data | BUILT |
 | E12 | Portfolio | Enrichment failed/stuck | "Generate now" + ~30s poll; rate-limited 10/hr/family | BUILT |
@@ -791,16 +792,23 @@ The trust loop. Every AI/network failure has an honest, recoverable surface. **H
 
 # Appendix C — Open questions for design & research
 
-1. **Mobile capability lens.** The thread sidebar is desktop-only; mobile parents lose the per-thread Portfolio lens. Where does it go on small screens? (UC-P-02)
-2. **Explicit DLO confirmation.** Should parents be able to confirm/override an AI DLO read? The spec assumes yes; nothing's built. Trust vs. effort trade-off. (UC-C-03, E22)
-3. **L4 moments — here or in Portfolio?** Resolve the duplication: does evidence-from-capability live in the Constellation or only the Portfolio? (UC-C-04)
-4. **Edit-scope clarity on shared entries.** Parents may not realise an edit fans out to all children. (UC-P-03, E13)
-5. **Cross-device drafts.** `localStorage` is device-locked; Postgres-backed drafts would fix it but add network dependence. (UC-L-11, E9)
-6. **Colour-blind-safe domain palette.** Currently leaning on shape glyphs; a true 15-domain accessible palette is owed. (UC-C-01, E21)
-7. **Portfolio PDF export.** Spec'd, not built — would serve sharing with co-educators/grandparents distinct from the HEU PDF. (UC-P-11)
-8. **Over-claiming guardrails.** How modest must pre-save and journey-observation copy be to avoid eroding trust? Needs qualitative testing with skeptical parents. (UC-L-05)
-9. **Multi-child form length.** 4+ children make Engagement/Discoveries long; does the 5-minute rule survive large families? (UC-L-03)
-10. **Cold-start wall.** Every Our-Story sub-surface is empty at once for a new family. Should there be a unified "your story is just beginning" onboarding state across all three? (UC-P-08, UC-C-08)
+Each is flagged by **how it should be resolved**, not just whether it's open:
+
+- **🗣️ [SIDEBAR]** — a bigger UX / product-judgment question. There's a real fork or tension with no obviously-correct answer, so it warrants a design deliberation with **Opus + Drew before any build** — not a ticket to pick up. These are the ones to bring to an Opus sidebar.
+- **🔧 [BUILD]** — direction is already clear enough; an engineering or design-system task to prioritise and build. Light design input is fine; no deliberation needed.
+
+1. **🗣️ [SIDEBAR] Mobile capability lens.** The thread sidebar is desktop-only; mobile parents lose the per-thread Portfolio lens. Bottom-sheet, collapsible drawer, or a dedicated tab? No clear winner. (UC-P-02)
+2. **🗣️ [SIDEBAR] Explicit DLO confirmation.** Should parents be able to confirm/override an AI DLO read? Trust-vs-effort, and a product-philosophy call about how much the parent steers the model. (UC-C-03, E22)
+3. **🗣️ [SIDEBAR] L4 moments — here or in Portfolio?** Information-architecture fork: does evidence-from-capability live in the Constellation or only the Portfolio? Picking wrong duplicates a surface. (UC-C-04)
+4. **🗣️ [SIDEBAR — light] Edit-scope clarity on shared entries.** Parents may not realise an edit fans out to all children. Small affordance (cf. the fan-out note, D-LPS-9), but needs a call on whether to *scope* the edit or just *signpost* it. (UC-P-03, E13)
+5. ~~**Cross-device drafts.** `localStorage` is device-locked; Postgres-backed drafts would fix it but add network dependence.~~ **[RESOLVED 2026-06-14]** Built as a hybrid per-user Postgres mirror — `localStorage` stays the offline-first primary, the server copy is best-effort and last-write-wins with a 7-day expiry, so there's no hard network dependence. (UC-L-11, E9; D-LPS-8)
+6. **🔧 [BUILD] Colour-blind-safe domain palette.** Pick a true 15-domain accessible palette (shape glyphs are the interim). Design-system task, not a judgment call. (UC-C-01, E21)
+7. **🔧 [BUILD] Portfolio PDF export.** Spec'd, not built — sharing with co-educators/grandparents distinct from the HEU PDF. Clear feature; prioritise. (UC-P-11)
+8. **🗣️ [SIDEBAR] Over-claiming guardrails.** How modest must pre-save / journey-observation copy be to avoid eroding trust? A design *stance* plus a qualitative-research question — the riskiest one for the product's credibility. (UC-L-05)
+9. **🗣️ [SIDEBAR] Multi-child form length.** 4+ children make Engagement/Discoveries long; does the 5-minute rule survive large families? Progressive disclosure vs. per-child tabs vs. a "same for all" shortcut — a real fork. (The fan-out-comprehension risk was resolved 2026-06-14, D-LPS-9; form length itself is untouched.) (UC-L-03)
+10. **🗣️ [SIDEBAR] Cold-start wall.** Every Our-Story sub-surface is empty at once for a new family. One unified "your story is just beginning" state across all three, or per-surface? Cross-surface onboarding architecture. (UC-P-08, UC-C-08)
+
+> **Decided, no sidebar (engineering deferrals):** audio evidence capture (UC-L-06) and the offline submission / sync queue (UC-L-10) are deliberate Phase-2 *build* items with entry criteria — see D-LPS-10. They need prioritising, not deliberating.
 
 ---
 

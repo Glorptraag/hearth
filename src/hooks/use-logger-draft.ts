@@ -6,11 +6,20 @@ import {
   isRestorableDraft,
   isStaleDraft,
   parseDraft,
+  pickNewerDraft,
   serializeDraft,
   shouldPersistDraft,
   type LoggerDraft,
   type LoggerDraftFields,
 } from '@/lib/logger/draft';
+
+/** The cross-device draft mirror endpoint. */
+const DRAFT_ENDPOINT = '/api/logger/draft';
+
+/** Whether we should attempt a network call (true when online or SSR-unknown). */
+function isOnline(): boolean {
+  return typeof navigator === 'undefined' || navigator.onLine !== false;
+}
 
 /** How often the autosave timer ticks. The original page used 10 s. */
 const AUTOSAVE_INTERVAL_MS = 10_000;
@@ -59,6 +68,17 @@ export type UseLoggerDraftReturn = {
  *  - every 10 s of idle form state, write the current draft to storage;
  *  - `clearDraft` wipes both `localStorage` and the local banner/timestamp.
  *
+ * Cross-device sync (additive, never blocks — `localStorage` stays the
+ * offline-first primary):
+ *  - on mount, after the local restore, best-effort `GET` the Postgres mirror;
+ *    if the server draft is newer (`pickNewerDraft`), restore from it and write
+ *    it back to `localStorage`. Offline → skipped, local behaviour unchanged;
+ *  - each autosave tick also fires a best-effort `PUT` of the same draft;
+ *  - `clearDraft` also fires a best-effort `DELETE` so a save on one device
+ *    doesn't leave a stale draft to resurface on another.
+ *  Every server call swallows its error (like the `draft_resume` fetch) so a
+ *  network failure never degrades capture.
+ *
  * `onRestore` is captured into a ref so the mount effect can run exactly once
  * without listing the caller's callback identity in its dep array.
  *
@@ -86,29 +106,57 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
   }, [onRestore]);
 
   useEffect(() => {
-    const d = parseDraft(localStorage.getItem(DRAFT_KEY));
-    if (!d) return;
-    onRestoreRef.current(d);
-    // Restoring banner state from localStorage on mount; gated on presence of restorable content.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isRestorableDraft(d)) setDraftRestored(true);
-    if (d.savedAt) setDraftSavedAt(d.savedAt);
-    if (isStaleDraft(d, Date.now())) {
-      const draftTitle = d.description?.slice(0, 40) || undefined;
-      fetch('/api/notifications/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'draft_resume', draftTitle }),
-      }).catch(() => {});
+    const local = parseDraft(localStorage.getItem(DRAFT_KEY));
+    if (local) {
+      onRestoreRef.current(local);
+      // Restoring banner state from localStorage on mount; gated on presence of restorable content.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (isRestorableDraft(local)) setDraftRestored(true);
+      if (local.savedAt) setDraftSavedAt(local.savedAt);
+      if (isStaleDraft(local, Date.now())) {
+        const draftTitle = local.description?.slice(0, 40) || undefined;
+        fetch('/api/notifications/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'draft_resume', draftTitle }),
+        }).catch(() => {});
+      }
     }
+
+    // Best-effort cross-device pull. If the server mirror is newer than the
+    // local draft, restore from it instead — this is what lets a draft started
+    // on the phone surface on the tablet. Offline / signed-out / no server
+    // draft → no-op, local behaviour above is untouched.
+    if (!isOnline()) return;
+    fetch(DRAFT_ENDPOINT)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { draft: LoggerDraft | null } | null) => {
+        const server = body?.draft ?? null;
+        if (pickNewerDraft(local, server) !== server || !server) return;
+        onRestoreRef.current(server);
+        if (isRestorableDraft(server)) setDraftRestored(true);
+        if (server.savedAt) setDraftSavedAt(server.savedAt);
+        localStorage.setItem(DRAFT_KEY, serializeDraft(server, server.savedAt));
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       if (!shouldPersistDraft(state)) return;
       const now = Date.now();
+      const draft: LoggerDraft = { ...state, savedAt: now };
       localStorage.setItem(DRAFT_KEY, serializeDraft(state, now));
       setLastSavedAt(now);
+      // Best-effort mirror to Postgres for cross-device pickup. Fire-and-forget;
+      // offline / failure leaves the localStorage write (above) as the source of truth.
+      if (isOnline()) {
+        fetch(DRAFT_ENDPOINT, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draft }),
+        }).catch(() => {});
+      }
     }, AUTOSAVE_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [state]);
@@ -117,6 +165,12 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     localStorage.removeItem(DRAFT_KEY);
     setLastSavedAt(null);
     setDraftRestored(false);
+    // Best-effort: drop the server mirror too, so a save on this device doesn't
+    // leave a stale draft to resurface on another. Offline / failure is fine —
+    // the next save's DELETE (or the 7-day server expiry) cleans it up.
+    if (isOnline()) {
+      fetch(DRAFT_ENDPOINT, { method: 'DELETE' }).catch(() => {});
+    }
   }, []);
 
   const dismissDraftRestored = useCallback(() => setDraftRestored(false), []);

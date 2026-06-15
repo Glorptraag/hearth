@@ -28,7 +28,9 @@ import {
   familyLibrary,
   facilitatorNotes,
   observationDloLinks,
+  loggerDrafts,
 } from '@/lib/db/schema';
+import type { LoggerDraft } from '@/lib/logger/draft';
 import type { InferInsertModel } from 'drizzle-orm';
 import { encryptField } from '@/lib/crypto/field-encryption';
 import {
@@ -80,6 +82,48 @@ export async function createEntry(
   const row = buildEntry(overrides);
   const result = await db.insert(learningEntries).values(row).returning();
   return result[0];
+}
+
+/**
+ * Insert a cross-device Logger draft (per-Clerk-user). `updatedAt` is settable
+ * so the route's 7-day read-time expiry can be exercised; the rest of the blob
+ * defaults to a minimal-but-restorable draft.
+ */
+export async function createLoggerDraft(
+  db: Db,
+  args: {
+    clerkUserId: string;
+    familyId: string;
+    draftData?: Partial<LoggerDraft>;
+    updatedAt?: Date;
+  }
+) {
+  const draftData: LoggerDraft = {
+    description: 'Draft in progress',
+    selectedLearners: [],
+    discoveries: {},
+    activityType: null,
+    lessonSubjects: [],
+    engagement: {},
+    whenDate: 'today',
+    duration: null,
+    location: null,
+    observations: [],
+    evidence: [],
+    observationDetails: {},
+    savedAt: 1_700_000_000_000,
+    ...args.draftData,
+  };
+  const [row] = await db
+    .insert(loggerDrafts)
+    .values({
+      clerkUserId: args.clerkUserId,
+      familyId: args.familyId,
+      draftData,
+      ...(args.updatedAt ? { updatedAt: args.updatedAt } : {}),
+    })
+    .returning();
+  return row;
 }
 
 export async function createBadgeDefinition(

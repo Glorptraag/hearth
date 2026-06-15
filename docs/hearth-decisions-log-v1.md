@@ -162,6 +162,56 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 ---
 
+### D-LPS-8 — Cross-device Logger drafts are a hybrid localStorage + Postgres mirror
+
+**Decision:** Drafts sync across a parent's devices via a Postgres mirror (`logger_drafts`, `/api/logger/draft`), but `localStorage` stays the **offline-first primary** — the mirror is purely additive and never blocks capture. Every server call is best-effort and swallows its error (like the existing `draft_resume` fetch): autosave fires a `PUT`, mount does a `GET` and restores the newer of {local, server} by `savedAt` (`pickNewerDraft`, last-write-wins), and `clearDraft` fires a `DELETE`. The row is keyed per **Clerk user**, not per family, so two co-facilitators of one family never clobber each other's in-progress log. Server rows expire read-time after 7 days (no cron). This resolves UX compendium UC-L-11 / E9 and logger-spec §Open-Q#3 without regressing the offline path (UC-L-10).
+
+**Why:** A draft started on the phone was invisible on the tablet (device-locked `localStorage`) — costly for the interruption-driven homeschool day. The spec already recommended a Postgres draft; the only real design question was avoiding a hard network dependence, answered by keeping `localStorage` authoritative and the server best-effort.
+
+**Document of record:** `docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-11; `docs/hearth-logger-spec-v1.md` §Open Questions #3
+**Implementation:** `src/lib/db/schema.ts` (`loggerDrafts`) + `drizzle/0026_logger_drafts.sql`; `src/app/api/logger/draft/route.ts`; `src/lib/logger/draft.ts` (`pickNewerDraft`, `DRAFT_EXPIRY_MS`); `src/hooks/use-logger-draft.ts`
+**Tests:** `src/lib/logger/draft.test.ts` (pickNewerDraft); `src/hooks/use-logger-draft.test.tsx` (sync); `src/app/api/logger/draft/route.integration.test.ts` (round-trip, expiry, per-user isolation)
+**Date:** 2026-06-14
+
+---
+
+### D-LPS-9 — Multi-child entries fan out automatically; the capture-time note makes it legible
+
+**Decision:** A multi-child entry already fans out into one per-child portfolio record (per-child engagement + discovery keyed by `learnerId`) — this is automatic and unconditional. The inert "Learning together" checkbox (it set state nothing read, and wasn't even in the draft shape) is **removed**; in its place `WhoSection` shows a note once 2+ children are selected: "Saved to each child's portfolio — rate engagement and add notes for each below." Comprehension fix, not a behaviour change.
+
+**Why:** UX compendium UC-L-03 flagged that parents may not realise one entry feeds N portfolios. A toggle that implied opt-in to a thing that always happens was misleading on a trust-sensitive surface; a plain statement of the real behaviour is the honest fix.
+
+**Document of record:** `docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-03
+**Implementation:** `src/app/(auth)/log/_components/WhoSection.tsx`; removed `togetherMode` wiring in `src/app/(auth)/log/page.tsx`
+**Tests:** `src/app/(auth)/log/_components/WhoSection.test.tsx`
+**Date:** 2026-06-14
+
+---
+
+### D-LPS-10 — Audio capture and the offline sync queue stay deferred (Phase 2)
+
+**Decision:** Two Logger gaps the UX compendium flags remain **deliberately deferred**, not built this round: (a) **audio evidence capture** (UC-L-06 — `kind: 'audio'` exists only as a data-model placeholder in `entry-payload.ts`; no MediaRecorder UI), and (b) the **offline submission / sync queue** (UC-L-10 — no service worker, no background submission, and no `local://` photo-placeholder queue; an offline photo-add fails outright). Both are recorded under "Missing (deliberately not re-landed)" in the refactor postmortem. **Entry criteria for picking these up:** audio needs the CaptureTray/MediaRecorder + an audio upload route + `kind='audio'` UI; offline needs a service worker + an IndexedDB blob queue for background submission. Until then, the only offline safety net is the `localStorage` draft (now mirrored to Postgres for cross-device pickup — D-LPS-8).
+
+**Why:** Both are substantial builds with no half-measure that improves trust; shipping them piecemeal would risk a worse failure mode (e.g. a queue that silently drops). Recording the deferral with explicit entry criteria keeps the gap honest rather than implied-done.
+
+**Document of record:** `docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-06, UC-L-10; `docs/hearth-refactor-postmortem-v1.md` §"Missing (deliberately not re-landed)"
+**Date:** 2026-06-14
+
+---
+
+### D-LPS-11 — The completeness ring is readiness/wayfinding, not a grade
+
+**Decision:** The save-bar completeness ring signals *readiness to leave*, not *worth*. Once the entry is saveable (`canSave` — the 50% quick / 65% guided gate) the ring turns sage and shows a ✓; the raw percentage is shown only *while still building*. `aria-valuetext` carries the readiness phrase ("Ready to save" / the next action), never a bare "55", and the ring carries `role="progressbar"`. The colour now flips at the save gate, not at 90. Scoring (`src/lib/logger/completeness.ts`) is **unchanged** — this is presentation only, so the save gate does not move.
+
+**Why:** UX compendium UC-L-13 — a percentage reads as a grade of the parent. The anxiety peaks exactly when they've "finished," so that's where the ✓ replaces the number.
+
+**Document of record:** `docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-13
+**Implementation:** `src/app/(auth)/log/_components/SectionHeader.tsx` (`CompletenessRing`); call sites in `src/app/(auth)/log/page.tsx`
+**Tests:** `src/app/(auth)/log/_components/SectionHeader.test.tsx`
+**Date:** 2026-06-14
+
+---
+
 ## Process
 
 ### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention

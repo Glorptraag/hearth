@@ -7,6 +7,13 @@ interface UseSpeechRecognitionOptions {
   continuous?: boolean;
   interimResults?: boolean;
   onTranscript: (text: string) => void;
+  /**
+   * Called instead of a native `alert()` when the browser has no
+   * SpeechRecognition support, so the caller can surface a themed toast
+   * (UX compendium UC-L-09). Optional — omitting it makes `start()` a no-op
+   * on unsupported browsers.
+   */
+  onUnsupported?: () => void;
 }
 
 interface UseSpeechRecognitionResult {
@@ -21,15 +28,21 @@ export function useSpeechRecognition({
   continuous = true,
   interimResults = false,
   onTranscript,
+  onUnsupported,
 }: UseSpeechRecognitionOptions): UseSpeechRecognitionResult {
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const onTranscriptRef = useRef(onTranscript);
+  const onUnsupportedRef = useRef(onUnsupported);
 
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
   }, [onTranscript]);
+
+  useEffect(() => {
+    onUnsupportedRef.current = onUnsupported;
+  }, [onUnsupported]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -41,7 +54,7 @@ export function useSpeechRecognition({
     if (typeof window === 'undefined') return;
     const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!Ctor) {
-      alert('Voice input is not supported in your browser. Try Chrome or Edge.');
+      onUnsupportedRef.current?.();
       return;
     }
     const recognition = new Ctor();

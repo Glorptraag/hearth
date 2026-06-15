@@ -15,6 +15,7 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import type { LoggerDraft } from '../logger/draft';
 
 // ─── Identity & Auth ───
 
@@ -71,6 +72,21 @@ export const familySettings = pgTable('family_settings', {
   nextReportDate: date('next_report_date'),
   state: text('state'),
   notificationPrefs: jsonb('notification_prefs').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Cross-device Logger draft. Keyed per Clerk user (not per family) so two
+// co-facilitators of the same family don't clobber each other's in-progress
+// log. `localStorage` stays the offline-first primary; this row is a
+// best-effort mirror synced when online (see use-logger-draft + draft.ts).
+export const loggerDrafts = pgTable('logger_drafts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clerkUserId: text('clerk_user_id').unique().notNull(),
+  familyId: uuid('family_id')
+    .references(() => families.id)
+    .notNull(),
+  draftData: jsonb('draft_data').$type<LoggerDraft>().notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

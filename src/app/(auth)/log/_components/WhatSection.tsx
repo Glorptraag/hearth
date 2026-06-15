@@ -11,6 +11,7 @@ interface WhatSectionProps {
   description: string;
   onDescriptionChange: (value: string) => void;
   isRecording: boolean;
+  voiceSupported: boolean;
   onStartVoice: () => void;
   onStopVoice: () => void;
   learners: LearnerRecord[];
@@ -41,6 +42,7 @@ export function WhatSection({
   description,
   onDescriptionChange,
   isRecording,
+  voiceSupported,
   onStartVoice,
   onStopVoice,
   learners,
@@ -69,11 +71,13 @@ export function WhatSection({
         <div className="mt-sm flex items-center gap-xs">
           <button
             onClick={isRecording ? onStopVoice : onStartVoice}
+            disabled={!voiceSupported}
+            title={voiceSupported ? undefined : 'Voice input needs Chrome or Edge'}
             className={`flex items-center gap-xs rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium transition-all duration-200 ${
               isRecording
                 ? 'bg-ember-glow border border-ember text-ember animate-pulse'
                 : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
           >
             <span className="inline-flex items-center gap-xs"><Microphone size={14} aria-hidden="true" /> {isRecording ? 'Recording…' : 'Voice'}</span>
           </button>

@@ -549,7 +549,11 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       tape(retried ? 'anthropic-call-retry' : 'anthropic-call-start');
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
+        // 1024 truncated rich/multi-child entries mid-JSON (per-child threads +
+        // DLOs + signals exceed it), so JSON.parse threw and the entry failed
+        // enrichment outright. 4096 gives headroom; calls still bill only the
+        // tokens actually produced.
+        max_tokens: 4096,
         system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: userPrompt }],
       });
@@ -779,7 +783,9 @@ async function sonnetFallback(
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
+    // Match the primary call's headroom — see note there. Rich/multi-child
+    // entries overrun 1024 output tokens and truncate the JSON.
+    max_tokens: 4096,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: userPrompt }],
   });

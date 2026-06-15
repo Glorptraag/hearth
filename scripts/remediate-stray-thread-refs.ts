@@ -88,6 +88,18 @@ type ThreadDoc = { _id: string; title: string; legacyV1Id?: string };
  * (arrays whose items are all `_type === 'reference'`) by `_ref`, keeping the
  * first occurrence's `_key`.
  */
+type SanityRef = { _type: 'reference'; _ref: string; _key?: string };
+type SanityDoc = Record<string, unknown> & { _id: string; _type: string; title?: string };
+
+function isSanityRef(v: unknown): v is SanityRef {
+  return (
+    !!v &&
+    typeof v === 'object' &&
+    (v as Record<string, unknown>)._type === 'reference' &&
+    typeof (v as Record<string, unknown>)._ref === 'string'
+  );
+}
+
 function repoint(
   value: unknown,
   strayToCanonical: Map<string, string>,
@@ -96,14 +108,12 @@ function repoint(
   if (Array.isArray(value)) {
     const mapped = value.map((v) => repoint(v, strayToCanonical, changes));
     // Dedupe only when every item is a plain reference object.
-    const allRefs = mapped.length > 0 && mapped.every(
-      (v) => v && typeof v === 'object' && (v as any)._type === 'reference' && '_ref' in (v as any),
-    );
+    const allRefs = mapped.length > 0 && mapped.every(isSanityRef);
     if (allRefs) {
       const seen = new Set<string>();
       const out: unknown[] = [];
       for (const item of mapped) {
-        const r = (item as any)._ref as string;
+        const r = (item as SanityRef)._ref;
         if (seen.has(r)) {
           changes.push(`      · dedupe: dropped duplicate ref ${r}`);
           continue;
@@ -166,7 +176,7 @@ async function main() {
   const strayIds = strays.map((s) => s._id);
 
   // ── 3. Find every doc that references a stray. ──
-  const refDocs = await client.fetch<any[]>(`*[references($strayIds)]`, { strayIds });
+  const refDocs = await client.fetch<SanityDoc[]>(`*[references($strayIds)]`, { strayIds });
   const byType: Record<string, number> = {};
   for (const d of refDocs) byType[d._type] = (byType[d._type] ?? 0) + 1;
   console.log(`\nDocs referencing a stray: ${refDocs.length}  ${JSON.stringify(byType)}`);
@@ -230,7 +240,7 @@ async function main() {
     }
     console.log(`\nDeleting ${strayIds.length} stray capabilityThread docs…`);
     const res = await client.delete({ query: `*[_id in $ids]`, params: { ids: strayIds } });
-    console.log(`Delete result: ${JSON.stringify(res.results?.map((r: any) => r.id) ?? res)}`);
+    console.log(`Delete result: ${JSON.stringify(res.results?.map((r: { id: string }) => r.id) ?? res)}`);
     const after = await client.fetch<number>(`count(*[_type == "capabilityThread"])`);
     console.log(`\nPost-delete capabilityThread count: ${after}  (expected 57)`);
     process.exit(after === 57 ? 0 : 6);

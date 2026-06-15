@@ -9,7 +9,9 @@
  * evidence instead of the legacy thread-level fallback.
  *
  * Eligibility:
- *   - status = 'enriched' (the first-pass pipeline succeeded)
+ *   - ai_enrichment->>'status' = 'enriched' (the first-pass pipeline succeeded).
+ *     NOTE: the success flag lives in the ai_enrichment JSONB, not the top-level
+ *     `status` column — that column stays 'complete' after enrichment (entry-payload.ts).
  *   - no rows in observation_dlo_links for the entryId yet
  *
  * Flags:
@@ -58,7 +60,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const client = await pool.connect();
 let candidates;
 try {
-  const whereParts = [`e.status = 'enriched'`, `NOT EXISTS (SELECT 1 FROM observation_dlo_links l WHERE l.observation_id = e.id)`];
+  const whereParts = [`e.ai_enrichment->>'status' = 'enriched'`, `NOT EXISTS (SELECT 1 FROM observation_dlo_links l WHERE l.observation_id = e.id)`];
   const params = [];
   if (familyId) { params.push(familyId); whereParts.push(`e.family_id = $${params.length}`); }
   if (since)    { params.push(since);    whereParts.push(`e.date_occurred >= $${params.length}`); }

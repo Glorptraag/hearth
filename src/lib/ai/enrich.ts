@@ -24,7 +24,7 @@ import {
 import { getValidDlos } from './dlo-cache';
 import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
@@ -210,7 +210,7 @@ async function assembleContext(entryId: string, familyId: string) {
   const seenTargets = new Set<string>();
   if (activityIds.length > 0) {
     try {
-      const activities = await sanityClient.fetch<
+      const activities = await sanityServerClient.fetch<
         Array<{
           capabilityThreads?: Array<{ _id: string }>;
           capabilityTargets?: Array<{ tier?: string | null; thread?: { _id: string } | null }>;

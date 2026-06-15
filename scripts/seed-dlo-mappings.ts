@@ -1,10 +1,10 @@
 /**
  * Seed DLO → regulatory-framework mappings (WS-5 transposer plumbing).
  *
- * SCAFFOLD — wired end-to-end but loaded with 2–3 SAMPLE rows only. Authoring
- * the real `ac-v9-qld` mapping set (and seeding it against prod) is a
- * separately gated task (plan items P-3 / P-2). Do NOT run this against prod
- * until those gates clear.
+ * Loaded with the real `ac-v9-qld` tranche-1 mapping set
+ * (`./data/dlo-regulatory-mappings.ts` — 51 DLOs across 17 threads). Seeding it
+ * against prod is a separately GATED task (Drew's go + no pilot mid-HEU-
+ * submission). Do NOT run this against prod until that gate clears.
  *
  * Idempotent + non-destructive: patches the existing `discreteLearningObjective`
  * documents created by `scripts/seed-dlos.ts`, setting ONLY `regulatoryMappings`

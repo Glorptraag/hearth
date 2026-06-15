@@ -48,17 +48,19 @@
  *   learner's `developing`/`demonstrating` *status*, so emerging-tier mappings
  *   are authored for completeness but do not move the weighted score today.
  *
- * ── CAVEATS for review (do NOT seed until resolved) ─────────────────────────
- *   1. PREFIX-MAP BUG (blocks HASS coverage). `AC9_SUBJECT_MAP` in
- *      `src/lib/report/deterministic-coverage.ts` keys HASS as `AC9HAS`, but the
- *      real v9 F–6 HASS prefix is `AC9HS`. As-is, every H1/H2/H3 code below
- *      resolves to NO subject and contributes zero coverage. Add
- *      `AC9HS: 'hass'` (the order is conflict-free vs `AC9HP`) — this is the
- *      same AC9-prefix-map reconciliation called out in plan item C3.
- *   2. PS3 demonstrating code (`AC9HP6P02`) — confirmed the Yr5–6 PSCH emotion/
- *      transition descriptor by text, but P02-vs-P06 numbering could not be
- *      verified against the QCAA Yr5–6 alignment PDF (Cloudflare-blocked).
- *      Confirm before seeding.
+ * ── NOTES (caveats 1–2 RESOLVED in this PR; 3–4 are confirmed mappings) ──────
+ *   1. PREFIX-MAP BUG — RESOLVED. `AC9_SUBJECT_MAP` in
+ *      `src/lib/report/deterministic-coverage.ts` carried an invented HASS key
+ *      (`AC9HAS`/`AC9HI`/…); the real v9 F–6 HASS prefix is `AC9HS`. The map is
+ *      now reconciled against real ACARA v9 prefixes (`AC9HS` + 7–10 subjects
+ *      `AC9HH/HG/HC/HE`), so every H1/H2/H3 code below resolves to `hass`. A unit
+ *      assertion (`deterministic-coverage.test.ts`) fails if ANY code in this
+ *      file resolves to null. This was plan item C3.
+ *   2. PS3 demonstrating code — RESOLVED. Was `AC9HP6P02` ("manage changes and
+ *      transitions, incl. puberty"); corrected to `AC9HP6P06` ("apply strategies
+ *      to manage emotions and analyse how emotional responses influence
+ *      interactions"), the emotion-management match for the PS3 demonstrating
+ *      descriptor. Verified via Scootle/QCAA v9 listings.
  *   3. C1 is "Visual Art" in `THREAD_NAMES` but the SEEDED `dlo.C1.*` descriptor
  *      (from the lo-fi payload, which `seed-dlos.ts` resolves first) is
  *      narrative/storytelling — matching `THREAD_TO_V2_DOMAIN` (C1 →
@@ -184,7 +186,7 @@ export const DLO_REGULATORY_MAPPINGS: DloRegulatoryMappingSeed[] = [
   { dloId: 'dlo.S5.demonstrating', mappings: [qld(['AC9S6I03', 'AC9S6I04'], 'primary', 1.0)] },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // HUMANITIES → HASS (AC9HS*) — coverage BLOCKED until prefix-map fix (caveat 1)
+  // HUMANITIES → HASS (AC9HS*) — resolves via AC9HS (prefix-map reconciled; note 1)
   // ─────────────────────────────────────────────────────────────────────────
 
   // H1 Historical Understanding & Chronology — History knowledge + chronology
@@ -209,9 +211,13 @@ export const DLO_REGULATORY_MAPPINGS: DloRegulatoryMappingSeed[] = [
   // WELLBEING → HPE (AC9HP*) — Personal, social and community health (banded)
   // ─────────────────────────────────────────────────────────────────────────
 
-  // PS3 Self-Regulation & Wellbeing — "Identities and change" emotion/transition
-  // descriptors. Yr5–6 code pending confirmation (caveat 2).
+  // PS3 Self-Regulation & Wellbeing — Personal/Social/Community Health emotion &
+  // resilience descriptors. Demonstrating uses AC9HP6P06 ("apply strategies to
+  // manage emotions and analyse how emotional responses influence interactions")
+  // — the emotion-management match for the PS3 demonstrating descriptor, NOT the
+  // mis-numbered AC9HP6P02 ("manage changes and transitions, incl. puberty"). See
+  // resolved caveat 2.
   { dloId: 'dlo.PS3.emerging', mappings: [qld(['AC9HP2P03'], 'primary', 0.9)] },
   { dloId: 'dlo.PS3.developing', mappings: [qld(['AC9HP4P01'], 'primary', 0.9)] },
-  { dloId: 'dlo.PS3.demonstrating', mappings: [qld(['AC9HP6P02'], 'primary', 0.8)] },
+  { dloId: 'dlo.PS3.demonstrating', mappings: [qld(['AC9HP6P06'], 'primary', 0.9)] },
 ];

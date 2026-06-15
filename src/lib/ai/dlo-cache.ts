@@ -9,8 +9,14 @@
  * observations against the actual descriptor text, not a reconstructed id pattern.
  *
  * ALL_DLOS_QUERY filters to published status so drafts can't leak through enrichment.
+ *
+ * Reads through the authed `sanityServerClient`: `discreteLearningObjective` docs
+ * are NOT visible to the tokenless read role, so the public `sanityClient` returns
+ * 0 rows in production — which silently empties the descriptor block and strips
+ * every DLO at validation. This is server-side write-time code, so authed reads
+ * are safe.
  */
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 
 const DLO_IDS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{ _id, tier, descriptor }`;
 
@@ -31,7 +37,7 @@ export async function getValidDlos(): Promise<{
 }> {
   if (cached && Date.now() - cachedAt < CACHE_TTL) return cached;
   try {
-    const rows = await sanityClient.fetch<DloRow[]>(DLO_IDS_QUERY);
+    const rows = await sanityServerClient.fetch<DloRow[]>(DLO_IDS_QUERY);
     const ids = new Set<string>();
     const tierById = new Map<string, DloRow['tier']>();
     const descriptorById = new Map<string, string>();

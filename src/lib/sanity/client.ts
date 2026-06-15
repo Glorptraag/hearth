@@ -81,3 +81,13 @@ function lazy(getter: () => SanityClient): SanityClient {
 
 export const sanityClient = lazy(getReadClient);
 export const sanityWriteClient = lazy(getWriteClient);
+
+/**
+ * Server-only client that carries the API token, for READS of content types the
+ * tokenless/public read role cannot see. `capabilityThread` and
+ * `discreteLearningObjective` return 0 rows without a token, so server-side
+ * write-time enrichment (e.g. the DLO cache) must read through an authed client
+ * — otherwise the DLO descriptor block is empty and every mapped DLO is stripped
+ * at validation. Functionally the authed client; named for read intent.
+ */
+export const sanityServerClient = lazy(getWriteClient);

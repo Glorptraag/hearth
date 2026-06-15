@@ -36,6 +36,7 @@ const PACK_TREE_QUERY = /* groq */ `
     sessionMetadata,
     duration, setting, energyLevel,
     "capabilityThreads": capabilityThreads[]{_key, _ref},
+    "capabilityTargets": capabilityTargets[]{_key, tier, "thread": thread{_ref}},
     subjects, subjectAreas,
     "approach": approach{_ref}
   },

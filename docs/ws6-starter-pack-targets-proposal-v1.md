@@ -8,8 +8,8 @@ This is the reviewable proposal called for in WS-6 Part 2: identify which Starte
 
 - **0 of 274 prod activities have `capabilityTargets`.** D1 (#195) shipped the field; no content uses it yet.
 - The script can **mechanically migrate 154 activities** (those carrying legacy `capabilityThreads`) into `capabilityTargets` at tier `developing` — behaviour-preserving (see below). **91 activities have no threads** and need genuine authoring.
-- **⚠️ Hard prerequisite (WS-7):** the canonical `capabilityThread.<CODE>` docs referenced by activities **do not exist in prod**. Targets would dangle exactly like the threads do today until those are seeded. **Do not apply the migration until WS-7 lands.**
-- **Recommended first scope:** the "Hearth Starter Collection" pack (9 activities) and/or The Golden Years (96, all mechanical). Drew picks.
+- **⚠️ Hard prerequisite (= task A1):** the canonical `capabilityThread.<CODE>` docs referenced by activities **do not exist in prod**. Targets would dangle exactly like the threads do today until A1 seeds them (`scripts/seed-capability-threads.ts`) and remediates the strays. **Do not apply the migration until A1 lands.**
+- **Decided 2026-06-15 (Drew):** scope = **all 154 migratable**; tier = **`developing` default, refine later**; **A1 is owned separately** (not D2). The migration is ready to run unchanged the moment A1 lands — the script already defaults to all packs at `developing` and refuses `--apply` while refs dangle.
 
 ## Dataset reality (audited 2026-06-15, `g5zhwbxg/production`)
 
@@ -76,11 +76,13 @@ node scripts/propose-capability-targets.mjs --apply            # migratable pack
 
 `--apply` only writes population (1) (threads → targets), only `setIfMissing` (never overwrites existing targets), and never touches `capabilityThreads`.
 
-## Decisions for Drew
+## Decisions (resolved 2026-06-15, Drew)
 
-1. **Scope of the first content pass** — "Hearth Starter Collection" (9), The Golden Years (96, all mechanical), or all 154 migratable? (Recommend: Golden Years first — biggest behaviour-preserving win, and it's live.)
-2. **Tier policy** — accept the mechanical `developing` default and refine later, or author tiers up front for the headline packs?
-3. **Authoring the 91 no-thread activities** — kindling rebuild (preferred, per the handoff note) vs. a one-off authored proposal here.
-4. **WS-7 ordering** — confirm the canonical-thread seed lands before any `--apply`.
+1. **Scope of the content pass** — ✅ **all 154 migratable** (every thread-bearing activity across the 9 resolved packs), not a single-pack first pass.
+2. **Tier policy** — ✅ **accept the mechanical `developing` default, refine later.** (Behaviour-identical to today's bare-thread handling; authors promote/demote in a later pass.)
+3. **A1 ordering / ownership** — ✅ **A1 is owned separately, not by D2.** The canonical-thread seed + stray remediation runs under its own gate (GA1); this migration waits on it. The script enforces the order (refuses `--apply` while refs dangle).
+4. **Authoring the 91 no-thread activities** — still open; kindling rebuild preferred (per the handoff note). Not part of the mechanical migration.
+
+**Net:** once A1 lands, the one command is `node scripts/propose-capability-targets.mjs --apply` (defaults = all packs, `developing`). No flags, no further decisions needed.
 
 See `docs/kindling-capability-targets-handoff-v1.md` for how new/rebuilt content gets targets at source.

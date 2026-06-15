@@ -1,6 +1,9 @@
 import type { DocType, FieldRule, CrossFieldRule, QAIssue, CompletenessResult, SanityDoc } from './types';
 
-// ─── Known value sets (sourced from content-studio types) ───
+// ─── Known value sets ───
+// Mirror the option lists in the Sanity schemas and the /api/modules/publish Zod
+// enums. KNOWN_MODALITIES is the approach set (approaches allow 'exploratory';
+// activities do not). Keep in sync if those lists change.
 
 const KNOWN_MODALITIES = ['kinesthetic', 'visual', 'auditory', 'narrative', 'social', 'exploratory'];
 const KNOWN_SETTINGS = ['indoor', 'outdoor', 'either'];

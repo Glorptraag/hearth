@@ -884,9 +884,9 @@ These items are either ambiguous in the prototype or represent decisions deferre
 
 2. **"Earlier" date selection:** The "Earlier" when chip needs a date picker in production. What date range should be available? Last 7 days? Last 30 days? Any past date? Recommendation: last 30 days, with a "Custom date" option for historical logging during onboarding.
 
-3. **Draft persistence storage:** Should drafts be stored in `localStorage` (simple but lost on device change) or in PostgreSQL with `status: 'draft'` (cross-device but requires network)? Recommendation: PostgreSQL with a 7-day auto-expiry on unfinished drafts.
+3. **Draft persistence storage:** Should drafts be stored in `localStorage` (simple but lost on device change) or in PostgreSQL with `status: 'draft'` (cross-device but requires network)? Recommendation: PostgreSQL with a 7-day auto-expiry on unfinished drafts. **[RESOLVED 2026-06-14 — D-LPS-8]** Built, but *hybrid* rather than pure-Postgres: `localStorage` stays the offline-first primary and the Postgres mirror (`logger_drafts`, per-Clerk-user, 7-day read-time expiry) is best-effort with last-write-wins — keeping the 7-day expiry while avoiding the hard network dependence the pure-Postgres option implied.
 
-4. **Photo storage and sizing:** The prototype stores photos as base64 in the evidence array. Production needs: maximum file size, client-side resize resolution, cloud storage (S3/Cloudflare R2), and thumbnail generation. These are infrastructure decisions outside the UX spec scope.
+4. **Photo storage and sizing:** The prototype stores photos as base64 in the evidence array. Production needs: maximum file size, client-side resize resolution, cloud storage (S3/Cloudflare R2), and thumbnail generation. These are infrastructure decisions outside the UX spec scope. **[2026-06-14 — mostly built]** Client-side compression (`compressImageFile`) runs before upload to `/api/evidence/upload` (Vercel Blob, server-side Sharp resize). The offline submission queue for photos is **not** built — an offline photo-add fails outright; deferred to Phase 2 (D-LPS-10).
 
 5. **Observation chip extensibility:** Are the 24 current observation chips sufficient, or should families be able to add custom observations? Recommendation: fixed vocabulary in MVP for consistent enrichment; custom chips in Phase 2 if feedback demands it.
 

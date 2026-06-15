@@ -107,6 +107,41 @@ Drew approved shipping the Gentle Prompt fix mid-pilot ("users will want that ch
 **Regression test:** `src/lib/dashboard/gentle-prompt.test.ts` (unit layer).
 **Date logged:** 2026-06-10.
 
+### R12 — UX compendium reconciliation (2026-06-14): Logger drafts were device-locked to `localStorage`.
+
+Reconciling the UX use-case compendium (`hearth-ux-use-cases-logger-portfolio-capabilities-v1.md`, PR #188) against the live Logger confirmed UC-L-11 / E9: a draft autosaved on one device never appeared on another (device-locked `localStorage`), costly for the interruption-driven homeschool day. Resolved with a hybrid per-user Postgres mirror — `localStorage` stays the offline-first primary, the server copy is best-effort (`PUT` on autosave, `GET` + last-write-wins restore on mount, `DELETE` on clear), 7-day read-time expiry. Offline path (UC-L-10) deliberately unchanged. Decision D-LPS-8.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-11/E9; `hearth-logger-spec-v1.md` §Open-Q#3 (now resolved).
+**Regression test:** `src/lib/logger/draft.test.ts` (`pickNewerDraft`, unit); `src/hooks/use-logger-draft.test.tsx` (sync, unit); `src/app/api/logger/draft/route.integration.test.ts` (round-trip, 7-day expiry, per-user isolation — integration).
+**Date logged:** 2026-06-14.
+
+### R13 — UX compendium reconciliation (2026-06-14): parents couldn't tell a multi-child entry fans out per child.
+
+UC-L-03 friction: a multi-child entry already fans out into one per-child portfolio record, but nothing at capture time said so — and the "Learning together" checkbox implied opting in to a thing that always happens (it was inert: `buildEntrySavePayload` ignored it, and it wasn't in the draft shape). Removed the dead toggle; `WhoSection` now shows a note once 2+ children are selected. Comprehension fix, behaviour unchanged. Decision D-LPS-9.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-03 (form-length Open-Q9 still open).
+**Regression test:** `src/app/(auth)/log/_components/WhoSection.test.tsx` (unit — note shows at 2+, hidden at 1, no checkbox).
+**Date logged:** 2026-06-14.
+
+### R14 — UX compendium reconciliation (2026-06-14): the completeness percentage read as a grade.
+
+UC-L-13 friction: the save-bar ring's headline was a raw percentage, which reads as a grade of the parent. Hardened to readiness/wayfinding — once saveable the ring turns sage and shows a ✓ (number shows only while building), `role="progressbar"` + `aria-valuetext` carry "Ready to save" / the next action, and colour flips at the save gate (50/65) not 90. Scoring (`completeness.ts`) untouched, so the save gate did not move. Decision D-LPS-11.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-13.
+**Regression test:** `src/app/(auth)/log/_components/SectionHeader.test.tsx` (unit — ✓/aria at gate, number while building).
+**Date logged:** 2026-06-14.
+
+### R15 — UX compendium reconciliation (2026-06-14): voice-unsupported fell back to a native `alert()`.
+
+UC-L-09 / E7: an unsupported browser fired a bare `alert()` — off-design and jarring. The hook now exposes `onUnsupported`; the Logger surfaces a themed toast ("Voice input needs Chrome or Edge.") and the mic button renders disabled with a tooltip so the limit is visible before the tap.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-09/E7.
+**Regression test:** `src/hooks/use-speech-recognition.test.ts` (unit — unsupported fires `onUnsupported` not `alert`; supported starts recognition).
+**Date logged:** 2026-06-14.
+
+### R16 — UX compendium reconciliation (2026-06-14): two Logger gaps confirmed deferred, not silently skipped.
+
+The same reconciliation confirmed audio evidence capture (UC-L-06) and the offline submission/sync queue (UC-L-10) remain unbuilt; both are recorded as deliberate Phase-2 deferrals with entry criteria (service worker + IndexedDB blob queue for offline; CaptureTray/MediaRecorder + upload route for audio) rather than left as implied-done. Also corrected a stale doc claim: there is no `local://` photo-placeholder queue — an offline photo-add fails outright. Decision D-LPS-10.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-06, UC-L-10.
+**Regression test:** none — deferred features, no behaviour to pin (honest interim state; entry criteria in D-LPS-10).
+**Date logged:** 2026-06-14.
+
 ---
 
-*Next entry: R12. Append below; never edit above.*
+*Next entry: R17. Append below; never edit above.*

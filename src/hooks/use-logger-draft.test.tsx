@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useLoggerDraft } from './use-logger-draft';
 import {
   DRAFT_KEY,
@@ -7,6 +7,9 @@ import {
   serializeDraft,
   type LoggerDraftFields,
 } from '@/lib/logger/draft';
+
+const DRAFT_ENDPOINT = '/api/logger/draft';
+const RESUME_ENDPOINT = '/api/notifications/trigger';
 
 const baseFields = (overrides: Partial<LoggerDraftFields> = {}): LoggerDraftFields => ({
   description: '',
@@ -24,30 +27,47 @@ const baseFields = (overrides: Partial<LoggerDraftFields> = {}): LoggerDraftFiel
   ...overrides,
 });
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+/** The fetch-mock calls made to a given URL (first positional arg). */
+const callsTo = (mock: ReturnType<typeof vi.fn>, url: string) =>
+  mock.mock.calls.filter((c) => c[0] === url);
+
+const setOnline = (online: boolean) =>
+  Object.defineProperty(navigator, 'onLine', { configurable: true, value: online });
+
 describe('useLoggerDraft', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.useFakeTimers();
     localStorage.clear();
-    fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+    setOnline(true);
+    // Default: the server mirror is empty. Individual tests override per-URL.
+    fetchMock = vi.fn(async () => jsonResponse({ draft: null }));
     vi.stubGlobal('fetch', fetchMock);
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
+    setOnline(true);
   });
 
   describe('restore on mount', () => {
-    it('does nothing when storage is empty', () => {
+    it('restores nothing when local + server are both empty', () => {
       const onRestore = vi.fn();
       const { result } = renderHook(() =>
         useLoggerDraft({ state: baseFields(), onRestore }),
       );
       expect(onRestore).not.toHaveBeenCalled();
       expect(result.current.draftRestored).toBe(false);
-      expect(fetchMock).not.toHaveBeenCalled();
+      // We still best-effort GET the server mirror, but never the resume notification.
+      expect(callsTo(fetchMock, RESUME_ENDPOINT)).toHaveLength(0);
     });
 
     it('does nothing when storage holds corrupt JSON', () => {
@@ -106,9 +126,9 @@ describe('useLoggerDraft', () => {
         useLoggerDraft({ state: baseFields(), onRestore: vi.fn() }),
       );
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [url, init] = fetchMock.mock.calls[0];
-      expect(url).toBe('/api/notifications/trigger');
+      const resumeCalls = callsTo(fetchMock, RESUME_ENDPOINT);
+      expect(resumeCalls).toHaveLength(1);
+      const init = resumeCalls[0][1];
       expect(init.method).toBe('POST');
       const body = JSON.parse(init.body);
       expect(body.type).toBe('draft_resume');
@@ -128,7 +148,7 @@ describe('useLoggerDraft', () => {
         useLoggerDraft({ state: baseFields(), onRestore: vi.fn() }),
       );
 
-      expect(fetchMock).not.toHaveBeenCalled();
+      expect(callsTo(fetchMock, RESUME_ENDPOINT)).toHaveLength(0);
     });
 
     it('swallows fetch failure on the stale-resume notification', () => {
@@ -246,6 +266,106 @@ describe('useLoggerDraft', () => {
 
       expect(result.current.draftRestored).toBe(false);
       expect(localStorage.getItem(DRAFT_KEY)).toBe(stored);
+    });
+  });
+
+  describe('cross-device sync (Postgres mirror)', () => {
+    it('restores from the server mirror when it is newer than the local draft', async () => {
+      vi.useRealTimers();
+      const now = 1_700_000_000_000;
+      localStorage.setItem(
+        DRAFT_KEY,
+        serializeDraft(baseFields({ description: 'local older' }), now - 10_000),
+      );
+      const serverDraft = { ...baseFields({ description: 'server newer' }), savedAt: now };
+      fetchMock.mockImplementation(async (url: string) =>
+        url === DRAFT_ENDPOINT ? jsonResponse({ draft: serverDraft }) : jsonResponse({ ok: true }),
+      );
+
+      const onRestore = vi.fn();
+      const { unmount } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      await waitFor(() =>
+        expect(onRestore).toHaveBeenCalledWith(
+          expect.objectContaining({ description: 'server newer' }),
+        ),
+      );
+      // Server draft is mirrored back into localStorage so it survives reload.
+      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).description).toBe(
+        'server newer',
+      );
+      unmount();
+    });
+
+    it('keeps the local draft when it is newer than the server mirror', async () => {
+      vi.useRealTimers();
+      const now = 1_700_000_000_000;
+      localStorage.setItem(
+        DRAFT_KEY,
+        serializeDraft(baseFields({ description: 'local newer' }), now),
+      );
+      const serverDraft = { ...baseFields({ description: 'server older' }), savedAt: now - 10_000 };
+      fetchMock.mockImplementation(async (url: string) =>
+        url === DRAFT_ENDPOINT ? jsonResponse({ draft: serverDraft }) : jsonResponse({ ok: true }),
+      );
+
+      const onRestore = vi.fn();
+      const { unmount } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      await waitFor(() => expect(callsTo(fetchMock, DRAFT_ENDPOINT).length).toBeGreaterThan(0));
+      // Local restore happened; the older server draft was never applied.
+      expect(onRestore).not.toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'server older' }),
+      );
+      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).description).toBe('local newer');
+      unmount();
+    });
+
+    it('mirrors each autosave to the server with a PUT when online', () => {
+      vi.setSystemTime(1_700_000_000_000);
+      const state = baseFields({ description: 'We baked bread' });
+      renderHook(() => useLoggerDraft({ state, onRestore: vi.fn() }));
+
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+
+      const puts = callsTo(fetchMock, DRAFT_ENDPOINT).filter(([, init]) => init?.method === 'PUT');
+      expect(puts).toHaveLength(1);
+      const body = JSON.parse(puts[0][1].body);
+      expect(body.draft.description).toBe('We baked bread');
+      expect(body.draft.savedAt).toBe(1_700_000_000_000 + 10_000);
+    });
+
+    it('clears the server mirror with a DELETE on clearDraft', () => {
+      const { result } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore: vi.fn() }),
+      );
+
+      act(() => {
+        result.current.clearDraft();
+      });
+
+      const dels = callsTo(fetchMock, DRAFT_ENDPOINT).filter(([, init]) => init?.method === 'DELETE');
+      expect(dels).toHaveLength(1);
+    });
+
+    it('makes no network calls (mount GET or autosave PUT) while offline', () => {
+      setOnline(false);
+      const state = baseFields({ description: 'offline note' });
+      renderHook(() => useLoggerDraft({ state, onRestore: vi.fn() }));
+
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+
+      expect(callsTo(fetchMock, DRAFT_ENDPOINT)).toHaveLength(0);
+      // The offline-first localStorage write still happened.
+      expect(localStorage.getItem(DRAFT_KEY)).not.toBeNull();
     });
   });
 });

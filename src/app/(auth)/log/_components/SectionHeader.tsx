@@ -32,40 +32,79 @@ export function SectionHeader({ number, done, label, optional }: { number: numbe
   );
 }
 
-export function CompletenessRing({ score }: { score: number }) {
+/**
+ * The save-bar completeness ring. This is *wayfinding, not a grade* (UX
+ * compendium UC-L-13): it tells the parent when they're allowed to leave, not
+ * how good a parent they are. So once the entry is saveable (`ready`) the ring
+ * turns sage and shows a ✓ rather than a number — readiness, not worth — and
+ * the raw percentage only shows while the entry is still being built. The
+ * `aria-valuetext` carries the readiness phrase so screen readers hear
+ * "Ready to save" / the next action, never a bare "55".
+ */
+export function CompletenessRing({
+  score,
+  ready = false,
+  valueText,
+}: {
+  score: number;
+  ready?: boolean;
+  valueText?: string;
+}) {
   const r = 16;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-  const color = score >= 90 ? 'var(--color-sage)' : 'var(--color-ember)';
+  const color = ready ? 'var(--color-sage)' : 'var(--color-ember)';
 
   return (
-    <svg width="40" height="40" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r={r} fill="none" stroke="var(--color-border-subtle)" strokeWidth="3" />
-      <circle
-        cx="20"
-        cy="20"
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="3"
-        strokeDasharray={circ}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform="rotate(-90 20 20)"
-        className="transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
-      />
-      <text
-        x="20"
-        y="20"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="var(--color-text-primary)"
-        fontSize="10"
-        fontFamily="var(--font-sans)"
-        fontWeight="600"
+    <div className="relative h-10 w-10">
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 40 40"
+        role="progressbar"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuetext={valueText ?? (ready ? 'Ready to save' : `${score}% there`)}
+        aria-label="Entry readiness"
       >
-        {score}
-      </text>
-    </svg>
+        <circle cx="20" cy="20" r={r} fill="none" stroke="var(--color-border-subtle)" strokeWidth="3" />
+        <circle
+          cx="20"
+          cy="20"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 20 20)"
+          className="transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+        />
+        {!ready && (
+          <text
+            x="20"
+            y="20"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="var(--color-text-primary)"
+            fontSize="10"
+            fontFamily="var(--font-sans)"
+            fontWeight="600"
+          >
+            {score}
+          </text>
+        )}
+      </svg>
+      {ready && (
+        <Check
+          size={18}
+          className="absolute inset-0 m-auto"
+          style={{ color: 'var(--color-sage)' }}
+          aria-hidden="true"
+        />
+      )}
+    </div>
   );
 }

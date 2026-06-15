@@ -4,9 +4,11 @@ import {
   DRAFT_STALE_MS,
   serializeDraft,
   parseDraft,
+  pickNewerDraft,
   shouldPersistDraft,
   isRestorableDraft,
   isStaleDraft,
+  type LoggerDraft,
   type LoggerDraftFields,
 } from './draft';
 
@@ -122,6 +124,45 @@ describe('logger draft persistence', () => {
 
     it('is true once older than the 4h threshold', () => {
       expect(isStaleDraft({ ...baseFields(), savedAt: now - DRAFT_STALE_MS - 1 }, now)).toBe(true);
+    });
+  });
+
+  describe('pickNewerDraft (cross-device last-write-wins)', () => {
+    const draft = (savedAt: number, description = 'x'): LoggerDraft => ({
+      ...baseFields({ description }),
+      savedAt,
+    });
+
+    it('returns the server draft when neither is local (fresh device pickup)', () => {
+      const server = draft(100);
+      expect(pickNewerDraft(null, server)).toBe(server);
+    });
+
+    it('returns the local draft when the server has none', () => {
+      const local = draft(100);
+      expect(pickNewerDraft(local, null)).toBe(local);
+    });
+
+    it('returns null when both are absent', () => {
+      expect(pickNewerDraft(null, null)).toBeNull();
+    });
+
+    it('prefers the server draft when it is strictly newer', () => {
+      const local = draft(100, 'local');
+      const server = draft(200, 'server');
+      expect(pickNewerDraft(local, server)).toBe(server);
+    });
+
+    it('keeps the local draft when it is newer (never clobbers fresher local work)', () => {
+      const local = draft(300, 'local');
+      const server = draft(200, 'server');
+      expect(pickNewerDraft(local, server)).toBe(local);
+    });
+
+    it('keeps the local draft on a savedAt tie (no needless re-restore)', () => {
+      const local = draft(200, 'local');
+      const server = draft(200, 'server');
+      expect(pickNewerDraft(local, server)).toBe(local);
     });
   });
 });

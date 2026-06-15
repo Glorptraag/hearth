@@ -1,5 +1,6 @@
 import { differenceInYears } from 'date-fns';
 import { WatchForTodayStrip } from '@/components/logger/WatchForTodayStrip';
+import { UsersThree } from '@/components/icons';
 import { SectionHeader } from './SectionHeader';
 import { CHILD_COLORS } from './childColors';
 import type { LearnerRecord } from '@/hooks/use-learners-fetch';
@@ -9,8 +10,6 @@ interface WhoSectionProps {
   learners: LearnerRecord[];
   selectedLearners: string[];
   onToggleLearner: (id: string) => void;
-  togetherMode: boolean;
-  onTogetherModeChange: (value: boolean) => void;
   snapshotData: SnapshotData | null;
   done: boolean;
 }
@@ -20,16 +19,20 @@ const learnerAge = (l: LearnerRecord) =>
 
 /**
  * Logger Section 1 — "Who was learning?". The learner chip picker, the
- * "Learning together" toggle (shown once 2+ are selected), and the
+ * multi-child fan-out note (shown once 2+ are selected), and the
  * WatchForTodayStrip below. Extracted verbatim from log/page.tsx; pure
  * presentational, all state lifted to the page.
+ *
+ * The fan-out note replaced an inert "Learning together" checkbox (it set
+ * state nothing read): a multi-child entry already fans out — each child gets
+ * their own portfolio record with their own engagement + discovery. The note
+ * makes that automatic behaviour legible at capture time (UX compendium
+ * UC-L-03 friction; decision D-LPS-9).
  */
 export function WhoSection({
   learners,
   selectedLearners,
   onToggleLearner,
-  togetherMode,
-  onTogetherModeChange,
   snapshotData,
   done,
 }: WhoSectionProps) {
@@ -58,15 +61,12 @@ export function WhoSection({
         })}
       </div>
       {selectedLearners.length >= 2 && (
-        <label className="mt-sm flex items-center gap-sm font-sans text-sm text-text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            checked={togetherMode}
-            onChange={(e) => onTogetherModeChange(e.target.checked)}
-            className="accent-ember"
-          />
-          Learning together
-        </label>
+        <div className="mt-sm flex items-start gap-sm rounded-md border border-border-subtle bg-surface-raised p-sm">
+          <UsersThree size={16} className="mt-[1px] shrink-0 text-text-muted" aria-hidden="true" />
+          <p className="font-sans text-xs leading-relaxed text-text-secondary">
+            Saved to each child&rsquo;s portfolio — rate engagement and add notes for each below.
+          </p>
+        </div>
       )}
       {/* (b) WatchForTodayStrip — shown below children when selected */}
       {selectedLearners.length > 0 && (

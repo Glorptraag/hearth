@@ -87,7 +87,6 @@ export default function LogPage() {
   const [showBatch, setShowBatch] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
-  const [togetherMode, setTogetherMode] = useState(false);
   const [description, setDescription] = useState('');
   const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
   const [activityType, setActivityType] = useState<string | null>(null);
@@ -257,8 +256,17 @@ export default function LogPage() {
   const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
 
-  const { isRecording, start: startVoiceInput, stop: stopVoiceInput } = useSpeechRecognition({
+  const {
+    isRecording,
+    isSupported: voiceSupported,
+    start: startVoiceInput,
+    stop: stopVoiceInput,
+  } = useSpeechRecognition({
     onTranscript: (transcript) => setDescription((prev) => prev + (prev ? ' ' : '') + transcript),
+    onUnsupported: () => {
+      setToast({ type: 'error', message: 'Voice input needs Chrome or Edge.' });
+      setTimeout(() => setToast(null), 3000);
+    },
   });
 
   // ─── Completeness ───
@@ -470,7 +478,6 @@ export default function LogPage() {
       }
       const learnersToCheck = [...selectedLearners];
       setSelectedLearners([]);
-      setTogetherMode(false);
       setDescription('');
       setDiscoveries({});
       setActivityType(null);
@@ -697,7 +704,11 @@ export default function LogPage() {
         </div>
         <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />
         <div className="hidden lg:flex items-center gap-sm">
-          <CompletenessRing score={completeness} />
+          <CompletenessRing
+            score={completeness}
+            ready={canSave}
+            valueText={canSave ? 'Ready to save' : completenessHint}
+          />
           <div className="hidden sm:block text-left">
             <p className="font-sans text-[0.6875rem] font-semibold text-text-secondary leading-tight">{completenessLabel}</p>
             <p className="font-sans text-[0.6875rem] text-text-muted leading-tight">{completenessHint}</p>
@@ -752,8 +763,6 @@ export default function LogPage() {
             learners={learners}
             selectedLearners={selectedLearners}
             onToggleLearner={toggleLearner}
-            togetherMode={togetherMode}
-            onTogetherModeChange={setTogetherMode}
             snapshotData={snapshotData}
             done={sectionDone[1]}
           />
@@ -766,6 +775,7 @@ export default function LogPage() {
             description={description}
             onDescriptionChange={setDescription}
             isRecording={isRecording}
+            voiceSupported={voiceSupported}
             onStartVoice={startVoiceInput}
             onStopVoice={stopVoiceInput}
             learners={learners}
@@ -913,7 +923,11 @@ export default function LogPage() {
               </div>
             )}
             <div className="flex items-center gap-md">
-              <CompletenessRing score={completeness} />
+              <CompletenessRing
+                score={completeness}
+                ready={canSave}
+                valueText={canSave ? 'Ready to save' : completenessHint}
+              />
               <div className="min-w-0 flex-1">
                 <p className="font-sans text-[0.75rem] font-semibold text-text-secondary leading-tight">
                   {completenessLabel}

@@ -110,3 +110,26 @@ export function isStaleDraft(draft: LoggerDraft | null, now: number): boolean {
   if (!draft?.savedAt) return false;
   return now - draft.savedAt > DRAFT_STALE_MS;
 }
+
+/**
+ * How long a server-mirrored draft survives before it's treated as expired.
+ * Mirrors the logger spec's §Open-Q#3 recommendation ("7-day auto-expiry");
+ * enforced read-time by the draft route so no cron is needed.
+ */
+export const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Reconcile the offline-first `localStorage` draft with the Postgres mirror —
+ * last-write-wins by `savedAt`. Null-safe: returns the other when one is
+ * absent, or null when both are. This is what lets a draft started on the
+ * phone surface on the tablet (server wins) without ever losing fresher local
+ * work (local wins).
+ */
+export function pickNewerDraft(
+  local: LoggerDraft | null,
+  server: LoggerDraft | null,
+): LoggerDraft | null {
+  if (!local) return server;
+  if (!server) return local;
+  return (server.savedAt ?? 0) > (local.savedAt ?? 0) ? server : local;
+}

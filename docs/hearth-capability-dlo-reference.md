@@ -11,6 +11,25 @@
 - **DLO descriptors are the contract.** When designing a module activity, identify which thread(s) it targets and which tier(s) it gives a child an opportunity to demonstrate. The descriptor text is what an observer would look for in the child's behaviour.
 - **AU/QLD do NOT mandate a finer-grained DLO scheme.** Don't map activities to AC9 codes — that grain is not shipped and not planned.
 
+## Authoring contract: `capabilityTargets` (WS-6)
+
+Since D1 (#195), the way an activity declares what it develops is the **`capabilityTargets`** field — a thread paired with the tier the author is targeting:
+
+```ts
+// src/sanity/schemas/activity.ts
+capabilityTargets: Array<{
+  thread: Reference<capabilityThread>;                 // required — capabilityThread.<CODE>, e.g. capabilityThread.M1
+  tier: 'emerging' | 'developing' | 'demonstrating';   // required — pick by DLO descriptor below
+}>
+```
+
+- **One target per (thread, tier) the activity gives the child a chance to demonstrate.** Use the per-tier DLO descriptors in this document to choose the tier: pick the band whose descriptor matches what an observer would actually see in the child's behaviour during the activity. When in doubt, `developing`.
+- **What completion writes.** A completed run with declared targets logs an **opportunity** at that (thread, tier) with `declared` provenance — it becomes observed evidence only when corroborated (a per-child signal or a parent tap). Targets do not auto-assert mastery.
+- **`capabilityThreads` (the old bare `reference[]`, no tier) is legacy.** It still works as a fallback — the runtime treats a bare thread as tier `developing` — but it is superseded. Populate `capabilityTargets` on new content; keep `capabilityThreads` during migration only.
+- **Threads are referenced by stable code, as a deterministic id.** `thread._ref = capabilityThread.<CODE>` (e.g. `capabilityThread.EF7`). The code is the contract; titles/slugs may drift.
+- **Soft-flagged when absent.** An activity with neither `capabilityThreads` nor `capabilityTargets` raises a non-blocking warning in Content QA (`/admin/content/qa`): *"activity declares no capability targets (won't contribute to the constellation)."* It never blocks publish.
+- **Kindling-authored content** populates this at source — see `docs/kindling-capability-targets-handoff-v1.md`.
+
 ## Tier definitions (global, all threads)
 
 | Tier | What it means |

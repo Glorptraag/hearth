@@ -28,6 +28,7 @@ import {
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
 import { getCachedThreads } from './sanity-thread-cache';
 import { scoreModules, type ScoringModule } from './recommend';
+import { descriptorToSubject, SUBJECT_KEYS } from '@/lib/report/deterministic-coverage';
 import { sanityClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import type {
@@ -159,36 +160,28 @@ export async function rebuildSnapshot(
         data.tier = countBasedTier(data.count, override ?? null);
       }
 
-      // Count AC V9 descriptors per subject from AI enrichment
+      // Count AC v9 descriptors per subject from AI enrichment. Subject
+      // resolution uses the single canonical prefix map in
+      // deterministic-coverage.ts (descriptorToSubject) so this legacy count and
+      // the transposer can't drift (plan item C3). The former inline map keyed
+      // maths as `AC9MA` and technologies as `AC9T`, which silently dropped real
+      // `AC9M…`/`AC9TD…` codes — descriptorToSubject resolves them correctly.
       const descriptorsBySubject: Record<string, Set<string>> = {};
       for (const entry of childEntries) {
         const enrichment = entry.aiEnrichment as EnrichmentResult | null;
         if (enrichment) {
           for (const desc of enrichment.curriculum_descriptors ?? []) {
-            // AC9 codes start with AC9 + subject abbreviation (e.g. AC9E = English, AC9MA = Maths)
-            const code = desc.code;
-            for (const [subj, prefix] of Object.entries({
-              english: 'AC9E',
-              mathematics: 'AC9MA',
-              science: 'AC9S',
-              hass: 'AC9HS',
-              arts: 'AC9A',
-              technologies: 'AC9T',
-              hpe: 'AC9HP',
-              languages: 'AC9L',
-            })) {
-              if (code.startsWith(prefix)) {
-                if (!descriptorsBySubject[subj]) descriptorsBySubject[subj] = new Set();
-                descriptorsBySubject[subj].add(code);
-              }
-            }
+            const subj = descriptorToSubject(desc.code);
+            if (!subj) continue;
+            if (!descriptorsBySubject[subj]) descriptorsBySubject[subj] = new Set();
+            descriptorsBySubject[subj].add(desc.code);
           }
         }
       }
 
       // Curriculum coverage by subject
       const curriculumCoverage: Record<string, unknown> = {};
-      const allSubjects = ['english', 'mathematics', 'science', 'hass', 'arts', 'technologies', 'hpe', 'languages'];
+      const allSubjects = SUBJECT_KEYS;
       for (const subj of allSubjects) {
         const touched = subjectCounts[subj] ?? 0;
         const descriptorCount = descriptorsBySubject[subj]?.size ?? 0;

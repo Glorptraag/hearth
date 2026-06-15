@@ -6,6 +6,7 @@ import {
   SUBJECT_KEYS,
   type RegulatoryMapping,
 } from './deterministic-coverage';
+import { DLO_REGULATORY_MAPPINGS } from '../../../scripts/data/dlo-regulatory-mappings';
 
 const QLD = 'ac-v9-qld';
 
@@ -22,18 +23,59 @@ function mapping(over: Partial<RegulatoryMapping> = {}): RegulatoryMapping {
 }
 
 describe('descriptorToSubject', () => {
-  it('routes each subject prefix', () => {
+  it('routes each real ACARA v9 learning-area prefix', () => {
     expect(descriptorToSubject('AC9E2LY05')).toBe('english');
     expect(descriptorToSubject('AC9M3N01')).toBe('mathematics');
     expect(descriptorToSubject('AC9S1U01')).toBe('science');
-    expect(descriptorToSubject('AC9HAS2K01')).toBe('hass');
-    expect(descriptorToSubject('AC9HP4P01')).toBe('hpe');
-    expect(descriptorToSubject('AC9LA2C01')).toBe('languages');
+    // HASS: F–6 combined + the four 7–10 subjects.
+    expect(descriptorToSubject('AC9HS2K02')).toBe('hass'); // F–6 HASS — the fix
+    expect(descriptorToSubject('AC9HH7K01')).toBe('hass'); // History 7–10
+    expect(descriptorToSubject('AC9HG7K01')).toBe('hass'); // Geography 7–10
+    expect(descriptorToSubject('AC9HC7K01')).toBe('hass'); // Civics 7–10
+    expect(descriptorToSubject('AC9HE7K01')).toBe('hass'); // Economics 7–10
+    expect(descriptorToSubject('AC9AMU2D01')).toBe('arts'); // Music — AC9A umbrella
+    expect(descriptorToSubject('AC9AVA8C01')).toBe('arts'); // Visual Arts
+    expect(descriptorToSubject('AC9TDE4K01')).toBe('technologies'); // Design
+    expect(descriptorToSubject('AC9TDI4P01')).toBe('technologies'); // Digital
+    expect(descriptorToSubject('AC9HP6P06')).toBe('hpe');
+    expect(descriptorToSubject('AC9LF8C01')).toBe('languages'); // French — AC9L umbrella
+  });
+
+  it('drops the invented HASS prefixes the bug rested on', () => {
+    // The reconciled map removed these fabricated HASS keys; codes shaped like
+    // them no longer route anywhere. The real F–6 HASS code (AC9HS…) does.
+    expect(descriptorToSubject('AC9HAS2K01')).toBeNull();
+    expect(descriptorToSubject('AC9HI2K01')).toBeNull();
+    expect(descriptorToSubject('AC9GE2K01')).toBeNull();
+    expect(descriptorToSubject('AC9CI2K01')).toBeNull();
+    expect(descriptorToSubject('AC9HS2K01')).toBe('hass');
+  });
+
+  it('does not misroute economics (AC9HE) to english (AC9E)', () => {
+    expect(descriptorToSubject('AC9HE7K01')).not.toBe('english');
   });
 
   it('returns null for an unknown prefix', () => {
     expect(descriptorToSubject('XYZ123')).toBeNull();
     expect(descriptorToSubject('AC9ZZ01')).toBeNull();
+  });
+});
+
+describe('tranche-1 regulatory mappings (C2: every code resolves)', () => {
+  it('every authored AC9 code resolves to a subject via the reconciled map', () => {
+    const unresolved: string[] = [];
+    for (const entry of DLO_REGULATORY_MAPPINGS) {
+      for (const m of entry.mappings) {
+        for (const code of m.codes) {
+          if (descriptorToSubject(code) === null) {
+            unresolved.push(`${entry.dloId} → ${code}`);
+          }
+        }
+      }
+    }
+    // A non-empty list means a mapping code contributes ZERO coverage — the exact
+    // class of bug (HASS via AC9HS) this PR reconciles. Fail loudly with the list.
+    expect(unresolved).toEqual([]);
   });
 });
 

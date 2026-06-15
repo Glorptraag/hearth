@@ -36,30 +36,37 @@ export type SubjectCoverage = {
 export type DeterministicCoverage = Record<string, SubjectCoverage>;
 
 /**
- * AC9 descriptor-code prefix → Hearth subject key. Single source of truth: the
- * report export route and the report page both import this (it was duplicated,
- * verbatim, in each before WS-5). Order is preserved from those originals so
- * `descriptorToSubject` resolves first-match identically — this is a de-dupe,
- * not a behaviour change.
+ * AC9 descriptor-code prefix → Hearth subject key. Single source of truth for
+ * AC9-code-to-subject resolution: the report export route, the report page, AND
+ * the snapshot-rebuild legacy descriptor count all import this (each previously
+ * kept its own copy — they had drifted, which is what this map reconciles, plan
+ * item C3).
+ *
+ * Every prefix here is a REAL ACARA v9 learning-area code prefix, verified
+ * against v9.australiancurriculum.edu.au (per-prefix sources in the PR body).
+ * The earlier table carried invented HASS/Arts/Languages prefixes (`AC9HAS`,
+ * `AC9HI`, `AC9GE`, `AC9CI`, `AC9EB`, `AC9AR`, `AC9MU`, `AC9DR`, `AC9DA`,
+ * `AC9MA`, `AC9LA`) — so real codes (notably F–6 HASS `AC9HS…`) resolved to no
+ * subject and contributed zero coverage. Those are removed here.
+ *
+ * No prefix shadows another (none is a string-prefix of another), so
+ * `descriptorToSubject`'s first-match scan is order-independent.
  */
 export const AC9_SUBJECT_MAP: Record<string, string> = {
   AC9E: 'english',
   AC9M: 'mathematics',
   AC9S: 'science',
-  AC9HAS: 'hass',
-  AC9HI: 'hass',
-  AC9GE: 'hass',
-  AC9CI: 'hass',
-  AC9EB: 'hass',
-  AC9AR: 'arts',
-  AC9MU: 'arts',
-  AC9DR: 'arts',
-  AC9DA: 'arts',
-  AC9MA: 'arts',
-  AC9TD: 'technologies',
-  AC9TDI: 'technologies',
-  AC9HP: 'hpe',
-  AC9LA: 'languages',
+  // HASS — F–6 is the combined AC9HS learning area; in Years 7–10 it splits into
+  // four subjects, each with its own real v9 prefix. All route to `hass`.
+  AC9HS: 'hass', // Humanities and Social Sciences, F–6 (e.g. AC9HS2K02)
+  AC9HH: 'hass', // History, Years 7–10
+  AC9HG: 'hass', // Geography, Years 7–10
+  AC9HC: 'hass', // Civics and Citizenship, Years 7–10
+  AC9HE: 'hass', // Economics and Business, Years 7–10
+  AC9A: 'arts', // The Arts umbrella — AC9ADA/ADR/AMA/AMU/AVA
+  AC9TD: 'technologies', // AC9TDE (Design) + AC9TDI (Digital Technologies)
+  AC9HP: 'hpe', // Health and Physical Education
+  AC9L: 'languages', // AC9L{language}
 };
 
 /** Canonical subject order (distinct values of AC9_SUBJECT_MAP, insertion order). */

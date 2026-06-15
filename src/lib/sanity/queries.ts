@@ -15,6 +15,16 @@
 // with a comment that references this invariant.
 //
 // A CI script (scripts/check-sanity-gating.mjs) enforces this on every PR.
+//
+// DEREF-EXISTENCE GUARD: ref arrays whose targets may be unreadable by the
+// tokenless browser client (notably `capabilityThread` docs — see the
+// dark-constellation root cause) must filter on `defined(@->_id)` BEFORE the
+// deref, e.g. `capabilityThreads[defined(@->_id)]->{...}`. Without it, an
+// unresolvable ref dereferences to `null`, leaving a null element in the array;
+// a component that `.map`s it and reads `.title`/`._id` then throws
+// "null is not an object (evaluating 'e.title')" (Sentry HEARTH-9). The filter
+// keeps resolvable refs (token/server reads) and silently drops the rest
+// (tokenless) — graceful absence instead of a crash.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Reusable projection for the pack/module indicators feature.
@@ -64,7 +74,7 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug && 
       }
     }
   },
-  badges[]->{ _id, title, emoji, description }
+  badges[defined(@->_id)]->{ _id, title, emoji, description }
 }`;
 
 // Single module with approaches and activities
@@ -81,8 +91,8 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
     ...,
     "activities": activities[@->status == "published"]->{
       ...,
-      capabilityThreads[]->{ _id, title, domain },
-      enabledBadges[]->{ _id, title, emoji },
+      capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+      enabledBadges[defined(@->_id)]->{ _id, title, emoji },
       "assets": assets[@.asset->status == "published"]{
         _key, role, notes,
         asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
@@ -97,8 +107,8 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
       }
     }
   },
-  capabilityThreads[]->{ _id, title, domain, description },
-  badges[]->{ _id, title, emoji, criteriaSummary },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain, description },
+  badges[defined(@->_id)]->{ _id, title, emoji, criteriaSummary },
   pedagogyLensBundles[]{ pedagogyKey, lens{ perspective, facilitatorTips, languageFrame, watchFor }, methodAffinity },
   methodologyOverlays[]{ practiceKey, overlay{ before, during, after, materialAdaptations } }
 }`;
@@ -113,8 +123,8 @@ export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published"
   ${PACK_INDICATORS_PROJECTION},
   "approachCount": count(approaches),
   "modalities": approaches[@->status == "published"]->modality,
-  capabilityThreads[]->{ _id, title, domain },
-  badges[]->{ _id, title, emoji },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+  badges[defined(@->_id)]->{ _id, title, emoji },
   pedagogyLensBundles[]{ pedagogyKey, methodAffinity },
   methodologyOverlays[]{ practiceKey },
   "owningPack": *[_type == "pack" && status == "published" && references(^._id)][0]{
@@ -126,8 +136,8 @@ export const MODULE_BROWSE_QUERY = `*[_type == "module" && status == "published"
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
 export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id && status == "published"][0]{
   ...,
-  capabilityThreads[]->{ _id, title, domain },
-  enabledBadges[]->{ _id, title, emoji },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+  enabledBadges[defined(@->_id)]->{ _id, title, emoji },
   "assets": assets[@.asset->status == "published"]{
     _key, role, notes,
     asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
@@ -159,16 +169,16 @@ export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id && statu
     _id, title, slug, stageNumber, instructions, materials,
     estimatedDuration, artifactDescription, dependsOn, status
   } | order(stageNumber asc),
-  capabilityThreads[]->{ _id, title, domain },
-  badges[]->{ _id, title, emoji, criteriaSummary }
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+  badges[defined(@->_id)]->{ _id, title, emoji, criteriaSummary }
 }`;
 
 // All published projects for explore/browse
 export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, duration,
   "stageCount": count(stages),
-  badges[]->{ _id, title, emoji },
-  capabilityThreads[]->{ _id, title, domain }
+  badges[defined(@->_id)]->{ _id, title, emoji },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain }
 }`;
 
 // All capability threads (reference data)

@@ -51,6 +51,10 @@ export default function PrepMode({
 }) {
   const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
+  // Defensive: tokenless reads can leave null elements where a capabilityThread
+  // ref didn't resolve (see SANITY GATING INVARIANT in queries.ts). Drop them so
+  // the .map below can't crash on a null `.title` (Sentry HEARTH-9).
+  const threads = (module.capabilityThreads ?? []).filter(Boolean);
 
   // Aggregated materials across every activity in every approach — dedup
   // and required-OR handled by the helper. Memo on module identity so the
@@ -379,9 +383,9 @@ export default function PrepMode({
         <p className="font-serif text-base text-text-primary leading-relaxed mb-md">
           {module.targetUnderstanding}
         </p>
-        {module.capabilityThreads && module.capabilityThreads.length > 0 && (
+        {threads.length > 0 && (
           <div className="flex flex-wrap gap-xs">
-            {module.capabilityThreads.map((thread) => (
+            {threads.map((thread) => (
               <span
                 key={thread._id}
                 className="font-sans text-[11px] text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"

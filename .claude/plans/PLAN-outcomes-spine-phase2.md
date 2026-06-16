@@ -153,7 +153,7 @@ Add capabilityTargets: [{thread, tier}] to the activity schema (alongside existi
 **D2 — Standards enforcement + content pass** `[SONNET]` (standard) · gate: D1 done
 ```
 Hearth LMS. Execute task D2 from .claude/plans/PLAN-outcomes-spine-phase2.md (read plan + status JSON). Gate: D1 merged (needs the capabilityTargets schema).
-Add a workbench publish soft-flag for activities with no threads/targets (120 of 274 today) — see src/lib/content-studio/validation.ts soft-flag helpers + /api/admin/content/publish. Update the kindling spec/orchestrator to populate capabilityTargets (kindling is a SIBLING repo on Drew's machine, not in this checkout — flag the change needed, don't assume access). Do a Starter Pack content pass adding targets. Regenerate the authoring-guidance section of docs/hearth-capability-dlo-reference.md. On completion set D2 done in status JSON. Model: Sonnet.
+The soft-flag for activities with no threads/targets (120 of 274) ALREADY LANDED in #197 — it lives in Content QA (src/lib/content-qa/rules.ts, capabilityTargets rule), NOT in the retired src/lib/content-studio/ + /api/admin/content/publish (removed #117). Remaining D2 work: update the kindling spec/orchestrator to populate capabilityTargets (kindling is a SIBLING repo on Drew's machine, not in this checkout — flag the change needed, don't assume access; handoff drafted in docs/kindling-capability-targets-handoff-v1.md + docs/ws6-starter-pack-targets-proposal-v1.md, #199). Do a Starter Pack content pass adding targets. Regenerate the authoring-guidance section of docs/hearth-capability-dlo-reference.md. On completion set D2 done in status JSON. Model: Sonnet.
 ```
 
 **D3 — Per-learner DLO attribution** `[SONNET]` (standard) · ✅ decision landed (D-OS2), spawnable now

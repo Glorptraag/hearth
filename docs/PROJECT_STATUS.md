@@ -30,7 +30,7 @@
 
 ### Recent Milestones (May 2026)
 
-- **Editorial workbench publish validation** (shipped 8 May, PR #37, `2493d5e`) — Optional `workbench` on activity schema + `workbenches` on pack per `workbench-claude-code-addendum`. New `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts` with Zod schemas and soft-flag helpers (id resolution, restrictive/duration/completion language, word cap). `/api/admin/content/publish` returns `workbenchFlags` (non-blocking). `/api/modules/publish` parent path unchanged.
+- **Editorial workbench publish validation** (shipped 8 May, PR #37, `2493d5e`) — Optional `workbench` on activity schema + `workbenches` on pack per `workbench-claude-code-addendum`. New `src/lib/content-studio/{types,factories,validation,sanity-transform}.ts` with Zod schemas and soft-flag helpers (id resolution, restrictive/duration/completion language, word cap). `/api/admin/content/publish` returns `workbenchFlags` (non-blocking). `/api/modules/publish` parent path unchanged. **[RETIRED 2026-06 — #117, `0baa3d8`]** The in-app editorial Content Studio (`src/lib/content-studio/` + `/api/admin/content/publish`) was removed; editorial authoring now happens directly in Sanity Studio, with the publish guardrails ported into the Sanity schemas. The surviving validation surface is read-only Content QA (`src/lib/content-qa/`, dashboard `/admin/content/qa`). The `/api/modules/publish` parent path is still unchanged.
 - **Mobile bottom nav** (shipped 6 May, PR #36, `1ba1203`) — 5-tab nav with trayed Plan/Explore tabs in `src/components/nav/` (single-source-of-truth `navConfig.ts`). Staggered enter / uniform exit consuming `--motion-quick`/`--ease-default`. Focus management on tray open/close. `env(safe-area-inset-bottom)` handling.
 - **Onboarding family-name pre-fill fix** (shipped 6 May, PR #35, `21bf522`) — Welcome and onboarding-complete routes derive `${user.lastName} Family` from Clerk and pass to `getOrCreateFamily`. Onboarding family-name input becomes an optional override that syncs from Clerk while untouched.
 - **Stale-doc audit** (shipped 6 May, PR #34, `7e130fd`) — Archival banners on superseded v1 specs; `ui-kit-v2.md` flagged for deleted Crimson/Inter; `hearth-claude-code-transition-plan-v1.md` moved to `docs/archive/` (gitignored). All six pilot-issue "Open" items reconciled.
@@ -83,8 +83,7 @@
 |-------|--------|
 | `/admin` | Admin Dashboard (ops summary) |
 | `/admin/analytics` | Analytics (thread coverage, abandonment, activity heat, pack adoption, AI cost) |
-| `/admin/content` | Content Studio (draft CRUD, publish to Sanity, **workbench validation**) |
-| `/admin/content/qa` | Pack QA dashboard |
+| `/admin/content/qa` | Pack QA dashboard (read-only validation; in-app Content Studio retired #117, editorial authoring now in Sanity Studio) |
 | `/admin/content/qa/[packId]` | Pack QA detail |
 | `/admin/content/qa/issues` | QA issue list |
 | `/admin/families` | Family search / view / snapshot rebuild |
@@ -177,7 +176,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 | Path | Used by | Entry | Output | Notes |
 |---|---|---|---|---|
 | **In-app editorial** (parent / family-authored) | Families using Module Builder | `src/app/(auth)/build/modules` UI | `POST /api/modules/publish` | Auto-sets `authorFamilyId` on the module. Goes through `src/lib/sanity/mutations.ts`. |
-| **In-app editorial** (admin / official content) | Hearth admins via Content Studio | `(admin)/admin/content` UI | `POST /api/admin/content/publish` | Accepts the optional `workbench` shape per addendum §2/§3; returns non-blocking `workbenchFlags` per §5. Used for editorial packs and revisions. |
+| **Editorial** (admin / official content) | Hearth editors in **Sanity Studio** (`/studio`) | Sanity Studio | direct Sanity publish | In-app Content Studio + `/api/admin/content/publish` retired #117 (`0baa3d8`); the workbench publish guardrails were ported into the Sanity schemas. Read-only validation survives as Content QA (`src/lib/content-qa/`). |
 | **External authoring** (kindling repo) | Drew / Cowork building official packs from spec docs | kindling's `library/build-mode/orchestrator.ts` (CLI) | Direct Sanity mutations with deterministic IDs | **Lives in a separate repo**, not part of this codebase. Uses `register/modules.jsonl` for event trail and `specced → content_constructed` bucket gates. Bypasses `/api/modules/publish` because that endpoint violates the editorial rule. Dropped 1 May 2026 (commits `306e4fc`, `f8ee5c7`, `f9e6e5c`). |
 
 ### AI Pipeline

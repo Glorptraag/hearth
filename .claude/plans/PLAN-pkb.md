@@ -141,17 +141,19 @@ Build a six-layer pedagogy knowledge base that embeds curated pedagogical conten
 
 ## Status
 
+> Reconciled against code 2026-06-16 — this table had drifted (all ⬜); canonical state is `.claude/plans/status-pkb.json`. All tasks landed in code.
+
 | Task | Model | Status | Completed By |
 |------|-------|--------|-------------|
-| 1.1  | Sonnet | ⬜     |             |
-| 1.2  | Sonnet | ⬜     |             |
-| 1.3  | Sonnet | ⬜     |             |
-| 2.1  | Sonnet | ⬜     |             |
-| 2.2  | Sonnet | ⬜     |             |
-| 2.3  | Sonnet | ⬜     |             |
-| 3.1  | Opus   | ⬜     |             |
-| 3.2  | Opus   | ⬜     |             |
-| 4.1  | Opus   | ⬜     |             |
+| 1.1  | Sonnet | ✅     | code (`src/sanity/schemas/pedagogicalFramework.ts`) |
+| 1.2  | Sonnet | ✅     | code (6 PKB Sanity schemas) |
+| 1.3  | Sonnet | ✅     | code (`drizzle/0014` — pgvector + `pedagogy_knowledge_chunks`) |
+| 2.1  | Sonnet | ✅     | T3-opus (`src/lib/pedagogy/embedding.ts`) |
+| 2.2  | Sonnet | ✅     | T3-opus (`src/lib/pedagogy/chunk-builder.ts`) |
+| 2.3  | Sonnet | ✅     | code (`scripts/reembed-pedagogy-corpus.ts`) |
+| 3.1  | Opus   | ✅     | T3-opus (`src/app/api/pedagogy/sanity-webhook/route.ts`) |
+| 3.2  | Opus   | ✅     | T3-opus (`src/lib/pedagogy/retrieval.ts`) |
+| 4.1  | Opus   | ✅     | T3-opus (write-time enrichment integration) |
 
 ---
 

@@ -331,7 +331,7 @@ The richer the affinity tagging, the better the ranker can match — at the cost
 
 Two paths, depending on module origin:
 
-- **Hand-curated content (Starter Pack, future curated packs):** Content Studio team authors `methodAffinity` as part of the module's metadata. One pass per module. The Kindler's Lens Bundle generation can suggest pattern matches based on which corpus chunks it grounds against, leaving the editor to confirm or refine.
+- **Hand-curated content (Starter Pack, future curated packs):** the editorial team authors `methodAffinity` as part of the module's metadata in Sanity Studio (the in-app Content Studio was retired #117). One pass per module. The Kindler's Lens Bundle generation can suggest pattern matches based on which corpus chunks it grounds against, leaving the editor to confirm or refine.
 - **Parent-built modules:** Inferred from the Bundle generation pass. Whichever Interpretive Patterns the Kindler retrieved heavily during Bundle generation are recorded as affinities. Quiet, automatic, no parent-facing surface.
 - **Agent-produced content:** Generated and flagged for human review, same as Bundle handling.
 

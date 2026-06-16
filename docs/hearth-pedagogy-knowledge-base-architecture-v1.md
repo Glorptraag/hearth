@@ -123,7 +123,7 @@ When a real Logger entry comes in that matches a worked example by age, capabili
 
 Per Drew's direction on 2026-04-11, the clean split is:
 
-**Sanity CMS** holds the authored documents. All six layers live as Sanity document types with editorial workflow, publish/draft states, and human review gates. Sanity remains the source of truth. Content authors and Drew work in Sanity Studio or the Content Studio. This is the same authoring surface used for pack content.
+**Sanity CMS** holds the authored documents. All six layers live as Sanity document types with editorial workflow, publish/draft states, and human review gates. Sanity remains the source of truth. Content authors and Drew work in Sanity Studio (the in-app Content Studio was retired #117). This is the same authoring surface used for pack content.
 
 **PostgreSQL with `pgvector`** holds the embedding index. When a Sanity document is published, a webhook triggers an embedding job that computes vectors over the document's retrievable text and stores them in a `pedagogy_knowledge_chunks` table keyed by Sanity document ID. This table is the runtime retrieval target.
 

@@ -9,12 +9,21 @@ import {
   familyLibrary,
   plannerEntries,
   learnerDloStatus,
+  observationDloLinks,
 } from '@/lib/db/schema';
-import { eq, and, desc, gte, lte, count, inArray } from 'drizzle-orm';
+import { eq, and, desc, gte, lte, count, inArray, sql } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import { entryThreadIds } from './thread-aggregation';
-import { countBasedTier } from './thread-tier';
+import {
+  countBasedTier,
+  renderedThreadTier,
+  parseDloId,
+  PRODUCTION_TIER_BAR,
+  type DloStatus,
+  type SourceCountsByTier,
+  type TierEvidence,
+} from './thread-tier';
 import type { ObservationTier } from '@/types/capability-universe';
 import { detectMilestoneEntries } from './milestone-detect';
 import {
@@ -23,6 +32,7 @@ import {
   triggerStreakPrompt,
   triggerModuleNudge,
   triggerRecommendationsRefreshNotice,
+  triggerConstellationHonestyNotice,
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
@@ -101,6 +111,9 @@ export async function rebuildSnapshot(
           .where(inArray(learnerDloStatus.learnerId, learnerIds))
       : [];
     const dloStatusByLearner: Record<string, Record<string, { status: string; confidence: number | null; last_observed_at: string | null }>> = {};
+    // learnerId → threadId → { dloId: { status } } — the per-thread slice the
+    // WS-4 tier derivation needs (status rows are corroboration, not the bar).
+    const dloStatusByThread: Record<string, Record<string, Record<string, DloStatus>>> = {};
     for (const row of dloRows) {
       const bucket = (dloStatusByLearner[row.learnerId] ||= {});
       bucket[row.dloId] = {
@@ -108,7 +121,55 @@ export async function rebuildSnapshot(
         confidence: row.confidence ? Number(row.confidence) : null,
         last_observed_at: row.lastObservedAt ? row.lastObservedAt.toISOString() : null,
       };
+      const parsed = parseDloId(row.dloId);
+      if (parsed) {
+        const byThread = (dloStatusByThread[row.learnerId] ||= {});
+        const byDlo = (byThread[parsed.threadId] ||= {});
+        byDlo[row.dloId] = { status: row.status };
+      }
     }
+
+    // WS-4: aggregate observation_dlo_links into per-(learner × thread × tier)
+    // evidence — provenance counts + distinct inferred days — so thread tier can
+    // be DERIVED from DLO evidence instead of raw observation counts. Only
+    // `observed` links are evidence; uncorroborated `opportunity` links (D-OS1)
+    // must not lift a tier, mirroring the dlo-evidence drill-down's filter.
+    const linkAgg = learnerIds.length > 0
+      ? await db
+          .select({
+            learnerId: observationDloLinks.learnerId,
+            dloId: observationDloLinks.dloId,
+            provenance: observationDloLinks.provenance,
+            n: sql<number>`count(*)::int`,
+            distinctDays: sql<number>`count(distinct (${observationDloLinks.createdAt} at time zone 'UTC')::date)::int`,
+          })
+          .from(observationDloLinks)
+          .where(and(
+            inArray(observationDloLinks.learnerId, learnerIds),
+            eq(observationDloLinks.evidenceState, 'observed'),
+          ))
+          .groupBy(observationDloLinks.learnerId, observationDloLinks.dloId, observationDloLinks.provenance)
+      : [];
+    // learnerId → threadId → SourceCountsByTier
+    const linksByThread: Record<string, Record<string, SourceCountsByTier>> = {};
+    for (const row of linkAgg) {
+      const parsed = parseDloId(row.dloId);
+      if (!parsed) continue;
+      const { threadId, tier } = parsed;
+      const byThread = (linksByThread[row.learnerId] ||= {});
+      const byTier = (byThread[threadId] ||= {});
+      const ev: TierEvidence = byTier[tier] ?? { declared: 0, asserted: 0, inferred: 0, inferredDistinctDays: 0 };
+      const n = Number(row.n);
+      const days = Number(row.distinctDays);
+      if (row.provenance === 'declared') ev.declared += n;
+      else if (row.provenance === 'asserted') ev.asserted += n;
+      else { ev.inferred += n; ev.inferredDistinctDays += days; }
+      byTier[tier] = ev;
+    }
+
+    // Whether ANY child's thread tier changed under the WS-4 derivation vs the
+    // old count-based ladder — gates the one-time constellation honesty notice.
+    let anyTierChanged = false;
 
     for (const child of familyLearners) {
       const childEntries = allEntries.filter((e) =>
@@ -150,14 +211,28 @@ export async function rebuildSnapshot(
         }
       }
 
-      // Compute tiers based on observation count. The count→tier ladder and the
-      // lower-only parent override live in one place (thread-tier.ts →
-      // countBasedTier) so the snapshot and the admin tier-comparison can't drift.
+      // WS-4: a thread's tier is now a SUMMARY OF ITS DLO EVIDENCE, not a raw
+      // observation counter. renderedThreadTier derives the tier from the
+      // child's learner_dlo_status + observation_dlo_links for this thread under
+      // the locked production bar, then applies the lower-only parent override.
+      // Observation counts survive as a volume signal only (observation_count,
+      // trajectory, sparks, badges, milestones) — never as the tier source.
+      // Threads with logging but no DLO evidence derive to null → 'unobserved'
+      // ("Not yet"); the one-time honesty notice explains the recalibration.
       const tierOverrides = (child.profileData as Record<string, unknown>)?.tierOverrides as
         Record<string, { tier: string }> | null | undefined;
+      const childStatusByThread = dloStatusByThread[child.id] ?? {};
+      const childLinksByThread = linksByThread[child.id] ?? {};
       for (const [threadId, data] of Object.entries(threadCounts)) {
         const override = tierOverrides?.[threadId]?.tier as ObservationTier | undefined;
-        data.tier = countBasedTier(data.count, override ?? null);
+        const dloStatuses = childStatusByThread[threadId] ?? {};
+        const sourceCounts = childLinksByThread[threadId] ?? {};
+        const derived = renderedThreadTier(dloStatuses, sourceCounts, override ?? null, PRODUCTION_TIER_BAR);
+        data.tier = derived ?? 'unobserved';
+        // Change detection for the shift notice: compare the old count-based tier
+        // (what the parent saw) against the new derived tier.
+        const oldTier = countBasedTier(data.count, override ?? null);
+        if (oldTier !== data.tier) anyTierChanged = true;
       }
 
       // Count AC v9 descriptors per subject from AI enrichment. Subject
@@ -317,28 +392,15 @@ export async function rebuildSnapshot(
         return 'adequate';
       }
 
-      // Build enhanced active threads with DLO data from cache
+      // Build enhanced active threads. The fabricated dlos_confirmed/dlos_total
+      // counts are gone (WS-4): real per-DLO status lives in `dlo_status` below
+      // and the constellation reads it directly via topology buildDLOs.
       const threadMetaMap = await getCachedThreads();
-      const tierRankMap = { emerging: 0, developing: 1, demonstrating: 2 };
 
       const activeThreads: SnapshotActiveThread[] = Object.entries(threadCounts)
         .map(([threadId, data]) => {
           const meta = threadMetaMap.get(threadId);
           const badgeInfo = threadBadgeMap[threadId];
-          const childTierRank = tierRankMap[data.tier as keyof typeof tierRankMap] ?? 0;
-
-          // DLOs confirmed = count of DLOs at or below the child's tier
-          let dlosConfirmed = 0;
-          const dlosTotal = meta?.dlos_total ?? 3;
-          if (meta?.dlos?.length) {
-            for (const dlo of meta.dlos) {
-              const dloRank = tierRankMap[dlo.tier as keyof typeof tierRankMap] ?? 0;
-              if (dloRank <= childTierRank) dlosConfirmed++;
-            }
-          } else {
-            // No Sanity DLO data — estimate from tier
-            dlosConfirmed = childTierRank + 1;
-          }
 
           return {
             thread_id: threadId,
@@ -349,8 +411,6 @@ export async function rebuildSnapshot(
             current_badge_level: badgeInfo?.current ?? null,
             next_badge: badgeInfo?.next ?? null,
             next_badge_progress: badgeInfo?.nextProgress ?? 0,
-            dlos_confirmed: dlosConfirmed,
-            dlos_total: dlosTotal,
             trajectory: computeTrajectory(threadId),
             recent_evidence_quality: computeEvidenceQuality(threadId),
             source_counts: { inferred: data.inferred, declared: data.declared },
@@ -769,6 +829,12 @@ export async function rebuildSnapshot(
       familyId,
       (recommendations?.suggested_next.length ?? 0) > 0,
     );
+
+    // Constellation honesty notice (WS-4): one-shot, warm, plain-language — fires
+    // only for families whose thread tiers actually shifted when tier derivation
+    // moved from observation counts to DLO evidence. No child is silently
+    // downgraded; the notice names the change.
+    await triggerConstellationHonestyNotice(familyId, anyTierChanged);
 
     if (rebuildDuration > 500) {
       console.warn(`[snapshotRebuild] SLOW family=${familyId} duration=${rebuildDuration}ms trigger=${trigger}`);

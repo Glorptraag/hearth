@@ -11,11 +11,14 @@
  *   - notification triggers (side-effects)
  */
 import { describe, it, expect, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { familyIntelligenceSnapshots, learningEntries } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
-import { createFamily, createLearner, createEntry } from '@/test/db-factories';
+import { createFamily, createLearner, createEntry, createDloLink } from '@/test/db-factories';
 import { rebuildSnapshot } from '../snapshot-rebuild';
+import { GET as getCapabilities } from '@/app/api/capabilities/[learnerId]/route';
+import { TEST_FAMILY_ID, TEST_USER_ID } from '../../../../vitest.setup';
 import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -38,6 +41,7 @@ vi.mock('@/lib/notifications/triggers', () => ({
   triggerStreakPrompt: vi.fn(async () => {}),
   triggerModuleNudge: vi.fn(async () => {}),
   triggerRecommendationsRefreshNotice: vi.fn(async () => {}),
+  triggerConstellationHonestyNotice: vi.fn(async () => {}),
   cleanStaleNotifications: vi.fn(async () => {}),
 }));
 
@@ -195,6 +199,102 @@ describe('INTEGRATION: rebuildSnapshot — declared thread aggregation', () => {
     const s1 = child?.active_threads.find((t) => t.thread_id === 'S1');
     expect(s1).toBeDefined();
     expect(s1!.observation_count).toBe(2);
+  });
+});
+
+describe('INTEGRATION: rebuildSnapshot — WS-4 DLO-evidence-derived tiers', () => {
+  it('derives tier from DLO evidence and exposes no fabricated dlos fields through the capabilities API', async () => {
+    // Signed-in owner of TEST_FAMILY_ID by default in the integration setup.
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+
+    // L1: one observation + a DECLARED demonstrating link → demonstrating
+    // (corroborated, clears the production bar).
+    const l1Entry = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      status: 'complete',
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'L1', confidence: 0.9 }] },
+    });
+    await createDloLink(db, {
+      observationId: l1Entry.id,
+      learnerId: learner.id,
+      dloId: 'dlo.L1.demonstrating',
+      tier: 'demonstrating',
+      provenance: 'declared',
+    });
+
+    // M1: observations only, NO DLO evidence → 'unobserved' ("Not yet").
+    await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      status: 'complete',
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'M1', confidence: 0.9 }] },
+    });
+
+    await rebuildSnapshot(TEST_FAMILY_ID, 'manual');
+
+    // Read it back the way the parent does — through the capabilities API.
+    const res = await getCapabilities(
+      new NextRequest(`http://x/api/capabilities/${learner.id}`),
+      { params: Promise.resolve({ learnerId: learner.id }) },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { activeThreads: Array<Record<string, unknown>> };
+
+    const l1 = body.activeThreads.find((t) => t.thread_id === 'L1');
+    const m1 = body.activeThreads.find((t) => t.thread_id === 'M1');
+    expect(l1).toBeDefined();
+    expect(m1).toBeDefined();
+
+    // Tier is DLO-evidence-derived, not count-derived.
+    expect(l1!.suggested_tier).toBe('demonstrating');
+    expect(m1!.suggested_tier).toBe('unobserved');
+
+    // Observation counts survive as a volume signal.
+    expect(l1!.observation_count).toBe(1);
+
+    // The fabricated counts are gone from the shape entirely.
+    expect('dlos_confirmed' in l1!).toBe(false);
+    expect('dlos_total' in l1!).toBe(false);
+  });
+
+  it('an inferred-only demonstrating link can NOT reach demonstrating (corroboration bar)', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+
+    // Two inferred demonstrating links on DISTINCT days — would clear the old
+    // proposed bar (≥2 inferred days) but the locked production bar requires a
+    // declared/asserted link for demonstrating, so this stays "Not yet".
+    for (const [i, date] of ['2026-06-01', '2026-06-02'].entries()) {
+      const entry = await createEntry(db, {
+        familyId: family.id,
+        learnerIds: [learner.id],
+        status: 'complete',
+        dateOccurred: date,
+        aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'S1', confidence: 0.9 }] },
+      });
+      await createDloLink(db, {
+        observationId: entry.id,
+        learnerId: learner.id,
+        dloId: 'dlo.S1.demonstrating',
+        tier: 'demonstrating',
+        provenance: 'inferred',
+        createdAt: new Date(`${date}T10:0${i}:00.000Z`),
+      });
+    }
+
+    await rebuildSnapshot(family.id, 'manual');
+
+    const rows = await db
+      .select()
+      .from(familyIntelligenceSnapshots)
+      .where(eq(familyIntelligenceSnapshots.familyId, family.id));
+    const snap = rows[0]?.snapshotData as SnapshotData;
+    const child = snap.children[learner.id] as ChildSnapshot;
+    const s1 = child.active_threads.find((t) => t.thread_id === 'S1');
+    expect(s1).toBeDefined();
+    expect(s1!.suggested_tier).toBe('unobserved');
   });
 });
 

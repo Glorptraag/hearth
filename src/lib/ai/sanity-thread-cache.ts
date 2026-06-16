@@ -122,9 +122,11 @@ export async function getCachedThreads(): Promise<Map<string, ThreadMeta>> {
 
   // Augment with standalone discreteLearningObjective documents — the single
   // source of truth (Item 3). The constellation visualiser reads the SAME
-  // documents (ALL_DLOS_QUERY), so the snapshot's dlos_confirmed math and the
-  // rendered DLO list cannot drift. Keyed directly by the deterministic
-  // `capabilityThread.{shortCode}` ref — no fuzzy title matching.
+  // documents (ALL_DLOS_QUERY). (WS-4 removed the snapshot's fabricated
+  // dlos_confirmed math; real per-DLO status now comes from learner_dlo_status,
+  // so these `dlos`/`dlos_total` fields are no longer read by the rebuild.)
+  // Keyed directly by the deterministic `capabilityThread.{shortCode}` ref — no
+  // fuzzy title matching.
   try {
     const dloRows: Array<{ _id: string; threadRef: string; tier: SanityDLO['tier'] }> =
       await sanityClient.fetch(DLO_TIERS_QUERY);

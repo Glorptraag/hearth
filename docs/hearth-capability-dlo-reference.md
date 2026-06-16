@@ -1,6 +1,6 @@
 # Hearth Capability DLO Reference
 
-**Generated:** 2026-05-26 from Sanity production (`g5zhwbxg/production`).
+**Generated:** 2026-05-26 from Sanity production (`g5zhwbxg/production`). **Updated 2026-06-16:** added the AC v9 regulatory-mappings section (transposer tranche 1, WS-5) after seeding `regulatoryMappings` onto 51 DLOs in prod.
 **Purpose:** Hand to Claude (or any session) when building learning modules so module activities can be tagged to capability threads with confidence in what the child is expected to demonstrate.
 
 ## How to use this
@@ -9,7 +9,7 @@
 - **57 threads** total, each with a short code (e.g. `M1`, `EF7`). Treat the code as the stable ID — slugs and titles may change.
 - **3 DLOs per thread**, one per tier: `emerging`, `developing`, `demonstrating`. These are growth bands, not age levels. A 5-year-old can be `demonstrating` in one thread and `emerging` in another.
 - **DLO descriptors are the contract.** When designing a module activity, identify which thread(s) it targets and which tier(s) it gives a child an opportunity to demonstrate. The descriptor text is what an observer would look for in the child's behaviour.
-- **AU/QLD do NOT mandate a finer-grained DLO scheme.** Don't map activities to AC9 codes — that grain is not shipped and not planned.
+- **AU/QLD do NOT mandate a finer-grained DLO scheme.** Keep tagging module activities to **threads + tiers**, not AC9 codes — that is still the authoring contract. The AC v9 codes now in Sanity (`discreteLearningObjective.regulatoryMappings`, see the section at the end of this doc) are a **backend transposer** layer (WS-5): they convert a child's observed DLO statuses into regulator-facing coverage at report time. They are report-only vocabulary (Architecture Principle 6) — never surfaced to parents, and not an authoring input.
 
 ## Authoring contract: `capabilityTargets` (WS-6)
 
@@ -620,3 +620,152 @@ These domains exist in the substrate but have no threads or DLOs. Do not invent 
 | `S4` | Physical & Chemical Sciences | Scientific Thinking |
 | `S5` | Scientific Observation | Scientific Thinking |
 | `S6` | Science as Human Endeavour | Scientific Thinking |
+
+---
+
+## Regulatory mappings (AC v9 — transposer tranche 1, WS-5)
+
+**Seeded to prod 2026-06-16** onto `discreteLearningObjective.regulatoryMappings` (framework `ac-v9-qld`, version 9.0). This is **tranche 1**: the 17 threads (× 3 tiers = 51 DLOs) touched by observed pilot evidence ∪ the Hearth Starter Collection — not the full 57. Remaining threads are unmapped until later tranches.
+
+**How the transposer uses these** (read-only, at report time): a child's `learner_dlo_status` of `developing`/`demonstrating` on a mapped DLO contributes `tierWeight × evidenceWeight` to the code's subject (`developing` = 0.5, `demonstrating` = 1.0; `emerging`/unobserved contribute nothing). Codes resolve to a Hearth subject via `AC9_SUBJECT_MAP` in `src/lib/report/deterministic-coverage.ts`. Adding another jurisdiction (e.g. `ac-v9-nsw` for NESA) is authoring more of these rows — no code change.
+
+**Authoring notes:**
+- `EF5` (Critical Thinking) and `EF7` (Metacognition) are observed in pilot data but correspond to the AC9 *Critical & Creative Thinking general capability*, which has no learning-area content-descriptor code — deliberately left out of this learning-area scheme.
+- Two thread **titles below are stale** relative to the **seeded descriptor** the codes follow: `C1` shows "Visual Art" but seeds as narrative/storytelling (→ English Literature "creating literary texts"); `L7` shows "Narrative & Retelling" but seeds as text-structure-&-purpose (→ English Language "text organisation"). The codes follow the seeded descriptor, not the title.
+- `PS3` demonstrating uses `AC9HP6P06` ("manage emotions") — the emotion-management match for the self-regulation descriptor — not `AC9HP6P02` ("changes and transitions").
+
+### L1 — Oral Communication  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LY02` | primary | 0.8 |
+| developing | `AC9E3LY02`, `AC9E3LY07` | primary | 0.9 |
+| demonstrating | `AC9E5LY02`, `AC9E5LY07` | primary | 1 |
+
+### L3 — Reading Comprehension  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LY04`, `AC9E1LY05` | primary | 0.8 |
+| developing | `AC9E3LY04`, `AC9E3LY05` | primary | 1 |
+| demonstrating | `AC9E5LY05`, `AC9E5LE02` | primary | 1 |
+
+### L5 — Written Expression  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LY06` | primary | 0.8 |
+| developing | `AC9E3LY06` | primary | 1 |
+| demonstrating | `AC9E5LY06` | primary | 1 |
+
+### L7 — Narrative & Retelling *(title stale; seeds as text-structure-&-purpose)*  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LA03`, `AC9E1LY01` | primary | 0.8 |
+| developing | `AC9E3LA03`, `AC9E3LY01` | primary | 0.9 |
+| demonstrating | `AC9E5LA03`, `AC9E5LY03` | primary | 1 |
+
+### L8 — Persuasion & Argument  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LA02` | primary | 0.8 |
+| developing | `AC9E3LA02`, `AC9E3LY06` | primary | 0.9 |
+| demonstrating | `AC9E5LA02`, `AC9E5LY06` | primary | 1 |
+
+### L9 — Literary Appreciation  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LE02`, `AC9E1LE03` | primary | 0.8 |
+| developing | `AC9E3LE02`, `AC9E3LE04` | primary | 0.9 |
+| demonstrating | `AC9E5LE02`, `AC9E5LE04` | primary | 1 |
+
+### C1 — Visual Art *(title stale; seeds as narrative/storytelling)*  ·  *subject:* `english`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9E1LE05` | primary | 0.9 |
+| developing | `AC9E3LE05` | primary | 1 |
+| demonstrating | `AC9E5LE05` | primary | 1 |
+
+### M1 — Number Sense  ·  *subject:* `mathematics`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9M1N01`, `AC9M1N02` | primary | 0.9 |
+| developing | `AC9M2N01`, `AC9M2N02` | primary | 1 |
+| demonstrating | `AC9M3N01`, `AC9M4N07` | primary | 1 |
+
+### M2 — Operations  ·  *subject:* `mathematics`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9M1N04`, `AC9M1N06` | primary | 0.9 |
+| developing | `AC9M3A02`, `AC9M3N04` | primary | 1 |
+| demonstrating | `AC9M4N06`, `AC9M4A02` | primary | 1 |
+
+### M5 — Measurement  ·  *subject:* `mathematics`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9M1M01`, `AC9M1M02` | primary | 0.9 |
+| developing | `AC9M3M02`, `AC9M3M04` | primary | 0.9 |
+| demonstrating | `AC9M6M01`, `AC9M6M02`, `AC9M6M03` | primary | 1 |
+
+### M9 — Mathematical Modelling  ·  *subject:* `mathematics`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9M1N05` | primary | 0.8 |
+| developing | `AC9M3N06` | primary | 0.9 |
+| demonstrating | `AC9M6N09` | primary | 1 |
+
+### S1 — Scientific Inquiry  ·  *subject:* `science`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9S1I01`, `AC9S1I03` | primary | 0.8 |
+| developing | `AC9S3I01`, `AC9S3I02`, `AC9S3I05` | primary | 0.9 |
+| demonstrating | `AC9S6I02`, `AC9S6I05` | primary | 1 |
+
+### S5 — Scientific Observation  ·  *subject:* `science`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9S1I03` | primary | 0.8 |
+| developing | `AC9S3I03`, `AC9S3I04` | primary | 0.9 |
+| demonstrating | `AC9S6I03`, `AC9S6I04` | primary | 1 |
+
+### H1 — Historical Understanding  ·  *subject:* `hass`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9HS2K02`, `AC9HS2S02` | partial | 0.6 |
+| developing | `AC9HS4K03`, `AC9HS4S02` | primary | 0.8 |
+| demonstrating | `AC9HS6K01`, `AC9HS6S03` | primary | 0.9 |
+
+### H2 — Source Analysis  ·  *subject:* `hass`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9HS2S02`, `AC9HS2S03` | primary | 0.8 |
+| developing | `AC9HS4S02`, `AC9HS4S04` | primary | 0.9 |
+| demonstrating | `AC9HS6S02`, `AC9HS6S04` | primary | 1 |
+
+### H3 — Geographical Understanding  ·  *subject:* `hass`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9HS2K03`, `AC9HS2K04` | primary | 0.7 |
+| developing | `AC9HS4K05`, `AC9HS4K06` | primary | 0.8 |
+| demonstrating | `AC9HS6K04`, `AC9HS6K05` | primary | 0.9 |
+
+### PS3 — Self-Regulation  ·  *subject:* `hpe`
+
+| Tier | AC v9 code(s) | Contribution | Weight |
+|---|---|---|---|
+| emerging | `AC9HP2P03` | primary | 0.9 |
+| developing | `AC9HP4P01` | primary | 0.9 |
+| demonstrating | `AC9HP6P06` | primary | 0.9 |

@@ -399,7 +399,6 @@ type DloEvidence = {
   confidence: number | null;
   rationale: string | null;
   provenance?: string | null;
-  claimedTier?: string | null;
 };
 
 const PROVENANCE_LABEL: Record<string, string> = {

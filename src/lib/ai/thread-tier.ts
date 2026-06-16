@@ -159,6 +159,28 @@ export const DEFAULT_DOS4_BAR: ThreadTierBar = {
   emerging: { minDeclaredOrAsserted: 1, minInferredDistinctDays: 1 },
 };
 
+/**
+ * The LOCKED production bar (D-OS4, decided by Drew 2026-06-16 / decision C2 —
+ * "TUNED-B") — this is what `snapshot-rebuild` derives parent-facing thread
+ * tiers from. It is the one the constellation honours; `DEFAULT_DOS4_BAR` above
+ * stays as the admin tier-comparison panel's tunable starting point.
+ *
+ *   emerging / developing = ≥1 declared/asserted OR ≥1 inferred distinct day
+ *   demonstrating         = ≥1 declared/asserted ONLY — never inference alone
+ *
+ * `demonstrating` closes the inferred path entirely (`Infinity` distinct days =
+ * unreachable by inference), so a thread can only read "demonstrating" when a
+ * module declared the outcome or a parent asserted it — the corroboration bar
+ * Bec's credibility ceiling needs. C2 confirmed this is identical to the
+ * proposed default over current pilot data (nothing reaches demonstrating yet)
+ * while permanently foreclosing inferred-only demonstrating as data grows.
+ */
+export const PRODUCTION_TIER_BAR: ThreadTierBar = {
+  demonstrating: { minDeclaredOrAsserted: 1, minInferredDistinctDays: Infinity },
+  developing: { minDeclaredOrAsserted: 1, minInferredDistinctDays: 1 },
+  emerging: { minDeclaredOrAsserted: 1, minInferredDistinctDays: 1 },
+};
+
 export interface DerivedTierResult {
   /** Highest tier with sufficient DLO evidence, or null if none clears the bar. */
   tier: ObservationTier | null;
@@ -219,6 +241,29 @@ export function deriveThreadTierFromDlos(
   }
 
   return { tier, tierMet, statusReached };
+}
+
+/**
+ * The parent-facing thread tier the constellation renders (WS-4): the
+ * DLO-evidence-derived tier with the lower-only parent override applied.
+ *
+ * This is a PURE function of (dloStatuses, sourceCounts, override, bar). There
+ * is deliberately NO observation-count parameter — a thread's rendered tier can
+ * never be inflated by raw logging volume, only by accumulated DLO evidence.
+ * Returns `null` ("Not yet") when no tier clears the bar. snapshot-rebuild calls
+ * this so the snapshot and any other surface share one derivation.
+ */
+export function renderedThreadTier(
+  dloStatuses: Record<string, DloStatus>,
+  sourceCounts: SourceCountsByTier,
+  override: ObservationTier | null | undefined,
+  bar: ThreadTierBar = PRODUCTION_TIER_BAR,
+): ObservationTier | null {
+  const derived = deriveThreadTierFromDlos(dloStatuses, sourceCounts, bar).tier;
+  // Lower-only: an override can pull a derived tier DOWN, never raise it, and
+  // never lift a null ("Not yet") into a tier.
+  if (override && derived && tierRank(override) < tierRank(derived)) return override;
+  return derived;
 }
 
 /** Direction of the derived tier relative to the count-based tier. */

@@ -1,12 +1,48 @@
 name: Test
 
-# Runs on every push and PR; manual dispatch is kept for ad-hoc reruns.
-# Parallel jobs finish faster and isolate failures — a failed lint
-# doesn't tell you anything about whether your tests pass.
+# ---------------------------------------------------------------------------
+# CI-minute-optimised variant. This file deliberately diverges from the
+# original "one job per check, all in parallel" format to cut GitHub Actions
+# minute usage on a free private repo (GitHub rounds every job up to a whole
+# minute and bills a full `npm ci` per job). There are two divergences from
+# the original, each documented inline at its site with a revert note:
+#   • CHANGE 1 — paths-ignore on push/PR: skip CI on docs-only changes.
+#   • CHANGE 2 — lint + typecheck + unit merged into one `checks` job.
+# To return to the original per-job format, follow the two REVERT notes below.
+#
+# Runs on every push to main and every PR; manual dispatch (workflow_dispatch)
+# is kept for ad-hoc reruns and always runs — it is exempt from the CHANGE 1
+# paths filter, so a manual rerun is never skipped.
+# ---------------------------------------------------------------------------
+
+# CHANGE 1 — Skip CI on docs-only changes.
+# A large share of this repo's churn is Markdown and JSON planning docs
+# (.claude/plans/PLAN-*.md, status-*.json, docs/**). Those changes can't
+# affect lint / typecheck / test outcomes, so running the full suite —
+# including the heavy Postgres integration job — on a docs-only PR is wasted
+# minutes. The paths-ignore blocks below skip a run entirely when *every*
+# changed path matches one of the patterns. workflow_dispatch is intentionally
+# left unfiltered so a manual rerun always works.
+# Safety (verified 2026-06-16): none of lint/typecheck/unit/integration are
+# REQUIRED status checks — branch protection and rulesets are unavailable on
+# this free private repo (the GitHub API returns 403 "Upgrade to GitHub Pro"),
+# so a paths-ignore skip cannot strand a docs-only PR behind a required check
+# that never reports. If this repo ever gains required checks, re-verify
+# before trusting paths-ignore (a skipped run reports no checks at all); the
+# alternative is a "skipped-but-reports-success" gating job.
+# REVERT: delete both `paths-ignore:` blocks to restore CI on every change.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.claude/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.claude/**'
   workflow_dispatch:
 
 # Cancel in-progress runs when a new manual dispatch is fired on the
@@ -17,12 +53,30 @@ concurrency:
 
 jobs:
   # -------------------------------------------------------------------------
-  # Lint — fastest job, fails loudly for style/unsafe patterns. Required.
-  # The 22 pre-existing ESLint errors flagged in the alpha-readiness pickup
-  # are gone; warnings remain but don't fail the build.
+  # CHANGE 2 — `checks`: lint + typecheck + unit merged into ONE job.
+  #
+  # This was three parallel jobs (Lint / Typecheck / Unit tests), each on its
+  # own runner with its own `npm ci`. GitHub rounds EACH job up to a whole
+  # minute, and each paid a full `npm ci` on a heavy dep tree (Clerk, Drizzle,
+  # Sanity), so three sub-minute jobs billed as ~3 minutes and installed
+  # node_modules three times. Merged, this is one rounded minute and one
+  # install. The `integration` job's `needs:` is updated to `[checks]` to
+  # match (was `[unit, typecheck]`).
+  #
+  # KNOWN TRADEOFF (the exact property the original file's lint comment called
+  # out): a single sequential job stops at the first failed step, so a failing
+  # lint no longer tells you whether typecheck / unit would have passed — you
+  # lose per-job failure isolation in exchange for the minute savings. It does
+  # fail faster on red, though. Steps run cheapest-and-most-likely-to-fail
+  # first: lint → tsc → schema/route/gating guards → unit.
+  #
+  # REVERT: to restore isolation/parallelism, split `checks` back into three
+  # separate jobs (Lint / Typecheck / Unit tests), each with its own
+  # actions/checkout + actions/setup-node + `npm ci`, and set the `integration`
+  # job's `needs:` back to `[unit, typecheck]`.
   # -------------------------------------------------------------------------
-  lint:
-    name: Lint
+  checks:
+    name: Checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,21 +85,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
+      # Lint — fastest check, fails loudly for style/unsafe patterns. The 22
+      # pre-existing ESLint errors flagged in the alpha-readiness pickup are
+      # gone; warnings remain but don't fail the build.
       - run: npm run lint
-
-  # -------------------------------------------------------------------------
-  # Typecheck — catches the bulk of real bugs on a TS-heavy codebase.
-  # -------------------------------------------------------------------------
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-      - run: npm ci
+      # Typecheck — catches the bulk of real bugs on a TS-heavy codebase.
       - run: npx tsc --noEmit
       # Catches the case where a new pgTable in schema.ts has no matching
       # CREATE TABLE migration — exactly the gap that left prod missing
@@ -61,23 +105,12 @@ jobs:
       # status == "published". Otherwise drafts leak through library/
       # marketplace/checkout. See scripts/check-sanity-gating.mjs header.
       - run: npm run check:sanity-gating
-
-  # -------------------------------------------------------------------------
-  # Unit tests — everything mocked, fast, run in parallel with the others.
-  # -------------------------------------------------------------------------
-  unit:
-    name: Unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-      - run: npm ci
+      # Unit tests — everything mocked, fast.
       - run: npm run test:unit
       # Upload coverage if the test step produced it. Optional but useful
       # for PR review. Remove if you don't want coverage reports in CI.
+      # `if: always()` so it still uploads when an earlier step failed;
+      # `if-no-files-found: ignore` keeps it quiet when unit never ran.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -102,8 +135,10 @@ jobs:
   integration:
     name: Integration tests
     runs-on: ubuntu-latest
-    # Only run if unit + typecheck pass — saves CI budget and reduces noise.
-    needs: [unit, typecheck]
+    # Only run if the `checks` job (lint + typecheck + unit) passes — saves
+    # CI budget and reduces noise. Was `needs: [unit, typecheck]` before
+    # CHANGE 2 merged those jobs into `checks`; revert this alongside CHANGE 2.
+    needs: [checks]
     services:
       postgres:
         # pgvector/pgvector (not stock postgres:16) — migration 0000 runs

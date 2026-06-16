@@ -15,6 +15,7 @@ import {
   MoonStars,
   X,
   Sparkle,
+  Star,
 } from '@/components/icons';
 
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
@@ -58,6 +59,7 @@ const TYPE_ICON: Record<string, IconC> = {
   weekly_digest:             ChartBar,
   capability_growth:         Plant,
   recommendations_refreshed: Sparkle,
+  constellation_honesty:     Star,
 };
 
 // Default action labels per type (overridden by bodyData.actionLabel)
@@ -73,6 +75,7 @@ const TYPE_ACTION_LABEL: Record<string, string> = {
   weekly_digest:             'View',
   capability_growth:         'See Growth',
   recommendations_refreshed: 'See Suggestions',
+  constellation_honesty:     'See Constellation',
 };
 
 export default function NotificationRow({

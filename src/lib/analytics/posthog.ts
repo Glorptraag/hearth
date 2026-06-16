@@ -96,7 +96,8 @@ export type HearthEvent =
   | 'dlo.attribution.unnamed_multichild'
   | 'feedback_submitted'
   | 'recommendations_scored'
-  | 'recommendation_accepted';
+  | 'recommendation_accepted'
+  | 'constellation_honesty_notice';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {
   if (!enabled || !initialised) return;

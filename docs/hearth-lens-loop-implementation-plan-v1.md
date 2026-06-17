@@ -52,7 +52,7 @@ interface LensAccumulatedSignals {
 **Schema:** ✅ field exists. Empty on all existing modules.
 
 **Authoring paths:**
-1. **Curated content** — Content Studio team authors `methodAffinity` per module. The Lens Bundle generation pass can suggest pattern matches based on which corpus chunks it grounded against; editor confirms or refines.
+1. **Curated content** — the editorial team authors `methodAffinity` per module in Sanity Studio (the in-app Content Studio was retired #117). The Lens Bundle generation pass can suggest pattern matches based on which corpus chunks it grounded against; editor confirms or refines.
 2. **Parent-built modules** — inferred from the Bundle generation pass: Kindler records which Interpretive Patterns were retrieved heavily during generation. Quiet, automatic, no parent-facing surface.
 3. **Agent-produced** — generated and flagged for human review.
 

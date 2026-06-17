@@ -3,6 +3,7 @@ import {
   ACTIVITY_SUBJECT_MAP,
   deriveSubjects,
   deriveEntryTitle,
+  deriveFallbackTitle,
   derivePhotoEvidenceUrls,
   deriveEvidenceRows,
   isThinEntry,
@@ -71,6 +72,21 @@ describe('deriveEntryTitle', () => {
   it('does not add an ellipsis at exactly 60 chars', () => {
     const exact = 'y'.repeat(60);
     expect(deriveEntryTitle(exact)).toBe(exact);
+  });
+});
+
+describe('deriveFallbackTitle', () => {
+  it('labels by the first subject when one is present', () => {
+    expect(deriveFallbackTitle(['mathematics'], '2026-06-01')).toBe('Maths learning');
+    expect(deriveFallbackTitle(['science', 'arts'], '2026-06-01')).toBe('Science learning');
+  });
+
+  it('falls back to the date when there are no subjects', () => {
+    expect(deriveFallbackTitle([], '2026-06-01')).toBe('Learning on 2026-06-01');
+  });
+
+  it('falls back to a generic label when there is no subject or date', () => {
+    expect(deriveFallbackTitle([], '')).toBe('Learning entry');
   });
 });
 
@@ -215,6 +231,22 @@ describe('buildEntrySavePayload', () => {
       { kind: 'note', content: 'Stuck with it past frustration' },
     ]);
     expect(p.status).toBe('complete');
+  });
+
+  it('never produces an empty title for a description-less Quick log', () => {
+    // Tap-only Quick log: no typed description. Title must fall back to the
+    // first subject (otherwise the server's title.min(1) check 400s the save).
+    const p = buildEntrySavePayload({ ...baseForm, description: '' }, baseCtx);
+    expect(p.title).toBe('Maths learning'); // cooking → mathematics first
+    expect(p.title.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to a date title when there is no description and no subject', () => {
+    const p = buildEntrySavePayload(
+      { ...baseForm, description: '   ', activityType: null, lessonSubjects: [] },
+      baseCtx,
+    );
+    expect(p.title).toBe('Learning on 2026-06-01');
   });
 
   it('passes form fields straight through', () => {

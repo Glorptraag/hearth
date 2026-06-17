@@ -21,8 +21,10 @@ import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { DLO_MAPPINGS_QUERY } from '@/lib/sanity/queries';
 import {
+  deriveCoverageSignals,
   frameworkKeyForState,
   rollupCoverage,
+  type CoverageSignals,
   type DeterministicCoverage,
   type RegulatoryMapping,
 } from './deterministic-coverage';
@@ -37,7 +39,7 @@ type DloMappingDoc = {
 
 export type CoverageResult =
   | { mode: 'fallback' }
-  | { mode: 'deterministic'; coverage: DeterministicCoverage };
+  | { mode: 'deterministic'; coverage: DeterministicCoverage; signals: CoverageSignals };
 
 /**
  * Compute deterministic coverage for one learner against their family's
@@ -91,5 +93,6 @@ export async function getDeterministicCoverage(input: {
   for (const d of docs) mappings[d._id] = d.regulatoryMappings ?? [];
 
   const coverage = rollupCoverage({ dloStatuses, mappings, frameworkKey });
-  return { mode: 'deterministic', coverage };
+  const signals = deriveCoverageSignals({ dloStatuses, mappings, frameworkKey, coverage });
+  return { mode: 'deterministic', coverage, signals };
 }

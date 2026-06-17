@@ -20,7 +20,7 @@ import CoverageInContext from '@/components/report/CoverageInContext';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
 import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
-import { buildCoverageNarrative, type CoverageResponse } from '@/lib/report/coverage-narrative';
+import { buildCoverageNarrative, derivePosture, POSTURE_LABEL, type CoverageResponse } from '@/lib/report/coverage-narrative';
 
 type Learner = {
   id: string;
@@ -311,13 +311,16 @@ export default function ReportPage() {
 
   const coveredSubjects = subjectCoverage.filter((s) => s.count > 0).length;
 
-  // Posture
+  // Posture — assume-good-faith wording (shared derivePosture/POSTURE_LABEL with
+  // the export PDF). Colours stay here (UI only): no ember on a status badge, no
+  // child-rose alarm at the highest-anxiety Stage-4 moment.
   const posture = useMemo(() => {
-    if (coveredSubjects >= 6 && entries.length >= 5)
-      return { label: 'On Track', color: 'bg-sage/15 text-sage border-sage/30' };
-    if (coveredSubjects >= 4 || entries.length >= 3)
-      return { label: 'Needs Attention', color: 'bg-ember-glow text-ember border-ember/30' };
-    return { label: 'At Risk', color: 'bg-child-rose/15 text-child-rose border-child-rose/30' };
+    const key = derivePosture(coveredSubjects, entries.length);
+    const color =
+      key === 'established' ? 'bg-sage/15 text-sage border-sage/30'
+      : key === 'building' ? 'bg-amber-status/15 text-amber-status border-amber-status/30'
+      : 'bg-surface-hover text-text-secondary border-border-subtle';
+    return { key, label: POSTURE_LABEL[key], color };
   }, [coveredSubjects, entries.length]);
 
   // Report year for sample matching
@@ -481,11 +484,11 @@ export default function ReportPage() {
           </span>
         </div>
         <p className="font-serif text-sm text-text-secondary leading-relaxed">
-          {posture.label === 'On Track'
-            ? `Good coverage across ${coveredSubjects} of 8 subject areas with ${entries.length} logged entries. Evidence is building well for your next report.`
-            : posture.label === 'Needs Attention'
-              ? `You have ${entries.length} entries covering ${coveredSubjects} of 8 subject areas. Consider logging activities in underrepresented areas to strengthen your portfolio.`
-              : `Limited evidence so far with ${entries.length} entries across ${coveredSubjects} subject areas. Regular logging will help build a strong portfolio for your report.`}
+          {posture.key === 'established'
+            ? `Good breadth across ${coveredSubjects} of 8 subject areas with ${entries.length} moment${entries.length === 1 ? '' : 's'} logged. Your evidence is building beautifully for your next ${config.reviewTerminology}.`
+            : posture.key === 'building'
+              ? `${entries.length} moment${entries.length === 1 ? '' : 's'} logged so far across ${coveredSubjects} of 8 subject areas. Keep capturing as you go — every entry adds to the picture for your next ${config.reviewTerminology}.`
+              : `You're just getting started — ${entries.length} moment${entries.length === 1 ? '' : 's'} logged so far. There's no bar to clear here: each moment you capture builds your evidence, and sparse early weeks are completely normal.`}
         </p>
       </div>
 
@@ -637,27 +640,27 @@ export default function ReportPage() {
             </div>
           </div>
 
-          {/* Gap Analysis */}
+          {/* Areas to Explore (opportunities — gently framed, no "Critical") */}
           {gaps.length > 0 && (
             <div className="mt-lg rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-card">
               <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted mb-xs">{vocab.coverageFrame}</p>
               <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Areas to Explore</h2>
               <div className="space-y-xs">
                 {gaps.map((g) => {
-                  const isCritical = g.count === 0;
+                  const notYetLogged = g.count === 0;
                   return (
                     <div
                       key={g.key}
                       className={`flex items-center gap-md rounded-lg border px-md py-sm ${
-                        isCritical
-                          ? 'border-child-rose/30 bg-child-rose/5'
+                        notYetLogged
+                          ? 'border-border-subtle bg-surface-raised'
                           : 'border-amber-status/20 bg-amber-status/5'
                       }`}
                     >
                       <span className={`font-sans text-[10px] font-semibold uppercase tracking-wide shrink-0 ${
-                        isCritical ? 'text-child-rose' : 'text-amber-status'
+                        notYetLogged ? 'text-text-muted' : 'text-amber-status'
                       }`}>
-                        {isCritical ? 'Critical' : 'Moderate'}
+                        {notYetLogged ? 'Not yet logged' : 'Light so far'}
                       </span>
                       <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><g.Icon size={16} /></span>
                       <span className="font-serif text-sm font-semibold text-text-primary flex-1">{g.label}</span>
@@ -684,14 +687,15 @@ export default function ReportPage() {
               <h2 className="font-serif text-lg font-semibold text-text-primary mb-md">Recommended Actions</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
                 {gaps.slice(0, 3).map((g, i) => {
-                  const tagLabel = i === 0 ? 'Fills biggest gap' : i === 1 ? 'Quick win' : 'Natural fit';
-                  const tagColor = i === 0 ? 'bg-child-rose/15 text-child-rose' : i === 1 ? 'bg-sage/15 text-sage' : 'bg-ember-glow text-ember';
+                  const tagLabel = i === 0 ? 'Worth a look' : i === 1 ? 'Quick win' : 'Natural fit';
+                  const tagColor = i === 1 ? 'bg-sage/15 text-sage' : 'bg-surface-hover text-text-secondary';
+                  const domain = SUBJECT_DOMAIN_CLASSES[g.key];
                   return (
                     <div
                       key={g.key}
                       className="relative rounded-lg border border-border-subtle bg-surface-panel p-md overflow-hidden"
                     >
-                      <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-60" />
+                      <div className={`absolute left-0 right-0 top-0 h-[2px] ${domain?.bar ?? 'bg-border-medium'}`} />
                       <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold mb-sm ${tagColor}`}>
                         {tagLabel}
                       </span>
@@ -700,7 +704,7 @@ export default function ReportPage() {
                         <span className="font-serif text-sm font-semibold text-text-primary">{g.label}</span>
                       </div>
                       <p className="font-sans text-xs text-text-muted mb-md">
-                        {g.count === 0 ? 'No entries yet' : `Only ${g.count} entr${g.count === 1 ? 'y' : 'ies'} logged`}
+                        {g.count === 0 ? 'Not yet logged' : `${g.count} logged so far`}
                       </p>
                       <Link
                         href={`/explore/activities?subject=${g.key}`}

@@ -167,3 +167,42 @@ export function buildCoverageNarrative(input: {
 
   return { state, activity, formal, observedAreas };
 }
+
+// ── Shared report wording (B6 follow-up) ──
+// Single home for the posture + per-subject activity language, so the report
+// screen and the compliance PDF speak with one gentle, non-shaming voice
+// (assume-good-faith; "sparse weeks aren't failure" — founding brief §4.5,
+// Renee's job-to-be-done). These replace the old "At Risk" / "Critical" /
+// "Coverage %" framing.
+
+export type Posture = 'established' | 'building' | 'getting_started';
+
+/**
+ * Overall posture from breadth + volume of real activity. Same thresholds the
+ * report screen and PDF previously each kept their own copy of — centralised
+ * here so they can never drift.
+ */
+export function derivePosture(coveredSubjects: number, entriesLogged: number): Posture {
+  if (coveredSubjects >= 6 && entriesLogged >= 5) return 'established';
+  if (coveredSubjects >= 4 || entriesLogged >= 3) return 'building';
+  return 'getting_started';
+}
+
+/** Parent-facing posture label. Never shaming — "Getting Started", not "At Risk". */
+export const POSTURE_LABEL: Record<Posture, string> = {
+  established: 'On Track',
+  building: 'Building',
+  getting_started: 'Getting Started',
+};
+
+/**
+ * Gentle, number-free word for how much activity a subject shows. Used in the
+ * compliance PDF in place of an entry-share "Coverage %" that read as a
+ * curriculum-coverage zero for any lightly-logged subject.
+ */
+export function subjectActivityLabel(entryCount: number): string {
+  if (entryCount <= 0) return 'Not yet logged';
+  if (entryCount === 1) return 'Emerging';
+  if (entryCount <= 3) return 'Developing';
+  return 'Strong';
+}

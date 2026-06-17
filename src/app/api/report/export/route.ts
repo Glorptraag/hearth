@@ -11,6 +11,7 @@ import { getJurisdiction } from '@/config/jurisdictions';
 import { routeHandler } from '@/lib/api-helpers';
 import { getDeterministicCoverage } from '@/lib/report/coverage';
 import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
+import { derivePosture, POSTURE_LABEL, subjectActivityLabel } from '@/lib/report/coverage-narrative';
 import { resolveExportSlotData } from '@/lib/report/export-slots';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
@@ -110,22 +111,22 @@ export const GET = routeHandler(async (request: NextRequest) => {
     });
   }
 
-  const total = entries.length || 1;
   const subjectCoverage = ALL_SUBJECTS.map((key) => ({
     key,
     label: SUBJECT_CONFIG[key].label,
     count: entryCounts[key],
     descriptors: descriptorSets[key].size,
-    pct: Math.round((entryCounts[key] / total) * 100),
   }));
 
   const coveredSubjects = subjectCoverage.filter((s) => s.count > 0).length;
 
-  // Posture
-  let postureLabel: string;
-  if (coveredSubjects >= 6 && entries.length >= 5) postureLabel = 'On Track';
-  else if (coveredSubjects >= 4 || entries.length >= 3) postureLabel = 'Needs Attention';
-  else postureLabel = 'At Risk';
+  // Posture — shared, non-shaming wording (same source as the report screen).
+  const postureLabel = POSTURE_LABEL[derivePosture(coveredSubjects, entries.length)];
+
+  // The formal "curriculum outcomes" cell: a count when mapped, else "Building"
+  // where the parent has logged activity, else "—". Never a bare "0".
+  const curriculumCell = (s: { descriptors: number; count: number }) =>
+    s.descriptors > 0 ? String(s.descriptors) : s.count > 0 ? 'Building' : '—';
 
   // ─── Generate PDF ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,16 +184,31 @@ export const GET = routeHandler(async (request: NextRequest) => {
     // Curriculum coverage table
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Curriculum Coverage', 14, y); y += 3;
+    doc.text('Curriculum Coverage', 14, y); y += 6;
+
+    // Honest framing — outcomes shown are those formally mapped to date; the full
+    // evidence base is the entry log + work samples. A lighter count early in the
+    // cycle reflects mapping in progress, not absence of learning.
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(90, 90, 90);
+    const coverageNote = doc.splitTextToSize(
+      `Curriculum outcomes below are those formally mapped to ${config.curriculumFramework} to date. ${learner.name}'s full evidence base — every logged moment and work sample — appears in the Learning Entry Log. A lighter formal count early in the ${config.reviewTerminology} cycle reflects mapping in progress, not absence of learning.`,
+      pageW - 28,
+    );
+    doc.text(coverageNote, 14, y);
+    y += coverageNote.length * 4 + 3;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
 
     autoTable(doc, {
       startY: y,
-      head: [['Subject', 'Entries', 'Coverage %', 'Curriculum Descriptors']],
+      head: [['Subject', 'Entries', 'Activity', 'Curriculum outcomes']],
       body: subjectCoverage.map((s) => [
         s.label,
         String(s.count),
-        `${s.pct}%`,
-        s.descriptors > 0 ? `${s.descriptors} matched` : '—',
+        subjectActivityLabel(s.count),
+        curriculumCell(s),
       ]),
       headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -390,21 +406,23 @@ export const GET = routeHandler(async (request: NextRequest) => {
       y += 4;
     }
 
-    // Gap analysis
+    // Areas to round out — opportunities, framed gently (no "Critical"/severity).
     const gaps = subjectCoverage.filter((s) => s.count <= 1);
     if (gaps.length > 0) {
       if (y > 240) { doc.addPage(); y = 20; }
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Gap Analysis', 14, y); y += 3;
+      doc.text('Areas to round out', 14, y); y += 3;
 
       autoTable(doc, {
         startY: y,
-        head: [['Subject', 'Entries', 'Severity']],
+        head: [['Subject', 'Entries', 'Note']],
         body: gaps.map((g) => [
           g.label,
           String(g.count),
-          g.count === 0 ? 'Critical — No entries' : 'Moderate — Only 1 entry',
+          g.count === 0
+            ? 'Not yet logged — a few activities here would round out the picture'
+            : 'A light touch so far — one or two more would strengthen it',
         ]),
         headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
         bodyStyles: { fontSize: 9 },
@@ -430,16 +448,28 @@ export const GET = routeHandler(async (request: NextRequest) => {
     // Learning area cards (one section per subject)
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Learning Areas', 14, y); y += 3;
+    doc.text('Learning Areas', 14, y); y += 6;
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(90, 90, 90);
+    const areaNote = doc.splitTextToSize(
+      `This report draws on every moment logged for ${learner.name}. Curriculum links shown are those mapped to the ${config.curriculumFramework} so far; the full record of learning appears in the Learning Entry Log below.`,
+      pageW - 28,
+    );
+    doc.text(areaNote, 14, y);
+    y += areaNote.length * 4 + 3;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
 
     autoTable(doc, {
       startY: y,
-      head: [['Learning Area', 'Entries', 'Coverage', 'Curriculum Links']],
+      head: [['Learning Area', 'Entries', 'Activity', 'Curriculum Links']],
       body: subjectCoverage.map((s) => [
         s.label,
         String(s.count),
-        `${s.pct}%`,
-        s.descriptors > 0 ? `${s.descriptors} matched` : '—',
+        subjectActivityLabel(s.count),
+        curriculumCell(s),
       ]),
       headStyles: { fillColor: [100, 80, 60], fontSize: 9 },
       bodyStyles: { fontSize: 9 },

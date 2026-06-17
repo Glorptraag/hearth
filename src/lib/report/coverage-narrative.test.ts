@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildCoverageNarrative,
+  derivePosture,
+  POSTURE_LABEL,
+  subjectActivityLabel,
   type CoverageResponse,
   type NarrativeEntry,
 } from './coverage-narrative';
@@ -143,5 +146,37 @@ describe('buildCoverageNarrative — observed areas stay distinct from the forma
       { subject: 'english', codeCount: 1 },
       { subject: 'hpe', codeCount: 1 },
     ]);
+  });
+});
+
+describe('derivePosture — never shaming', () => {
+  it('established only with both breadth and volume', () => {
+    expect(derivePosture(6, 5)).toBe('established');
+    expect(derivePosture(8, 12)).toBe('established');
+  });
+
+  it('building on either decent breadth or decent volume', () => {
+    expect(derivePosture(4, 0)).toBe('building'); // breadth alone
+    expect(derivePosture(0, 3)).toBe('building'); // volume alone
+    expect(derivePosture(6, 4)).toBe('building'); // breadth without the volume floor
+  });
+
+  it('getting_started for the sparsest — and the label never says "At Risk"', () => {
+    expect(derivePosture(0, 0)).toBe('getting_started');
+    expect(derivePosture(2, 2)).toBe('getting_started');
+    expect(POSTURE_LABEL.getting_started).toBe('Getting Started');
+    expect(Object.values(POSTURE_LABEL)).not.toContain('At Risk');
+    expect(Object.values(POSTURE_LABEL)).not.toContain('Needs Attention');
+  });
+});
+
+describe('subjectActivityLabel — gentle, number-free', () => {
+  it('maps entry volume to a non-numeric word, no "0%"', () => {
+    expect(subjectActivityLabel(0)).toBe('Not yet logged');
+    expect(subjectActivityLabel(1)).toBe('Emerging');
+    expect(subjectActivityLabel(3)).toBe('Developing');
+    expect(subjectActivityLabel(9)).toBe('Strong');
+    // Negative guard (defensive) folds into the empty case.
+    expect(subjectActivityLabel(-1)).toBe('Not yet logged');
   });
 });

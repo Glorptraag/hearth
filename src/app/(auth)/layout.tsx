@@ -138,7 +138,11 @@ export default function AuthLayout({
 
   return (
     <PostHogProvider>
-    <div className="flex min-h-dvh bg-surface-body">
+    {/* App shell: pinned to the dynamic viewport height. The shell itself never
+        scrolls — the inner <main> does. This keeps the mobile bottom nav an
+        in-flow layout sibling rather than a position:fixed overlay, which is
+        what makes iOS Safari snapshot-and-resettle it during momentum scroll. */}
+    <div className="flex h-dvh overflow-hidden bg-surface-body">
       {/* Desktop sidebar — hidden below lg */}
       <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel">
         {/* Top corner: home + notifications */}
@@ -217,7 +221,7 @@ export default function AuthLayout({
 
       {/* Mobile top header — hidden at lg */}
       <div className="flex flex-1 flex-col min-w-0 lg:ml-[240px]">
-        <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
+        <header className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
           <Link href="/dashboard" className="inline-flex items-center" aria-label="Hearth — home">
             <Wordmark
               iconHeight={24}
@@ -248,15 +252,18 @@ export default function AuthLayout({
           </div>
         </header>
 
-        {/* Main content. Bottom padding clears the mobile nav (~72px) plus the
-            iOS home-indicator safe area on notched devices. lg: drops it. */}
-        <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-0">
+        {/* Main content. This is the only scroll container on mobile — the shell
+            and body stay fixed at viewport height. min-h-0 lets a flex child
+            actually shrink so it can scroll; overscroll-contain stops the
+            scroll chaining up to the (non-scrolling) shell. The mobile nav below
+            is an in-flow sibling, so no bottom padding is needed to clear it. */}
+        <main className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain">
           <ToastProvider>{children}</ToastProvider>
         </main>
-      </div>
 
-      {/* Mobile bottom nav — hidden at lg */}
-      <MobileBottomNav />
+        {/* Mobile bottom nav — in-flow sibling of the scroll area, hidden at lg */}
+        <MobileBottomNav />
+      </div>
     </div>
     </PostHogProvider>
   );

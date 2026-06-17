@@ -41,16 +41,16 @@ export default function DevPreviewLayout({
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-surface-body">
+    <div className="flex h-dvh flex-col overflow-hidden bg-surface-body">
       {/* Dev banner */}
-      <div className="bg-ember/20 border-b border-ember/30 px-md py-xs text-center">
+      <div className="shrink-0 bg-ember/20 border-b border-ember/30 px-md py-xs text-center">
         <span className="font-sans text-xs font-semibold text-ember">
           DEV PREVIEW — No auth, mock data
         </span>
       </div>
 
       {/* Top header */}
-      <header className="flex items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm">
+      <header className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm">
         <span className="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]">
           Hearth
         </span>
@@ -78,11 +78,12 @@ export default function DevPreviewLayout({
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 min-w-0 overflow-y-auto pb-[72px]">{children}</main>
+      {/* Main content — the only scroll container (shell stays at viewport
+          height; the bottom nav below is an in-flow sibling). */}
+      <main className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain">{children}</main>
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm">
+      {/* Bottom nav — in-flow sibling of the scroll area */}
+      <nav className="relative z-50 shrink-0 flex items-center justify-around border-t border-border-subtle bg-surface-panel px-xs py-sm">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
           return (

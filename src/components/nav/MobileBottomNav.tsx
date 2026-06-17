@@ -129,7 +129,7 @@ export function MobileBottomNav() {
 
       <nav
         aria-label="Primary"
-        className="fixed bottom-0 left-0 right-0 z-[100] grid grid-cols-5 items-end bg-surface-body px-xs pt-sm lg:hidden"
+        className="relative z-[100] shrink-0 grid grid-cols-5 items-end bg-surface-body px-xs pt-sm lg:hidden"
         style={{ paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))' }}
       >
         {NAV_TABS.map((tab) => {

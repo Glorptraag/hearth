@@ -16,9 +16,11 @@ import type { ComponentType } from 'react';
 type ReportIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 import ProgressionConnector from '@/components/report/ProgressionConnector';
+import CoverageInContext from '@/components/report/CoverageInContext';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
-import { descriptorToSubject, type DeterministicCoverage } from '@/lib/report/deterministic-coverage';
+import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
+import { buildCoverageNarrative, type CoverageResponse } from '@/lib/report/coverage-narrative';
 
 type Learner = {
   id: string;
@@ -89,10 +91,6 @@ type Settings = {
   createdAt: string;
 };
 
-type CoverageResponse =
-  | { mode: 'deterministic'; coverage: DeterministicCoverage }
-  | { mode: 'fallback' };
-
 const SUBJECT_CONFIG: Record<string, { label: string; Icon: ReportIconC }> = {
   english:      { label: 'English',      Icon: BookOpenText },
   mathematics:  { label: 'Mathematics',  Icon: MathOperations },
@@ -105,6 +103,9 @@ const SUBJECT_CONFIG: Record<string, { label: string; Icon: ReportIconC }> = {
 };
 
 const ALL_SUBJECTS = Object.keys(SUBJECT_CONFIG);
+const SUBJECT_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(SUBJECT_CONFIG).map(([key, { label }]) => [key, label]),
+);
 
 const SUBJECT_DOMAIN_CLASSES: Record<string, { bar: string; pill: string; border: string }> = {
   english:      { bar: 'bg-domain-english',      pill: 'bg-domain-english/15 text-domain-english',           border: 'border-t-domain-english' },
@@ -376,6 +377,26 @@ export default function ReportPage() {
 
   const completedSlots = workSampleSlots.filter((s) => s.status === 'complete').length;
 
+  // Confirmed work samples — a real, earned signal for the coverage-in-context panel.
+  const confirmedWorkSamples = useMemo(
+    () => (report?.samples ?? []).filter((s) => s.annotation?.confirmedAt).length,
+    [report?.samples],
+  );
+
+  // Humane coverage framing (B6): pairs the formal mapped figure with the real
+  // activity behind it so a sparse-but-honest report never reads "you did
+  // nothing" at the Stage-4 compliance event.
+  const coverageNarrative = useMemo(
+    () =>
+      buildCoverageNarrative({
+        entries,
+        coverage,
+        confirmedWorkSamples,
+        subjectKeys: ALL_SUBJECTS,
+      }),
+    [entries, coverage, confirmedWorkSamples],
+  );
+
   // Gap analysis
   const gaps = useMemo(() => {
     return subjectCoverage.filter((s) => s.count <= 1);
@@ -467,6 +488,21 @@ export default function ReportPage() {
               : `Limited evidence so far with ${entries.length} entries across ${coveredSubjects} subject areas. Regular logging will help build a strong portfolio for your report.`}
         </p>
       </div>
+
+      {/* Coverage in context — keeps a sparse formal count from reading as
+          "you did nothing" at the Stage-4 compliance event. Renders for both
+          report tiers; adapts its copy to the family's regulator + state. */}
+      {entries.length > 0 && (
+        <CoverageInContext
+          narrative={coverageNarrative}
+          regulatorShort={config.regulatoryBodyShort}
+          curriculumFramework={config.curriculumFramework}
+          reviewTerminology={config.reviewTerminology}
+          coverageFrame={vocab.coverageFrame}
+          subjectLabels={SUBJECT_LABELS}
+          isCdLevel={isCdLevel}
+        />
+      )}
 
       {/* === CD-Level Tier (QLD/SA/NT): Work Samples + Curriculum Coverage + Gap Analysis === */}
       {isCdLevel && (

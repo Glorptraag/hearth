@@ -36,6 +36,30 @@ export type SubjectCoverage = {
 export type DeterministicCoverage = Record<string, SubjectCoverage>;
 
 /**
+ * Honest-framing diagnostics that ride alongside a deterministic rollup. Pure
+ * counts derived from the same `learner_dlo_status` × mapping inputs, so they
+ * stay deterministic and add no read-time LLM call. They let the report screen
+ * tell the two #204 failure classes apart *gently* for the parent (without ever
+ * surfacing the engineering vocabulary):
+ *
+ * - **Class A — mapping gap.** `countingDloCount > 0` but no subject scored
+ *   (`mappedSubjectCount === 0`): the child HAS evidence at the developing/
+ *   demonstrating bar, but on threads this framework hasn't mapped yet. The
+ *   formal number will rise as mappings land — "more mappings coming".
+ * - **Class B — status-bar gap.** `countingDloCount === 0`: nothing has reached
+ *   the developing bar yet, so the conservative rollup scores zero even though
+ *   the log holds real activity — "evidence still emerging".
+ */
+export type CoverageSignals = {
+  /** `learner_dlo_status` rows at `developing`/`demonstrating` — the only tiers the rollup scores. */
+  countingDloCount: number;
+  /** …of which carry at least one mapping targeting this framework. */
+  mappedCountingDloCount: number;
+  /** Distinct subjects whose `weightedScore > 0` in the rollup. */
+  mappedSubjectCount: number;
+};
+
+/**
  * AC9 descriptor-code prefix → Hearth subject key. Single source of truth for
  * AC9-code-to-subject resolution: the report export route, the report page, AND
  * the snapshot-rebuild legacy descriptor count all import this (each previously
@@ -183,4 +207,33 @@ export function rollupCoverage(input: {
   }
 
   return result;
+}
+
+/**
+ * Derive honest-framing signals from the same inputs the rollup consumed. Pure
+ * and deterministic — a function of its arguments, no I/O. Counts only the
+ * `developing`/`demonstrating` tiers (the bar `rollupCoverage` scores against),
+ * how many of those carry a mapping into `frameworkKey`, and how many subjects
+ * actually scored. See `CoverageSignals` for how the report reads A vs B.
+ */
+export function deriveCoverageSignals(input: {
+  dloStatuses: Record<string, DloStatus>;
+  mappings: Record<string, RegulatoryMapping[]>;
+  frameworkKey: string;
+  coverage: DeterministicCoverage;
+}): CoverageSignals {
+  const { dloStatuses, mappings, frameworkKey, coverage } = input;
+
+  let countingDloCount = 0;
+  let mappedCountingDloCount = 0;
+  for (const [dloId, { status }] of Object.entries(dloStatuses)) {
+    if (!TIER_WEIGHT[status]) continue;
+    countingDloCount++;
+    const targetsFramework = (mappings[dloId] ?? []).some((m) => m.frameworkKey === frameworkKey);
+    if (targetsFramework) mappedCountingDloCount++;
+  }
+
+  const mappedSubjectCount = Object.values(coverage).filter((s) => s.weightedScore > 0).length;
+
+  return { countingDloCount, mappedCountingDloCount, mappedSubjectCount };
 }

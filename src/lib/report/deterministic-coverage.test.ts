@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   rollupCoverage,
+  deriveCoverageSignals,
   descriptorToSubject,
   frameworkKeyForState,
   SUBJECT_KEYS,
@@ -210,5 +211,91 @@ describe('rollupCoverage', () => {
     expect(a).toEqual(b);
     // And byte-identical when serialised — the Stage-4 determinism contract.
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe('deriveCoverageSignals', () => {
+  it('class A — mapping gap: counting evidence on UNMAPPED threads → 0 subjects mapped', () => {
+    // Mirrors Fox-Lewer (#204): DLOs reached demonstrating, but on threads with
+    // no `ac-v9-qld` mapping → rollup scores zero yet evidence plainly exists.
+    const dloStatuses = {
+      'dlo.P1.demonstrating': { status: 'demonstrating' },
+      'dlo.PS2.developing': { status: 'developing' },
+    };
+    const mappings = {
+      // Mapped, but to a DIFFERENT framework — so neither targets ac-v9-qld.
+      'dlo.P1.demonstrating': [mapping({ frameworkKey: 'ac-v9-nsw', codes: ['AC9HP6M01'] })],
+      'dlo.PS2.developing': [mapping({ frameworkKey: 'ac-v9-nsw', codes: ['AC9HP6P01'] })],
+    };
+    const coverage = rollupCoverage({ dloStatuses, mappings, frameworkKey: QLD });
+    const signals = deriveCoverageSignals({ dloStatuses, mappings, frameworkKey: QLD, coverage });
+    expect(signals).toEqual({
+      countingDloCount: 2, // both are developing/demonstrating
+      mappedCountingDloCount: 0, // …but neither maps into ac-v9-qld
+      mappedSubjectCount: 0, // …so nothing scored
+    });
+  });
+
+  it('class B — status-bar gap: evidence below the bar → no counting rows at all', () => {
+    // Mirrors Barkley (#204): logged on mapped threads, but nothing promoted to
+    // developing, so the conservative rollup counts zero.
+    const dloStatuses = {
+      'dlo.L3.emerging': { status: 'emerging' },
+      'dlo.M1.unobserved': { status: 'unobserved' },
+    };
+    const mappings = {
+      'dlo.L3.emerging': [mapping({ codes: ['AC9E2LY05'] })],
+      'dlo.M1.unobserved': [mapping({ codes: ['AC9M3N01'] })],
+    };
+    const coverage = rollupCoverage({ dloStatuses, mappings, frameworkKey: QLD });
+    const signals = deriveCoverageSignals({ dloStatuses, mappings, frameworkKey: QLD, coverage });
+    expect(signals).toEqual({
+      countingDloCount: 0, // emerging/unobserved never count
+      mappedCountingDloCount: 0,
+      mappedSubjectCount: 0,
+    });
+  });
+
+  it('mapped — counting evidence on mapped threads scores real subjects', () => {
+    const dloStatuses = {
+      'dlo.L3.developing': { status: 'developing' },
+      'dlo.M1.demonstrating': { status: 'demonstrating' },
+    };
+    const mappings = {
+      'dlo.L3.developing': [mapping({ codes: ['AC9E2LY05'] })],
+      'dlo.M1.demonstrating': [mapping({ codes: ['AC9M3N01'] })],
+    };
+    const coverage = rollupCoverage({ dloStatuses, mappings, frameworkKey: QLD });
+    const signals = deriveCoverageSignals({ dloStatuses, mappings, frameworkKey: QLD, coverage });
+    expect(signals).toEqual({
+      countingDloCount: 2,
+      mappedCountingDloCount: 2,
+      mappedSubjectCount: 2, // english + mathematics
+    });
+  });
+
+  it('is a pure function of its arguments — order-independent', () => {
+    const mappings = {
+      'dlo.L3.developing': [mapping({ codes: ['AC9E2LY05'] })],
+      'dlo.M1.demonstrating': [mapping({ codes: ['AC9M3N01'] })],
+    };
+    const coverage = rollupCoverage({
+      dloStatuses: { 'dlo.L3.developing': { status: 'developing' } },
+      mappings,
+      frameworkKey: QLD,
+    });
+    const a = deriveCoverageSignals({
+      dloStatuses: { 'dlo.L3.developing': { status: 'developing' }, 'dlo.M1.demonstrating': { status: 'demonstrating' } },
+      mappings,
+      frameworkKey: QLD,
+      coverage,
+    });
+    const b = deriveCoverageSignals({
+      dloStatuses: { 'dlo.M1.demonstrating': { status: 'demonstrating' }, 'dlo.L3.developing': { status: 'developing' } },
+      mappings,
+      frameworkKey: QLD,
+      coverage,
+    });
+    expect(a).toEqual(b);
   });
 });

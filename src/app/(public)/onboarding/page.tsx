@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { LEARNER_COLOURS, type Pedagogy } from '@/types';
@@ -55,6 +55,16 @@ export default function OnboardingPage() {
     if (familyNameTouched) return;
     if (user?.lastName) setFamilyName(`${user.lastName} Family`);
   }, [user?.lastName, familyNameTouched]);
+
+  // Stage-1 funnel entry: the start that pairs with `pedagogy_set` (completion).
+  // Buffered in posthog.ts until the provider initialises, so it survives the
+  // public-page mount-before-init ordering rather than dropping silently.
+  const onboardingStartedRef = useRef(false);
+  useEffect(() => {
+    if (onboardingStartedRef.current) return;
+    onboardingStartedRef.current = true;
+    track('onboarding_started');
+  }, []);
 
   function addChild() {
     if (children.length >= 6) return;

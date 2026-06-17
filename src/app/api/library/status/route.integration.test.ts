@@ -5,9 +5,18 @@
  *
  * Task 4.8.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { asUser } from '@/test/clerk-helpers';
+
+// The route resolves pack→module rollups through the server-only `sanityFetch`.
+// Stub it so importing the route module doesn't pull in `server-only` (which
+// throws under the node test env) and so pack expansion is a no-op — these
+// tests seed standalone modules only, never packs.
+vi.mock('@/lib/sanity/server-fetch', () => ({
+  sanityFetch: vi.fn().mockResolvedValue([]),
+  SANITY_CONTENT_TAG: 'sanity:content',
+}));
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry, createModuleRun } from '@/test/db-factories';
 import { familyLibrary, plannerEntries, moduleRuns } from '@/lib/db/schema';
@@ -140,6 +149,33 @@ describe('GET /api/library/status — status derivation', () => {
       items: Array<{ sanityModuleId: string | null; status: string }>;
     };
     expect(body.items.find((i) => i.sanityModuleId === 'mod-stale')?.status).toBe('abandoned');
+  });
+
+  it('does NOT flag a stale open_ended run as abandoned (stays in_flight)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    await db.insert(familyLibrary).values({
+      familyId: TEST_FAMILY_ID,
+      sanityModuleId: 'mod-open-ended',
+    });
+    // Same shape as the abandoned case — an open run quiet for 30 days — but
+    // open_ended runs are long-lived/resumable, so they must NOT go abandoned.
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    await db.insert(moduleRuns).values({
+      familyId: TEST_FAMILY_ID,
+      sanityModuleId: 'mod-open-ended',
+      state: 'active',
+      sessionType: 'open_ended',
+      startedAt: thirtyDaysAgo,
+      lastActiveAt: thirtyDaysAgo,
+    });
+
+    const res = await (GET as () => Promise<Response>)();
+    const body = (await res.json()) as {
+      items: Array<{ sanityModuleId: string | null; status: string }>;
+    };
+    expect(body.items.find((i) => i.sanityModuleId === 'mod-open-ended')?.status).toBe('in_flight');
   });
 
   it('does not surface soft-deleted library rows', async () => {

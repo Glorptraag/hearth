@@ -12,6 +12,7 @@ import {
   ChartBar,
   Lightning,
   FileText,
+  ChatTeardropText,
 } from '@/components/icons';
 import type { ComponentType } from 'react';
 
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/families',     label: 'Families',    Icon: UsersThree },
   { href: '/admin/analytics',    label: 'Analytics',   Icon: ChartBar },
   { href: '/admin/snapshots',    label: 'Snapshots',   Icon: Lightning },
+  { href: '/admin/feedback',     label: 'Feedback',    Icon: ChatTeardropText },
   { href: '/admin/audit-log',    label: 'Audit Log',   Icon: FileText },
 ];
 

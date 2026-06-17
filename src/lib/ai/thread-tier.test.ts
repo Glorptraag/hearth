@@ -2,16 +2,20 @@ import { describe, it, expect } from 'vitest';
 import {
   countBasedTier,
   deriveThreadTierFromDlos,
+  renderedThreadTier,
   parseDloId,
   tierRank,
   tierDelta,
   DEFAULT_DOS4_BAR,
+  PRODUCTION_TIER_BAR,
   COUNT_TIER_THRESHOLDS,
   TIER_ORDER,
+  type DloStatus,
   type SourceCountsByTier,
   type TierEvidence,
   type ThreadTierBar,
 } from './thread-tier';
+import type { ObservationTier } from '@/types/capability-universe';
 
 function evidence(over: Partial<TierEvidence> = {}): TierEvidence {
   return { declared: 0, asserted: 0, inferred: 0, inferredDistinctDays: 0, ...over };
@@ -201,6 +205,99 @@ describe('deriveThreadTierFromDlos (custom bars)', () => {
       withFallback,
     );
     expect(r.tier).toBe('developing');
+  });
+});
+
+describe('PRODUCTION_TIER_BAR (locked D-OS4 / C2 = TUNED-B)', () => {
+  it('reaches demonstrating ONLY via a declared/asserted link, never inference', () => {
+    // One declared demonstrating link → demonstrating.
+    expect(
+      deriveThreadTierFromDlos({}, { demonstrating: evidence({ declared: 1 }) }, PRODUCTION_TIER_BAR).tier,
+    ).toBe('demonstrating');
+    // One asserted demonstrating link → demonstrating.
+    expect(
+      deriveThreadTierFromDlos({}, { demonstrating: evidence({ asserted: 1 }) }, PRODUCTION_TIER_BAR).tier,
+    ).toBe('demonstrating');
+    // Any volume of inferred-only links — even many on many distinct days —
+    // can NEVER reach demonstrating under the production bar.
+    expect(
+      deriveThreadTierFromDlos({}, { demonstrating: evidence({ inferred: 99, inferredDistinctDays: 99 }) }, PRODUCTION_TIER_BAR).tier,
+    ).toBeNull();
+  });
+
+  it('keeps emerging/developing reachable on a single inferred day (constellation stays alive)', () => {
+    expect(
+      deriveThreadTierFromDlos({}, { emerging: evidence({ inferred: 1, inferredDistinctDays: 1 }) }, PRODUCTION_TIER_BAR).tier,
+    ).toBe('emerging');
+    expect(
+      deriveThreadTierFromDlos({}, { developing: evidence({ inferred: 1, inferredDistinctDays: 1 }) }, PRODUCTION_TIER_BAR).tier,
+    ).toBe('developing');
+  });
+});
+
+describe('renderedThreadTier — pure function of evidence + bar + override (no count path)', () => {
+  const TIERS: ObservationTier[] = ['emerging', 'developing', 'demonstrating'];
+  const OVERRIDES: Array<ObservationTier | null> = [null, 'emerging', 'developing', 'demonstrating'];
+
+  // Evidence shapes spanning "no evidence", inferred-only at each tier, and a
+  // corroborated (declared) link at each tier.
+  const SHAPES: Array<{ label: string; sc: SourceCountsByTier; status?: Record<string, DloStatus> }> = [
+    { label: 'none', sc: {} },
+    { label: 'emerging inferred', sc: { emerging: evidence({ inferred: 1, inferredDistinctDays: 1 }) } },
+    { label: 'developing inferred', sc: { developing: evidence({ inferred: 1, inferredDistinctDays: 1 }) } },
+    { label: 'demonstrating inferred x3', sc: { demonstrating: evidence({ inferred: 3, inferredDistinctDays: 3 }) } },
+    { label: 'demonstrating declared', sc: { demonstrating: evidence({ declared: 1 }) } },
+    { label: 'developing declared', sc: { developing: evidence({ declared: 1 }) } },
+  ];
+
+  it('only ever returns a valid tier or null', () => {
+    for (const shape of SHAPES) {
+      for (const override of OVERRIDES) {
+        const r = renderedThreadTier(shape.status ?? {}, shape.sc, override);
+        expect([null, ...TIERS]).toContain(r);
+      }
+    }
+  });
+
+  it('override can only LOWER (never raise), and never lifts a null into a tier', () => {
+    for (const shape of SHAPES) {
+      const base = renderedThreadTier(shape.status ?? {}, shape.sc, null);
+      for (const override of OVERRIDES) {
+        const r = renderedThreadTier(shape.status ?? {}, shape.sc, override);
+        // Result never ranks above the un-overridden derivation.
+        expect(tierRank(r)).toBeLessThanOrEqual(tierRank(base));
+        // A null derivation stays null whatever the override.
+        if (base === null) expect(r).toBeNull();
+        // When the override is strictly lower than a non-null derivation, it wins.
+        if (base !== null && override && tierRank(override) < tierRank(base)) {
+          expect(r).toBe(override);
+        }
+      }
+    }
+  });
+
+  it('is deterministic — same inputs, same output', () => {
+    for (const shape of SHAPES) {
+      for (const override of OVERRIDES) {
+        const a = renderedThreadTier(shape.status ?? {}, shape.sc, override);
+        const b = renderedThreadTier(shape.status ?? {}, shape.sc, override);
+        expect(a).toBe(b);
+      }
+    }
+  });
+
+  it('ignores observation volume entirely — evidence is the only tier source', () => {
+    // No DLO evidence ⇒ "Not yet", regardless of how much was logged. The
+    // function has no count parameter, so volume cannot enter the result.
+    expect(renderedThreadTier({}, {}, null)).toBeNull();
+    // A single corroborated link outranks any amount of raw logging.
+    expect(renderedThreadTier({}, { demonstrating: evidence({ declared: 1 }) }, null)).toBe('demonstrating');
+  });
+
+  it('a reached learner_dlo_status alone does NOT set the tier (links are the bar)', () => {
+    // status rows corroborate but don't satisfy the production bar (no fallback).
+    const r = renderedThreadTier({ 'dlo.L1.demonstrating': { status: 'demonstrating' } }, {}, null);
+    expect(r).toBeNull();
   });
 });
 

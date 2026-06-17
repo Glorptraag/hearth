@@ -107,15 +107,12 @@ describe('topology', () => {
         current_badge_level: null,
         next_badge: 'practising',
         next_badge_progress: 0.4,
-        dlos_confirmed: 1,
-        dlos_total: 3,
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: 'rose' }, rows);
     expect(snap.tierByThread['L1']).toBe('developing');
     expect(snap.observationsByThread['L1']).toBe(5);
     expect(snap.threadState['L1']).toBe('active');
-    expect(snap.dlosByThread['L1']).toEqual({ confirmed: 1, total: 3 });
   });
 
   it('threadIdFromRef strips the capabilityThread. prefix', () => {
@@ -145,7 +142,6 @@ describe('topology', () => {
         observation_count: 9, suggested_tier: 'developing',
         last_evidence_date: '2026-05-01',
         current_badge_level: null, next_badge: null, next_badge_progress: 0,
-        dlos_confirmed: 1, dlos_total: 3,
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
@@ -174,7 +170,6 @@ describe('topology', () => {
         observation_count: 1, suggested_tier: 'emerging',
         last_evidence_date: '2026-05-01',
         current_badge_level: null, next_badge: null, next_badge_progress: 0,
-        dlos_confirmed: 0, dlos_total: 5,
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
@@ -198,7 +193,6 @@ describe('topology', () => {
         observation_count: 0, suggested_tier: 'unobserved',
         last_evidence_date: '',
         current_badge_level: null, next_badge: null, next_badge_progress: 0,
-        dlos_confirmed: 0, dlos_total: 3,
       },
     ];
     const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);

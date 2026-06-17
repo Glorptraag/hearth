@@ -10,6 +10,7 @@ import { getJurisdiction } from '@/config/jurisdictions';
 import { eq, and, gte, desc, count } from 'drizzle-orm';
 import { format, addHours, differenceInCalendarDays } from 'date-fns';
 import { adaptNotificationCopy } from '@/lib/pedagogy/adapter';
+import { trackServer } from '@/lib/analytics/posthog-server';
 
 // ─── Types ───
 
@@ -27,7 +28,8 @@ type NotificationType =
   | 'session_completed'
   | 'observation_received'
   | 'scaffold_expiring'
-  | 'recommendations_refreshed';
+  | 'recommendations_refreshed'
+  | 'constellation_honesty';
 
 type NotificationTier = 'whisper' | 'nudge' | 'chime';
 
@@ -58,6 +60,7 @@ const TYPE_COOLDOWNS: Record<NotificationType, number> = {
   observation_received: 24 * 60 * 60 * 1000,         // 1 day
   scaffold_expiring: 5 * 24 * 60 * 60 * 1000,        // 5 days
   recommendations_refreshed: 365 * 24 * 60 * 60 * 1000, // 365 days (one-time — flag also guards)
+  constellation_honesty: 365 * 24 * 60 * 60 * 1000, // 365 days (one-time — flag also guards)
 };
 
 const DAILY_CAP = 4;
@@ -452,6 +455,70 @@ export async function triggerRecommendationsRefreshNotice(
         .where(eq(familySettings.familyId, familyId));
     } else {
       await db.insert(familySettings).values({ familyId, notificationPrefs: newPrefs });
+    }
+  }
+
+  return created;
+}
+
+// ─── Trigger: constellation_honesty ───
+// One-shot notice that WS-4 (2026-06) made thread tiers a summary of real DLO
+// evidence rather than a raw observation count, so some threads may read
+// differently. Warm, plain-language, never blames the parent or the child.
+// Self-sunsets 2026-12-31. Mirrors the recommendations_refreshed guard pattern.
+
+const WS4_SHIP_DATE = new Date('2026-06-16T00:00:00.000Z');
+const HONESTY_NOTICE_SUNSET = new Date('2026-12-31T00:00:00.000Z');
+
+export async function triggerConstellationHonestyNotice(
+  familyId: string,
+  tiersChanged: boolean,
+): Promise<boolean> {
+  // No visible change → nothing to explain.
+  if (!tiersChanged) return false;
+
+  const now = new Date();
+  if (now >= HONESTY_NOTICE_SUNSET) return false;
+
+  // Only families that existed before WS-4 shipped saw the old (count-based)
+  // tiers; families created afterwards never did, so they get no "we changed it"
+  // notice (and never see a downgrade).
+  const family = await db.query.families.findFirst({
+    where: eq(families.id, familyId),
+  });
+  if (!family?.createdAt || new Date(family.createdAt) >= WS4_SHIP_DATE) return false;
+
+  // One-time flag: if already set, skip. Gating declines must NOT burn the shot.
+  const settings = await db.query.familySettings.findFirst({
+    where: eq(familySettings.familyId, familyId),
+  });
+  const prefs = (settings?.notificationPrefs ?? {}) as Record<string, unknown>;
+  if (prefs.constellationHonestyNoticeAt) return false;
+
+  const created = await createNotification({
+    familyId,
+    type: 'constellation_honesty',
+    tier: 'chime',
+    title: "We've made the constellation more honest",
+    body: "It now reflects what we've actually observed about your child's learning, so some threads may look a little different. Nothing your child did was lost — we've simply tightened how we read the evidence.",
+    destinationRoute: '/our-story/capabilities',
+  });
+
+  // Set flag ONLY when createNotification returns true (quiet hours / cap
+  // declines retry next rebuild).
+  if (created) {
+    const newPrefs = { ...prefs, constellationHonestyNoticeAt: now.toISOString() };
+    if (settings) {
+      await db
+        .update(familySettings)
+        .set({ notificationPrefs: newPrefs })
+        .where(eq(familySettings.familyId, familyId));
+    } else {
+      await db.insert(familySettings).values({ familyId, notificationPrefs: newPrefs });
+    }
+    // Fire-and-forget analytics (server-side; no-op when PostHog env is unset).
+    if (family.clerkUserId) {
+      void trackServer('constellation_honesty_notice', family.clerkUserId, {}, { familyId });
     }
   }
 

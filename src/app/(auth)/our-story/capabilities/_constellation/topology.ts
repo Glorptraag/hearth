@@ -166,9 +166,10 @@ export type LearnerSnapshot = {
   lastDateByThread: Record<string, string>;
   threadState: Record<string, ThreadState>;
   badges: Array<{ thread: string; level?: string | null; status?: 'approaching' | 'awarded' }>;
-  dlosByThread: Record<string, { confirmed: number; total: number }>;
   // Per-DLO status keyed by Sanity DLO `_id`. Populated by the snapshot rebuild
-  // from `learner_dlo_status`. Missing entries default to 'not-started'.
+  // from `learner_dlo_status`. Missing entries default to 'not-started'. This is
+  // the real per-DLO surface buildDLOs reads — the old fabricated dlos_confirmed/
+  // dlos_total counts were removed in WS-4.
   dloStatusById: Record<string, { status: string }>;
 };
 
@@ -181,8 +182,6 @@ export type ActiveThreadRow = {
   current_badge_level: string | null;
   next_badge: string | null;
   next_badge_progress: number;
-  dlos_confirmed: number;
-  dlos_total: number;
 };
 
 export function buildSnapshot(
@@ -193,7 +192,6 @@ export function buildSnapshot(
   const tier: Record<string, Tier> = {};
   const obs: Record<string, number> = {};
   const last: Record<string, string> = {};
-  const dlos: Record<string, { confirmed: number; total: number }> = {};
   const badges: LearnerSnapshot['badges'] = [];
 
   for (const r of rows) {
@@ -201,7 +199,6 @@ export function buildSnapshot(
     tier[r.thread_id] = t === 'emerging' || t === 'developing' || t === 'demonstrating' ? t : 'unobserved';
     obs[r.thread_id] = r.observation_count ?? 0;
     if (r.last_evidence_date) last[r.thread_id] = r.last_evidence_date;
-    dlos[r.thread_id] = { confirmed: r.dlos_confirmed ?? 0, total: r.dlos_total ?? 3 };
     if (r.current_badge_level) {
       badges.push({ thread: r.thread_id, level: r.current_badge_level, status: 'awarded' });
     } else if (r.next_badge && (r.next_badge_progress ?? 0) >= 0.6) {
@@ -218,7 +215,6 @@ export function buildSnapshot(
     lastDateByThread: last,
     threadState: deriveThreadStates(tier),
     badges,
-    dlosByThread: dlos,
     dloStatusById: dloStatusById ?? {},
   };
 }

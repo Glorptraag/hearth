@@ -27,7 +27,6 @@ import { routeHandler } from '@/lib/api-helpers';
  *       confidence: number | null;   // 0..1
  *       rationale: string | null;    // 1-2 sentence parent-facing Haiku output
  *       provenance: string;          // 'inferred' | 'declared' | 'asserted'
- *       claimedTier: string | null;  // model's original claim when it was clamped
  *       createdAt: string;           // ISO timestamp link was written
  *     }>;
  *   }
@@ -67,7 +66,6 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
       confidence: observationDloLinks.confidence,
       rationale: observationDloLinks.rationale,
       provenance: observationDloLinks.provenance,
-      claimedTier: observationDloLinks.claimedTier,
       createdAt: observationDloLinks.createdAt,
     })
     .from(observationDloLinks)
@@ -90,7 +88,6 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
     confidence: r.confidence != null ? Number(r.confidence) : null,
     rationale: r.rationale,
     provenance: r.provenance,
-    claimedTier: r.claimedTier,
     createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
   }));
 

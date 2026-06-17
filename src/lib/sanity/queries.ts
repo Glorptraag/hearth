@@ -177,9 +177,10 @@ export const ALL_DLOS_QUERY = `*[_type == "discreteLearningObjective" && status 
 
 // Lean per-thread DLO tier list for the Family Intelligence Snapshot rebuild.
 // Standalone discreteLearningObjective documents are the single source of
-// truth (Item 3) — the snapshot's dlos_confirmed math and the constellation
-// visualiser now read the SAME documents, so they cannot drift. threadRef is
-// the deterministic `capabilityThread.{shortCode}` ref written by seed-dlos.ts.
+// truth (Item 3); the constellation visualiser reads the SAME documents.
+// (WS-4 removed the snapshot's fabricated dlos_confirmed math — real per-DLO
+// status comes from learner_dlo_status.) threadRef is the deterministic
+// `capabilityThread.{shortCode}` ref written by seed-dlos.ts.
 export const DLO_TIERS_QUERY = `*[_type == "discreteLearningObjective" && status == "published"]{
   _id,
   "threadRef": thread._ref,

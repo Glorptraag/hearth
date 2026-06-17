@@ -10,12 +10,12 @@ export interface SnapshotActiveThread {
   thread_name: string;
   observation_count: number;
   last_evidence_date: string;
-  suggested_tier: ObservationStatus;
+  // WS-4: DLO-evidence-derived. 'unobserved' ("Not yet") when a thread has
+  // logging volume but no DLO evidence clears the bar.
+  suggested_tier: ObservationStatus | 'unobserved';
   current_badge_level: string | null;
   next_badge: string | null;
   next_badge_progress: number;
-  dlos_confirmed: number;
-  dlos_total: number;
   trajectory: ThreadTrajectory;
   recent_evidence_quality: EvidenceQuality;
   source_counts?: { inferred: number; declared: number };

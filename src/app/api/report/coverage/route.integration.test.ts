@@ -22,7 +22,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { asSignedOut, asUser } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
-import { learnerDloStatus } from '@/lib/db/schema';
+import { familySettings, learnerDloStatus } from '@/lib/db/schema';
 import { createFamily, createLearner } from '@/test/db-factories';
 import { GET } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../vitest.setup';
@@ -98,6 +98,8 @@ describe('GET /api/report/coverage — real DB', () => {
   it('is deterministic: same history → deep-equal coverage twice', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    // Deterministic mode now requires an explicit jurisdiction.
+    await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: 'QLD' });
     const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
     await db.insert(learnerDloStatus).values([
       { learnerId: learner.id, dloId: 'dlo.L3.developing', status: 'developing' },
@@ -127,11 +129,13 @@ describe('GET /api/report/coverage — real DB', () => {
   it('returns fallback (legacy shape untouched) when the framework has no mappings', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    // Explicit QLD jurisdiction so the no-mappings path is what triggers fallback.
+    await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: 'QLD' });
     const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
     await db.insert(learnerDloStatus).values([
       { learnerId: learner.id, dloId: 'dlo.L3.developing', status: 'developing' },
     ]);
-    // Mappings exist, but for a DIFFERENT framework — family defaults to QLD.
+    // Mappings exist, but for a DIFFERENT framework — family is explicitly QLD.
     mocks.sanityFetch.mockResolvedValue([
       {
         _id: 'dlo.L3.developing',
@@ -154,5 +158,51 @@ describe('GET /api/report/coverage — real DB', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ mode: 'fallback' });
+  });
+
+  // #204 coverage-risk audit: blank/missing `state` must NOT activate QLD's
+  // deterministic coverage. ac-v9-qld HAS authored mappings here — the only thing
+  // keeping a non-QLD family off the QLD path is an EXPLICIT jurisdiction. A
+  // family that never chose a state (e.g. Mei-Lin, Stage 4 — regulator NESA, not
+  // HEU) must keep the LLM-derived fallback, never be silently scored against QLD.
+  describe('blank state never activates QLD deterministic coverage', () => {
+    it.each([
+      ['no settings row at all', undefined],
+      ['null state', null],
+      ['empty-string state', ''],
+      ['whitespace-only state', '   '],
+    ])('returns fallback for %s even though ac-v9-qld has mappings', async (_label, stateValue) => {
+      asUser({});
+      await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+      const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+      await db.insert(learnerDloStatus).values([
+        { learnerId: learner.id, dloId: 'dlo.M1.demonstrating', status: 'demonstrating' },
+      ]);
+      if (stateValue !== undefined) {
+        await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: stateValue });
+      }
+      mocks.sanityFetch.mockResolvedValue(QLD_FIXTURE);
+
+      const res = await GET(req(`?learnerId=${learner.id}`));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ mode: 'fallback' });
+    });
+
+    it('returns deterministic for an explicit state=QLD with authored mappings', async () => {
+      asUser({});
+      await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+      await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: 'QLD' });
+      const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+      await db.insert(learnerDloStatus).values([
+        { learnerId: learner.id, dloId: 'dlo.M1.demonstrating', status: 'demonstrating' },
+      ]);
+      mocks.sanityFetch.mockResolvedValue(QLD_FIXTURE);
+
+      const res = await GET(req(`?learnerId=${learner.id}`));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.mode).toBe('deterministic');
+      expect(body.coverage.mathematics.codes).toEqual(['AC9M3N01']);
+    });
   });
 });

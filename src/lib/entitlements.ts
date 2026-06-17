@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { familyLibrary } from '@/lib/db/schema';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
 import { ASSET_ENTITLEMENT_QUERY, COMMONS_TEXT_ENTITLEMENT_QUERY } from '@/lib/sanity/queries';
 
@@ -16,6 +16,9 @@ export async function getFamilyPackIds(familyId: string): Promise<string[]> {
       and(
         eq(familyLibrary.familyId, familyId),
         isNotNull(familyLibrary.sanityPackId),
+        // A soft-removed pack must not keep granting asset/commons-text access.
+        // Mirrors the partial-index predicate on familyLibrary (removed_at IS NULL).
+        isNull(familyLibrary.removedAt),
       ),
     );
   return records.map((r) => r.sanityPackId).filter((id): id is string => !!id);

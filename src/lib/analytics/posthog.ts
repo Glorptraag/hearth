@@ -18,6 +18,17 @@ const enabled = Boolean(PH_KEY && PH_HOST);
 
 let initialised = false;
 
+/**
+ * Events fired before init are buffered here and flushed on init. This matters
+ * on `(public)` pages (e.g. onboarding): React runs a child page's effects
+ * BEFORE its ancestor PostHogProvider's effect calls initAnalytics(), so a
+ * mount-time track() would otherwise hit the uninitialised early-return and
+ * drop silently. Capped so a misconfigured env can't grow it unbounded.
+ */
+const MAX_PENDING_EVENTS = 50;
+type PendingEvent = { event: HearthEvent; properties?: Record<string, string | number | boolean> };
+const pendingEvents: PendingEvent[] = [];
+
 export function initAnalytics() {
   if (!enabled || initialised || typeof window === 'undefined') return;
   posthog.init(PH_KEY!, {
@@ -34,6 +45,17 @@ export function initAnalytics() {
     },
   });
   initialised = true;
+  // Flush anything captured before init (see pendingEvents).
+  if (pendingEvents.length > 0) {
+    const queued = pendingEvents.splice(0);
+    for (const { event, properties } of queued) {
+      try {
+        posthog.capture(event, sanitise(properties));
+      } catch {
+        // capture failure is non-fatal
+      }
+    }
+  }
 }
 
 /**
@@ -89,6 +111,7 @@ export type HearthEvent =
   | 'badge_deferred'
   | 'report_exported'
   | 'logger_completed_50pct'
+  | 'onboarding_started'
   | 'pedagogy_set'
   | 'pack_purchased'
   | 'dlo.enrichment.completed'
@@ -100,7 +123,13 @@ export type HearthEvent =
   | 'constellation_honesty_notice';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {
-  if (!enabled || !initialised) return;
+  if (!enabled) return;
+  if (!initialised) {
+    // Buffer until init (a mount-time event on a public page can fire before
+    // the provider's initAnalytics). Drop oldest-first if the cap is hit.
+    if (pendingEvents.length < MAX_PENDING_EVENTS) pendingEvents.push({ event, properties });
+    return;
+  }
   try {
     posthog.capture(event, sanitise(properties));
   } catch {

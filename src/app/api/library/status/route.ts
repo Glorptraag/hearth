@@ -10,7 +10,7 @@ import {
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, gte, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { routeHandler } from '@/lib/api-helpers';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityFetch } from '@/lib/sanity/server-fetch';
 
 /**
  * GET /api/library/status
@@ -21,7 +21,8 @@ import { sanityClient } from '@/lib/sanity/client';
  *   planned       → planner_entries row within the next 7 days
  *   recently_used → learning_entries within the last 14 days
  *   abandoned     → open run with lastActiveAt > STALE_DAYS old, OR no entry
- *                   within 30 days of run start
+ *                   within 30 days of run start. open_ended runs are exempt —
+ *                   they are long-lived and resumable, never "abandoned".
  *   untouched     → in library, never run, never planned, no entries
  *
  * For library rows that point at a pack, status aggregates across the pack's
@@ -114,16 +115,18 @@ export const GET = routeHandler(async () => {
     .map((r) => r.sanityPackId)
     .filter((id): id is string => !!id);
 
-  // Expand pack → module IDs via Sanity (one fetch).
+  // Expand pack → module IDs via Sanity. Routed through the tagged server
+  // cache (`sanity:content`, 300s self-heal, publish-invalidated) so this
+  // pack→module rollup isn't a synchronous content-lake round trip on every
+  // status poll — pack membership only changes on a Sanity publish.
   const packExpansions: Array<{ _id: string; moduleIds: string[] }> = packIds.length > 0
-    ? await sanityClient
-        .fetch<Array<{ _id: string; moduleIds: string[] | null }>>(
-          `*[_type == "pack" && _id in $ids && status == "published"]{
-            _id,
-            "moduleIds": modules[@->status == "published"]->_id
-          }`,
-          { ids: packIds },
-        )
+    ? await sanityFetch<Array<{ _id: string; moduleIds: string[] | null }>>(
+        `*[_type == "pack" && _id in $ids && status == "published"]{
+          _id,
+          "moduleIds": modules[@->status == "published"]->_id
+        }`,
+        { ids: packIds },
+      )
         .then((rows) => rows.map((r) => ({ _id: r._id, moduleIds: r.moduleIds ?? [] })))
         .catch(() => [])
     : [];
@@ -248,7 +251,11 @@ export const GET = routeHandler(async () => {
       runCount += rs.length;
       for (const run of rs) {
         const lastActive = new Date(run.lastActiveAt);
-        const isStale = lastActive < staleCutoff;
+        // open_ended runs (nature journal, instrument practice) are long-lived
+        // and resumable — going quiet is not abandonment, so exempt them from
+        // the staleness check entirely. sessionType is mirrored onto the run
+        // row at start, so no Sanity read is needed here.
+        const isStale = run.sessionType !== 'open_ended' && lastActive < staleCutoff;
         // Prefer the freshest open run as the "open run" of record.
         if (!openRun || new Date(run.lastActiveAt) > new Date(openRun.lastActiveAt)) {
           openRun = run;

@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { routeHandler } from '@/lib/api-helpers';
 import { getDeterministicCoverage } from '@/lib/report/coverage';
-import { descriptorToSubject, frameworkKeyForState } from '@/lib/report/deterministic-coverage';
+import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
 import { resolveExportSlotData } from '@/lib/report/export-slots';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
@@ -74,12 +74,13 @@ export const GET = routeHandler(async (request: NextRequest) => {
     ? differenceInYears(now, new Date(learner.dateOfBirth))
     : null;
 
-  // Deterministic curriculum coverage (WS-5). When the family's framework has
-  // authored DLO→framework mappings, curriculum codes come from
-  // learner_dlo_status × the mapping — same history, same report. Otherwise
-  // `mode: 'fallback'` and we keep today's LLM-recalled descriptor path verbatim.
-  const frameworkKey = frameworkKeyForState(settings?.state ?? null);
-  const coverage = await getDeterministicCoverage({ learnerId, frameworkKey });
+  // Deterministic curriculum coverage (WS-5). When the family set an explicit
+  // jurisdiction whose framework has authored DLO→framework mappings, curriculum
+  // codes come from learner_dlo_status × the mapping — same history, same report.
+  // A blank state or an unmapped framework yields `mode: 'fallback'` and we keep
+  // today's LLM-recalled descriptor path verbatim — a blank-state family is never
+  // silently scored against QLD's mappings here.
+  const coverage = await getDeterministicCoverage({ learnerId, state: settings?.state ?? null });
   const isDeterministic = coverage.mode === 'deterministic';
 
   // Subject coverage

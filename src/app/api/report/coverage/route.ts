@@ -6,7 +6,6 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { routeHandler } from '@/lib/api-helpers';
 import { getDeterministicCoverage } from '@/lib/report/coverage';
-import { frameworkKeyForState } from '@/lib/report/deterministic-coverage';
 
 /**
  * GET /api/report/coverage?learnerId=
@@ -34,8 +33,11 @@ export const GET = routeHandler(async (request: NextRequest) => {
   const settings = await db.query.familySettings.findFirst({
     where: eq(familySettings.familyId, family.id),
   });
-  const frameworkKey = frameworkKeyForState(settings?.state ?? null);
 
-  const result = await getDeterministicCoverage({ learnerId, frameworkKey });
+  // Deterministic coverage requires an explicit jurisdiction; a blank/missing
+  // `state` keeps the family on the LLM-derived fallback (getDeterministicCoverage
+  // short-circuits before deriving a framework key). The report screen still
+  // displays a QLD default separately — this only gates coverage activation.
+  const result = await getDeterministicCoverage({ learnerId, state: settings?.state ?? null });
   return NextResponse.json(result);
 }, { route: 'GET /api/report/coverage' });

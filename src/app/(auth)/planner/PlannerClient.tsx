@@ -6,6 +6,7 @@ import PlannerGrid from '@/components/planner/PlannerGrid';
 import BottomSheet from '@/components/planner/BottomSheet';
 import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
+import { track } from '@/lib/analytics/posthog';
 import { sanityClient } from '@/lib/sanity/client';
 import { MODULES_MATERIALS_BATCH_QUERY, MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
 import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
@@ -135,6 +136,12 @@ export default function PlannerClient({
     if (res.ok) {
       const entry = await res.json();
       setEntries((prev) => [...prev, entry]);
+      // Stage-5 signal: does this family move from retro-logging to forward
+      // planning? Props stay enum-like/numeric (no free-form text).
+      track('planner_entry_created', {
+        has_module: Boolean(entry?.moduleId),
+        learner_count: payload.learnerIds.length,
+      });
     }
   }
 

@@ -104,6 +104,7 @@ export type HearthEvent =
   | 'entry_enrich_retried'
   | 'enrichment_viewed'
   | 'module_added_to_library'
+  | 'planner_entry_created'
   | 'module_session_started'
   | 'module_session_resumed'
   | 'module_session_logged'

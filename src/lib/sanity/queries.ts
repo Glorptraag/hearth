@@ -36,10 +36,14 @@ export const PACK_INDICATORS_PROJECTION = `
   assetCounts
 `;
 
-// Pack list for marketplace/activity discovery
+// Pack list for marketplace/activity discovery.
+// moduleCount gates on status so the card matches what the pack detail renders
+// (modules[@->status == "published"]) — an un-gated count(modules) would count
+// draft modules and over-report on the marketplace card. Mirrors the gated
+// count(activities[@->status == "published"]) pattern in ALL_MODULES_QUERY.
 export const PACKS_QUERY = `*[_type == "pack" && status == "published"]{
   _id, title, slug, description, subjects, ageRange,
-  "moduleCount": count(modules),
+  "moduleCount": count(modules[@->status == "published"]),
   totalActivities,
   availability, version, creator, creatorType, stripePriceId, "badgeCount": count(badges),
   assetCounts, commonsTextCount,

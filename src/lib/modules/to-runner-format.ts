@@ -40,21 +40,35 @@ export function toRunnerFormat(raw: unknown): RunnerModule {
       mod._id,
     );
   }
-  for (const approach of mod.approaches) {
-    if (!approach || typeof approach !== 'object') {
-      throw new RunnerFormatError('Module contains an invalid approach.', mod._id);
-    }
-    if (!Array.isArray(approach.activities) || approach.activities.length === 0) {
-      throw new RunnerFormatError(
-        `Approach "${approach.title ?? 'untitled'}" has no activities.`,
-        mod._id,
-      );
-    }
-    for (const activity of approach.activities) {
+  // Tolerate one broken link in the chain. The GROQ status-gate
+  // (`approaches[@->status == "published"]->{ activities[@->status == "published"]-> }`)
+  // already drops draft approaches and draft activities, but it CANNOT drop a
+  // *published* approach whose activities are all still draft — that survives as
+  // an approach with an empty `activities` array. A dangling/deleted approach
+  // ref is likewise filtered to nothing. Drop those non-runnable approaches
+  // instead of failing the whole module: a sibling approach that IS fully
+  // published must still run. The runner is approach-pick based, so a parent
+  // simply never sees the unfinished alternative. Only when NOTHING is runnable
+  // do we surface the same "not ready" error as a genuinely empty module.
+  const runnableApproaches = mod.approaches.filter((approach) => {
+    const activities =
+      approach && typeof approach === 'object' ? approach.activities : undefined;
+    return Array.isArray(activities) && activities.length > 0;
+  });
+  if (runnableApproaches.length === 0) {
+    throw new RunnerFormatError(
+      'This module has no approaches yet. It needs at least one approach with one activity before it can run.',
+      mod._id,
+    );
+  }
+  // A titleless activity is malformed content (title is schema- and Zod-required),
+  // not a draft-gating hole — surface it loudly rather than degrading silently.
+  for (const approach of runnableApproaches) {
+    for (const activity of approach.activities ?? []) {
       if (!activity?.title) {
         throw new RunnerFormatError('An activity is missing a title.', mod._id);
       }
     }
   }
-  return mod as RunnerModule;
+  return { ...mod, approaches: runnableApproaches } as RunnerModule;
 }

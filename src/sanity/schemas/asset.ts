@@ -21,10 +21,32 @@ export const asset = defineType({
           { title: 'Handout', value: 'handout' },
           { title: 'Audio', value: 'audio' },
           { title: 'Manipulative', value: 'manipulative' },
+          { title: 'Generated (image)', value: 'generated' },
         ],
       },
     }),
-    defineField({ name: 'file', title: 'File', type: 'file', validation: (r) => r.required() }),
+    // File is required for the file-based kinds. Generated-image assets (gen2
+    // pipeline) carry an `image` instead, so file is not required when kind === 'generated'.
+    defineField({
+      name: 'file',
+      title: 'File',
+      type: 'file',
+      hidden: ({ document }) => document?.kind === 'generated',
+      validation: (r) =>
+        r.custom((value, context) => {
+          const doc = context.document as { kind?: string } | undefined;
+          if (doc?.kind === 'generated') return true;
+          return value ? true : 'File is required.';
+        }),
+    }),
+    defineField({
+      name: 'image',
+      title: 'Image',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Primary raster for image/generated assets (gen2 pipeline).',
+      hidden: ({ document }) => document?.kind !== 'generated',
+    }),
     defineField({ name: 'thumbnail', title: 'Thumbnail', type: 'image' }),
     defineField({ name: 'pageCount', title: 'Page Count', type: 'number', description: 'For PDFs — helps parents budget paper' }),
     defineField({ name: 'description', title: 'Description', type: 'text', description: 'What it is, when to print it' }),
@@ -86,6 +108,40 @@ export const asset = defineType({
       },
     }),
     defineField({ name: 'version', title: 'Version', type: 'number', initialValue: 1 }),
+    // ── Generated-image fields (gen2 worksheet pipeline; kind === 'generated') ──
+    // All optional — only populated for generated assets. License for generated
+    // assets is 'hearth_proprietary' (Hearth-owned original work). _id convention:
+    // asset.generated.{packId}.{slot}. See Kindler Advance/worksheets gen2 pipeline.
+    defineField({
+      name: 'register',
+      title: 'Register',
+      type: 'string',
+      options: { list: ['painted', 'paper', 'line'] },
+      hidden: ({ document }) => document?.kind !== 'generated',
+    }),
+    defineField({
+      name: 'skin',
+      title: 'Skin',
+      type: 'string',
+      options: { list: ['playground', 'meadow', 'blocks'] },
+      hidden: ({ document }) => document?.kind !== 'generated',
+    }),
+    defineField({ name: 'packId', title: 'Pack Id', type: 'string', hidden: ({ document }) => document?.kind !== 'generated' }),
+    defineField({ name: 'slot', title: 'Slot', type: 'string', hidden: ({ document }) => document?.kind !== 'generated' }),
+    defineField({
+      name: 'provenance',
+      title: 'Provenance',
+      type: 'object',
+      description: 'Reproducible + auditable generation record (gen2 §7).',
+      hidden: ({ document }) => document?.kind !== 'generated',
+      fields: [
+        defineField({ name: 'model', title: 'Model', type: 'string' }),
+        defineField({ name: 'seed', title: 'Seed', type: 'string' }),
+        defineField({ name: 'northStar', title: 'North-star ref', type: 'string' }),
+        defineField({ name: 'creamHex', title: 'Cream hex', type: 'string' }),
+        defineField({ name: 'generatedAt', title: 'Generated at', type: 'string' }),
+      ],
+    }),
   ],
   preview: {
     select: { title: 'title', subtitle: 'kind' },

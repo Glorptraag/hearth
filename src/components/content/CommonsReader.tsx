@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { PortableText } from '@portabletext/react';
-import { Printer, X } from '@/components/icons';
+import { Printer, X, Play, Pause, SpeakerHigh } from '@/components/icons';
 
 type ReadingMode = 'standard' | 'short' | 'readAloud';
 
@@ -17,6 +17,8 @@ interface CommonsReaderProps {
   readAloudVersion?: unknown[];
   estimatedReadAloudMinutes?: number;
   source?: string;
+  /** Read-aloud narration audio (generated via Deepgram). Enables the Listen control. */
+  audioUrl?: string;
   onClose: () => void;
   onPrint?: () => void;
   returnLabel?: string;
@@ -70,11 +72,24 @@ export function CommonsReader({
   readAloudVersion,
   estimatedReadAloudMinutes,
   source,
+  audioUrl,
   onClose,
   onPrint,
   returnLabel = 'Back',
 }: CommonsReaderProps) {
   const trapRef = useFocusTrap(isOpen);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const toggleAudio = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play().catch(() => setIsPlaying(false));
+    } else {
+      el.pause();
+    }
+  }, []);
 
   const hasShort = shortBody && shortBody.length > 0;
   const hasReadAloud = readAloudVersion && readAloudVersion.length > 0;
@@ -182,6 +197,44 @@ export function CommonsReader({
                 Read-aloud
               </ModeButton>
             )}
+          </div>
+        )}
+
+        {/* Listen — read-aloud narration audio */}
+        {audioUrl && (
+          <div className="flex items-center gap-md mb-xl">
+            <button
+              type="button"
+              onClick={toggleAudio}
+              aria-pressed={isPlaying}
+              aria-label={isPlaying ? 'Pause narration' : 'Play narration'}
+              className={`inline-flex items-center gap-xs font-sans text-sm px-md py-sm rounded-[10px] border transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                isPlaying
+                  ? 'bg-ember text-text-inverse border-ember font-semibold'
+                  : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
+              }`}
+            >
+              {isPlaying ? (
+                <Pause size={16} weight="fill" aria-hidden="true" />
+              ) : (
+                <Play size={16} weight="fill" aria-hidden="true" />
+              )}
+              {isPlaying ? 'Pause' : 'Listen'}
+            </button>
+            {estimatedReadAloudMinutes ? (
+              <span className="inline-flex items-center gap-xs font-sans text-[12px] text-text-muted">
+                <SpeakerHigh size={14} aria-hidden="true" />~{estimatedReadAloudMinutes} min
+              </span>
+            ) : null}
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              preload="none"
+              className="sr-only"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            />
           </div>
         )}
 

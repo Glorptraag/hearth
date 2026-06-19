@@ -1,6 +1,7 @@
 import { createAsset, createCommonsText, patch } from '@/lib/sanity/mutations';
 import { query } from '@/lib/sanity/mutations';
 import { assetRef, commonsTextRef } from '@/lib/sanity/helpers';
+import { generateCommonsAudio } from './generate-commons-audio';
 
 /**
  * Seeds test content assets and commons texts into Sanity.
@@ -8,7 +9,18 @@ import { assetRef, commonsTextRef } from '@/lib/sanity/helpers';
  * and updates parent pack rollup counts.
  */
 export async function seedContentAssets() {
-  const results = { created: 0, linked: 0, failed: 0, errors: [] as string[] };
+  const results = {
+    created: 0,
+    linked: 0,
+    failed: 0,
+    errors: [] as string[],
+    audio: {
+      generated: 0,
+      skipped: 0,
+      failed: 0,
+      skippedReason: undefined as string | undefined,
+    },
+  };
 
   // ── Create assets ──────────────────────────────────────────────────────────
 
@@ -105,13 +117,37 @@ export async function seedContentAssets() {
     },
   ];
 
+  const createdTextSlugs: string[] = [];
   for (const textInput of commonsTexts) {
     try {
       await createCommonsText(textInput);
       results.created++;
+      createdTextSlugs.push(textInput.slug);
     } catch (err) {
       results.errors.push(`CommonsText "${textInput.title}": ${err instanceof Error ? err.message : String(err)}`);
       results.failed++;
+    }
+  }
+
+  // ── Generate read-aloud narration audio for the seeded texts ────────────────
+  // Gated on DEEPGRAM_API_KEY so the seed still works without TTS configured.
+  // Audio failures are tracked separately and do NOT fail the content seed.
+  if (createdTextSlugs.length > 0) {
+    if (process.env.DEEPGRAM_API_KEY) {
+      for (const slug of createdTextSlugs) {
+        try {
+          const audio = await generateCommonsAudio({ slug });
+          results.audio.generated += audio.generated;
+          results.audio.skipped += audio.skipped;
+          results.audio.failed += audio.failed;
+          results.errors.push(...audio.errors);
+        } catch (err) {
+          results.audio.failed++;
+          results.errors.push(`Audio "${slug}": ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    } else {
+      results.audio.skippedReason = 'DEEPGRAM_API_KEY not set';
     }
   }
 
@@ -160,13 +196,13 @@ export async function seedContentAssets() {
     if (packs.length > 0) {
       await patch(packs[0]._id, {
         assetCounts: {
-          total: 3,
+          total: 3 + results.audio.generated,
           template: 2,
           worksheet: 1,
           reference: 0,
           card_set: 0,
           handout: 0,
-          audio: 0,
+          audio: results.audio.generated,
           manipulative: 0,
         },
         commonsTextCount: 2,

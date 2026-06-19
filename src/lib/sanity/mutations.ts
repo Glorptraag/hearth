@@ -203,6 +203,8 @@ interface CreateAsset {
   tags?: string[];
   commonsTextIds?: string[];
   status?: Status;
+  /** `_id` of an already-uploaded Sanity file asset to bind to the required `file` field. */
+  fileAssetId?: string;
 }
 
 export async function createAsset(input: CreateAsset) {
@@ -223,6 +225,7 @@ export async function createAsset(input: CreateAsset) {
   if (input.sourceUrl) doc.sourceUrl = input.sourceUrl;
   if (input.tags) doc.tags = input.tags;
   if (input.commonsTextIds) doc.relatedCommonsTexts = keyedRefs(input.commonsTextIds);
+  if (input.fileAssetId) doc.file = { _type: 'file', asset: ref(input.fileAssetId) };
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 

@@ -590,6 +590,7 @@ export default function ModuleDetailPage() {
           readAloudVersion={readerText.readAloudVersion}
           estimatedReadAloudMinutes={readerText.estimatedReadAloudMinutes}
           source={readerText.source}
+          audioUrl={readerText.audioUrl}
           onClose={() => setReaderTextId(null)}
           returnLabel="Back to module"
         />

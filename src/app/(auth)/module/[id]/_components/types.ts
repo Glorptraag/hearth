@@ -59,6 +59,7 @@ export interface ActivityCommonsText {
     length?: string;
     source?: string;
     status: string;
+    audioUrl?: string;
   };
 }
 

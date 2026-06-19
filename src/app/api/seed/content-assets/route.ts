@@ -34,8 +34,12 @@ export const POST = routeHandler(async (_req: NextRequest) => {
       created: results.created,
       linked: results.linked,
       failed: results.failed,
+      audio: results.audio,
       errors: results.errors,
-      message: `Created ${results.created} documents, linked ${results.linked} activities. ${results.failed} failures.`,
+      message:
+        `Created ${results.created} documents, linked ${results.linked} activities, ` +
+        `${results.audio.generated} narration audio. ${results.failed} failures.` +
+        (results.audio.skippedReason ? ` (audio skipped: ${results.audio.skippedReason})` : ''),
     });
   } catch (error) {
     return NextResponse.json(

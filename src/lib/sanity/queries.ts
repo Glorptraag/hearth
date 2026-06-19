@@ -96,7 +96,8 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
       "commonsTexts": commonsTexts[@.text->status == "published"]{
         _key, role, presentationMode, notes,
         text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
-          estimatedReadAloudMinutes, length, source, status
+          estimatedReadAloudMinutes, length, source, status,
+          "audioUrl": *[_type == "asset" && kind == "audio" && status == "published" && references(^._id)][0].file.asset->url
         }
       }
     }
@@ -120,7 +121,8 @@ export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id && sta
   "commonsTexts": commonsTexts[@.text->status == "published"]{
     _key, role, presentationMode, notes,
     text->{ _id, title, slug, kind, tradition, body, shortBody, readAloudVersion,
-      estimatedReadAloudMinutes, length, source, status
+      estimatedReadAloudMinutes, length, source, status,
+      "audioUrl": *[_type == "asset" && kind == "audio" && status == "published" && references(^._id)][0].file.asset->url
     }
   }
 }`;

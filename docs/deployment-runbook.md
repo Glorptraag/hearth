@@ -191,7 +191,7 @@ Short version — see §1.6 for the full smoke test, only run it after risky cha
 
 ## 3. Cost + quota watch (weekly during pilot)
 
-**First stop:** `/admin/analytics` → **AI Cost** tab. Gives you window totals, daily stacked bar (full vs draft), and top-20 families by spend in one view. Pricing is hardcoded to Haiku 4.5 in `/api/admin/analytics/ai-cost/route.ts` — update `PRICING_PER_MTOK` if the model wired into `src/lib/ai/*` changes.
+**First stop:** `/admin/analytics` → **AI Cost** tab. Gives you window totals, daily stacked bar (full vs draft), and top-20 families by spend in one view. Pricing is model-aware via `priceFor()` in `src/config/ai-pricing.ts` — update `PRICING_PER_MTOK` there if Anthropic's rates change or a new model is wired into `src/lib/ai/*`.
 
 | Signal | Where | Action if tripped |
 |---|---|---|

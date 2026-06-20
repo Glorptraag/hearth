@@ -132,7 +132,9 @@ const PAGE_SIZE = 20;
  * anchors); quotes and notes are content the parent reads (serif). A link is
  * only clickable when it is an http(s) URL; a name-only "link" (or a bare label)
  * renders as plain text. Images are never rendered here — the collapsed card's
- * thumbnail grid is the only place photos are shown as `<Image>`.
+ * thumbnail grid is the only place photos are shown as `<Image>`. Audio
+ * captures render as a native `<audio controls>` player (waveform/transcript
+ * are a documented follow-on).
  */
 function ExpandedEvidence({ items }: { items: DisplayEvidence[] }) {
   if (items.length === 0) return null;
@@ -156,6 +158,20 @@ function ExpandedEvidence({ items }: { items: DisplayEvidence[] }) {
               </a>
             ) : (
               <p key={i} className="font-sans text-xs text-text-secondary truncate">{label}</p>
+            );
+          }
+          if (item.kind === 'audio') {
+            return (
+              <div key={i} className="flex flex-col gap-xs">
+                {item.caption && (
+                  <span className="font-sans text-xs text-text-muted truncate">{item.caption}</span>
+                )}
+                <audio controls preload="none" src={evidenceSrc(item.content)} className="w-full max-w-[320px]">
+                  <a href={evidenceSrc(item.content)} target="_blank" rel="noopener noreferrer" className="font-sans text-xs text-ember underline">
+                    Play audio
+                  </a>
+                </audio>
+              </div>
             );
           }
           if (item.kind === 'quote') {

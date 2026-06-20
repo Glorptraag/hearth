@@ -542,9 +542,11 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
     const client = new Anthropic();
 
-    // TODO(phase-2): Sonnet fallback retry per AI Intelligence Layer spec §3.4
-    // when Haiku confidence < threshold. Deferred — Haiku confidence is
-    // acceptable in pilot. See docs/pre-release-tracker.md F10.
+    // Sonnet fallback per AI Intelligence Layer spec §3.4 is implemented as an
+    // async re-enrichment queued after a successful Haiku pass when
+    // validated.confidence < 0.5 (see sonnetFallback() below and its call site).
+    // It is intentionally fire-and-forget rather than an inline blocking retry
+    // so entry save stays fast; revisit if pilot data shows the async path lags.
     const callLLM = async (): Promise<EnrichmentResult> => {
       tape(retried ? 'anthropic-call-retry' : 'anthropic-call-start');
       const response = await client.messages.create({

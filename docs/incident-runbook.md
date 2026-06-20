@@ -86,7 +86,7 @@ GROUP BY 1 ORDER BY 1;
 
 Baseline (from the debounced draft-insight design): ~100 calls/family/month ≈ $2/family/month. A jump past $3/family/month on a rolling 7-day window is the soft alert.
 
-> **Pricing note.** Dashboard USD figures use the hardcoded Haiku 4.5 rates in `PRICING_PER_MTOK` inside `/api/admin/analytics/ai-cost/route.ts`. If the model wired into `src/lib/ai/*` changes, update that constant — see caveat 10 in `docs/alpha-readiness-pickup.md`.
+> **Pricing note.** Dashboard USD figures use the model-aware `priceFor()` resolver and `PRICING_PER_MTOK` table in `src/config/ai-pricing.ts`. If Anthropic's rates change or the model wired into `src/lib/ai/*` changes, update that table — see caveat 10 in `docs/alpha-readiness-pickup.md`.
 
 ### Investigate
 

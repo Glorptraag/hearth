@@ -165,7 +165,7 @@ function PricingFootnote({
       </ul>
       <p className="mt-xs">
         Update <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">PRICING_PER_MTOK</code>{' '}
-        in <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">/api/admin/analytics/ai-cost</code> if Anthropic publishes new rates.
+        in <code className="rounded-sm bg-surface-raised px-xs py-[1px] font-mono text-[10px]">src/config/ai-pricing.ts</code> if Anthropic publishes new rates.
       </p>
     </div>
   );

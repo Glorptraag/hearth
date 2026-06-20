@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import StatusPill from './StatusPill';
 import type { Invitation, AdminAuditLogEntry } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   invitationId: string | null;
@@ -31,6 +32,7 @@ function timeAgo(d: Date | string | null): string {
 }
 
 export default function InvitationDetailPanel({ invitationId, onClose, onRevoked }: Props) {
+  const { toast } = useToast();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [auditHistory, setAuditHistory] = useState<AdminAuditLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,7 +70,7 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
       setRevokeReason('');
       onRevoked();
     } catch {
-      alert('Failed to revoke invitation');
+      toast('Failed to revoke invitation', 'error');
     } finally {
       setRevoking(false);
     }

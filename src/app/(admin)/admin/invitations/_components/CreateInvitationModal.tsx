@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AU_STATES } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ Welcome to Hearth.
 \u2014 Drew`;
 
 export default function CreateInvitationModal({ open, onClose, onCreated }: Props) {
+  const { toast } = useToast();
   const [familyName, setFamilyName] = useState('');
   const [email, setEmail] = useState('');
   const [state, setState] = useState('');
@@ -63,7 +65,7 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
       const data = await res.json();
       setResult({ code: data.invitation.code, familyName });
     } catch {
-      alert('Failed to create invitation');
+      toast('Failed to create invitation', 'error');
     } finally {
       setSubmitting(false);
     }

@@ -221,7 +221,11 @@ export function BrowseTab() {
         </div>
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value as SortMode)}
+          onChange={(e) => {
+            const next = e.target.value as SortMode;
+            setSort(next);
+            track('browse_sort_changed', { sort_mode: next });
+          }}
           className="bg-surface-panel border border-border-subtle rounded-md px-sm py-sm font-sans text-sm text-text-secondary focus:outline-none focus:border-ember"
         >
           <option value="relevance">Sort: Relevance</option>

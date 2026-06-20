@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import { ArrowsClockwise, X } from '@/components/icons';
+import { track } from '@/lib/analytics/posthog';
 
 interface RemovedItem {
   rowId: string;
@@ -61,6 +62,7 @@ export function RecentlyRemovedDrawer({
         body: JSON.stringify(body),
       });
       if (res.ok) {
+        track('library_item_restored', { kind: item.kind });
         setItems((prev) => (prev ? prev.filter((p) => p.rowId !== item.rowId) : prev));
         onRestored?.();
       }

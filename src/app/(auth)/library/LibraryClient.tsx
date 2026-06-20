@@ -10,6 +10,7 @@ import type { LibraryModuleItem } from '@/app/api/library/modules/route';
 import type { LibraryStatus, LibraryStatusResponse } from '@/app/api/library/status/route';
 import { BrowseTab } from './_components/BrowseTab';
 import { RecentlyRemovedDrawer } from './_components/RecentlyRemovedDrawer';
+import { track } from '@/lib/analytics/posthog';
 
 interface LibraryItem {
   id: string;
@@ -289,6 +290,7 @@ export default function LibraryClient() {
                         return;
                       }
                       await fetch(`/api/library/${item.rowId}`, { method: 'DELETE' }).catch(() => {});
+                      track('library_item_soft_deleted', { kind: item.kind });
                       fetchLibrary();
                     }}
                   />

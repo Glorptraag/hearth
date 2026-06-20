@@ -121,7 +121,10 @@ export type HearthEvent =
   | 'feedback_submitted'
   | 'recommendations_scored'
   | 'recommendation_accepted'
-  | 'constellation_honesty_notice';
+  | 'constellation_honesty_notice'
+  | 'browse_sort_changed'
+  | 'library_item_soft_deleted'
+  | 'library_item_restored';
 
 export function track(event: HearthEvent, properties?: Record<string, string | number | boolean>) {
   if (!enabled) return;

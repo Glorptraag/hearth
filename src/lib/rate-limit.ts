@@ -1,3 +1,14 @@
+/**
+ * In-memory, single-region rate limiter (Map of token buckets).
+ *
+ * GUARD: this is correct ONLY under our single Vercel-region assumption. The
+ * moment we run in more than one region each region keeps its own Map, so the
+ * effective ceiling multiplies by the region count — do NOT trust this for
+ * global enforcement once that changes. The migration is designed but
+ * deliberately deferred (tracker item #30): see docs/redis-rate-limiter-plan.md
+ * for the Upstash plan + flip conditions, gated behind a `LIMITER_BACKEND`
+ * switch (memory default → redis). Board card f3.
+ */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 export function rateLimit(

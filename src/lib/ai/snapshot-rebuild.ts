@@ -37,7 +37,7 @@ import {
 } from '@/lib/notifications/triggers';
 import { generateMonthlyNarrative } from './generate-monthly-narrative';
 import { getCachedThreads } from './sanity-thread-cache';
-import { scoreModules, type ScoringModule } from './recommend';
+import { scoreModules, type ScoringModule, type PedagogyContext } from './recommend';
 import { descriptorToSubject, SUBJECT_KEYS } from '@/lib/report/deterministic-coverage';
 import { sanityClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
@@ -541,6 +541,7 @@ export async function rebuildSnapshot(
           title: m.title,
           subjects: m.subjects ?? [],
           averageEnergyLevel: m.averageEnergyLevel ?? null,
+          methodAffinity: m.methodAffinity ?? null,
           capabilityThreadIds: (m.capabilityThreadTitles ?? [])
             .map((t) => titleToCode.get((t ?? '').toLowerCase()))
             .filter((c): c is string => !!c),
@@ -569,12 +570,22 @@ export async function rebuildSnapshot(
           // Subjects already planned this week
           const weekSubjects = new Set(weekPlanned.flatMap((p) => p.subjects ?? []));
 
+          // Pedagogy weight (W_PEDAGOGY=0.15) only applies when context is
+          // supplied. Omitting it here silently reroutes that weight into spark,
+          // so the persisted snapshot ignored the family's tradition entirely.
+          const pedagogyContext: PedagogyContext = {
+            pedagogyKey: settings?.pedagogyPreference ?? 'eclectic',
+            values: settings?.pedagogyValues ?? [],
+            practices: settings?.pedagogyPractices ?? [],
+          };
+
           const scored = scoreModules(
             scoringModules,
             childSnapshots as Record<string, ChildSnapshot>,
             plannedModuleIds,
             completedModuleCounts,
             weekSubjects,
+            pedagogyContext,
           );
 
           // Subject balance: count planned subjects per day vs target of 2 per core subject

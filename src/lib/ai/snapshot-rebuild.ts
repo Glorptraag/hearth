@@ -854,5 +854,17 @@ export async function rebuildSnapshot(
     }
   } catch (error) {
     console.error('[snapshotRebuild] Failed:', error);
+    // rebuildSnapshot is fired non-blocking (callers .catch(()=>{})), so a
+    // failure here is otherwise silent — and a stale snapshot quietly drifts
+    // the dashboard, Explore and the compliance report. Surface it in Sentry.
+    try {
+      const Sentry = await import('@sentry/nextjs');
+      Sentry.captureException(error, {
+        tags: { pipeline: 'rebuild-snapshot' },
+        extra: { familyId, trigger },
+      });
+    } catch {
+      // observability is best-effort — never let it throw out of the catch
+    }
   }
 }

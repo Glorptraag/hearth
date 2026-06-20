@@ -6,6 +6,10 @@
  * numbers below are correct as of pilot preparation 2026-04 but the source
  * of truth is Anthropic's site.
  *
+ * GUARD: these rates are hand-maintained and go stale on every Anthropic
+ * price change — never trust them as live. Extracted from the ai-cost route
+ * in PR #221 (board card f8); re-verify before launch and after any model bump.
+ *
  * `priceFor(model)` resolves any `model_used` value (with or without a
  * `-draft` suffix, with or without a `-YYYYMMDD` date stamp) by falling
  * back through (1) exact match, (2) `claude-{family}-{tier}` prefix match

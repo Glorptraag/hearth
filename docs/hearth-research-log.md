@@ -144,4 +144,13 @@ The same reconciliation confirmed audio evidence capture (UC-L-06) and the offli
 
 ---
 
-*Next entry: R17. Append below; never edit above.*
+### R17 — Logger reconciliation (2026-06-21): voice was Chrome/Edge-only, dead on the mobile-first audience.
+
+The Logger's voice capture used the browser Web Speech API (`useSpeechRecognition`), which is solid in Chrome/Edge but unreliable-to-absent on iOS Safari and in-app webviews — exactly where time-poor parents are, and exactly the "hardest capture moment" the voice fallback exists for (UC-L-09 rationale: voice is the pressure-release valve when hands aren't free). The disabled "Voice input needs Chrome or Edge" state meant the feature didn't exist on the most common device. Replaced with record-then-transcribe: `MediaRecorder` → `POST /api/transcribe` → Deepgram `/v1/listen` (`smart_format` returns punctuated text, which also closes the raw-dictation cleanliness gap). Cross-browser incl. iOS; reuses the existing Deepgram key. Scoped runtime-AI exception — user-initiated and bounded; Decision D-LPS-12.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-09 (voice support); touches UC-L-06 (audio still deferred for evidence storage).
+**Regression test:** `src/lib/ai/transcribe.test.ts` (Deepgram client, unit); `src/hooks/use-audio-transcription.test.ts` (record→transcribe→permission-denied, unit).
+**Date logged:** 2026-06-21.
+
+---
+
+*Next entry: R18. Append below; never edit above.*

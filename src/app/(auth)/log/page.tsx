@@ -15,7 +15,7 @@ import { useCoachHints } from '@/hooks/use-coach-hints';
 import { useCompletenessUi } from '@/hooks/use-completeness-ui';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
+import { useAudioTranscription } from '@/hooks/use-audio-transcription';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
@@ -258,13 +258,26 @@ export default function LogPage() {
 
   const {
     isRecording,
+    isTranscribing,
     isSupported: voiceSupported,
     start: startVoiceInput,
     stop: stopVoiceInput,
-  } = useSpeechRecognition({
+  } = useAudioTranscription({
     onTranscript: (transcript) => setDescription((prev) => prev + (prev ? ' ' : '') + transcript),
     onUnsupported: () => {
-      setToast({ type: 'error', message: 'Voice input needs Chrome or Edge.' });
+      setToast({ type: 'error', message: 'Voice needs microphone access in a recent browser.' });
+      setTimeout(() => setToast(null), 3000);
+    },
+    onError: (kind) => {
+      const message =
+        kind === 'permission'
+          ? 'Microphone access is blocked — enable it in your browser settings.'
+          : kind === 'network'
+            ? "Couldn't reach the transcriber — check your connection and try again."
+            : kind === 'no-speech'
+              ? "Didn't catch any speech — try again, or type instead."
+              : 'Voice transcription failed — please try again, or type instead.';
+      setToast({ type: 'error', message });
       setTimeout(() => setToast(null), 3000);
     },
   });
@@ -775,6 +788,7 @@ export default function LogPage() {
             description={description}
             onDescriptionChange={setDescription}
             isRecording={isRecording}
+            isTranscribing={isTranscribing}
             voiceSupported={voiceSupported}
             onStartVoice={startVoiceInput}
             onStopVoice={stopVoiceInput}

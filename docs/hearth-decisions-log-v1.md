@@ -212,6 +212,19 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 ---
 
+### D-LPS-12 — Logger voice is server-side STT (Deepgram), a scoped runtime-AI exception
+
+**Decision:** Logger voice capture moves off the browser Web Speech API (`useSpeechRecognition` — Chrome/Edge only, unreliable-to-absent on iOS Safari and in-app webviews) to **record-then-transcribe**: `MediaRecorder` captures a clip, `POST /api/transcribe` forwards it to **Deepgram** `/v1/listen` (`smart_format=true` → punctuated, capitalized text), and the recognised text appends to the description. This is a **deliberate, scoped exception** to architecture principle #4 ("no runtime AI calls in the UI"): it is *user-initiated* (one button press → one short clip) and *bounded*, not ambient or per-render — so it keeps the spirit of "no automatic LLM calls" while making voice work for the mobile-first audience the 5-minute rule is built around. **Bounds (be precise):** server-side, the route enforces auth + a **write-permission gate** (a read-only viewer can't spend Deepgram credits, mirroring `POST /api/entries`) + a 20/min rate limit + a 25MB byte cap (which implicitly bounds a clip to a few minutes of Opus). The **120s ceiling is client-side only** (the recorder's auto-stop), trivially bypassed by a direct POST — the 25MB byte cap is the real server backstop on size. The 20/min cap is **best-effort under serverless**: the in-memory limiter resets per cold start / per instance until the Upstash migration (tracker #30) lands. Provider reuses the existing `DEEPGRAM_API_KEY` (already wired for TTS in `tts.ts`) — no new vendor; model/language overridable via `DEEPGRAM_STT_MODEL` / `DEEPGRAM_STT_LANGUAGE` (default `nova-2` / `en-AU`; `smart_format=true` alone delivers punctuation). A silent/empty clip or an empty Deepgram transcript surfaces a `no-speech` toast rather than dead-ending. `useSpeechRecognition` is retained for the module-runner QuickCapture, which is unchanged.
+
+**Why:** The mobile-first audience is exactly where Web Speech fails. "Voice input needs Chrome or Edge" made the pressure-release valve (UX compendium UC-L-09 rationale: voice is the hardest-capture-moment fallback) unavailable on the most common device. Server STT is cross-browser, accurate, en-AU-tuned, and ~AUD 0.0065/min — negligible. This partially revisits **D-LPS-10**'s voice posture (audio *evidence* capture and the offline sync queue stay deferred; this is dictation-to-text, a distinct, smaller surface).
+
+**Document of record:** `docs/hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` UC-L-09 (voice), UC-L-06 (audio — still deferred for evidence storage)
+**Implementation:** `src/lib/ai/transcribe.ts`; `src/app/api/transcribe/route.ts` (auth + write-permission + rate-limit + size guards); `src/hooks/use-audio-transcription.ts` (race-guarded record→transcribe with abort-on-unmount); wired in `src/app/(auth)/log/page.tsx` + `_components/WhatSection.tsx`
+**Tests:** `src/lib/ai/transcribe.test.ts`; `src/app/api/transcribe/route.test.ts` (auth/permission/size/502 guards); `src/hooks/use-audio-transcription.test.ts` (error kinds, auto-stop, unmount, race guards)
+**Date:** 2026-06-21
+
+---
+
 ## Process
 
 ### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention

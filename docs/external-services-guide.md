@@ -35,7 +35,8 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 7. [PostHog](#7-posthog) — product analytics
 8. [Vercel Blob](#8-vercel-blob) — evidence media storage
 9. [Voyage AI](#9-voyage-ai) — embeddings (optional, off by default)
-10. [GitHub](#10-github) — source + CI
+10. [Deepgram](#10-deepgram) — voice STT (runtime) + read-aloud TTS (write-time)
+11. [GitHub](#11-github) — source + CI
 
 ---
 
@@ -384,7 +385,28 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 
 ---
 
-## 10. GitHub
+## 10. Deepgram
+
+**What it is:** A speech-AI provider. Hearth uses two of its REST surfaces off a single key (`DEEPGRAM_API_KEY`):
+
+- **Aura TTS (write-time).** Renders commons-text read-aloud narration into MP3 assets in Sanity via `npm run generate:audio` / `POST /api/seed/commons-audio`. Client: `src/lib/ai/tts.ts`. A batch, never-at-runtime call — fully inside the two-layer-AI rule.
+- **Nova STT (runtime — the one sanctioned exception).** Logger voice capture records a clip and `POST /api/transcribe` forwards it to Deepgram `/v1/listen` (`smart_format=true` → punctuated, capitalized, en-AU text). Client: `src/lib/ai/transcribe.ts`. A deliberate, **scoped** carve-out from "no runtime AI in the UI" — user-initiated, auth + write-permission gated, rate-limited (20/min/user), and 25MB-capped. See **D-LPS-12**.
+
+**Why Deepgram:**
+
+- **Vs. the browser Web Speech API** (the previous approach): Chrome/Edge-only and unreliable-to-absent on iOS Safari / in-app webviews — i.e. dead on the mobile-first audience. Server STT is cross-browser.
+- **Vs. OpenAI Whisper / Groq:** both are capable STT, but each is a new vendor + key + billing relationship. Deepgram is already in the stack for TTS, so STT adds zero new vendor surface — the "prefer one-billing-relationship bundles" principle.
+- **Vs. self-hosted Whisper:** owning a GPU/inference box is wildly more ops than a metered REST call at pilot scale.
+
+**Cost:** pay-as-you-go, ~AUD 0.0065/min of audio (nova-2). At pilot voice volume this is pennies/month. The 25MB byte cap + per-user rate limit bound the blast radius of a stuck/looping client.
+
+**Hearth env vars from this:** `DEEPGRAM_API_KEY` (both surfaces); `DEEPGRAM_TTS_MODEL` (default `aura-2-thalia-en`); `DEEPGRAM_STT_MODEL` / `DEEPGRAM_STT_LANGUAGE` (default `nova-2` / `en-AU`).
+
+**Watch for:**
+- 🟡 STT spend climbing — the in-memory 20/min limiter is best-effort under serverless (resets per cold start / instance until the Upstash migration, tracker #30). A per-family/global Deepgram ceiling is the durable guard.
+- 🔴 Missing key in prod — `/api/transcribe` returns 502 (Logger voice silently falls back to typing) and `generate:audio` throws on first synth.
+
+## 11. GitHub
 
 **What it is:** The default source-control hosting platform. Git repository hosting, pull-request review surface, issue tracking, GitHub Actions CI/CD, branch protection rules, code search, packages, releases. Effectively the table-stakes infrastructure layer for any modern software project.
 
@@ -419,7 +441,7 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 
 ---
 
-## 11. Facilitator-notes encryption key (internal secret — no external service)
+## 12. Facilitator-notes encryption key (internal secret — no external service)
 
 **What it is:** Not a vendor. A 32-byte (256-bit) symmetric key the app holds, used to encrypt **facilitator private notes** at rest with AES-256-GCM. Lives in `FACILITATOR_NOTES_ENCRYPTION_KEY`; the crypto lives in `src/lib/crypto/field-encryption.ts`.
 
@@ -451,6 +473,7 @@ If everything stays on free tiers and Anthropic is the only paid line item:
 | PostHog Cloud Free | $0 | $0 |
 | Vercel Blob (Hobby allotment) | $0 | $0 |
 | Voyage (off) | $0 | $0 |
+| Deepgram (metered TTS + STT) | $0 | ~$0 *(pay-as-you-go; pennies/mo at pilot voice volume)* |
 | GitHub Free | $0 | $0 |
 | **Total** | | **~$40 / month** |
 

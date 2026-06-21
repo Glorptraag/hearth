@@ -886,6 +886,13 @@ function ReviewStep({
               {activeInsight.content}
             </p>
           </div>
+
+          {/* Honest expectation-setting: the demo insight is fuller than a first
+              real one, so we name that rather than let the sample over-promise. */}
+          <p className="mt-md border-t border-border-subtle pt-sm font-sans text-[11px] leading-relaxed text-text-muted">
+            This is a fuller example, to show what the overlay does. Your first
+            real insights start lighter, and grow richer as you log more moments.
+          </p>
         </div>
       </div>
     </>

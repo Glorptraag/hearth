@@ -122,7 +122,7 @@ export function GuidedModeToggle({ mode, onChange }: GuidedModeToggleProps) {
             Quick Mode
           </p>
           <p className="font-sans text-xs text-text-secondary leading-relaxed">
-            Streamlined capture. All the fields, none of the scaffolding. Ideal once you know what you&apos;re looking for.
+            Skips the depth prompts and the higher completeness bar, so you can capture fast and move on. Best once you&apos;ve got your eye in.
           </p>
         </div>
       )}

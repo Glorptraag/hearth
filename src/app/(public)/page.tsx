@@ -110,11 +110,11 @@ export default async function LandingPage() {
             Three steps. That&apos;s it.
           </h2>
           <p className="mb-2xl text-center font-serif text-base text-text-secondary">
-            Every interaction takes under five minutes.
+            Logging takes under two minutes. Exporting a report takes one tap.
           </p>
           <div className="grid grid-cols-1 gap-xl md:grid-cols-3 md:gap-2xl">
             <Step number={1} title="Log" body="Describe what happened today. Hearth spots the learning and maps it to capability threads across eight domains." />
-            <Step number={2} title="Grow" body="Watch your child's Capabilities Constellation come alive — a visual map of growth that reveals connections you didn't plan for." />
+            <Step number={2} title="Grow" body="Watch the Capabilities Constellation fill in: one logged morning of baking shows up as maths, reading, and science at once." />
             <Step number={3} title="Report" body="Export portfolio documentation with one tap. Evidence, curriculum coverage, and work samples — sorted for your state's requirements." />
           </div>
         </section>
@@ -127,7 +127,7 @@ export default async function LandingPage() {
             Wherever you are in your journey
           </h2>
           <p className="mb-2xl text-center font-serif text-base text-text-secondary">
-            Hearth meets you where you are and grows with you.
+            First week or fifth year, you start the same way: log what already happened today.
           </p>
           <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
             <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">

@@ -28,7 +28,7 @@ const slides: Array<{ Icon: IconC; title: string; body: string }> = [
   {
     Icon: Sparkle,
     title: "See what they\u2019re really learning",
-    body: "Every logged moment feeds the Capabilities Constellation \u2014 a living map of your child\u2019s growth across eight domains. Watch capabilities emerge that you didn\u2019t plan for.",
+    body: "Every logged moment feeds the Capabilities Constellation, a living map of your child\u2019s growth across eight domains. An afternoon at the creek shows up as science, observation, and storytelling at once.",
   },
   {
     Icon: Books,

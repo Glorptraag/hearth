@@ -117,7 +117,7 @@ export default function OnboardingPage() {
           body: JSON.stringify({ familyName: trimmedFamilyName }),
         });
         if (!familyRes.ok) {
-          setError('Could not save your family name. Please try again.');
+          setError("We couldn't save your family name. Your details are still here — try again?");
           return;
         }
       }
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
 
       setStep(3);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError("We couldn't save your family just then. Your details are still here — try again?");
     } finally {
       setSaving(false);
     }
@@ -162,7 +162,7 @@ export default function OnboardingPage() {
       });
       if (!res.ok) {
         // fetch resolves on 4xx/5xx — only the throw path hit catch.
-        setError('Something went wrong saving your approach. Please try again.');
+        setError("We couldn't save your approach. Your answers are still here — try again?");
         return;
       }
       track('pedagogy_set', {
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
       });
       setStep(4);
     } catch {
-      setError('Network error. Please check your connection and try again.');
+      setError("The connection dropped before we could save. Check you're online and try again.");
     } finally {
       setSaving(false);
     }
@@ -199,12 +199,12 @@ export default function OnboardingPage() {
       if (!res.ok) {
         // fetch resolves on 4xx/5xx so a thrown-only error path missed
         // these. Surface it to the user instead of silently advancing.
-        setError("Couldn't save your defaults — please try again.");
+        setError("We couldn't save your defaults just then. Give it another go?");
         return;
       }
       setStep(4);
     } catch {
-      setError('Network error. Please check your connection and try again.');
+      setError("The connection dropped before we could save. Check you're online and try again.");
     } finally {
       setSaving(false);
     }
@@ -422,7 +422,7 @@ export default function OnboardingPage() {
 
             <p className="font-sans text-xs text-text-muted">
               Next, we&rsquo;ll ask a few questions about your educational approach so
-              Hearth can personalise your insights. Takes about 3 minutes.
+              Hearth can personalise your insights. Takes about three minutes.
             </p>
 
             {error && (

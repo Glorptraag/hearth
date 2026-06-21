@@ -197,9 +197,21 @@ function EnrichedBody({ enrichment }: { enrichment: AiEnrichment }) {
   return (
     <div className="flex flex-col gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg">
       {reflection && (
-        <p className="body-serif text-[1.05rem] leading-relaxed text-text-primary">
-          {reflection}
-        </p>
+        <>
+          <p className="body-serif text-[1.05rem] leading-relaxed text-text-primary">
+            {reflection}
+          </p>
+          {/* cr-ai-content-framing — WORDING PENDING DREW SIGN-OFF, DO NOT SHIP AS-IS.
+              See docs/batch-d/cr-ai-content-framing.md (options A/B + placement). */}
+          <p className="font-sans text-[11px] leading-relaxed text-text-muted">
+            Drawn by Hearth&rsquo;s AI from this entry &mdash; a starting point for your
+            reflection, not a verdict.
+          </p>
+          <p className="font-sans text-[11px] leading-relaxed text-text-muted">
+            You know your child best. Where a moment touches on culture, faith, or
+            something tender, trust your read over ours.
+          </p>
+        </>
       )}
       {threadLabel && (
         <p className="inline-flex items-center gap-xs font-sans text-[12px] text-text-muted">

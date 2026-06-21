@@ -31,6 +31,7 @@ import {
   buildEntrySavePayload,
   coerceEntrySource,
   isThinEntry,
+  warmThinSaveMessage,
 } from '@/lib/logger/entry-payload';
 import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
 import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
@@ -482,7 +483,9 @@ export default function LogPage() {
       }
 
       if (thinEntry || !savedEntryId) {
-        if (!scaffoldData) setToast({ type: 'success', message: 'Learning entry saved!' });
+        // Thin entries skip the substantive post-save screen, so this toast is
+        // the only feedback on the quick days — keep it warm, not a flat "saved".
+        if (!scaffoldData) setToast({ type: 'success', message: warmThinSaveMessage() });
       } else {
         // Substantive entry → render the inline post-save second screen.
         // Enrichment starts as null; the poll below populates it as the

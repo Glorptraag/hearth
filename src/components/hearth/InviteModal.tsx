@@ -42,7 +42,7 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
         setState('idle');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError("We couldn't generate your invite link just then. Try again?");
       setState('idle');
     }
   }

@@ -173,7 +173,7 @@ export default function HearthHomeClient({
         toast(data.error ?? 'Failed to leave', 'error');
       }
     } catch {
-      toast('Something went wrong', 'error');
+      toast("We couldn't leave the Hearth just then. Try again?", 'error');
     }
   }
 

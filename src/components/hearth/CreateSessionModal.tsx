@@ -59,7 +59,7 @@ export default function CreateSessionModal({
         setError((body as { error?: string }).error ?? 'Failed to create session.');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError("We couldn't create your session just then. Your details are still here — try again?");
     } finally {
       setSubmitting(false);
     }

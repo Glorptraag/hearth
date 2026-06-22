@@ -611,11 +611,20 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     });
     if (validatedDlos.length > 0 && attributedLearnerIds.length > 0) {
       try {
+        // When the entry's activity author-declared capability targets, its
+        // Haiku-inferred DLOs are author-grounded, not a blind guess — tag them
+        // 'declared' so they count toward the declared/asserted demonstrating bar
+        // (WS-4). Plain Logger entries (no declared targets) stay 'inferred'.
+        // (Per-DLO tagging — only DLOs on a declared thread — is a follow-up;
+        // it needs declaredThreadIds threaded out of assembleContext.)
+        const inferredProvenance =
+          (ctx.declaredTargets?.length ?? 0) > 0 ? ('declared' as const) : ('inferred' as const);
         await persistDloLinks({
           entryId,
           learnerIds: attributedLearnerIds,
           dlos: validatedDlos,
           observedAt: new Date(),
+          provenance: inferredProvenance,
         });
         tape('dlo-links-persisted');
         // Fire-and-forget — analytics MUST NOT block enrichment.

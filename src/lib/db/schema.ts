@@ -872,8 +872,10 @@ export const observationDloLinks = pgTable(
   'observation_dlo_links',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    // Nullable: a parent assertion (provenance 'asserted') is evidence with no
+    // backing learning entry — the parent confirmed the DLO directly. All other
+    // rows still carry an observation_id (FK cascade preserved).
     observationId: uuid('observation_id')
-      .notNull()
       .references(() => learningEntries.id, { onDelete: 'cascade' }),
     learnerId: uuid('learner_id')
       .notNull()
@@ -894,5 +896,10 @@ export const observationDloLinks = pgTable(
     index('odl_observation_idx').on(table.observationId),
     index('odl_learner_dlo_idx').on(table.learnerId, table.dloId),
     index('odl_dlo_idx').on(table.dloId),
+    // One parent assertion per (learner, dlo): guards against double-counting an
+    // 'asserted' link in the tier derivation under concurrent confirms.
+    uniqueIndex('odl_parent_assertion_uniq')
+      .on(table.learnerId, table.dloId)
+      .where(sql`provenance = 'asserted' and observation_id is null`),
   ]
 );

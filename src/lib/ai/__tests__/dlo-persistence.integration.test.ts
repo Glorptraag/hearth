@@ -15,7 +15,7 @@ import { db } from '@/lib/db';
 import { learnerDloStatus, observationDloLinks } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { persistDloLinks, gateLearnersByNamedSignals } from '../dlo-persistence';
+import { persistDloLinks, gateLearnersByNamedSignals, upsertParentAssertion, clearParentAssertion } from '../dlo-persistence';
 
 vi.mock('../dlo-cache', () => ({
   getValidDlos: vi.fn(async () => ({
@@ -230,5 +230,76 @@ describe('INTEGRATION: persistDloLinks', () => {
       .from(observationDloLinks)
       .where(eq(observationDloLinks.observationId, entry.id));
     expect(link.provenance).toBe('declared');
+  });
+
+  it('upsertParentAssertion lands an asserted/observed link with no observation and sets status', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+
+    const res = await upsertParentAssertion({
+      learnerId: learner.id,
+      dloId: 'dlo.M1.demonstrating',
+      observedAt: new Date(),
+    });
+    expect(res).toEqual({ tier: 'demonstrating' });
+
+    const links = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.learnerId, learner.id));
+    expect(links).toHaveLength(1);
+    expect(links[0].provenance).toBe('asserted');
+    expect(links[0].evidenceState).toBe('observed');
+    expect(links[0].observationId).toBeNull();
+
+    const [status] = await db
+      .select()
+      .from(learnerDloStatus)
+      .where(and(eq(learnerDloStatus.learnerId, learner.id), eq(learnerDloStatus.dloId, 'dlo.M1.demonstrating')));
+    expect(status.status).toBe('demonstrating');
+  });
+
+  it('upsertParentAssertion is idempotent — a re-confirm adds no duplicate row', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    const dloId = 'dlo.M1.demonstrating';
+    await upsertParentAssertion({ learnerId: learner.id, dloId, observedAt: new Date() });
+    await upsertParentAssertion({ learnerId: learner.id, dloId, observedAt: new Date() });
+    const links = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.learnerId, learner.id));
+    expect(links).toHaveLength(1);
+  });
+
+  it('clearParentAssertion removes the assertion and recomputes status to not-started', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    const dloId = 'dlo.M1.demonstrating';
+    await upsertParentAssertion({ learnerId: learner.id, dloId, observedAt: new Date() });
+    await clearParentAssertion({ learnerId: learner.id, dloId, observedAt: new Date() });
+
+    const links = await db
+      .select()
+      .from(observationDloLinks)
+      .where(eq(observationDloLinks.learnerId, learner.id));
+    expect(links).toHaveLength(0);
+
+    const [status] = await db
+      .select()
+      .from(learnerDloStatus)
+      .where(and(eq(learnerDloStatus.learnerId, learner.id), eq(learnerDloStatus.dloId, dloId)));
+    expect(status.status).toBe('not-started');
+  });
+
+  it('upsertParentAssertion returns null for a DLO not in the published catalog', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    const res = await upsertParentAssertion({
+      learnerId: learner.id,
+      dloId: 'dlo.ZZ.demonstrating',
+      observedAt: new Date(),
+    });
+    expect(res).toBeNull();
   });
 });

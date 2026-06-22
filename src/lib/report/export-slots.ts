@@ -53,3 +53,50 @@ export function resolveExportSlotData(
 
   return resolved;
 }
+
+// ─── On-screen slot resolution ───
+// The HEU report screen is PERSISTED-ONLY too: a slot is filled solely from its
+// selected DB work-sample entry — never a date/subject auto-match. This keeps the
+// on-screen report and the exported PDF in lockstep (both show "Empty" for an
+// unfilled slot). The screen's status vocabulary (complete/partial/empty, from
+// workSamples.status) differs from the export's (Empty/Selected/Confirmed), so
+// this is a sibling resolver rather than the same function — but neither auto-matches.
+
+export type ScreenSlotStatus = 'complete' | 'partial' | 'empty';
+
+/** Minimal slice of a DB work-sample row the screen resolver needs. */
+export type ScreenSlotSample = { slot: string; entryId: string | null; status: string };
+
+export type ResolvedScreenSlot<S, E, D> = S & {
+  matchedEntry: E | null;
+  status: ScreenSlotStatus;
+  dbSample: D | null;
+};
+
+/**
+ * Resolve the on-screen work-sample slots from persisted DB rows only. A slot is
+ * `empty` unless its DB row carries an `entryId` that resolves to a loaded entry
+ * (a selected-but-since-deleted entry falls back to `empty`, matching the export).
+ * Generic over the caller's slot / entry / sample shapes so the page keeps its
+ * richer types on the returned objects.
+ */
+export function resolveScreenSlots<
+  S extends { slotKey: string },
+  E extends { id: string },
+  D extends ScreenSlotSample,
+>(slots: S[], samples: D[], entries: E[]): ResolvedScreenSlot<S, E, D>[] {
+  const sampleMap = new Map(samples.map((s) => [s.slot, s]));
+  return slots.map((slot) => {
+    const dbSample = sampleMap.get(slot.slotKey) ?? null;
+    if (dbSample?.entryId) {
+      const matchedEntry = entries.find((e) => e.id === dbSample.entryId) ?? null;
+      if (matchedEntry) {
+        const st = dbSample.status;
+        const status: ScreenSlotStatus =
+          st === 'complete' || st === 'annotated' ? 'complete' : st === 'selected' ? 'partial' : 'empty';
+        return { ...slot, matchedEntry, status, dbSample };
+      }
+    }
+    return { ...slot, matchedEntry: null, status: 'empty', dbSample };
+  });
+}

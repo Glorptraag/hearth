@@ -199,6 +199,31 @@ export function isThinEntry(input: {
   );
 }
 
+/**
+ * Warm confirmations for the fast (thin-entry) save path. A thin entry skips the
+ * substantive post-save screen, so this toast is the *only* feedback the parent
+ * gets — and it lands on exactly the busy days when a flat "Learning entry saved!"
+ * feels coldest. The lines stay warm, concrete and philosophy-neutral, and don't
+ * over-claim (a thin entry hasn't been richly enriched, so nothing here promises
+ * an insight). Rotating keeps a run of quick saves from reading like a robot.
+ * See isThinEntry for what counts as thin.
+ */
+export const THIN_SAVE_MESSAGES = [
+  'Saved. Another moment in their story.',
+  'Got it — the quick notes count too.',
+  'Saved. Little moments like this add up.',
+  'Captured. Even a quick jot builds the picture.',
+] as const;
+
+/**
+ * Pick a warm confirmation for a thin-entry save. `pick` defaults to Math.random
+ * (so repeated quick saves vary) but is injectable for deterministic tests.
+ */
+export function warmThinSaveMessage(pick: () => number = Math.random): string {
+  const i = Math.floor(pick() * THIN_SAVE_MESSAGES.length) % THIN_SAVE_MESSAGES.length;
+  return THIN_SAVE_MESSAGES[i];
+}
+
 /** Form state read by the save handler to assemble the `/api/entries` body. */
 export interface EntrySaveForm {
   description: string;

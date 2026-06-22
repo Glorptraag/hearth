@@ -9,6 +9,8 @@ import {
   isThinEntry,
   buildEntrySavePayload,
   coerceEntrySource,
+  warmThinSaveMessage,
+  THIN_SAVE_MESSAGES,
   type EntrySaveForm,
   type EntrySaveContext,
 } from './entry-payload';
@@ -300,5 +302,28 @@ describe('buildEntrySavePayload', () => {
     const p = buildEntrySavePayload(baseForm, { ...baseCtx, scaffoldSessionId: 'sess-9' });
     expect(p.source).toBe('hearth_session');
     expect(p.sourceSessionId).toBe('sess-9');
+  });
+});
+
+describe('warmThinSaveMessage', () => {
+  it('always returns one of the warm thin-save confirmations', () => {
+    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0));
+    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0.999999));
+    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0.5));
+  });
+
+  it('maps the injected pick deterministically across the full set', () => {
+    THIN_SAVE_MESSAGES.forEach((msg, i) => {
+      // pick lands mid-bucket for index i
+      const pick = () => (i + 0.5) / THIN_SAVE_MESSAGES.length;
+      expect(warmThinSaveMessage(pick)).toBe(msg);
+    });
+  });
+
+  it('never returns a flat or empty confirmation', () => {
+    for (const msg of THIN_SAVE_MESSAGES) {
+      expect(msg.trim().length).toBeGreaterThan(0);
+      expect(msg.toLowerCase()).not.toBe('learning entry saved!');
+    }
   });
 });

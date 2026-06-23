@@ -20,6 +20,8 @@ import CoverageInContext from '@/components/report/CoverageInContext';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
 import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
+import { resolveScreenSlots } from '@/lib/report/export-slots';
+import { reportEditedSinceExport } from '@/lib/report/staleness';
 import { buildCoverageNarrative, derivePosture, POSTURE_LABEL, type CoverageResponse } from '@/lib/report/coverage-narrative';
 
 type Learner = {
@@ -50,6 +52,7 @@ type Entry = {
   workSampleQuality: number | null;
   status: string;
   source: string;
+  updatedAt: string | null;
 };
 
 type ReportData = {
@@ -68,6 +71,7 @@ type WorkSampleData = {
   slot: string;
   entryId: string | null;
   status: string;
+  updatedAt: string | null;
   annotation: {
     id: string;
     observations: string | null;
@@ -81,6 +85,7 @@ type WorkSampleData = {
     progressionSummary: string | null;
     progressionSummaryEdited: boolean | null;
     confirmedAt: string | null;
+    updatedAt: string | null;
   } | null;
 };
 
@@ -328,55 +333,28 @@ export default function ReportPage() {
     return dueDateStr ? new Date(dueDateStr).getFullYear() : new Date().getFullYear();
   }, [dueDateStr]);
 
-  // Work sample slots — merge DB-backed samples with slot config
-  const workSampleSlots = useMemo(() => {
-    const sampleMap = new Map(
-      (report?.samples ?? []).map((s) => [s.slot, s])
-    );
+  // Work sample slots — persisted-only (lib/report/export-slots → resolveScreenSlots):
+  // a slot is filled solely from its selected DB entry, never a date/subject
+  // auto-match, so the on-screen report matches the exported PDF — an unfilled
+  // slot reads "Empty" in both. (The earlier auto-match fallback diverged from
+  // the persisted-only export and could show an entry the parent never chose.)
+  const workSampleSlots = useMemo(
+    () => resolveScreenSlots(WORK_SAMPLE_SLOTS, report?.samples ?? [], entries),
+    [entries, report?.samples],
+  );
 
-    return WORK_SAMPLE_SLOTS.map((slot) => {
-      const dbSample = sampleMap.get(slot.slotKey) ?? null;
-
-      // If DB has a selected entry, use that
-      if (dbSample?.entryId) {
-        const matchedEntry = entries.find((e) => e.id === dbSample.entryId) ?? null;
-        const dbStatus = dbSample.status as string;
-        const displayStatus: 'complete' | 'partial' | 'empty' =
-          dbStatus === 'complete' || dbStatus === 'annotated' ? 'complete'
-          : dbStatus === 'selected' ? 'partial'
-          : 'empty';
-        return { ...slot, matchedEntry, status: displayStatus, dbSample };
-      }
-
-      // Fallback: auto-match like before
-      const candidates = entries.filter((e) => {
-        const d = new Date(e.dateOccurred + 'T00:00:00');
-        if (d.getFullYear() !== reportYear) return false;
-        const month = d.getMonth() + 1;
-        const inHalf = slot.termHalf === 'early' ? month <= 6 : month >= 7;
-        if (!inHalf) return false;
-        const subjectSet = new Set([
-          ...(e.subjects ?? []),
-          ...(e.aiEnrichment?.subjects_detected ?? []).map((s) => s.toLowerCase()),
-        ]);
-        return subjectSet.has(slot.area) || (slot.altArea ? subjectSet.has(slot.altArea) : false);
-      });
-
-      candidates.sort((a, b) => {
-        const aHasEvidence = (a.evidenceUrls?.length ?? 0) > 0;
-        const bHasEvidence = (b.evidenceUrls?.length ?? 0) > 0;
-        if (aHasEvidence !== bHasEvidence) return aHasEvidence ? -1 : 1;
-        return new Date(b.dateOccurred).getTime() - new Date(a.dateOccurred).getTime();
-      });
-
-      const match = candidates[0] ?? null;
-      const status: 'complete' | 'partial' | 'empty' = match
-        ? (match.evidenceUrls?.length ?? 0) > 0 ? 'complete' : 'partial'
-        : 'empty';
-
-      return { ...slot, matchedEntry: match, status, dbSample };
-    });
-  }, [entries, report?.samples, reportYear]);
+  // "Edited since export": stale when any content (samples, their annotations,
+  // or the underlying entries) changed after the last export. Excludes the
+  // report row's own updatedAt — the export PATCH bumps it alongside
+  // lastExportedAt, which would otherwise read as permanently stale.
+  const editedSinceExport = useMemo(() => {
+    const samples = report?.samples ?? [];
+    return reportEditedSinceExport(report?.lastExportedAt, [
+      ...samples.map((s) => s.updatedAt),
+      ...samples.map((s) => s.annotation?.updatedAt ?? null),
+      ...entries.map((e) => e.updatedAt),
+    ]);
+  }, [report?.samples, report?.lastExportedAt, entries]);
 
   const completedSlots = workSampleSlots.filter((s) => s.status === 'complete').length;
 
@@ -548,7 +526,7 @@ export default function ReportPage() {
                     </span>
 
                     <p className="font-serif text-xs text-text-secondary mt-sm truncate">
-                      {slot.matchedEntry ? slot.matchedEntry.title : 'No matching entry yet'}
+                      {slot.matchedEntry ? slot.matchedEntry.title : 'Empty'}
                     </p>
 
                     <span className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200">
@@ -872,6 +850,14 @@ export default function ReportPage() {
         {report?.lastExportedAt && (
           <span className="font-sans text-[10px] text-text-muted">
             Last exported {format(new Date(report.lastExportedAt), 'd MMM yyyy')}
+          </span>
+        )}
+        {editedSinceExport && (
+          <span
+            className="inline-flex items-center rounded-full bg-amber-status/15 px-sm py-[2px] font-sans text-[10px] font-semibold text-amber-status"
+            title="This report has changed since you last exported it"
+          >
+            Edited since export
           </span>
         )}
         {entries.length === 0 && (

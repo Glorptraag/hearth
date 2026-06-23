@@ -46,7 +46,11 @@ export const POST = routeHandler(async () => {
       `*[_type == "pack" && status == "published" && title match "Starter*"][0]{ _id }`
     );
 
-    if (starterPack) {
+    // Guard on _id, not just truthiness: family_library has a pack-xor-module
+    // check constraint, so inserting a row with no sanity_pack_id throws. A GROQ
+    // `[0]{_id}` can resolve to a value without a usable _id — skip rather than
+    // poison the request.
+    if (starterPack && starterPack._id) {
       await db
         .insert(familyLibrary)
         .values({ familyId: family.id, sanityPackId: starterPack._id })

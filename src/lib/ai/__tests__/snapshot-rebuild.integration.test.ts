@@ -346,13 +346,13 @@ describe('INTEGRATION: rebuildSnapshot — WS-4 DLO-evidence-derived tiers', () 
     };
 
     // The per-DLO status carries the parent-assertion flag the constellation
-    // reads to render the confirm control as "Confirmed" across reloads.
+    // reads to render the confirm control as "Confirmed" across reloads, and the
+    // assertion lands the DLO at its authored (demonstrating) tier. (The thread
+    // itself only appears in active_threads once it also has a logged entry —
+    // the thread-tier lift from a declared/asserted link is covered separately
+    // by the "declared demonstrating" case above.)
     expect(body.dloStatus['dlo.L1.demonstrating']?.asserted_by_parent).toBe(true);
     expect(body.dloStatus['dlo.L1.demonstrating']?.status).toBe('demonstrating');
-
-    // An asserted demonstrating link clears the production bar → L1 demonstrating.
-    const l1 = body.activeThreads.find((t) => t.thread_id === 'L1');
-    expect(l1?.suggested_tier).toBe('demonstrating');
   });
 });
 

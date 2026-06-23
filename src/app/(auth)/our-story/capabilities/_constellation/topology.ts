@@ -56,7 +56,7 @@ export const ORDERED_DOMAINS: DomainSpec[] = [...V2_DOMAINS]
 
 export function domainColor(domainKey: string): string {
   const d = V2_DOMAINS_BY_KEY[domainKey];
-  return `var(${d?.colourVar ?? '--color-domain-english'})`;
+  return `var(${d?.colourVar ?? '--color-capdomain-1'})`;
 }
 
 /* Build a thread DAG from THREAD_NAMES + THREAD_CONNECTIONS.

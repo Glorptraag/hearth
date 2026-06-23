@@ -319,3 +319,27 @@ describe('TIER_ORDER', () => {
     expect(TIER_ORDER).toEqual(['emerging', 'developing', 'demonstrating']);
   });
 });
+
+describe('parent assertion under PRODUCTION_TIER_BAR', () => {
+  // A parent confirm lands an `asserted` link; asserted + declared share the
+  // minDeclaredOrAsserted clause. Under the production bar, demonstrating is
+  // reachable ONLY via declared/asserted (inferredDistinctDays = Infinity), so a
+  // parent confirm is the corroboration that lifts a thread to demonstrating.
+  it('lifts a thread to demonstrating on ONE parent-asserted link', () => {
+    const r = deriveThreadTierFromDlos(
+      {},
+      { demonstrating: evidence({ asserted: 1 }) },
+      PRODUCTION_TIER_BAR,
+    );
+    expect(r.tier).toBe('demonstrating');
+  });
+
+  it('does NOT let inferred-only evidence reach demonstrating (the bar a confirm clears)', () => {
+    const r = deriveThreadTierFromDlos(
+      {},
+      { demonstrating: evidence({ inferred: 9, inferredDistinctDays: 9 }) },
+      PRODUCTION_TIER_BAR,
+    );
+    expect(r.tier).not.toBe('demonstrating');
+  });
+});

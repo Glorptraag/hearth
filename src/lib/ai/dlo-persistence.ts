@@ -30,8 +30,9 @@
  */
 import { db } from '@/lib/db';
 import { observationDloLinks, learnerDloStatus } from '@/lib/db/schema';
-import { eq, and, inArray, sql } from 'drizzle-orm';
+import { eq, and, inArray, isNull, sql } from 'drizzle-orm';
 import { getValidDlos } from './dlo-cache';
+import { parseDloId } from './thread-tier';
 
 export type DloTier = 'emerging' | 'developing' | 'demonstrating';
 
@@ -152,7 +153,8 @@ async function recomputeLearnerDloStatus(args: {
   dloId: string;
   confidence: number | null;
   observedAt: Date;
-  sourceObservationId: string;
+  // Null for a parent assertion — the status has no backing learning entry.
+  sourceObservationId: string | null;
 }): Promise<void> {
   const { learnerId, dloId, confidence, observedAt, sourceObservationId } = args;
 
@@ -342,4 +344,86 @@ export async function corroborateDloOpportunities(args: {
     }
   }
   return promoted;
+}
+
+/**
+ * Record an explicit parent assertion for one (learner, DLO): "yes, I've seen
+ * this". Lands an `asserted` / `observed` link with NO backing observation
+ * (observation_id NULL), confidence 1, at the DLO's own authored tier (parsed
+ * from the id, so a parent can only confirm the tier the catalog defines — never
+ * over-claim). Recomputes learner_dlo_status, which under PRODUCTION_TIER_BAR is
+ * the corroboration the "demonstrating" bar needs. Idempotent: the partial
+ * unique index (learner_id, dlo_id WHERE asserted & observation_id IS NULL) makes
+ * a re-confirm a no-op. Returns the asserted tier, or null if the DLO id is
+ * malformed or not in the published catalog.
+ */
+export async function upsertParentAssertion(args: {
+  learnerId: string;
+  dloId: string;
+  observedAt: Date;
+}): Promise<{ tier: DloTier } | null> {
+  const { learnerId, dloId, observedAt } = args;
+  const parsed = parseDloId(dloId);
+  if (!parsed) return null;
+  const tier = parsed.tier as DloTier;
+  const { ids } = await getValidDlos();
+  if (!ids.has(dloId)) return null;
+
+  await db
+    .insert(observationDloLinks)
+    .values({
+      observationId: null,
+      learnerId,
+      dloId,
+      tier,
+      confidence: '1',
+      rationale: null,
+      provenance: 'asserted' as const,
+      claimedTier: null,
+      evidenceState: 'observed' as const,
+    })
+    .onConflictDoNothing({
+      target: [observationDloLinks.learnerId, observationDloLinks.dloId],
+      where: sql`provenance = 'asserted' and observation_id is null`,
+    });
+
+  await recomputeLearnerDloStatus({
+    learnerId,
+    dloId,
+    confidence: 1,
+    observedAt,
+    sourceObservationId: null,
+  });
+  return { tier };
+}
+
+/**
+ * Clear a parent assertion (dispute / undo). Deletes the parent's asserted,
+ * observation-less link for the (learner, DLO) and recomputes status from
+ * whatever evidence remains. Does NOT touch inferred/declared evidence.
+ */
+export async function clearParentAssertion(args: {
+  learnerId: string;
+  dloId: string;
+  observedAt: Date;
+}): Promise<void> {
+  const { learnerId, dloId, observedAt } = args;
+  await db
+    .delete(observationDloLinks)
+    .where(
+      and(
+        eq(observationDloLinks.learnerId, learnerId),
+        eq(observationDloLinks.dloId, dloId),
+        eq(observationDloLinks.provenance, 'asserted'),
+        isNull(observationDloLinks.observationId),
+      ),
+    );
+
+  await recomputeLearnerDloStatus({
+    learnerId,
+    dloId,
+    confidence: null,
+    observedAt,
+    sourceObservationId: null,
+  });
 }

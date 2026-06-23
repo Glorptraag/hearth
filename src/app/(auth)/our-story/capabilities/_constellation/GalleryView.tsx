@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, type ReactNode } from 'react';
+import { DloConfirmButton } from './DloConfirmButton';
 import {
   ALL_THREADS,
   ORDERED_DOMAINS,
@@ -658,12 +659,41 @@ const TIER_COLOR: Record<'emerging' | 'developing' | 'demonstrating', string> = 
 };
 
 export function GalleryMoments({
-  snap, dlo,
-}: { snap: LearnerSnapshot; dlo: SynthDLO }) {
+  snap, dlo, confirmed = false, pending = false, onConfirm,
+}: {
+  snap: LearnerSnapshot;
+  dlo: SynthDLO;
+  confirmed?: boolean;
+  pending?: boolean;
+  onConfirm?: (next: boolean) => void;
+}) {
   const W = 1100, H = 460;
   const padL = 100, padR = 60;
   const [moments, setMoments] = useState<GalleryMoment[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+
+  // The confirm control sits above the timeline in every state — a parent can
+  // assert an objective even with zero logged moments (the whole point: "I've
+  // seen this, even off-log"). No-ops to a bare timeline when onConfirm is unset.
+  const wrap = (inner: ReactNode) =>
+    onConfirm ? (
+      <div className="flex flex-col gap-md">
+        <div className="flex flex-wrap items-center justify-between gap-sm">
+          <p className="max-w-[56ch] font-sans text-[0.78rem] text-text-secondary">
+            Seen {snap.name} do this, even off-log? Confirm it to corroborate this objective.
+          </p>
+          <DloConfirmButton
+            confirmed={confirmed}
+            pending={pending}
+            descriptor={dlo.descriptor}
+            onToggle={() => onConfirm(!confirmed)}
+          />
+        </div>
+        {inner}
+      </div>
+    ) : (
+      inner
+    );
 
   useEffect(() => {
     let cancelled = false;
@@ -715,7 +745,7 @@ export function GalleryMoments({
   }, [snap.id, dlo.id, dlo.thread]);
 
   if (moments === null) {
-    return (
+    return wrap(
       <svg
         className="cap-gallery-svg"
         viewBox={`0 0 ${W} ${H}`}
@@ -733,7 +763,7 @@ export function GalleryMoments({
   }
 
   if (moments.length === 0) {
-    return (
+    return wrap(
       <svg
         className="cap-gallery-svg"
         viewBox={`0 0 ${W} ${H}`}
@@ -761,7 +791,7 @@ export function GalleryMoments({
   const yLogger = H / 2 + 40;
   const yModule = H / 2 - 40;
 
-  return (
+  return wrap(
     <svg
       className="cap-gallery-svg"
       viewBox={`0 0 ${W} ${H}`}

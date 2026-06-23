@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { DloConfirmButton } from './DloConfirmButton';
 import {
   ALL_THREADS,
   ORDERED_DOMAINS,
@@ -320,7 +321,16 @@ export function TableThreads({
 /* ----- Depth 3 : DLO list ----- */
 export function TableDLOs({
   snap, threadId, dlosByThread, onDrillDown,
-}: { snap: LearnerSnapshot; threadId: string; dlosByThread?: Record<string, SanityDLO[]>; onDrillDown: (d: DLO) => void }) {
+  confirmedDloIds, pendingDloIds, onConfirmDlo,
+}: {
+  snap: LearnerSnapshot;
+  threadId: string;
+  dlosByThread?: Record<string, SanityDLO[]>;
+  onDrillDown: (d: DLO) => void;
+  confirmedDloIds?: Set<string>;
+  pendingDloIds?: Set<string>;
+  onConfirmDlo?: (dloId: string, next: boolean) => void;
+}) {
   const thread = THREADS_BY_ID[threadId];
   const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
 
@@ -355,27 +365,39 @@ export function TableDLOs({
           dlo.status === 'confirmed' ? 'bg-sage-muted text-sage-text' :
           dlo.status === 'emerging' ? 'bg-ember-glow text-ember' :
           'text-text-muted bg-surface-hover';
+        const confirmed = confirmedDloIds?.has(dlo.id) ?? false;
+        const pending = pendingDloIds?.has(dlo.id) ?? false;
         return (
-          <button
+          <div
             key={dlo.id}
-            type="button"
-            onClick={() => onDrillDown(dlo)}
-            className="grid w-full grid-cols-[40px_1fr_auto] gap-sm px-md py-sm sm:grid-cols-[48px_1fr_200px_120px] sm:gap-md sm:px-lg sm:py-md items-center text-left border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
+            className="flex items-center gap-sm border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)] px-md py-sm sm:gap-md sm:px-lg sm:py-md"
           >
-            <span className="inline-flex justify-center text-[1.6rem] leading-none" style={{ color: tierColor }}>{dlo.glyph}</span>
-            <div className="min-w-0">
-              <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
-              <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
-                {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
+            <button
+              type="button"
+              onClick={() => onDrillDown(dlo)}
+              className="flex min-w-0 flex-1 items-center gap-sm text-left sm:gap-md"
+              aria-label={`${dlo.descriptor} — open moments`}
+            >
+              <span className="inline-flex w-[28px] shrink-0 justify-center text-[1.6rem] leading-none sm:w-[36px]" style={{ color: tierColor }}>{dlo.glyph}</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
+                <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
+                  {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
+                </div>
               </div>
-            </div>
-            <div>
-              <span className={`inline-block rounded-sm px-sm py-[4px] font-sans text-[0.75rem] uppercase tracking-[0.05em] ${statusChip}`}>
-                {dlo.status === 'confirmed' ? 'Confirmed' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
+              <span className={`hidden shrink-0 rounded-sm px-sm py-[4px] font-sans text-[0.75rem] uppercase tracking-[0.05em] sm:inline-block ${statusChip}`}>
+                {dlo.status === 'confirmed' ? 'Demonstrating' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
               </span>
-            </div>
-            <div className="hidden sm:block text-right font-sans text-[0.78rem] text-text-muted">→ moments</div>
-          </button>
+            </button>
+            {onConfirmDlo && (
+              <DloConfirmButton
+                confirmed={confirmed}
+                pending={pending}
+                descriptor={dlo.descriptor}
+                onToggle={() => onConfirmDlo(dlo.id, !confirmed)}
+              />
+            )}
+          </div>
         );
       })}
     </div>
@@ -425,7 +447,6 @@ export function TableMoments({
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEvidence(null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFallback(null);
 
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)

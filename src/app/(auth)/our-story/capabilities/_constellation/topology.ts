@@ -156,6 +156,11 @@ export const TIER_LABEL: Record<Tier, string> = {
 
 export type { ThreadDomain };
 
+/* Per-DLO status slice the constellation reads, keyed by Sanity DLO `_id`.
+   `asserted_by_parent` mirrors the snapshot field — true when the parent has
+   explicitly confirmed this DLO ("Yes, I've seen this"). */
+export type DloStatusLite = { status: string; asserted_by_parent?: boolean };
+
 /* Snapshot consumed by TableView / GalleryView. Built from /api/capabilities/[learnerId]. */
 export type LearnerSnapshot = {
   id: string;
@@ -170,7 +175,7 @@ export type LearnerSnapshot = {
   // from `learner_dlo_status`. Missing entries default to 'not-started'. This is
   // the real per-DLO surface buildDLOs reads — the old fabricated dlos_confirmed/
   // dlos_total counts were removed in WS-4.
-  dloStatusById: Record<string, { status: string }>;
+  dloStatusById: Record<string, DloStatusLite>;
 };
 
 export type ActiveThreadRow = {
@@ -187,7 +192,7 @@ export type ActiveThreadRow = {
 export function buildSnapshot(
   learner: { id: string; name: string; colourToken: string | null },
   rows: ActiveThreadRow[],
-  dloStatusById?: Record<string, { status: string }>,
+  dloStatusById?: Record<string, DloStatusLite>,
 ): LearnerSnapshot {
   const tier: Record<string, Tier> = {};
   const obs: Record<string, number> = {};

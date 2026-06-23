@@ -3,6 +3,7 @@
 import './constellation.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 import { ChildSelector } from '@/components/ui/child-selector';
 import {
   ALL_THREADS,
@@ -12,6 +13,7 @@ import {
   buildSnapshot,
   threadCurrentTier,
   type ActiveThreadRow,
+  type DloStatusLite,
   type LearnerSnapshot,
   type SanityDLO,
   type SynthDLO,
@@ -158,16 +160,22 @@ function ContextLine({
 }
 
 export function ConstellationRoute({
-  learners, learnerId, snap, dlosByThread = {}, onSelectLearner,
+  learners, learnerId, snap, dlosByThread = {}, onSelectLearner, onDataChanged,
 }: {
   learners: Learner[];
   learnerId: string;
   snap: LearnerSnapshot;
   dlosByThread?: Record<string, SanityDLO[]>;
   onSelectLearner: (id: string) => void;
+  // Called after a DLO confirm/clear succeeds so the page can refetch the
+  // snapshot. The rebuild is fire-and-forget server-side, so the refetch may
+  // lag — local optimistic state below keeps the control correct until it
+  // catches up.
+  onDataChanged?: () => void;
 }) {
   const router = useRouter();
   const search = useSearchParams();
+  const { toast } = useToast();
 
   const initialView: ViewMode = search.get('view') === 'gallery' ? 'gallery' : 'table';
   const initialDepth: Depth = (() => {
@@ -198,6 +206,53 @@ export function ConstellationRoute({
   const [depth, setDepth] = useState<Depth>(initialDepth);
   const [focus, setFocus] = useState<Focus>(initialFocus);
 
+  // Parent DLO confirmations. `assertOverrides` is the optimistic layer (dloId →
+  // intended confirmed-state) laid over the snapshot's durable
+  // `asserted_by_parent` flag; `pendingDlos` disables a control mid-request.
+  const [assertOverrides, setAssertOverrides] = useState<Record<string, boolean>>({});
+  const [pendingDlos, setPendingDlos] = useState<Set<string>>(new Set());
+
+  const confirmedDloIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const [id, v] of Object.entries(snap.dloStatusById)) {
+      if (v?.asserted_by_parent) s.add(id);
+    }
+    for (const [id, v] of Object.entries(assertOverrides)) {
+      if (v) s.add(id); else s.delete(id);
+    }
+    return s;
+  }, [snap.dloStatusById, assertOverrides]);
+
+  const handleConfirmDlo = async (dloId: string, next: boolean) => {
+    setAssertOverrides((prev) => ({ ...prev, [dloId]: next }));
+    setPendingDlos((prev) => new Set(prev).add(dloId));
+    try {
+      const res = await fetch(
+        `/api/capabilities/${learnerId}/dlo/${encodeURIComponent(dloId)}/confirm`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: next ? 'confirm' : 'dispute' }),
+        },
+      );
+      if (!res.ok) throw new Error(`confirm ${res.status}`);
+      onDataChanged?.();
+    } catch {
+      // Revert the optimistic flip; tell the parent it didn't stick.
+      setAssertOverrides((prev) => ({ ...prev, [dloId]: !next }));
+      toast(
+        next ? 'Could not save your confirmation. Try again.' : 'Could not clear that. Try again.',
+        'error',
+      );
+    } finally {
+      setPendingDlos((prev) => {
+        const n = new Set(prev);
+        n.delete(dloId);
+        return n;
+      });
+    }
+  };
+
   // Reset the drill to Level 1 when the parent switches child. Without this a
   // deep drill into one child's thread/DLO/moments carries over to the next
   // child — showing the wrong context and inviting cross-child comparison. The
@@ -209,6 +264,10 @@ export function ConstellationRoute({
     prevLearnerId.current = learnerId;
     setDepth(1);
     setFocus({ domain: null, thread: null, dlo: null });
+    // Drop the previous child's optimistic confirmations — they're keyed by DLO
+    // id, which is shared across learners, so they'd otherwise leak across.
+    setAssertOverrides({});
+    setPendingDlos(new Set());
   }, [learnerId]);
 
   // Sync URL on changes
@@ -283,7 +342,15 @@ export function ConstellationRoute({
           <TableThreads snap={snap} depth={2} focusDomain={focus.domain} onDrillDown={drillToThread} />
         )}
         {view === 'table' && depth === 3 && focus.thread && (
-          <TableDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrillDown={drillToDLO} />
+          <TableDLOs
+            snap={snap}
+            threadId={focus.thread}
+            dlosByThread={dlosByThread}
+            onDrillDown={drillToDLO}
+            confirmedDloIds={confirmedDloIds}
+            pendingDloIds={pendingDlos}
+            onConfirmDlo={handleConfirmDlo}
+          />
         )}
         {view === 'table' && depth === 4 && dloObj && (
           <TableMoments snap={snap} dlo={dloObj} />
@@ -294,7 +361,15 @@ export function ConstellationRoute({
             {depth === 1 && <GalleryDomains snap={snap} onDrill={drillToDomain} />}
             {depth === 2 && focus.domain && <GalleryThreads snap={snap} domainKey={focus.domain} onDrill={drillToThread} />}
             {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrill={drillToDLO} />}
-            {depth === 4 && dloObj && <GalleryMoments snap={snap} dlo={dloObj} />}
+            {depth === 4 && dloObj && (
+              <GalleryMoments
+                snap={snap}
+                dlo={dloObj}
+                confirmed={confirmedDloIds.has(dloObj.id)}
+                pending={pendingDlos.has(dloObj.id)}
+                onConfirm={(next) => handleConfirmDlo(dloObj.id, next)}
+              />
+            )}
           </div>
         )}
       </div>
@@ -328,7 +403,7 @@ export function ConstellationRoute({
 export function buildSnapshotFromApi(
   learner: Learner,
   rows: ActiveThreadRow[],
-  dloStatus?: Record<string, { status: string }>,
+  dloStatus?: Record<string, DloStatusLite>,
 ): LearnerSnapshot {
   return buildSnapshot(
     { id: learner.id, name: learner.name, colourToken: learner.colourToken },

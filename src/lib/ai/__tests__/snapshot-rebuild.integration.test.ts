@@ -17,6 +17,7 @@ import { familyIntelligenceSnapshots, learningEntries } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry, createDloLink } from '@/test/db-factories';
 import { rebuildSnapshot } from '../snapshot-rebuild';
+import { upsertParentAssertion } from '../dlo-persistence';
 import { GET as getCapabilities } from '@/app/api/capabilities/[learnerId]/route';
 import { TEST_FAMILY_ID, TEST_USER_ID } from '../../../../vitest.setup';
 import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
@@ -43,6 +44,21 @@ vi.mock('@/lib/notifications/triggers', () => ({
   triggerRecommendationsRefreshNotice: vi.fn(async () => {}),
   triggerConstellationHonestyNotice: vi.fn(async () => {}),
   cleanStaleNotifications: vi.fn(async () => {}),
+}));
+
+// upsertParentAssertion validates the DLO id against the published catalog
+// (getValidDlos). snapshot-rebuild itself never calls it, so mocking is inert
+// for the other cases here.
+vi.mock('../dlo-cache', () => ({
+  getValidDlos: vi.fn(async () => ({
+    ids: new Set(['dlo.L1.emerging', 'dlo.L1.developing', 'dlo.L1.demonstrating']),
+    tierById: new Map<string, 'emerging' | 'developing' | 'demonstrating'>([
+      ['dlo.L1.emerging', 'emerging'],
+      ['dlo.L1.developing', 'developing'],
+      ['dlo.L1.demonstrating', 'demonstrating'],
+    ]),
+    descriptorById: new Map<string, string>(),
+  })),
 }));
 
 // sanityClient already mocked globally in vitest.setup.ts but the
@@ -295,6 +311,40 @@ describe('INTEGRATION: rebuildSnapshot — WS-4 DLO-evidence-derived tiers', () 
     const s1 = child.active_threads.find((t) => t.thread_id === 'S1');
     expect(s1).toBeDefined();
     expect(s1!.suggested_tier).toBe('unobserved');
+  });
+
+  it('surfaces a parent assertion as dlo_status.asserted_by_parent through the capabilities API (T2)', async () => {
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+
+    // Parent confirms a DLO with NO backing entry — the real confirm-route path.
+    const asserted = await upsertParentAssertion({
+      learnerId: learner.id,
+      dloId: 'dlo.L1.demonstrating',
+      observedAt: new Date(),
+    });
+    expect(asserted).toEqual({ tier: 'demonstrating' });
+
+    await rebuildSnapshot(TEST_FAMILY_ID, 'manual');
+
+    const res = await getCapabilities(
+      new NextRequest(`http://x/api/capabilities/${learner.id}`),
+      { params: Promise.resolve({ learnerId: learner.id }) },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      activeThreads: Array<Record<string, unknown>>;
+      dloStatus: Record<string, { status: string; asserted_by_parent?: boolean }>;
+    };
+
+    // The per-DLO status carries the parent-assertion flag the constellation
+    // reads to render the confirm control as "Confirmed" across reloads.
+    expect(body.dloStatus['dlo.L1.demonstrating']?.asserted_by_parent).toBe(true);
+    expect(body.dloStatus['dlo.L1.demonstrating']?.status).toBe('demonstrating');
+
+    // An asserted demonstrating link clears the production bar → L1 demonstrating.
+    const l1 = body.activeThreads.find((t) => t.thread_id === 'L1');
+    expect(l1?.suggested_tier).toBe('demonstrating');
   });
 });
 

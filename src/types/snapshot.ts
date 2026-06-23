@@ -104,6 +104,12 @@ export interface DloStatusEntry {
   status: DloStatusValue | string;
   confidence: number | null;
   last_observed_at: string | null;
+  // True when this learner has an explicit parent assertion ("Yes, I've seen
+  // this") for the DLO — an `asserted`, observation-less link. Lets the
+  // constellation render the parent-facing confirm control as "Confirmed"
+  // (and offer "Clear") durably across reloads, not just optimistically.
+  // Absent on snapshots written before the T2 confirm loop landed.
+  asserted_by_parent?: boolean;
 }
 
 // ─── Family-wide snapshot ───

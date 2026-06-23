@@ -169,6 +169,30 @@
   --thinking-pulse-high: rgba(217, 123, 58, 0.30);
   --skeleton-low:        rgba(232, 223, 212, 0.04);
   --skeleton-high:       rgba(232, 223, 212, 0.08);
+
+  /* ── Capability constellation: 15-domain palette (dark) ──
+     One colour per v2 domain (keyed by numericId; see capability-universe-v2.ts).
+     Consumed only via inline var() by the constellation — NOT a Tailwind utility,
+     and deliberately separate from the 8 --color-domain-* subject tokens.
+     Tuned for colour-blind legibility: hue families that repeat across 15 slots
+     are kept non-adjacent (bands render in numericId order) and separated by
+     lightness, so deutan/protan viewers still get a luminance cue. The ○◐●
+     tier glyphs + text labels remain the primary disambiguator regardless. */
+  --color-capdomain-1:  #6FA8DC;  /* Language & Literacy — sky blue */
+  --color-capdomain-2:  #E0913F;  /* Mathematical Thinking — orange */
+  --color-capdomain-3:  #74C282;  /* Scientific Thinking — green */
+  --color-capdomain-4:  #A98BD6;  /* Technological Fluency — purple */
+  --color-capdomain-5:  #E3C552;  /* History, Civic & Geographic — yellow */
+  --color-capdomain-6:  #59B6C4;  /* Literary Tradition — teal */
+  --color-capdomain-7:  #D98AB0;  /* Classical Languages — pink */
+  --color-capdomain-8:  #8093E0;  /* Logic & Rhetoric — indigo */
+  --color-capdomain-9:  #C2A36B;  /* Theology & Scripture — sand */
+  --color-capdomain-10: #E37A66;  /* Visual & Plastic Arts — coral */
+  --color-capdomain-11: #5FCBB6;  /* Musical & Performative — aqua */
+  --color-capdomain-12: #C7B24F;  /* Practical Mastery — olive gold */
+  --color-capdomain-13: #CE86D2;  /* Personal & Ethical — orchid */
+  --color-capdomain-14: #6E9BD9;  /* Social & Relational — cornflower */
+  --color-capdomain-15: #E8A24E;  /* Physical & Embodied — amber */
 }
 
 /* ==========================================================================
@@ -259,6 +283,24 @@
   --thinking-pulse-high:   rgba(192, 86, 33, 0.40);
   --skeleton-low:          rgba(44, 36, 24, 0.04);
   --skeleton-high:         rgba(44, 36, 24, 0.08);
+
+  /* Capability constellation 15-domain palette (gathering) — same hue order as
+     dark, darkened ~25–30% so each reads against the parchment surface. */
+  --color-capdomain-1:  #2F6FA8;  /* Language & Literacy */
+  --color-capdomain-2:  #B26A1C;  /* Mathematical Thinking */
+  --color-capdomain-3:  #3E9159;  /* Scientific Thinking */
+  --color-capdomain-4:  #7A52B0;  /* Technological Fluency */
+  --color-capdomain-5:  #A9871C;  /* History, Civic & Geographic */
+  --color-capdomain-6:  #2C8A99;  /* Literary Tradition */
+  --color-capdomain-7:  #B0567E;  /* Classical Languages */
+  --color-capdomain-8:  #4A5CC0;  /* Logic & Rhetoric */
+  --color-capdomain-9:  #8A6B33;  /* Theology & Scripture */
+  --color-capdomain-10: #C2543C;  /* Visual & Plastic Arts */
+  --color-capdomain-11: #2E9E86;  /* Musical & Performative */
+  --color-capdomain-12: #8C7A1E;  /* Practical Mastery */
+  --color-capdomain-13: #9E54C0;  /* Personal & Ethical */
+  --color-capdomain-14: #3D6FB5;  /* Social & Relational */
+  --color-capdomain-15: #B5751E;  /* Physical & Embodied */
 }
 
 /* Adapt ambient atmospheric glow for gathering mode (subtler — cream surface

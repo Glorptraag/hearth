@@ -131,6 +131,52 @@ describe('PATCH /api/entries/[id]', () => {
     expect(row?.evidenceUrls).toEqual(['https://blob/original.jpg']);
   });
 
+  it('re-enriches (flips aiEnrichment to pending) when a complete entry’s subjects change', async () => {
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+    const entry = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Marble run',
+      status: 'complete',
+      subjects: ['science'],
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'S1', confidence: 0.9 }] },
+    });
+    asUser({});
+
+    const res = await PATCH(
+      patchReq(`http://x/api/entries/${entry.id}`, { subjects: ['science', 'mathematics'] }),
+      ctx(entry.id),
+    );
+    expect(res.status).toBe(200);
+    // Response carries the synchronous update — the stale map is dropped to
+    // 'pending' before the after() re-enrich runs.
+    const body = (await res.json()) as { aiEnrichment: { status: string } | null };
+    expect(body.aiEnrichment?.status).toBe('pending');
+  });
+
+  it('does NOT re-enrich when only the title changes (no needless Anthropic call)', async () => {
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+    const entry = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Marble run',
+      status: 'complete',
+      subjects: ['science'],
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'S1', confidence: 0.9 }] },
+    });
+    asUser({});
+
+    const res = await PATCH(
+      patchReq(`http://x/api/entries/${entry.id}`, { title: 'Marble run v2' }),
+      ctx(entry.id),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { aiEnrichment: { status: string } | null };
+    expect(body.aiEnrichment?.status).toBe('enriched');
+  });
+
   it("cannot modify another family's entry — 404, row untouched", async () => {
     const { theirs } = await seedTwoFamilies();
     asUser({});

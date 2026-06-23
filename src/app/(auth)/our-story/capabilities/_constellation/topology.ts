@@ -56,7 +56,7 @@ export const ORDERED_DOMAINS: DomainSpec[] = [...V2_DOMAINS]
 
 export function domainColor(domainKey: string): string {
   const d = V2_DOMAINS_BY_KEY[domainKey];
-  return `var(${d?.colourVar ?? '--color-domain-english'})`;
+  return `var(${d?.colourVar ?? '--color-capdomain-1'})`;
 }
 
 /* Build a thread DAG from THREAD_NAMES + THREAD_CONNECTIONS.
@@ -156,6 +156,21 @@ export const TIER_LABEL: Record<Tier, string> = {
 
 export type { ThreadDomain };
 
+/* Per-DLO status slice the constellation reads, keyed by Sanity DLO `_id`.
+   `asserted_by_parent` mirrors the snapshot field — true when the parent has
+   explicitly confirmed this DLO ("Yes, I've seen this"). */
+export type DloStatusLite = { status: string; asserted_by_parent?: boolean };
+
+/* Explore (gap) view data, sliced from the per-child snapshot. */
+export type GapAnalysis = {
+  underserved_subjects: string[];
+  suggested_focus_threads: string[];
+};
+export type CurriculumCoverage = Record<
+  string,
+  { total_entries: number; unique_descriptors: number; coverage_percentage: number }
+>;
+
 /* Snapshot consumed by TableView / GalleryView. Built from /api/capabilities/[learnerId]. */
 export type LearnerSnapshot = {
   id: string;
@@ -170,7 +185,7 @@ export type LearnerSnapshot = {
   // from `learner_dlo_status`. Missing entries default to 'not-started'. This is
   // the real per-DLO surface buildDLOs reads — the old fabricated dlos_confirmed/
   // dlos_total counts were removed in WS-4.
-  dloStatusById: Record<string, { status: string }>;
+  dloStatusById: Record<string, DloStatusLite>;
 };
 
 export type ActiveThreadRow = {
@@ -187,7 +202,7 @@ export type ActiveThreadRow = {
 export function buildSnapshot(
   learner: { id: string; name: string; colourToken: string | null },
   rows: ActiveThreadRow[],
-  dloStatusById?: Record<string, { status: string }>,
+  dloStatusById?: Record<string, DloStatusLite>,
 ): LearnerSnapshot {
   const tier: Record<string, Tier> = {};
   const obs: Record<string, number> = {};

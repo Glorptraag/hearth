@@ -7,10 +7,11 @@
 // the rendered constellation, the Sanity seed, and the migration table cannot
 // drift. Spec: hearth-capability-universe-v2-architecture-spec-v1.md §2, §3.2.
 //
-// Colour assignment is deliberately deferred design (per the directive): each
-// domain reuses an existing --color-domain-* token so nothing renders with a
-// broken var; the proper 15-domain colour-blind-safe palette is a separate
-// design task. Emoji are placeholders per the decorative-emoji standing rule.
+// Each domain owns a dedicated --color-capdomain-{numericId} token (defined in
+// globals.css for both themes) — a 15-colour, colour-blind-aware palette that
+// replaced the earlier stop-gap of reusing the 8 --color-domain-* subject
+// tokens (which collided: 3 domains shared HPE, etc.). Emoji are placeholders
+// per the decorative-emoji standing rule.
 
 export type SuperDomainKey =
   | 'foundations'
@@ -32,21 +33,21 @@ export type V2Domain = {
 };
 
 export const V2_DOMAINS: V2Domain[] = [
-  { numericId: 1, key: 'languageLiteracy', name: 'Language & Literacy', shortName: 'Language', superDomain: 'foundations', colourVar: '--color-domain-english', emoji: '📚' },
-  { numericId: 2, key: 'mathematicalThinking', name: 'Mathematical Thinking', shortName: 'Maths', superDomain: 'foundations', colourVar: '--color-domain-mathematics', emoji: '🔢' },
-  { numericId: 3, key: 'scientificThinking', name: 'Scientific Thinking', shortName: 'Science', superDomain: 'foundations', colourVar: '--color-domain-science', emoji: '🔬' },
-  { numericId: 4, key: 'technologicalFluency', name: 'Technological Fluency', shortName: 'Technology', superDomain: 'foundations', colourVar: '--color-domain-technologies', emoji: '💻' },
-  { numericId: 5, key: 'historicalCivicGeographic', name: 'Historical, Civic & Geographic Understanding', shortName: 'History & Place', superDomain: 'cultural-inheritance', colourVar: '--color-domain-hass', emoji: '🌏' },
-  { numericId: 6, key: 'literaryTradition', name: 'Literary & Narrative Tradition', shortName: 'Literature', superDomain: 'cultural-inheritance', colourVar: '--color-domain-english', emoji: '📖' },
-  { numericId: 7, key: 'classicalLanguages', name: 'Classical Languages', shortName: 'Classical', superDomain: 'classical-disciplines', colourVar: '--color-domain-languages', emoji: '🏛️' },
-  { numericId: 8, key: 'logicRhetoric', name: 'Logic & Rhetoric', shortName: 'Logic & Rhetoric', superDomain: 'classical-disciplines', colourVar: '--color-domain-languages', emoji: '⚖️' },
-  { numericId: 9, key: 'theologyScripture', name: 'Theology & Scriptural Literacy', shortName: 'Theology', superDomain: 'classical-disciplines', colourVar: '--color-domain-hass', emoji: '✝️' },
-  { numericId: 10, key: 'visualPlasticArts', name: 'Visual & Plastic Arts', shortName: 'Visual Arts', superDomain: 'aesthetic-expression', colourVar: '--color-domain-arts', emoji: '🎨' },
-  { numericId: 11, key: 'musicalPerformative', name: 'Musical & Performative Arts', shortName: 'Music & Performance', superDomain: 'aesthetic-expression', colourVar: '--color-domain-arts', emoji: '🎭' },
-  { numericId: 12, key: 'practicalMastery', name: 'Practical Mastery', shortName: 'Practical', superDomain: 'practical-vocational', colourVar: '--color-domain-technologies', emoji: '🛠️' },
-  { numericId: 13, key: 'personalEthical', name: 'Personal & Ethical Formation', shortName: 'Personal', superDomain: 'human-formation', colourVar: '--color-domain-hpe', emoji: '🧭' },
-  { numericId: 14, key: 'socialRelational', name: 'Social & Relational Formation', shortName: 'Social', superDomain: 'human-formation', colourVar: '--color-domain-hpe', emoji: '🤝' },
-  { numericId: 15, key: 'physicalEmbodied', name: 'Physical & Embodied Capability', shortName: 'Physical', superDomain: 'human-formation', colourVar: '--color-domain-hpe', emoji: '🏃' },
+  { numericId: 1, key: 'languageLiteracy', name: 'Language & Literacy', shortName: 'Language', superDomain: 'foundations', colourVar: '--color-capdomain-1', emoji: '📚' },
+  { numericId: 2, key: 'mathematicalThinking', name: 'Mathematical Thinking', shortName: 'Maths', superDomain: 'foundations', colourVar: '--color-capdomain-2', emoji: '🔢' },
+  { numericId: 3, key: 'scientificThinking', name: 'Scientific Thinking', shortName: 'Science', superDomain: 'foundations', colourVar: '--color-capdomain-3', emoji: '🔬' },
+  { numericId: 4, key: 'technologicalFluency', name: 'Technological Fluency', shortName: 'Technology', superDomain: 'foundations', colourVar: '--color-capdomain-4', emoji: '💻' },
+  { numericId: 5, key: 'historicalCivicGeographic', name: 'Historical, Civic & Geographic Understanding', shortName: 'History & Place', superDomain: 'cultural-inheritance', colourVar: '--color-capdomain-5', emoji: '🌏' },
+  { numericId: 6, key: 'literaryTradition', name: 'Literary & Narrative Tradition', shortName: 'Literature', superDomain: 'cultural-inheritance', colourVar: '--color-capdomain-6', emoji: '📖' },
+  { numericId: 7, key: 'classicalLanguages', name: 'Classical Languages', shortName: 'Classical', superDomain: 'classical-disciplines', colourVar: '--color-capdomain-7', emoji: '🏛️' },
+  { numericId: 8, key: 'logicRhetoric', name: 'Logic & Rhetoric', shortName: 'Logic & Rhetoric', superDomain: 'classical-disciplines', colourVar: '--color-capdomain-8', emoji: '⚖️' },
+  { numericId: 9, key: 'theologyScripture', name: 'Theology & Scriptural Literacy', shortName: 'Theology', superDomain: 'classical-disciplines', colourVar: '--color-capdomain-9', emoji: '✝️' },
+  { numericId: 10, key: 'visualPlasticArts', name: 'Visual & Plastic Arts', shortName: 'Visual Arts', superDomain: 'aesthetic-expression', colourVar: '--color-capdomain-10', emoji: '🎨' },
+  { numericId: 11, key: 'musicalPerformative', name: 'Musical & Performative Arts', shortName: 'Music & Performance', superDomain: 'aesthetic-expression', colourVar: '--color-capdomain-11', emoji: '🎭' },
+  { numericId: 12, key: 'practicalMastery', name: 'Practical Mastery', shortName: 'Practical', superDomain: 'practical-vocational', colourVar: '--color-capdomain-12', emoji: '🛠️' },
+  { numericId: 13, key: 'personalEthical', name: 'Personal & Ethical Formation', shortName: 'Personal', superDomain: 'human-formation', colourVar: '--color-capdomain-13', emoji: '🧭' },
+  { numericId: 14, key: 'socialRelational', name: 'Social & Relational Formation', shortName: 'Social', superDomain: 'human-formation', colourVar: '--color-capdomain-14', emoji: '🤝' },
+  { numericId: 15, key: 'physicalEmbodied', name: 'Physical & Embodied Capability', shortName: 'Physical', superDomain: 'human-formation', colourVar: '--color-capdomain-15', emoji: '🏃' },
 ];
 
 export const V2_DOMAINS_BY_KEY: Record<string, V2Domain> = Object.fromEntries(

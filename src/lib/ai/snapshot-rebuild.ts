@@ -110,7 +110,7 @@ export async function rebuildSnapshot(
           .from(learnerDloStatus)
           .where(inArray(learnerDloStatus.learnerId, learnerIds))
       : [];
-    const dloStatusByLearner: Record<string, Record<string, { status: string; confidence: number | null; last_observed_at: string | null }>> = {};
+    const dloStatusByLearner: Record<string, Record<string, { status: string; confidence: number | null; last_observed_at: string | null; asserted_by_parent?: boolean }>> = {};
     // learnerId → threadId → { dloId: { status } } — the per-thread slice the
     // WS-4 tier derivation needs (status rows are corroboration, not the bar).
     const dloStatusByThread: Record<string, Record<string, Record<string, DloStatus>>> = {};
@@ -162,7 +162,13 @@ export async function rebuildSnapshot(
       const n = Number(row.n);
       const days = Number(row.distinctDays);
       if (row.provenance === 'declared') ev.declared += n;
-      else if (row.provenance === 'asserted') ev.asserted += n;
+      else if (row.provenance === 'asserted') {
+        ev.asserted += n;
+        // Surface the explicit parent assertion onto the per-DLO status so the
+        // constellation's confirm control reads "Confirmed" across reloads.
+        const entry = dloStatusByLearner[row.learnerId]?.[row.dloId];
+        if (entry) entry.asserted_by_parent = true;
+      }
       else { ev.inferred += n; ev.inferredDistinctDays += days; }
       byTier[tier] = ev;
     }

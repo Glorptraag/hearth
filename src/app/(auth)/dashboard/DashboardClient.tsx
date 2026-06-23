@@ -7,6 +7,7 @@ import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import { getGentlePrompt } from '@/lib/dashboard/gentle-prompt';
 import type { SnapshotData as FamilySnapshot } from '@/types/snapshot';
 import EmptyState from '@/components/ui/EmptyState';
+import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { PackIndicators } from '@/components/ui/PackIndicators';
@@ -289,6 +290,7 @@ export default function DashboardClient({
     <div className="mx-auto max-w-6xl px-md py-xl lg:px-4xl lg:py-3xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-xl">
       {/* ── Main column ── */}
       <div>
+        <JurisdictionBanner />
         {/* Time context */}
         <div className="animate-in delay-1 mb-sm flex items-center gap-sm font-sans text-[0.8rem] text-text-muted">
           <span className="h-[6px] w-[6px] rounded-full bg-ember shadow-[0_0_8px_var(--color-ember)] animate-[pulse_3s_ease-in-out_infinite]" />

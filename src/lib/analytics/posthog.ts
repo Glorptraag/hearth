@@ -111,6 +111,7 @@ export type HearthEvent =
   | 'badge_awarded'
   | 'badge_deferred'
   | 'report_exported'
+  | 'portfolio_exported'
   | 'logger_completed_50pct'
   | 'onboarding_started'
   | 'pedagogy_set'

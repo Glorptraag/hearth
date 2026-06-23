@@ -29,6 +29,17 @@ describe('topology', () => {
     expect(byKey['languageLiteracy']?.threadCount).toBe(7);
   });
 
+  it('every domain has its own colour-blind-aware capdomain colour (no collisions)', () => {
+    // T4: each of the 15 domains owns a distinct --color-capdomain-N token.
+    // The earlier stop-gap reused 8 subject tokens, so 3 domains shared one
+    // colour — this guards against regressing to that.
+    const colours = ORDERED_DOMAINS.map((d) => d.color);
+    expect(new Set(colours).size).toBe(ORDERED_DOMAINS.length);
+    for (const c of colours) {
+      expect(c).toMatch(/^var\(--color-capdomain-\d+\)$/);
+    }
+  });
+
   it('foundational threads have no prereqs', () => {
     for (const t of ALL_THREADS) {
       if (t.foundational) expect(t.prereqs).toHaveLength(0);

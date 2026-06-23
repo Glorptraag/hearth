@@ -6,6 +6,7 @@ import { format, differenceInDays } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import EmptyState from '@/components/ui/EmptyState';
+import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
 import {
   FileText,
   BookOpenText, MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
@@ -394,6 +395,8 @@ export default function ReportPage() {
   return (
     <div className="max-w-[1200px] mx-auto px-md py-lg">
       <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">{config.reportScreenTitle}</h1>
+
+      <JurisdictionBanner />
 
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { families, familyLibrary } from '@/lib/db/schema';
+import { families, familyLibrary, familySettings } from '@/lib/db/schema';
 import { getOrCreateFamily } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { sanityClient } from '@/lib/sanity/client';
@@ -16,6 +16,21 @@ export const POST = routeHandler(async () => {
     ? `${user.lastName.trim()} Family`
     : undefined;
   const family = await getOrCreateFamily(userId, familyName);
+
+  // State/territory must be set before we mark onboarding complete — it drives
+  // reporting rules + compliance dates, and getJurisdiction(null) silently falls
+  // back to QLD/HEU. The onboarding UI saves it via /api/settings first; this is
+  // the server-side backstop so a family can never finish setup without a state
+  // (which would leave them on a silent QLD default).
+  const settings = await db.query.familySettings.findFirst({
+    where: eq(familySettings.familyId, family.id),
+  });
+  if (!settings?.state?.trim()) {
+    return NextResponse.json(
+      { error: 'Select your state or territory before finishing setup.' },
+      { status: 400 },
+    );
+  }
 
   // Mark onboarding complete
   await db

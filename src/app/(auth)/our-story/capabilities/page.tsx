@@ -5,7 +5,9 @@ import { ConstellationRoute, buildSnapshotFromApi } from './_constellation/Const
 import {
   indexDLOsByThread,
   type ActiveThreadRow,
+  type CurriculumCoverage,
   type DloStatusLite,
+  type GapAnalysis,
   type LearnerSnapshot,
   type SanityDLO,
 } from './_constellation/topology';
@@ -26,6 +28,8 @@ export default function CapabilitiesPage() {
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
   const [dloStatus, setDloStatus] = useState<Record<string, DloStatusLite>>({});
+  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysis>({ underserved_subjects: [], suggested_focus_threads: [] });
+  const [curriculumCoverage, setCurriculumCoverage] = useState<CurriculumCoverage>({});
   const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
   const [loading, setLoading] = useState(true);
   // Bumped after a DLO confirm/clear to refetch the snapshot (the server rebuild
@@ -72,18 +76,25 @@ export default function CapabilitiesPage() {
       prevLearnerRef.current = selectedLearnerId;
       setActiveThreads([]);
       setDloStatus({});
+      setGapAnalysis({ underserved_subjects: [], suggested_focus_threads: [] });
+      setCurriculumCoverage({});
     }
     fetch(`/api/capabilities/${selectedLearnerId}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`capabilities ${r.status}`))))
       .then((data) => {
         if (cancelled) return;
-        // New shape: { activeThreads, dloStatus }. Old shape was a bare array.
+        // New shape: { activeThreads, dloStatus, gapAnalysis, curriculumCoverage }.
+        // Old shape was a bare array.
         if (Array.isArray(data)) {
           setActiveThreads(data as ActiveThreadRow[]);
           setDloStatus({});
         } else {
           setActiveThreads(Array.isArray(data?.activeThreads) ? data.activeThreads : []);
           setDloStatus(data?.dloStatus ?? {});
+          setGapAnalysis(
+            data?.gapAnalysis ?? { underserved_subjects: [], suggested_focus_threads: [] },
+          );
+          setCurriculumCoverage(data?.curriculumCoverage ?? {});
         }
       })
       .catch(() => { /* leave threads/dloStatus empty on failure */ });
@@ -125,6 +136,8 @@ export default function CapabilitiesPage() {
         dlosByThread={dlosByThread}
         onSelectLearner={setSelectedLearnerId}
         onDataChanged={() => setReloadNonce((n) => n + 1)}
+        gapAnalysis={gapAnalysis}
+        curriculumCoverage={curriculumCoverage}
       />
       {totalObservations === 0 && (
         <div className="mx-auto max-w-[1280px] px-md pb-2xl lg:px-xl">

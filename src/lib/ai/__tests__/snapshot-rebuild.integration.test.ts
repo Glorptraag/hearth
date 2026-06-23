@@ -256,7 +256,15 @@ describe('INTEGRATION: rebuildSnapshot — WS-4 DLO-evidence-derived tiers', () 
       { params: Promise.resolve({ learnerId: learner.id }) },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { activeThreads: Array<Record<string, unknown>> };
+    const body = (await res.json()) as {
+      activeThreads: Array<Record<string, unknown>>;
+      gapAnalysis: { underserved_subjects: string[]; suggested_focus_threads: string[] };
+      curriculumCoverage: Record<string, unknown>;
+    };
+
+    // T3: the Explore view's data rides along on the same response.
+    expect(Array.isArray(body.gapAnalysis?.underserved_subjects)).toBe(true);
+    expect(body.curriculumCoverage).toBeTypeOf('object');
 
     const l1 = body.activeThreads.find((t) => t.thread_id === 'L1');
     const m1 = body.activeThreads.find((t) => t.thread_id === 'M1');

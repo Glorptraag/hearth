@@ -13,7 +13,9 @@ import {
   buildSnapshot,
   threadCurrentTier,
   type ActiveThreadRow,
+  type CurriculumCoverage,
   type DloStatusLite,
+  type GapAnalysis,
   type LearnerSnapshot,
   type SanityDLO,
   type SynthDLO,
@@ -21,6 +23,7 @@ import {
 } from './topology';
 import { TableThreads, TableDLOs, TableMoments } from './TableView';
 import { GalleryDomains, GalleryThreads, GalleryDLOs, GalleryMoments } from './GalleryView';
+import { ExploreView } from './ExploreView';
 
 type Learner = {
   id: string;
@@ -30,7 +33,7 @@ type Learner = {
   colourToken: string | null;
 };
 
-type ViewMode = 'table' | 'gallery';
+type ViewMode = 'table' | 'gallery' | 'explore';
 type Depth = 1 | 2 | 3 | 4;
 type Focus = { domain: string | null; thread: string | null; dlo: string | null };
 
@@ -113,6 +116,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
       {([
         { id: 'table' as const, glyph: '☰', label: 'Table' },
         { id: 'gallery' as const, glyph: '✦', label: 'Gallery' },
+        { id: 'explore' as const, glyph: '◎', label: 'Explore' },
       ]).map((v) => {
         const active = view === v.id;
         return (
@@ -161,12 +165,16 @@ function ContextLine({
 
 export function ConstellationRoute({
   learners, learnerId, snap, dlosByThread = {}, onSelectLearner, onDataChanged,
+  gapAnalysis = { underserved_subjects: [], suggested_focus_threads: [] },
+  curriculumCoverage = {},
 }: {
   learners: Learner[];
   learnerId: string;
   snap: LearnerSnapshot;
   dlosByThread?: Record<string, SanityDLO[]>;
   onSelectLearner: (id: string) => void;
+  gapAnalysis?: GapAnalysis;
+  curriculumCoverage?: CurriculumCoverage;
   // Called after a DLO confirm/clear succeeds so the page can refetch the
   // snapshot. The rebuild is fire-and-forget server-side, so the refetch may
   // lag — local optimistic state below keeps the control correct until it
@@ -177,7 +185,10 @@ export function ConstellationRoute({
   const search = useSearchParams();
   const { toast } = useToast();
 
-  const initialView: ViewMode = search.get('view') === 'gallery' ? 'gallery' : 'table';
+  const initialView: ViewMode = (() => {
+    const v = search.get('view');
+    return v === 'gallery' ? 'gallery' : v === 'explore' ? 'explore' : 'table';
+  })();
   const initialDepth: Depth = (() => {
     const n = Number(search.get('d') ?? '1');
     return n === 2 || n === 3 || n === 4 ? (n as Depth) : 1;
@@ -287,6 +298,13 @@ export function ConstellationRoute({
   const drillToDomain = (key: string) => { setFocus({ domain: key, thread: null, dlo: null }); setDepth(2); };
   const drillToThread = (t: ThreadNode) => { setFocus((f) => ({ ...f, domain: t.domain, thread: t.id, dlo: null })); setDepth(3); };
   const drillToDLO = (d: SynthDLO) => { setFocus((f) => ({ ...f, dlo: d.id })); setDepth(4); };
+  // From the Explore view: jump straight into a suggested thread's objectives.
+  const drillToThreadId = (threadId: string) => {
+    const t = THREADS_BY_ID[threadId];
+    if (!t) return;
+    setView('table');
+    drillToThread(t);
+  };
 
   const jump = (d: Depth) => {
     if (d > depth) return;
@@ -325,16 +343,30 @@ export function ConstellationRoute({
         </div>
       </div>
 
-      <Stepper depth={depth} focus={focus} snap={snap} dlosByThread={dlosByThread} onJump={jump} />
+      {view !== 'explore' && (
+        <Stepper depth={depth} focus={focus} snap={snap} dlosByThread={dlosByThread} onJump={jump} />
+      )}
 
       <div className="mt-xs mb-lg flex flex-wrap items-center justify-between gap-md">
-        <ContextLine snap={snap} depth={depth} focus={focus} dlosByThread={dlosByThread} />
+        <div>
+          {view !== 'explore' && (
+            <ContextLine snap={snap} depth={depth} focus={focus} dlosByThread={dlosByThread} />
+          )}
+        </div>
         <ViewToggle view={view} onChange={setView} />
       </div>
 
-      {depth === 1 && <HearthVoiceCard snap={snap} />}
+      {depth === 1 && view !== 'explore' && <HearthVoiceCard snap={snap} />}
 
       <div key={stageKey} className="cap-stage">
+        {view === 'explore' && (
+          <ExploreView
+            snap={snap}
+            gapAnalysis={gapAnalysis}
+            curriculumCoverage={curriculumCoverage}
+            onDrillThread={drillToThreadId}
+          />
+        )}
         {view === 'table' && depth === 1 && (
           <TableThreads snap={snap} depth={1} onDrillDown={drillToThread} onDomainTap={drillToDomain} />
         )}

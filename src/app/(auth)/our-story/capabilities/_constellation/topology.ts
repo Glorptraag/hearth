@@ -161,6 +161,16 @@ export type { ThreadDomain };
    explicitly confirmed this DLO ("Yes, I've seen this"). */
 export type DloStatusLite = { status: string; asserted_by_parent?: boolean };
 
+/* Explore (gap) view data, sliced from the per-child snapshot. */
+export type GapAnalysis = {
+  underserved_subjects: string[];
+  suggested_focus_threads: string[];
+};
+export type CurriculumCoverage = Record<
+  string,
+  { total_entries: number; unique_descriptors: number; coverage_percentage: number }
+>;
+
 /* Snapshot consumed by TableView / GalleryView. Built from /api/capabilities/[learnerId]. */
 export type LearnerSnapshot = {
   id: string;

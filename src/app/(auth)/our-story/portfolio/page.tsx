@@ -8,7 +8,8 @@ import { format, startOfMonth, subMonths } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import { getThreadName } from '@/lib/capability-threads';
-import { groupEntriesByTopThread, THREAD_DISPLAY_CONFIDENCE_FLOOR } from '@/lib/portfolio/thread-grouping';
+import { groupEntriesByTopThread, topThreadId, THREAD_DISPLAY_CONFIDENCE_FLOOR } from '@/lib/portfolio/thread-grouping';
+import { track } from '@/lib/analytics/posthog';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
   CalendarBlank, BookOpenText, Medal, Plant,
@@ -336,6 +337,7 @@ export default function PortfolioPage() {
   const [threads, setThreads] = useState<ActiveThread[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  const [threadFilter, setThreadFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all' | 'custom'>('all');
   const [customMonth, setCustomMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -426,7 +428,14 @@ export default function PortfolioPage() {
     // Reset pagination when learner or filter changes so the new view starts at the first page.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE);
-  }, [selectedLearnerId, subjectFilter]);
+  }, [selectedLearnerId, subjectFilter, threadFilter]);
+
+  // A thread filter is keyed by thread_id, which is meaningless once the learner
+  // changes (the new child has different active threads) — clear it on switch.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setThreadFilter(null);
+  }, [selectedLearnerId]);
 
   useEffect(() => {
     if (!selectedLearnerId) return;
@@ -464,6 +473,11 @@ export default function PortfolioPage() {
     if (subjectFilter) {
       result = result.filter((e) => e.subjects?.includes(subjectFilter));
     }
+    if (threadFilter) {
+      // Match the "By Thread" grouping: an entry belongs to its single top
+      // thread (highest-confidence at/above the floor), so filter on that.
+      result = result.filter((e) => topThreadId(e.aiEnrichment?.capability_threads) === threadFilter);
+    }
     if (dateFilter === 'month') {
       const start = format(startOfMonth(new Date()), 'yyyy-MM-dd');
       result = result.filter((e) => e.dateOccurred >= start);
@@ -478,7 +492,7 @@ export default function PortfolioPage() {
       result = result.filter((e) => e.dateOccurred >= start && e.dateOccurred < nextMonth);
     }
     return result;
-  }, [entries, subjectFilter, dateFilter, customMonth]);
+  }, [entries, subjectFilter, threadFilter, dateFilter, customMonth]);
 
   const monthlySummary = useMemo(() => {
     const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
@@ -537,9 +551,20 @@ export default function PortfolioPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-md py-xl lg:px-lg lg:py-2xl">
-      <h1 className="font-serif text-2xl font-semibold text-text-primary mb-md">
-        {vocab.sessionNoun === 'session' ? 'Learning Journey' : `${vocab.learnerNoun.charAt(0).toUpperCase() + vocab.learnerNoun.slice(1)}'s Journey`}
-      </h1>
+      <div className="mb-md flex flex-wrap items-start justify-between gap-md">
+        <h1 className="font-serif text-2xl font-semibold text-text-primary">
+          {vocab.sessionNoun === 'session' ? 'Learning Journey' : `${vocab.learnerNoun.charAt(0).toUpperCase() + vocab.learnerNoun.slice(1)}'s Journey`}
+        </h1>
+        {selectedLearnerId && entries.length > 0 && (
+          <a
+            href={`/api/portfolio/export?learnerId=${encodeURIComponent(selectedLearnerId)}`}
+            onClick={() => track('portfolio_exported', { entries: entries.length, threads: sortedThreads.length })}
+            className="inline-flex shrink-0 items-center gap-xs rounded-md border border-border-subtle px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-colors duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+          >
+            <FilePdf size={16} aria-hidden /> Download PDF
+          </a>
+        )}
+      </div>
 
       {/* Child selector */}
       <ChildSelector learners={learners} selectedId={selectedLearnerId} onChange={setSelectedLearnerId} />
@@ -642,17 +667,44 @@ export default function PortfolioPage() {
             ))}
           </div>
 
-          {/* Capability threads — mobile horizontal scroll */}
+          {/* Capability threads — mobile horizontal scroll. Tapping a thread
+              filters the feed to that thread (the desktop sidebar mirrors this). */}
           {sortedThreads.length > 0 && (
-            <div className="lg:hidden flex gap-sm overflow-x-auto pb-sm mb-md scrollbar-none">
-              {sortedThreads.map((t) => (
-                <div
-                  key={t.thread_id}
-                  className="shrink-0 rounded-full border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary"
-                >
-                  {getThreadName(t.thread_id)} <span className="text-text-muted">({t.observation_count})</span>
-                </div>
-              ))}
+            <div className="lg:hidden flex gap-sm overflow-x-auto pb-sm mb-md scrollbar-none" role="group" aria-label="Filter by capability thread">
+              {sortedThreads.map((t) => {
+                const active = threadFilter === t.thread_id;
+                return (
+                  <button
+                    key={t.thread_id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setThreadFilter(active ? null : t.thread_id)}
+                    className={`shrink-0 rounded-full border px-sm py-xs font-sans text-xs transition-colors duration-[var(--motion-quick)] ${
+                      active
+                        ? 'border-border-active bg-ember-glow text-ember'
+                        : 'border-border-subtle text-text-secondary hover:border-border-medium'
+                    }`}
+                  >
+                    {getThreadName(t.thread_id)} <span className={active ? 'text-ember' : 'text-text-muted'}>({t.observation_count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Active thread-filter banner — shows the lens is engaged + how to clear it. */}
+          {threadFilter && (
+            <div className="mb-md flex items-center justify-between gap-sm rounded-[10px] border border-border-active bg-ember-glow px-md py-sm">
+              <span className="font-sans text-xs text-ember">
+                Showing only <strong className="font-semibold">{getThreadName(threadFilter)}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setThreadFilter(null)}
+                className="font-sans text-xs font-semibold text-ember underline-offset-2 hover:underline"
+              >
+                Clear
+              </button>
             </div>
           )}
 
@@ -676,7 +728,7 @@ export default function PortfolioPage() {
                   Try a different month or clear your filters to see all moments.
                 </p>
                 <button
-                  onClick={() => { setSubjectFilter(null); setDateFilter('all'); }}
+                  onClick={() => { setSubjectFilter(null); setThreadFilter(null); setDateFilter('all'); }}
                   className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
                 >
                   Clear filters
@@ -1065,30 +1117,38 @@ export default function PortfolioPage() {
               </div>
             ) : (
               <div className="space-y-sm">
-                {sortedThreads.map((t) => (
-                  <div
-                    key={t.thread_id}
-                    className="rounded-[10px] border border-border-subtle bg-surface-panel p-md hover:border-border-medium transition-all duration-200 ease-[var(--ease-default)]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-serif text-sm font-semibold text-text-primary">
-                        {getThreadName(t.thread_id)}
-                      </span>
-                      <span className="font-sans text-xs text-text-muted">{t.observation_count}</span>
-                    </div>
-                    <span
-                      className={`inline-block mt-xs rounded-full px-sm py-[2px] font-sans text-[10px] font-medium ${
-                        t.suggested_tier === 'demonstrating'
-                          ? 'bg-sage/15 text-sage'
-                          : t.suggested_tier === 'developing'
-                            ? 'bg-ember-glow text-ember'
-                            : 'bg-surface-hover text-text-muted'
+                {sortedThreads.map((t) => {
+                  const active = threadFilter === t.thread_id;
+                  return (
+                    <button
+                      key={t.thread_id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setThreadFilter(active ? null : t.thread_id)}
+                      className={`block w-full rounded-[10px] border bg-surface-panel p-md text-left transition-all duration-200 ease-[var(--ease-default)] ${
+                        active ? 'border-border-active' : 'border-border-subtle hover:border-border-medium'
                       }`}
                     >
-                      {t.suggested_tier}
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex items-center justify-between">
+                        <span className="font-serif text-sm font-semibold text-text-primary">
+                          {getThreadName(t.thread_id)}
+                        </span>
+                        <span className="font-sans text-xs text-text-muted">{t.observation_count}</span>
+                      </div>
+                      <span
+                        className={`inline-block mt-xs rounded-full px-sm py-[2px] font-sans text-[10px] font-medium ${
+                          t.suggested_tier === 'demonstrating'
+                            ? 'bg-sage/15 text-sage'
+                            : t.suggested_tier === 'developing'
+                              ? 'bg-ember-glow text-ember'
+                              : 'bg-surface-hover text-text-muted'
+                        }`}
+                      >
+                        {t.suggested_tier}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1228,6 +1288,12 @@ function EntryEditForm({
             );
           })}
         </div>
+        {entryLearnerIds.length > 1 && (
+          <p className="mt-xs font-sans text-[11px] italic text-text-muted">
+            This moment is logged for {entryLearnerIds.length} children — changing its subjects or
+            who it&rsquo;s for re-reads it for all of them.
+          </p>
+        )}
       </div>
 
       {/* Engagement per learner */}

@@ -9,6 +9,17 @@ import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { attachEvidence } from '@/lib/evidence-db';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
+import { enrichEntry } from '@/lib/ai/enrich';
+import { trackServer } from '@/lib/analytics/posthog-server';
+
+/** Order-insensitive set equality for string[] columns (subjects / learnerIds). */
+function sameStringSet(a: string[] | null | undefined, b: string[] | null | undefined): boolean {
+  const sa = new Set(a ?? []);
+  const sb = new Set(b ?? []);
+  if (sa.size !== sb.size) return false;
+  for (const x of sa) if (!sb.has(x)) return false;
+  return true;
+}
 
 // Snapshot rebuild (fired in `after()` on mutating handlers) makes an Anthropic
 // call per child — give the serverless instance room past the response.
@@ -95,10 +106,31 @@ export const PATCH = routeHandler(async (request: NextRequest, { params }: Param
   const result = await parseBody(request, updateEntrySchema);
   if ('error' in result) return result.error;
   const parsed = result;
+  const data = parsed.data;
+
+  // A subject/learner edit invalidates this entry's OWN enrichment: its
+  // capability_threads / curriculum_descriptors were inferred from the original
+  // subject + learner context, so the stored map is now stale. A snapshot
+  // rebuild alone only re-aggregates existing enrichments — it can't fix the
+  // entry's own mapping. So when an enriched (complete) entry's subjects or
+  // learners actually change, re-run enrichment (which then feeds a fresh
+  // rebuild). Drafts are never enriched, so they only need the plain rebuild.
+  const subjectsChanged = 'subjects' in data && !sameStringSet(existing.subjects, data.subjects);
+  const learnersChanged = 'learnerIds' in data && !sameStringSet(existing.learnerIds, data.learnerIds);
+  const nowComplete = (data.status ?? existing.status) === 'complete';
+  const needsReenrich = nowComplete && (subjectsChanged || learnersChanged);
 
   const [updated] = await db
     .update(learningEntries)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...data,
+      updatedAt: new Date(),
+      // Flip to pending up front so the portfolio's enrichment affordance shows
+      // "reading…" immediately rather than the stale map.
+      ...(needsReenrich
+        ? { aiEnrichment: { status: 'pending' as const, startedAt: new Date().toISOString() } }
+        : {}),
+    })
     .where(
       and(
         eq(learningEntries.id, id),
@@ -115,10 +147,28 @@ export const PATCH = routeHandler(async (request: NextRequest, { params }: Param
   // toggles (e.g. workSampleCandidate) so a portfolio star-tap doesn't fire an
   // Anthropic call. `after()` keeps the serverless instance alive past the
   // response (a bare promise gets killed when NextResponse returns).
-  const data = parsed.data;
   const affectsSnapshot =
     'status' in data || 'learnerIds' in data || 'subjects' in data || 'dateOccurred' in data;
-  if (affectsSnapshot) {
+
+  if (needsReenrich) {
+    after(async () => {
+      try {
+        await enrichEntry({ entryId: id, familyId: family.id });
+        await rebuildSnapshot(family.id, 'entry_saved').catch(() => {});
+        trackServer('entry_enrich_retried', userId, { trigger: 'edit', status: 'ok' }, { familyId: family.id });
+      } catch (err) {
+        console.error('[entries/PATCH] re-enrich error:', err);
+        // Don't leave the card stuck on "reading…" — mark it failed so the
+        // portfolio's recovery affordance can offer a retry.
+        await db
+          .update(learningEntries)
+          .set({ aiEnrichment: { status: 'failed' as const, error: 'enrichment failed' }, updatedAt: new Date() })
+          .where(and(eq(learningEntries.id, id), eq(learningEntries.familyId, family.id)))
+          .catch(() => {});
+        trackServer('entry_enrich_retried', userId, { trigger: 'edit', status: 'error' }, { familyId: family.id });
+      }
+    });
+  } else if (affectsSnapshot) {
     after(async () => {
       try {
         await rebuildSnapshot(family.id, 'entry_saved');

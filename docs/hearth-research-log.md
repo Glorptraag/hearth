@@ -153,4 +153,13 @@ The Logger's voice capture used the browser Web Speech API (`useSpeechRecognitio
 
 ---
 
-*Next entry: R18. Append below; never edit above.*
+### R18 — Operator feedback (2026-06-24): the Logger had crept back over the 5-minute promise.
+
+Reviewing the live Logger before a demo, the six numbered sections (Who, What+discoveries+activity-grid+subjects, Engagement, When/Where, 24 observation chips, Evidence) plus the AI-insights rail rendered up-front — signalling "fill all of this" when only three fields are needed to save, and crowding the screen on mobile. The quick-first restructure that had been agreed (and recorded in memory as the deferred "Part B") had not actually been built; only the voice work (R17) had shipped. Built it: **Quick Log** is now the default surface (Who → What+voice → Engagement → Save), with the rest moved behind an explicit "switch to Full Log" link. Quick uses the lean save gate, so a minimum entry is reachable in well under a minute. Decision **D-LPS-13**.
+**Spec affected:** `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` SIDEBAR #9 / Open-Q9 (form length) — resolved.
+**Regression test:** `src/app/(auth)/log/_components/WhatSection.test.tsx` (unit — `minimal` hides discoveries / activity grid / subjects, keeps description + voice).
+**Date logged:** 2026-06-24.
+
+---
+
+*Next entry: R19. Append below; never edit above.*

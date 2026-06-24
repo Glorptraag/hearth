@@ -87,6 +87,11 @@ export default function LogPage() {
   // ─── Form state ───
   const [showBatch, setShowBatch] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  // Two-tier Logger surface: `quick` is the default lean capture (Who + What +
+  // Engagement → save, in under a minute); `full` reveals the complete form.
+  // The quick view is the primary path; the longer guided form is secondary.
+  // See D-LPS-13.
+  const [view, setView] = useState<'quick' | 'full'>('quick');
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
@@ -283,6 +288,10 @@ export default function LogPage() {
     },
   });
 
+  // In Quick view the save gate is always the lean 'quick' threshold,
+  // regardless of the Guided/Quick mode toggle (which lives in Full view).
+  const effectiveMode = view === 'quick' ? 'quick' : loggerMode;
+
   // ─── Completeness ───
   const completeness = useMemo(() => scoreCompleteness({
     selectedLearners,
@@ -295,8 +304,8 @@ export default function LogPage() {
     duration,
     location,
     evidence,
-    mode: loggerMode,
-  }), [selectedLearners, description, discoveries, activityType, engagement, duration, location, observations, evidence, loggerMode, observationDetails]);
+    mode: effectiveMode,
+  }), [selectedLearners, description, discoveries, activityType, engagement, duration, location, observations, evidence, effectiveMode, observationDetails]);
 
   const sectionDone = useMemo(
     () => ({
@@ -316,14 +325,14 @@ export default function LogPage() {
     missingItems,
   } = useCompletenessUi({
     completeness,
-    loggerMode,
+    loggerMode: effectiveMode,
     selectedLearners,
     description,
     activityType,
     engagement,
   });
 
-  const canSave = canSaveEntry(completeness, loggerMode);
+  const canSave = canSaveEntry(completeness, effectiveMode);
 
   // Fire `logger_completed_50pct` exactly once per Logger session, the
   // moment completeness first crosses the save threshold. Useful for
@@ -399,7 +408,7 @@ export default function LogPage() {
         engagement,
         discoveries,
         evidence,
-        loggerMode,
+        loggerMode: effectiveMode,
         observationDetails,
       },
       {
@@ -701,7 +710,7 @@ export default function LogPage() {
               ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
               : vocab.logNudge}
           </p>
-          <div className="mt-xs flex flex-wrap items-center gap-xs">
+          {view === 'full' && (<div className="mt-xs flex flex-wrap items-center gap-xs">
             <button
               type="button"
               onClick={() => setShowBatch(true)}
@@ -716,9 +725,9 @@ export default function LogPage() {
             >
               <ClipboardText size={12} aria-hidden="true" /> Import CSV
             </button>
-          </div>
+          </div>)}
         </div>
-        <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />
+        {view === 'full' && <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />}
         <div className="hidden lg:flex items-center gap-sm">
           <CompletenessRing
             score={completeness}
@@ -774,6 +783,15 @@ export default function LogPage() {
         {/* ─── Left: Capture Form ─── */}
         <div className="flex-1 overflow-y-auto px-md pt-lg pb-[220px] lg:py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
+          {view === 'full' && (
+            <button
+              type="button"
+              onClick={() => setView('quick')}
+              className="inline-flex items-center gap-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200"
+            >
+              <CaretDown size={14} aria-hidden="true" className="rotate-90" /> Back to Quick Log
+            </button>
+          )}
           {/* Section 1: Who Was Learning? */}
           <WhoSection
             learners={learners}
@@ -787,7 +805,8 @@ export default function LogPage() {
           <WhatSection
             label={vocab.logWhatLabel}
             placeholder={vocab.logWhatPlaceholder}
-            done={sectionDone[2]}
+            minimal={view === 'quick'}
+            done={view === 'quick' ? description.length > 20 : sectionDone[2]}
             description={description}
             onDescriptionChange={setDescription}
             isRecording={isRecording}
@@ -823,43 +842,62 @@ export default function LogPage() {
             }
           />
 
-          {/* Section 4: When & Where */}
-          <WhenWhereSection
-            done={sectionDone[4]}
-            whenDate={whenDate}
-            onWhenDateChange={setWhenDate}
-            duration={duration}
-            onDurationChange={setDuration}
-            location={location}
-            onLocationChange={setLocation}
-          />
+          {/* Sections 4–6 (When/Where · Observe · Evidence) — Full view only */}
+          {view === 'full' && (
+            <>
+              <WhenWhereSection
+                done={sectionDone[4]}
+                whenDate={whenDate}
+                onWhenDateChange={setWhenDate}
+                duration={duration}
+                onDurationChange={setDuration}
+                location={location}
+                onLocationChange={setLocation}
+              />
 
-          {/* Section 5: What Did You Observe? */}
-          <ObserveSection
-            done={sectionDone[5]}
-            label={vocab.logObserveLabel}
-            observations={observations}
-            observationDetails={observationDetails}
-            onToggleObservation={toggleObservation}
-            onObservationDetailChange={(chip, value) =>
-              setObservationDetails((prev) => ({ ...prev, [chip]: value }))
-            }
-            isGuided={loggerMode === 'guided'}
-          />
+              <ObserveSection
+                done={sectionDone[5]}
+                label={vocab.logObserveLabel}
+                observations={observations}
+                observationDetails={observationDetails}
+                onToggleObservation={toggleObservation}
+                onObservationDetailChange={(chip, value) =>
+                  setObservationDetails((prev) => ({ ...prev, [chip]: value }))
+                }
+                isGuided={loggerMode === 'guided'}
+              />
 
-          {/* Section 6: Evidence */}
-          <EvidenceSection
-            done={sectionDone[6]}
-            evidence={evidence}
-            onOpenTool={setEvidenceModal}
-            onRemoveEvidence={(index) =>
-              setEvidence((prev) => prev.filter((_, idx) => idx !== index))
-            }
-          />
+              <EvidenceSection
+                done={sectionDone[6]}
+                evidence={evidence}
+                onOpenTool={setEvidenceModal}
+                onRemoveEvidence={(index) =>
+                  setEvidence((prev) => prev.filter((_, idx) => idx !== index))
+                }
+              />
+            </>
+          )}
+
+          {/* Quick view: invite into the full form without crowding it */}
+          {view === 'quick' && (
+            <div className="pt-sm">
+              <button
+                type="button"
+                onClick={() => setView('full')}
+                className="inline-flex items-center gap-xs rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.8125rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-200"
+              >
+                Add more detail — switch to Full Log
+              </button>
+              <p className="mt-xs font-sans text-[0.6875rem] text-text-muted">
+                Quick Log captures the essentials in under a minute. Full Log adds activity type, observations, evidence and more.
+              </p>
+            </div>
+          )}
           </div>
         </div>
 
-        {/* ─── Right: AI Insights Panel (desktop) ─── */}
+        {/* ─── Right: AI Insights Panel (desktop, Full view only) ─── */}
+        {view === 'full' && (
         <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
           <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
             <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-ember text-text-inverse">
@@ -878,11 +916,13 @@ export default function LogPage() {
           />
           <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
         </aside>
+        )}
       </div>}
 
       {/* ─── Mobile bottom stack: AI Insights drawer + Save bar ─── */}
       <div className="lg:hidden fixed bottom-[72px] left-0 right-0 z-50">
-        {/* AI Insights drawer — expands upward, above the save bar */}
+        {/* AI Insights drawer + toggle — Full view only */}
+        {view === 'full' && (<>
         {insightsExpanded && (
           <div className="max-h-[55vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
             <div className="flex items-center gap-sm mb-md">
@@ -915,6 +955,7 @@ export default function LogPage() {
             className={`text-text-secondary transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${insightsExpanded ? '' : 'rotate-180'}`}
           />
         </button>
+        </>)}
 
         {/* Save bar — primary action anchored at the bottom on mobile */}
         {!showBatch && !showImport && (

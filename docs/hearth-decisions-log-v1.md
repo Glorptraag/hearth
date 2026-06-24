@@ -225,6 +225,17 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 ---
 
+### D-LPS-13 — The Logger is two-tier: Quick Log is the default surface, Full Log is opt-in
+
+**Decision:** The Logger opens in **Quick Log** — a lean, three-step capture (Who → What [description + voice] → Engagement → Save) that is the only surface a parent must touch to log. Everything else (per-child discoveries, the activity-type grid, lesson subjects, When/Where, the 24 observation chips, evidence, and the AI-insights panel/drawer) moves behind an explicit **"Add more detail — switch to Full Log"** link. Full Log is the previous complete form, unchanged, with a "Back to Quick Log" affordance; the Guided/Quick completeness-mode toggle and Batch/Import live there too. **Quick view always uses the lean `quick` save threshold** regardless of the mode toggle, so the minimum viable save (one learner + a >20-char description + one engagement rating = 53% ≥ the 50% gate) is reachable in well under a minute. Implemented as a `view: 'quick' | 'full'` switch inside `log/page.tsx` — all form state is shared, so entered data is preserved across the switch and nothing is lost or duplicated.
+
+**Why:** Pilot/operator feedback: the Logger had drifted back over the 5-minute promise — six numbered sections rendered up-front signalled "fill all of this" when only three are needed to save, and the extra categories + insights rail crowded the screen (esp. on mobile). The retrospective-logging heartbeat (architecture principle #1) and the 5-minute rule (#2) demand the fast path be the *default*, not a mode you opt into. This is the build of the previously-deferred "Part B"; **D-LPS-12** (server STT) shipped first, this completes the sub-5-minute rework. Resolves spec SIDEBAR #9 / Open-Q9 (form length) in `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md`.
+
+**Implementation:** `src/app/(auth)/log/page.tsx` (`view` state + `effectiveMode`; gates sections 4–6, insights panel/drawer, header batch/import + mode toggle to Full); `src/app/(auth)/log/_components/WhatSection.tsx` (`minimal` prop hides discoveries / activity grid / subjects).
+**Date:** 2026-06-24
+
+---
+
 ## Process
 
 ### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention

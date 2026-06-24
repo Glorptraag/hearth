@@ -8,6 +8,9 @@ interface WhatSectionProps {
   label: string;
   placeholder: string;
   done: boolean;
+  /** Quick view: render only the description + voice; hide discoveries, the
+   *  activity-type grid, and the lesson-subject picker. */
+  minimal?: boolean;
   description: string;
   onDescriptionChange: (value: string) => void;
   isRecording: boolean;
@@ -40,6 +43,7 @@ export function WhatSection({
   label,
   placeholder,
   done,
+  minimal = false,
   description,
   onDescriptionChange,
   isRecording,
@@ -92,6 +96,7 @@ export function WhatSection({
         </div>
       </div>
 
+      {!minimal && (<>
       {/* 2b: Per-child discoveries */}
       <div className="mb-lg space-y-md">
         {selectedLearners.length === 0 ? (
@@ -199,6 +204,7 @@ export function WhatSection({
           </div>
         </div>
       )}
+      </>)}
     </section>
   );
 }

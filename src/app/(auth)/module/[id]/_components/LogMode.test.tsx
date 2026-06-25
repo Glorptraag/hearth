@@ -74,6 +74,86 @@ const clickSave = async () => {
   button.click();
 };
 
+/**
+ * A module whose activities carry distinct observation prompts, plus a second
+ * approach whose prompt must never leak into the first approach's session.
+ */
+const buildModuleWithPrompts = (): Module => ({
+  _id: 'module_p',
+  title: 'Vowels',
+  targetUnderstanding: 'The five vowel sounds.',
+  subjects: ['languages'],
+  approaches: [
+    {
+      _id: 'approach_1',
+      title: 'Sing',
+      modality: 'auditory',
+      activities: [
+        { _id: 'act_a', title: 'Listen', observationPrompts: ['PROMPT_A — can they sing the vowels?'] },
+        { _id: 'act_b', title: 'Trace', observationPrompts: ['PROMPT_B — do they follow stroke order?'] },
+      ],
+    },
+    {
+      _id: 'approach_2',
+      title: 'Write',
+      modality: 'kinesthetic',
+      activities: [
+        { _id: 'act_s', title: 'Sibling', observationPrompts: ['PROMPT_SIBLING — should not show'] },
+      ],
+    },
+  ],
+});
+
+describe('LogMode — observation prompts are scoped to the session', () => {
+  it('shows only the completed activities of the selected approach', async () => {
+    stubFetch();
+    render(
+      <LogMode
+        module={buildModuleWithPrompts()}
+        selectedApproachIdx={0}
+        completedActivityIdxs={[0]}
+        quickCaptures={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText('PROMPT_A — can they sing the vowels?')).toBeInTheDocument();
+    // act_b was not completed; the sibling approach must never leak in.
+    expect(screen.queryByText('PROMPT_B — do they follow stroke order?')).not.toBeInTheDocument();
+    expect(screen.queryByText('PROMPT_SIBLING — should not show')).not.toBeInTheDocument();
+  });
+
+  it('falls back to all activities of the selected approach when none are marked completed', async () => {
+    stubFetch();
+    render(
+      <LogMode
+        module={buildModuleWithPrompts()}
+        selectedApproachIdx={0}
+        completedActivityIdxs={[]}
+        quickCaptures={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText('PROMPT_A — can they sing the vowels?')).toBeInTheDocument();
+    expect(screen.getByText('PROMPT_B — do they follow stroke order?')).toBeInTheDocument();
+    expect(screen.queryByText('PROMPT_SIBLING — should not show')).not.toBeInTheDocument();
+  });
+
+  it('falls back to every approach when no approach is selected', async () => {
+    stubFetch();
+    render(
+      <LogMode
+        module={buildModuleWithPrompts()}
+        selectedApproachIdx={undefined}
+        completedActivityIdxs={[]}
+        quickCaptures={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+    expect(await screen.findByText('PROMPT_SIBLING — should not show')).toBeInTheDocument();
+    expect(screen.getByText('PROMPT_A — can they sing the vowels?')).toBeInTheDocument();
+  });
+});
+
 describe('LogMode save flow — sourceActivityIds', () => {
   it('sends sourceActivityIds when activities were completed and captured', async () => {
     const { posted } = stubFetch();

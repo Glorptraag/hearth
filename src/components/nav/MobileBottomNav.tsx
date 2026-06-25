@@ -103,7 +103,7 @@ export function MobileBottomNav() {
           aria-label="Close menu"
           tabIndex={-1}
           onClick={close}
-          className="fixed inset-0 z-[90] cursor-default backdrop-modal hearth-fade-in lg:hidden"
+          className="fixed inset-0 z-[90] cursor-default backdrop-tray hearth-fade-in lg:hidden"
         />
       )}
 

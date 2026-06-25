@@ -71,7 +71,7 @@ export default function FacilitateMode({
   return (
     <div className="xl:grid xl:grid-cols-[1fr_280px]">
       {/* Main facilitate content */}
-      <div className="px-md py-xl max-w-2xl mx-auto pb-40">
+      <div className="px-md py-xl max-w-2xl mx-auto pb-44">
         {/* Progress dots + timer */}
         <div className="flex items-center justify-between mb-xl">
           <div className="flex items-center gap-xs">
@@ -401,8 +401,10 @@ export default function FacilitateMode({
           </div>
         )}
 
-        {/* Navigation — pinned just above the global bottom nav (safe-area aware). */}
-        <div className="fixed bottom-[calc(72px+env(safe-area-inset-bottom,0px))] left-0 right-0 lg:left-[220px] z-30 px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
+        {/* Navigation — pinned above the global bottom nav (safe-area aware); the
+            offset also clears the nav's raised centre Log button. On desktop there
+            is no bottom nav, so pin to the viewport bottom. */}
+        <div className="fixed bottom-[calc(84px+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 lg:left-[220px] z-30 px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
           <div className="flex gap-sm">
             {onPause && (
               <button
@@ -639,10 +641,10 @@ export default function FacilitateMode({
               aria-label="Close quick capture"
               tabIndex={-1}
               onClick={() => setMobileCapture(false)}
-              className="fixed inset-0 z-40 backdrop-modal hearth-fade-in xl:hidden"
+              className="fixed inset-0 z-40 backdrop-tray hearth-fade-in xl:hidden"
             />
           )}
-          <div className="fixed bottom-[calc(132px+env(safe-area-inset-bottom,0px))] right-4 xl:hidden z-50">
+          <div className="fixed bottom-[calc(144px+env(safe-area-inset-bottom,0px))] right-4 xl:hidden z-50">
             {mobileCapture && (
               <div className="absolute bottom-14 right-0 w-72 mb-sm">
                 <QuickCapture

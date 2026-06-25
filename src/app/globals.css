@@ -87,6 +87,7 @@
 
   /* ---------- Backdrops (v2.1 NEW) ---------- */
   --color-backdrop-modal:   rgba(0, 0, 0, 0.70);
+  --color-backdrop-tray:    rgba(0, 0, 0, 0.45);   /* lighter than modal — nav trays / capture popovers */
   --color-backdrop-success: rgba(21, 17, 13, 0.92);
   --color-overlay-backdrop: rgba(0, 0, 0, 0.6);   /* legacy alias — kept for unmigrated sites */
   --color-surface-nav-blur: rgba(15, 13, 11, 0.85);
@@ -258,6 +259,7 @@
 
   /* Backdrops — theme-aware veil + blur */
   --color-backdrop-modal:   rgba(44, 36, 24, 0.40);
+  --color-backdrop-tray:    rgba(44, 36, 24, 0.28);
   --color-backdrop-success: rgba(253, 246, 240, 0.94);
   --color-overlay-backdrop: rgba(44, 36, 24, 0.40);
   --color-surface-nav-blur: rgba(253, 246, 240, 0.85);
@@ -345,6 +347,12 @@
   background-color: var(--color-backdrop-modal);
   backdrop-filter: blur(var(--backdrop-modal-blur));
   -webkit-backdrop-filter: blur(var(--backdrop-modal-blur));
+}
+
+/* Lighter veil for popover-weight overlays (nav trays, the runner's quick-capture
+   panel) — a distinct layer without full modal dimming. No blur, by design. */
+.backdrop-tray {
+  background-color: var(--color-backdrop-tray);
 }
 
 .backdrop-success {

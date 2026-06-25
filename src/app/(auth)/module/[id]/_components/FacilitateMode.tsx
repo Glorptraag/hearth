@@ -71,7 +71,7 @@ export default function FacilitateMode({
   return (
     <div className="xl:grid xl:grid-cols-[1fr_280px]">
       {/* Main facilitate content */}
-      <div className="px-md py-xl max-w-2xl mx-auto pb-32">
+      <div className="px-md py-xl max-w-2xl mx-auto pb-44">
         {/* Progress dots + timer */}
         <div className="flex items-center justify-between mb-xl">
           <div className="flex items-center gap-xs">
@@ -401,8 +401,10 @@ export default function FacilitateMode({
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="fixed bottom-20 left-0 right-0 lg:left-[220px] px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
+        {/* Navigation — pinned above the global bottom nav (safe-area aware); the
+            offset also clears the nav's raised centre Log button. On desktop there
+            is no bottom nav, so pin to the viewport bottom. */}
+        <div className="fixed bottom-[calc(84px+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 lg:left-[220px] z-30 px-md pb-md bg-gradient-to-t from-surface-body via-surface-body/95 to-transparent pt-lg">
           <div className="flex gap-sm">
             {onPause && (
               <button
@@ -628,36 +630,49 @@ export default function FacilitateMode({
         )}
       </aside>
 
-      {/* Mobile floating capture button + panel */}
+      {/* Mobile floating capture button + panel. The FAB sits above the action
+          bar (which clears the global nav); when the panel is open a dimmed
+          backdrop separates it from the page and captures outside-taps. */}
       {onAddCapture && (
-        <div className="fixed bottom-32 right-4 xl:hidden z-20">
+        <>
           {mobileCapture && (
-            <div className="absolute bottom-14 right-0 w-72 mb-sm">
-              <QuickCapture
-                captures={quickCaptures ?? []}
-                currentActivityIdx={externalActivityIdx ?? currentIdx}
-                currentActivityTitle={current.title}
-                onAddCapture={(item) => {
-                  onAddCapture(item);
-                  setMobileCapture(false);
-                }}
-                onRemoveCapture={onRemoveCapture ?? (() => {})}
-              />
-            </div>
+            <button
+              type="button"
+              aria-label="Close quick capture"
+              tabIndex={-1}
+              onClick={() => setMobileCapture(false)}
+              className="fixed inset-0 z-40 backdrop-tray hearth-fade-in xl:hidden"
+            />
           )}
-          <button
-            onClick={() => setMobileCapture((v) => !v)}
-            className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
-            aria-label="Quick capture"
-          >
-            {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}
-            {!mobileCapture && quickCaptures && quickCaptures.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-surface-raised text-ember text-[10px] font-semibold rounded-full w-5 h-5 flex items-center justify-center border border-border-subtle">
-                {quickCaptures.length}
-              </span>
+          <div className="fixed bottom-[calc(144px+env(safe-area-inset-bottom,0px))] right-4 xl:hidden z-50">
+            {mobileCapture && (
+              <div className="absolute bottom-14 right-0 w-72 mb-sm">
+                <QuickCapture
+                  captures={quickCaptures ?? []}
+                  currentActivityIdx={externalActivityIdx ?? currentIdx}
+                  currentActivityTitle={current.title}
+                  onAddCapture={(item) => {
+                    onAddCapture(item);
+                    setMobileCapture(false);
+                  }}
+                  onRemoveCapture={onRemoveCapture ?? (() => {})}
+                />
+              </div>
             )}
-          </button>
-        </div>
+            <button
+              onClick={() => setMobileCapture((v) => !v)}
+              className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
+              aria-label="Quick capture"
+            >
+              {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}
+              {!mobileCapture && quickCaptures && quickCaptures.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-surface-raised text-ember text-[10px] font-semibold rounded-full w-5 h-5 flex items-center justify-center border border-border-subtle">
+                  {quickCaptures.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

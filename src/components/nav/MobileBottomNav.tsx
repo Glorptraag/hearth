@@ -95,14 +95,15 @@ export function MobileBottomNav() {
 
   return (
     <>
-      {/* Backdrop captures outside-taps. Transparent — page stays visible. */}
+      {/* Backdrop captures outside-taps and dims the page so the tray reads as a
+          distinct layer — not tangled with floating runner buttons beneath it. */}
       {tray.phase === 'open' && (
         <button
           type="button"
           aria-label="Close menu"
           tabIndex={-1}
           onClick={close}
-          className="fixed inset-0 z-[90] cursor-default bg-transparent lg:hidden"
+          className="fixed inset-0 z-[90] cursor-default backdrop-modal hearth-fade-in lg:hidden"
         />
       )}
 

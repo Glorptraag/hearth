@@ -45,20 +45,33 @@ export default function LogMode({
   const [saving, setSaving] = useState(false);
   const [attemptNumber, setAttemptNumber] = useState(1);
 
+  // Scope the prompts to the activities the parent actually facilitated this
+  // session — the selected approach's completed activities — rather than every
+  // activity in every approach. Aggregating the whole module dumped 20+ chips at
+  // session end (the "bombardment"); a real session touches only a few.
+  const scopedActivities = (() => {
+    const approaches = module.approaches ?? [];
+    const approach = selectedApproachIdx != null ? approaches[selectedApproachIdx] : undefined;
+    if (approach) {
+      const acts = approach.activities ?? [];
+      if (completedActivityIdxs && completedActivityIdxs.length > 0) {
+        const done = completedActivityIdxs
+          .map((i) => acts[i])
+          .filter((a): a is NonNullable<typeof a> => Boolean(a));
+        if (done.length > 0) return done;
+      }
+      if (acts.length > 0) return acts;
+    }
+    // Fallback (e.g. Log opened directly): every activity across all approaches.
+    return approaches.flatMap((app) => app.activities ?? []);
+  })();
+
   const allPrompts = Array.from(
-    new Set(
-      module.approaches?.flatMap((app) =>
-        app.activities?.flatMap((act) => act.observationPrompts ?? []) ?? []
-      ) ?? []
-    )
+    new Set(scopedActivities.flatMap((act) => act.observationPrompts ?? []))
   );
 
   const reflectionPrompts = Array.from(
-    new Set(
-      module.approaches?.flatMap((app) =>
-        app.activities?.flatMap((act) => act.reflectionPrompts ?? []) ?? []
-      ) ?? []
-    )
+    new Set(scopedActivities.flatMap((act) => act.reflectionPrompts ?? []))
   );
 
   useEffect(() => {

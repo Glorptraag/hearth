@@ -265,6 +265,7 @@ export default function LogPage() {
   const {
     isRecording,
     isTranscribing,
+    audioLevel,
     isSupported: voiceSupported,
     start: startVoiceInput,
     stop: stopVoiceInput,
@@ -654,7 +655,11 @@ export default function LogPage() {
   }
 
   return (
-    <div className="relative">
+    // Mobile: fill the scroll container as a flex column so the `flex-1` content
+    // region stretches and the `sticky bottom-0` save bar always pins flush above
+    // the nav — even when the form is shorter than the viewport. Desktop reverts
+    // to the original block flow (the sticky bar is lg:hidden).
+    <div className="relative flex min-h-full flex-col lg:block">
       {/* Offline banner — sits above the draft-restored banner so it's the
           first thing the parent sees if a network drop interrupts them.
           The 10s autosave keeps writing to localStorage regardless of
@@ -781,7 +786,7 @@ export default function LogPage() {
 
       {!showBatch && !showImport && <div className="flex-1 lg:flex">
         {/* ─── Left: Capture Form ─── */}
-        <div className="flex-1 overflow-y-auto px-md pt-lg pb-[220px] lg:py-lg lg:flex lg:justify-center">
+        <div className="flex-1 overflow-y-auto px-md pt-lg pb-[120px] lg:py-lg lg:flex lg:justify-center">
           <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
           {view === 'full' && (
             <button
@@ -811,6 +816,7 @@ export default function LogPage() {
             onDescriptionChange={setDescription}
             isRecording={isRecording}
             isTranscribing={isTranscribing}
+            audioLevel={audioLevel}
             voiceSupported={voiceSupported}
             onStartVoice={startVoiceInput}
             onStopVoice={stopVoiceInput}
@@ -842,7 +848,7 @@ export default function LogPage() {
             }
           />
 
-          {/* Sections 4–6 (When/Where · Observe · Evidence) — Full view only */}
+          {/* Sections 4–5 (When/Where · Observe) — Full view only */}
           {view === 'full' && (
             <>
               <WhenWhereSection
@@ -866,17 +872,19 @@ export default function LogPage() {
                 }
                 isGuided={loggerMode === 'guided'}
               />
-
-              <EvidenceSection
-                done={sectionDone[6]}
-                evidence={evidence}
-                onOpenTool={setEvidenceModal}
-                onRemoveEvidence={(index) =>
-                  setEvidence((prev) => prev.filter((_, idx) => idx !== index))
-                }
-              />
             </>
           )}
+
+          {/* Section 6: Evidence (optional) — available in both Quick and Full.
+              In Quick it follows Engagement; in Full it follows Observe. */}
+          <EvidenceSection
+            done={sectionDone[6]}
+            evidence={evidence}
+            onOpenTool={setEvidenceModal}
+            onRemoveEvidence={(index) =>
+              setEvidence((prev) => prev.filter((_, idx) => idx !== index))
+            }
+          />
 
           {/* Quick view: invite into the full form without crowding it */}
           {view === 'quick' && (
@@ -919,8 +927,11 @@ export default function LogPage() {
         )}
       </div>}
 
-      {/* ─── Mobile bottom stack: AI Insights drawer + Save bar ─── */}
-      <div className="lg:hidden fixed bottom-[72px] left-0 right-0 z-50">
+      {/* ─── Mobile bottom stack: AI Insights drawer + Save bar ───
+          `sticky bottom-0` inside the scrolling <main> pins this flush above the
+          in-flow MobileBottomNav regardless of the nav's safe-area height — no
+          magic offset, no separate scroll. */}
+      <div className="lg:hidden sticky bottom-0 z-50">
         {/* AI Insights drawer + toggle — Full view only */}
         {view === 'full' && (<>
         {insightsExpanded && (
@@ -960,26 +971,6 @@ export default function LogPage() {
         {/* Save bar — primary action anchored at the bottom on mobile */}
         {!showBatch && !showImport && (
           <div className="border-t border-border-subtle bg-surface-panel px-md py-sm pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
-            {!canSave && missingItems.length > 0 && (
-              <div
-                className="mb-sm flex flex-wrap items-center gap-xs"
-                role="status"
-                aria-live="polite"
-              >
-                <span className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  Before you save
-                </span>
-                {missingItems.map((m) => (
-                  <span
-                    key={m}
-                    className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-surface-raised px-sm py-[2px] font-sans text-[0.6875rem] text-text-secondary"
-                  >
-                    <span className="h-[5px] w-[5px] rounded-full bg-ember" aria-hidden="true" />
-                    {m}
-                  </span>
-                ))}
-              </div>
-            )}
             <div className="flex items-center gap-md">
               <CompletenessRing
                 score={completeness}
@@ -1031,7 +1022,7 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[200px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
+          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
             toast.type === 'badge'
               ? 'bg-ember/20 text-ember border border-ember/30'
               : toast.type === 'success'

@@ -1,4 +1,4 @@
-import { Microphone, ChatCircleDots } from '@/components/icons';
+import { Microphone, ChatCircleDots, CircleNotch } from '@/components/icons';
 import { SectionHeader } from './SectionHeader';
 import { CHILD_COLORS } from './childColors';
 import { ACTIVITY_TYPES, SUBJECTS } from './loggerConstants';
@@ -15,6 +15,8 @@ interface WhatSectionProps {
   onDescriptionChange: (value: string) => void;
   isRecording: boolean;
   isTranscribing: boolean;
+  /** Live mic input level, 0–1, while recording. Drives the "receiving audio" bars. */
+  audioLevel: number;
   voiceSupported: boolean;
   onStartVoice: () => void;
   onStopVoice: () => void;
@@ -48,6 +50,7 @@ export function WhatSection({
   onDescriptionChange,
   isRecording,
   isTranscribing,
+  audioLevel,
   voiceSupported,
   onStartVoice,
   onStopVoice,
@@ -65,35 +68,72 @@ export function WhatSection({
     <section>
       <SectionHeader number={2} done={done} label={label} />
 
-      {/* 2a: Description */}
+      {/* 2a: Description — the voice control lives inside the textbox (bottom-right). */}
       <div className="mb-lg">
-        <textarea
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder={placeholder}
-          rows={4}
-          className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body p-md font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-200 resize-y"
-        />
-        <div className="mt-sm flex items-center gap-xs">
-          <button
-            onClick={isRecording ? onStopVoice : onStartVoice}
-            disabled={!voiceSupported || isTranscribing}
-            title={voiceSupported ? undefined : 'Voice needs microphone access in a recent browser'}
-            className={`flex items-center gap-xs rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium transition-all duration-200 ${
-              isRecording
-                ? 'bg-ember-glow border border-ember text-ember animate-pulse'
-                : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-            } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
-          >
-            <span className="inline-flex items-center gap-xs">
-              <Microphone size={14} aria-hidden="true" />{' '}
-              {isTranscribing ? 'Transcribing…' : isRecording ? 'Recording…' : 'Voice'}
-            </span>
-          </button>
-          <span className="ml-auto font-sans text-[0.6875rem] text-text-muted">
-            {description.length > 0 ? `${description.length}` : ''}
-          </span>
+        <div className="relative">
+          <textarea
+            value={description}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder={placeholder}
+            aria-label={label}
+            rows={4}
+            className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body px-md pt-md pb-[52px] font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-200 resize-none"
+          />
+          <div className="absolute bottom-2 right-2 flex items-center gap-xs">
+            {/* Live audio-level bars — visible while recording. They sit at a
+                small floor (so "armed/live" reads even in silence) and grow with
+                the mic level, which is the "receiving audio" signal. */}
+            {isRecording && (
+              <span className="flex h-[18px] items-center gap-[2px]" aria-hidden="true">
+                {[0, 1, 2].map((i) => {
+                  const floor = 0.28;
+                  const gain = i === 1 ? 1 : 0.7;
+                  const scale = Math.max(floor, Math.min(1, floor + audioLevel * gain));
+                  return (
+                    <span
+                      key={i}
+                      className="w-[3px] rounded-full bg-ember origin-center transition-transform duration-[var(--motion-instant)] ease-[var(--ease-out)]"
+                      style={{ height: '18px', transform: `scaleY(${scale})` }}
+                    />
+                  );
+                })}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={isRecording ? onStopVoice : onStartVoice}
+              disabled={!voiceSupported || isTranscribing}
+              aria-pressed={isRecording}
+              aria-label={
+                isTranscribing
+                  ? 'Transcribing voice input'
+                  : isRecording
+                    ? 'Stop voice input'
+                    : 'Start voice input'
+              }
+              title={voiceSupported ? undefined : 'Voice needs microphone access in a recent browser'}
+              className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] before:absolute before:-inset-1 before:content-[''] ${
+                isRecording
+                  ? 'bg-ember text-text-inverse shadow-ember'
+                  : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
+              } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
+            >
+              {isTranscribing ? (
+                <CircleNotch size={18} aria-hidden="true" className="animate-spin" />
+              ) : (
+                <Microphone size={18} weight={isRecording ? 'fill' : 'regular'} aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
+        {(isRecording || isTranscribing || description.length > 0) && (
+          <div className="mt-xs flex items-center justify-between font-sans text-[0.6875rem] text-text-muted">
+            <span>
+              {isTranscribing ? 'Transcribing…' : isRecording ? 'Listening…' : ''}
+            </span>
+            <span>{description.length > 0 ? `${description.length}` : ''}</span>
+          </div>
+        )}
       </div>
 
       {!minimal && (<>

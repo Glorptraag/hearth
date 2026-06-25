@@ -21,6 +21,72 @@ export function computeTargetDimensions(
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
+/** A decoded image ready to draw to a canvas, plus a cleanup hook. */
+interface DecodedImage {
+  source: CanvasImageSource;
+  width: number;
+  height: number;
+  cleanup: () => void;
+}
+
+/**
+ * Decode a File to something drawable, trying the fastest path first and falling
+ * back for older/locked-down browsers:
+ *   1. `createImageBitmap(file, { imageOrientation })` — fast, but the options
+ *      dictionary THROWS on iOS Safari < 17, which is why a bare iPad upload
+ *      previously fell through to the original (uncompressed, often >4.5 MB) file.
+ *   2. `createImageBitmap(file)` — no options dict (older Safari).
+ *   3. `<img>` + object URL — Safari decodes HEIC/HEIF natively here, so this is
+ *      the reliable iOS path.
+ * Returns null when nothing can decode it (e.g. desktop Chrome + HEIC).
+ */
+async function decodeImage(file: File): Promise<DecodedImage | null> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      return { source: bitmap, width: bitmap.width, height: bitmap.height, cleanup: () => bitmap.close() };
+    } catch {
+      try {
+        const bitmap = await createImageBitmap(file);
+        return { source: bitmap, width: bitmap.width, height: bitmap.height, cleanup: () => bitmap.close() };
+      } catch {
+        /* fall through to the <img> path */
+      }
+    }
+  }
+
+  if (typeof document !== 'undefined' && typeof URL?.createObjectURL === 'function') {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        // A decode that fires neither onload nor onerror would hang the upload —
+        // time it out so we fall back to the original file + server path instead.
+        const timer = setTimeout(() => reject(new Error('image decode timed out')), 15000);
+        el.onload = () => {
+          clearTimeout(timer);
+          resolve(el);
+        };
+        el.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error('image decode failed'));
+        };
+        el.src = url;
+      });
+      return {
+        source: img,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        cleanup: () => URL.revokeObjectURL(url),
+      };
+    } catch {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  return null;
+}
+
 /**
  * Downscale + re-encode an image to JPEG in the browser before upload. Keeps
  * the payload well under Vercel's 4.5 MB function-body limit and converts HEIC/
@@ -37,32 +103,37 @@ export async function compressImageFile(
   if (!file.type.startsWith('image/')) return file;
   if (file.type === 'image/gif') return file; // may be animated — leave alone
 
+  const decoded = await decodeImage(file);
+  if (!decoded) return file;
+
   try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    const { width, height } = computeTargetDimensions(bitmap.width, bitmap.height, maxEdge);
+    const { width, height } = computeTargetDimensions(decoded.width, decoded.height, maxEdge);
+    if (!width || !height) return file; // undecodable dimensions
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close();
+    if (!ctx) return file;
+    ctx.drawImage(decoded.source, 0, 0, width, height);
 
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/jpeg', quality)
     );
     if (!blob) return file;
 
-    // Already-small images can round-trip larger — keep the smaller original.
-    if (blob.size >= file.size) return file;
+    // HEIC/HEIF must always become JPEG (cross-browser rendering + the server's
+    // sharp build may lack libheif), even on the rare case the JPEG is larger.
+    // For everything else, an already-small image can round-trip larger — keep
+    // the smaller original then.
+    const isHeic = /hei[cf]/i.test(file.type);
+    if (!isHeic && blob.size >= file.size) return file;
 
     const name = file.name.replace(/\.[^./\\]+$/, '') + '.jpg';
     return new File([blob], name, { type: 'image/jpeg', lastModified: file.lastModified });
   } catch {
     return file;
+  } finally {
+    decoded.cleanup();
   }
 }

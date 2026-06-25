@@ -33,6 +33,7 @@ const renderWhat = (minimal: boolean) =>
       onDescriptionChange={vi.fn()}
       isRecording={false}
       isTranscribing={false}
+      audioLevel={0}
       voiceSupported
       onStartVoice={vi.fn()}
       onStopVoice={vi.fn()}

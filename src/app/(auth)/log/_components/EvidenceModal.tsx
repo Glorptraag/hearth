@@ -48,6 +48,10 @@ export function EvidenceModal({
         formData.append('file', fileToUpload);
         const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
         if (!res.ok) {
+          if (res.status === 413) {
+            toast('That photo is too large to upload — try a smaller one.', 'error');
+            return;
+          }
           const err = await res.json().catch(() => ({ error: 'Upload failed. Please try again.' }));
           toast(err.error ?? 'Upload failed. Please try again.', 'error');
           return;
@@ -55,7 +59,10 @@ export function EvidenceModal({
         const { pathname } = await res.json();
         onSave({ type: 'photo', content: pathname, caption });
       } catch {
-        toast('Upload failed. Check your connection and try again.', 'error');
+        // A body that exceeds the platform request limit can surface as a network
+        // error before any JSON response — name the likely cause (an oversized
+        // photo) rather than a bare connection failure.
+        toast('Couldn’t upload that photo — it may be too large. Try a smaller one.', 'error');
         return;
       } finally {
         setUploading(false);
@@ -75,6 +82,15 @@ export function EvidenceModal({
     note: 'Add Note',
     link: 'Link Resource',
   };
+
+  // Gate the action so a tap with nothing entered isn't a silent no-op. Photo
+  // readiness tracks `previewUrl` (state) since the File itself lives in a ref.
+  const canSubmit =
+    type === 'photo'
+      ? !!previewUrl
+      : type === 'link'
+        ? !!(linkName.trim() || linkUrl.trim())
+        : !!content.trim();
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center">
@@ -142,8 +158,8 @@ export function EvidenceModal({
 
         <button
           onClick={handleSave}
-          disabled={uploading}
-          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 min-h-[44px] disabled:opacity-40"
+          disabled={uploading || !canSubmit}
+          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 min-h-[44px] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {uploading ? 'Uploading...' : 'Add Evidence'}
         </button>

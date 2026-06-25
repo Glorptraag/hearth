@@ -32,6 +32,8 @@ interface UseAudioTranscriptionResult {
   isRecording: boolean;
   isTranscribing: boolean;
   isSupported: boolean;
+  /** Live mic input level, 0–1, while recording. 0 when idle or unmetered. */
+  audioLevel: number;
   start: () => void;
   stop: () => void;
 }
@@ -55,11 +57,16 @@ export function useAudioTranscription({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Web Audio level meter (best-effort): drives the "receiving audio" affordance.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const meterRafRef = useRef<number | null>(null);
+  const lastMeterTsRef = useRef(0);
   // Re-entrancy guards for the async getUserMedia window. `startingRef` blocks a
   // second start() while the mic prompt is open (otherwise a second
   // getUserMedia orphans the first stream and leaves the mic hot). `cancelRef`
@@ -93,6 +100,70 @@ export function useAudioTranscription({
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }, []);
+
+  // Tear down the level meter: stop the rAF loop, close the AudioContext, zero
+  // the level. Safe to call when no meter is running.
+  const stopMeter = useCallback(() => {
+    if (meterRafRef.current !== null) {
+      cancelAnimationFrame(meterRafRef.current);
+      meterRafRef.current = null;
+    }
+    const ctx = audioCtxRef.current;
+    audioCtxRef.current = null;
+    if (ctx) void ctx.close().catch(() => {});
+    setAudioLevel(0);
+  }, []);
+
+  // Start an AnalyserNode over the live stream and publish a throttled 0–1 level.
+  // Best-effort: a missing AudioContext (older browsers / jsdom) just means no
+  // live meter — recording and transcription are unaffected.
+  const startMeter = useCallback(
+    (stream: MediaStream) => {
+      const Ctor =
+        typeof window !== 'undefined'
+          ? window.AudioContext ??
+            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+          : undefined;
+      if (!Ctor) return;
+      try {
+        const ctx = new Ctor();
+        // iOS Safari (the target platform) starts the context 'suspended' until a
+        // user gesture; start() is tap-driven, so a best-effort resume lets the
+        // analyser read real samples instead of silence. No-op when running.
+        if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        audioCtxRef.current = ctx;
+        // Reset the throttle clock so the first tick of every recording publishes.
+        lastMeterTsRef.current = 0;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        const tick = () => {
+          analyser.getByteTimeDomainData(data);
+          let sumSq = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128; // centre at 0, range -1..1
+            sumSq += v * v;
+          }
+          const rms = Math.sqrt(sumSq / data.length); // 0..~1
+          // Throttle state to ~12fps so we don't re-render at the rAF cadence.
+          const now = typeof performance !== 'undefined' ? performance.now() : 0;
+          if (now - lastMeterTsRef.current >= 80) {
+            lastMeterTsRef.current = now;
+            // Light gain so ordinary speech fills the meter; clamp to 1.
+            setAudioLevel(Math.min(1, rms * 2.2));
+          }
+          meterRafRef.current = requestAnimationFrame(tick);
+        };
+        meterRafRef.current = requestAnimationFrame(tick);
+      } catch {
+        stopMeter();
+      }
+    },
+    [stopMeter],
+  );
 
   const transcribe = useCallback(async (blob: Blob) => {
     setIsTranscribing(true);
@@ -145,6 +216,7 @@ export function useAudioTranscription({
           return;
         }
         streamRef.current = stream;
+        startMeter(stream);
         chunksRef.current = [];
         const mimeType = pickMimeType();
         const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -160,6 +232,7 @@ export function useAudioTranscription({
           }
           const chunks = chunksRef.current;
           chunksRef.current = [];
+          stopMeter();
           releaseStream();
           if (chunks.length > 0) {
             void transcribe(new Blob(chunks, { type: recorder.mimeType || mimeType }));
@@ -179,12 +252,13 @@ export function useAudioTranscription({
       })
       .catch(() => {
         // getUserMedia rejects on denied permission or no input device.
+        stopMeter();
         releaseStream();
         startingRef.current = false;
         cancelRef.current = false;
         onErrorRef.current?.('permission');
       });
-  }, [maxDurationMs, releaseStream, transcribe]);
+  }, [maxDurationMs, releaseStream, transcribe, startMeter, stopMeter]);
 
   const stop = useCallback(() => {
     if (recorderRef.current?.state === 'recording') {
@@ -198,13 +272,16 @@ export function useAudioTranscription({
     }
   }, []);
 
-  // Unmount cleanup — abort an in-flight upload, stop the recorder, release mic.
+  // Unmount cleanup — abort an in-flight upload, stop the recorder, release mic,
+  // tear down the level meter.
   useEffect(() => () => {
     if (autoStopRef.current) clearTimeout(autoStopRef.current);
     abortRef.current?.abort();
+    if (meterRafRef.current !== null) cancelAnimationFrame(meterRafRef.current);
+    if (audioCtxRef.current) void audioCtxRef.current.close().catch(() => {});
     if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
     streamRef.current?.getTracks().forEach((t) => t.stop());
   }, []);
 
-  return { isRecording, isTranscribing, isSupported, start, stop };
+  return { isRecording, isTranscribing, isSupported, audioLevel, start, stop };
 }

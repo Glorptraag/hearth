@@ -258,6 +258,26 @@ describe('useAudioTranscription', () => {
     expect(result.current.isRecording).toBe(true);
   });
 
+  it('exposes audioLevel (0 without Web Audio) and still records + transcribes', async () => {
+    // jsdom has no AudioContext, so the level meter is skipped — the recording
+    // and transcription path must work regardless and audioLevel stays 0.
+    const onTranscript = vi.fn();
+    installImmediateMedia();
+    installMediaRecorder();
+    vi.stubGlobal('fetch', okFetch('a kookaburra called'));
+
+    const { result } = renderHook(() => useAudioTranscription({ onTranscript }));
+    expect(result.current.audioLevel).toBe(0);
+
+    await act(async () => { result.current.start(); });
+    expect(result.current.isRecording).toBe(true);
+    expect(result.current.audioLevel).toBe(0);
+
+    await act(async () => { result.current.stop(); });
+    expect(onTranscript).toHaveBeenCalledWith('a kookaburra called');
+    expect(result.current.audioLevel).toBe(0);
+  });
+
   it('cancels cleanly when stop() is tapped during the permission prompt', async () => {
     const { resolveStream } = installDeferredMedia();
     installMediaRecorder();

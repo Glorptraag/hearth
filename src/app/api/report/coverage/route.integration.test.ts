@@ -14,8 +14,12 @@ const mocks = vi.hoisted(() => ({
   sanityFetch: vi.fn().mockResolvedValue([]),
 }));
 
+// coverage.ts reads DLO mappings through the authed `sanityServerClient`
+// (the dotted-id DLO docs are dark to the tokenless `sanityClient` in prod).
+// Back both names with the same fixture fetch so the mock survives either.
 vi.mock('@/lib/sanity/client', () => ({
   sanityClient: { fetch: mocks.sanityFetch },
+  sanityServerClient: { fetch: mocks.sanityFetch },
 }));
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

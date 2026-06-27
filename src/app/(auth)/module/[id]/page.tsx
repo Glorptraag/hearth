@@ -5,7 +5,7 @@ import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { MODULE_DETAIL_QUERY, OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
+import { OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
 import { markActivityVisited } from '@/lib/modules/completion';
 import EmptyState from '@/components/ui/EmptyState';
@@ -119,7 +119,11 @@ export default function ModuleDetailPage() {
   const fetchModule = useCallback(async () => {
     try {
       const [rawMod, libraryRes, settingsRes] = await Promise.all([
-        sanityClient.fetch(MODULE_DETAIL_QUERY, { id }),
+        // Read the module detail through the authed server proxy: this client
+        // component would otherwise use the tokenless `sanityClient`, which
+        // can't see the dotted-id commonsText/asset docs (read-aloud text +
+        // audio URL) in prod. See /api/modules/[id]/detail.
+        fetch(`/api/modules/${encodeURIComponent(id)}/detail`).then((r) => (r.ok ? r.json() : null)),
         fetch('/api/library'),
         fetch('/api/settings'),
       ]);

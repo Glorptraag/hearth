@@ -71,6 +71,11 @@ function stubApiFetch() {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
+      if (url === '/api/modules/module_1/detail')
+        return new Response(JSON.stringify(MOCK_RAW_MODULE), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       if (url === '/api/library')
         return new Response(JSON.stringify([{ id: 'module_1', kind: 'module' }]), {
           status: 200,
@@ -111,8 +116,10 @@ beforeEach(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockFetch = vi.mocked(sanityClient.fetch) as unknown as any;
   mockFetch.mockReset();
+  // MODULE_DETAIL_QUERY now loads via the /api/modules/[id]/detail proxy (see
+  // stubApiFetch); the remaining client-side sanityClient reads are framework
+  // then overlays.
   mockFetch
-    .mockResolvedValueOnce(MOCK_RAW_MODULE) // MODULE_DETAIL_QUERY
     .mockResolvedValueOnce(null)            // FRAMEWORK_BY_PEDAGOGY_KEY_QUERY → no framework
     .mockResolvedValue([]);                 // OVERLAYS_BATCH_QUERY + any fallback
 

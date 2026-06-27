@@ -18,7 +18,7 @@
 import { db } from '@/lib/db';
 import { learnerDloStatus } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { DLO_MAPPINGS_QUERY } from '@/lib/sanity/queries';
 import {
   deriveCoverageSignals,
@@ -74,7 +74,12 @@ export async function getDeterministicCoverage(input: {
       .select({ dloId: learnerDloStatus.dloId, status: learnerDloStatus.status })
       .from(learnerDloStatus)
       .where(eq(learnerDloStatus.learnerId, learnerId)),
-    sanityClient.fetch<DloMappingDoc[]>(DLO_MAPPINGS_QUERY),
+    // Authed read: `discreteLearningObjective` docs use dotted ids outside the
+    // prod public-read ACL, so the tokenless `sanityClient` returns 0 rows and
+    // every framework looks like it has no authored mappings — collapsing
+    // deterministic coverage to the `{ mode: 'fallback' }` LLM path in prod.
+    // Server-only code (imports @/lib/db), so the authed read is safe.
+    sanityServerClient.fetch<DloMappingDoc[]>(DLO_MAPPINGS_QUERY),
   ]);
 
   const docs = mappingDocs ?? [];

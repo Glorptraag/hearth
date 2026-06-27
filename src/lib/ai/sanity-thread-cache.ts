@@ -1,4 +1,4 @@
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { DLO_TIERS_QUERY } from '@/lib/sanity/queries';
 
 // ─── Types ───
@@ -127,9 +127,14 @@ export async function getCachedThreads(): Promise<Map<string, ThreadMeta>> {
   // so these `dlos`/`dlos_total` fields are no longer read by the rebuild.)
   // Keyed directly by the deterministic `capabilityThread.{shortCode}` ref — no
   // fuzzy title matching.
+  // Read through the authed `sanityServerClient`: `discreteLearningObjective`
+  // docs use dotted ids that fall outside the prod public-read ACL, so the
+  // tokenless `sanityClient` returns 0 rows in production — silently leaving
+  // every thread on taxonomy-only (3 placeholder DLOs). Server-side write-time
+  // code, so the authed read is safe. Mirrors dlo-cache.ts / thread-links.ts.
   try {
     const dloRows: Array<{ _id: string; threadRef: string; tier: SanityDLO['tier'] }> =
-      await sanityClient.fetch(DLO_TIERS_QUERY);
+      await sanityServerClient.fetch(DLO_TIERS_QUERY);
 
     const byShortCode = new Map<string, SanityDLO[]>();
     for (const row of dloRows) {

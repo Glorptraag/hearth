@@ -378,6 +378,15 @@ export const OBSERVATIONAL_MARKERS_QUERY = `*[_type == "pedagogyObservationalMar
   _id, markerName, whatItIndicates, markersToLookFor, tags
 }`;
 
+// PKB: Source excerpts for a given framework (Learn More panel). Excludes
+// suggested drafts. `pedagogySourceExcerpt` uses dotted ids → dark to the
+// tokenless browser client, so this reads through the authed proxy.
+export const PEDAGOGY_SOURCE_EXCERPTS_QUERY = `*[_type == "pedagogySourceExcerpt" && references($frameworkId) && status == "published" && suggestedDraft != true]{
+  text, isParaphrase,
+  sourceAttribution{ author, title, year, pageOrChapter },
+  tags
+}`;
+
 export interface SkeletonRecord {
   _id: string;
   skeletonId: string;

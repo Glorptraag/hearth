@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { sanityClient } from '@/lib/sanity/client';
-import { PACK_MATERIALS_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
 import { MaterialItemRow } from './MaterialItemRow';
 import { PrintSheet } from './PrintSheet';
 import { Package } from '@/components/icons';
@@ -93,7 +92,9 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
     async function fetchMaterials() {
       setLoading(true);
       try {
-        const result = await sanityClient.fetch<PackMaterialsData>(PACK_MATERIALS_QUERY, { packId });
+        // pack materials deref dotted-id asset/commonsText (dark to the
+        // tokenless browser client) — read through the authed proxy.
+        const result = await clientSanityRead<PackMaterialsData>('packMaterials', { packId });
         if (!cancelled) setData(result);
       } finally {
         if (!cancelled) setLoading(false);

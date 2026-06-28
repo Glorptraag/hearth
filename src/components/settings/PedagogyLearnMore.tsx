@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { sanityClient } from '@/lib/sanity/client';
+import { clientSanityRead } from '@/lib/sanity/client-read';
 
 interface SourceExcerpt {
   text: string;
@@ -48,24 +48,16 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
 
     async function fetchExcerpts() {
       try {
-        const framework = await sanityClient.fetch<{ _id: string } | null>(
-          `*[_type == "pedagogicalFramework" && slug == $pedagogyKey][0]{ _id }`,
-          { pedagogyKey }
-        );
+        // pedagogicalFramework / pedagogySourceExcerpt use dotted ids (dark to
+        // the tokenless browser client) — read through the authed proxy.
+        const framework = await clientSanityRead<{ _id: string }>('frameworkByPedagogyKey', { pedagogyKey });
         if (cancelled) return;
         if (!framework) {
           setExcerpts([]);
           return;
         }
 
-        const results = await sanityClient.fetch<SourceExcerpt[]>(
-          `*[_type == "pedagogySourceExcerpt" && references($frameworkId) && status == "published" && suggestedDraft != true]{
-            text, isParaphrase,
-            sourceAttribution{ author, title, year, pageOrChapter },
-            tags
-          }`,
-          { frameworkId: framework._id }
-        );
+        const results = await clientSanityRead<SourceExcerpt[]>('pedagogySourceExcerpts', { frameworkId: framework._id });
         if (cancelled) return;
 
         if (!results || results.length === 0) {

@@ -5,12 +5,14 @@ import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 import type { QuickCaptureItem } from './_components/types';
 import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { OVERLAYS_BATCH_QUERY, FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, PRACTICE_PATTERNS_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
 import { markActivityVisited } from '@/lib/modules/completion';
 import EmptyState from '@/components/ui/EmptyState';
 import { Wrench, Lock, ClipboardText, PencilSimple, Play, FilePdf } from '@/components/icons';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
+
+type OverlayRow = { _id: string; activity: { _ref: string }; lens: PedagogyLens };
 import PrepMode from './_components/PrepMode';
 import FacilitateMode from './_components/FacilitateMode';
 import LogMode from './_components/LogMode';
@@ -173,10 +175,12 @@ export default function ModuleDetailPage() {
         setPedagogy(resolvedPedagogy);
       }
 
-      // Fetch practice patterns for the resolved pedagogy
-      const framework = await sanityClient.fetch(FRAMEWORK_BY_PEDAGOGY_KEY_QUERY, { pedagogyKey: resolvedPedagogy });
+      // Fetch practice patterns for the resolved pedagogy. pedagogicalFramework /
+      // pedagogyPracticePattern use dotted ids (dark to the tokenless browser
+      // client), so these read through the authed proxy.
+      const framework = await clientSanityRead<{ _id: string } | null>('frameworkByPedagogyKey', { pedagogyKey: resolvedPedagogy });
       if (framework?._id) {
-        const patterns = await sanityClient.fetch(PRACTICE_PATTERNS_QUERY, { frameworkId: framework._id });
+        const patterns = await clientSanityRead<Array<{_id: string; triggerTitle: string; triggerContext?: string; traditionResponse?: string; antiPattern?: string; tags?: string[]}>>('practicePatterns', { frameworkId: framework._id });
         setPracticePatterns(patterns ?? []);
       }
 
@@ -184,9 +188,9 @@ export default function ModuleDetailPage() {
         const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
         if (activityIds.length > 0) {
           let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
-            await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: resolvedPedagogy });
+            (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: resolvedPedagogy })) ?? [];
           if (raw.length === 0 && resolvedPedagogy !== 'eclectic') {
-            raw = await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: 'eclectic' });
+            raw = (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: 'eclectic' })) ?? [];
           }
           setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
         }
@@ -202,9 +206,9 @@ export default function ModuleDetailPage() {
     const activityIds: string[] = module?.approaches?.[idx]?.activities?.map((a) => a._id) ?? [];
     if (activityIds.length > 0 && pedagogy) {
       let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
-        await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: pedagogy });
+        (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: pedagogy })) ?? [];
       if (raw.length === 0 && pedagogy !== 'eclectic') {
-        raw = await sanityClient.fetch(OVERLAYS_BATCH_QUERY, { activityIds, framework: 'eclectic' });
+        raw = (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: 'eclectic' })) ?? [];
       }
       setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
     } else {

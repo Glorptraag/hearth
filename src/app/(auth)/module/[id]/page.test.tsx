@@ -67,26 +67,28 @@ const MOCK_RAW_MODULE = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function json(body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 function stubApiFetch() {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string) => {
-      if (url === '/api/modules/module_1/detail')
-        return new Response(JSON.stringify(MOCK_RAW_MODULE), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      if (url === '/api/library')
-        return new Response(JSON.stringify([{ id: 'module_1', kind: 'module' }]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      if (url === '/api/settings')
-        return new Response(JSON.stringify({ pedagogyPreference: 'eclectic' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/modules/module_1/detail') return json(MOCK_RAW_MODULE);
+      if (url === '/api/library') return json([{ id: 'module_1', kind: 'module' }]);
+      if (url === '/api/settings') return json({ pedagogyPreference: 'eclectic' });
+      // Authed Sanity read proxy: the module page reads framework / practice
+      // patterns / overlays through it. Return shapes per query key.
+      if (url === '/api/sanity/read') {
+        const key = init?.body ? JSON.parse(String(init.body)).key : undefined;
+        if (key === 'frameworkByPedagogyKey') return json(null); // no framework → skip patterns
+        return json([]); // overlaysBatch / practicePatterns → empty arrays
+      }
+      return json({});
     }),
   );
 }
@@ -116,12 +118,12 @@ beforeEach(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockFetch = vi.mocked(sanityClient.fetch) as unknown as any;
   mockFetch.mockReset();
-  // MODULE_DETAIL_QUERY now loads via the /api/modules/[id]/detail proxy (see
-  // stubApiFetch); the remaining client-side sanityClient reads are framework
-  // then overlays.
-  mockFetch
-    .mockResolvedValueOnce(null)            // FRAMEWORK_BY_PEDAGOGY_KEY_QUERY → no framework
-    .mockResolvedValue([]);                 // OVERLAYS_BATCH_QUERY + any fallback
+  // MODULE_DETAIL_QUERY loads via /api/modules/[id]/detail and the dark pedagogy
+  // reads (framework / practice patterns / overlays) via /api/sanity/read — both
+  // stubbed in stubApiFetch. The only direct sanityClient read left in the page
+  // is the owning-packs access check, which this test doesn't hit (the library
+  // stub marks module_1 as own-built). Default any stray call to [].
+  mockFetch.mockResolvedValue([]);
 
   stubApiFetch();
   window.localStorage.clear();

@@ -8,7 +8,8 @@ import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { track } from '@/lib/analytics/posthog';
 import { sanityClient } from '@/lib/sanity/client';
-import { MODULES_MATERIALS_BATCH_QUERY, MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
+import { MODULE_INDICATORS_QUERY } from '@/lib/sanity/queries';
 import { resolveIndicators, type Indicators, type Printables, type Materials, type AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from '@/components/content/types';
 import { fetchPrintBundle } from '@/components/content/types';
@@ -212,7 +213,9 @@ export default function PlannerClient({
     let cancelled = false;
     async function fetchMaterials() {
       try {
-        const modules = await sanityClient.fetch<Array<{
+        // module materials deref dotted-id asset/commonsText (dark to the
+        // tokenless browser client) — read through the authed proxy.
+        const modules = (await clientSanityRead<Array<{
           _id: string;
           title: string;
           approaches?: Array<{
@@ -253,7 +256,7 @@ export default function PlannerClient({
               }>;
             }>;
           }>;
-        }>>(MODULES_MATERIALS_BATCH_QUERY, { ids: moduleIds });
+        }>>('modulesMaterialsBatch', { ids: moduleIds })) ?? [];
 
         if (cancelled) return;
 

@@ -11,8 +11,7 @@ import {
   type LearnerSnapshot,
   type SanityDLO,
 } from './_constellation/topology';
-import { sanityClient } from '@/lib/sanity/client';
-import { ALL_DLOS_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
 import { Sparkle } from '@/components/icons';
 
 type Learner = {
@@ -55,8 +54,9 @@ export default function CapabilitiesPage() {
   // DLO content is shared across learners — fetch once.
   useEffect(() => {
     let cancelled = false;
-    sanityClient
-      .fetch<SanityDLO[]>(ALL_DLOS_QUERY)
+    // discreteLearningObjective uses dotted ids (dark to the tokenless browser
+    // client) — read the DLO descriptor catalog through the authed proxy.
+    clientSanityRead<SanityDLO[]>('allDlos')
       .then((rows) => {
         if (cancelled) return;
         setDlosByThread(indexDLOsByThread(Array.isArray(rows) ? rows : []));

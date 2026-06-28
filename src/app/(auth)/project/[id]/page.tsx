@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { PortableText } from '@portabletext/react';
 import type { PortableTextBlock } from '@portabletext/types';
-import { sanityClient } from '@/lib/sanity/client';
-import { PROJECT_DETAIL_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
 import { DOMAIN_CLASSES as SUBJECT_CLASSES, DOMAIN_LABELS as SUBJECT_LABELS } from '@/components/ui/DomainChip';
 import {
   CalendarBlank,
@@ -440,7 +439,9 @@ export default function ProjectDetailPage() {
 
   const fetchProject = useCallback(async () => {
     try {
-      const data = await sanityClient.fetch(PROJECT_DETAIL_QUERY, { id });
+      // project derefs capabilityThread (dotted id, dark to the tokenless
+      // browser client) — read through the authed proxy.
+      const data = await clientSanityRead<Project>('projectDetail', { id });
       setProject(data);
       if (data?._id) {
         setCompletedIds(getCompletedStages(data._id));

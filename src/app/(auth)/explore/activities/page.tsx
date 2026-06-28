@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
-import { ALL_MODULES_QUERY, ALL_PROJECTS_QUERY, DISCOVERY_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
+import { clientSanityRead } from '@/lib/sanity/client-read';
+import { ALL_MODULES_QUERY, DISCOVERY_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import EmptyState from '@/components/ui/EmptyState';
 import {
   Books, MagnifyingGlass,
@@ -333,7 +334,9 @@ export default function ExploreActivitiesPage() {
         fetch('/api/library'),
         fetch('/api/family'),
         sanityClient.fetch<{ _id: string; title: string; description?: string; subjects?: string[]; modules: Module[] | null }[]>(ALL_MODULES_QUERY),
-        sanityClient.fetch<ProjectSummary[]>(ALL_PROJECTS_QUERY),
+        // project derefs capabilityThread (dotted id, dark to the tokenless
+        // browser client) — read through the authed proxy.
+        clientSanityRead<ProjectSummary[]>('allProjects'),
       ]);
 
       let libraryPackIds: string[] = [];

@@ -8,8 +8,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { sanityClient } from '@/lib/sanity/client';
-import { MODULE_DETAIL_QUERY } from '@/lib/sanity/queries';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
   getActiveOverlays,
@@ -40,8 +38,11 @@ export default function ConstellationPage() {
       return;
     }
     setLoading(true);
-    sanityClient
-      .fetch<FocusedModule>(MODULE_DETAIL_QUERY, { id: moduleId })
+    // MODULE_DETAIL_QUERY derefs dotted-id commonsText/asset/capabilityThread
+    // (dark to the tokenless browser client) — read via the authed module-detail
+    // proxy instead of querying Sanity directly.
+    fetch(`/api/modules/${encodeURIComponent(moduleId)}/detail`)
+      .then((r) => (r.ok ? (r.json() as Promise<FocusedModule | null>) : null))
       .then((m) => setModule(m ?? null))
       .catch(() => setModule(null))
       .finally(() => setLoading(false));

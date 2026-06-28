@@ -336,6 +336,28 @@ export const crossFieldRules: Partial<Record<DocType, CrossFieldRule[]>> = {
       description: "activity declares no capability targets (won't contribute to the constellation)",
       flagIf: (doc) => isEmptyArray(doc.capabilityThreads) && isEmptyArray(doc.capabilityTargets),
     },
+    {
+      // A commonsTexts entry only renders when its `text` reference resolves to a
+      // PUBLISHED commonsText. Entries carrying the off-schema `textId` STRING (an
+      // external writer passed the raw input through without commonsTextRef(), so
+      // there is no `text` ref at all), or whose `text` points at a draft/missing
+      // doc, are SILENTLY dropped by the runtime
+      // `commonsTexts[@.text->status == "published"]` filter — the activity then
+      // shows no read-aloud text, with no error. Flag it. `textPublished` is
+      // projected per entry by fetchPackTree (true only for a resolvable published
+      // target).
+      field: 'commonsTexts',
+      severity: 'error',
+      description:
+        "activity has commonsText entries that won't render (missing `text` reference, or target is unpublished/missing)",
+      flagIf: (doc) => {
+        const entries = doc.commonsTexts;
+        if (!Array.isArray(entries) || entries.length === 0) return false;
+        return entries.some(
+          (e) => !e || (e as Record<string, unknown>).textPublished !== true,
+        );
+      },
+    },
   ],
 };
 

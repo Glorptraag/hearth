@@ -5,7 +5,7 @@ import { familySettings, learners as learnersTable } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq } from 'drizzle-orm';
 import { routeHandler } from '@/lib/api-helpers';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import type { ChildSnapshot, SnapshotRecommendation } from '@/types/snapshot';
 import { scoreModules, summariseReasonDistribution, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
 import { trackServer } from '@/lib/analytics/posthog-server';
@@ -70,8 +70,8 @@ export const GET = routeHandler(async (req: NextRequest) => {
       where: eq(familySettings.familyId, family.id),
     }),
     db.select().from(learnersTable).where(eq(learnersTable.familyId, family.id)),
-    sanityClient.fetch<{ modules: RawScoringModule[] }[]>(ZERO_STATE_MODULES_QUERY),
-    sanityClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId: family.id }),
+    sanityServerClient.fetch<{ modules: RawScoringModule[] }[]>(ZERO_STATE_MODULES_QUERY),
+    sanityServerClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId: family.id }),
   ]);
 
   const threadCache = await getCachedThreads();

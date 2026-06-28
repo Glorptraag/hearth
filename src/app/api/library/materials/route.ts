@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticatedFamily, routeHandler } from '@/lib/api-helpers';
 import { getFamilyPackIds } from '@/lib/entitlements';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 
 /**
  * GET /api/library/materials
@@ -36,7 +36,7 @@ export const GET = routeHandler(async (request: NextRequest) => {
   }
 
   // Fetch all materials across the target packs
-  const packsData = await sanityClient.fetch<Array<{
+  const packsData = await sanityServerClient.fetch<Array<{
     _id: string;
     title: string;
     modules: Array<{

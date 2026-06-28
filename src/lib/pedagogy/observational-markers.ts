@@ -1,4 +1,4 @@
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import {
   FRAMEWORK_BY_PEDAGOGY_KEY_QUERY,
   OBSERVATIONAL_MARKERS_QUERY,
@@ -49,7 +49,7 @@ export async function getMarkersForThread(
     return cache.get(cacheKey)!;
   }
 
-  const framework = await sanityClient.fetch<{ _id: string; slug: string } | null>(
+  const framework = await sanityServerClient.fetch<{ _id: string; slug: string } | null>(
     FRAMEWORK_BY_PEDAGOGY_KEY_QUERY,
     { pedagogyKey },
   );
@@ -59,7 +59,7 @@ export async function getMarkersForThread(
     return [];
   }
 
-  const markers = await sanityClient.fetch<ObservationalMarker[]>(
+  const markers = await sanityServerClient.fetch<ObservationalMarker[]>(
     OBSERVATIONAL_MARKERS_QUERY,
     { frameworkId: framework._id },
   );

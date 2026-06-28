@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { canAccessCommonsText } from '@/lib/entitlements';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { COMMONS_TEXT_DETAIL_QUERY } from '@/lib/sanity/queries';
 import { renderCommonsTextToPdf } from '@/lib/pdf/renderCommons';
 
@@ -31,7 +31,7 @@ export const GET = routeHandler(async (request: NextRequest) => {
   }
 
   // Fetch the commons text
-  const text = await sanityClient.fetch<{
+  const text = await sanityServerClient.fetch<{
     _id: string;
     title: string;
     kind?: string;

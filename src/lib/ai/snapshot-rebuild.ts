@@ -39,7 +39,7 @@ import { generateMonthlyNarrative } from './generate-monthly-narrative';
 import { getCachedThreads } from './sanity-thread-cache';
 import { scoreModules, type ScoringModule, type PedagogyContext } from './recommend';
 import { descriptorToSubject, SUBJECT_KEYS } from '@/lib/report/deterministic-coverage';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import type {
   SnapshotActiveThread, SnapshotPlannerSuggestion, ChildSnapshot,
@@ -531,9 +531,9 @@ export async function rebuildSnapshot(
         type RawScoringModule = Omit<ScoringModule, 'capabilityThreadIds'> & { capabilityThreadTitles?: string[] };
         const [sanityPacks, ownScoringModules] = await Promise.all([
           packIds.length > 0
-            ? sanityClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
+            ? sanityServerClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
             : Promise.resolve([] as { modules: RawScoringModule[] }[]),
-          sanityClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId }),
+          sanityServerClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId }),
         ]);
         // Build title → code lookup from the cached taxonomy so module thread refs
         // (which resolve to Sanity titles) match snapshot thread_id codes (L1, S5, etc.).

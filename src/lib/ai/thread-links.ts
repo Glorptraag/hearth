@@ -27,7 +27,7 @@
  * .claude/plans/PLAN-outcomes-spine-phase2.md task D1.
  */
 
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import type {
   ThreadObservationLink,
   ObservationTier,
@@ -110,7 +110,7 @@ export async function buildThreadLinksFromActivities(
 
   try {
     // Sanity-gated per src/lib/sanity/queries.ts header.
-    const activities = await sanityClient.fetch<ActivityWithThreads[]>(
+    const activities = await sanityServerClient.fetch<ActivityWithThreads[]>(
       `*[_type == "activity" && _id in $ids && status == "published"]{
         _id,
         capabilityThreads[]->{ _id },

@@ -4,11 +4,13 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
+import { MarketplaceModuleCard, type SanityStandaloneModule } from '@/components/screens/MarketplaceModuleCard';
 import {
   Binoculars, Target, Books, MagnifyingGlass, Confetti,
 } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
+import { packMatchesFilter, moduleMatchesFilter, type CatalogKind } from './catalog-filter';
 
 // ─── Subject filter config ────────────────────────────────────────────────────
 
@@ -31,10 +33,17 @@ function hexToRgb(hex: string): string {
 }
 
 // ─── Shell ──────────────────────────────────────────────────────────────────
-// Packs are fetched server-side (tagged, cache-revalidated) and passed in;
-// per-family state (library, entitlements, snapshot gaps) is fetched here.
+// Packs and standalone modules are fetched server-side (tagged, cache-
+// revalidated) and passed in; per-family state (library, entitlements,
+// snapshot gaps) is fetched here.
 
-export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] }) {
+export function MarketplaceShell({
+  initialPacks,
+  initialModules = [],
+}: {
+  initialPacks: SanityPack[];
+  initialModules?: SanityStandaloneModule[];
+}) {
   const { toast } = useToast();
   const router = useRouter();
   // Normalise drifted/aliased subject values so a stale subject can't blank
@@ -50,10 +59,23 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
       })),
     [initialPacks],
   );
+  // Standalone modules (not inside any pack) — same subject normalisation.
+  const modules = useMemo(
+    () =>
+      initialModules.map((m) => ({
+        ...m,
+        subjects: (m.subjects ?? [])
+          .map(normalizeSubject)
+          .filter((s): s is Subject => s !== null),
+      })),
+    [initialModules],
+  );
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
+  const [kind, setKind] = useState<CatalogKind>('all');
   const [libraryIds, setLibraryIds] = useState<Set<string>>(new Set());
+  const [moduleLibraryIds, setModuleLibraryIds] = useState<Set<string>>(new Set());
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [gapSubjects, setGapSubjects] = useState<string[]>([]);
 
@@ -67,6 +89,7 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
       if (libraryRes.ok) {
         const library: Array<{ id: string; kind: 'pack' | 'module' }> = await libraryRes.json();
         setLibraryIds(new Set(library.filter((l) => l.kind === 'pack').map((l) => l.id)));
+        setModuleLibraryIds(new Set(library.filter((l) => l.kind === 'module').map((l) => l.id)));
       }
       if (entitlementsRes?.ok) {
         const owned: string[] = await entitlementsRes.json();
@@ -91,18 +114,22 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    return packs.filter((pack) => {
-      const matchesSearch =
-        !q ||
-        pack.title.toLowerCase().includes(q) ||
-        (pack.creator ?? '').toLowerCase().includes(q) ||
-        (pack.description ?? '').toLowerCase().includes(q);
-      const matchesSubject = !activeSubject || (pack.subjects ?? []).includes(activeSubject);
-      return matchesSearch && matchesSubject;
-    });
-  }, [search, activeSubject, packs]);
+  const filteredPacks = useMemo(
+    () => packs.filter((pack) => packMatchesFilter(pack, search, activeSubject)),
+    [search, activeSubject, packs],
+  );
+  const filteredModules = useMemo(
+    () => modules.filter((m) => moduleMatchesFilter(m, search, activeSubject)),
+    [search, activeSubject, modules],
+  );
+  // What the active kind tab actually renders.
+  const visiblePacks = kind === 'module' ? [] : filteredPacks;
+  const visibleModules = kind === 'pack' ? [] : filteredModules;
+  const visibleCount = visiblePacks.length + visibleModules.length;
+  const hasContent = packs.length > 0 || modules.length > 0;
+  // The kind toggle only appears once standalone modules exist, so when there
+  // are none the screen behaves exactly as the packs-only version did.
+  const showKindToggle = modules.length > 0;
 
   async function handlePurchase(id: string) {
     const pack = packs.find((p) => p._id === id);
@@ -124,10 +151,11 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
     }
   }
 
-  async function handleAddToLibrary(id: string) {
-    setLibraryIds((prev) => new Set(prev).add(id));
+  async function handleAddToLibrary(id: string, itemKind: 'pack' | 'module' = 'pack') {
+    const setIds = itemKind === 'module' ? setModuleLibraryIds : setLibraryIds;
+    setIds((prev) => new Set(prev).add(id));
     const rollback = () => {
-      setLibraryIds((prev) => {
+      setIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
@@ -137,7 +165,7 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
       const res = await fetch('/api/library', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sanityPackId: id }),
+        body: JSON.stringify(itemKind === 'module' ? { sanityModuleId: id } : { sanityPackId: id }),
       });
       if (!res.ok) {
         rollback();
@@ -154,7 +182,7 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
     }
   }
 
-  const libraryCount = libraryIds.size;
+  const libraryCount = libraryIds.size + moduleLibraryIds.size;
 
   return (
     <div className="min-h-screen bg-surface-body">
@@ -202,6 +230,33 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
           />
         </div>
 
+        {/* ── Kind filter (Packs / Modules) — only when standalone modules exist ── */}
+        {showKindToggle && (
+          <div className="flex items-center gap-2 mb-lg">
+            <span className="font-sans text-[0.72rem] text-text-muted">Show</span>
+            <div className="inline-flex rounded-full border border-border-subtle bg-surface-raised p-0.5">
+              {([
+                ['all', 'All'],
+                ['pack', 'Packs'],
+                ['module', 'Modules'],
+              ] as [CatalogKind, string][]).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setKind(value)}
+                  aria-pressed={kind === value}
+                  className={`font-sans text-[0.72rem] font-semibold px-3 py-1 rounded-full transition-colors duration-200 ${
+                    kind === value
+                      ? 'bg-ember text-text-inverse'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Subject filter pills ── */}
         <div className="flex flex-wrap gap-xs mb-xl">
           <button
@@ -237,12 +292,12 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
         {/* ── Loading state ── */}
         {loading ? (
           <div className="py-20 text-center">
-            <p className="font-sans text-sm text-text-muted animate-pulse">Loading packs…</p>
+            <p className="font-sans text-sm text-text-muted animate-pulse">Loading marketplace…</p>
           </div>
         ) : (
           <>
-            {/* ── Editor's Picks ── */}
-            {packs.length > 0 && (
+            {/* ── Editor's Picks (pack-centric — hidden in the Modules view) ── */}
+            {packs.length > 0 && kind !== 'module' && (
               <div className="mb-xl">
                 <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
                   Editor&apos;s Picks
@@ -273,8 +328,8 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
               </div>
             )}
 
-            {/* ── Family Fit Banner ── */}
-            {gapSubjects.length > 0 && (
+            {/* ── Family Fit Banner (suggests packs — hidden in the Modules view) ── */}
+            {gapSubjects.length > 0 && kind !== 'module' && (
               <div className="mb-xl rounded-[16px] border border-ember/20 bg-ember-glow/20 p-lg overflow-hidden relative">
                 <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
                 <div className="flex items-start gap-md">
@@ -312,29 +367,34 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
             )}
 
             {/* ── All-in-library banner ── */}
-            {packs.length > 0 && filtered.length > 0 && filtered.every((p) => libraryIds.has(p._id)) && (
-              <div className="mb-lg rounded-[10px] border border-sage/20 bg-sage/5 px-lg py-sm">
-                <p className="inline-flex items-center gap-xs font-serif text-sm text-sage">
-                  <Confetti size={16} aria-hidden="true" />
-                  You&rsquo;ve added everything here — nice curation!
-                </p>
-              </div>
-            )}
+            {hasContent &&
+              visibleCount > 0 &&
+              visiblePacks.every((p) => libraryIds.has(p._id)) &&
+              visibleModules.every((m) => moduleLibraryIds.has(m._id)) && (
+                <div className="mb-lg rounded-[10px] border border-sage/20 bg-sage/5 px-lg py-sm">
+                  <p className="inline-flex items-center gap-xs font-serif text-sm text-sage">
+                    <Confetti size={16} aria-hidden="true" />
+                    You&rsquo;ve added everything here — nice curation!
+                  </p>
+                </div>
+              )}
 
             {/* ── Results count ── */}
             <p className="font-sans text-[0.75rem] text-text-muted mb-lg">
-              {filtered.length === packs.length
-                ? `Showing all ${filtered.length} packs`
-                : `Showing ${filtered.length} of ${packs.length} packs`}
+              {kind === 'module'
+                ? `Showing ${visibleModules.length} ${visibleModules.length === 1 ? 'module' : 'modules'}`
+                : kind === 'pack'
+                  ? `Showing ${visiblePacks.length} ${visiblePacks.length === 1 ? 'pack' : 'packs'}`
+                  : `Showing ${visibleCount} ${visibleCount === 1 ? 'item' : 'items'}`}
             </p>
 
             {/* ── Content grid ── */}
-            {/* Card body navigates to /pack/[id] — single canonical pack
-                detail surface (workstream B). Inline Add / Get CTAs on the
-                card remain as fast-path actions and stop propagation. */}
-            {filtered.length > 0 ? (
+            {/* Pack cards navigate to /pack/[id]; module cards to /module/[id].
+                Inline Add / Get CTAs stop propagation so they don't also fire
+                the card-body navigation. */}
+            {visibleCount > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
-                {filtered.map((pack) => (
+                {visiblePacks.map((pack) => (
                   <div
                     key={pack._id}
                     onClick={() => router.push(`/pack/${pack._id}`)}
@@ -358,6 +418,28 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
                     />
                   </div>
                 ))}
+                {visibleModules.map((module) => (
+                  <div
+                    key={module._id}
+                    onClick={() => router.push(`/module/${module._id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push(`/module/${module._id}`);
+                      }
+                    }}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Open ${module.title}`}
+                    className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ember rounded-[16px]"
+                  >
+                    <MarketplaceModuleCard
+                      module={module}
+                      inLibrary={moduleLibraryIds.has(module._id)}
+                      onAddToLibrary={(id) => handleAddToLibrary(id, 'module')}
+                    />
+                  </div>
+                ))}
               </div>
             ) : (
               /* ── Empty state ── */
@@ -366,18 +448,18 @@ export function MarketplaceShell({ initialPacks }: { initialPacks: SanityPack[] 
                   <Binoculars size={32} />
                 </span>
                 <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
-                  {packs.length === 0
-                    ? 'No packs published yet'
+                  {!hasContent
+                    ? 'No content published yet'
                     : 'No content matches your filters'}
                 </h3>
                 <p className="font-sans text-sm text-text-secondary mb-6 max-w-xs">
-                  {packs.length === 0
-                    ? 'Content packs will appear here once they are published in Sanity.'
-                    : 'Try adjusting your search or selecting a different subject area.'}
+                  {!hasContent
+                    ? 'Packs and modules will appear here once they are published in Sanity.'
+                    : 'Try adjusting your search, kind, or subject filter.'}
                 </p>
-                {packs.length > 0 && (
+                {hasContent && (
                   <button
-                    onClick={() => { setSearch(''); setActiveSubject(null); }}
+                    onClick={() => { setSearch(''); setActiveSubject(null); setKind('all'); }}
                     className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200"
                   >
                     Reset filters

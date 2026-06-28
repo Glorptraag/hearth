@@ -80,7 +80,7 @@ function getCreatorLabel(type?: CreatorType): string {
   }
 }
 
-const SUBJECT_META: Record<Subject, { label: string; hex: string; Icon: IconC }> = {
+export const SUBJECT_META: Record<Subject, { label: string; hex: string; Icon: IconC }> = {
   english:      { label: 'English',      hex: '#6B8E9B', Icon: BookOpenText },
   mathematics:  { label: 'Mathematics',  hex: '#9B7B6B', Icon: MathOperations },
   science:      { label: 'Science',      hex: '#7B9B6B', Icon: Atom },

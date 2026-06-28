@@ -280,6 +280,19 @@ export const SCORING_OWN_MODULES_QUERY = `*[_type == "module" && status == "publ
   "averageEnergyLevel": approaches[0]->activities[0]->energyLevel
 }`;
 
+// Standalone marketplace modules: published, curated (not family-private), and
+// NOT contained in any published pack — so the Marketplace's module view never
+// duplicates a pack's own modules. Powers the ?kind=module browse (Task 6.3).
+export const STANDALONE_MODULES_QUERY = `*[
+  _type == "module"
+  && status == "published"
+  && !defined(authorFamilyId)
+  && !(_id in *[_type == "pack" && status == "published"].modules[]._ref)
+]{
+  _id, title, subjects, targetUnderstanding, ageRange, duration,
+  "approachCount": count(approaches[@->status == "published"])
+} | order(title asc)`;
+
 // Single asset with full metadata
 export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id && status == "published"][0]{
   ...,

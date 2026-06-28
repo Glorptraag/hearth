@@ -5,6 +5,8 @@ import type { QuickCaptureItem } from './types';
 import { PencilSimple, Camera, Microphone, X } from '@/components/icons';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { evidenceSrc } from '@/lib/evidence';
+import { compressImageFile } from '@/lib/images/compress-image';
+import { useToast } from '@/hooks/use-toast';
 
 export default function QuickCapture({
   captures,
@@ -27,6 +29,7 @@ export default function QuickCapture({
   const [noteText, setNoteText] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { isRecording, isSupported: voiceSupported, start: startVoice, stop: stopVoice } = useSpeechRecognition({
     onTranscript: (transcript) => {
@@ -56,19 +59,32 @@ export default function QuickCapture({
     setUploading(true);
     try {
       const form = new FormData();
-      form.append('file', file);
+      const fileToUpload = await compressImageFile(file);
+      form.append('file', fileToUpload);
       const res = await fetch('/api/evidence/upload', { method: 'POST', body: form });
-      if (res.ok) {
-        const { pathname } = (await res.json()) as { pathname: string };
-        onAddCapture({
-          type: 'photo',
-          content: pathname,
-          activityIdx: currentActivityIdx,
-          activityTitle: currentActivityTitle,
-          activityId: currentActivityId,
-          timestamp: Date.now(),
-        });
+      if (!res.ok) {
+        if (res.status === 413) {
+          toast('That photo is too large to upload — try a smaller one.', 'error');
+          return;
+        }
+        const err = await res.json().catch(() => ({ error: 'Upload failed. Please try again.' }));
+        toast(err.error ?? 'Upload failed. Please try again.', 'error');
+        return;
       }
+      const { pathname } = (await res.json()) as { pathname: string };
+      onAddCapture({
+        type: 'photo',
+        content: pathname,
+        activityIdx: currentActivityIdx,
+        activityTitle: currentActivityTitle,
+        activityId: currentActivityId,
+        timestamp: Date.now(),
+      });
+    } catch {
+      // A body that exceeds the platform request limit can surface as a network
+      // error before any JSON response — name the likely cause (an oversized
+      // photo) rather than a bare connection failure.
+      toast('Couldn’t upload that photo — it may be too large. Try a smaller one.', 'error');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';

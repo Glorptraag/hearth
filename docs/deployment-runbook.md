@@ -49,7 +49,7 @@ Copy each key below into Vercel → Project → Settings → Environment Variabl
 | `SANITY_API_TOKEN` | ✅ | ✅ | — | Only for server writes (seeding, publish API). |
 | `ANTHROPIC_API_KEY` | ✅ | ✅ | — | Scoped to workspace with spend cap. |
 | `DRAFT_INSIGHTS_ENABLED` | ✅ | ✅ | — | Default `true`. Flip to `false` as emergency kill switch. |
-| `BLOB_READ_WRITE_TOKEN` | ✅ | — | — | Prod only; preview/dev without it cleanly returns 503 from `/api/evidence/upload`. |
+| `BLOB_READ_WRITE_TOKEN` | ✅ | ✅ | — | **Provision by connecting the `hearth-evidence` store (Storage → Connect Project) or `vercel env add` — a value in `.env.local` is local-only and never reaches a deployment.** Verify with `vercel env ls`. Without it `/api/evidence/upload` returns 503 *and* the `/api/evidence` read proxy can't serve previews. Now set in Preview too (shares the prod evidence store — fine at pilot scale; isolate with a separate store if preview test uploads shouldn't mix with real children's photos). Was missing in prod 5–28 Jun 2026 (R19). |
 | `CRON_SECRET` | ✅ | — | — | Vercel injects this as the Bearer token for scheduled invocations. |
 | `ADMIN_CLERK_IDS` | ✅ | ✅ | — | Comma-separated Clerk user IDs. Gates `/admin/*` routes and the production seed endpoints. |
 | `NEXT_PUBLIC_SENTRY_DSN` | ✅ | ✅ | — | DSN is safe to expose; it's write-only. |

@@ -162,4 +162,13 @@ Reviewing the live Logger before a demo, the six numbered sections (Who, What+di
 
 ---
 
-*Next entry: R19. Append below; never edit above.*
+### R19 — Production runtime errors (2026-06-28): evidence photo uploads 503'd in prod since 5 June — `BLOB_READ_WRITE_TOKEN` was never set on Vercel.
+
+Photo evidence upload had been silently broken in production since 2026-06-05 (12 errors / 3 users — `[evidence/upload] BLOB_READ_WRITE_TOKEN not set`; the `hearth-evidence` store held 0 files). Root cause was purely operational: the blob read-write token lived only in the local `.env.local` — so it worked in `next dev` and *looked* present — but was never added to the Vercel project's Production/Preview env, and `.env.local` never ships to a deployment. `BLOB_STORE_ID` + `BLOB_WEBHOOK_PUBLIC_KEY` had been added manually, masking the gap (three `BLOB_*` vars; only two present). Fixed by binding the token to Production + Preview (`vercel env add`, value sourced from the operator's `.env.local`) and redeploying; verified end-to-end — a real upload landed a 753 KB compressed blob, the error cluster went quiet, and the `get(pathname, { access: 'private' })` read proxy returns `statusCode 200`. A *secondary* code gap surfaced alongside: the in-session runner's `QuickCapture` uploaded the raw file (no client compression → a large HEIC can 413 past Vercel's 4.5 MB body limit) and swallowed `!res.ok` with no toast, unlike the Logger's `EvidenceModal`. Hardened to parity: `compressImageFile` before upload + a clear failure toast (413-specific). Preview render was briefly suspected broken but confirmed working same session after a hard refresh — the initial miss was a stale-cache / deploy-transition artifact, not a code defect; upload *and* read paths are both verified end-to-end.
+**Spec affected:** `deployment-runbook.md` §1.2 (env-var provisioning for `BLOB_READ_WRITE_TOKEN` clarified — `.env.local` ≠ deployment env); runner evidence capture (parity with `EvidenceModal`).
+**Regression test:** `src/app/(auth)/module/[id]/_components/QuickCapture.test.tsx` (unit — compresses before upload; 413 → oversized toast; non-OK → error toast; success → capture recorded). The token gap itself is env-config (no code test — guarded by the runbook checklist + the route's existing 503 degradation).
+**Date logged:** 2026-06-28.
+
+---
+
+*Next entry: R20. Append below; never edit above.*

@@ -12,7 +12,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { and, eq, gte, isNull } from 'drizzle-orm';
 import { routeHandler } from '@/lib/api-helpers';
 import type { ChildSnapshot, SnapshotData, SnapshotRecommendation } from '@/types/snapshot';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import { getCachedThreads } from '@/lib/ai/sanity-thread-cache';
 import { scoreModules, summariseReasonDistribution, type ScoringModule, type PedagogyContext } from '@/lib/ai/recommend';
@@ -92,9 +92,9 @@ export const GET = routeHandler(async (req: NextRequest) => {
 
   const [sanityPacks, ownScoringModules] = await Promise.all([
     packIds.length > 0
-      ? sanityClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
+      ? sanityServerClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
       : Promise.resolve([] as { modules: RawScoringModule[] }[]),
-    sanityClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId: family.id }),
+    sanityServerClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId: family.id }),
   ]);
 
   const threadCache = await getCachedThreads();

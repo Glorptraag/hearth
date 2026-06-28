@@ -20,7 +20,11 @@ vi.mock('@/lib/analytics/posthog-server', () => ({
   trackServer: mocks.trackServer,
 }));
 vi.mock('@/lib/sanity/client', () => ({
+  // The route reads scoring modules through the authed server client (those
+  // queries deref dotted-id capabilityThread). Back both names with the same
+  // fixture fetch.
   sanityClient: { fetch: mocks.sanityFetch },
+  sanityServerClient: { fetch: mocks.sanityFetch },
 }));
 vi.mock('@/lib/ai/sanity-thread-cache', () => ({
   getCachedThreads: mocks.getCachedThreads,

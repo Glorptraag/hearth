@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticatedFamily, apiError, routeHandler } from '@/lib/api-helpers';
 import { canAccessAsset, getUpsellPack } from '@/lib/entitlements';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { ASSET_DETAIL_QUERY } from '@/lib/sanity/queries';
 
 /**
@@ -35,7 +35,7 @@ export const GET = routeHandler(async (request: NextRequest) => {
   }
 
   // Fetch asset metadata to get file URL
-  const asset = await sanityClient.fetch<{
+  const asset = await sanityServerClient.fetch<{
     _id: string;
     title: string;
     fileUrl?: string;

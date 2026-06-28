@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticatedFamily, parseBody, routeHandler } from '@/lib/api-helpers';
 import { checkBulkAccess } from '@/lib/entitlements';
-import { sanityClient } from '@/lib/sanity/client';
+import { sanityServerClient } from '@/lib/sanity/client';
 import { ASSET_DETAIL_QUERY, COMMONS_TEXT_DETAIL_QUERY } from '@/lib/sanity/queries';
 import { PDFDocument } from 'pdf-lib';
 import { mergePdfs, createCoverPage } from '@/lib/pdf/merge';
@@ -55,7 +55,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
   for (const item of items) {
     try {
       if (item.kind === 'asset') {
-        const asset = await sanityClient.fetch<{
+        const asset = await sanityServerClient.fetch<{
           _id: string;
           title: string;
           fileUrl?: string;
@@ -90,7 +90,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
         }
       } else {
         // commonsText — render to PDF
-        const text = await sanityClient.fetch<{
+        const text = await sanityServerClient.fetch<{
           _id: string;
           title: string;
           kind?: string;

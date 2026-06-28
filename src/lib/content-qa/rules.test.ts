@@ -85,3 +85,66 @@ describe("activity soft-flag: 'no capability targets'", () => {
     expect(crossFieldRules.pack).toBeUndefined();
   });
 });
+
+const COMMONS_MESSAGE =
+  "activity has commonsText entries that won't render (missing `text` reference, or target is unpublished/missing)";
+
+/** A commonsTexts entry as fetchPackTree projects it (resolution flag included). */
+function commonsEntry(over: Partial<Record<string, unknown>> = {}) {
+  return { _key: 'c1', role: 'core', textId: null, textPublished: true, ...over };
+}
+
+function commonsFlag(issues: QAIssue[]) {
+  return issues.find((i) => i.field === 'commonsTexts' && i.message === COMMONS_MESSAGE);
+}
+
+describe("activity flag: 'commonsText won't render'", () => {
+  it('does NOT flag an activity with no commonsTexts', () => {
+    const { errors } = checkDocument(activity(), 'activity');
+    expect(commonsFlag(errors)).toBeUndefined();
+  });
+
+  it('does NOT flag an activity whose entry resolves to a published text', () => {
+    const { errors } = checkDocument(
+      activity({ commonsTexts: [commonsEntry({ textPublished: true })] }),
+      'activity',
+    );
+    expect(commonsFlag(errors)).toBeUndefined();
+  });
+
+  it('flags the off-schema `textId`-string shape (no `text` ref → textPublished falsy)', () => {
+    const { errors } = checkDocument(
+      activity({ commonsTexts: [commonsEntry({ textId: 'commons.scripture.joseph', textPublished: null })] }),
+      'activity',
+    );
+    const flag = commonsFlag(errors);
+    expect(flag).toBeDefined();
+    expect(flag?.severity).toBe('error');
+    expect(flag?.docType).toBe('activity');
+    expect(flag?.path).toEqual(['commonsTexts']);
+  });
+
+  it('flags a `text` ref whose target is unpublished/missing (textPublished false)', () => {
+    const { errors } = checkDocument(
+      activity({ commonsTexts: [commonsEntry({ textPublished: false })] }),
+      'activity',
+    );
+    expect(commonsFlag(errors)).toBeDefined();
+  });
+
+  it('flags when ANY entry is bad even if others are fine', () => {
+    const { errors } = checkDocument(
+      activity({ commonsTexts: [commonsEntry({ textPublished: true }), commonsEntry({ _key: 'c2', textPublished: null })] }),
+      'activity',
+    );
+    expect(commonsFlag(errors)).toBeDefined();
+  });
+
+  it('does not change the completeness score (cross-field signal)', () => {
+    const good = activity({ commonsTexts: [commonsEntry({ textPublished: true })] });
+    const bad = activity({ commonsTexts: [commonsEntry({ textPublished: null })] });
+    expect(checkDocument(good, 'activity').completeness).toBe(
+      checkDocument(bad, 'activity').completeness,
+    );
+  });
+});

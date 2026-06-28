@@ -38,6 +38,10 @@ const PACK_TREE_QUERY = /* groq */ `
     "capabilityThreads": capabilityThreads[]{_key, _ref},
     "capabilityTargets": capabilityTargets[]{_key, tier, "thread": thread{_ref}},
     subjects, subjectAreas,
+    "commonsTexts": commonsTexts[]{
+      _key, role, textId,
+      "textPublished": text->status == "published"
+    },
     "approach": approach{_ref}
   },
   "expandedBadges": badges[]->{

@@ -70,7 +70,10 @@ const observationDetailSchema = z.object({
 });
 
 const createEntrySchema = z.object({
-  title: z.string().min(1),
+  // Optional + coalesced below (safeTitle): a description-less Quick log has no
+  // title to send, and a blank title must never 400 away a parent's logged
+  // learning. The column is NOT NULL, so the server guarantees one.
+  title: z.string().optional(),
   description: z.string().optional(),
   dateOccurred: z.string().optional(),
   subjects: z.array(z.enum(SUBJECTS)).optional(),
@@ -130,7 +133,12 @@ export const POST = routeHandler(async (request: NextRequest) => {
 
   // `evidence` is written to its own table (not a learning_entries column), so
   // it's pulled out of the spread below.
-  const { mode, evidence: evidenceItems, ...entryData } = parsed.data;
+  const { mode, evidence: evidenceItems, title, ...entryData } = parsed.data;
+
+  // Guarantee a non-empty title for every caller (Logger Quick logs, the module
+  // runner's Log mode, import). Falls back to the description head, then a
+  // generic label — a title-less POST must never reject the parent's save.
+  const safeTitle = title?.trim() || entryData.description?.trim().slice(0, 60) || 'Learning entry';
 
   // Log mode for telemetry (informational only — not gated server-side)
   if (mode) {
@@ -142,6 +150,7 @@ export const POST = routeHandler(async (request: NextRequest) => {
     .insert(learningEntries)
     .values({
       familyId: family.id,
+      title: safeTitle,
       ...entryData,
       // Seed enrichment with pending status so the Logger post-save surface
       // can distinguish "in flight" from "never ran" while the after() job

@@ -17,6 +17,7 @@ import { familyIntelligenceSnapshots, learningEntries } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry, createDloLink } from '@/test/db-factories';
 import { rebuildSnapshot } from '../snapshot-rebuild';
+import { generateMonthlyNarrative } from '../generate-monthly-narrative';
 import { upsertParentAssertion } from '../dlo-persistence';
 import { GET as getCapabilities } from '@/app/api/capabilities/[learnerId]/route';
 import { TEST_FAMILY_ID, TEST_USER_ID } from '../../../../vitest.setup';
@@ -428,5 +429,70 @@ describe('INTEGRATION: rebuildSnapshot — milestone markers (P0-5)', () => {
     const flags = await entryFlags(family.id);
     expect(flags).toHaveLength(1);
     expect(flags[0].flag).toBe(false); // reconciled back to false
+  });
+});
+
+describe('INTEGRATION: rebuildSnapshot — library_change incremental fast-path', () => {
+  // A current-month entry so the FULL rebuild generates a monthly narrative —
+  // letting us prove the incremental path specifically skips that LLM call.
+  const thisMonth = `${new Date().toISOString().slice(0, 7)}-15`;
+
+  it('reuses prior children and skips the monthly-narrative LLM call on a library_change', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [learner.id],
+      status: 'complete',
+      dateOccurred: thisMonth,
+      aiEnrichment: {
+        status: 'enriched',
+        capability_threads: [{ thread_id: 'L1', confidence: 0.9 }],
+      },
+    });
+
+    // Full rebuild establishes the per-child snapshot AND runs the narrative.
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    await rebuildSnapshot(family.id, 'manual');
+    expect(generateMonthlyNarrative).toHaveBeenCalled();
+
+    const full = await getSnapshot(family.id);
+    expect(full).not.toBeNull();
+    const childrenAfterFull = full!.children;
+    expect(Object.keys(childrenAfterFull)).toContain(learner.id);
+
+    // Incremental path: must NOT re-run the LLM narrative, and must reuse the
+    // entry-derived children verbatim.
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    await rebuildSnapshot(family.id, 'library_change');
+    expect(generateMonthlyNarrative).not.toHaveBeenCalled();
+
+    const incremental = await getSnapshot(family.id);
+    expect(incremental).not.toBeNull();
+    expect(incremental!.children).toEqual(childrenAfterFull);
+    expect((incremental as SnapshotData & { rebuild_trigger?: string }).rebuild_trigger).toBe('library_change');
+  });
+
+  it('falls back to a full rebuild when no prior snapshot exists', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [learner.id],
+      status: 'complete',
+      dateOccurred: thisMonth,
+      aiEnrichment: {
+        status: 'enriched',
+        capability_threads: [{ thread_id: 'M1', confidence: 0.9 }],
+      },
+    });
+
+    // No prior snapshot → the fast-path defers to a full rebuild so the children
+    // block is created in the first place.
+    await rebuildSnapshot(family.id, 'library_change');
+
+    const snapshot = await getSnapshot(family.id);
+    expect(snapshot).not.toBeNull();
+    expect(Object.keys(snapshot!.children)).toContain(learner.id);
   });
 });

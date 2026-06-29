@@ -42,7 +42,7 @@ import { descriptorToSubject, SUBJECT_KEYS } from '@/lib/report/deterministic-co
 import { sanityServerClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import type {
-  SnapshotActiveThread, SnapshotPlannerSuggestion, ChildSnapshot,
+  SnapshotActiveThread, SnapshotPlannerSuggestion, SnapshotRecommendation, ChildSnapshot,
   ThreadTrajectory, EvidenceQuality, SubjectBalance,
 } from '@/types/snapshot';
 
@@ -52,6 +52,244 @@ type RebuildTrigger =
   | 'settings_change'
   | 'manual'
   | 'user_dashboard';
+
+type RecommendationsResult = {
+  recommendations: { suggested_next: SnapshotRecommendation[]; subject_balance: Record<string, SubjectBalance> } | undefined;
+  plannerSuggestions: SnapshotPlannerSuggestion[] | undefined;
+};
+
+/**
+ * Compute recommendations + planner suggestions from the library, the week's
+ * planner, and the already-aggregated per-child snapshots. Extracted so the
+ * full rebuild and the `library_change` incremental fast-path share one
+ * implementation. Library/scoring failures degrade to `undefined` (the caller
+ * persists whatever it gets), never throwing.
+ */
+async function computeRecommendations(opts: {
+  familyId: string;
+  settings: typeof familySettings.$inferSelect | undefined;
+  libraryPackIds: { sanityPackId: string | null }[];
+  weekPlanned: { moduleId: string | null; date: string; subjects: string[] | null }[];
+  allEntries: (typeof learningEntries.$inferSelect)[];
+  childSnapshots: Record<string, ChildSnapshot>;
+  weekStart: Date;
+}): Promise<RecommendationsResult> {
+  const { familyId, settings, libraryPackIds, weekPlanned, allEntries, childSnapshots, weekStart } = opts;
+  let recommendations: RecommendationsResult['recommendations'];
+  let plannerSuggestions: SnapshotPlannerSuggestion[] | undefined;
+
+  const packIds = libraryPackIds
+    .map((r) => r.sanityPackId)
+    .filter((id): id is string => !!id);
+  try {
+    type RawScoringModule = Omit<ScoringModule, 'capabilityThreadIds'> & { capabilityThreadTitles?: string[] };
+    const [sanityPacks, ownScoringModules] = await Promise.all([
+      packIds.length > 0
+        ? sanityServerClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
+        : Promise.resolve([] as { modules: RawScoringModule[] }[]),
+      sanityServerClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId }),
+    ]);
+    // Build title → code lookup from the cached taxonomy so module thread refs
+    // (which resolve to Sanity titles) match snapshot thread_id codes (L1, S5, etc.).
+    const threadCache = await getCachedThreads();
+    const titleToCode = new Map<string, string>();
+    for (const [code, meta] of threadCache.entries()) {
+      titleToCode.set(meta.title.toLowerCase(), code);
+    }
+    const toScoring = (m: RawScoringModule): ScoringModule => ({
+      _id: m._id,
+      title: m.title,
+      subjects: m.subjects ?? [],
+      averageEnergyLevel: m.averageEnergyLevel ?? null,
+      methodAffinity: m.methodAffinity ?? null,
+      capabilityThreadIds: (m.capabilityThreadTitles ?? [])
+        .map((t) => titleToCode.get((t ?? '').toLowerCase()))
+        .filter((c): c is string => !!c),
+    });
+    const seen = new Set<string>();
+    const scoringModules: ScoringModule[] = [
+      ...sanityPacks.flatMap((p) => p.modules ?? []),
+      ...(ownScoringModules ?? []),
+    ]
+      .filter((m) => m._id && m.title)
+      .filter((m) => (seen.has(m._id) ? false : (seen.add(m._id), true)))
+      .map(toScoring);
+
+    if (scoringModules.length > 0) {
+      const plannedModuleIds = weekPlanned
+        .map((p) => p.moduleId)
+        .filter((id): id is string => id != null);
+
+      // Count completed modules from entries
+      const completedModuleCounts: Record<string, number> = {};
+      for (const e of allEntries) {
+        const modId = (e as Record<string, unknown>).sourceModuleId as string | null;
+        if (modId) completedModuleCounts[modId] = (completedModuleCounts[modId] ?? 0) + 1;
+      }
+
+      // Subjects already planned this week
+      const weekSubjects = new Set(weekPlanned.flatMap((p) => p.subjects ?? []));
+
+      // Pedagogy weight (W_PEDAGOGY=0.15) only applies when context is
+      // supplied. Omitting it here silently reroutes that weight into spark,
+      // so the persisted snapshot ignored the family's tradition entirely.
+      const pedagogyContext: PedagogyContext = {
+        pedagogyKey: settings?.pedagogyPreference ?? 'eclectic',
+        values: settings?.pedagogyValues ?? [],
+        practices: settings?.pedagogyPractices ?? [],
+      };
+
+      const scored = scoreModules(
+        scoringModules,
+        childSnapshots,
+        plannedModuleIds,
+        completedModuleCounts,
+        weekSubjects,
+        pedagogyContext,
+      );
+
+      // Subject balance: count planned subjects per day vs target of 2 per core subject
+      const coreSubjects = ['english', 'mathematics', 'science', 'hass'];
+      const subjectPlannedCount: Record<string, number> = {};
+      for (const p of weekPlanned) {
+        for (const s of p.subjects ?? []) {
+          subjectPlannedCount[s] = (subjectPlannedCount[s] ?? 0) + 1;
+        }
+      }
+      const subjectBalance: Record<string, SubjectBalance> = {};
+      for (const s of coreSubjects) {
+        const count = subjectPlannedCount[s] ?? 0;
+        subjectBalance[s] = count >= 2 ? (count > 4 ? 'over' : 'balanced') : 'under';
+      }
+
+      recommendations = { suggested_next: scored, subject_balance: subjectBalance };
+
+      // Planner suggestions: top recommendations not already planned, assigned to under-represented days
+      const weekDays = Array.from({ length: 5 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
+      const daySubjectCounts: Record<string, Record<string, number>> = {};
+      for (const day of weekDays) daySubjectCounts[day] = {};
+      for (const p of weekPlanned) {
+        if (!daySubjectCounts[p.date]) continue;
+        for (const s of p.subjects ?? []) {
+          daySubjectCounts[p.date][s] = (daySubjectCounts[p.date][s] ?? 0) + 1;
+        }
+      }
+
+      plannerSuggestions = scored.slice(0, 5).map((rec) => {
+        // Assign to the day with fewest entries in this module's primary subject
+        const primarySubject = scoringModules.find((m) => m._id === rec.module_id)?.subjects[0];
+        let bestDay = weekDays[0];
+        let minCount = Infinity;
+        for (const day of weekDays) {
+          const cnt = primarySubject ? (daySubjectCounts[day][primarySubject] ?? 0) : Object.values(daySubjectCounts[day]).reduce((s, c) => s + c, 0);
+          if (cnt < minCount) { minCount = cnt; bestDay = day; }
+        }
+        return {
+          module_id: rec.module_id,
+          module_title: rec.module_title,
+          suggested_day: bestDay,
+          reason: rec.primary_reason,
+          reason_text: rec.reason_text,
+        };
+      });
+    }
+  } catch (err) {
+    console.warn('[snapshotRebuild] Recommendation scoring failed, skipping:', err);
+  }
+
+  return { recommendations, plannerSuggestions };
+}
+
+/**
+ * Incremental rebuild for `library_change`: adding/removing a library pack only
+ * changes recommendations, planner suggestions, and the active-modules count —
+ * never the entry-derived per-child aggregation or the (expensive, LLM-backed)
+ * monthly narrative. Reuse the prior snapshot's `children` and refresh only the
+ * library-dependent fields, skipping the per-child loop, the narrative calls,
+ * the milestone reconciliation, and the entry/tier notification triggers (a
+ * library change has no new badge/streak/tier state to announce, and firing a
+ * "recommendations refreshed" notice on every pack add would be noise).
+ *
+ * Returns false — so the caller falls back to a full rebuild — when there is no
+ * prior snapshot to build on (the children block has to be created first).
+ */
+async function rebuildLibraryRecommendationsOnly(
+  familyId: string,
+  trigger: RebuildTrigger,
+  now: Date,
+  weekStart: Date,
+  weekStartStr: string,
+  weekEndStr: string,
+): Promise<boolean> {
+  const prior = await db.query.familyIntelligenceSnapshots.findFirst({
+    where: eq(familyIntelligenceSnapshots.familyId, familyId),
+  });
+  const priorData = prior?.snapshotData as Record<string, unknown> | undefined;
+  const priorChildren = priorData?.children as Record<string, ChildSnapshot> | undefined;
+  if (!prior || !priorData || !priorChildren || Object.keys(priorChildren).length === 0) {
+    return false;
+  }
+
+  const [settings, allEntries, libraryPackIds, weekPlanned, activeModulesCount] = await Promise.all([
+    db.query.familySettings.findFirst({ where: eq(familySettings.familyId, familyId) }),
+    db
+      .select()
+      .from(learningEntries)
+      .where(and(eq(learningEntries.familyId, familyId), eq(learningEntries.status, 'complete')))
+      .orderBy(desc(learningEntries.dateOccurred)),
+    db
+      .select({ sanityPackId: familyLibrary.sanityPackId })
+      .from(familyLibrary)
+      .where(eq(familyLibrary.familyId, familyId)),
+    db
+      .select({ moduleId: plannerEntries.moduleId, date: plannerEntries.date, subjects: plannerEntries.subjects })
+      .from(plannerEntries)
+      .where(
+        and(
+          eq(plannerEntries.familyId, familyId),
+          gte(plannerEntries.date, weekStartStr),
+          lte(plannerEntries.date, weekEndStr),
+        ),
+      ),
+    db
+      .select({ count: count() })
+      .from(familyLibrary)
+      .where(eq(familyLibrary.familyId, familyId))
+      .then((r) => r[0]?.count ?? 0),
+  ]);
+
+  const { recommendations, plannerSuggestions } = await computeRecommendations({
+    familyId,
+    settings,
+    libraryPackIds,
+    weekPlanned,
+    allEntries,
+    childSnapshots: priorChildren,
+    weekStart,
+  });
+
+  const snapshotData = {
+    ...priorData,
+    rebuilt_at: now.toISOString(),
+    rebuild_trigger: trigger,
+    recommendations,
+    planner_suggestions: plannerSuggestions,
+    activeModulesCount,
+  };
+
+  await db
+    .update(familyIntelligenceSnapshots)
+    .set({
+      snapshotData,
+      rebuiltAt: now,
+      rebuildTrigger: trigger,
+      snapshotVersion: (prior.snapshotVersion ?? 0) + 1,
+      updatedAt: now,
+    })
+    .where(eq(familyIntelligenceSnapshots.familyId, familyId));
+
+  return true;
+}
 
 export async function rebuildSnapshot(
   familyId: string,
@@ -65,6 +303,17 @@ export async function rebuildSnapshot(
     const weekEnd = addDays(weekStart, 6);
     const weekStartStr = format(weekStart, 'yyyy-MM-dd');
     const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
+
+    // Incremental fast-path: a library change only touches the library-derived
+    // fields, so reuse the prior snapshot's children and skip the per-child loop
+    // + monthly narrative. Falls through to the full rebuild below when there is
+    // no prior snapshot to build on.
+    if (trigger === 'library_change') {
+      const handled = await rebuildLibraryRecommendationsOnly(
+        familyId, trigger, now, weekStart, weekStartStr, weekEndStr,
+      );
+      if (handled) return;
+    }
 
     const [familyLearners, settings, allEntries, badges, libraryPackIds, weekPlanned] = await Promise.all([
       db.select().from(learners).where(eq(learners.familyId, familyId)),
@@ -520,129 +769,15 @@ export async function rebuildSnapshot(
     }
 
     // ─── Recommendations + Planner Suggestions ───
-    let recommendations: { suggested_next: import('@/types/snapshot').SnapshotRecommendation[]; subject_balance: Record<string, SubjectBalance> } | undefined;
-    let plannerSuggestions: SnapshotPlannerSuggestion[] | undefined;
-
-    const packIds = libraryPackIds
-      .map((r) => r.sanityPackId)
-      .filter((id): id is string => !!id);
-    {
-      try {
-        type RawScoringModule = Omit<ScoringModule, 'capabilityThreadIds'> & { capabilityThreadTitles?: string[] };
-        const [sanityPacks, ownScoringModules] = await Promise.all([
-          packIds.length > 0
-            ? sanityServerClient.fetch<{ modules: RawScoringModule[] }[]>(SCORING_MODULES_QUERY, { packIds })
-            : Promise.resolve([] as { modules: RawScoringModule[] }[]),
-          sanityServerClient.fetch<RawScoringModule[]>(SCORING_OWN_MODULES_QUERY, { familyId }),
-        ]);
-        // Build title → code lookup from the cached taxonomy so module thread refs
-        // (which resolve to Sanity titles) match snapshot thread_id codes (L1, S5, etc.).
-        const threadCache = await getCachedThreads();
-        const titleToCode = new Map<string, string>();
-        for (const [code, meta] of threadCache.entries()) {
-          titleToCode.set(meta.title.toLowerCase(), code);
-        }
-        const toScoring = (m: RawScoringModule): ScoringModule => ({
-          _id: m._id,
-          title: m.title,
-          subjects: m.subjects ?? [],
-          averageEnergyLevel: m.averageEnergyLevel ?? null,
-          methodAffinity: m.methodAffinity ?? null,
-          capabilityThreadIds: (m.capabilityThreadTitles ?? [])
-            .map((t) => titleToCode.get((t ?? '').toLowerCase()))
-            .filter((c): c is string => !!c),
-        });
-        const seen = new Set<string>();
-        const scoringModules: ScoringModule[] = [
-          ...sanityPacks.flatMap((p) => p.modules ?? []),
-          ...(ownScoringModules ?? []),
-        ]
-          .filter((m) => m._id && m.title)
-          .filter((m) => (seen.has(m._id) ? false : (seen.add(m._id), true)))
-          .map(toScoring);
-
-        if (scoringModules.length > 0) {
-          const plannedModuleIds = weekPlanned
-            .map((p) => p.moduleId)
-            .filter((id): id is string => id != null);
-
-          // Count completed modules from entries
-          const completedModuleCounts: Record<string, number> = {};
-          for (const e of allEntries) {
-            const modId = (e as Record<string, unknown>).sourceModuleId as string | null;
-            if (modId) completedModuleCounts[modId] = (completedModuleCounts[modId] ?? 0) + 1;
-          }
-
-          // Subjects already planned this week
-          const weekSubjects = new Set(weekPlanned.flatMap((p) => p.subjects ?? []));
-
-          // Pedagogy weight (W_PEDAGOGY=0.15) only applies when context is
-          // supplied. Omitting it here silently reroutes that weight into spark,
-          // so the persisted snapshot ignored the family's tradition entirely.
-          const pedagogyContext: PedagogyContext = {
-            pedagogyKey: settings?.pedagogyPreference ?? 'eclectic',
-            values: settings?.pedagogyValues ?? [],
-            practices: settings?.pedagogyPractices ?? [],
-          };
-
-          const scored = scoreModules(
-            scoringModules,
-            childSnapshots as Record<string, ChildSnapshot>,
-            plannedModuleIds,
-            completedModuleCounts,
-            weekSubjects,
-            pedagogyContext,
-          );
-
-          // Subject balance: count planned subjects per day vs target of 2 per core subject
-          const coreSubjects = ['english', 'mathematics', 'science', 'hass'];
-          const subjectPlannedCount: Record<string, number> = {};
-          for (const p of weekPlanned) {
-            for (const s of p.subjects ?? []) {
-              subjectPlannedCount[s] = (subjectPlannedCount[s] ?? 0) + 1;
-            }
-          }
-          const subjectBalance: Record<string, SubjectBalance> = {};
-          for (const s of coreSubjects) {
-            const count = subjectPlannedCount[s] ?? 0;
-            subjectBalance[s] = count >= 2 ? (count > 4 ? 'over' : 'balanced') : 'under';
-          }
-
-          recommendations = { suggested_next: scored, subject_balance: subjectBalance };
-
-          // Planner suggestions: top recommendations not already planned, assigned to under-represented days
-          const weekDays = Array.from({ length: 5 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
-          const daySubjectCounts: Record<string, Record<string, number>> = {};
-          for (const day of weekDays) daySubjectCounts[day] = {};
-          for (const p of weekPlanned) {
-            if (!daySubjectCounts[p.date]) continue;
-            for (const s of p.subjects ?? []) {
-              daySubjectCounts[p.date][s] = (daySubjectCounts[p.date][s] ?? 0) + 1;
-            }
-          }
-
-          plannerSuggestions = scored.slice(0, 5).map((rec) => {
-            // Assign to the day with fewest entries in this module's primary subject
-            const primarySubject = scoringModules.find((m) => m._id === rec.module_id)?.subjects[0];
-            let bestDay = weekDays[0];
-            let minCount = Infinity;
-            for (const day of weekDays) {
-              const cnt = primarySubject ? (daySubjectCounts[day][primarySubject] ?? 0) : Object.values(daySubjectCounts[day]).reduce((s, c) => s + c, 0);
-              if (cnt < minCount) { minCount = cnt; bestDay = day; }
-            }
-            return {
-              module_id: rec.module_id,
-              module_title: rec.module_title,
-              suggested_day: bestDay,
-              reason: rec.primary_reason,
-              reason_text: rec.reason_text,
-            };
-          });
-        }
-      } catch (err) {
-        console.warn('[snapshotRebuild] Recommendation scoring failed, skipping:', err);
-      }
-    }
+    const { recommendations, plannerSuggestions } = await computeRecommendations({
+      familyId,
+      settings,
+      libraryPackIds,
+      weekPlanned,
+      allEntries,
+      childSnapshots: childSnapshots as Record<string, ChildSnapshot>,
+      weekStart,
+    });
 
     // Family-wide intelligence
     const totalEntries = allEntries.length;

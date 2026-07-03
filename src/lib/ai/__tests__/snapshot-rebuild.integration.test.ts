@@ -32,7 +32,10 @@ import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
 // only reliable capture point. All three exports are required (routes 500 if
 // `sanityServerClient` is missing from a partial mock).
 const { serverFetchMock } = vi.hoisted(() => ({
-  serverFetchMock: vi.fn(async () => [] as unknown[]),
+  // Parameterised signature (matches client.fetch(query, params)) so
+  // `mock.calls` rows are destructurable — a zero-arg vi.fn types calls as
+  // empty tuples and `[, params]` fails tsc (TS2493).
+  serverFetchMock: vi.fn(async (_query: string, _params?: Record<string, unknown>) => [] as unknown[]),
 }));
 vi.mock('@/lib/sanity/client', () => ({
   sanityClient: { fetch: vi.fn(async () => []) },

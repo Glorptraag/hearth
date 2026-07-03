@@ -52,6 +52,13 @@ export default function ModuleDetailPage() {
   const [packState, setPackState] = useState<{ printablesDownloaded: boolean; kitOwned: boolean }>(
     { printablesDownloaded: false, kitOwned: false },
   );
+  // module_runs lifecycle: opened (or resumed) on facilitate entry, touched on
+  // activity advance, finished server-side by the entry save (POST /api/entries
+  // with moduleRunId). Run tracking must never block facilitation — failures
+  // degrade to an untracked session. The cursor itself stays in localStorage.
+  const [moduleRunId, setModuleRunId] = useState<string | null>(null);
+  const moduleRunIdRef = useRef<string | null>(null);
+  const runCreateInFlightRef = useRef(false);
 
   const handleAddCapture = useCallback((item: QuickCaptureItem) => {
     setQuickCaptures((prev) => [...prev, item]);
@@ -68,6 +75,16 @@ export default function ModuleDetailPage() {
   const STORAGE_KEY = `hearth_module_${id}_session`;
   const START_TIME_KEY = `hearth_module_${id}_start`;
 
+  function touchModuleRun() {
+    const rid = moduleRunIdRef.current;
+    if (!rid) return;
+    fetch(`/api/module-runs/${rid}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'touch' }),
+    }).catch(() => { /* staleness derivation just sees the older timestamp */ });
+  }
+
   function persistChunk(chunkIdx: number) {
     setSavedChunkIdx(chunkIdx);
     setCurrentActivityIdx(chunkIdx);
@@ -75,6 +92,7 @@ export default function ModuleDetailPage() {
     // parent advances to; skipped activities are never marked.
     setCompletedActivityIdxs((prev) => markActivityVisited(prev, chunkIdx));
     try { localStorage.setItem(STORAGE_KEY, String(chunkIdx)); } catch { /* ignore */ }
+    touchModuleRun();
   }
 
   function clearSession() {
@@ -82,6 +100,8 @@ export default function ModuleDetailPage() {
     setCurrentActivityIdx(0);
     setCompletedActivityIdxs([]);
     setQuickCaptures([]);
+    moduleRunIdRef.current = null;
+    setModuleRunId(null);
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(START_TIME_KEY);
@@ -102,8 +122,41 @@ export default function ModuleDetailPage() {
     // skipped-over activities as done (the old `i < idx` range did).
     setCompletedActivityIdxs((prev) => markActivityVisited(prev, idx));
     try { localStorage.setItem(`hearth_module_${id}_session`, String(idx)); } catch { /* ignore */ }
+    const rid = moduleRunIdRef.current;
+    if (rid) {
+      fetch(`/api/module-runs/${rid}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'touch' }),
+      }).catch(() => { /* non-blocking */ });
+    }
     setMode('facilitate');
   }, [id]);
+
+  // Open (or resume) the family's run for this module when facilitate mode is
+  // entered. Open-or-create is idempotent server-side, so a resume after a
+  // reload re-attaches to the same open run instead of forking a second one.
+  useEffect(() => {
+    if (mode !== 'facilitate' || moduleRunIdRef.current || runCreateInFlightRef.current) return;
+    runCreateInFlightRef.current = true;
+    const approachId = module?.approaches?.[selectedApproachIdx]?._id ?? null;
+    fetch('/api/module-runs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sanityModuleId: id, approachId }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((run: { id?: string } | null) => {
+        if (run?.id) {
+          moduleRunIdRef.current = run.id;
+          setModuleRunId(run.id);
+        }
+      })
+      .catch(() => { /* untracked session — the board just won't show in_flight */ })
+      .finally(() => {
+        runCreateInFlightRef.current = false;
+      });
+  }, [mode, id, module, selectedApproachIdx]);
 
   // Mark the current activity visited on entry into facilitate mode. The
   // navigation handlers (persistChunk / handleActivitySelect) mark what the
@@ -578,6 +631,7 @@ export default function ModuleDetailPage() {
             onRemoveCapture={handleRemoveCapture}
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
+            moduleRunId={moduleRunId}
             onSaved={() => {
               if (moduleIdHashRef.current) track('module_session_logged', { module_id_hash: moduleIdHashRef.current });
               clearSession();

@@ -15,6 +15,7 @@ export default function LogMode({
   onRemoveCapture,
   selectedApproachIdx,
   completedActivityIdxs,
+  moduleRunId,
   onSaved,
 }: {
   module: Module;
@@ -29,6 +30,9 @@ export default function LogMode({
   // activities the parent actually entered/viewed in Facilitate mode (includes
   // the activity they ended on; excludes ones skipped past via a forward jump).
   completedActivityIdxs?: number[];
+  // The open module_runs row this session belongs to. Saving a complete entry
+  // with it finishes the run server-side (library board flips off in_flight).
+  moduleRunId?: string | null;
   // Invoked after a successful POST /api/entries, before navigating away. The
   // runner clears session state here (not on finish) so the sourceActivityIds
   // derivation above still sees the completed activities and quick captures.
@@ -160,6 +164,9 @@ export default function LogMode({
       }
       if (approach?._id) {
         body.sourceApproachId = approach._id;
+      }
+      if (moduleRunId) {
+        body.moduleRunId = moduleRunId;
       }
       if (evidenceUrls.length > 0) {
         body.evidenceUrls = evidenceUrls;

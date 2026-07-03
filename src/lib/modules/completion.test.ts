@@ -3,6 +3,8 @@ import {
   markActivityVisited,
   visitedThrough,
   deriveSourceActivityIds,
+  clampIndex,
+  clampIndexList,
 } from './completion';
 
 describe('markActivityVisited', () => {
@@ -111,5 +113,30 @@ describe('deriveSourceActivityIds', () => {
         quickCaptures: undefined,
       }),
     ).toEqual([]);
+  });
+});
+
+describe('clampIndex / clampIndexList — restored-session clamping', () => {
+  it('clamps an out-of-range restored cursor to the last activity', () => {
+    expect(clampIndex(7, 3)).toBe(2);
+  });
+
+  it('leaves in-range indexes untouched', () => {
+    expect(clampIndex(1, 3)).toBe(1);
+    expect(clampIndex(2, 3)).toBe(2);
+  });
+
+  it('is a no-op against an empty/unknown activity list', () => {
+    expect(clampIndex(5, 0)).toBe(5);
+    expect(clampIndexList([0, 5], 0)).toEqual([0, 5]);
+  });
+
+  it('drops completed indexes that no longer map to an activity', () => {
+    expect(clampIndexList([0, 1, 4, 9], 3)).toEqual([0, 1]);
+  });
+
+  it('returns the same reference when nothing is out of range (setState no-op)', () => {
+    const idxs = [0, 1, 2];
+    expect(clampIndexList(idxs, 3)).toBe(idxs);
   });
 });

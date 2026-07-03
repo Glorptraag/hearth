@@ -1,0 +1,107 @@
+/**
+ * Capabilities page — load-failure honesty.
+ *
+ * A fetch failure previously fell into "No learners found" or the first-use
+ * "Capabilities emerge from logging" zero-state — telling an established
+ * family their constellation is empty when a request merely failed. These
+ * tests pin the distinction: failure renders a gentle retryable error, never
+ * a first-use state.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import CapabilitiesPage from './page';
+
+vi.mock('./_constellation/ConstellationRoute', () => ({
+  ConstellationRoute: () => <div data-testid="constellation" />,
+  buildSnapshotFromApi: (learner: { id: string; name: string }) => ({
+    learnerId: learner.id,
+    name: learner.name,
+    observationsByThread: {},
+    dloStatusById: {},
+  }),
+}));
+vi.mock('@/lib/sanity/client-read', () => ({
+  clientSanityRead: vi.fn(async () => []),
+}));
+
+const learnersOk = [{ id: 'learner-1', name: 'Sage', dateOfBirth: null, shapeIcon: null, colourToken: null }];
+
+function mockFetch(handlers: { learners?: () => Promise<Response>; capabilities?: () => Promise<Response> }) {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes('/api/learners')) {
+      return handlers.learners ? handlers.learners() : jsonResponse(learnersOk);
+    }
+    if (url.includes('/api/capabilities/')) {
+      return handlers.capabilities ? handlers.capabilities() : jsonResponse({ activeThreads: [], dloStatus: {} });
+    }
+    return jsonResponse({});
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+function jsonResponse(body: unknown, status = 200): Promise<Response> {
+  return Promise.resolve(
+    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
+  );
+}
+
+beforeEach(() => {
+  vi.useRealTimers();
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe('CapabilitiesPage — load failures', () => {
+  it('a learners fetch failure renders the retryable error, not "No learners found"', async () => {
+    mockFetch({ learners: () => Promise.reject(new Error('network down')) });
+    render(<CapabilitiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't load the constellation/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/No learners found/i)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+  });
+
+  it('a capabilities fetch failure with nothing on screen renders the error, not the first-use zero-state', async () => {
+    mockFetch({ capabilities: () => Promise.reject(new Error('500')) });
+    render(<CapabilitiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't load the constellation/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/Capabilities emerge from logging/i)).toBeNull();
+  });
+
+  it('Try again refetches and recovers', async () => {
+    let fail = true;
+    const fetchMock = mockFetch({
+      capabilities: () => (fail ? Promise.reject(new Error('500')) : jsonResponse({ activeThreads: [], dloStatus: {} })),
+    });
+    render(<CapabilitiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    });
+
+    fail = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('constellation')).toBeTruthy();
+    });
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/capabilities/')).length).toBeGreaterThan(1);
+  });
+
+  it('the happy path still renders the constellation', async () => {
+    mockFetch({});
+    render(<CapabilitiesPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId('constellation')).toBeTruthy();
+    });
+  });
+});

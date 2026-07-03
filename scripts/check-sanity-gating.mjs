@@ -38,6 +38,16 @@ const TYPE_RE = new RegExp(
   'g',
 );
 const PUBLISHED_RE = /status\s*==\s*"published"/;
+// Arrays of gated (draftable) documents. `count(<field>)` over one of these
+// counts draft docs too — the gated form is `count(field[@->status == …])`
+// (or `[@.ref->status == …]` for keyed reference arrays). A bare count slipped
+// through the per-query PUBLISHED_RE five times historically because the query
+// gates SOMEWHERE, just not inside the count argument.
+const GATED_ARRAY_FIELDS = ['modules', 'approaches', 'activities', 'assets', 'commonsTexts', 'stages'];
+const UNGATED_COUNT_RE = new RegExp(
+  String.raw`count\(\s*(${GATED_ARRAY_FIELDS.join('|')})\s*\)`,
+  'g',
+);
 const EXEMPT_RE = /SANITY-GATING EXEMPT/;
 const LIST = process.argv.includes('--list');
 
@@ -105,6 +115,9 @@ function hasExemption(src, hitIdx) {
 const files = ROOTS.flatMap((r) => walk(join(ROOT, r)));
 const violations = [];
 const matches = [];
+// A query with several `_type ==` hits resolves to the same range each time —
+// dedupe count violations by their absolute position.
+const seenCountViolations = new Set();
 
 for (const file of files) {
   const src = readFileSync(file, 'utf8');
@@ -118,6 +131,26 @@ for (const file of files) {
     const line = lineForOffset(src, hitIdx);
     const relPath = relative(ROOT, file);
     matches.push({ file: relPath, line, type: m[1] });
+
+    // Per-deref hole: a bare count() over a gated array inside an otherwise
+    // gated query. Checked before the whole-query PUBLISHED_RE pass, which a
+    // gated-elsewhere query satisfies trivially.
+    UNGATED_COUNT_RE.lastIndex = 0;
+    let c;
+    while ((c = UNGATED_COUNT_RE.exec(query)) !== null) {
+      const absIdx = range.start + c.index;
+      const key = `${relPath}:${absIdx}`;
+      if (seenCountViolations.has(key)) continue;
+      seenCountViolations.add(key);
+      if (hasExemption(src, absIdx)) continue;
+      violations.push({
+        file: relPath,
+        line: lineForOffset(src, absIdx),
+        type: `ungated count(${c[1]})`,
+        snippet: `count(${c[1]}) counts drafts — use count(${c[1]}[@->status == "published"]) (or [@.ref->status == …] for keyed reference arrays)`,
+      });
+    }
+
     if (PUBLISHED_RE.test(query)) continue;
     if (hasExemption(src, hitIdx)) continue;
     violations.push({
@@ -143,7 +176,8 @@ if (violations.length === 0) {
 
 console.error(`\n✗ Sanity-gating violation(s): ${violations.length}\n`);
 for (const v of violations) {
-  console.error(`  ${v.file}:${v.line}  (_type == "${v.type}")`);
+  const label = v.type.startsWith('ungated') ? v.type : `_type == "${v.type}"`;
+  console.error(`  ${v.file}:${v.line}  (${label})`);
   console.error(`    ${v.snippet.replace(/\n\s*/g, ' ')}`);
 }
 console.error('\nEvery runtime GROQ query for pack/module/activity/asset/commonsText/project');

@@ -8,7 +8,7 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { learningEntries, moduleRuns } from '@/lib/db/schema';
+import { learningEntries, moduleRuns, plannerEntries } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { attachEvidence, writeEntryEvidence } from '@/lib/evidence-db';
@@ -95,6 +95,9 @@ const createEntrySchema = z.object({
   // saving a complete entry for a sustained run marks the run finished (the
   // single writer of run completion — see /api/module-runs).
   moduleRunId: z.string().uuid().optional(),
+  // Planner provenance: the planner_entries row the parent launched the runner
+  // from (planner card title → /module/[id]?plannerEntryId=…).
+  plannerEntryId: z.string().uuid().optional(),
   // Sanity activity IDs the family engaged with. Populated by the module
   // runner Log mode (and by the Logger attach-to-module flow via PATCH).
   // Drives per-activity capability mapping in thread_links.
@@ -149,6 +152,18 @@ export const POST = routeHandler(async (request: NextRequest) => {
       return NextResponse.json({ error: 'moduleRunId does not reference your family\'s run' }, { status: 400 });
     }
     claimedRun = run;
+  }
+
+  // Same family guard for planner provenance.
+  if (entryData.plannerEntryId) {
+    const [plan] = await db
+      .select({ id: plannerEntries.id })
+      .from(plannerEntries)
+      .where(and(eq(plannerEntries.id, entryData.plannerEntryId), eq(plannerEntries.familyId, family.id)))
+      .limit(1);
+    if (!plan) {
+      return NextResponse.json({ error: 'plannerEntryId does not reference your family\'s planner entry' }, { status: 400 });
+    }
   }
 
   // Log mode for telemetry (informational only — not gated server-side)

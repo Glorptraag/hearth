@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
-> **Last updated:** 10 June 2026
+> **Last updated:** 3 July 2026
 > **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
@@ -15,6 +15,10 @@
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (July 2026)
+
+- **Post-alpha hardening sweep** (3 July — PRs #249–#256, **all merged to main same day**) — deep audit pass over the module/activity process, library, and constellation/reporting; findings logged as R20–R26 in `hearth-research-log.md`, each with a regression test. Headline fixes: the **H6 First Nations alpha suppression built** (it had never actually landed — one reversible switch in `src/lib/capability-alpha-suppression.ts`, evidence writes untouched; takes effect in prod on next deploy + snapshot rebuild, #249); **snapshot rebuild honours library soft-delete** (#250); **`module_runs` persistence landed** so the library status board's `in_flight`/`abandoned` derivation reads real rows (ghost-schema gap closed, #251); **planner cards open the runner** with `plannerEntryId` provenance (#252); **ungated `count()` class fixed + CI check taught to catch it** (#253); **owned-pack add un-disabled + transactional module publish** (#254); **honest retryable failure states** in runner + constellation, restored-session clamping (#255). Housekeeping: superseded branch `claude/modest-feistel-cc6376` reconciled (both commits obsoleted by #241–#243) and deleted. Flagged for decision, not built: whether a finished module run auto-completes its planner entry (provenance plumbing is in).
 
 ### Recent Milestones (June 2026)
 

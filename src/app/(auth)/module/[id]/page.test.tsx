@@ -60,7 +60,14 @@ const MOCK_RAW_MODULE = {
       _id: 'approach_1',
       title: 'Hands-on',
       modality: 'kinesthetic',
-      activities: [{ _id: 'activity_a', title: 'Observe' }],
+      // Three activities so a saved cursor of 2 is IN RANGE — the page clamps
+      // restored positions to the loaded list, so a fixture with fewer
+      // activities would (correctly) clamp the resume away.
+      activities: [
+        { _id: 'activity_a', title: 'Observe' },
+        { _id: 'activity_b', title: 'Compare' },
+        { _id: 'activity_c', title: 'Record' },
+      ],
     },
   ],
 };

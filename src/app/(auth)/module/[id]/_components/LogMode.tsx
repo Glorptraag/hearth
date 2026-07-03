@@ -16,6 +16,7 @@ export default function LogMode({
   selectedApproachIdx,
   completedActivityIdxs,
   moduleRunId,
+  plannerEntryId,
   onSaved,
 }: {
   module: Module;
@@ -33,6 +34,9 @@ export default function LogMode({
   // The open module_runs row this session belongs to. Saving a complete entry
   // with it finishes the run server-side (library board flips off in_flight).
   moduleRunId?: string | null;
+  // Set when the runner was opened from a planner card — stamps the saved
+  // entry with its planner provenance (learning_entries.plannerEntryId).
+  plannerEntryId?: string | null;
   // Invoked after a successful POST /api/entries, before navigating away. The
   // runner clears session state here (not on finish) so the sourceActivityIds
   // derivation above still sees the completed activities and quick captures.
@@ -167,6 +171,9 @@ export default function LogMode({
       }
       if (moduleRunId) {
         body.moduleRunId = moduleRunId;
+      }
+      if (plannerEntryId) {
+        body.plannerEntryId = plannerEntryId;
       }
       if (evidenceUrls.length > 0) {
         body.evidenceUrls = evidenceUrls;

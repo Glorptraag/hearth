@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
 import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
-import { createFamily, createLearner, createEntry } from '@/test/db-factories';
+import { createFamily, createLearner, createEntry, createPlannerEntry } from '@/test/db-factories';
 import { familyMembers, learningEntries, learningEntryEvidence } from '@/lib/db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { GET, POST } from './route';
@@ -72,6 +72,52 @@ describe('POST /api/entries — real DB', () => {
 
     const res = await POST(jsonReq('http://x/api/entries', { title: 'Forbidden' }));
     expect(res.status).toBe(403);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('POST /api/entries — planner provenance (plannerEntryId)', () => {
+  it("stamps the entry with the family's planner entry", async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const plan = await createPlannerEntry(db, { familyId: TEST_FAMILY_ID, title: 'Weather week' });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Module: Weather Station',
+        status: 'draft',
+        plannerEntryId: plan.id,
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].plannerEntryId).toBe(plan.id);
+  });
+
+  it("400s a plannerEntryId belonging to another family and writes nothing", async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const other = await createFamily(db, { id: crypto.randomUUID(), clerkUserId: 'user-other' });
+    const theirPlan = await createPlannerEntry(db, { familyId: other.id, title: 'Their plan' });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Sneaky',
+        status: 'draft',
+        plannerEntryId: theirPlan.id,
+      })
+    );
+    expect(res.status).toBe(400);
 
     const rows = await db
       .select()

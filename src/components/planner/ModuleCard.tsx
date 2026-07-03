@@ -1,4 +1,5 @@
-import { FilePdf, X } from '@/components/icons';
+import Link from 'next/link';
+import { FilePdf, Play, X } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
 
@@ -128,29 +129,48 @@ export default function ModuleCard({
           </button>
         )}
 
-        {/* Status dot + title */}
-        <button
-          onClick={() => !isReadOnly && onToggle(entry.id, entry.status)}
-          disabled={isReadOnly}
-          className="flex items-start gap-xs text-left w-full"
-        >
-          <span
-            className={`mt-[3px] h-[8px] w-[8px] flex-shrink-0 rounded-full transition-colors ${
-              isComplete
-                ? 'bg-sage'
-                : entry.status === 'in_progress'
-                  ? 'bg-ember'
-                  : 'border border-border-medium bg-transparent'
-            }`}
-          />
-          <span
-            className={`font-sans text-[0.6875rem] font-medium leading-snug ${
-              isComplete ? 'text-text-muted line-through' : 'text-text-primary'
-            }`}
+        {/* Status dot (toggle) + title (opens the runner when a module backs
+            this entry; free-text entries keep the title as the toggle). */}
+        <div className="flex items-start gap-xs w-full">
+          <button
+            onClick={() => !isReadOnly && onToggle(entry.id, entry.status)}
+            disabled={isReadOnly}
+            aria-label={`Mark "${entry.title ?? 'Untitled'}" ${isComplete ? 'planned' : 'complete'}`}
+            // p/-m enlarges the tap target past the 8px dot without moving layout.
+            className="mt-[3px] shrink-0 p-xs -m-xs"
           >
-            {entry.title ?? 'Untitled'}
-          </span>
-        </button>
+            <span
+              className={`block h-[8px] w-[8px] rounded-full transition-colors ${
+                isComplete
+                  ? 'bg-sage'
+                  : entry.status === 'in_progress'
+                    ? 'bg-ember'
+                    : 'border border-border-medium bg-transparent'
+              }`}
+            />
+          </button>
+          {entry.moduleId ? (
+            <Link
+              href={`/module/${encodeURIComponent(entry.moduleId)}?plannerEntryId=${encodeURIComponent(entry.id)}`}
+              className={`inline-flex items-start gap-[3px] font-sans text-[0.6875rem] font-medium leading-snug hover:text-ember transition-colors duration-200 ${
+                isComplete ? 'text-text-muted line-through' : 'text-text-primary'
+              }`}
+            >
+              <span>{entry.title ?? 'Untitled'}</span>
+              <Play size={10} weight="fill" className="mt-[2px] shrink-0 opacity-60" aria-hidden="true" />
+            </Link>
+          ) : (
+            <button
+              onClick={() => !isReadOnly && onToggle(entry.id, entry.status)}
+              disabled={isReadOnly}
+              className={`font-sans text-[0.6875rem] font-medium leading-snug text-left ${
+                isComplete ? 'text-text-muted line-through' : 'text-text-primary'
+              }`}
+            >
+              {entry.title ?? 'Untitled'}
+            </button>
+          )}
+        </div>
 
         {/* Learner dots */}
         {entryLearners.length > 0 && (

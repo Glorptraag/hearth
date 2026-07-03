@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { track, hashForAnalytics } from '@/lib/analytics/posthog';
 import type { QuickCaptureItem } from './_components/types';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { clientSanityRead } from '@/lib/sanity/client-read';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
@@ -29,6 +29,10 @@ export default function ModuleDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  // Set when the parent arrived from a planner card — threads through LogMode
+  // into the saved entry so the log carries its planner provenance. The server
+  // validates family ownership; an invalid id just fails the save's 400 path.
+  const plannerEntryId = useSearchParams().get('plannerEntryId');
 
   const [module, setModule] = useState<Module | null>(null);
   const [loading, setLoading] = useState(true);
@@ -695,6 +699,7 @@ export default function ModuleDetailPage() {
             selectedApproachIdx={selectedApproachIdx}
             completedActivityIdxs={completedActivityIdxs}
             moduleRunId={moduleRunId}
+            plannerEntryId={plannerEntryId}
             onSaved={() => {
               if (moduleIdHashRef.current) track('module_session_logged', { module_id_hash: moduleIdHashRef.current });
               clearSession();

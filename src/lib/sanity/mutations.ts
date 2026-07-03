@@ -332,7 +332,9 @@ interface CreateActivity {
   status?: Status;
 }
 
-export async function createActivity(input: CreateActivity) {
+// Pure doc assembly — shared by the single-doc creator and the transactional
+// createFullModule (which must build the whole tree before any write).
+function buildActivityDoc(input: CreateActivity): SanityDoc {
   const doc: SanityDoc = {
     _type: 'activity',
     title: input.title,
@@ -392,6 +394,11 @@ export async function createActivity(input: CreateActivity) {
     }
     doc.workbench = wbDoc;
   }
+  return doc;
+}
+
+export async function createActivity(input: CreateActivity) {
+  const doc = buildActivityDoc(input);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -408,7 +415,7 @@ interface CreateApproach {
   status?: Status;
 }
 
-export async function createApproach(input: CreateApproach) {
+function buildApproachDoc(input: CreateApproach): SanityDoc {
   const doc: SanityDoc = {
     _type: 'approach',
     title: input.title,
@@ -420,6 +427,11 @@ export async function createApproach(input: CreateApproach) {
   if (input.modality) doc.modality = input.modality;
   if (input.description) doc.description = input.description;
   if (input.activityIds) doc.activities = keyedRefs(input.activityIds);
+  return doc;
+}
+
+export async function createApproach(input: CreateApproach) {
+  const doc = buildApproachDoc(input);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -472,7 +484,7 @@ function buildMaterialsField(input: MaterialsInput): Record<string, unknown> {
   return out;
 }
 
-export async function createModule(input: CreateModule) {
+function buildModuleDoc(input: CreateModule): SanityDoc {
   const doc: SanityDoc = {
     _type: 'module',
     title: input.title,
@@ -492,6 +504,11 @@ export async function createModule(input: CreateModule) {
   if (input.createdVia) doc.createdVia = input.createdVia;
   if (input.printables) doc.printables = { ...input.printables };
   if (input.materials) doc.materials = buildMaterialsField(input.materials);
+  return doc;
+}
+
+export async function createModule(input: CreateModule) {
+  const doc = buildModuleDoc(input);
   return input._id ? createWithId(doc as SanityDoc & { _id: string }) : create(doc);
 }
 
@@ -722,23 +739,54 @@ interface FullModuleInput extends Omit<CreateModule, 'approachIds'> {
 }
 
 export async function createFullModule(input: FullModuleInput) {
-  const mod = await createModule(input);
+  // Build the whole tree with pre-assigned ids, then commit it as ONE Sanity
+  // transaction. The previous implementation wrote in three phases (module →
+  // approach/activity creates → back-ref patches); a mid-flight failure
+  // (quota, network) orphaned a module shell with dangling refs. Pre-assigning
+  // ids means no post-create patches are needed at all. Generated ids are
+  // random UUIDs — single-segment, so they stay visible to tokenless public
+  // reads (dotted ids are not).
+  const moduleId = input._id ?? crypto.randomUUID();
 
-  const approachResults = [];
+  const approachDocs: Array<SanityDoc & { _id: string }> = [];
+  const activityDocs: Array<SanityDoc & { _id: string }> = [];
+  const approachResults: Array<SanityDoc & { _id: string; activityIds: string[] }> = [];
+
   for (const appInput of input.approaches) {
-    const approach = await createApproach({ ...appInput, moduleId: mod._id });
+    const approachId = appInput._id ?? crypto.randomUUID();
 
     const activityIds: string[] = [];
     for (const actInput of appInput.activities) {
-      const activity = await createActivity({ ...actInput, approachId: approach._id });
-      activityIds.push(activity._id);
+      const activityId = actInput._id ?? crypto.randomUUID();
+      activityDocs.push(
+        buildActivityDoc({ ...actInput, _id: activityId, approachId }) as SanityDoc & { _id: string },
+      );
+      activityIds.push(activityId);
     }
 
-    await patch(approach._id, { activities: keyedRefs(activityIds) });
-    approachResults.push({ ...approach, activityIds });
+    const approachDoc = buildApproachDoc({
+      ...appInput,
+      _id: approachId,
+      moduleId,
+      activityIds,
+    }) as SanityDoc & { _id: string };
+    approachDocs.push(approachDoc);
+    approachResults.push({ ...approachDoc, activityIds });
   }
 
-  await patch(mod._id, { approaches: keyedRefs(approachResults.map((a) => a._id)) });
+  const moduleDoc = buildModuleDoc({
+    ...input,
+    _id: moduleId,
+    approachIds: approachDocs.map((a) => a._id),
+  }) as SanityDoc & { _id: string };
 
-  return { module: mod, approaches: approachResults };
+  // createOrReplace keeps createWithId's idempotent semantics for
+  // caller-supplied ids and behaves as a plain create for generated ones.
+  const tx = sanityWriteClient.transaction();
+  tx.createOrReplace(moduleDoc);
+  for (const doc of approachDocs) tx.createOrReplace(doc);
+  for (const doc of activityDocs) tx.createOrReplace(doc);
+  await tx.commit();
+
+  return { module: moduleDoc, approaches: approachResults };
 }

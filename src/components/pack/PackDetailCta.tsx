@@ -96,10 +96,13 @@ export function PackDetailCta({
   }
 
   if (owned) {
+    // Owned but not yet in the library — the add is the whole point of the
+    // purchase, so this button must act (it shipped disabled: a purchaser
+    // literally could not add their pack from this page).
     return (
       <button
-        disabled
-        className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm cursor-default"
+        onClick={handleAdd}
+        className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-sage/30 transition-all duration-200"
       >
         Owned — Add to Library
       </button>

@@ -11,7 +11,7 @@ import {
   learnerDloStatus,
   observationDloLinks,
 } from '@/lib/db/schema';
-import { eq, and, desc, gte, lte, count, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, gte, lte, count, inArray, isNull, sql } from 'drizzle-orm';
 import { subDays, addDays, startOfWeek, differenceInCalendarDays, format, startOfMonth } from 'date-fns';
 import type { EnrichmentResult } from './enrich';
 import { entryThreadIds } from './thread-aggregation';
@@ -245,7 +245,9 @@ async function rebuildLibraryRecommendationsOnly(
     db
       .select({ sanityPackId: familyLibrary.sanityPackId })
       .from(familyLibrary)
-      .where(eq(familyLibrary.familyId, familyId)),
+      // Soft-deleted rows (removedAt set) are no longer in the library —
+      // without this guard a just-removed pack keeps driving recommendations.
+      .where(and(eq(familyLibrary.familyId, familyId), isNull(familyLibrary.removedAt))),
     db
       .select({ moduleId: plannerEntries.moduleId, date: plannerEntries.date, subjects: plannerEntries.subjects })
       .from(plannerEntries)
@@ -259,7 +261,7 @@ async function rebuildLibraryRecommendationsOnly(
     db
       .select({ count: count() })
       .from(familyLibrary)
-      .where(eq(familyLibrary.familyId, familyId))
+      .where(and(eq(familyLibrary.familyId, familyId), isNull(familyLibrary.removedAt)))
       .then((r) => r[0]?.count ?? 0),
   ]);
 
@@ -332,7 +334,8 @@ export async function rebuildSnapshot(
       db
         .select({ sanityPackId: familyLibrary.sanityPackId })
         .from(familyLibrary)
-        .where(eq(familyLibrary.familyId, familyId)),
+        // Mirrors /api/library's read: soft-deleted packs are out of the library.
+        .where(and(eq(familyLibrary.familyId, familyId), isNull(familyLibrary.removedAt))),
       db
         .select({ moduleId: plannerEntries.moduleId, date: plannerEntries.date, subjects: plannerEntries.subjects })
         .from(plannerEntries)
@@ -849,7 +852,7 @@ export async function rebuildSnapshot(
     const activeModulesCount = await db
       .select({ count: count() })
       .from(familyLibrary)
-      .where(eq(familyLibrary.familyId, familyId))
+      .where(and(eq(familyLibrary.familyId, familyId), isNull(familyLibrary.removedAt)))
       .then((r) => r[0]?.count ?? 0);
 
     const snapshotData = {

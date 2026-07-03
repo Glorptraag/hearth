@@ -163,6 +163,19 @@ describe('deterministic coverage seam', () => {
   });
 });
 
+describe('post-save top-thread seam', () => {
+  it('the first NON-suppressed thread wins the post-save line', () => {
+    // Mirrors PostSaveSurface's pick: enrichment may rank H6 first (evidence
+    // preserved), but the parent-facing line takes the next thread.
+    const threads = [
+      { thread_id: 'H6', confidence: 0.9 },
+      { thread_id: 'S5', confidence: 0.7 },
+    ];
+    const top = threads.find((t) => !isSuppressedThread(t.thread_id));
+    expect(top?.thread_id).toBe('S5');
+  });
+});
+
 describe('portfolio thread-grouping seam', () => {
   it('a suppressed thread never wins top-thread even at higher confidence', () => {
     expect(

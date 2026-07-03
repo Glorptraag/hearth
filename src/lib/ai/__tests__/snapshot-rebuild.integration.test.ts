@@ -13,7 +13,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { familyIntelligenceSnapshots, learningEntries } from '@/lib/db/schema';
+import { familyIntelligenceSnapshots, familyLibrary, learningEntries } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createFamily, createLearner, createEntry, createDloLink } from '@/test/db-factories';
 import { rebuildSnapshot } from '../snapshot-rebuild';
@@ -24,6 +24,21 @@ import { TEST_FAMILY_ID, TEST_USER_ID } from '../../../../vitest.setup';
 import type { SnapshotData, ChildSnapshot } from '@/types/snapshot';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
+
+// File-level client mock so tests can inspect the scoring query's `packIds`
+// param. The lazy proxies in the real module re-bind `fetch` per access (the
+// bound copy has no `.mock`), and the setup's per-test clearing wipes
+// `createClient.mock.results` — so a plain object with a hoisted vi.fn is the
+// only reliable capture point. All three exports are required (routes 500 if
+// `sanityServerClient` is missing from a partial mock).
+const { serverFetchMock } = vi.hoisted(() => ({
+  serverFetchMock: vi.fn(async () => [] as unknown[]),
+}));
+vi.mock('@/lib/sanity/client', () => ({
+  sanityClient: { fetch: vi.fn(async () => []) },
+  sanityWriteClient: { fetch: vi.fn(async () => []) },
+  sanityServerClient: { fetch: serverFetchMock },
+}));
 
 vi.mock('../sanity-thread-cache', () => ({
   getCachedThreads: vi.fn(async () => new Map([
@@ -78,6 +93,13 @@ async function getSnapshot(familyId: string): Promise<SnapshotData | null> {
 function getActiveThreadIds(snapshot: SnapshotData, learnerId: string): string[] {
   const child = snapshot.children[learnerId] as ChildSnapshot | undefined;
   return child?.active_threads.map((t) => t.thread_id) ?? [];
+}
+
+/** Every `{ packIds }` param passed to the mocked server client's fetch. */
+function scoringPackIds(): string[][] {
+  return serverFetchMock.mock.calls
+    .map(([, params]) => (params as { packIds?: string[] } | undefined)?.packIds)
+    .filter((ids): ids is string[] => Array.isArray(ids));
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -471,6 +493,70 @@ describe('INTEGRATION: rebuildSnapshot — library_change incremental fast-path'
     expect(incremental).not.toBeNull();
     expect(incremental!.children).toEqual(childrenAfterFull);
     expect((incremental as SnapshotData & { rebuild_trigger?: string }).rebuild_trigger).toBe('library_change');
+  });
+
+  it('excludes soft-deleted library rows from active count and recommendation scoring (full rebuild)', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [learner.id],
+      status: 'complete',
+      dateOccurred: thisMonth,
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'L1', confidence: 0.9 }] },
+    });
+    // One active pack; one soft-removed pack; one soft-removed module.
+    await db.insert(familyLibrary).values([
+      { familyId: family.id, sanityPackId: 'pack-active-sd1', sanityModuleId: null },
+      { familyId: family.id, sanityPackId: 'pack-removed-sd1', sanityModuleId: null, removedAt: new Date() },
+      { familyId: family.id, sanityPackId: null, sanityModuleId: 'mod-removed-sd1', removedAt: new Date() },
+    ]);
+
+    await rebuildSnapshot(family.id, 'manual');
+
+    const snapshot = await getSnapshot(family.id);
+    expect((snapshot as SnapshotData & { activeModulesCount?: number }).activeModulesCount).toBe(1);
+
+    // The recommendation scoring query must only see the ACTIVE pack — a
+    // removed pack driving recommendations was the live bug this pins.
+    const scoringPackIdCalls = scoringPackIds();
+    const forThisFamily = scoringPackIdCalls.filter((ids) => ids.includes('pack-active-sd1') || ids.includes('pack-removed-sd1'));
+    expect(forThisFamily.length).toBeGreaterThan(0);
+    for (const ids of forThisFamily) {
+      expect(ids).toEqual(['pack-active-sd1']);
+    }
+  });
+
+  it('the library_change fast-path also excludes soft-deleted rows (the removal-triggered rebuild)', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id,
+      learnerIds: [learner.id],
+      status: 'complete',
+      dateOccurred: thisMonth,
+      aiEnrichment: { status: 'enriched', capability_threads: [{ thread_id: 'L1', confidence: 0.9 }] },
+    });
+    // Full rebuild first so the fast-path has prior children to reuse.
+    await rebuildSnapshot(family.id, 'manual');
+
+    // The family removes one of two packs — exactly what DELETE /api/library/[id]
+    // does before it fires rebuildSnapshot('library_change').
+    await db.insert(familyLibrary).values([
+      { familyId: family.id, sanityPackId: 'pack-active-sd2', sanityModuleId: null },
+      { familyId: family.id, sanityPackId: 'pack-removed-sd2', sanityModuleId: null, removedAt: new Date() },
+    ]);
+
+    await rebuildSnapshot(family.id, 'library_change');
+
+    const snapshot = await getSnapshot(family.id);
+    expect((snapshot as SnapshotData & { activeModulesCount?: number }).activeModulesCount).toBe(1);
+
+    const forThisFamily = scoringPackIds().filter((ids) => ids.includes('pack-active-sd2') || ids.includes('pack-removed-sd2'));
+    expect(forThisFamily.length).toBeGreaterThan(0);
+    for (const ids of forThisFamily) {
+      expect(ids).toEqual(['pack-active-sd2']);
+    }
   });
 
   it('falls back to a full rebuild when no prior snapshot exists', async () => {

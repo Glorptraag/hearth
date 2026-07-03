@@ -12,6 +12,7 @@ import {
   type SanityDLO,
 } from './_constellation/topology';
 import { clientSanityRead } from '@/lib/sanity/client-read';
+import EmptyState from '@/components/ui/EmptyState';
 import { Sparkle } from '@/components/icons';
 
 type Learner = {
@@ -31,10 +32,20 @@ export default function CapabilitiesPage() {
   const [curriculumCoverage, setCurriculumCoverage] = useState<CurriculumCoverage>({});
   const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
   const [loading, setLoading] = useState(true);
+  // A fetch failure must be distinguishable from "nothing observed yet" — an
+  // established family seeing the first-use zero-state because a request
+  // failed reads as lost progress (the exact trust break the "not yet" copy
+  // rules exist to avoid). Retryable via the nonces below.
+  const [loadError, setLoadError] = useState(false);
+  const [learnersNonce, setLearnersNonce] = useState(0);
   // Bumped after a DLO confirm/clear to refetch the snapshot (the server rebuild
   // is fire-and-forget, so this is best-effort eventual consistency).
   const [reloadNonce, setReloadNonce] = useState(0);
   const prevLearnerRef = useRef<string | null>(null);
+  // Whether the current learner has capability data on screen — a background
+  // refetch failure (confirm-triggered reloadNonce) keeps the stale-but-real
+  // view instead of flipping the whole page to an error.
+  const hasDataRef = useRef(false);
 
   useEffect(() => {
     // Guarded: a 5xx must NOT crash the page via JSON-parse SyntaxError.
@@ -44,12 +55,12 @@ export default function CapabilitiesPage() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setLearners(data);
-          setSelectedLearnerId(data[0].id);
+          setSelectedLearnerId((prev) => prev || data[0].id);
         }
       })
-      .catch(() => { /* degrade silently; capability view stays empty */ })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [learnersNonce]);
 
   // DLO content is shared across learners — fetch once.
   useEffect(() => {
@@ -74,6 +85,7 @@ export default function CapabilitiesPage() {
     // the previous learner's progress under the new name.
     if (prevLearnerRef.current !== selectedLearnerId) {
       prevLearnerRef.current = selectedLearnerId;
+      hasDataRef.current = false;
       setActiveThreads([]);
       setDloStatus({});
       setGapAnalysis({ underserved_subjects: [], suggested_focus_threads: [] });
@@ -83,6 +95,8 @@ export default function CapabilitiesPage() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`capabilities ${r.status}`))))
       .then((data) => {
         if (cancelled) return;
+        hasDataRef.current = true;
+        setLoadError(false);
         // New shape: { activeThreads, dloStatus, gapAnalysis, curriculumCoverage }.
         // Old shape was a bare array.
         if (Array.isArray(data)) {
@@ -97,7 +111,13 @@ export default function CapabilitiesPage() {
           setCurriculumCoverage(data?.curriculumCoverage ?? {});
         }
       })
-      .catch(() => { /* leave threads/dloStatus empty on failure */ });
+      .catch(() => {
+        if (cancelled) return;
+        // With data already on screen (a confirm-triggered background refetch),
+        // keep the stale-but-real view. With nothing, this failure would have
+        // rendered the first-use zero-state — say what actually happened.
+        if (!hasDataRef.current) setLoadError(true);
+      });
     return () => { cancelled = true; };
   }, [selectedLearnerId, reloadNonce]);
 
@@ -111,6 +131,30 @@ export default function CapabilitiesPage() {
     return (
       <div className="flex items-center justify-center py-4xl">
         <p className="font-sans text-sm text-text-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-[600px] px-md py-2xl">
+        <EmptyState
+          icon={Sparkle}
+          heading="We couldn't load the constellation just now"
+          body="Nothing is lost — every moment you've logged is safe. This looks like a connection hiccup."
+          cta={{
+            label: 'Try again',
+            onClick: () => {
+              setLoadError(false);
+              if (learners.length === 0) {
+                setLoading(true);
+                setLearnersNonce((n) => n + 1);
+              } else {
+                setReloadNonce((n) => n + 1);
+              }
+            },
+          }}
+        />
       </div>
     );
   }

@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { sanityClient } from '@/lib/sanity/client';
 import { clientSanityRead } from '@/lib/sanity/client-read';
 import { toRunnerFormat, RunnerFormatError } from '@/lib/modules/to-runner-format';
-import { markActivityVisited } from '@/lib/modules/completion';
+import { markActivityVisited, clampIndex, clampIndexList } from '@/lib/modules/completion';
 import EmptyState from '@/components/ui/EmptyState';
 import { Wrench, Lock, ClipboardText, PencilSimple, Play, FilePdf } from '@/components/icons';
 import type { Module, Activity, PedagogyLens, ActivityOverlay, Mode } from './_components/types';
@@ -34,6 +34,10 @@ export default function ModuleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [runnerError, setRunnerError] = useState<string | null>(null);
+  // A server/network failure is a RETRYABLE state, distinct from "module not
+  // published" (honest not-available) and "not in your library" (no access) —
+  // previously it fell through to those states or an unhandled rejection.
+  const [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<Mode>('approach-pick');
   const [selectedApproachIdx, setSelectedApproachIdx] = useState(0);
   const [overlays, setOverlays] = useState<ActivityOverlay[]>([]);
@@ -119,19 +123,36 @@ export default function ModuleDetailPage() {
   }, [mode, currentActivityIdx]);
 
   const fetchModule = useCallback(async () => {
+    setLoadError(false);
     try {
-      const [rawMod, libraryRes, settingsRes] = await Promise.all([
+      const [detail, libraryRes, settingsRes] = await Promise.all([
         // Read the module detail through the authed server proxy: this client
         // component would otherwise use the tokenless `sanityClient`, which
         // can't see the dotted-id commonsText/asset docs (read-aloud text +
         // audio URL) in prod. See /api/modules/[id]/detail.
-        fetch(`/api/modules/${encodeURIComponent(id)}/detail`).then((r) => (r.ok ? r.json() : null)),
-        fetch('/api/library'),
-        fetch('/api/settings'),
+        fetch(`/api/modules/${encodeURIComponent(id)}/detail`)
+          .then(async (r) => (r.ok ? { ok: true as const, body: await r.json() } : { ok: false as const }))
+          .catch(() => ({ ok: false as const })),
+        fetch('/api/library').catch(() => null),
+        fetch('/api/settings').catch(() => null),
       ]);
+
+      // Server/network failure: retryable, and must not masquerade as "module
+      // not available" or "not in your library". The library check failing is
+      // included — without it we cannot tell access apart from no-access.
+      if (!detail.ok || !libraryRes) {
+        setLoadError(true);
+        return;
+      }
+      if (detail.body === null) {
+        // 200 with a null body: the module genuinely isn't published (or
+        // doesn't exist) — the honest not-available state, not an error.
+        setModule(null);
+        return;
+      }
       let mod: Module | null = null;
       try {
-        mod = toRunnerFormat(rawMod);
+        mod = toRunnerFormat(detail.body);
         setModule(mod);
       } catch (err) {
         if (err instanceof RunnerFormatError) {
@@ -169,33 +190,42 @@ export default function ModuleDetailPage() {
       }
 
       let resolvedPedagogy = 'eclectic';
-      if (settingsRes.ok) {
+      if (settingsRes?.ok) {
         const settings = await settingsRes.json();
         resolvedPedagogy = settings.pedagogyPreference ?? 'eclectic';
         setPedagogy(resolvedPedagogy);
       }
 
-      // Fetch practice patterns for the resolved pedagogy. pedagogicalFramework /
-      // pedagogyPracticePattern use dotted ids (dark to the tokenless browser
-      // client), so these read through the authed proxy.
-      const framework = await clientSanityRead<{ _id: string } | null>('frameworkByPedagogyKey', { pedagogyKey: resolvedPedagogy });
-      if (framework?._id) {
-        const patterns = await clientSanityRead<Array<{_id: string; triggerTitle: string; triggerContext?: string; traditionResponse?: string; antiPattern?: string; tags?: string[]}>>('practicePatterns', { frameworkId: framework._id });
-        setPracticePatterns(patterns ?? []);
-      }
-
-      if ((mod?.approaches?.length ?? 0) <= 1) {
-        const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
-        if (activityIds.length > 0) {
-          let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
-            (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: resolvedPedagogy })) ?? [];
-          if (raw.length === 0 && resolvedPedagogy !== 'eclectic') {
-            raw = (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: 'eclectic' })) ?? [];
-          }
-          setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
+      // Pedagogy overlays are enrichment, not load-bearing: a failure here
+      // must never block facilitation, so the block degrades to no overlays.
+      try {
+        // Fetch practice patterns for the resolved pedagogy. pedagogicalFramework /
+        // pedagogyPracticePattern use dotted ids (dark to the tokenless browser
+        // client), so these read through the authed proxy.
+        const framework = await clientSanityRead<{ _id: string } | null>('frameworkByPedagogyKey', { pedagogyKey: resolvedPedagogy });
+        if (framework?._id) {
+          const patterns = await clientSanityRead<Array<{_id: string; triggerTitle: string; triggerContext?: string; traditionResponse?: string; antiPattern?: string; tags?: string[]}>>('practicePatterns', { frameworkId: framework._id });
+          setPracticePatterns(patterns ?? []);
         }
-        setMode('prep');
-      }
+
+        if ((mod?.approaches?.length ?? 0) <= 1) {
+          const activityIds: string[] = mod?.approaches?.[0]?.activities?.map((a: Activity) => a._id) ?? [];
+          if (activityIds.length > 0) {
+            let raw: { _id: string; activity: { _ref: string }; lens: PedagogyLens }[] =
+              (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: resolvedPedagogy })) ?? [];
+            if (raw.length === 0 && resolvedPedagogy !== 'eclectic') {
+              raw = (await clientSanityRead<OverlayRow[]>('overlaysBatch', { activityIds, framework: 'eclectic' })) ?? [];
+            }
+            setOverlays(raw.map((o) => ({ activityId: o.activity._ref, lens: o.lens })));
+          }
+          setMode('prep');
+        }
+      } catch { /* overlays/patterns degrade silently */ }
+    } catch {
+      // Any other failure in the load chain (e.g. a JSON parse on a flaky
+      // response) is retryable too — previously this surfaced as an unhandled
+      // rejection plus a misleading "Module not available" state.
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -261,6 +291,20 @@ export default function ModuleDetailPage() {
       }
     } catch { /* ignore */ }
   }, [fetchModule, id]);
+
+  // Clamp the restored session to the loaded activity list — a saved cursor
+  // can exceed it when content changed between sessions (an activity
+  // unpublished, a shorter approach picked), which rendered a blank facilitate
+  // view and mis-derived sourceActivityIds.
+  useEffect(() => {
+    if (!module) return;
+    const count = module.approaches?.[selectedApproachIdx]?.activities?.length ?? 0;
+    if (count === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentActivityIdx((i) => clampIndex(i, count));
+    setSavedChunkIdx((i) => clampIndex(i, count));
+    setCompletedActivityIdxs((prev) => clampIndexList(prev, count) as number[]);
+  }, [module, selectedApproachIdx]);
 
   // ─── Material counts and helpers ───────────────────────────────────────────────
 
@@ -367,6 +411,25 @@ export default function ModuleDetailPage() {
           <div className="h-4 bg-surface-raised rounded w-full" />
           <div className="h-4 bg-surface-raised rounded w-4/5" />
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-md py-xl">
+        <EmptyState
+          icon={Wrench}
+          heading="We couldn't load this module"
+          body="That looks like a connection hiccup — nothing is lost, and your learning data is safe. Give it another try."
+          cta={{
+            label: 'Try again',
+            onClick: () => {
+              setLoading(true);
+              fetchModule();
+            },
+          }}
+        />
       </div>
     );
   }

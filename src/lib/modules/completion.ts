@@ -54,6 +54,28 @@ export function deriveSourceActivityIds(opts: {
   return Array.from(ids);
 }
 
+/**
+ * Clamp a restored session index to the loaded activity list. A saved
+ * localStorage cursor can exceed the list when content changed between
+ * sessions (an activity unpublished, a shorter approach selected); an
+ * out-of-range cursor renders a blank facilitate view. No-op when in range
+ * or when the list is empty (nothing meaningful to clamp against).
+ */
+export function clampIndex(idx: number, activityCount: number): number {
+  if (activityCount <= 0) return idx;
+  return Math.min(idx, activityCount - 1);
+}
+
+/**
+ * Drop completed indexes that no longer map to a loaded activity — they would
+ * otherwise mis-derive `sourceActivityIds` for the session's entry. Returns
+ * the same reference when nothing is out of range (setState no-op friendly).
+ */
+export function clampIndexList(idxs: readonly number[], activityCount: number): readonly number[] {
+  if (activityCount <= 0) return idxs;
+  return idxs.every((i) => i < activityCount) ? idxs : idxs.filter((i) => i < activityCount);
+}
+
 function dedupeSorted(xs: readonly number[]): number[] {
   return Array.from(new Set(xs)).sort((a, b) => a - b);
 }

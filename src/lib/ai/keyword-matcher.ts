@@ -1,3 +1,5 @@
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
+
 export const SUBJECT_KEYWORDS: Record<string, string[]> = {
   Mathematics: [
     'count', 'number', 'add', 'subtract', 'measure', 'shape',
@@ -138,9 +140,12 @@ export function matchKeywords(text: string, childNames: string[]): KeywordMatchR
     .filter(([, keywords]) => keywords.some((kw) => lower.includes(kw)))
     .map(([subject]) => subject);
 
+  // Alpha-suppressed threads never surface in the parent-facing match chips;
+  // keyword data stays intact so re-lighting a thread is data-free.
   const threads = Object.entries(THREAD_KEYWORDS)
     .filter(([, keywords]) => keywords.some((kw) => lower.includes(kw)))
-    .map(([threadId]) => threadId);
+    .map(([threadId]) => threadId)
+    .filter((threadId) => !isSuppressedThread(threadId));
 
   const engagement = (Object.entries(ENGAGEMENT_VOCABULARY) as [keyof typeof ENGAGEMENT_VOCABULARY, readonly string[]][])
     .find(([, words]) => words.some((w) => lower.includes(w)));
@@ -251,7 +256,9 @@ export function generateReflectionPrompts(ctx: ReflectionContext): ReflectionPro
   if (snapshotSignals && activityType && ACTIVITY_THREAD_MAP[activityType]) {
     const activityThreads = ACTIVITY_THREAD_MAP[activityType];
     for (const [learnerId, sig] of Object.entries(snapshotSignals.perChild)) {
-      const matchedThread = sig.quiet.find((t) => activityThreads.includes(t) && THREAD_PROMPT_CUES[t]);
+      const matchedThread = sig.quiet.find(
+        (t) => !isSuppressedThread(t) && activityThreads.includes(t) && THREAD_PROMPT_CUES[t],
+      );
       if (matchedThread) {
         const displayName = learnerNamesById?.[learnerId];
         // Skip if we can't resolve a human-readable name — better to fall back

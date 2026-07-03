@@ -12,6 +12,8 @@
  * data, not changing code: this rollup is framework-agnostic.
  */
 
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
+
 export type Contribution = 'primary' | 'partial' | 'incidental';
 
 /** Verbatim shape of a `discreteLearningObjective.regulatoryMappings[]` item. */
@@ -169,6 +171,8 @@ export function rollupCoverage(input: {
   const dloIds = Object.keys(dloStatuses).sort();
 
   for (const dloId of dloIds) {
+    // Alpha-suppressed threads never contribute to a regulator-facing report.
+    if (isSuppressedThread(dloId)) continue;
     const tierWeight = TIER_WEIGHT[dloStatuses[dloId].status];
     if (!tierWeight) continue;
 
@@ -227,6 +231,7 @@ export function deriveCoverageSignals(input: {
   let countingDloCount = 0;
   let mappedCountingDloCount = 0;
   for (const [dloId, { status }] of Object.entries(dloStatuses)) {
+    if (isSuppressedThread(dloId)) continue;
     if (!TIER_WEIGHT[status]) continue;
     countingDloCount++;
     const targetsFramework = (mappings[dloId] ?? []).some((m) => m.frameworkKey === frameworkKey);

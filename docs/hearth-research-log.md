@@ -171,4 +171,55 @@ Photo evidence upload had been silently broken in production since 2026-06-05 (1
 
 ---
 
-*Next entry: R20. Append below; never edit above.*
+### R20 — Code audit (2026-07-03): the H6 alpha suppression was never implemented — the First Nations thread was live in all parent UI.
+
+The decision record says H6 ("First Nations Australian Perspectives") is hidden from parent surfaces pending cultural consultation via `capability-alpha-suppression.ts`; that file was never committed on any branch (`git log --all` empty), so H6 rendered in the constellation, logger nudges, portfolio tags, and reports the whole time. Built fresh as one reversible switch applied at every parent-visible seam; evidence writes untouched so re-lighting loses nothing.
+**Spec affected:** cultural-content governance (cr-cultural-framework draft, PR #234); constellation/logger/portfolio surfaces.
+**Regression test:** `src/lib/capability-alpha-suppression.test.ts` (module + every pure seam); `src/app/api/capabilities/[learnerId]/route.integration.test.ts` (stale-snapshot read seam).
+**Fix:** PR #249. **Date logged:** 2026-07-03.
+
+### R21 — Code audit (2026-07-03): removing a pack left it driving recommendations and the active-library count.
+
+All four `familyLibrary` reads in the snapshot rebuild ignored the `removedAt` soft-delete — and the removal itself fired the `library_change` rebuild that re-counted the removed pack and kept scoring its modules into dashboard recommendations.
+**Spec affected:** library soft-delete contract (foundation re-land `b5bbe60`); dashboard recommendations surface.
+**Regression test:** `src/lib/ai/__tests__/snapshot-rebuild.integration.test.ts` (full + fast-path soft-delete cases).
+**Fix:** PR #250. **Date logged:** 2026-07-03.
+
+### R22 — Code audit (2026-07-03): the library status board derived from a table nothing ever wrote.
+
+`module_runs` had zero writers, so the board's `in_flight`/`abandoned`/`openRunId` statuses could never occur (the ghost-schema gap in PROJECT_STATUS). Minimal persistence landed: run opened on facilitate entry, touched on activity advance, finished by the entry save.
+**Spec affected:** library status board (F4, `b81aee9`); `docs/hearth-refactor-postmortem-v1.md` delta table.
+**Regression test:** `src/app/api/module-runs/route.integration.test.ts` (routes + entries stamping + board payoff).
+**Fix:** PR #251. **Date logged:** 2026-07-03.
+
+### R23 — Code audit (2026-07-03): a planned module offered no path into the runner.
+
+Planner module cards only toggled status or deleted — the parent had to re-find the module through Explore. Card titles now open the runner (status dot keeps the toggle) and carry `plannerEntryId` provenance onto the saved entry. Whether a finished run auto-completes the plan stays a flagged product question.
+**Spec affected:** planner↔runner integration (June content-hierarchy audit gap).
+**Regression test:** `src/components/planner/ModuleCard.test.tsx`; `entries/route.integration.test.ts` planner-provenance cases.
+**Fix:** PR #252 (stacked on #251). **Date logged:** 2026-07-03.
+
+### R24 — Code audit (2026-07-03): browse counts promised draft content — fifth recurrence of the ungated-count() class.
+
+`PACK_DETAIL_QUERY` per-activity asset/text counts (which also counted the R-known broken commonsText refs), `ALL_PROJECTS_QUERY` stage count, and `DISCOVERY_OWN_MODULES_QUERY` activity count (plus its ungated approaches deref) all counted drafts inside otherwise-gated queries. `check-sanity-gating.mjs` now flags bare `count()` over gated arrays, so CI catches the class.
+**Spec affected:** Sanity gating invariant (`src/lib/sanity/queries.ts` header).
+**Regression test:** the strengthened CI check itself (red on all four sites pre-fix, green post-fix).
+**Fix:** PR #253. **Date logged:** 2026-07-03.
+
+### R25 — Code audit (2026-07-03): a purchased pack could not be added to the library from its own detail page.
+
+`PackDetailCta` rendered owned-but-not-in-library as a disabled "Owned — Add to Library" button. Now active (same add path as membership packs). Alongside it, `createFullModule` gained transactional publish — a mid-flight failure previously orphaned a module shell with dangling refs in Sanity.
+**Spec affected:** marketplace CTA matrix (`MarketplaceCard` parity comment); `/api/modules/publish` integrity.
+**Regression test:** `src/components/pack/PackDetailCta.test.tsx`; `src/lib/sanity/mutations.test.ts`.
+**Fix:** PR #254. **Date logged:** 2026-07-03.
+
+### R26 — Code audit (2026-07-03): load failures masqueraded as empty or first-use states in the runner and constellation.
+
+A failed module load surfaced as an unhandled rejection plus "Module not available"/"Not in your library"; a failed capabilities read rendered the first-use "Capabilities emerge from logging" zero-state to established families ("couldn't load" must never read as "not yet observed"). Both now land in gentle retryable states; restored runner sessions clamp to the loaded activity list (a stale cursor rendered a blank facilitate view and mis-derived `sourceActivityIds`). Verified no-change-needed: the DLO confirm optimistic-override design was already refetch-safe.
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 2/3 trust contract ("not yet", never failure-as-emptiness).
+**Regression test:** `src/app/(auth)/our-story/capabilities/page.test.tsx`; `src/lib/modules/completion.test.ts` clamp cases.
+**Fix:** PR #255. **Date logged:** 2026-07-03.
+
+---
+
+*Next entry: R27. Append below; never edit above.*

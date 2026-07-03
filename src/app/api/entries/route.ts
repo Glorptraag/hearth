@@ -8,7 +8,7 @@ export const maxDuration = 60;
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { learningEntries } from '@/lib/db/schema';
+import { learningEntries, moduleRuns } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and, gte, lte, desc, arrayContains } from 'drizzle-orm';
 import { attachEvidence, writeEntryEvidence } from '@/lib/evidence-db';
@@ -91,6 +91,10 @@ const createEntrySchema = z.object({
     .optional(),
   source: z.enum(ENTRY_SOURCES).optional(),
   sourceModuleId: z.string().optional(),
+  // The module_runs row this log closes out. Set by the runner's Log mode;
+  // saving a complete entry for a sustained run marks the run finished (the
+  // single writer of run completion — see /api/module-runs).
+  moduleRunId: z.string().uuid().optional(),
   // Sanity activity IDs the family engaged with. Populated by the module
   // runner Log mode (and by the Logger attach-to-module flow via PATCH).
   // Drives per-activity capability mapping in thread_links.
@@ -132,6 +136,21 @@ export const POST = routeHandler(async (request: NextRequest) => {
   // it's pulled out of the spread below.
   const { mode, evidence: evidenceItems, ...entryData } = parsed.data;
 
+  // A claimed run must be this family's — otherwise the FK would let one
+  // family stamp its entries onto another family's run history.
+  let claimedRun: typeof moduleRuns.$inferSelect | null = null;
+  if (entryData.moduleRunId) {
+    const [run] = await db
+      .select()
+      .from(moduleRuns)
+      .where(and(eq(moduleRuns.id, entryData.moduleRunId), eq(moduleRuns.familyId, family.id)))
+      .limit(1);
+    if (!run) {
+      return NextResponse.json({ error: 'moduleRunId does not reference your family\'s run' }, { status: 400 });
+    }
+    claimedRun = run;
+  }
+
   // Log mode for telemetry (informational only — not gated server-side)
   if (mode) {
     console.log(JSON.stringify({ event: 'entry_save', mode, familyId: family.id }));
@@ -155,6 +174,20 @@ export const POST = routeHandler(async (request: NextRequest) => {
   // Dual-write the caption-carrying evidence rows. evidenceUrls is already
   // committed on the entry above, so this is best-effort (see evidence-db.ts).
   await writeEntryEvidence(entry.id, evidenceItems, entryData.evidenceUrls);
+
+  // A complete log closes out a SUSTAINED run (open_ended runs — nature
+  // journals, instrument practice — are long-lived and survive their logs).
+  // Best-effort: a failed flip must never fail the save; the run would simply
+  // read as stale later.
+  if (claimedRun && willEnrich && claimedRun.sessionType === 'sustained'
+    && (claimedRun.state === 'active' || claimedRun.state === 'paused')) {
+    const now = new Date();
+    await db
+      .update(moduleRuns)
+      .set({ state: 'finished', finishedAt: now, lastActiveAt: now, updatedAt: now })
+      .where(eq(moduleRuns.id, claimedRun.id))
+      .catch((err) => console.error('[entries/POST] run finish failed:', err));
+  }
 
   // Async AI enrichment — does not block the response.
   // CRITICAL: wrap in `after()` so Vercel serverless keeps the function

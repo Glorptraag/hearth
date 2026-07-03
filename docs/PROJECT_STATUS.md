@@ -149,7 +149,7 @@
 ### PostgreSQL (Neon + Drizzle) — 40 tables
 - **Identity:** `families`, `learners`, `familySettings`, `familyMembers`
 - **Logger drafts:** `loggerDrafts` (per-Clerk-user cross-device draft mirror; offline-first `localStorage` stays primary)
-- **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance, nullable `moduleRunId`/`plannerEntryId` FKs), `learningEntryEvidence` (photo/quote/note/link kinds), `moduleRuns` (schema present; persistence routes pending — see Known Gaps)
+- **Learning data:** `learningEntries` (includes `sourceSessionId` for hearth provenance, nullable `moduleRunId`/`plannerEntryId` FKs), `learningEntryEvidence` (photo/quote/note/link kinds), `moduleRuns` (live 2026-07: runner opens/touches via `/api/module-runs`, entry save finishes the run)
 - **AI:** `familyIntelligenceSnapshots`, `aiPipelineLogs`
 - **Badges:** `badgeDefinitions`, `badgeAwards`, `badgeAssessmentLogs`
 - **Planner:** `plannerEntries`
@@ -262,7 +262,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 ## Known Gaps
 
 ### Technical
-- **Ghost `module_runs` schema** — the `module_runs` table landed in the foundation re-land (`b5bbe60`) but the `/api/module-runs/*` routes from the original refactor were never re-landed; the module runner persists session state to `localStorage` only. Resolve by either landing the persistence routes or dropping the table. See `docs/hearth-refactor-postmortem-v1.md` delta table.
+- **Ghost `module_runs` schema** — RESOLVED (July 2026): minimal persistence landed. `POST /api/module-runs` (open-or-create on facilitate entry), `PATCH /api/module-runs/[id]` (touch/finish), and `POST /api/entries` with `moduleRunId` finishes a sustained run — so the library status board's `in_flight`/`abandoned`/`openRunId` derivation now reads real rows. The in-session cursor stays `localStorage`-only by design; `materialsState` plumbing and the Sanity `sessionType` field remain deferred (runs default `'sustained'`). See `docs/hearth-refactor-postmortem-v1.md` delta table for the original incident.
 - **Refactor delta not re-landed** — audio evidence capture (MediaRecorder + upload route), contextual log proposals, Sanity module `sessionType`/`idleDaysBeforeAutoClose`/`previewActivityRef` fields + backfill, IndexedDB blob persistence for the offline upload queue. All catalogued (with re-triaged backlog) in the post-mortem doc; re-design from refined use cases before re-landing.
 - **Payment processing (Stripe)** — STUBBED. API routes return 503. Marketplace UI renders but purchase flow is non-functional. Stripe package removed from dependencies. Revisit when ready to onboard paying families (Phase 3+). Requires: Stripe account, product/price IDs in Sanity, `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` env vars, restore `stripe` package and real implementations in `src/lib/stripe/client.ts`, `api/stripe/checkout`, `api/stripe/webhook`.
 - **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema). First-deploy smoke test still pending (#5 in tracker).

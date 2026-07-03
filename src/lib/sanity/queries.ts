@@ -63,8 +63,12 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug && 
       _id, title, slug, modality,
       "activities": activities[@->status == "published"]->{
         _id, title, slug, summary, duration, setting, energyLevel,
-        "assetCount": count(assets),
-        "commonsTextCount": count(commonsTexts)
+        // Counts gate on the referenced doc's status so the pack detail
+        // promises exactly what the runner renders (MODULE_DETAIL_QUERY
+        // filters assets/commonsTexts the same way). A bare count() also
+        // counted broken refs whose deref resolves to nothing.
+        "assetCount": count(assets[@.asset->status == "published"]),
+        "commonsTextCount": count(commonsTexts[@.text->status == "published"])
       }
     }
   },
@@ -151,7 +155,7 @@ export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id && statu
 // All published projects for explore/browse
 export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, duration,
-  "stageCount": count(stages),
+  "stageCount": count(stages[@->status == "published"]),
   badges[]->{ _id, title, emoji },
   capabilityThreads[]->{ _id, title, domain }
 }`;
@@ -267,9 +271,9 @@ export const ALL_MODULES_QUERY = `*[_type == "pack" && status == "published"]{
 // Private-by-default: only returns modules authored by the given family.
 export const DISCOVERY_OWN_MODULES_QUERY = `*[_type == "module" && status == "published" && authorFamilyId == $familyId]{
   _id, title, slug, targetUnderstanding, subjects, ageRange, duration, createdVia,
-  approaches[]->{
+  "approaches": approaches[@->status == "published"]->{
     _id, title, modality,
-    "activityCount": count(activities)
+    "activityCount": count(activities[@->status == "published"])
   }
 }`;
 

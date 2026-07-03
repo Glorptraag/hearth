@@ -9,6 +9,7 @@ import { ChildSelector } from '@/components/ui/child-selector';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import { getThreadName } from '@/lib/capability-threads';
 import { groupEntriesByTopThread, topThreadId, THREAD_DISPLAY_CONFIDENCE_FLOOR } from '@/lib/portfolio/thread-grouping';
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
 import { track } from '@/lib/analytics/posthog';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import {
@@ -501,7 +502,8 @@ export default function PortfolioPage() {
     const monthThreadIds = new Set<string>();
     monthEntries.forEach((e) => {
       e.aiEnrichment?.capability_threads
-        ?.filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR)
+        ?.filter((ct) => !isSuppressedThread(ct.thread_id))
+        .filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR)
         .forEach((ct) => monthThreadIds.add(ct.thread_id));
     });
     return { count: monthEntries.length, subjects: subjects.size, threads: monthThreadIds.size };
@@ -911,6 +913,7 @@ export default function PortfolioPage() {
                 const engValue = entry.engagementPerLearner?.[selectedLearnerId];
                 const discovery = entry.discoveriesPerLearner?.[selectedLearnerId];
                 const entryThreads = (entry.aiEnrichment?.capability_threads ?? [])
+                  .filter((ct) => !isSuppressedThread(ct.thread_id))
                   .filter((ct) => ct.confidence >= THREAD_DISPLAY_CONFIDENCE_FLOOR);
                 const cardType = getCardType(entry);
                 const photos = entryPhotoEvidence(entry);

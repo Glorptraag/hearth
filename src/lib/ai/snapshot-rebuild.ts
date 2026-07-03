@@ -25,6 +25,11 @@ import {
   type TierEvidence,
 } from './thread-tier';
 import type { ObservationTier } from '@/types/capability-universe';
+import {
+  ALPHA_SUPPRESSED_THREAD_IDS,
+  isSuppressedThread,
+  omitSuppressedKeys,
+} from '@/lib/capability-alpha-suppression';
 import { detectMilestoneEntries } from './milestone-detect';
 import {
   triggerBadgeReady,
@@ -441,6 +446,10 @@ export async function rebuildSnapshot(
         }
 
         for (const { threadId, inferred, declared } of entryThreadIds(entry)) {
+          // Alpha-suppressed threads never enter the parent-visible aggregate;
+          // the underlying entry/DLO evidence is untouched (see module header
+          // of capability-alpha-suppression.ts).
+          if (isSuppressedThread(threadId)) continue;
           const existing = threadCounts[threadId];
           if (existing) {
             existing.count++;
@@ -689,6 +698,7 @@ export async function rebuildSnapshot(
       const sparkCounts: Record<string, number> = {};
       for (const entry of recentEntries) {
         for (const { threadId } of entryThreadIds(entry)) {
+          if (isSuppressedThread(threadId)) continue;
           sparkCounts[threadId] = (sparkCounts[threadId] ?? 0) + 1;
         }
       }
@@ -741,7 +751,9 @@ export async function rebuildSnapshot(
           id: e.id,
           dateOccurred: e.dateOccurred,
           createdAt: e.createdAt,
-          threadIds: entryThreadIds(e).map((t) => t.threadId),
+          threadIds: entryThreadIds(e)
+            .map((t) => t.threadId)
+            .filter((id) => !isSuppressedThread(id)),
         })),
         badges,
       );
@@ -764,7 +776,7 @@ export async function rebuildSnapshot(
           suggested_focus_threads: suggestedFocusThreads,
         },
         monthly_narrative: monthlyNarrative,
-        dlo_status: dloStatusByLearner[child.id] ?? {},
+        dlo_status: omitSuppressedKeys(dloStatusByLearner[child.id] ?? {}),
       };
     }
 
@@ -825,10 +837,14 @@ export async function rebuildSnapshot(
     const weekThreads = new Set<string>();
     for (const entry of weekEntries) {
       for (const { threadId } of entryThreadIds(entry)) {
+        if (isSuppressedThread(threadId)) continue;
         weekThreads.add(threadId);
       }
     }
-    const weeklyThreadCoverage = Math.min(100, Math.round((weekThreads.size / 57) * 100));
+    // Denominator excludes alpha-suppressed threads so a family touching every
+    // visible thread reads 100%, not 98%.
+    const visibleThreadCount = 57 - ALPHA_SUPPRESSED_THREAD_IDS.length;
+    const weeklyThreadCoverage = Math.min(100, Math.round((weekThreads.size / visibleThreadCount) * 100));
 
     const activeModulesCount = await db
       .select({ count: count() })

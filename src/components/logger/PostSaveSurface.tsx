@@ -7,6 +7,7 @@ import WorkSamplePill from '@/components/ui/WorkSamplePill';
 import type { AiEnrichment } from '@/types/enrichment';
 import { useViewedOnce } from '@/hooks/use-viewed-once';
 import { track, hashForAnalytics } from '@/lib/analytics/posthog';
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
 
 // Mirrors the taxonomy in src/lib/ai/enrich.ts. Kept local so this surface
 // doesn't have to reach into the route file for labels; the surface only
@@ -77,7 +78,13 @@ export function PostSaveSurface({
         enrichment.journey_observation?.text?.trim() ||
         null
       : null;
-  const topThread = status === 'enriched' && enrichment ? enrichment.capability_threads?.[0] : undefined;
+  // First NON-suppressed thread: enrichment may still tag alpha-suppressed
+  // threads internally (evidence preserved), but the post-save line never
+  // names one to the parent.
+  const topThread =
+    status === 'enriched' && enrichment
+      ? enrichment.capability_threads?.find((t) => !isSuppressedThread(t.thread_id))
+      : undefined;
   const threadLabel = topThread ? THREAD_LABELS[topThread.thread_id] : null;
   const workSampleFlagged = Boolean(status === 'enriched' && enrichment?.work_sample?.flag === true);
   const hasContent = Boolean(reflection || threadLabel || workSampleFlagged);
@@ -188,7 +195,7 @@ function EnrichedBody({ enrichment }: { enrichment: AiEnrichment }) {
     enrichment.journey_observation?.text?.trim() ||
     null;
 
-  const topThread = enrichment.capability_threads?.[0];
+  const topThread = enrichment.capability_threads?.find((t) => !isSuppressedThread(t.thread_id));
   const threadLabel = topThread ? THREAD_LABELS[topThread.thread_id] : null;
   const workSampleFlagged = enrichment.work_sample?.flag === true;
 

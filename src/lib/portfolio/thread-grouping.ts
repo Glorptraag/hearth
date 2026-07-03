@@ -1,4 +1,5 @@
 import { getThreadName } from '@/lib/capability-threads';
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
 
 /**
  * Confidence floor shared by the Portfolio's thread-derived views: the monthly
@@ -26,6 +27,9 @@ export function topThreadId(
 ): string | null {
   let best: ConfidenceThread | null = null;
   for (const t of threads ?? []) {
+    // Alpha-suppressed threads never surface as a portfolio group or tag —
+    // the entry falls through to its next-best thread (or Uncategorized).
+    if (isSuppressedThread(t?.thread_id)) continue;
     if (typeof t?.confidence !== 'number' || t.confidence < floor) continue;
     // Strictly-greater keeps the first thread on a confidence tie (stable).
     if (!best || t.confidence > best.confidence) best = t;

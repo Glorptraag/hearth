@@ -5,6 +5,11 @@ import { learners, familyIntelligenceSnapshots } from '@/lib/db/schema';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import type { SnapshotActiveThread, SnapshotData, DloStatusEntry, ChildSnapshot } from '@/types/snapshot';
+import {
+  filterSuppressedThreadIds,
+  isSuppressedThread,
+  omitSuppressedKeys,
+} from '@/lib/capability-alpha-suppression';
 import { routeHandler } from '@/lib/api-helpers';
 
 const EMPTY_GAP_ANALYSIS: ChildSnapshot['gap_analysis'] = {
@@ -47,10 +52,19 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
 
   const data = snapshot.snapshotData as SnapshotData;
   const child = data?.children?.[learnerId];
-  const activeThreads: SnapshotActiveThread[] = child?.active_threads ?? [];
-  const dloStatus: Record<string, DloStatusEntry> = child?.dlo_status ?? {};
+  // Alpha-suppression is applied at snapshot WRITE, but snapshots built before
+  // a thread was suppressed may still carry it — filter again at the read seam
+  // so parent surfaces never see a suppressed thread.
+  const activeThreads: SnapshotActiveThread[] = (child?.active_threads ?? []).filter(
+    (t) => !isSuppressedThread(t.thread_id),
+  );
+  const dloStatus: Record<string, DloStatusEntry> = omitSuppressedKeys(child?.dlo_status ?? {});
   // Drives the Explore (gap) view. Both already live in the per-child snapshot.
-  const gapAnalysis = child?.gap_analysis ?? EMPTY_GAP_ANALYSIS;
+  const rawGap = child?.gap_analysis ?? EMPTY_GAP_ANALYSIS;
+  const gapAnalysis = {
+    ...rawGap,
+    suggested_focus_threads: filterSuppressedThreadIds(rawGap.suggested_focus_threads ?? []),
+  };
   const curriculumCoverage = child?.curriculum_coverage ?? {};
 
   return NextResponse.json({ activeThreads, dloStatus, gapAnalysis, curriculumCoverage });

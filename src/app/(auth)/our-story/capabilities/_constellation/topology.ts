@@ -8,6 +8,7 @@ import {
   V2_DOMAINS_BY_KEY,
   getV2DomainKey,
 } from '@/lib/capability-universe-v2';
+import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
 export type ThreadState = 'active' | 'ghost' | 'dormant';
@@ -35,7 +36,12 @@ export type DomainSpec = {
    taxonomy. Domains with no v1 successor threads (7 Classical Languages, 9
    Theology) still render — present but unlit — per spec §9.1 / D9. Colour
    assignment is deferred design (each domain reuses an existing token). */
-const V2_THREAD_COUNTS: Record<string, number> = Object.keys(THREAD_NAMES).reduce(
+/* Alpha-suppressed threads (capability-alpha-suppression.ts) are excluded from
+   the constellation catalog entirely: they don't render, don't count toward a
+   domain's threadCount, and their DLOs are dropped in indexDLOsByThread. */
+const VISIBLE_THREAD_IDS = Object.keys(THREAD_NAMES).filter((id) => !isSuppressedThread(id));
+
+const V2_THREAD_COUNTS: Record<string, number> = VISIBLE_THREAD_IDS.reduce(
   (acc, id) => {
     const key = getV2DomainKey(id);
     if (key) acc[key] = (acc[key] ?? 0) + 1;
@@ -68,7 +74,7 @@ function buildThreads(): ThreadNode[] {
     (prereqMap[to] ||= []).push(from);
     (enablesMap[from] ||= []).push(to);
   });
-  return Object.keys(THREAD_NAMES).map((id) => {
+  return VISIBLE_THREAD_IDS.map((id) => {
     const prereqs = prereqMap[id] ?? [];
     return {
       id,
@@ -259,7 +265,7 @@ export function indexDLOsByThread(dlos: SanityDLO[]): Record<string, SanityDLO[]
   const out: Record<string, SanityDLO[]> = {};
   for (const d of dlos) {
     const id = threadIdFromRef(d.threadRef);
-    if (!id) continue;
+    if (!id || isSuppressedThread(id)) continue;
     (out[id] ||= []).push(d);
   }
   return out;

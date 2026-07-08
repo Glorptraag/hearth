@@ -63,15 +63,22 @@ export async function buildPedagogyContextWithSources(
       return { prompt: fallbackContext(opts.framework), sources: [] };
     }
 
+    const isEclectic = opts.framework === 'eclectic';
+
     const refs = budgetChunks
-      .map(
-        (c) =>
-          `<reference layer="${c.layer}" id="${c.id}">\n${c.text}\n</reference>`
+      .map((c) =>
+        isEclectic
+          ? `<reference layer="${c.layer}" id="${c.id}" tradition="${c.pedagogyKey}">\n${c.text}\n</reference>`
+          : `<reference layer="${c.layer}" id="${c.id}">\n${c.text}\n</reference>`
       )
       .join('\n\n');
 
+    const wrapper = isEclectic
+      ? `The family draws on multiple pedagogical traditions rather than following a single approach. The following reference material has been retrieved across those traditions as relevant to this entry. Interpret each reference through whichever tradition's lens best fits the moment, and name the tradition when attributing specific guidance back to its source. Where a contraindication from one tradition tensions with another tradition's suggestion, surface the tension honestly rather than resolving it silently.`
+      : `The family follows the ${opts.framework} pedagogical approach. The following reference material has been retrieved as relevant to this entry. Use it to inform interpretation and suggestions, attributing specific guidance back to its source where appropriate.`;
+
     const prompt = `<pedagogy_reference_material>
-The family follows the ${opts.framework} pedagogical approach. The following reference material has been retrieved as relevant to this entry. Use it to inform interpretation and suggestions, attributing specific guidance back to its source where appropriate.
+${wrapper}
 
 ${refs}
 

@@ -5,15 +5,15 @@
   "tasks": {
     "P0": { "status": "done", "blocked_by": [], "completed_at": "2026-07-08T00:00:00Z", "completed_by": "fable-session", "note": "This file + PLAN-pkb-completion.md + corpus-fanout/ stubs + architecture-doc §6 correction." },
 
-    "E1": { "status": "pending", "blocked_by": [] },
-    "E2": { "status": "pending", "blocked_by": ["E1"] },
-    "E3": { "status": "pending", "blocked_by": [] },
+    "E1": { "status": "done", "blocked_by": [], "completed_by": "worker-haiku", "pr": 263, "completed_at": "2026-07-08T00:00:00Z", "note": "5 PKB schemas gain optional ageRange/capabilityThreads/activityType. Verified: allocation matches spec, FV untouched, tsc+eslint clean. PR off origin/main." },
+    "E2": { "status": "pending", "blocked_by": ["E1", "258-MERGE"], "note": "Compiler passthrough — parse.ts/compile.ts only exist on the vault stack; branch off goofy-cartwright once #258 merges." },
+    "E3": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 261, "completed_at": "2026-07-08T00:00:00Z", "note": "Unified metadata writers + reembed metadata-refresh. Verified: buildChunkText untouched (hashes stable), 25 tests, IS-DISTINCT-FROM guarded UPDATE. PR off origin/main." },
     "E4": { "status": "pending", "blocked_by": ["E3"] },
     "E5": { "status": "pending", "blocked_by": ["E3"] },
-    "E6": { "status": "pending", "blocked_by": [] },
+    "E6": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 262, "completed_at": "2026-07-08T00:00:00Z", "note": "Eclectic multi-lens (IN-query LIMIT 100 + selectEclectic + tension surfacing). Verified: non-eclectic SQL+prompt byte-identical (prompt pinned in test), 9 tests. PR off origin/main." },
     "E7": { "status": "pending", "blocked_by": ["E5", "E6"] },
     "E8": { "status": "pending", "blocked_by": ["E6", "OPS-POPULATE"] },
-    "E9": { "status": "pending", "blocked_by": [] },
+    "E9": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 260, "completed_at": "2026-07-08T00:00:00Z", "note": "SPEC-ONLY doc; single file. Worker cross-referenced existing hearth-lens-loop-implementation-plan-v1.md and positioned E9 as the narrower verifiable interim step." },
 
     "W0.1": { "status": "pending", "blocked_by": [] },
     "W0.2": { "status": "pending", "blocked_by": ["W0.1"] },

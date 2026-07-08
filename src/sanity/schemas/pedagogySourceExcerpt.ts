@@ -46,6 +46,16 @@ export const pedagogySourceExcerpt = defineType({
       options: { layout: 'tags' },
     }),
     defineField({
+      name: 'ageRange',
+      title: 'Age Range',
+      type: 'object',
+      description: 'Optional. Age band this entry is most relevant to (inclusive). Retrieval rerank boost.',
+      fields: [
+        { name: 'min', title: 'Min Age', type: 'number', validation: (r) => r.min(0).max(18) },
+        { name: 'max', title: 'Max Age', type: 'number', validation: (r) => r.min(0).max(18) },
+      ],
+    }),
+    defineField({
       name: 'suggestedDraft',
       title: 'AI-Drafted Candidate',
       type: 'boolean',

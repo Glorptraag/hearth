@@ -87,11 +87,12 @@ Corpus growth needs **no deploys** after this: author → compile → review →
 
 ## 6. Follow-up engine gaps (not part of this landing)
 
-These close the loop from "retrieval informs the Haiku prompt" to "the parent can see the tradition speaking", per the engine spec's per-screen behaviours. Each is a separate PR per the re-land pattern:
+These close the loop from "retrieval informs the Haiku prompt" to "the parent can see the tradition speaking". **The full execution program (with worker-model task routing) now lives in `.claude/plans/PLAN-pkb-completion.md`** — the items below are summarised there as tasks E1–E9:
 
-- **[BUILD] Persist pedagogy sources on entries.** `buildPedagogyContextWithSources()` already returns the retrieved sources, but they are dropped after prompt assembly — `learningEntries.aiEnrichment` never stores them, so `PedagogyAttribution` (already wired into `/log`) renders nothing. Persist `pedagogy_sources` in the enrichment JSONB and populate the component. This is the single highest-leverage visible payoff of the corpus: "Grounded in Charlotte Mason" cards with real attribution, for Renee-class parents whose anxiety the journey doc locates exactly where tradition-grounded reassurance helps.
-- **[BUILD] Layer-5 lens accumulated signals (C-PL6).** The FIS snapshot rebuild does not yet write `lensAccumulatedSignals` (interpretive-pattern counts / activity shapes / threads). Blocked-by-preference on the CM practice-pattern audit against the Interpretive Patterns reframe (architecture §16), not by infrastructure.
-- **[BUILD] Retrieval quality harness.** Once prod chunks exist: a small golden-query set per framework (the spec's §5.10 CM acceptance query is the first) run via `/api/pedagogy/retrieve` to catch regressions when the corpus grows or the embedding model is upgraded.
+- **[CORRECTED 2026-07-08] Pedagogy-source persistence is already built end-to-end** — this doc's v1 (and the July audit it inherited from) wrongly listed it as missing. Verified: `enrich.ts` persists `pedagogy_sources` into `learningEntries.aiEnrichment`, the enrichment poll populates the `/log` state, and `PedagogyAttribution` renders. The real residual gaps: `SourceCard` renders only 2 of 6 layers (→ E4), the persist→poll→render path has no test pinning it (→ E5), and the two chunk-metadata writers have diverged so vault-embedded chunks lack the display fields the cards read (→ E3, required).
+- **[BUILD → E6] Eclectic multi-lens retrieval.** Eclectic families currently always hit the fallback (no corpus, single-key filter). E6 specs the one-query multi-framework retrieval with per-framework caps and a guaranteed contraindication for tension surfacing.
+- **[SPEC → E9, BUILD later] Layer-5 lens accumulated signals (C-PL6).** Spec-only doc first; the build waits on the CM practice-pattern audit against the Interpretive Patterns reframe (architecture §16) and Drew's read of the spec.
+- **[BUILD → E7/E8] Retrieval quality harness.** Deterministic pgvector integration tests (CI) + a golden-query ops verifier per framework for the populated index.
 
 ## 7. What this deliberately does not do
 

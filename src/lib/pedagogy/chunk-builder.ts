@@ -4,10 +4,11 @@
 //
 // PKB document types are embeddings-only: pedagogyWorkedExample,
 // pedagogyContraindication, pedagogyFacilitationVocabulary and friends have no
-// CRUD path in src/lib/sanity/{queries,mutations}.ts. They are populated via
-// `npm run seed:pedagogy:corpus` (scripts/ingest-pedagogy-corpus.ts) and
+// CRUD path in src/lib/sanity/{queries,mutations}.ts. They are authored in the
+// corpus vault (corpus/pedagogy/ — see its README), compiled to Sanity via
+// `npm run seed:pedagogy:corpus` (scripts/compile-pedagogy-corpus.ts), and
 // re-embedded with `npm run seed:pedagogy:reembed`
-// (scripts/reembed-pedagogy-corpus.ts). Author edits happen in Sanity Studio.
+// (scripts/reembed-pedagogy-corpus.ts).
 
 import { createHash } from 'crypto';
 

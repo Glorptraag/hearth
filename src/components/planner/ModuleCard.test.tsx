@@ -62,4 +62,54 @@ describe('ModuleCard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Mark "Weather Station" complete/ }));
     expect(onToggle).not.toHaveBeenCalled();
   });
+
+  /**
+   * Remove button accessibility (WCAG 2.2 SC 2.5.8 Target Size (Minimum), and
+   * keyboard reachability). It used to be a 16px `hidden`/`group-hover:flex`
+   * corner button: under the AA 24px bar, and `display:none` drops an element
+   * out of the tab order entirely, so a keyboard user could never reach it.
+   */
+  describe('remove button', () => {
+    it('meets the 24px minimum target size', () => {
+      renderCard();
+      const remove = screen.getByRole('button', { name: 'Remove' });
+      // Tailwind arbitrary sizing — jsdom does no layout, so assert the class
+      // contract rather than a measured box.
+      expect(remove.className).toMatch(/h-\[26px\]/);
+      expect(remove.className).toMatch(/w-\[26px\]/);
+    });
+
+    it('stays in the tab order and reveals itself on focus, hover and touch', () => {
+      renderCard();
+      const remove = screen.getByRole('button', { name: 'Remove' });
+      // `hidden` would make it unfocusable; opacity keeps it reachable.
+      expect(remove.className).not.toMatch(/(^|\s)hidden(\s|$)/);
+      expect(remove.className).toMatch(/focus-visible:opacity-100/);
+      expect(remove.className).toMatch(/group-hover:opacity-100/);
+      expect(remove.className).toMatch(/pointer-coarse:opacity-100/);
+    });
+
+    it('does not carry hit-target, which would overlap the indicator dots', () => {
+      renderCard();
+      const remove = screen.getByRole('button', { name: 'Remove' });
+      expect(remove.className).not.toMatch(/hit-target/);
+    });
+
+    it('sits in flow beside the indicators, not absolutely positioned', () => {
+      renderCard();
+      const remove = screen.getByRole('button', { name: 'Remove' });
+      expect(remove.className).not.toMatch(/absolute/);
+    });
+
+    it('deletes the entry when clicked', () => {
+      const { onDelete } = renderCard();
+      fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+      expect(onDelete).toHaveBeenCalledWith('plan-1');
+    });
+
+    it('is absent on read-only cards', () => {
+      renderCard(baseEntry, true);
+      expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
+    });
+  });
 });

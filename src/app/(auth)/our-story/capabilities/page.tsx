@@ -13,7 +13,7 @@ import {
 } from './_constellation/topology';
 import { clientSanityRead } from '@/lib/sanity/client-read';
 import EmptyState from '@/components/ui/EmptyState';
-import { Sparkle } from '@/components/icons';
+import { ArrowsClockwise, Sparkle } from '@/components/icons';
 
 type Learner = {
   id: string;
@@ -37,6 +37,11 @@ export default function CapabilitiesPage() {
   // failed reads as lost progress (the exact trust break the "not yet" copy
   // rules exist to avoid). Retryable via the nonces below.
   const [loadError, setLoadError] = useState(false);
+  // A background refetch (post-DLO-confirm) that fails while data is already
+  // on screen — distinct from loadError, which replaces the whole page. This
+  // keeps the stale-but-real view and surfaces a small retryable notice
+  // instead, so the rebuild's fate is never silent.
+  const [refreshError, setRefreshError] = useState(false);
   const [learnersNonce, setLearnersNonce] = useState(0);
   // Bumped after a DLO confirm/clear to refetch the snapshot (the server rebuild
   // is fire-and-forget, so this is best-effort eventual consistency).
@@ -97,6 +102,7 @@ export default function CapabilitiesPage() {
         if (cancelled) return;
         hasDataRef.current = true;
         setLoadError(false);
+        setRefreshError(false);
         // New shape: { activeThreads, dloStatus, gapAnalysis, curriculumCoverage }.
         // Old shape was a bare array.
         if (Array.isArray(data)) {
@@ -114,9 +120,15 @@ export default function CapabilitiesPage() {
       .catch(() => {
         if (cancelled) return;
         // With data already on screen (a confirm-triggered background refetch),
-        // keep the stale-but-real view. With nothing, this failure would have
-        // rendered the first-use zero-state — say what actually happened.
-        if (!hasDataRef.current) setLoadError(true);
+        // keep the stale-but-real view but say the rebuild may not have
+        // persisted — a small retryable notice, not silence. With nothing on
+        // screen yet, this failure would have rendered the first-use
+        // zero-state — that path still gets the full-page retry instead.
+        if (!hasDataRef.current) {
+          setLoadError(true);
+        } else {
+          setRefreshError(true);
+        }
       });
     return () => { cancelled = true; };
   }, [selectedLearnerId, reloadNonce]);
@@ -173,6 +185,30 @@ export default function CapabilitiesPage() {
 
   return (
     <>
+      {refreshError && (
+        <div className="mx-auto max-w-[1280px] px-md pt-md lg:px-xl">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised px-md py-sm"
+          >
+            <span className="inline-flex items-center gap-sm font-sans text-[11px] text-text-secondary">
+              <span className="text-text-muted" aria-hidden="true"><ArrowsClockwise size={14} /></span>
+              We couldn&rsquo;t refresh just now — nothing&rsquo;s lost, tap to try again.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setRefreshError(false);
+                setReloadNonce((n) => n + 1);
+              }}
+              className="shrink-0 font-sans text-[11px] font-semibold text-ember transition-colors duration-[var(--motion-quick)] hover:text-ember-hover"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
       <ConstellationRoute
         learners={learners}
         learnerId={selectedLearnerId}

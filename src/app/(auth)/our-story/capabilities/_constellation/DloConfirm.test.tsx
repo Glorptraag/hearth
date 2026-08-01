@@ -5,6 +5,11 @@ import { TableDLOs } from './TableView';
 import { GalleryMoments } from './GalleryView';
 import { buildSnapshot, type SanityDLO, type DloStatusLite } from './topology';
 
+// The cold import of the capability-universe graph module can take well over
+// vitest's default 5000ms per-test timeout (90-150s on a cold cache) — bump
+// it for this file so `npm test` (no --testTimeout flag) stays green.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+
 // A real thread id so buildDLOs (which checks THREADS_BY_ID) returns rows.
 const THREAD_ID = Object.keys(THREAD_NAMES)[0];
 const DLO_ID = `dlo.${THREAD_ID}.emerging`;

@@ -11,12 +11,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
 import CapabilitiesPage from './page';
 
+let latestOnDataChanged: (() => void) | undefined;
+
 vi.mock('./_constellation/ConstellationRoute', () => ({
-  ConstellationRoute: () => <div data-testid="constellation" />,
+  ConstellationRoute: (props: { onDataChanged?: () => void }) => {
+    latestOnDataChanged = props.onDataChanged;
+    return <div data-testid="constellation" />;
+  },
   buildSnapshotFromApi: (learner: { id: string; name: string }) => ({
     learnerId: learner.id,
     name: learner.name,
-    observationsByThread: {},
+    observationsByThread: { seed: 1 },
     dloStatusById: {},
   }),
 }));
@@ -103,5 +108,42 @@ describe('CapabilitiesPage — load failures', () => {
     await waitFor(() => {
       expect(screen.getByTestId('constellation')).toBeTruthy();
     });
+  });
+
+  it('a failed post-confirm background refetch shows a retryable notice, keeping the stale view', async () => {
+    let shouldFail = false;
+    const fetchMock = mockFetch({
+      capabilities: () =>
+        shouldFail
+          ? Promise.reject(new Error('500'))
+          : jsonResponse({ activeThreads: [], dloStatus: {} }),
+    });
+    render(<CapabilitiesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('constellation')).toBeTruthy();
+    });
+
+    // Simulate ConstellationRoute calling onDataChanged after a DLO confirm,
+    // with the background refetch failing this time.
+    shouldFail = true;
+    latestOnDataChanged?.();
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn[’']t refresh/i)).toBeTruthy();
+    });
+    // Stale-but-real view stays on screen — not silent, not a zero-state.
+    expect(screen.getByTestId('constellation')).toBeTruthy();
+    expect(screen.queryByText(/couldn't load the constellation/i)).toBeNull();
+    expect(screen.queryByText(/Capabilities emerge from logging/i)).toBeNull();
+
+    const retryButton = screen.getByRole('button', { name: 'Retry' });
+    shouldFail = false; // the retry should succeed
+    fireEvent.click(retryButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/couldn't refresh/i)).toBeNull();
+    });
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/capabilities/')).length).toBeGreaterThan(2);
   });
 });

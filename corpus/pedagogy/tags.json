@@ -1,0 +1,1155 @@
+{
+  "AP_visit_upcoming": {
+    "category": "situation",
+    "description": "An Authorised Person (AU home-education oversight) visit is coming up."
+  },
+  "HEU_report_context": {
+    "category": "situation",
+    "description": "Background/context relevant to a QLD Home Education Unit annual report."
+  },
+  "HEU_report_due": {
+    "category": "situation",
+    "description": "A QLD Home Education Unit annual report deadline is approaching."
+  },
+  "HEU_report_literacy": {
+    "category": "situation",
+    "description": "Content relevant to the literacy section of a QLD HEU report."
+  },
+  "HEU_report_literacy_section": {
+    "category": "situation",
+    "description": "The literacy section specifically of a QLD HEU report (near-duplicate of HEU_report_literacy — candidate for a future consolidation pass)."
+  },
+  "HEU_report_preparation": {
+    "category": "situation",
+    "description": "Actively compiling/preparing a QLD HEU annual report."
+  },
+  "absolute_prohibition": {
+    "category": "concept"
+  },
+  "access": {
+    "category": "concept"
+  },
+  "adult_restraint": {
+    "category": "concept"
+  },
+  "adult_satisfaction": {
+    "category": "concept"
+  },
+  "after_an_outing": {
+    "category": "situation"
+  },
+  "after_reading": {
+    "category": "situation"
+  },
+  "age_11_to_13": {
+    "category": "age_band"
+  },
+  "age_2_to_3": {
+    "category": "age_band"
+  },
+  "age_2_to_4": {
+    "category": "age_band"
+  },
+  "age_2_to_6": {
+    "category": "age_band"
+  },
+  "age_3_to_5": {
+    "category": "age_band"
+  },
+  "age_4_to_5": {
+    "category": "age_band"
+  },
+  "age_4_to_6": {
+    "category": "age_band"
+  },
+  "age_5_to_7": {
+    "category": "age_band"
+  },
+  "age_6_to_8": {
+    "category": "age_band"
+  },
+  "age_7_to_9": {
+    "category": "age_band"
+  },
+  "age_8_to_10": {
+    "category": "age_band"
+  },
+  "air_and_exercise": {
+    "category": "domain"
+  },
+  "all_ages": {
+    "category": "age_band"
+  },
+  "alternative_to_lessons": {
+    "category": "concept"
+  },
+  "anti_age_norms": {
+    "category": "concept"
+  },
+  "anti_child_centric": {
+    "category": "concept"
+  },
+  "anti_drill": {
+    "category": "concept"
+  },
+  "anti_dumbing_down": {
+    "category": "concept"
+  },
+  "anti_rote": {
+    "category": "concept"
+  },
+  "anti_tabula_rasa": {
+    "category": "concept"
+  },
+  "anti_twaddle": {
+    "category": "concept"
+  },
+  "appetite_for_knowledge": {
+    "category": "concept"
+  },
+  "appropriate_challenge": {
+    "category": "concept"
+  },
+  "art": {
+    "category": "domain"
+  },
+  "art_appreciation": {
+    "category": "domain"
+  },
+  "assessment_moment": {
+    "category": "situation"
+  },
+  "atmosphere": {
+    "category": "concept"
+  },
+  "attention": {
+    "category": "concept"
+  },
+  "authenticity": {
+    "category": "concept"
+  },
+  "autonomy": {
+    "category": "concept"
+  },
+  "badge_framing": {
+    "category": "concept",
+    "description": "Critique of extrinsic badge/reward framing undermining intrinsic motivation."
+  },
+  "behavioural_concerns": {
+    "category": "concept"
+  },
+  "biology": {
+    "category": "domain"
+  },
+  "boredom_management": {
+    "category": "concept"
+  },
+  "born_law_abiding": {
+    "category": "concept",
+    "description": "Mason's claim that children are innately disposed to accept just authority, not naturally lawless."
+  },
+  "brain_structure": {
+    "category": "concept"
+  },
+  "breadth": {
+    "category": "concept"
+  },
+  "calibrating_challenge_level": {
+    "category": "concept"
+  },
+  "child_asking_many_questions_about_something": {
+    "category": "situation"
+  },
+  "child_asks_many_questions": {
+    "category": "situation"
+  },
+  "child_bored": {
+    "category": "situation"
+  },
+  "child_deeply_focused": {
+    "category": "situation"
+  },
+  "child_deeply_interested_in_topic": {
+    "category": "situation"
+  },
+  "child_demands_entertainment": {
+    "category": "situation"
+  },
+  "child_estate": {
+    "category": "concept",
+    "description": "Mason's phrase for the child's innate constitution and capacities as a person."
+  },
+  "child_fascinated_by_something": {
+    "category": "situation"
+  },
+  "child_fidgets": {
+    "category": "situation"
+  },
+  "child_gaming_hours": {
+    "category": "situation"
+  },
+  "child_in_free_play": {
+    "category": "situation"
+  },
+  "child_is_bored": {
+    "category": "situation"
+  },
+  "child_is_difficult": {
+    "category": "situation"
+  },
+  "child_nature": {
+    "category": "concept"
+  },
+  "child_not_reading": {
+    "category": "situation"
+  },
+  "child_not_reading_yet": {
+    "category": "situation"
+  },
+  "child_prefers_hands_on": {
+    "category": "situation"
+  },
+  "child_producing_careless_work": {
+    "category": "situation"
+  },
+  "child_resistance": {
+    "category": "situation"
+  },
+  "child_resists_lesson": {
+    "category": "situation"
+  },
+  "child_seems_aimless": {
+    "category": "situation"
+  },
+  "child_seems_aware_of_wrongdoing": {
+    "category": "situation"
+  },
+  "child_seems_bored": {
+    "category": "situation"
+  },
+  "child_seems_uninterested": {
+    "category": "situation"
+  },
+  "child_sorting_or_classifying": {
+    "category": "situation"
+  },
+  "child_staring_at_something": {
+    "category": "situation"
+  },
+  "child_telling_back": {
+    "category": "situation"
+  },
+  "children_are_persons": {
+    "category": "concept",
+    "description": "Mason's first principle: children are born persons, not blank slates."
+  },
+  "choosing_books": {
+    "category": "situation"
+  },
+  "classification": {
+    "category": "domain"
+  },
+  "comfort_with_uncertainty": {
+    "category": "concept"
+  },
+  "communication": {
+    "category": "domain"
+  },
+  "comparing_to_school_peers": {
+    "category": "situation"
+  },
+  "comparison_to_school_peers": {
+    "category": "situation"
+  },
+  "comparison_to_structured_days": {
+    "category": "situation"
+  },
+  "completion": {
+    "category": "concept"
+  },
+  "composition": {
+    "category": "domain"
+  },
+  "comprehension": {
+    "category": "domain"
+  },
+  "comprehension_concern": {
+    "category": "situation"
+  },
+  "concentration": {
+    "category": "concept",
+    "description": "Montessori's central construct — deep, self-chosen focus that drives development."
+  },
+  "conceptual_integration": {
+    "category": "concept"
+  },
+  "conscience": {
+    "category": "concept"
+  },
+  "consolidation": {
+    "category": "concept"
+  },
+  "content_quality": {
+    "category": "concept"
+  },
+  "control_of_error": {
+    "category": "concept",
+    "description": "Montessori's design principle: materials that let the child self-correct without adult intervention."
+  },
+  "copywork": {
+    "category": "concept",
+    "description": "Mason's technique of copying a passage by hand for handwriting, spelling and literary exposure together."
+  },
+  "copywork_session": {
+    "category": "situation"
+  },
+  "core_principle": {
+    "category": "concept"
+  },
+  "criticism_from_relatives": {
+    "category": "situation"
+  },
+  "cross_domain_connection": {
+    "category": "concept"
+  },
+  "curiosity": {
+    "category": "concept"
+  },
+  "curriculum_depth_vs_breadth": {
+    "category": "concept"
+  },
+  "curriculum_planning": {
+    "category": "concept"
+  },
+  "daily_walk": {
+    "category": "situation"
+  },
+  "default_to_silence": {
+    "category": "concept"
+  },
+  "defending_to_relatives": {
+    "category": "situation"
+  },
+  "defending_to_skeptics": {
+    "category": "situation"
+  },
+  "defining_education": {
+    "category": "concept"
+  },
+  "depth_of_engagement": {
+    "category": "concept"
+  },
+  "deschooling": {
+    "category": "concept",
+    "description": "The general concept of the adjustment period after leaving conventional school."
+  },
+  "deschooling_concept": {
+    "category": "concept",
+    "description": "Near-duplicate of `deschooling` — candidate for a future consolidation pass."
+  },
+  "deschooling_progression": {
+    "category": "situation",
+    "description": "The staged, time-bound process of a family moving through deschooling."
+  },
+  "deschooling_self": {
+    "category": "concept",
+    "description": "The parent's own deschooling — unlearning school-based expectations, distinct from the child's."
+  },
+  "despise_not": {
+    "category": "concept",
+    "description": "One of Mason's three 'negative precepts' (paired with offend_not, hinder_not)."
+  },
+  "developmental_variation": {
+    "category": "concept"
+  },
+  "direct_knowledge": {
+    "category": "concept"
+  },
+  "discipline": {
+    "category": "concept"
+  },
+  "disciplined_affection": {
+    "category": "concept"
+  },
+  "documentation": {
+    "category": "situation"
+  },
+  "drawing": {
+    "category": "domain"
+  },
+  "dressing_independence": {
+    "category": "domain"
+  },
+  "dyslexia": {
+    "category": "domain"
+  },
+  "environment": {
+    "category": "concept"
+  },
+  "environment_adjustment": {
+    "category": "concept"
+  },
+  "environment_planning": {
+    "category": "concept"
+  },
+  "environmental_awareness": {
+    "category": "domain"
+  },
+  "establishing_rhythms": {
+    "category": "concept"
+  },
+  "evidence_base": {
+    "category": "concept"
+  },
+  "evidence_for_method": {
+    "category": "concept"
+  },
+  "executive_function": {
+    "category": "domain"
+  },
+  "explosion_into_reading": {
+    "category": "situation",
+    "description": "Montessori's term for the sudden, rapid onset of fluent reading after preparation."
+  },
+  "external_rewards": {
+    "aliases": [
+      "stickers",
+      "bribes",
+      "rewards"
+    ],
+    "category": "concept",
+    "description": "Canonical tag for extrinsic reward/motivation critique across traditions."
+  },
+  "failure_mode": {
+    "category": "concept"
+  },
+  "family_disapproval": {
+    "category": "situation"
+  },
+  "family_just_left_school": {
+    "category": "situation"
+  },
+  "family_relationships": {
+    "category": "domain"
+  },
+  "fantasy": {
+    "category": "concept"
+  },
+  "fear_vs_curiosity": {
+    "category": "concept"
+  },
+  "fine_motor": {
+    "category": "domain"
+  },
+  "first_principles": {
+    "category": "concept"
+  },
+  "first_principles_reference": {
+    "category": "concept"
+  },
+  "first_three_months": {
+    "category": "situation"
+  },
+  "first_visit_to_a_place": {
+    "category": "situation"
+  },
+  "first_year_registration": {
+    "category": "situation"
+  },
+  "firsthand_knowledge": {
+    "category": "concept"
+  },
+  "four_hours_outdoors": {
+    "category": "situation"
+  },
+  "framing_the_child": {
+    "category": "concept"
+  },
+  "freedom": {
+    "category": "concept"
+  },
+  "general_knowledge": {
+    "category": "domain"
+  },
+  "grandparent_pressure": {
+    "category": "situation"
+  },
+  "gross_motor": {
+    "category": "domain"
+  },
+  "growth_mindset": {
+    "category": "concept"
+  },
+  "habit": {
+    "category": "concept"
+  },
+  "habit_of_excellence": {
+    "category": "concept"
+  },
+  "habit_of_obedience": {
+    "category": "concept"
+  },
+  "handicraft_activity": {
+    "category": "domain"
+  },
+  "handicrafts": {
+    "category": "domain"
+  },
+  "handwriting": {
+    "category": "domain"
+  },
+  "higher_education": {
+    "category": "concept"
+  },
+  "hinder_not": {
+    "category": "concept",
+    "description": "One of Mason's three 'negative precepts' (paired with despise_not, offend_not)."
+  },
+  "history": {
+    "category": "domain"
+  },
+  "hoarding_dynamic": {
+    "category": "concept",
+    "description": "The pattern where past restriction (e.g. of screens or sweets) produces hoarding once access is granted."
+  },
+  "holt_legacy": {
+    "category": "concept",
+    "description": "Reference to John Holt's foundational unschooling writing."
+  },
+  "home_life": {
+    "category": "concept"
+  },
+  "honest_framing": {
+    "category": "concept"
+  },
+  "illich_legacy": {
+    "category": "concept",
+    "description": "Reference to Ivan Illich's institutional-critique writing (Deschooling Society)."
+  },
+  "in_laws_disapproving_of_screens": {
+    "category": "situation"
+  },
+  "indoors_too_long": {
+    "category": "situation"
+  },
+  "inner_life": {
+    "category": "concept"
+  },
+  "institutional_critique": {
+    "category": "concept"
+  },
+  "internal_tension": {
+    "category": "concept"
+  },
+  "internalisation": {
+    "category": "concept"
+  },
+  "interruption": {
+    "category": "situation"
+  },
+  "intervention_debate": {
+    "category": "concept"
+  },
+  "intrinsic_motivation": {
+    "category": "concept"
+  },
+  "kitchen_table_learning": {
+    "category": "concept",
+    "description": "Mason's point that lessons don't require a dedicated schoolroom."
+  },
+  "language": {
+    "category": "domain"
+  },
+  "late_reader_concern": {
+    "category": "situation"
+  },
+  "late_reading": {
+    "category": "domain"
+  },
+  "learning_differences": {
+    "category": "domain"
+  },
+  "learning_vs_schooling": {
+    "category": "concept"
+  },
+  "lesson_running_long": {
+    "category": "situation"
+  },
+  "living_books": {
+    "category": "concept"
+  },
+  "living_ideas": {
+    "category": "concept"
+  },
+  "long_concentration_observed": {
+    "category": "situation"
+  },
+  "masterly_inactivity": {
+    "category": "concept",
+    "description": "Mason's term for active, watchful parental restraint — not passivity."
+  },
+  "material_conditions": {
+    "category": "concept",
+    "description": "The socioeconomic/practical conditions (time, money, a literacy-rich home) that an approach depends on."
+  },
+  "material_misuse": {
+    "category": "situation"
+  },
+  "memory": {
+    "category": "domain"
+  },
+  "memory_exercise": {
+    "category": "concept",
+    "description": "A specific memory-work technique or activity, distinct from `memory` as a broader curriculum area."
+  },
+  "mind_as_organism": {
+    "category": "concept",
+    "description": "Mason's principle that the mind grows on ideas as the body grows on food, not a vessel to be filled."
+  },
+  "mixed_age": {
+    "category": "concept"
+  },
+  "montessori_tension": {
+    "category": "tension"
+  },
+  "moral_framework": {
+    "category": "concept"
+  },
+  "moral_moment": {
+    "category": "situation"
+  },
+  "moral_reasoning": {
+    "category": "domain"
+  },
+  "moral_sense": {
+    "category": "concept"
+  },
+  "mother_role": {
+    "category": "concept"
+  },
+  "movable_alphabet": {
+    "category": "domain",
+    "description": "Montessori's letter-tile material used to bridge phonetic writing before reading."
+  },
+  "multi_child": {
+    "category": "situation"
+  },
+  "narration": {
+    "category": "concept"
+  },
+  "narration_was_short": {
+    "category": "situation"
+  },
+  "narration_was_thin": {
+    "category": "situation"
+  },
+  "natural_language": {
+    "category": "domain"
+  },
+  "naturalist": {
+    "category": "domain"
+  },
+  "nature": {
+    "category": "domain"
+  },
+  "nature_as_spectacle": {
+    "category": "concept"
+  },
+  "nature_study": {
+    "category": "domain"
+  },
+  "nature_walk": {
+    "category": "situation"
+  },
+  "negative_precepts": {
+    "category": "concept",
+    "description": "Mason's don't-do counterparts to her positive educational laws (see despise_not/offend_not/hinder_not)."
+  },
+  "neill_legacy": {
+    "category": "concept",
+    "description": "Reference to A. S. Neill's foundational Summerhill/freedom-in-education writing."
+  },
+  "no_pressure": {
+    "category": "concept"
+  },
+  "normalisation": {
+    "category": "concept",
+    "description": "Montessori's term for a child settling into calm, focused, self-chosen work after real concentration."
+  },
+  "observation": {
+    "category": "concept"
+  },
+  "observation_activity": {
+    "category": "situation"
+  },
+  "off_curriculum_engagement": {
+    "category": "situation"
+  },
+  "offend_not": {
+    "category": "concept",
+    "description": "One of Mason's three 'negative precepts' (paired with despise_not, hinder_not)."
+  },
+  "onboarding_wizard": {
+    "category": "situation",
+    "description": "Surfaced during Hearth's pedagogy onboarding wizard rather than a Logger moment."
+  },
+  "oral_composition": {
+    "category": "domain"
+  },
+  "oral_language": {
+    "category": "domain"
+  },
+  "outcomes": {
+    "category": "concept"
+  },
+  "outdoor_activity": {
+    "category": "situation"
+  },
+  "outdoor_free_observation": {
+    "category": "situation"
+  },
+  "outdoor_hours": {
+    "category": "situation"
+  },
+  "outdoor_life": {
+    "category": "concept"
+  },
+  "over_talk": {
+    "category": "concept"
+  },
+  "over_teaching": {
+    "category": "concept"
+  },
+  "overpressure": {
+    "category": "concept"
+  },
+  "overtalking_parent": {
+    "category": "situation"
+  },
+  "parent_abandoned_plan": {
+    "category": "situation"
+  },
+  "parent_anxiety": {
+    "category": "situation"
+  },
+  "parent_anxiety_about_future": {
+    "category": "situation"
+  },
+  "parent_anxious_about_documentation": {
+    "category": "situation"
+  },
+  "parent_anxious_during_transition": {
+    "category": "situation"
+  },
+  "parent_asking_how_much_outdoor_time": {
+    "category": "situation"
+  },
+  "parent_burnout": {
+    "category": "situation"
+  },
+  "parent_challenges": {
+    "category": "situation"
+  },
+  "parent_compares_to_school": {
+    "category": "situation"
+  },
+  "parent_considering_dedicated_learning_space": {
+    "category": "situation"
+  },
+  "parent_considering_interrupting": {
+    "category": "situation"
+  },
+  "parent_considering_intervention": {
+    "category": "situation"
+  },
+  "parent_considering_nature_study": {
+    "category": "situation"
+  },
+  "parent_expected_more": {
+    "category": "situation"
+  },
+  "parent_feels_inadequate": {
+    "category": "situation"
+  },
+  "parent_feels_need_to_narrate": {
+    "category": "situation"
+  },
+  "parent_frustrated": {
+    "category": "situation"
+  },
+  "parent_inner_state": {
+    "category": "concept"
+  },
+  "parent_learning": {
+    "category": "concept"
+  },
+  "parent_new_to_homeschooling": {
+    "category": "situation"
+  },
+  "parent_overmanaging": {
+    "category": "situation"
+  },
+  "parent_overwhelmed_by_subject_coverage": {
+    "category": "situation"
+  },
+  "parent_questions_freedom": {
+    "category": "situation"
+  },
+  "parent_reflection": {
+    "category": "situation"
+  },
+  "parent_role": {
+    "category": "concept"
+  },
+  "parent_seeking_metrics": {
+    "category": "situation"
+  },
+  "parent_self_doubt": {
+    "category": "situation"
+  },
+  "parent_self_doubt_on_reading": {
+    "category": "situation"
+  },
+  "parent_self_management": {
+    "category": "concept"
+  },
+  "parent_self_reflection": {
+    "category": "situation"
+  },
+  "parent_self_work": {
+    "category": "concept"
+  },
+  "parent_struggling_with_routines": {
+    "category": "situation"
+  },
+  "parent_understanding_movement_origins": {
+    "category": "concept"
+  },
+  "parent_wants_to_help_without_directing": {
+    "category": "situation"
+  },
+  "parent_worried_about_reading": {
+    "category": "situation"
+  },
+  "parent_worried_about_screens": {
+    "category": "situation"
+  },
+  "parent_worries_about_overload": {
+    "category": "situation"
+  },
+  "parent_worries_child_overwhelmed": {
+    "category": "situation"
+  },
+  "parental_restraint": {
+    "category": "concept"
+  },
+  "parenting_mistakes": {
+    "category": "concept"
+  },
+  "peer_teaching": {
+    "category": "concept"
+  },
+  "perfect_execution": {
+    "category": "concept"
+  },
+  "performance": {
+    "category": "concept",
+    "description": "Presenting or performing an approach for an audience (e.g. social media) rather than living it authentically."
+  },
+  "persistence": {
+    "category": "domain"
+  },
+  "personal_engagement": {
+    "category": "domain"
+  },
+  "personal_responsibility": {
+    "category": "domain"
+  },
+  "pestalozzi": {
+    "category": "concept",
+    "description": "Reference to Johann Pestalozzi as a forerunner cited in Mason's writing."
+  },
+  "physiology": {
+    "category": "domain"
+  },
+  "planned_lesson_displaced": {
+    "category": "situation"
+  },
+  "potential_harm": {
+    "category": "concept"
+  },
+  "practical_life": {
+    "category": "domain"
+  },
+  "praise": {
+    "category": "concept"
+  },
+  "prepared_environment": {
+    "category": "concept",
+    "description": "Montessori's deliberately ordered, child-sized space that invites independent work."
+  },
+  "privilege": {
+    "category": "concept"
+  },
+  "progress_anxiety": {
+    "category": "situation"
+  },
+  "quiet_observation_moment": {
+    "category": "situation"
+  },
+  "radical_unschooling": {
+    "category": "concept",
+    "description": "The position that unschooling must extend to all of life, not just academics (cf. relaxed_unschooling)."
+  },
+  "read_aloud_and_narration": {
+    "category": "situation"
+  },
+  "reading": {
+    "category": "domain"
+  },
+  "reading_aloud_session": {
+    "category": "situation"
+  },
+  "reading_path_introduction": {
+    "category": "situation"
+  },
+  "real_experience": {
+    "category": "concept",
+    "description": "Mason's preference for firsthand encounters with real things over abstraction or worksheets."
+  },
+  "reality_grounding": {
+    "category": "concept",
+    "description": "Montessori's preference for real objects and tasks over fantasy or pretend, especially under six."
+  },
+  "recently_lifted_screen_limits": {
+    "category": "situation"
+  },
+  "registration_paperwork_due": {
+    "category": "situation"
+  },
+  "registration_preparation": {
+    "category": "situation"
+  },
+  "regulatory_compliance": {
+    "category": "concept"
+  },
+  "relaxed_unschooling": {
+    "category": "concept",
+    "description": "The position that accepts some parental decision-making (sleep, food, screens) alongside unschooled learning (cf. radical_unschooling)."
+  },
+  "restless_child": {
+    "category": "situation"
+  },
+  "restraint": {
+    "category": "concept"
+  },
+  "reverence": {
+    "category": "concept"
+  },
+  "rich_curriculum": {
+    "category": "concept"
+  },
+  "sandra_dodd": {
+    "category": "concept",
+    "description": "Reference to Sandra Dodd's radical-unschooling writing and terminology."
+  },
+  "schools_as_obstacle": {
+    "category": "concept"
+  },
+  "science_of_relations": {
+    "category": "concept",
+    "description": "Mason's principle that education is chiefly the child forming relations with people, ideas and things."
+  },
+  "scientific_observation": {
+    "category": "domain"
+  },
+  "screen_request": {
+    "category": "situation"
+  },
+  "screen_time": {
+    "category": "concept"
+  },
+  "screens": {
+    "category": "concept"
+  },
+  "seasonal_observation": {
+    "category": "domain"
+  },
+  "secure_attachment": {
+    "category": "domain"
+  },
+  "seeing": {
+    "category": "concept"
+  },
+  "seeing_fully": {
+    "category": "concept"
+  },
+  "self_directed_learning": {
+    "category": "concept"
+  },
+  "self_direction": {
+    "category": "concept"
+  },
+  "self_government": {
+    "category": "concept",
+    "description": "Mason's term for children's capacity to govern themselves rather than merely obey."
+  },
+  "self_regulation": {
+    "category": "domain"
+  },
+  "sensitive_periods": {
+    "category": "concept",
+    "description": "Montessori's windows of heightened receptivity to a particular skill or interest."
+  },
+  "sensorial": {
+    "category": "domain"
+  },
+  "settings_reading_path": {
+    "category": "situation",
+    "description": "A parent configuring a reading-path setting in Hearth rather than a Logger moment."
+  },
+  "short_lessons": {
+    "category": "concept"
+  },
+  "short_outdoor_day": {
+    "category": "situation"
+  },
+  "sight_seeing": {
+    "category": "situation"
+  },
+  "silence": {
+    "category": "concept",
+    "description": "A deliberate practice of stillness (e.g. Montessori's 'silence game'; Mason's quiet), not merely absence of noise."
+  },
+  "social_cooperation": {
+    "category": "domain"
+  },
+  "social_emotional": {
+    "category": "domain"
+  },
+  "social_pressure": {
+    "category": "concept"
+  },
+  "space_to_grow": {
+    "category": "concept"
+  },
+  "spontaneous_interest": {
+    "category": "situation"
+  },
+  "spontaneous_research": {
+    "category": "situation"
+  },
+  "strewing": {
+    "category": "concept",
+    "description": "Sandra Dodd's term for leaving interesting materials in a child's path without directing them to it."
+  },
+  "structured_freedom": {
+    "category": "concept",
+    "description": "Montessori's paradox: freedom operates within a deliberately prepared, ordered environment."
+  },
+  "summerhill": {
+    "category": "concept",
+    "description": "Reference to A. S. Neill's Summerhill School and its founding premise."
+  },
+  "sustained_attention": {
+    "category": "domain"
+  },
+  "telling_back": {
+    "category": "concept",
+    "description": "Mason's original name for narration — 'telling back' what was read or observed."
+  },
+  "term_review": {
+    "category": "situation"
+  },
+  "things_vs_words": {
+    "category": "concept",
+    "description": "Mason's 'things before words' — firsthand experience before verbal description."
+  },
+  "thinking_love": {
+    "category": "concept",
+    "description": "Mason's phrase for parental attention that is both intellectually engaged and affectionate."
+  },
+  "three_laws": {
+    "category": "concept",
+    "description": "Charlotte Mason's named 'three educational laws' principle."
+  },
+  "three_phases": {
+    "category": "concept"
+  },
+  "timing": {
+    "category": "concept"
+  },
+  "toddler_testing_limits": {
+    "category": "situation"
+  },
+  "transfer_of_learning": {
+    "category": "concept"
+  },
+  "transition_after_school_left": {
+    "category": "situation"
+  },
+  "transition_period": {
+    "category": "situation"
+  },
+  "trust": {
+    "category": "concept"
+  },
+  "trust_the_child": {
+    "category": "concept"
+  },
+  "twaddle": {
+    "category": "concept"
+  },
+  "under_six": {
+    "category": "age_band"
+  },
+  "unschooling_tension": {
+    "category": "tension"
+  },
+  "unstructured_day_logged": {
+    "category": "situation"
+  },
+  "visual_discrimination": {
+    "category": "domain"
+  },
+  "vocabulary": {
+    "category": "domain"
+  },
+  "waldorf_tension": {
+    "category": "tension"
+  },
+  "weather_concerns": {
+    "category": "situation"
+  },
+  "wellbeing": {
+    "category": "domain"
+  },
+  "whole_life_trust": {
+    "category": "concept",
+    "description": "Radical unschooling's premise that trust in the child must extend beyond academics to all of life."
+  },
+  "will": {
+    "category": "concept"
+  },
+  "withdrawal": {
+    "category": "concept",
+    "description": "The parent's active, watchful stepping-back once a lesson or material is set in motion (masterly inactivity in practice)."
+  },
+  "wonder": {
+    "category": "concept"
+  },
+  "work_cycle": {
+    "category": "concept",
+    "description": "Montessori's uninterrupted block of self-directed work."
+  },
+  "worksheet_vs_real_study": {
+    "category": "concept"
+  },
+  "worksheets_vs_real_things": {
+    "category": "concept"
+  },
+  "wrong_work": {
+    "category": "concept",
+    "description": "Mason's term for work mismatched to the child's stage — the root of overpressure, not the child's fault."
+  }
+}

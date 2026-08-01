@@ -8,6 +8,7 @@ import * as path from 'path';
 import { parseEntry } from './parse';
 import { compileEntry } from './compile';
 import { parseSourceRegistry } from './registry';
+import { parseTagRegistry, buildAliasMap } from './tags';
 import {
   FRAMEWORKS,
   LAYER_DIRS,
@@ -21,11 +22,15 @@ import {
 export interface VaultCompileOutput {
   docs: CompiledDoc[];
   issues: CorpusIssue[];
+  /** Soft findings — novel/alias/malformed tags. Never blocks the compile. */
+  warnings: CorpusIssue[];
   registry: SourceRegistry;
   /** framework dir → layer dir → entry count */
   coverage: Record<string, Record<LayerDir, number>>;
   entryCount: number;
 }
+
+const TAG_FORMAT_PATTERN = /^[a-z0-9_]+$/;
 
 export const DEFAULT_VAULT_ROOT = path.join('corpus', 'pedagogy');
 
@@ -34,6 +39,7 @@ export function compileVault(
   opts: { frameworkDir?: string } = {}
 ): VaultCompileOutput {
   const issues: CorpusIssue[] = [];
+  const warnings: CorpusIssue[] = [];
   const docs: CompiledDoc[] = [];
   const coverage: Record<string, Record<LayerDir, number>> = {};
   let entryCount = 0;
@@ -43,6 +49,21 @@ export function compileVault(
     throw new Error(`source registry not found at ${registryPath}`);
   }
   const registry = parseSourceRegistry(fs.readFileSync(registryPath, 'utf8'));
+
+  // Tag vocabulary — soft gate. Absence of tags.json is not an error; a
+  // parse error in it is (it's a hard issue, not a per-tag warning).
+  let tagAliasMap: Map<string, string> | undefined;
+  let tagRegistryKeys: Set<string> | undefined;
+  const tagsPath = path.join(vaultRoot, 'tags.json');
+  if (fs.existsSync(tagsPath)) {
+    try {
+      const tagRegistry = parseTagRegistry(fs.readFileSync(tagsPath, 'utf8'));
+      tagRegistryKeys = new Set(Object.keys(tagRegistry));
+      tagAliasMap = buildAliasMap(tagRegistry);
+    } catch (err) {
+      issues.push({ file: 'tags.json', message: (err as Error).message });
+    }
+  }
 
   const seenIds = new Map<string, string>();
 
@@ -87,6 +108,32 @@ export function compileVault(
         issues.push(...entryIssues);
         if (!doc) continue;
 
+        if (tagRegistryKeys && tagAliasMap) {
+          const tags = Array.isArray(doc.tags) ? (doc.tags as unknown[]) : [];
+          for (const tag of tags) {
+            if (typeof tag !== 'string') continue;
+            if (tagRegistryKeys.has(tag)) {
+              // registered canonical key — OK
+            } else if (tagAliasMap.has(tag)) {
+              warnings.push({
+                file: relPath,
+                message: `tag "${tag}" is an alias of "${tagAliasMap.get(tag)}" — use the canonical tag`,
+              });
+            } else {
+              warnings.push({
+                file: relPath,
+                message: `novel tag "${tag}" — add it to tags.json or fix the spelling`,
+              });
+            }
+            if (!TAG_FORMAT_PATTERN.test(tag)) {
+              warnings.push({
+                file: relPath,
+                message: `tag "${tag}" is not lowercase snake_case (must match ${TAG_FORMAT_PATTERN}) — fix the formatting`,
+              });
+            }
+          }
+        }
+
         const priorFile = seenIds.get(doc._id);
         if (priorFile) {
           issues.push({ file: relPath, message: `duplicate document id ${doc._id} (also defined in ${priorFile})` });
@@ -100,7 +147,7 @@ export function compileVault(
     }
   }
 
-  return { docs, issues, registry, coverage, entryCount };
+  return { docs, issues, warnings, registry, coverage, entryCount };
 }
 
 /** Render the coverage table as terminal-friendly lines. */

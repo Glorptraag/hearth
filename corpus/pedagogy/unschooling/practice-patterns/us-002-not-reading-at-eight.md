@@ -8,6 +8,8 @@ tags:
   - comparing_to_school_peers
   - grandparent_pressure
   - parent_self_doubt_on_reading
+ageRange: 7-10
+capabilityThreads: [L2]
 status: published
 suggestedDraft: true
 ---

@@ -7,6 +7,7 @@ tags:
   - planned_lesson_displaced
   - spontaneous_interest
   - long_concentration_observed
+capabilityThreads: [EF1]
 status: published
 suggestedDraft: false
 ---

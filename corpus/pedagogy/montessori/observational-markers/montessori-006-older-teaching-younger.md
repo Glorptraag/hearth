@@ -2,6 +2,7 @@
 id: montessori.006
 markerName: Older child spontaneously teaching younger
 tags: [mixed_age, social_cooperation, peer_teaching, consolidation]
+capabilityThreads: [PS2]
 status: published
 suggestedDraft: true
 ---

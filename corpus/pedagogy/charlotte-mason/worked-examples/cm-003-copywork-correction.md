@@ -1,6 +1,9 @@
 ---
 id: cm.003
 tags: [handwriting, attention, executive_function, fine_motor, copywork, age_7_to_9]
+ageRange: 7-9
+capabilityThreads: [L6, P2]
+activityType: copywork
 status: published
 suggestedDraft: false
 ---

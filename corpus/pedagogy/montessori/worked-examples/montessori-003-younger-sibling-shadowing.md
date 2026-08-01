@@ -1,6 +1,9 @@
 ---
 id: montessori.003
 tags: [mixed_age, sensorial, concentration, visual_discrimination, age_2_to_6]
+ageRange: 2-6
+capabilityThreads: [EF1]
+activityType: sensorial_work
 status: published
 suggestedDraft: true
 ---

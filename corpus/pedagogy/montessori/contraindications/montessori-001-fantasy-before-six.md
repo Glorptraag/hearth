@@ -2,6 +2,7 @@
 id: montessori.001
 warnedAgainst: Adult-introduced fantasy for children under 6
 tags: [fantasy, under_six, reality_grounding, waldorf_tension, practical_life]
+ageRange: 0-6
 status: published
 suggestedDraft: true
 ---

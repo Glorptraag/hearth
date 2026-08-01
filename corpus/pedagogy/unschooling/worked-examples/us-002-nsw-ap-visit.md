@@ -1,6 +1,7 @@
 ---
 id: us.002
 tags: [parent_self_management, regulatory_compliance, documentation, registration_preparation, age_11_to_13]
+ageRange: 11-13
 status: published
 suggestedDraft: true
 ---

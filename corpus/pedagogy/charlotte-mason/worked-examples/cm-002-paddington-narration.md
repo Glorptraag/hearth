@@ -1,6 +1,9 @@
 ---
 id: cm.002
 tags: [oral_language, comprehension, memory, attention, read_aloud_and_narration, age_6_to_8]
+ageRange: 6-8
+capabilityThreads: [L1, L3]
+activityType: read_aloud_and_narration
 status: published
 suggestedDraft: false
 ---

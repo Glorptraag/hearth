@@ -1,6 +1,8 @@
 ---
 id: cm.001
 tags: [scientific_observation, attention, biology, outdoor_free_observation, age_4_to_6]
+ageRange: 4-6
+capabilityThreads: [S5, EF1]
 status: published
 suggestedDraft: false
 ---

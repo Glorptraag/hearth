@@ -1,6 +1,8 @@
 ---
 id: us.001
 tags: [self_direction, intrinsic_motivation, sustained_attention, deschooling_progression, age_8_to_10]
+ageRange: 8-10
+activityType: gaming
 status: published
 suggestedDraft: true
 ---

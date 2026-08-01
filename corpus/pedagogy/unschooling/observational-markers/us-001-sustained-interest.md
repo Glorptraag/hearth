@@ -2,6 +2,7 @@
 id: us.001
 markerName: Sustained interest pursued without external pressure
 tags: [intrinsic_motivation, sustained_attention, self_directed_learning, depth_of_engagement]
+capabilityThreads: [EF1]
 status: published
 suggestedDraft: true
 ---

@@ -1,6 +1,9 @@
 ---
 id: montessori.002
 tags: [practical_life, control_of_error, fine_motor, self_regulation, age_2_to_4]
+ageRange: 2-4
+capabilityThreads: [P2]
+activityType: practical_life_exercise
 status: published
 suggestedDraft: true
 ---

@@ -1,7 +1,7 @@
 ---
 id: montessori.003
 warnedAgainst: External rewards and punishments
-tags: [rewards, stickers, intrinsic_motivation, badge_framing]
+tags: [external_rewards, intrinsic_motivation, badge_framing]
 status: published
 suggestedDraft: true
 ---

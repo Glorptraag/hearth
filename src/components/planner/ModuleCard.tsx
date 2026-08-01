@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FilePdf, Play, X } from '@/components/icons';
+import { ArrowsOutCardinal, FilePdf, Play, X } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
 
@@ -26,6 +26,12 @@ interface ModuleCardProps {
   onDelete: (id: string) => void;
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
+  /**
+   * Touch-capable move path. HTML5 drag never fires on touch, so this opens an
+   * explicit day/session picker. Always rendered (it is also the keyboard and
+   * screen-reader path); the glyph only fades in on hover for fine pointers.
+   */
+  onRequestMove?: (id: string) => void;
 }
 
 const COLOUR_DOT: Record<string, string> = {
@@ -68,6 +74,7 @@ export default function ModuleCard({
   onDelete,
   onDragStart,
   onDragEnd,
+  onRequestMove,
 }: ModuleCardProps) {
   const entryLearners = learners.filter((l) => entry.learnerIds?.includes(l.id));
   const isComplete = entry.status === 'completed';
@@ -98,6 +105,22 @@ export default function ModuleCard({
       <div className="p-sm pt-[6px]">
         {/* Subject chip + material indicator */}
         <div className="flex items-center gap-[3px] mb-[3px]">
+          {!isReadOnly && onRequestMove && (
+            <button
+              onClick={() => onRequestMove(entry.id)}
+              aria-label={`Move "${entry.title ?? 'Untitled'}" to another day or session`}
+              // Leads the row deliberately: the delete button's hit-target
+              // claims 44px of the top-RIGHT corner, so a trailing move control
+              // would have its taps swallowed by a destructive action.
+              // Capped at 24px (not hit-target's 44) for the same reason the
+              // status dot is — it must not swallow taps meant for its
+              // neighbours. Persistent on coarse pointers: it is the only way
+              // to move an entry where HTML5 drag never fires.
+              className="hearth-press -my-[7px] flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-muted opacity-0 transition-[opacity,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
+            >
+              <ArrowsOutCardinal size={12} aria-hidden="true" />
+            </button>
+          )}
           {primarySubject && (
             <span className={`inline-block rounded-full px-[5px] py-[1px] font-sans text-[9px] font-semibold ${SUBJECT_CHIP[primarySubject] ?? 'bg-surface-hover text-text-muted'}`}>
               {SUBJECT_LABELS[primarySubject] ?? primarySubject}

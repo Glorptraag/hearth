@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { format } from 'date-fns';
 import ModuleCard from './ModuleCard';
+import MoveSheet, { type MoveTargetDay } from './MoveSheet';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
 
 interface Learner {
@@ -48,8 +50,11 @@ const SUBJECT_DOT: Record<string, string> = {
   languages:    'bg-domain-languages',
 };
 
+// Local calendar date, not UTC. `today` is produced server-side with the same
+// date-fns `format`, and toISOString() would shift a whole day behind it in any
+// positive-offset zone (AEST included), keying every column to the wrong day.
 function toDateString(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return format(d, 'yyyy-MM-dd');
 }
 
 export default function PlannerGrid({
@@ -68,6 +73,43 @@ export default function PlannerGrid({
   const isReadOnly = !isCurrentOrFutureWeek;
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   const [, setDraggingId] = useState<string | null>(null);
+
+  // Touch move path. `moveEntryId` outlives `moveOpen` so the sheet keeps its
+  // content through the slide-out transition.
+  const [moveEntryId, setMoveEntryId] = useState<string | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
+
+  const handleRequestMove = useCallback((id: string) => {
+    setMoveEntryId(id);
+    setMoveOpen(true);
+  }, []);
+
+  const moveDays: MoveTargetDay[] = useMemo(
+    () =>
+      weekDates.map((d) => {
+        const date = toDateString(d);
+        const dayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1;
+        return {
+          date,
+          label: DAY_LABELS[dayIndex],
+          dayNumber: d.getDate(),
+          // Mirrors the grid's own drop rule: past cells reject moves.
+          isPast: date < today,
+        };
+      }),
+    [weekDates, today],
+  );
+
+  const moveEntry = useMemo(() => {
+    const entry = entries.find((e) => e.id === moveEntryId);
+    if (!entry) return null;
+    return {
+      id: entry.id,
+      title: entry.title,
+      date: entry.date,
+      session: entry.session ?? 'morning',
+    };
+  }, [entries, moveEntryId]);
 
   const handleDragOver = useCallback((e: React.DragEvent, cellKey: string) => {
     e.preventDefault();
@@ -90,6 +132,7 @@ export default function PlannerGrid({
   }, [onMove]);
 
   return (
+    <>
     <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border-subtle bg-surface-panel shadow-card">
       <div
         className="grid min-w-[620px]"
@@ -182,6 +225,7 @@ export default function PlannerGrid({
                   onDelete={onDelete}
                   onDragStart={setDraggingId}
                   onDragEnd={() => { setDraggingId(null); setDragOverCell(null); }}
+                  onRequestMove={onMove && !isPast ? handleRequestMove : undefined}
                 />
               ))}
               {!isReadOnly && !isPast && (
@@ -235,6 +279,7 @@ export default function PlannerGrid({
                   onDelete={onDelete}
                   onDragStart={setDraggingId}
                   onDragEnd={() => { setDraggingId(null); setDragOverCell(null); }}
+                  onRequestMove={onMove && !isPast ? handleRequestMove : undefined}
                 />
               ))}
               {!isReadOnly && !isPast && (
@@ -250,5 +295,16 @@ export default function PlannerGrid({
         })}
       </div>
     </div>
+
+    {!isReadOnly && onMove && (
+      <MoveSheet
+        isOpen={moveOpen}
+        entry={moveEntry}
+        days={moveDays}
+        onMove={onMove}
+        onClose={() => setMoveOpen(false)}
+      />
+    )}
+    </>
   );
 }

@@ -22,7 +22,7 @@ const baseEntry = {
   subjects: ['science'],
 };
 
-function renderCard(entry = baseEntry, isReadOnly = false) {
+function renderCard(entry = baseEntry, isReadOnly = false, onRequestMove?: () => void) {
   const onToggle = vi.fn();
   const onDelete = vi.fn();
   render(
@@ -32,6 +32,7 @@ function renderCard(entry = baseEntry, isReadOnly = false) {
       isReadOnly={isReadOnly}
       onToggle={onToggle}
       onDelete={onDelete}
+      onRequestMove={onRequestMove}
     />,
   );
   return { onToggle, onDelete };
@@ -55,6 +56,21 @@ describe('ModuleCard', () => {
     expect(screen.queryByRole('link')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Weather Station' }));
     expect(onToggle).toHaveBeenCalledWith('plan-1', 'planned');
+  });
+
+  // HTML5 drag never fires on touch, so the move button is the only way a
+  // phone can move an entry — it must be a real, always-present button rather
+  // than a hover-only affordance.
+  it('exposes a move button that requests the day/session picker', () => {
+    const onRequestMove = vi.fn();
+    renderCard(baseEntry, false, onRequestMove);
+    fireEvent.click(screen.getByRole('button', { name: /Move "Weather Station"/ }));
+    expect(onRequestMove).toHaveBeenCalledWith('plan-1');
+  });
+
+  it('read-only cards offer no move button', () => {
+    renderCard(baseEntry, true, vi.fn());
+    expect(screen.queryByRole('button', { name: /Move "Weather Station"/ })).toBeNull();
   });
 
   it('read-only cards cannot toggle', () => {

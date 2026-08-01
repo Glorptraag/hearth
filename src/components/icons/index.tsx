@@ -236,7 +236,7 @@ export { ChartLine } from '@phosphor-icons/react';                   // misc.no-
 export { DownloadSimple } from '@phosphor-icons/react';              // misc.download (material rows)
 
 // ── Universal UI chrome ────────────────────────────────────────────
-export { ArrowLeft, ArrowRight, CaretDown, CaretLeft, CaretRight, CaretUp, Plus, Check, X, Trash, List, Play, Pause } from '@phosphor-icons/react';
+export { ArrowLeft, ArrowRight, ArrowsOutCardinal, CaretDown, CaretLeft, CaretRight, CaretUp, Plus, Check, X, Trash, List, Play, Pause } from '@phosphor-icons/react';
 
 // ── Tri-state response (yes / sometimes / not-yet) ────────────────
 export {

@@ -43,7 +43,7 @@ export default function ModuleExperiencePage() {
           </p>
           <Link
             href="/demo/explore/activities"
-            className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+            className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
           >
             Back to Explore
           </Link>
@@ -279,7 +279,7 @@ export default function ModuleExperiencePage() {
         {/* Begin Session button */}
         <button
           onClick={() => setMode('facilitate')}
-          className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200 mt-lg"
+          className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] mt-lg"
         >
           Begin Session
         </button>
@@ -304,7 +304,7 @@ export default function ModuleExperiencePage() {
             aria-label={`Step ${currentStep + 1} of ${totalActivities}`}
           >
             <div
-              className="bg-ember h-full transition-all duration-300"
+              className="bg-ember h-full transition-all duration-[var(--motion-base)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -394,7 +394,7 @@ export default function ModuleExperiencePage() {
           {currentStep > 0 && (
             <button
               onClick={() => setCurrentStep(currentStep - 1)}
-              className="flex-1 bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-200"
+              className="flex-1 bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
             >
               ← Previous
             </button>
@@ -403,14 +403,14 @@ export default function ModuleExperiencePage() {
           {currentStep < totalActivities - 1 ? (
             <button
               onClick={() => setCurrentStep(currentStep + 1)}
-              className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+              className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
             >
-              Next →
+              Next
             </button>
           ) : (
             <button
               onClick={() => setMode('complete')}
-              className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+              className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
             >
               Complete Session
             </button>
@@ -442,19 +442,19 @@ export default function ModuleExperiencePage() {
         <div className="grid grid-cols-1 gap-md w-full mt-xl pt-xl border-t border-border-subtle">
           <Link
             href="/demo/log"
-            className="block text-center bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+            className="block text-center bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
           >
             Log this session
           </Link>
           <Link
             href="/demo/explore/activities"
-            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-200"
+            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
           >
             Back to explore
           </Link>
           <Link
             href="/demo/planner"
-            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-200"
+            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
           >
             Plan another session
           </Link>

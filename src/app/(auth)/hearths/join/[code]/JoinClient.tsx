@@ -125,14 +125,14 @@ export default function JoinClient({
         <div className="flex items-center gap-md">
           <a
             href="/dashboard"
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-transparent border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-[10px] hover:border-border-medium hover:text-text-primary transition-all duration-200"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-transparent border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-[10px] hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
           >
             Back to Dashboard
           </a>
           <button
             onClick={handleJoin}
             disabled={joining}
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
           >
             {joining ? 'Joining…' : `Join ${hearthName}`}
           </button>

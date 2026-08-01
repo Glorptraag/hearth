@@ -151,7 +151,7 @@ export default function CapabilitiesPage() {
     return (
       <div className="mx-auto max-w-[600px] px-md py-2xl">
         <EmptyState
-          icon={Sparkle}
+          icon={ArrowsClockwise}
           heading="We couldn't load the constellation just now"
           body="Nothing is lost — every moment you've logged is safe. This looks like a connection hiccup."
           cta={{

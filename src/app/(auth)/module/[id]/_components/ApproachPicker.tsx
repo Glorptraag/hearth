@@ -1,6 +1,7 @@
 'use client';
 
 import type { Module } from './types';
+import { CaretRight } from '@/components/icons';
 import { MODALITY_ICON, FALLBACK_PIN_ICON } from './constants';
 
 export default function ApproachPickMode({
@@ -36,7 +37,7 @@ export default function ApproachPickMode({
               <button
                 key={approach._id}
                 onClick={() => onSelect(idx)}
-                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-card transition-all duration-200 hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px]"
+                className="flex w-full items-start gap-md rounded-lg border border-border-subtle bg-surface-panel p-lg text-left shadow-card transition-[transform,border-color,box-shadow,background-color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0"
               >
                 <span className="mt-[2px] inline-flex text-text-secondary" aria-hidden="true">
                   {(() => {
@@ -54,7 +55,7 @@ export default function ApproachPickMode({
                     </p>
                   )}
                 </div>
-                <span className="mt-[3px] font-sans text-xs text-ember">→</span>
+                <span className="mt-[3px] inline-flex text-ember" aria-hidden="true"><CaretRight size={14} /></span>
               </button>
             );
           })}

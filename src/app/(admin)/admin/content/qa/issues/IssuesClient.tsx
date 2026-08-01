@@ -55,7 +55,7 @@ export default function IssuesClient() {
       <div className="flex items-center gap-sm mb-xs">
         <Link
           href="/admin/content/qa"
-          className="font-sans text-xs text-text-muted hover:text-text-primary transition-colors duration-200"
+          className="font-sans text-xs text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
         >
           QA
         </Link>

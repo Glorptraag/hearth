@@ -40,9 +40,9 @@ export default function ModuleBuilderPage() {
       <div className="pt-lg border-t border-border-subtle">
         <Link
           href="/onboarding"
-          className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+          className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
         >
-          Start your Hearth →
+          Start your Hearth
         </Link>
       </div>
     </div>

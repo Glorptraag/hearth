@@ -78,7 +78,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
                 <button
                   key={c.token}
                   onClick={() => setColour(c.token)}
-                  className={`h-7 w-7 rounded-full transition-all duration-200 ${c.bg} ${
+                  className={`h-8 w-8 rounded-full transition-all duration-[var(--motion-quick)] ${c.bg} ${
                     colour === c.token ? `ring-2 ring-offset-2 ring-offset-surface-raised ${c.ring}` : ''
                   }`}
                   aria-label={c.label}

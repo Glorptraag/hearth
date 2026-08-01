@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useSheetDrag } from '@/hooks/use-sheet-drag';
 import RecommendationChip from './RecommendationChip';
 import { Sun, SunHorizon } from '@/components/icons';
 import { track, hashForAnalytics } from '@/lib/analytics/posthog';
@@ -65,6 +66,7 @@ export default function BottomSheet({
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const trapRef = useFocusTrap(isOpen);
+  const dragHandleProps = useSheetDrag(trapRef, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -131,7 +133,7 @@ export default function BottomSheet({
     <>
       {/* Backdrop — above the mobile bottom nav (z-100) so the sheet is truly modal */}
       <div
-        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-200 ${
+        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-[var(--motion-quick)] ${
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
@@ -148,8 +150,8 @@ export default function BottomSheet({
         }`}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-sm pb-xs">
+        {/* Handle — swipe down to dismiss */}
+        <div className="flex justify-center pt-sm pb-xs" {...dragHandleProps}>
           <div className="h-1 w-10 rounded-full bg-border-medium" />
         </div>
 
@@ -173,7 +175,7 @@ export default function BottomSheet({
         <div className="flex gap-xs px-md pb-sm">
           <button
             onClick={() => setSession('morning')}
-            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
               session === 'morning'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
@@ -183,7 +185,7 @@ export default function BottomSheet({
           </button>
           <button
             onClick={() => setSession('afternoon')}
-            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
               session === 'afternoon'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
@@ -195,12 +197,12 @@ export default function BottomSheet({
 
         {/* Learner selector */}
         {learners.length > 0 && (
-          <div className="flex gap-xs overflow-x-auto px-md pb-sm">
+          <div className="flex gap-xs overflow-x-auto overscroll-x-contain scrollbar-none px-md pb-sm">
             {learners.map((l) => (
               <button
                 key={l.id}
                 onClick={() => toggleLearner(l.id)}
-                className={`flex-shrink-0 rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
                   selectedLearners.includes(l.id)
                     ? (COLOUR_CHIP[l.colourToken ?? ''] ?? 'bg-ember-glow text-ember border-ember/30')
                     : 'border-border-subtle bg-transparent text-text-muted'
@@ -324,7 +326,7 @@ export default function BottomSheet({
               <button
                 onClick={() => handleSubmit(title)}
                 disabled={!title.trim() || saving}
-                className="w-full rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover disabled:opacity-40"
+                className="w-full rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-40"
               >
                 {saving ? 'Adding...' : 'Add to planner'}
               </button>

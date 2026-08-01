@@ -57,7 +57,7 @@ export default function DevPreviewLayout({
         <div className="flex items-center gap-md">
           <button
             onClick={toggleTheme}
-            className="font-sans text-xs font-medium text-text-secondary hover:text-text-primary transition-colors duration-200"
+            className="font-sans text-xs font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
             aria-label={gathering ? 'Switch to dark mode' : 'Switch to gathering mode'}
           >
             {gathering ? '🌙' : '☀️'}
@@ -67,7 +67,7 @@ export default function DevPreviewLayout({
           </span>
           <Link
             href="/dev-preview/notifications"
-            className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
+            className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
             aria-label="Notifications"
           >
             <span className="text-lg" aria-hidden="true">🔔</span>
@@ -90,7 +90,7 @@ export default function DevPreviewLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ease-[var(--ease-default)] ${
+              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 item.primary
                   ? active
                     ? 'text-ember'

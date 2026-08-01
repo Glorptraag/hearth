@@ -164,7 +164,7 @@ export function PedagogyProfilePanel({
                 onClick={() => toggleItem(value.id, selectedValues, 5, onValuesChange)}
                 disabled={!isSelected && !canSelect}
                 className={[
-                  'flex items-start gap-sm rounded-md border p-sm text-left transition-all duration-200',
+                  'flex items-start gap-sm rounded-md border p-sm text-left transition-all duration-[var(--motion-quick)]',
                   isSelected
                     ? 'border-ember/40 bg-ember-glow/30'
                     : canSelect
@@ -245,7 +245,7 @@ export function PedagogyProfilePanel({
                 onClick={() => toggleItem(practice.id, selectedPractices, 5, onPracticesChange)}
                 disabled={!isSelected && !canSelect}
                 className={[
-                  'flex items-start gap-sm rounded-md border p-sm text-left transition-all duration-200',
+                  'flex items-start gap-sm rounded-md border p-sm text-left transition-all duration-[var(--motion-quick)]',
                   isSelected
                     ? 'border-ember/40 bg-ember-glow/30'
                     : canSelect

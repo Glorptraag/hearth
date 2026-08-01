@@ -111,7 +111,7 @@ export default function FamiliesClient() {
             <button
               key={t.value}
               onClick={() => setSearchType(t.value)}
-              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-200 border ${
+              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-[var(--motion-quick)] border ${
                 searchType === t.value
                   ? 'border-border-medium bg-surface-raised text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-subtle'
@@ -133,12 +133,12 @@ export default function FamiliesClient() {
                 ? 'Search by email...'
                 : 'Search by family name...'
           }
-          className="flex-1 max-w-[400px] rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-200"
+          className="flex-1 max-w-[400px] rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
         />
         <button
           onClick={handleSearch}
           disabled={!query.trim() || searching}
-          className="rounded-md bg-ember px-md py-xs font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-200"
+          className="rounded-md bg-ember px-md py-xs font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>
@@ -173,7 +173,7 @@ export default function FamiliesClient() {
                   <tr
                     key={r.id}
                     onClick={() => handleRowClick(r.id)}
-                    className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-200"
+                    className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-[var(--motion-quick)]"
                     style={{ height: 'var(--admin-row-height, 40px)' }}
                   >
                     <td className="px-md font-sans text-sm font-medium text-text-primary">

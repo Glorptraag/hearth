@@ -241,7 +241,7 @@ export default function LogMode({
                 {onRemoveCapture && (
                   <button
                     onClick={() => onRemoveCapture(cap.timestamp)}
-                    className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-200"
+                    className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-[var(--motion-quick)]"
                     aria-label="Remove capture"
                   >
                     <X size={14} aria-hidden="true" />
@@ -264,7 +264,7 @@ export default function LogMode({
               <button
                 key={l.id}
                 onClick={() => toggleLearner(l.id)}
-                className={`font-sans text-sm px-md py-sm rounded-full border transition-all duration-200 ${
+                className={`font-sans text-sm px-md py-sm rounded-full border transition-all duration-[var(--motion-quick)] ${
                   selectedLearnerIds.includes(l.id)
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
@@ -293,10 +293,10 @@ export default function LogMode({
                     <button
                       key={i}
                       onClick={() => setEngagement((prev) => ({ ...prev, [lid]: i + 1 }))}
-                      className={`text-2xl rounded-md p-xs transition-all duration-200 ${
+                      className={`min-h-[44px] min-w-[44px] text-2xl rounded-md p-xs ${
                         engagement[lid] === i + 1
-                          ? 'bg-ember-glow scale-110'
-                          : 'opacity-40 hover:opacity-70'
+                          ? 'hearth-engagement-select bg-ember-glow'
+                          : 'hearth-engagement-not-selected hover:opacity-70'
                       }`}
                     >
                       {emoji}
@@ -329,7 +329,7 @@ export default function LogMode({
                     <button
                       key={key}
                       onClick={() => setUnderstandingLevel((prev) => ({ ...prev, [lid]: prev[lid] === key ? '' : key }))}
-                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition-all duration-200 ${
+                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition-all duration-[var(--motion-quick)] ${
                         understandingLevel[lid] === key
                           ? badge
                           : 'bg-transparent border-border-subtle text-text-muted hover:border-border-medium'
@@ -402,7 +402,7 @@ export default function LogMode({
                 <button
                   key={prompt}
                   onClick={() => togglePrompt(prompt)}
-                  className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-200 ${
+                  className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-[var(--motion-quick)] ${
                     activePrompts.includes(prompt)
                       ? 'bg-sage/20 text-sage border-sage/30'
                       : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'
@@ -421,9 +421,9 @@ export default function LogMode({
       <button
         onClick={handleSave}
         disabled={saving || selectedLearnerIds.length === 0}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember disabled:opacity-50 disabled:cursor-not-allowed"
+        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {saving ? 'Saving...' : 'Save to Portfolio →'}
+        {saving ? 'Saving…' : 'Save to Portfolio'}
       </button>
     </div>
   );

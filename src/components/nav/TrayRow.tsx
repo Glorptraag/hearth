@@ -36,7 +36,7 @@ export const TrayRow = forwardRef<HTMLAnchorElement, TrayRowProps>(
         onAnimationEnd={onAnimationEnd}
         data-state={closing ? 'closing' : 'open'}
         style={style}
-        className={`${styles['tray-row']} flex items-center justify-end gap-sm`}
+        className={`${styles['tray-row']} hearth-press flex min-h-[44px] items-center justify-end gap-sm`}
       >
         <span className="rounded-full border border-border-subtle bg-surface-panel px-md py-xs font-sans text-[0.85rem] font-medium text-text-primary shadow-inset-highlight">
           {label}

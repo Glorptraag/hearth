@@ -67,7 +67,7 @@ export default function AnalyticsClient() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-xs rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition-all duration-200 border ${
+            className={`flex items-center gap-xs rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition-all duration-[var(--motion-quick)] border ${
               activeTab === tab.id
                 ? 'border-border-medium bg-surface-raised text-ember'
                 : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -160,7 +160,7 @@ function IdInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full max-w-[420px] rounded-md border border-border-subtle bg-surface-body px-md py-sm font-mono text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-200"
+        className="w-full max-w-[420px] rounded-md border border-border-subtle bg-surface-body px-md py-sm font-mono text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
       />
     </div>
   );
@@ -246,7 +246,7 @@ function AbandonmentTab({
       {moduleId !== submittedId && moduleId && (
         <button
           onClick={() => setSubmittedId(moduleId)}
-          className="mb-lg rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200"
+          className="mb-lg rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
         >
           Load
         </button>
@@ -352,7 +352,7 @@ function ThreadCoverageTab({
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
+            className="rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
           />
         </div>
         <div>
@@ -363,7 +363,7 @@ function ThreadCoverageTab({
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
+            className="rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
           />
         </div>
       </div>

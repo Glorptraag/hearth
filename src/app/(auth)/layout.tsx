@@ -149,7 +149,7 @@ export default function AuthLayout({
         <div className="flex shrink-0 items-center gap-sm px-xl pt-xl pb-2xl">
           <Link
             href="/dashboard"
-            className="relative inline-flex items-center transition-opacity duration-200 ease-[var(--ease-default)] hover:opacity-80 focus:outline-none focus-visible:opacity-80"
+            className="relative inline-flex items-center transition-opacity duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:opacity-80 focus:outline-none focus-visible:opacity-80"
             aria-label={`Hearth — home${unreadCount > 0 ? ` (${unreadCount} unread notifications)` : ''}`}
           >
             <Wordmark
@@ -167,7 +167,7 @@ export default function AuthLayout({
           <Link
             href="/notifications"
             aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            className={`relative ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+            className={`relative ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
               isActive(pathname, '/notifications')
                 ? 'bg-surface-raised text-ember'
                 : 'text-text-muted hover:bg-ember-glow hover:text-text-primary'
@@ -197,7 +197,7 @@ export default function AuthLayout({
           <Link
             href="/settings"
             aria-label={`Settings — ${firstName}`}
-            className={`flex items-center gap-md rounded-md border p-md text-left transition-colors duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+            className={`flex items-center gap-md rounded-md border p-md text-left transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
               isActive(pathname, '/settings')
                 ? 'border-border-medium bg-surface-raised shadow-card'
                 : 'border-border-subtle bg-surface-raised hover:border-border-medium'
@@ -232,13 +232,13 @@ export default function AuthLayout({
             <Link
               href="/settings?tab=profile"
               aria-label={`${familyName} — family settings`}
-              className="max-w-[45vw] truncate font-sans text-sm text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:text-text-primary focus:outline-none focus-visible:text-text-primary"
+              className="max-w-[45vw] truncate font-sans text-sm text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary focus:outline-none focus-visible:text-text-primary"
             >
               {familyName}
             </Link>
             <Link
               href="/notifications"
-              className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
+              className="hit-target hearth-press relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-[background-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
               <Bell size={18} aria-hidden="true" />
@@ -270,7 +270,7 @@ export default function AuthLayout({
 }
 
 const DESKTOP_NAV_ROW_BASE =
-  'mb-xs flex w-full items-center gap-md rounded-md border px-md py-md text-left font-sans text-[0.9rem] font-medium transition-all duration-200 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+  'mb-xs flex w-full items-center gap-md rounded-md border px-md py-md text-left font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
 const DESKTOP_NAV_ROW_ACTIVE =
   'border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight';
 const DESKTOP_NAV_ROW_IDLE =
@@ -329,7 +329,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
+        className={`text-text-muted transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
       />
     </Link>
   ) : (
@@ -346,7 +346,7 @@ function DesktopNavRow({
       <CaretRight
         size={14}
         aria-hidden="true"
-        className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
+        className={`text-text-muted transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
       />
     </button>
   );
@@ -438,7 +438,7 @@ function DesktopCommunityRow({
         <CaretRight
           size={14}
           aria-hidden="true"
-          className={`text-text-muted transition-transform duration-200 ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
+          className={`text-text-muted transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${effectiveOpen ? 'rotate-90' : ''}`}
         />
       </button>
       {effectiveOpen && (

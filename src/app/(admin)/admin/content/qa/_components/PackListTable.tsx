@@ -63,13 +63,13 @@ export default function PackListTable({ packs, loading }: Props) {
           {packs.map((pack) => (
             <tr
               key={pack.id}
-              className="border-b border-border-subtle hover:bg-surface-hover transition-colors duration-200"
+              className="border-b border-border-subtle hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
               style={{ height: 'var(--admin-row-height, 40px)' }}
             >
               <td className="px-md">
                 <Link
                   href={`/admin/content/qa/${pack.id}`}
-                  className="font-serif text-sm font-semibold text-text-primary hover:text-ember transition-colors duration-200"
+                  className="font-serif text-sm font-semibold text-text-primary hover:text-ember transition-colors duration-[var(--motion-quick)]"
                 >
                   {pack.title}
                 </Link>
@@ -107,7 +107,7 @@ export default function PackListTable({ packs, loading }: Props) {
                 {pack.errorCount > 0 || pack.warningCount > 0 ? (
                   <Link
                     href={`/admin/content/qa/issues?packId=${pack.id}`}
-                    className="font-sans text-xs text-text-muted hover:text-ember transition-colors duration-200"
+                    className="font-sans text-xs text-text-muted hover:text-ember transition-colors duration-[var(--motion-quick)]"
                   >
                     {pack.errorCount > 0 && (
                       <span className="text-ember">{pack.errorCount} error{pack.errorCount !== 1 ? 's' : ''}</span>

@@ -82,7 +82,7 @@ export default function ModuleCard({
         onDragStart?.(entry.id);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-200 ease-[var(--ease-default)] ${
+      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         !isReadOnly ? 'cursor-grab active:cursor-grabbing' : ''
       } ${
         isComplete
@@ -92,7 +92,7 @@ export default function ModuleCard({
     >
       {/* Ember top-line on hover */}
       {!isComplete && (
-        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-quick)] group-hover:opacity-100" />
       )}
 
       <div className="p-sm pt-[6px]">
@@ -122,10 +122,10 @@ export default function ModuleCard({
         {!isReadOnly && (
           <button
             onClick={() => onDelete(entry.id)}
-            className="absolute right-xs top-xs hidden h-4 w-4 items-center justify-center rounded text-text-muted transition-colors hover:text-red-400 group-hover:flex"
+            className="hit-target absolute right-xs top-xs hidden h-5 w-5 items-center justify-center rounded text-text-muted transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-red-400 group-hover:flex pointer-coarse:flex"
             aria-label="Remove"
           >
-            <X size={10} aria-hidden="true" />
+            <X size={12} aria-hidden="true" />
           </button>
         )}
 
@@ -137,7 +137,9 @@ export default function ModuleCard({
             disabled={isReadOnly}
             aria-label={`Mark "${entry.title ?? 'Untitled'}" ${isComplete ? 'planned' : 'complete'}`}
             // p/-m enlarges the tap target past the 8px dot without moving layout.
-            className="mt-[3px] shrink-0 p-xs -m-xs"
+            // Capped at 28px (not hit-target's 44) so it can't swallow taps
+            // meant for the adjacent title button.
+            className="mt-[3px] shrink-0 p-[10px] -m-[10px]"
           >
             <span
               className={`block h-[8px] w-[8px] rounded-full transition-colors ${
@@ -152,7 +154,7 @@ export default function ModuleCard({
           {entry.moduleId ? (
             <Link
               href={`/module/${encodeURIComponent(entry.moduleId)}?plannerEntryId=${encodeURIComponent(entry.id)}`}
-              className={`inline-flex items-start gap-[3px] font-sans text-[0.6875rem] font-medium leading-snug hover:text-ember transition-colors duration-200 ${
+              className={`inline-flex items-start gap-[3px] font-sans text-[0.6875rem] font-medium leading-snug hover:text-ember transition-colors duration-[var(--motion-quick)] ${
                 isComplete ? 'text-text-muted line-through' : 'text-text-primary'
               }`}
             >

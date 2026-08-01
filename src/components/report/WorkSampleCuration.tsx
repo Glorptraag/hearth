@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { useToast } from '@/hooks/use-toast';
-import { X, Tray, Flame, Camera, Check, Sparkle } from '@/components/icons';
+import { X, Tray, Flame, Camera, Check, Sparkle, ArrowRight } from '@/components/icons';
 import WorkSamplePill from '@/components/ui/WorkSamplePill';
 
 // ─── Types ───
@@ -344,7 +344,7 @@ export default function WorkSampleCuration({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm">
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="w-full max-w-[640px] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="hearth-modal-enter w-full max-w-[640px] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="sticky top-0 z-10 bg-surface-body border-b border-border-subtle px-lg py-md flex items-center justify-between">
           <div>
@@ -430,7 +430,7 @@ export default function WorkSampleCuration({
                         key={entry.id}
                         onClick={() => handleSelect(entry.id)}
                         disabled={saving}
-                        className={`w-full text-left rounded-lg border p-md transition-all duration-200 ${
+                        className={`w-full text-left rounded-lg border p-md transition-all duration-[var(--motion-quick)] ${
                           isSelected
                             ? 'border-ember bg-ember/5'
                             : 'border-border-subtle bg-surface-raised hover:border-border-medium hover:translate-y-[-1px]'
@@ -521,7 +521,7 @@ export default function WorkSampleCuration({
                   {ANNOTATION_FIELDS.map((f) => (
                     <div
                       key={f.key}
-                      className={`h-[4px] w-[32px] rounded-full transition-colors duration-200 ${
+                      className={`h-[4px] w-[32px] rounded-full transition-colors duration-[var(--motion-quick)] ${
                         annotationDraft[f.key]?.trim() ? 'bg-sage' : 'bg-surface-hover'
                       }`}
                     />
@@ -610,7 +610,7 @@ export default function WorkSampleCuration({
               <button
                 onClick={handleConfirm}
                 disabled={saving || !isComplete}
-                className={`mt-lg w-full rounded-md py-sm font-sans text-sm font-semibold transition-all duration-200 ${
+                className={`mt-lg w-full rounded-md py-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] ${
                   isComplete
                     ? 'bg-sage text-surface-body hover:bg-sage/90 shadow-[0_4px_16px_rgba(123,191,138,0.20)]'
                     : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'
@@ -638,9 +638,9 @@ export default function WorkSampleCuration({
               <p className="font-serif text-sm text-text-secondary">Select an entry first to add your annotations.</p>
               <button
                 onClick={() => setView('candidates')}
-                className="mt-sm font-sans text-xs text-ember hover:text-ember-hover"
+                className="hearth-link-arrow mt-sm font-sans text-xs text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
               >
-                Choose an entry →
+                Choose an entry <ArrowRight size={14} aria-hidden="true" />
               </button>
             </div>
           )}

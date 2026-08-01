@@ -48,7 +48,7 @@ export function WhoSection({
             <button
               key={learner.id}
               onClick={() => onToggleLearner(learner.id)}
-              className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-200 ease-[var(--ease-default)] select-none ${
+              className={`flex items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] select-none ${
                 selected
                   ? `${colors.border} bg-ember-glow text-text-primary`
                   : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'

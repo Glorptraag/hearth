@@ -9,7 +9,7 @@ import { Check } from '@/components/icons';
 export function SectionIndicator({ number, done }: { number: number; done: boolean }) {
   return (
     <div
-      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
       }`}
     >
@@ -22,7 +22,7 @@ export function SectionHeader({ number, done, label, optional }: { number: numbe
   return (
     <div className="flex items-center gap-sm mb-md">
       <SectionIndicator number={number} done={done} />
-      <span className={`font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-200 ${done ? 'text-text-secondary' : 'text-text-muted'}`}>
+      <span className={`font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-[var(--motion-quick)] ${done ? 'text-text-secondary' : 'text-text-muted'}`}>
         {label}
       </span>
       {optional && (

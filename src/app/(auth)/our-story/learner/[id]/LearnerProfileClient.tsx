@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkle, Medal, Plant, Lock } from '@/components/icons';
+import { ArrowLeft, Sparkle, Medal, Plant, Lock, X } from '@/components/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ function TagInput({
 
   return (
     <div
-      className={`flex min-h-[44px] flex-wrap gap-xs rounded-[10px] border border-border-subtle bg-surface-raised p-sm transition-all duration-200 ${
+      className={`flex min-h-[44px] flex-wrap gap-xs rounded-[10px] border border-border-subtle bg-surface-raised p-sm transition-all duration-[var(--motion-quick)] ${
         editing ? 'cursor-text' : ''
       }`}
       onClick={() => editing && inputRef.current?.focus()}
@@ -109,10 +109,10 @@ function TagInput({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
-              className="ml-[2px] text-text-muted transition-colors hover:text-text-primary"
+              className="ml-[2px] inline-flex p-[4px] -my-[4px] text-text-muted transition-colors hover:text-text-primary"
               aria-label={`Remove ${tag}`}
             >
-              ×
+              <X size={12} aria-hidden="true" />
             </button>
           )}
         </span>
@@ -287,14 +287,14 @@ export default function LearnerProfileClient({
       <div className="flex items-center justify-between px-md pb-md pt-lg">
         <Link
           href="/our-story"
-          className="flex items-center gap-xs font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary"
+          className="flex items-center gap-xs font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary"
         >
-          ← Our Story
+          <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Our Story</span>
         </Link>
         <button
           type="button"
           onClick={editing ? cancelEdit : startEdit}
-          className={`rounded-[6px] border px-md py-sm font-sans text-xs font-medium transition-all duration-200 ${
+          className={`rounded-[6px] border px-md py-sm font-sans text-xs font-medium transition-all duration-[var(--motion-quick)] ${
             editing
               ? 'border-border-medium bg-surface-raised text-text-secondary'
               : 'border-border-subtle bg-surface-raised text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -325,7 +325,7 @@ export default function LearnerProfileClient({
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 onBlur={() => setTaglineEditing(false)}
-                className="mt-xs w-full bg-transparent font-serif text-base italic text-text-secondary border-b border-border-subtle focus:outline-none transition-colors duration-200 focus:[border-color:var(--color-child-accent)]"
+                className="mt-xs w-full bg-transparent font-serif text-base italic text-text-secondary border-b border-border-subtle focus:outline-none transition-colors duration-[var(--motion-quick)] focus:[border-color:var(--color-child-accent)]"
                 placeholder="Add a tagline..."
               />
             ) : (
@@ -335,7 +335,7 @@ export default function LearnerProfileClient({
                 className={`mt-xs ${editing ? 'cursor-pointer' : 'cursor-default'}`}
               >
                 {tagline ? (
-                  <p className="font-serif text-base italic text-text-secondary hover:text-text-primary transition-colors duration-200">
+                  <p className="font-serif text-base italic text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)]">
                     {tagline}
                   </p>
                 ) : (
@@ -427,7 +427,7 @@ export default function LearnerProfileClient({
               {Array.from({ length: 12 }, (_, i) => i + 7).map((h) => (
                 <div
                   key={h}
-                  className={`h-2 w-2 rounded-full transition-all duration-200 ${
+                  className={`h-2 w-2 rounded-full transition-all duration-[var(--motion-quick)] ${
                     h >= attentionWindowStart && h < attentionWindowEnd
                       ? 'bg-ember shadow-[0_0_4px_rgba(217,123,58,0.4)]'
                       : 'bg-surface-hover'
@@ -457,7 +457,7 @@ export default function LearnerProfileClient({
                     );
                   }}
                   disabled={!editing}
-                  className={`rounded-full border px-md py-[4px] font-sans text-xs font-semibold transition-all duration-200 ${
+                  className={`rounded-full border px-md py-[4px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
                     preferredTimes.includes(t)
                       ? 'border-ember bg-ember/15 text-ember'
                       : editing
@@ -492,7 +492,7 @@ export default function LearnerProfileClient({
                       }));
                     }}
                     disabled={!editing}
-                    className={`rounded-md border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-200 ${
+                    className={`rounded-md border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
                       stylePreferences[key] === opt
                         ? 'border-ember bg-ember/15 text-ember'
                         : editing
@@ -519,7 +519,7 @@ export default function LearnerProfileClient({
               onChange={(e) => setAbout(e.target.value)}
               placeholder={`What makes ${learner.name} unique as a learner?`}
               rows={4}
-              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-200"
+              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-[var(--motion-quick)]"
             />
           ) : about ? (
             <p className="font-serif text-base leading-relaxed text-text-secondary">
@@ -551,7 +551,7 @@ export default function LearnerProfileClient({
                   type="button"
                   disabled={!editing}
                   onClick={() => toggleWorkingStyle(tag)}
-                  className={`rounded-[6px] border px-sm py-[5px] font-sans text-xs font-medium transition-all duration-200 ${
+                  className={`rounded-[6px] border px-sm py-[5px] font-sans text-xs font-medium transition-all duration-[var(--motion-quick)] ${
                     active
                       ? `${colour.pill} border`
                       : editing
@@ -580,7 +580,7 @@ export default function LearnerProfileClient({
             tags={interests}
             onChange={setInterests}
             editing={editing}
-            placeholder="What is she into right now?"
+            placeholder="What are they into right now?"
           />
         </section>
 
@@ -598,7 +598,7 @@ export default function LearnerProfileClient({
             tags={strengths}
             onChange={setStrengths}
             editing={editing}
-            placeholder="What does she do well?"
+            placeholder="What do they do well?"
           />
         </section>
 
@@ -648,7 +648,7 @@ export default function LearnerProfileClient({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anything else worth knowing — sensory needs, what helps on hard days, transition strategies…"
               rows={4}
-              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-200"
+              className="w-full resize-none rounded-[10px] border border-border-medium bg-surface-raised px-md py-sm font-serif text-base leading-relaxed text-text-primary outline-none placeholder:text-text-muted focus:border-border-medium focus:shadow-focus transition-all duration-[var(--motion-quick)]"
             />
           ) : notes ? (
             <p className="font-serif text-base leading-relaxed text-text-secondary">
@@ -678,14 +678,14 @@ export default function LearnerProfileClient({
               onChange={(e) => setFacilitatorNotes(e.target.value)}
               onBlur={() => setFacilitatorNotesEditing(false)}
               rows={4}
-              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none transition-all duration-200"
+              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm text-text-secondary focus:border-ember focus:outline-none resize-none transition-all duration-[var(--motion-quick)]"
               placeholder="Private notes about this learner's style, needs, or observations…"
             />
           ) : (
             <button
               onClick={() => editing && setFacilitatorNotesEditing(true)}
               disabled={!editing}
-              className="w-full text-left rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm italic text-text-secondary hover:border-border-medium transition-all duration-200 disabled:cursor-default"
+              className="w-full text-left rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm italic text-text-secondary hover:border-border-medium transition-all duration-[var(--motion-quick)] disabled:cursor-default"
             >
               {facilitatorNotes ? (
                 facilitatorNotes
@@ -707,7 +707,7 @@ export default function LearnerProfileClient({
             <button
               type="button"
               onClick={cancelEdit}
-              className="flex-1 rounded-[6px] border border-border-subtle bg-transparent py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+              className="flex-1 rounded-[6px] border border-border-subtle bg-transparent py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
             >
               Cancel
             </button>
@@ -715,7 +715,7 @@ export default function LearnerProfileClient({
               type="button"
               onClick={save}
               disabled={saving}
-              className="flex-[2] rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 hover:bg-[#E88F4E] disabled:opacity-60"
+              className="flex-[2] rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-[#E88F4E] disabled:opacity-60"
             >
               {saving ? 'Saving…' : `Save ${learner.name}'s portrait`}
             </button>

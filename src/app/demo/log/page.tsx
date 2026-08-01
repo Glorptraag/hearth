@@ -85,7 +85,7 @@ export default function DemoLog() {
                   <button
                     key={t.key}
                     onClick={() => setActivityType(t.key)}
-                    className={`rounded-md px-md py-sm font-sans text-sm border transition-all duration-200 ease-[var(--ease-default)] text-left ${
+                    className={`rounded-md px-md py-sm font-sans text-sm border transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] text-left ${
                       activityType === t.key
                         ? 'border-ember text-ember bg-ember/10'
                         : 'border-border-subtle text-text-secondary bg-surface-raised hover:border-border-medium'
@@ -107,7 +107,7 @@ export default function DemoLog() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Nature journaling at the creek"
-                className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-200"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
               />
             </div>
 
@@ -121,7 +121,7 @@ export default function DemoLog() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What happened? What did you notice?"
-                className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-200 resize-none"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)] resize-none"
               />
             </div>
 
@@ -134,7 +134,7 @@ export default function DemoLog() {
                 type="date"
                 value={dateOccurred}
                 onChange={(e) => setDateOccurred(e.target.value)}
-                className="bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-200"
+                className="bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
               />
             </div>
 
@@ -150,7 +150,7 @@ export default function DemoLog() {
                     <button
                       key={l.id}
                       onClick={() => toggleLearner(l.id)}
-                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition-all duration-200 ease-[var(--ease-default)] ${
+                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                         selected
                           ? `${LEARNER_BORDER[l.colourToken] ?? 'border-ember'} text-text-primary bg-surface-raised`
                           : 'border-border-subtle text-text-muted hover:border-border-medium'
@@ -174,7 +174,7 @@ export default function DemoLog() {
                   <button
                     key={s}
                     onClick={() => toggleSubject(s)}
-                    className={`transition-opacity duration-200 ${
+                    className={`transition-opacity duration-[var(--motion-quick)] ${
                       selectedSubjects.length === 0 || selectedSubjects.includes(s)
                         ? 'opacity-100'
                         : 'opacity-40'
@@ -190,7 +190,7 @@ export default function DemoLog() {
             <button
               onClick={handleSave}
               disabled={!title.trim()}
-              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] ${
+              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 title.trim()
                   ? 'hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]'
                   : 'opacity-50 cursor-not-allowed'

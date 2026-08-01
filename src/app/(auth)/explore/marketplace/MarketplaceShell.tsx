@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MarketplaceCard, normalizeSubject, type SanityPack, type Subject } from '@/components/screens/MarketplaceCard';
 import { MarketplaceModuleCard, type SanityStandaloneModule } from '@/components/screens/MarketplaceModuleCard';
 import {
-  Binoculars, Target, Books, MagnifyingGlass, Confetti,
+  ArrowLeft, Binoculars, Target, Books, MagnifyingGlass, Check as CheckIcon,
 } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
@@ -191,11 +191,11 @@ export function MarketplaceShell({
         <div className="flex items-center justify-between pb-lg mb-lg border-b border-border-subtle">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-200"
+            className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]"
           >
-            ← Dashboard
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Dashboard</span>
           </Link>
-          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-200 cursor-pointer">
+          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-[var(--motion-quick)] cursor-pointer">
             <Books size={16} aria-hidden="true" />
             <span>My Library</span>
             {libraryCount > 0 && (
@@ -226,7 +226,7 @@ export function MarketplaceShell({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search packs, modules, or creators…"
-            className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-[36px] pr-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
+            className="w-full bg-surface-panel border border-border-subtle rounded-[10px] pl-[36px] pr-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-[var(--motion-quick)]"
           />
         </div>
 
@@ -244,7 +244,7 @@ export function MarketplaceShell({
                   key={value}
                   onClick={() => setKind(value)}
                   aria-pressed={kind === value}
-                  className={`font-sans text-[0.72rem] font-semibold px-3 py-1 rounded-full transition-colors duration-200 ${
+                  className={`font-sans text-[0.72rem] font-semibold px-3 py-1 rounded-full transition-colors duration-[var(--motion-quick)] ${
                     kind === value
                       ? 'bg-ember text-text-inverse'
                       : 'text-text-secondary hover:text-text-primary'
@@ -261,7 +261,7 @@ export function MarketplaceShell({
         <div className="flex flex-wrap gap-xs mb-xl">
           <button
             onClick={() => setActiveSubject(null)}
-            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-200 ${
+            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)] ${
               activeSubject === null
                 ? 'bg-ember text-text-inverse border-ember'
                 : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -276,7 +276,7 @@ export function MarketplaceShell({
               <button
                 key={s.value}
                 onClick={() => setActiveSubject(isActive ? null : s.value)}
-                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-200"
+                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)]"
                 style={{
                   color: s.hex,
                   background: isActive ? `rgba(${rgb},0.22)` : `rgba(${rgb},0.08)`,
@@ -302,7 +302,7 @@ export function MarketplaceShell({
                 <p className="mb-sm font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
                   Editor&apos;s Picks
                 </p>
-                <div className="flex gap-md overflow-x-auto pb-sm scrollbar-none">
+                <div className="flex gap-md overflow-x-auto overscroll-x-contain snap-x pb-sm scrollbar-none">
                   {packs.slice(0, 4).map((pack, i) => {
                     const BADGES = ['Staff Pick', 'Specialist', 'New', 'Popular'];
                     const BADGE_STYLES = [
@@ -314,7 +314,7 @@ export function MarketplaceShell({
                     return (
                       <div
                         key={pack._id}
-                        className="relative shrink-0 w-[200px] rounded-[10px] border border-border-subtle bg-surface-panel p-md overflow-hidden"
+                        className="relative snap-start shrink-0 w-[200px] rounded-[10px] border border-border-subtle bg-surface-panel p-md overflow-hidden"
                       >
                         <div className="absolute left-0 right-0 top-0 h-[2px] bg-ember opacity-60" />
                         <span className={`mb-sm inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${BADGE_STYLES[i % BADGE_STYLES.length]}`}>
@@ -341,7 +341,7 @@ export function MarketplaceShell({
                       Family Fit
                     </p>
                     <p className="font-serif text-sm text-text-primary mb-sm">
-                      Your learning journey has room to grow in{' '}
+                      There&rsquo;s room to grow in{' '}
                       {gapSubjects.slice(0, 3).map((s, i) => {
                         const label = SUBJECT_FILTERS.find((sf) => sf.value === s)?.label ?? s;
                         return (
@@ -373,8 +373,8 @@ export function MarketplaceShell({
               visibleModules.every((m) => moduleLibraryIds.has(m._id)) && (
                 <div className="mb-lg rounded-[10px] border border-sage/20 bg-sage/5 px-lg py-sm">
                   <p className="inline-flex items-center gap-xs font-serif text-sm text-sage">
-                    <Confetti size={16} aria-hidden="true" />
-                    You&rsquo;ve added everything here — nice curation!
+                    <CheckIcon size={16} aria-hidden="true" />
+                    You&rsquo;ve added everything here.
                   </p>
                 </div>
               )}
@@ -454,13 +454,13 @@ export function MarketplaceShell({
                 </h3>
                 <p className="font-sans text-sm text-text-secondary mb-6 max-w-xs">
                   {!hasContent
-                    ? 'Packs and modules will appear here once they are published in Sanity.'
+                    ? 'Packs and modules will appear here as they\u2019re published.'
                     : 'Try adjusting your search, kind, or subject filter.'}
                 </p>
                 {hasContent && (
                   <button
                     onClick={() => { setSearch(''); setActiveSubject(null); setKind('all'); }}
-                    className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200"
+                    className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)]"
                   >
                     Reset filters
                   </button>

@@ -631,7 +631,7 @@ export default function LogPage() {
         />
         {toast && (
           <div
-            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
+            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
               toast.type === 'badge'
                 ? 'bg-ember/20 text-ember border border-ember/30'
                 : toast.type === 'success'
@@ -684,7 +684,7 @@ export default function LogPage() {
           <p className="inline-flex items-center gap-xs font-sans text-[11px] text-text-secondary"><NotePencil size={14} aria-hidden="true" /> Draft restored from your last session</p>
           <button
             onClick={dismissDraftRestored}
-            className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-200"
+            className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
           >
             Dismiss
           </button>
@@ -719,14 +719,14 @@ export default function LogPage() {
             <button
               type="button"
               onClick={() => setShowBatch(true)}
-              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
             >
               <ClipboardText size={12} aria-hidden="true" /> Batch log
             </button>
             <button
               type="button"
               onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
             >
               <ClipboardText size={12} aria-hidden="true" /> Import CSV
             </button>
@@ -747,7 +747,7 @@ export default function LogPage() {
         <button
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
             canSave
               ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
               : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
@@ -792,7 +792,7 @@ export default function LogPage() {
             <button
               type="button"
               onClick={() => setView('quick')}
-              className="inline-flex items-center gap-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200"
+              className="inline-flex items-center gap-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
             >
               <CaretDown size={14} aria-hidden="true" className="rotate-90" /> Back to Quick Log
             </button>
@@ -892,7 +892,7 @@ export default function LogPage() {
               <button
                 type="button"
                 onClick={() => setView('full')}
-                className="inline-flex items-center gap-xs rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.8125rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-200"
+                className="inline-flex items-center gap-xs rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.8125rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               >
                 Add more detail — switch to Full Log
               </button>
@@ -990,7 +990,7 @@ export default function LogPage() {
               <button
                 onClick={handleSave}
                 disabled={!canSave || isSaving}
-                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   canSave
                     ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
                     : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
@@ -1022,7 +1022,7 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-200 ${
+          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
             toast.type === 'badge'
               ? 'bg-ember/20 text-ember border border-ember/30'
               : toast.type === 'success'

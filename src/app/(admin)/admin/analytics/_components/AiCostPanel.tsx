@@ -84,7 +84,7 @@ export default function AiCostPanel() {
                 key={opt.days}
                 type="button"
                 onClick={() => setDays(opt.days)}
-                className={`rounded-md border px-md py-sm font-sans text-xs font-semibold transition-colors duration-200 ${
+                className={`rounded-md border px-md py-sm font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)] ${
                   days === opt.days
                     ? 'border-ember bg-ember-glow text-ember'
                     : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'

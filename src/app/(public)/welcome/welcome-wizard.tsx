@@ -42,8 +42,8 @@ const slides: Array<{ Icon: IconC; title: string; body: string }> = [
   },
   {
     Icon: Flame,
-    title: 'Ready to get started?',
-    body: "First, we\u2019ll set up your family profile and add your learners. It takes about two minutes. Then your Dashboard is waiting.",
+    title: 'Set up your family',
+    body: "Set up your family profile and add your learners. It takes about two minutes.",
   },
 ];
 
@@ -128,7 +128,7 @@ export default function WelcomeWizard() {
         <button
           onClick={complete}
           disabled={isCompleting}
-          className="absolute right-md top-md z-10 rounded-[6px] px-sm py-xs font-sans text-xs font-medium text-text-muted transition-colors duration-200 hover:text-text-secondary"
+          className="absolute right-md top-md z-10 rounded-[6px] px-sm py-xs font-sans text-xs font-medium text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary"
         >
           Skip
         </button>
@@ -138,7 +138,7 @@ export default function WelcomeWizard() {
           {slides.map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-2 rounded-full transition-all duration-200 ease-[var(--ease-default)] ${
+              className={`h-2 w-2 rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 i === current
                   ? 'bg-ember shadow-[0_0_8px_rgba(217,123,58,0.4)]'
                   : i < current
@@ -175,7 +175,7 @@ export default function WelcomeWizard() {
           {!isFirst && (
             <button
               onClick={prev}
-              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
+              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
             >
               Back
             </button>
@@ -183,9 +183,9 @@ export default function WelcomeWizard() {
           <button
             onClick={isLast ? complete : next}
             disabled={isCompleting}
-            className="flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
+            className="hearth-press flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-[background-color,transform,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
           >
-            {isCompleting ? 'Loading…' : isLast ? 'Set up my family →' : 'Next'}
+            {isCompleting ? 'Loading…' : isLast ? 'Set up my family' : 'Next'}
           </button>
         </div>
 

@@ -134,7 +134,7 @@ export function GalleryDomains({
       <text x={labelW} y={26} className="cap-band-meta" textAnchor="start">FOUNDATIONAL  ◂</text>
       <text x={(W + labelW) / 2} y={26} className="cap-band-meta" textAnchor="middle"
             style={{ fontStyle: 'italic', fill: 'var(--color-text-muted)' }}>
-        each band reads left → right as capability dependency
+        each band reads left to right as capability dependency
       </text>
       <text x={W - 24} y={26} className="cap-band-meta" textAnchor="end">▸  SYNTHESISING</text>
 
@@ -381,7 +381,7 @@ export function GalleryThreads({
         {domain.label}
       </text>
       <text x={padL} y={50} className="cap-band-meta">
-        {threads.length} threads · capability dependency reads left → right
+        {threads.length} threads · capability dependency reads left to right
       </text>
 
       {Array.from({ length: maxCol + 1 }).map((_, c) => (
@@ -562,7 +562,7 @@ export function GalleryDLOs({
       <GalleryDefs />
       <text x={padL} y={28} className="cap-band-label">{thread.name}</text>
       <text x={padL} y={48} className="cap-band-meta">
-        Left → right reads as tier progression. The right edge is mastery.
+        Left to right reads as tier progression. The right edge is mastery.
       </text>
 
       {/* Tier column headers + progression rail */}
@@ -803,7 +803,7 @@ export function GalleryMoments({
       <desc id="cap-moments-desc">{`${sorted.length} ${sorted.length === 1 ? 'moment' : 'moments'} plotted left-to-right by date. Top lane is module-sourced, bottom lane is parent-logged.`}</desc>
       <text x={padL} y={28} className="cap-band-label">Moments for &ldquo;{dlo.descriptor}&rdquo;</text>
       <text x={padL} y={48} className="cap-band-meta">
-        Left → right is time. Top lane is module-sourced, bottom lane is parent-logged.
+        Left to right is time. Top lane is module-sourced, bottom lane is parent-logged.
       </text>
 
       <text x={padL - 12} y={yModule + 5} textAnchor="end" className="cap-band-meta">MODULE</text>

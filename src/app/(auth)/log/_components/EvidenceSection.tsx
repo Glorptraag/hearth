@@ -41,7 +41,7 @@ export function EvidenceSection({
             <button
               key={tool.key}
               onClick={() => onOpenTool(tool.key)}
-              className={`flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm transition-all duration-200 min-h-[44px] ${
+              className={`hearth-press flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] min-h-[44px] ${
                 hasItems
                   ? 'border-sage bg-sage/5 text-sage'
                   : 'border-dashed border-border-medium text-text-secondary hover:border-ember hover:text-text-primary'
@@ -74,7 +74,7 @@ export function EvidenceSection({
               </span>
               <button
                 onClick={() => onRemoveEvidence(i)}
-                className="text-text-muted hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
+                className="hit-target text-text-muted hover:text-text-primary min-h-[32px] min-w-[32px] flex items-center justify-center"
                 aria-label="Remove evidence item"
               >
                 <X size={14} aria-hidden="true" />

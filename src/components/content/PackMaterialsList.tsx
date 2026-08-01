@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { clientSanityRead } from '@/lib/sanity/client-read';
 import { MaterialItemRow } from './MaterialItemRow';
 import { PrintSheet } from './PrintSheet';
-import { Package } from '@/components/icons';
+import { ArrowLeft, Package } from '@/components/icons';
 import type { PrintableItem, PrintSelection, PrintBundleResponse } from './types';
 import { isPrintableAssetKind, fetchPrintBundle, type AssetKind } from './types';
 
@@ -254,8 +254,8 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-md px-xl pt-lg pb-md border-b border-border-subtle">
-          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-200">
-            ← Back
+          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]">
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
           </button>
           <h3 className="font-serif text-lg font-semibold text-text-primary">{packTitle}</h3>
         </div>
@@ -270,8 +270,8 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-md px-xl pt-lg pb-md border-b border-border-subtle">
-          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-200">
-            ← Back
+          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]">
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
           </button>
           <h3 className="font-serif text-lg font-semibold text-text-primary">{packTitle}</h3>
         </div>
@@ -293,8 +293,8 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
       {/* Header */}
       <div className="px-xl pt-lg pb-md border-b border-border-subtle">
         <div className="flex items-center gap-md mb-sm">
-          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-200">
-            ← Back
+          <button onClick={onBack} className="font-sans text-sm text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]">
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
           </button>
           <h3 className="font-serif text-lg font-semibold text-text-primary flex-1 truncate">{packTitle}</h3>
         </div>
@@ -308,7 +308,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
             <button
               key={chip.value}
               onClick={() => setFilter(chip.value)}
-              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-200 ${
+              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-[var(--motion-quick)] ${
                 filter === chip.value
                   ? 'bg-ember text-text-inverse border-ember'
                   : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -326,7 +326,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
           <div className="flex items-center justify-between">
             <button
               onClick={handleSelectAll}
-              className="font-sans text-[0.72rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+              className="font-sans text-[0.72rem] font-medium text-ember hover:text-ember/80 transition-colors duration-[var(--motion-quick)]"
             >
               {allSelected ? 'Deselect all' : 'Select all for printing'}
             </button>
@@ -341,10 +341,10 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
                 onClick={() => toggleModule(group.moduleId)}
                 className="w-full flex items-center gap-sm mb-sm group"
               >
-                <span className="font-sans text-[0.68rem] text-text-muted transition-transform duration-200" style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                <span className="font-sans text-[0.68rem] text-text-muted transition-transform duration-[var(--motion-quick)]" style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
                   ▼
                 </span>
-                <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted group-hover:text-text-secondary transition-colors duration-200">
+                <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted group-hover:text-text-secondary transition-colors duration-[var(--motion-quick)]">
                   {group.moduleTitle}
                 </p>
                 <span className="font-sans text-[10px] text-text-muted">
@@ -378,7 +378,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
         <div className="px-xl py-md border-t border-border-subtle bg-surface-panel">
           <button
             onClick={() => setShowPrintSheet(true)}
-            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
           >
             Print {selectedIds.size} selected item{selectedIds.size !== 1 ? 's' : ''}
           </button>

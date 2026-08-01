@@ -449,6 +449,34 @@ body::after {
   }
 }
 
+/* Touch fundamentals — the app supplies its own press states (.hearth-press,
+   active: variants), so the default grey mobile tap flash reads as a glitch.
+   `touch-action: manipulation` removes the double-tap-zoom delay on taps. */
+a,
+button,
+[role='button'],
+input,
+select,
+textarea,
+summary,
+label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Expand a small control's tap area to a 44px minimum per axis without
+   changing its visual size. Each side's percentage resolves against that
+   axis, so only undersized axes grow. Apply to icon buttons, close X's,
+   swatches, toggles — anything visually smaller than 44px. */
+@utility hit-target {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2));
+  }
+}
+
 /* Reduced motion — respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -162,7 +162,7 @@ export function PrintSheet({
     <div className="fixed inset-0 z-[200] flex items-end lg:items-center lg:justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-modal transition-opacity duration-200"
+        className="absolute inset-0 backdrop-modal transition-opacity duration-[var(--motion-quick)]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -192,7 +192,7 @@ export function PrintSheet({
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+            className="shrink-0 p-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
             aria-label="Close"
           >
             <X size={18} aria-hidden="true" />
@@ -212,7 +212,7 @@ export function PrintSheet({
                   <button
                     key={n}
                     onClick={() => { setCopies(n); setCustomCopies(false); }}
-                    className={`font-sans text-sm px-md py-xs rounded-[6px] border transition-colors duration-200 ${
+                    className={`font-sans text-sm px-md py-xs rounded-[6px] border transition-colors duration-[var(--motion-quick)] ${
                       copies === n && !customCopies
                         ? 'bg-ember text-text-inverse border-ember font-semibold'
                         : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
@@ -223,7 +223,7 @@ export function PrintSheet({
                 ))}
                 <button
                   onClick={() => setCustomCopies(true)}
-                  className={`font-sans text-sm px-md py-xs rounded-[6px] border transition-colors duration-200 ${
+                  className={`font-sans text-sm px-md py-xs rounded-[6px] border transition-colors duration-[var(--motion-quick)] ${
                     customCopies
                       ? 'bg-ember text-text-inverse border-ember font-semibold'
                       : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
@@ -256,7 +256,7 @@ export function PrintSheet({
             </p>
             <button
               onClick={toggleAll}
-              className="font-sans text-[0.72rem] text-ember hover:text-ember/80 transition-colors duration-200"
+              className="font-sans text-[0.72rem] text-ember hover:text-ember/80 transition-colors duration-[var(--motion-quick)]"
             >
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>
@@ -278,7 +278,7 @@ export function PrintSheet({
                     return (
                       <label
                         key={item.id}
-                        className="flex items-center gap-sm p-sm rounded-[6px] cursor-pointer transition-colors duration-200 hover:bg-surface-hover"
+                        className="flex items-center gap-sm p-sm rounded-[6px] cursor-pointer transition-colors duration-[var(--motion-quick)] hover:bg-surface-hover"
                       >
                         <input
                           type="checkbox"
@@ -334,14 +334,14 @@ export function PrintSheet({
             <button
               onClick={() => handleGenerate(false)}
               disabled={generating || selectedItems.length === 0}
-              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
             >
               {generating ? 'Preparing...' : 'Download PDF'}
             </button>
             <button
               onClick={() => handleGenerate(true)}
               disabled={generating || selectedItems.length === 0}
-              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
             >
               {generating ? 'Preparing...' : 'Print now'}
             </button>

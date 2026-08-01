@@ -94,7 +94,7 @@ export default function SnapshotsClient() {
           )}
           <button
             onClick={fetchAll}
-            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-200"
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
           >
             Refresh
           </button>
@@ -158,7 +158,7 @@ export default function SnapshotsClient() {
               onChange={(e) => setReason(e.target.value)}
               placeholder="Reason for manual rebuild…"
               rows={3}
-              className="w-full rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none resize-none transition-colors duration-200"
+              className="w-full rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none resize-none transition-colors duration-[var(--motion-quick)]"
               autoFocus
             />
 
@@ -170,14 +170,14 @@ export default function SnapshotsClient() {
               <button
                 onClick={() => setModal(null)}
                 disabled={rebuilding}
-                className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition-all duration-200 disabled:opacity-40"
+                className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-40"
               >
                 Cancel
               </button>
               <button
                 onClick={submitRebuild}
                 disabled={rebuilding || !reason.trim()}
-                className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 disabled:opacity-40"
+                className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] disabled:opacity-40"
               >
                 {rebuilding ? 'Queuing…' : 'Queue Rebuild'}
               </button>

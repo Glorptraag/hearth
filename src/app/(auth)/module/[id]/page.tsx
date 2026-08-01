@@ -534,7 +534,7 @@ export default function ModuleDetailPage() {
         </p>
         <button
           onClick={() => router.push('/explore/marketplace')}
-          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
         >
           Browse Marketplace
         </button>
@@ -577,7 +577,7 @@ export default function ModuleDetailPage() {
                 <button
                   key={m}
                   onClick={() => handleModeChange(m)}
-                  className={`font-sans text-sm font-semibold transition-colors duration-200 ${
+                  className={`font-sans text-sm font-semibold transition-colors duration-[var(--motion-quick)] ${
                     mode === m ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
                   }`}
                 >
@@ -588,7 +588,7 @@ export default function ModuleDetailPage() {
             {materialCount > 0 && (
               <button
                 onClick={() => setShowPrintSheet(true)}
-                className="ml-auto shrink-0 font-sans text-sm text-text-muted hover:text-ember transition-colors duration-200"
+                className="ml-auto shrink-0 font-sans text-sm text-text-muted hover:text-ember transition-colors duration-[var(--motion-quick)]"
                 aria-label={`${materialCount} materials — print`}
               >
                 <span className="inline-flex items-center gap-xs"><FilePdf size={14} aria-hidden="true" /> {materialCount}</span>

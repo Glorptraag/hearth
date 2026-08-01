@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { PortableText } from '@portabletext/react';
-import { Printer, X, Play, Pause, SpeakerHigh } from '@/components/icons';
+import { ArrowLeft, Printer, X, Play, Pause, SpeakerHigh } from '@/components/icons';
 
 type ReadingMode = 'standard' | 'short' | 'readAloud';
 
@@ -143,15 +143,15 @@ export function CommonsReader({
       <header className="sticky top-0 z-10 flex items-center justify-between px-lg py-md bg-surface-body/95 backdrop-blur-sm border-b border-border-subtle">
         <button
           onClick={onClose}
-          className="font-sans text-sm text-ember hover:text-ember/80 transition-colors duration-200"
+          className="font-sans text-sm text-ember hover:text-ember/80 transition-colors duration-[var(--motion-quick)]"
         >
-          ← {returnLabel}
+          <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> {returnLabel}</span>
         </button>
         <div className="flex items-center gap-sm">
           {onPrint && (
             <button
               onClick={onPrint}
-              className="p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+              className="p-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               aria-label="Print this text"
             >
               <Printer size={18} aria-hidden="true" />
@@ -159,7 +159,7 @@ export function CommonsReader({
           )}
           <button
             onClick={onClose}
-            className="p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+            className="p-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
             aria-label="Close reader"
           >
             <X size={18} aria-hidden="true" />
@@ -278,7 +278,7 @@ function ModeButton({
   return (
     <button
       onClick={onClick}
-      className={`font-sans text-sm px-md py-xs rounded-[10px] border transition-all duration-200 ${
+      className={`font-sans text-sm px-md py-xs rounded-[10px] border transition-all duration-[var(--motion-quick)] ${
         active
           ? 'bg-ember text-text-inverse border-ember font-semibold'
           : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'

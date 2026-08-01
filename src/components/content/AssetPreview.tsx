@@ -58,7 +58,7 @@ export function AssetPreview({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-modal transition-opacity duration-200"
+        className="absolute inset-0 backdrop-modal transition-opacity duration-[var(--motion-quick)]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -69,12 +69,12 @@ export function AssetPreview({
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-preview-title"
-        className="relative z-10 w-full max-w-md max-h-[90dvh] mx-md rounded-[16px] bg-surface-panel border border-border-subtle shadow-float overflow-y-auto transition-all duration-200 ease-[var(--ease-default)]"
+        className="relative z-10 w-full max-w-md max-h-[90dvh] mx-md rounded-[16px] bg-surface-panel border border-border-subtle shadow-float overflow-y-auto transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-md right-md z-10 p-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+          className="absolute top-md right-md z-10 p-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
           aria-label="Close preview"
         >
           <X size={18} aria-hidden="true" />
@@ -131,7 +131,7 @@ export function AssetPreview({
               {onDownload && (
                 <button
                   onClick={() => onDownload(asset)}
-                  className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 transition-all duration-200"
+                  className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
                 >
                   Download
                 </button>
@@ -139,7 +139,7 @@ export function AssetPreview({
               {onPrint && (
                 <button
                   onClick={() => onPrint(asset)}
-                  className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 transition-all duration-200"
+                  className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 transition-all duration-[var(--motion-quick)]"
                 >
                   Print
                 </button>
@@ -152,7 +152,7 @@ export function AssetPreview({
               </p>
               <a
                 href={upsellPackSlug ? `/explore/marketplace?pack=${upsellPackSlug}` : '/explore/marketplace'}
-                className="inline-block font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 transition-all duration-200"
+                className="inline-block font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
               >
                 View in Marketplace
               </a>

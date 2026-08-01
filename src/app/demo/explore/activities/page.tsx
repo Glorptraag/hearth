@@ -67,7 +67,7 @@ export default function DemoActivities() {
           </span>
           <Link
             href="/demo/explore/marketplace"
-            className="pb-sm font-sans text-sm font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
+            className="pb-sm font-sans text-sm font-medium text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
           >
             Marketplace
           </Link>
@@ -81,7 +81,7 @@ export default function DemoActivities() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="🔍  Search modules..."
-          className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-200"
+          className="w-full bg-surface-raised border border-border-subtle rounded-md px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
         />
       </div>
 
@@ -91,7 +91,7 @@ export default function DemoActivities() {
           <button
             key={s}
             onClick={() => toggleSubject(s)}
-            className={`transition-opacity duration-200 ${
+            className={`transition-opacity duration-[var(--motion-quick)] ${
               selectedSubjects.length === 0 || selectedSubjects.includes(s)
                 ? 'opacity-100'
                 : 'opacity-40'
@@ -108,7 +108,7 @@ export default function DemoActivities() {
           <button
             key={d.key}
             onClick={() => setSelectedDuration(d.key)}
-            className={`rounded-md px-md py-xs font-sans text-xs border transition-all duration-200 ease-[var(--ease-default)] ${
+            className={`rounded-md px-md py-xs font-sans text-xs border transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               selectedDuration === d.key
                 ? 'border-ember text-ember bg-ember/10'
                 : 'border-border-subtle text-text-muted hover:border-border-medium'
@@ -145,7 +145,7 @@ export default function DemoActivities() {
                 <span>{m.approaches.length} approaches</span>
               </div>
               <div className="mt-md">
-                <span className="inline-block rounded-md bg-ember px-md py-xs font-sans text-xs font-semibold text-text-inverse group-hover:bg-ember-hover transition-colors duration-200">
+                <span className="inline-block rounded-md bg-ember px-md py-xs font-sans text-xs font-semibold text-text-inverse group-hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]">
                   Start
                 </span>
               </div>

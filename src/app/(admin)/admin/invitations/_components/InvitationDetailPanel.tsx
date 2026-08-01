@@ -84,7 +84,7 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
         </h3>
         <button
           onClick={onClose}
-          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
         >
           Close
         </button>
@@ -130,7 +130,7 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
           {invitation.status === 'pending' && !showRevokeForm && (
             <button
               onClick={() => setShowRevokeForm(true)}
-              className="w-full rounded-md bg-red-900/20 border border-red-900/30 px-md py-sm font-sans text-[0.8rem] font-semibold text-red-400 hover:bg-red-900/30 transition-all duration-200 mb-lg"
+              className="w-full rounded-md bg-red-900/20 border border-red-900/30 px-md py-sm font-sans text-[0.8rem] font-semibold text-red-400 hover:bg-red-900/30 transition-all duration-[var(--motion-quick)] mb-lg"
             >
               Revoke Invitation
             </button>
@@ -151,14 +151,14 @@ export default function InvitationDetailPanel({ invitationId, onClose, onRevoked
               <div className="flex gap-sm">
                 <button
                   onClick={() => { setShowRevokeForm(false); setRevokeReason(''); }}
-                  className="flex-1 rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+                  className="flex-1 rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRevoke}
                   disabled={!revokeReason.trim() || revoking}
-                  className="flex-1 rounded-md bg-red-600 px-sm py-xs font-sans text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-200"
+                  className="flex-1 rounded-md bg-red-600 px-sm py-xs font-sans text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
                 >
                   {revoking ? 'Revoking...' : 'Confirm Revoke'}
                 </button>

@@ -489,12 +489,12 @@ export default function SettingsClient({
       </div>
 
       {/* Tab bar — mobile only */}
-      <div className="mb-xl flex overflow-x-auto border-b border-border-subtle pb-[1px] lg:hidden">
+      <div className="mb-xl flex overflow-x-auto overscroll-x-contain scrollbar-none border-b border-border-subtle pb-[1px] lg:hidden">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-shrink-0 px-md pb-sm font-sans text-sm font-semibold transition-colors duration-200 ${
+            className={`flex-shrink-0 px-md pb-sm font-sans text-sm font-semibold transition-colors duration-[var(--motion-quick)] ${
               activeTab === tab.id
                 ? 'border-b-2 border-ember text-ember'
                 : 'text-text-muted hover:text-text-secondary'
@@ -508,7 +508,7 @@ export default function SettingsClient({
       {/* Mobile sidebar toggle button */}
       <button
         onClick={() => setSidebarOpen((v) => !v)}
-        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         {sidebarOpen
           ? <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Hide menu</span>
@@ -525,7 +525,7 @@ export default function SettingsClient({
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-200 ease-[var(--ease-default)] border ${
+              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
                 activeTab === tab.id
                   ? 'border-border-medium bg-surface-raised text-ember shadow-card'
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -616,7 +616,8 @@ export default function SettingsClient({
                       <button
                         key={c.token}
                         onClick={() => setNewChildColour(c.token)}
-                        className={`h-7 w-7 rounded-full transition-all duration-200 ${c.bg} ${
+                        aria-label={`Colour ${c.token}`}
+                        className={`h-8 w-8 rounded-full transition-all duration-[var(--motion-quick)] ${c.bg} ${
                           newChildColour === c.token ? 'ring-2 ring-offset-2 ring-offset-surface-raised ring-ember' : ''
                         }`}
                       />
@@ -663,7 +664,7 @@ export default function SettingsClient({
             <button
               type="button"
               onClick={() => setWizardOpen(true)}
-              className="flex-shrink-0 rounded-[6px] border border-border-subtle px-md py-xs font-sans text-xs font-semibold text-text-secondary hover:border-ember hover:text-ember transition-colors duration-200"
+              className="flex-shrink-0 rounded-[6px] border border-border-subtle px-md py-xs font-sans text-xs font-semibold text-text-secondary hover:border-ember hover:text-ember transition-colors duration-[var(--motion-quick)]"
             >
               Re-run wizard
             </button>
@@ -689,8 +690,8 @@ export default function SettingsClient({
           />
           <p className="font-sans text-xs text-text-muted mt-sm">
             Your philosophy shapes how Hearth interprets your learning logs.{' '}
-            <a href="/settings?tab=pedagogy" className="text-ember underline underline-offset-2 hover:text-ember-hover transition-colors duration-200">
-              Update any time →
+            <a href="/settings?tab=pedagogy" className="text-ember underline underline-offset-2 hover:text-ember-hover transition-colors duration-[var(--motion-quick)]">
+              Update any time
             </a>
           </p>
           {/* Learning values & practices */}

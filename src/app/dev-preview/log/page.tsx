@@ -21,7 +21,7 @@ export default function DevPreviewLog() {
         </p>
         <Link
           href="/dev-preview/dashboard"
-          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover"
+          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover"
         >
           Back to Dashboard
         </Link>

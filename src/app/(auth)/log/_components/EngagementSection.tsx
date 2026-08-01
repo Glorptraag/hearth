@@ -53,10 +53,10 @@ export function EngagementSection({
                         key={level.value}
                         onClick={() => onEngagementChange(id, level.value)}
                         title={level.label}
-                        className={`flex h-[36px] w-[36px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-all duration-200 ease-[var(--ease-default)] ${
+                        className={`flex h-[40px] w-[40px] items-center justify-center rounded-sm border-[1.5px] text-[1.125rem] transition-[background-color,border-color,opacity] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                           selected
-                            ? `${colors.bg} ${colors.border} scale-110 opacity-100`
-                            : 'bg-surface-body border-border-subtle opacity-60 hover:opacity-100 hover:border-border-medium hover:scale-105'
+                            ? `hearth-engagement-select ${colors.bg} ${colors.border} opacity-100`
+                            : 'hearth-engagement-not-selected bg-surface-body border-border-subtle hover:opacity-100 hover:border-border-medium'
                         }`}
                       >
                         {level.emoji}

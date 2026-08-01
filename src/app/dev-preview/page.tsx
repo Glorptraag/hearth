@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CaretRight } from '@/components/icons';
 
 const ROUTES = [
   { href: '/dev-preview/dashboard', label: 'Dashboard', emoji: '🏠', desc: 'Family hub with greeting, learner row, moments, stats' },
@@ -39,7 +40,7 @@ export default function DevPreviewIndex() {
                 </h2>
                 <p className="font-sans text-xs text-text-secondary">{route.desc}</p>
               </div>
-              <span className="font-sans text-xs text-ember">→</span>
+              <span className="inline-flex text-ember" aria-hidden="true"><CaretRight size={14} /></span>
             </div>
           </Link>
         ))}

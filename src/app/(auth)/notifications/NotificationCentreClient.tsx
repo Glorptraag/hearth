@@ -124,7 +124,7 @@ export default function NotificationCentreClient({
           <div className="flex items-center gap-sm">
             <button
               onClick={() => setQuietDay((v) => !v)}
-              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-200 ease-[var(--ease-default)] ${
+              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 quietDay
                   ? 'border-sage/60 bg-sage/10 text-sage'
                   : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -135,7 +135,7 @@ export default function NotificationCentreClient({
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+                className="font-sans text-xs font-semibold text-ember transition-colors duration-[var(--motion-quick)] hover:text-ember-hover"
               >
                 Mark all read
               </button>
@@ -144,14 +144,14 @@ export default function NotificationCentreClient({
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-xs overflow-x-auto px-md pb-sm scrollbar-none">
+        <div className="flex gap-xs overflow-x-auto overscroll-x-contain px-md pb-sm scrollbar-none">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-200 ease-[var(--ease-default)] ${
+                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   isActive
                     ? 'border-ember bg-ember text-text-inverse'
                     : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'

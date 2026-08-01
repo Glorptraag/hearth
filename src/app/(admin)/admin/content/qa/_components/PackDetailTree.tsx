@@ -68,7 +68,7 @@ function TreeRow({
   return (
     <>
       <div
-        className={`flex items-center gap-sm px-md py-xs hover:bg-surface-hover transition-colors duration-200 cursor-pointer ${
+        className={`flex items-center gap-sm px-md py-xs hover:bg-surface-hover transition-colors duration-[var(--motion-quick)] cursor-pointer ${
           !isLast ? 'border-b border-border-subtle' : ''
         }`}
         style={{ paddingLeft: `${16 + indent}px` }}
@@ -83,7 +83,7 @@ function TreeRow({
             className="text-text-muted hover:text-text-primary w-4 flex justify-center flex-shrink-0"
             aria-label={expanded ? 'Collapse' : 'Expand'}
           >
-            <CaretDown size={12} className={`transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`} aria-hidden="true" />
+            <CaretDown size={12} className={`transition-transform duration-[var(--motion-quick)] ${expanded ? '' : '-rotate-90'}`} aria-hidden="true" />
           </button>
         )}
         {!hasChildren && <span className="w-4 flex-shrink-0" />}

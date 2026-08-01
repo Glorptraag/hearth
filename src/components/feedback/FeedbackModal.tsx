@@ -88,6 +88,7 @@ export function FeedbackModal({ open, onClose }: { open: boolean; onClose: () =>
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Escape') close(); }}
         className="hearth-modal-enter w-full max-w-[440px] rounded-t-lg border border-border-subtle bg-surface-panel p-xl shadow-float sm:rounded-lg"
       >
         <div className="mb-md flex items-start justify-between gap-sm">
@@ -101,7 +102,7 @@ export function FeedbackModal({ open, onClose }: { open: boolean; onClose: () =>
             type="button"
             onClick={close}
             aria-label="Close feedback form"
-            className="rounded-full p-xs text-text-muted transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary"
+            className="hit-target rounded-full p-xs text-text-muted transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary"
           >
             <X size={18} aria-hidden="true" />
           </button>

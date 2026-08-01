@@ -96,7 +96,7 @@ export default function IssueBrowser({ issues, loading, filters, onFilterChange 
               {issues.map((issue, i) => (
                 <tr
                   key={`${issue.docId}-${issue.field}-${i}`}
-                  className="border-b border-border-subtle hover:bg-surface-hover transition-colors duration-200"
+                  className="border-b border-border-subtle hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
                   style={{ height: 'var(--admin-row-height, 40px)' }}
                 >
                   <td className="px-md font-sans text-xs text-text-secondary max-w-[300px] truncate">
@@ -113,7 +113,7 @@ export default function IssueBrowser({ issues, loading, filters, onFilterChange 
                   <td className="px-md">
                     <Link
                       href={`/admin/content/qa/${issue.packId}`}
-                      className="font-sans text-xs text-text-secondary hover:text-ember transition-colors duration-200"
+                      className="font-sans text-xs text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]"
                     >
                       <span className="capitalize">{issue.docType}</span>: {issue.docTitle}
                     </Link>
@@ -121,7 +121,7 @@ export default function IssueBrowser({ issues, loading, filters, onFilterChange 
                   <td className="px-md">
                     <Link
                       href={`/admin/content/qa/issues?packId=${issue.packId}`}
-                      className="font-sans text-xs text-text-muted hover:text-ember transition-colors duration-200"
+                      className="font-sans text-xs text-text-muted hover:text-ember transition-colors duration-[var(--motion-quick)]"
                     >
                       {issue.packTitle}
                     </Link>
@@ -170,7 +170,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-xs text-text-secondary focus:border-ember focus:outline-none transition-colors duration-200"
+      className="rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-xs text-text-secondary focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Pedagogy } from '@/types';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { Check, Flame } from '@/components/icons';
+import { ArrowLeft, CaretDown, CaretUp, Check, Flame, X } from '@/components/icons';
 import {
   PHILOSOPHIES,
   VALUES,
@@ -220,9 +220,9 @@ export function PedagogyWizard({
                 type="button"
                 onClick={handleSkip}
                 disabled={saving}
-                className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-200 disabled:opacity-50"
+                className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:opacity-50"
               >
-                Skip for now →
+                Skip for now
               </button>
             )}
             {onClose && (
@@ -230,7 +230,7 @@ export function PedagogyWizard({
                 type="button"
                 onClick={onClose}
                 aria-label="Close wizard"
-                className="rounded-[6px] border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-200"
+                className="rounded-[6px] border border-border-subtle px-sm py-xs font-sans text-xs text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               >
                 Close
               </button>
@@ -241,7 +241,7 @@ export function PedagogyWizard({
 
       {/* Step indicator */}
       <div className="border-b border-border-subtle bg-surface-panel">
-        <div className="mx-auto flex max-w-[680px] items-center justify-center gap-xs overflow-x-auto px-md py-md md:gap-md md:py-lg">
+        <div className="mx-auto flex max-w-[680px] items-center justify-center gap-xs overflow-x-auto overscroll-x-contain scrollbar-none px-md py-md md:gap-md md:py-lg">
           {STEP_LABELS.map((label, idx) => {
             const isActive = idx === step;
             const isComplete = idx < step;
@@ -250,7 +250,7 @@ export function PedagogyWizard({
                 <div className="flex flex-col items-center gap-xs">
                   <div
                     className={[
-                      'flex h-8 w-8 items-center justify-center rounded-full border-2 font-sans text-xs font-semibold transition-all duration-200 md:h-9 md:w-9 md:text-sm',
+                      'flex h-8 w-8 items-center justify-center rounded-full border-2 font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] md:h-9 md:w-9 md:text-sm',
                       isActive
                         ? 'bg-ember text-text-inverse border-transparent shadow-[0_0_16px_rgba(217,123,58,0.5)]'
                         : isComplete
@@ -335,9 +335,9 @@ export function PedagogyWizard({
               type="button"
               onClick={goBack}
               disabled={saving}
-              className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200 disabled:opacity-50"
+              className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-50"
             >
-              ← Back
+              <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
             </button>
           ) : (
             <span className="invisible" aria-hidden="true">
@@ -360,7 +360,7 @@ export function PedagogyWizard({
               type="button"
               onClick={goNext}
               disabled={!canProceed || saving}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
             >
               {step < 3
                 ? 'Continue'
@@ -558,26 +558,26 @@ function PriorityStep({
                         onClick={() => move(idx, -1)}
                         disabled={idx === 0}
                         aria-label={`Move ${getLabel(id)} up`}
-                        className="flex h-7 w-7 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+                        className="flex h-9 w-9 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
                       >
-                        ↑
+                        <CaretUp size={14} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
                         onClick={() => move(idx, 1)}
                         disabled={idx === selected.length - 1}
                         aria-label={`Move ${getLabel(id)} down`}
-                        className="flex h-7 w-7 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+                        className="flex h-9 w-9 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-surface-hover hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
                       >
-                        ↓
+                        <CaretDown size={14} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
                         onClick={() => remove(id)}
                         aria-label={`Remove ${getLabel(id)}`}
-                        className="flex h-7 w-7 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-red-900/20 hover:text-red-400"
+                        className="flex h-9 w-9 items-center justify-center rounded-[6px] font-sans text-sm text-text-muted hover:bg-red-900/20 hover:text-red-400"
                       >
-                        ×
+                        <X size={14} aria-hidden="true" />
                       </button>
                     </div>
                   </li>
@@ -601,7 +601,7 @@ function PriorityStep({
                 disabled={atCap}
                 aria-pressed={isSelected}
                 className={[
-                  'group flex flex-col gap-xs rounded-[10px] border p-md text-left transition-all duration-200',
+                  'group flex flex-col gap-xs rounded-[10px] border p-md text-left transition-all duration-[var(--motion-quick)]',
                   isSelected
                     ? 'border-ember/40 bg-ember-glow'
                     : atCap
@@ -970,7 +970,7 @@ function InsightTab({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={[
-        'relative -mb-[1px] border-b-2 px-sm py-xs font-sans text-xs font-semibold transition-colors duration-200',
+        'relative -mb-[1px] border-b-2 px-sm py-xs font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)]',
         active
           ? 'border-ember text-ember'
           : 'border-transparent text-text-muted hover:text-text-secondary',

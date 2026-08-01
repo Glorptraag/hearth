@@ -36,7 +36,7 @@ export default function DemoMarketplace() {
         <div className="flex gap-lg border-b border-border-subtle">
           <Link
             href="/demo/explore/activities"
-            className="pb-sm font-sans text-sm font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
+            className="pb-sm font-sans text-sm font-medium text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
           >
             My Library
           </Link>
@@ -52,7 +52,7 @@ export default function DemoMarketplace() {
           <button
             key={s}
             onClick={() => toggleSubject(s)}
-            className={`transition-opacity duration-200 ${
+            className={`transition-opacity duration-[var(--motion-quick)] ${
               selectedSubjects.length === 0 || selectedSubjects.includes(s)
                 ? 'opacity-100'
                 : 'opacity-40'

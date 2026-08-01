@@ -27,7 +27,7 @@ export const TrayedTab = forwardRef<HTMLButtonElement, TrayedTabProps>(
         aria-expanded={isOpen}
         aria-controls={trayId}
         aria-label={`${label} menu`}
-        className={`flex min-h-[44px] flex-col items-center justify-end gap-xs px-xs py-sm font-sans text-[0.65rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+        className={`hearth-press flex min-h-[44px] flex-col items-center justify-end gap-xs px-xs py-sm font-sans text-[0.65rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
           isOpen ? 'text-ember' : 'text-text-muted'
         }`}
       >

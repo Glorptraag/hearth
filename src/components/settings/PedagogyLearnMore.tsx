@@ -99,7 +99,7 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
           Explore {frameworkLabel}

@@ -68,7 +68,7 @@ export function GuidedModeToggle({ mode, onChange }: GuidedModeToggleProps) {
           aria-pressed={mode === 'guided'}
           onClick={() => handleModeChange('guided')}
           className={[
-            'px-sm py-xs font-sans text-xs font-semibold transition-colors duration-200',
+            'min-h-[36px] px-md py-xs font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]',
             mode === 'guided'
               ? 'bg-ember text-text-inverse'
               : 'text-text-secondary hover:text-text-primary',
@@ -81,7 +81,7 @@ export function GuidedModeToggle({ mode, onChange }: GuidedModeToggleProps) {
           aria-pressed={mode === 'quick'}
           onClick={() => handleModeChange('quick')}
           className={[
-            'px-sm py-xs font-sans text-xs font-semibold transition-colors duration-200',
+            'min-h-[36px] px-md py-xs font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]',
             mode === 'quick'
               ? 'bg-surface-panel text-text-primary'
               : 'text-text-secondary hover:text-text-primary',
@@ -99,7 +99,7 @@ export function GuidedModeToggle({ mode, onChange }: GuidedModeToggleProps) {
         aria-expanded={popoverOpen}
         aria-controls={popoverId}
         onClick={() => setPopoverOpen((v) => !v)}
-        className="h-5 w-5 rounded-full border border-border-subtle bg-surface-raised text-text-muted hover:text-text-secondary hover:border-border-medium transition-colors duration-200 font-sans text-xs flex items-center justify-center"
+        className="hit-target h-5 w-5 rounded-full border border-border-subtle bg-surface-raised text-text-muted hover:text-text-secondary hover:border-border-medium transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] font-sans text-xs flex items-center justify-center"
       >
         ?
       </button>

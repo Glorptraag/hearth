@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { format } from 'date-fns';
 import ModuleCard from './ModuleCard';
 import type { Indicators } from '@/lib/sanity/pack-indicators';
 
@@ -48,8 +49,11 @@ const SUBJECT_DOT: Record<string, string> = {
   languages:    'bg-domain-languages',
 };
 
+// Local calendar date, not UTC. `today` is produced server-side with the same
+// date-fns `format`, and toISOString() would shift a whole day behind it in any
+// positive-offset zone (AEST included), keying every column to the wrong day.
 function toDateString(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return format(d, 'yyyy-MM-dd');
 }
 
 export default function PlannerGrid({

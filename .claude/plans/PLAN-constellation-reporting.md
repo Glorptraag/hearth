@@ -106,9 +106,9 @@ None — all tasks are `standard` (no `micro` batching).
 | 2.1  | ✅ done | 46 tests green on node@24 (+ file-scoped testTimeout for CI robustness) |
 | 2.2  | ✅ done | 5 tests green; R26 states preserved |
 | 3.3  | ✅ done | seed script (no prod write) + 21 coverage tests green |
-| 3.1  | ⏸ parked (D4) | implemented + typecheck-clean; integration test written, NOT run (Docker down) |
-| 3.2  | ⏸ parked (D4) | implemented + typecheck-clean; 3 tests written, NOT run (Docker down) |
-| 3.4  | ⏸ parked (D4) | implemented + typecheck-clean; integration test written, NOT run (Docker down) |
+| 3.1  | ✅ done | CI-verified (integration job, PR #267 run 30685617244) |
+| 3.2  | ✅ done | CI-verified (integration job, PR #267 run 30685617244) |
+| 3.4  | ✅ done | CI-verified (integration job, PR #267 run 30685617244) |
 
-Combined verification: project-wide `tsc --noEmit` clean; 8 unit files / 72 tests green together on node@24.
-D4 blocks 3.1/3.2/3.4 on integration-suite verification (CI on push, or local once Docker recovers).
+All 9 tasks done. CI green on PR #267 (Checks + Integration tests both pass).
+D4 resolved by the green integration job. Remaining: 3 parked sidebars (Drew) + the D-publish content gate (Sanity mapping publish).

@@ -95,7 +95,7 @@
       "dispatched_at": "2026-07-08T12:35:10+00:00"
     },
     "3.1": {
-      "status": "parked",
+      "status": "done",
       "model": "sonnet",
       "size": "standard",
       "batch": null,
@@ -108,13 +108,12 @@
       ],
       "done_when": "deleting an entry assigned to a work-sample slot no longer silently orphans the slot (blocked with 409 or slot cleared); a new integration test asserts the behaviour and passes via `npm run test:integration:local`",
       "contracts": "Verify the actual delete-route path first (the [entryId] segment name may differ, e.g. [id]); update files accordingly. Follow existing FK cascade style in src/lib/db/schema.ts. Integration tests use transaction-rollback isolation and real pgvector Postgres.",
-      "completed_at": null,
-      "completed_by": null,
-      "dispatched_at": "2026-07-11T12:08:05+00:00",
-      "parked_reason": "awaiting decision D4"
+      "completed_at": "2026-08-01T05:26:27+00:00",
+      "completed_by": "orchestrator-ci",
+      "dispatched_at": "2026-07-11T12:08:05+00:00"
     },
     "3.2": {
-      "status": "parked",
+      "status": "done",
       "model": "sonnet",
       "size": "standard",
       "batch": null,
@@ -127,10 +126,9 @@
       ],
       "done_when": "new assertions for learning_area-tier export, cross-slot 409 conflict, and null-DOB age rendering exist and pass via `npm run test:integration:local` on node@24",
       "contracts": "learning_area tier = NSW/VIC/WA/TAS/ACT; cd_level = QLD/SA/NT (src/config/jurisdictions.ts). Use asUser()/db-factories seeders. If the samples integration test file does not yet exist, create it.",
-      "completed_at": null,
-      "completed_by": null,
-      "dispatched_at": "2026-07-11T12:08:05+00:00",
-      "parked_reason": "awaiting decision D4"
+      "completed_at": "2026-08-01T05:26:28+00:00",
+      "completed_by": "orchestrator-ci",
+      "dispatched_at": "2026-07-11T12:08:05+00:00"
     },
     "3.3": {
       "status": "done",
@@ -151,7 +149,7 @@
       "dispatched_at": "2026-07-08T12:35:10+00:00"
     },
     "3.4": {
-      "status": "parked",
+      "status": "done",
       "model": "sonnet",
       "size": "standard",
       "batch": null,
@@ -166,10 +164,9 @@
       ],
       "done_when": "scripts/seed-dlo-mappings-nsw-demo.mjs exists and a coverage integration test proves a NSW family reaches {mode:'deterministic'} via mappings-only (no src/lib/report/*.ts edits), passing via `npm run test:integration:local` on node@24",
       "contracts": "Reuse task 3.3's regulatoryMapping shape with frameworkKey 'ac-v9-nsw'. frameworkKeyForState('NSW') must resolve to 'ac-v9-nsw' \u2014 verify in deterministic-coverage.ts; if it does not, that IS a code gap, queue a decision rather than editing report logic silently. Publishing gated on D-publish.",
-      "completed_at": null,
-      "completed_by": null,
-      "dispatched_at": "2026-07-11T12:08:05+00:00",
-      "parked_reason": "awaiting decision D4"
+      "completed_at": "2026-08-01T05:26:28+00:00",
+      "completed_by": "orchestrator-ci",
+      "dispatched_at": "2026-07-11T12:08:05+00:00"
     }
   },
   "human_gates": [
@@ -214,7 +211,8 @@
         "3.2",
         "3.4"
       ],
-      "resolved": false
+      "resolved": true,
+      "answer": "CI run 30685617244 green: Integration tests job passed against real Postgres, verifying 3.1/3.2/3.4. PR #267."
     }
   ]
 }

@@ -55,14 +55,22 @@ Per layer:
 
 | Layer | Extra frontmatter | Body sections |
 |---|---|---|
-| source-excerpts | `source` (required), `pageOrChapter`, `isParaphrase`, `attributionAuthor/Title/Year` (overrides) | `## Text` (required), `## Context` (vault-only note) |
-| practice-patterns | `triggerTitle` | `## Trigger`, `## Response`, `## Anti-pattern`, `## Grounded in` |
-| observational-markers | `markerName` | `## What it indicates`, `## Look for` (list), `## Grounded in` |
+| source-excerpts | `source` (required), `pageOrChapter`, `isParaphrase`, `attributionAuthor/Title/Year` (overrides), `ageRange` (optional) | `## Text` (required), `## Context` (vault-only note) |
+| practice-patterns | `triggerTitle`, `ageRange` / `capabilityThreads` (optional) | `## Trigger`, `## Response`, `## Anti-pattern`, `## Grounded in` |
+| observational-markers | `markerName`, `ageRange` / `capabilityThreads` (optional) | `## What it indicates`, `## Look for` (list), `## Grounded in` |
 | facilitation-vocabulary | — | `## Verbs`, `## Restraints`, `## Micro-scripts` (pair lists: `- **Term** — description`) |
-| contraindications | `warnedAgainst` | `## Reasoning`, `## Grounded in` |
-| worked-examples | — | `## Scenario`, `## Interpretation`, `## Grounded in` |
+| contraindications | `warnedAgainst`, `ageRange` (optional) | `## Reasoning`, `## Grounded in` |
+| worked-examples | `ageRange` / `capabilityThreads` / `activityType` (optional) | `## Scenario`, `## Interpretation`, `## Grounded in` |
 
 `## Context` and `## Grounded in` are vault-only: they carry authoring provenance and `[[wikilinks]]` for Obsidian's graph, and are not pushed to Sanity.
+
+### Optional retrieval metadata (all layers except facilitation-vocabulary)
+
+These feed the retrieval rerank boost (age/thread match) rather than the tradition voice itself. All are optional — omit when unsure; absence beats guesswork.
+
+- `ageRange` — bare string `min-max`, both 0–18, min ≤ max, e.g. `ageRange: 4-8`.
+- `capabilityThreads` — inline array of canonical thread codes (`THREAD_TO_V2_DOMAIN` in `src/lib/capability-universe-v2.ts`, L1…C7), e.g. `capabilityThreads: [L1, S2]`.
+- `activityType` (worked-examples only) — bare lowercase/underscore string, e.g. `activityType: nature_walk`.
 
 Filenames: `{id-with-dashes}-{slug}.md`, e.g. `cm-001-educational-triad.md`. Document IDs are deterministic (`pedagogySourceExcerpt.cm.001`), so recompiling always updates in place.
 

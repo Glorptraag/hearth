@@ -7,11 +7,14 @@
 // ## Grounded in wikilinks, registry provenance). Compilation projects the
 // schema subset; the rest stays in the vault as authoring context.
 
+import { THREAD_TO_V2_DOMAIN } from '@/lib/capability-universe-v2';
 import { parseListSection, parsePairListSection } from './parse';
 import type { CompiledDoc, CorpusIssue, ParsedEntry, SourceRegistry } from './types';
 import { checkLicenceGate } from './registry';
 
 const ID_PATTERN = /^[a-z_]+\.\d{3}$/;
+const AGE_RANGE_PATTERN = /^(\d{1,2})\s*-\s*(\d{1,2})$/;
+const ACTIVITY_TYPE_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 export interface CompileResult {
   doc: CompiledDoc | null;
@@ -63,6 +66,49 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
     if (gate) issues.push(gate);
   }
 
+  // Retrieval metadata (E1/E2) — all optional; absence is not an error.
+  let ageRange: { min: number; max: number } | undefined;
+  if ('ageRange' in fm) {
+    const raw = str(fm.ageRange);
+    const m = raw.match(AGE_RANGE_PATTERN);
+    const min = m ? Number(m[1]) : NaN;
+    const max = m ? Number(m[2]) : NaN;
+    if (!m || min > 18 || max > 18 || min > max) {
+      issues.push({
+        file,
+        message: `ageRange must be "min-max" with 0 ≤ min ≤ max ≤ 18, got "${raw}"`,
+      });
+    } else {
+      ageRange = { min, max };
+    }
+  }
+
+  let capabilityThreads: string[] | undefined;
+  if ('capabilityThreads' in fm) {
+    if (!Array.isArray(fm.capabilityThreads)) {
+      issues.push({ file, message: 'capabilityThreads must be an array of thread codes' });
+    } else {
+      const codes = fm.capabilityThreads;
+      const unknown = codes.filter((code) => !(code in THREAD_TO_V2_DOMAIN));
+      for (const code of unknown) {
+        issues.push({ file, message: `capabilityThreads: unknown thread code "${code}"` });
+      }
+      if (unknown.length === 0) {
+        capabilityThreads = codes;
+      }
+    }
+  }
+
+  let activityType: string | undefined;
+  if ('activityType' in fm) {
+    const raw = str(fm.activityType);
+    if (!ACTIVITY_TYPE_PATTERN.test(raw)) {
+      issues.push({ file, message: `activityType must match /^[a-z][a-z0-9_]*$/, got "${raw}"` });
+    } else {
+      activityType = raw;
+    }
+  }
+
   if (issues.length > 0) return { doc: null, issues };
 
   const base = {
@@ -92,6 +138,7 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
               pageOrChapter: str(fm.pageOrChapter),
             },
             tags,
+            ...(ageRange ? { ageRange } : {}),
           },
           issues,
         };
@@ -106,6 +153,8 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
             traditionResponse: entry.sections['response'],
             ...(entry.sections['anti-pattern'] ? { antiPattern: entry.sections['anti-pattern'] } : {}),
             tags,
+            ...(ageRange ? { ageRange } : {}),
+            ...(capabilityThreads ? { capabilityThreads } : {}),
           },
           issues,
         };
@@ -118,6 +167,8 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
             whatItIndicates: entry.sections['what it indicates'],
             markersToLookFor: parseListSection(file, 'Look for', entry.sections['look for']),
             tags,
+            ...(ageRange ? { ageRange } : {}),
+            ...(capabilityThreads ? { capabilityThreads } : {}),
           },
           issues,
         };
@@ -151,6 +202,7 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
             warnedAgainst: str(fm.warnedAgainst),
             traditionReasoning: entry.sections['reasoning'],
             tags,
+            ...(ageRange ? { ageRange } : {}),
           },
           issues,
         };
@@ -162,6 +214,9 @@ export function compileEntry(entry: ParsedEntry, registry: SourceRegistry): Comp
             scenario: entry.sections['scenario'],
             interpretationInTraditionVoice: entry.sections['interpretation'],
             tags,
+            ...(ageRange ? { ageRange } : {}),
+            ...(capabilityThreads ? { capabilityThreads } : {}),
+            ...(activityType ? { activityType } : {}),
           },
           issues,
         };

@@ -223,6 +223,84 @@ describe('compileEntry — other layers', () => {
   });
 });
 
+describe('compileEntry — retrieval metadata (E2)', () => {
+  it('compiles a worked example with ageRange, capabilityThreads, and activityType', () => {
+    const entry = parseEntry(
+      'unschooling/worked-examples/us-002-test.md',
+      entryFile(
+        [
+          'id: us.002',
+          'tags: [t1]',
+          'status: published',
+          'ageRange: 4-8',
+          'capabilityThreads: [L1, S2]',
+          'activityType: nature_walk',
+        ],
+        ['## Scenario', '', 'S.', '', '## Interpretation', '', 'I.']
+      )
+    );
+    const { doc, issues } = compileEntry(entry, REGISTRY);
+    expect(issues).toEqual([]);
+    expect(doc!.ageRange).toEqual({ min: 4, max: 8 });
+    expect(doc!.capabilityThreads).toEqual(['L1', 'S2']);
+    expect(doc!.activityType).toBe('nature_walk');
+  });
+
+  it('rejects an inverted ageRange', () => {
+    const entry = parseEntry(
+      'unschooling/worked-examples/us-002-test.md',
+      entryFile(
+        ['id: us.002', 'tags: [t1]', 'status: published', 'ageRange: 8-4'],
+        ['## Scenario', '', 'S.', '', '## Interpretation', '', 'I.']
+      )
+    );
+    const { doc, issues } = compileEntry(entry, REGISTRY);
+    expect(doc).toBeNull();
+    expect(issues[0].message).toMatch(/ageRange must be "min-max"/);
+  });
+
+  it('rejects a non-numeric ageRange', () => {
+    const entry = parseEntry(
+      'unschooling/worked-examples/us-002-test.md',
+      entryFile(
+        ['id: us.002', 'tags: [t1]', 'status: published', 'ageRange: banana'],
+        ['## Scenario', '', 'S.', '', '## Interpretation', '', 'I.']
+      )
+    );
+    const { doc, issues } = compileEntry(entry, REGISTRY);
+    expect(doc).toBeNull();
+    expect(issues[0].message).toMatch(/ageRange must be "min-max"/);
+  });
+
+  it('rejects an unknown capability thread code, naming it', () => {
+    const entry = parseEntry(
+      'unschooling/worked-examples/us-002-test.md',
+      entryFile(
+        ['id: us.002', 'tags: [t1]', 'status: published', 'capabilityThreads: [L1, ZZ9]'],
+        ['## Scenario', '', 'S.', '', '## Interpretation', '', 'I.']
+      )
+    );
+    const { doc, issues } = compileEntry(entry, REGISTRY);
+    expect(doc).toBeNull();
+    expect(issues[0].message).toMatch(/unknown thread code "ZZ9"/);
+  });
+
+  it('leaves retrieval-metadata keys absent when the entry carries none of them', () => {
+    const entry = parseEntry(
+      'unschooling/worked-examples/us-002-test.md',
+      entryFile(
+        ['id: us.002', 'tags: [t1]', 'status: published'],
+        ['## Scenario', '', 'S.', '', '## Interpretation', '', 'I.']
+      )
+    );
+    const { doc, issues } = compileEntry(entry, REGISTRY);
+    expect(issues).toEqual([]);
+    expect(doc).not.toHaveProperty('ageRange');
+    expect(doc).not.toHaveProperty('capabilityThreads');
+    expect(doc).not.toHaveProperty('activityType');
+  });
+});
+
 describe('compiled documents feed the live chunk pipeline', () => {
   it('buildChunkText produces non-empty embedding text for every layer', () => {
     const cases: Array<{ path: string; fm: string[]; body: string[] }> = [

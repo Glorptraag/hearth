@@ -16,9 +16,14 @@ import { createClient } from '@sanity/client';
 import { neon } from '@neondatabase/serverless';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { buildChunkText, hashChunk, sanityTypeToPkbLayer } from '../src/lib/pedagogy/chunk-builder';
+import {
+  buildChunkText,
+  buildChunkMetadata,
+  hashChunk,
+  sanityTypeToPkbLayer,
+} from '../src/lib/pedagogy/chunk-builder';
 import { embedBatch } from '../src/lib/pedagogy/embedding';
-import type { PkbLayer } from '../src/lib/pedagogy/chunk-builder';
+import type { PkbLayer, SanityPKBDocument } from '../src/lib/pedagogy/chunk-builder';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -142,16 +147,6 @@ async function upsertChunks(chunks: ChunkRow[]): Promise<void> {
   }
 }
 
-// ─── Metadata extraction ──────────────────────────────────────────────────────
-
-function extractMetadata(doc: SanityPkbDoc): Record<string, unknown> {
-  const meta: Record<string, unknown> = {};
-  if (Array.isArray(doc.tags)) meta.tags = doc.tags;
-  if (doc.ageRange) meta.ageRange = doc.ageRange;
-  if (Array.isArray(doc.capabilityThreads)) meta.capabilityThreads = doc.capabilityThreads;
-  return meta;
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function run() {
@@ -173,6 +168,7 @@ async function run() {
 
   // 3. Build chunk texts and filter to changed/new
   const pending: Array<{ doc: SanityPkbDoc; layer: PkbLayer; text: string; hash: string }> = [];
+  const metadataOnly: Array<{ id: string; metadata: Record<string, unknown> }> = [];
   let skipped = 0;
 
   for (const doc of docs) {
@@ -200,6 +196,8 @@ async function run() {
 
     if (!FORCE && existingHash === hash) {
       skipped++;
+      const newMeta = buildChunkMetadata(doc as SanityPKBDocument);
+      metadataOnly.push({ id: doc._id, metadata: newMeta });
       continue;
     }
 
@@ -209,51 +207,75 @@ async function run() {
   console.log(`\n  ${skipped} unchanged (skipped)`);
   console.log(`  ${pending.length} to embed`);
 
-  if (pending.length === 0) {
-    console.log('\nAll chunks up to date. Done.');
-    return;
-  }
-
   if (DRY_RUN) {
-    console.log('\nDry run — would embed:');
-    for (const { doc, layer } of pending) {
-      const fw = doc.framework?.slug ?? 'unknown';
-      console.log(`  ${doc._id}  [${fw}/${layer}]`);
+    if (pending.length > 0) {
+      console.log('\nDry run — would embed:');
+      for (const { doc, layer } of pending) {
+        const fw = doc.framework?.slug ?? 'unknown';
+        console.log(`  ${doc._id}  [${fw}/${layer}]`);
+      }
+    }
+    if (metadataOnly.length > 0) {
+      console.log('\nDry run — would refresh metadata only:');
+      for (const { id } of metadataOnly) {
+        console.log(`  ${id}`);
+      }
+    }
+    if (pending.length === 0 && metadataOnly.length === 0) {
+      console.log('\nAll chunks up to date. Done.');
     }
     return;
   }
 
-  // 4. Embed in batches
-  const texts = pending.map((p) => p.text);
-  console.log(`\nEmbedding ${texts.length} chunks via Voyage AI…`);
-  const embeddings = await embedBatch(texts);
-  console.log('Embedding complete.');
+  let refreshed = 0;
 
-  // 5. Upsert
-  const chunks: ChunkRow[] = pending.map((p, i) => ({
-    id: p.doc._id,
-    pedagogy_key: p.doc.framework?.slug ?? '',
-    layer: p.layer,
-    text: p.text,
-    embedding: embeddings[i],
-    metadata: extractMetadata(p.doc),
-    content_hash: p.hash,
-    sanity_doc_id: p.doc._id,
-  }));
+  if (pending.length > 0) {
+    // 4. Embed in batches
+    const texts = pending.map((p) => p.text);
+    console.log(`\nEmbedding ${texts.length} chunks via Voyage AI…`);
+    const embeddings = await embedBatch(texts);
+    console.log('Embedding complete.');
 
-  console.log(`Upserting ${chunks.length} chunks into DB…`);
-  await upsertChunks(chunks);
+    // 5. Upsert
+    const chunks: ChunkRow[] = pending.map((p, i) => ({
+      id: p.doc._id,
+      pedagogy_key: p.doc.framework?.slug ?? '',
+      layer: p.layer,
+      text: p.text,
+      embedding: embeddings[i],
+      metadata: buildChunkMetadata(p.doc as SanityPKBDocument),
+      content_hash: p.hash,
+      sanity_doc_id: p.doc._id,
+    }));
 
-  // 6. Report
-  console.log('\nDone.\n');
-  const byFramework = new Map<string, number>();
-  for (const c of chunks) {
-    byFramework.set(c.pedagogy_key, (byFramework.get(c.pedagogy_key) ?? 0) + 1);
+    console.log(`Upserting ${chunks.length} chunks into DB…`);
+    await upsertChunks(chunks);
+
+    console.log('\nDone.\n');
+    const byFramework = new Map<string, number>();
+    for (const c of chunks) {
+      byFramework.set(c.pedagogy_key, (byFramework.get(c.pedagogy_key) ?? 0) + 1);
+    }
+    for (const [fw, count] of [...byFramework.entries()].sort()) {
+      console.log(`  ${fw}: ${count} chunk${count !== 1 ? 's' : ''} upserted`);
+    }
+    console.log(`  Total: ${chunks.length}`);
   }
-  for (const [fw, count] of [...byFramework.entries()].sort()) {
-    console.log(`  ${fw}: ${count} chunk${count !== 1 ? 's' : ''} upserted`);
+
+  // 6. Refresh metadata for hash-matched (otherwise-skipped) docs
+  if (metadataOnly.length > 0) {
+    for (const { id, metadata } of metadataOnly) {
+      const metadataJson = JSON.stringify(metadata);
+      await sql`
+        UPDATE pedagogy_knowledge_chunks
+        SET metadata = ${metadataJson}::jsonb, updated_at = NOW()
+        WHERE id = ${id} AND metadata::text IS DISTINCT FROM ${metadataJson}::text
+      `;
+      refreshed++;
+    }
   }
-  console.log(`  Total: ${chunks.length}`);
+
+  console.log(`\n${skipped} unchanged, ${refreshed} metadata-refreshed`);
 }
 
 run().catch((err) => {

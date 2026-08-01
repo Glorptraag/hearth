@@ -143,6 +143,15 @@ function formatAttribution(val: unknown): string {
   return parts.join(', ');
 }
 
+/** Truncate text to `max` chars at a word boundary, appending '…' only if truncated. */
+function preview(text: string, max = 200): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  const boundary = lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+  return `${boundary}…`;
+}
+
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unknown> {
@@ -159,6 +168,8 @@ export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unkno
   if (doc.appliesAtAges) meta.appliesAtAges = doc.appliesAtAges;
   if (doc.ageRange) meta.ageRange = doc.ageRange;
   if (doc.authoredBy) meta.authoredBy = doc.authoredBy;
+  if (Array.isArray(doc.tags)) meta.tags = doc.tags;
+  if (Array.isArray(doc.capabilityThreads)) meta.capabilityThreads = doc.capabilityThreads;
 
   switch (doc._type) {
     case 'pedagogySourceExcerpt':
@@ -179,16 +190,28 @@ export function buildChunkMetadata(doc: SanityPKBDocument): Record<string, unkno
       break;
     case 'pedagogyObservationalMarker':
       if (doc.markerId) meta.markerId = doc.markerId;
+      if (typeof doc.markerName === 'string') meta.markerName = doc.markerName;
+      if (typeof doc.whatItIndicates === 'string') meta.whatItIndicates = doc.whatItIndicates;
+      if (Array.isArray(doc.markersToLookFor)) meta.markersToLookFor = doc.markersToLookFor;
       break;
     case 'pedagogyContraindication':
       if (doc.contraindicationId) meta.contraindicationId = doc.contraindicationId;
       if (doc.tensionWithOtherTraditions) meta.tensionWithOtherTraditions = doc.tensionWithOtherTraditions;
+      if (typeof doc.warnedAgainst === 'string') meta.warnedAgainst = doc.warnedAgainst;
       break;
     case 'pedagogyWorkedExample':
       if (doc.exampleId) meta.exampleId = doc.exampleId;
       if (doc.activityType) meta.activityType = doc.activityType;
-      if (doc.capabilityThreads) meta.capabilityThreads = doc.capabilityThreads;
+      if (typeof doc.scenario === 'string') meta.scenarioPreview = preview(doc.scenario);
       break;
+    case 'pedagogyFacilitationVocabulary': {
+      const verbs = doc.verbs as Array<{ verb: string }> | undefined;
+      if (Array.isArray(verbs) && verbs.length > 0) {
+        meta.verbSample = verbs.slice(0, 3).map((v) => v.verb);
+        meta.verbCount = verbs.length;
+      }
+      break;
+    }
   }
 
   return meta;

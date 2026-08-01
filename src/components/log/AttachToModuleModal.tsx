@@ -89,8 +89,9 @@ export function AttachToModuleModal({
         aria-modal="true"
         aria-labelledby="attach-modal-title"
         tabIndex={-1}
-        className="relative w-full max-w-md max-h-[90dvh] flex flex-col overflow-hidden rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-float"
+        className="hearth-modal-enter relative w-full max-w-md max-h-[90dvh] flex flex-col overflow-hidden rounded-t-[24px] sm:rounded-[16px] bg-surface-panel border border-border-subtle shadow-float"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
         <div className="mx-auto mt-sm h-1 w-10 rounded-full bg-border-medium sm:hidden" />
 
@@ -104,7 +105,7 @@ export function AttachToModuleModal({
             </h2>
             <button
               onClick={onClose}
-              className="shrink-0 rounded-full border border-border-subtle p-xs text-text-muted hover:text-text-primary transition-colors duration-200"
+              className="hit-target shrink-0 rounded-full border border-border-subtle p-xs text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               aria-label="Close"
             >
               <X size={14} aria-hidden="true" />
@@ -129,7 +130,7 @@ export function AttachToModuleModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search modules…"
-              className="w-full bg-surface-raised border border-border-subtle rounded-md pl-[32px] pr-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-200"
+              className="w-full bg-surface-raised border border-border-subtle rounded-md pl-[32px] pr-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-medium transition-colors duration-[var(--motion-quick)]"
             />
           </div>
         </div>
@@ -159,7 +160,7 @@ export function AttachToModuleModal({
                 key={m.id}
                 onClick={() => attach(m.id)}
                 disabled={attaching != null}
-                className="w-full text-left bg-surface-raised border border-border-subtle rounded-md px-md py-sm hover:border-border-medium hover:bg-surface-panel transition-all duration-200 disabled:opacity-50"
+                className="w-full text-left bg-surface-raised border border-border-subtle rounded-md px-md py-sm hover:border-border-medium hover:bg-surface-panel transition-all duration-[var(--motion-quick)] disabled:opacity-50"
               >
                 <p className="font-serif text-sm font-semibold text-text-primary">
                   {m.title}
@@ -181,7 +182,7 @@ export function AttachToModuleModal({
         <div className="px-xl py-md border-t border-border-subtle">
           <button
             onClick={onClose}
-            className="w-full font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 py-sm"
+            className="w-full font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] py-sm"
           >
             Skip — just a logged moment
           </button>

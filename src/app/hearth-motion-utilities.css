@@ -230,6 +230,39 @@
 }
 
 /* --------------------------------------------------------------------------
+   Drawer entrance — side drawers slide in from the right edge.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-drawer-enter {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.hearth-drawer-enter {
+  animation: hearth-drawer-enter var(--motion-gentle) var(--ease-out) both;
+}
+
+/* --------------------------------------------------------------------------
+   Text-link trailing arrow — ArrowRight icon (14px), nudges 2px on hover.
+   Icon system: action arrows in text links use the icon glyph, never "→".
+   -------------------------------------------------------------------------- */
+
+.hearth-link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.hearth-link-arrow > svg {
+  transition: transform var(--motion-quick) var(--ease-default);
+}
+
+.hearth-link-arrow:hover > svg,
+.hearth-link-arrow:focus-visible > svg {
+  transform: translateX(2px);
+}
+
+/* --------------------------------------------------------------------------
    Reduced motion — canonical zero-out
    Every animation and transition stripped to ~0ms. The UI must function
    perfectly without motion; motion is enhancement, never information.

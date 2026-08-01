@@ -233,9 +233,10 @@ export { Paperclip } from '@phosphor-icons/react';                   // project.
 export { MagicWand } from '@phosphor-icons/react';                   // misc.no-prebuilt
 export { MoonStars } from '@phosphor-icons/react';                   // misc.snooze
 export { ChartLine } from '@phosphor-icons/react';                   // misc.no-patterns
+export { DownloadSimple } from '@phosphor-icons/react';              // misc.download (material rows)
 
 // ── Universal UI chrome ────────────────────────────────────────────
-export { ArrowLeft, ArrowRight, CaretDown, CaretRight, Plus, Check, X, Trash, List, Play, Pause } from '@phosphor-icons/react';
+export { ArrowLeft, ArrowRight, CaretDown, CaretLeft, CaretRight, CaretUp, Plus, Check, X, Trash, List, Play, Pause } from '@phosphor-icons/react';
 
 // ── Tri-state response (yes / sometimes / not-yet) ────────────────
 export {

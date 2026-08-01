@@ -47,7 +47,7 @@ export default function ProviderCodeInput() {
             if (status !== 'idle') setStatus('idle');
           }}
           placeholder="Enter code"
-          className="flex-1 rounded-[10px] border bg-surface-body px-md py-sm font-sans text-sm text-text-primary outline-none transition-colors duration-200 placeholder:text-text-muted focus:border-[rgba(217,123,58,0.25)]"
+          className="flex-1 rounded-[10px] border bg-surface-body px-md py-sm font-sans text-sm text-text-primary outline-none transition-colors duration-[var(--motion-quick)] placeholder:text-text-muted focus:border-[rgba(217,123,58,0.25)]"
           style={{
             borderColor:
               status === 'valid'
@@ -58,7 +58,7 @@ export default function ProviderCodeInput() {
         <button
           onClick={apply}
           disabled={status === 'loading'}
-          className="whitespace-nowrap rounded-[6px] border border-ember px-md py-sm font-sans text-xs font-semibold text-ember transition-all duration-200 hover:bg-[rgba(217,123,58,0.15)] disabled:opacity-60"
+          className="whitespace-nowrap rounded-[6px] border border-ember px-md py-sm font-sans text-xs font-semibold text-ember transition-all duration-[var(--motion-quick)] hover:bg-[rgba(217,123,58,0.15)] disabled:opacity-60"
         >
           {status === 'loading' ? '…' : 'Apply'}
         </button>

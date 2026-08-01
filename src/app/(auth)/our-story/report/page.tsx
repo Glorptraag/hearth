@@ -10,7 +10,7 @@ import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
 import {
   FileText,
   BookOpenText, MathOperations, Atom, Globe, Palette, Cpu, PersonSimpleRun, ChatsCircle,
-  Check,
+  Check, ArrowRight,
 } from '@/components/icons';
 import type { ComponentType } from 'react';
 
@@ -432,11 +432,11 @@ export default function ReportPage() {
           aria-label="Report timeline progress"
         >
           <div
-            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[1200ms] ease-[var(--ease-default)]"
+            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[var(--motion-slow)] ease-[var(--ease-default)]"
             style={{ width: `${timelineProgress}%` }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-ember border-2 border-surface-raised transition-all duration-[1200ms] ease-[var(--ease-default)]"
+            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-ember border-2 border-surface-raised transition-all duration-[var(--motion-slow)] ease-[var(--ease-default)]"
             style={{ left: `${timelineProgress}%`, marginLeft: '-7px' }}
           />
         </div>
@@ -532,8 +532,8 @@ export default function ReportPage() {
                       {slot.matchedEntry ? slot.matchedEntry.title : 'Empty'}
                     </p>
 
-                    <span className="mt-sm inline-block font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200">
-                      {slot.status === 'empty' ? 'Select sample' : slot.dbSample?.entryId ? 'Edit annotation' : 'Choose entry'} →
+                    <span className="hearth-link-arrow mt-sm font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]">
+                      {slot.status === 'empty' ? 'Select sample' : slot.dbSample?.entryId ? 'Edit annotation' : 'Choose entry'} <ArrowRight size={14} aria-hidden="true" />
                     </span>
                   </button>
                 );
@@ -650,9 +650,9 @@ export default function ReportPage() {
                       </p>
                       <Link
                         href={`/explore/activities?subject=${g.key}`}
-                        className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
+                        className="hearth-link-arrow font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shrink-0"
                       >
-                        Explore →
+                        Explore <ArrowRight size={14} aria-hidden="true" />
                       </Link>
                     </div>
                   );
@@ -689,9 +689,9 @@ export default function ReportPage() {
                       </p>
                       <Link
                         href={`/explore/activities?subject=${g.key}`}
-                        className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200"
+                        className="hearth-link-arrow font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                       >
-                        Browse Activities →
+                        Browse Activities <ArrowRight size={14} aria-hidden="true" />
                       </Link>
                     </div>
                   );
@@ -768,9 +768,9 @@ export default function ReportPage() {
                     </span>
                     <Link
                       href={`/explore/activities?subject=${g.key}`}
-                      className="font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-200 shrink-0"
+                      className="hearth-link-arrow font-sans text-[11px] text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shrink-0"
                     >
-                      Explore →
+                      Explore <ArrowRight size={14} aria-hidden="true" />
                     </Link>
                   </div>
                 ))}
@@ -842,7 +842,7 @@ export default function ReportPage() {
             }
           }}
           disabled={!selectedLearnerId || entries.length === 0}
-          className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-200 ${
+          className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] ${
             selectedLearnerId && entries.length > 0
               ? 'bg-ember text-text-inverse hover:bg-ember-hover shadow-ember'
               : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'

@@ -195,7 +195,7 @@ export function BrowseTab() {
         </p>
         <Link
           href="/explore/marketplace"
-          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
         >
           Explore Marketplace
         </Link>

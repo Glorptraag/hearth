@@ -74,7 +74,7 @@ export function InsightsContent({
         <div className="flex flex-col items-center justify-center py-xl text-center">
           <span className="text-4xl mb-md opacity-30" aria-hidden="true">🙂</span>
           <p className="font-serif text-sm text-text-muted italic leading-relaxed">
-            Start describing the activity and I&apos;ll begin finding the learning within it.
+            Start describing the activity and Hearth will find the learning within it.
           </p>
         </div>
         <div className="rounded-md bg-surface-raised border border-border-subtle p-md">

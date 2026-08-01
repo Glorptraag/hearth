@@ -28,19 +28,19 @@ export default async function LandingPage() {
         <div className="flex items-center gap-sm">
           <Link
             href="/demo"
-            className="rounded-[6px] px-md py-sm font-sans text-xs font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary"
+            className="rounded-[6px] px-md py-sm font-sans text-xs font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] hover:text-text-primary"
           >
             Try Demo
           </Link>
           <Link
             href="/sign-in"
-            className="rounded-[10px] border border-border-subtle px-md py-sm font-sans text-xs font-medium text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+            className="rounded-[10px] border border-border-subtle px-md py-sm font-sans text-xs font-medium text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           >
             Sign In
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-[10px] bg-ember px-md py-sm font-sans text-xs font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover hover:-translate-y-px"
+            className="rounded-[10px] bg-ember px-md py-sm font-sans text-xs font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover hover:-translate-y-px"
           >
             Get Started
           </Link>
@@ -59,13 +59,13 @@ export default async function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-md">
             <Link
               href="/sign-up"
-              className="inline-flex items-center gap-sm rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
+              className="inline-flex items-center gap-sm rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
               Get Started
             </Link>
             <a
               href="#how-it-works"
-              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
+              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               See How It Works
             </a>
@@ -124,7 +124,7 @@ export default async function LandingPage() {
         {/* Who is this for */}
         <section className="mx-auto max-w-[960px] px-lg py-4xl">
           <h2 className="mb-sm text-center font-serif text-2xl font-semibold text-text-primary">
-            Wherever you are in your journey
+            Wherever you&rsquo;re starting from
           </h2>
           <p className="mb-2xl text-center font-serif text-base text-text-secondary">
             First week or fifth year, you start the same way: log what already happened today.
@@ -179,7 +179,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/sign-up"
-              className="inline-flex w-full items-center justify-center rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
+              className="inline-flex w-full items-center justify-center rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
               Get Started
             </Link>
@@ -201,7 +201,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/demo"
-              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-200 ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
+              className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
               Try the Interactive Demo
             </Link>
@@ -220,9 +220,9 @@ export default async function LandingPage() {
             </span>
           </div>
           <div className="flex gap-lg">
-            <Link href="/terms" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Terms</Link>
-            <Link href="/privacy" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Privacy</Link>
-            <a href="mailto:hello@hearthlearning.au" className="font-sans text-xs text-text-muted transition-colors duration-200 hover:text-text-secondary">Contact</a>
+            <Link href="/terms" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Terms</Link>
+            <Link href="/privacy" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Privacy</Link>
+            <a href="mailto:hello@hearthlearning.au" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Contact</a>
           </div>
           <div className="font-sans text-xs text-text-muted">© 2026 Hearth Learning Pty Ltd</div>
         </footer>

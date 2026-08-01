@@ -111,7 +111,7 @@ export function ExploreView({
                   href={`/log?source=check-in&learner=${encodeURIComponent(snap.id)}`}
                   className="mt-md inline-block rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-colors duration-[var(--motion-quick)] hover:bg-ember-hover"
                 >
-                  Log a moment →
+                  Log a moment
                 </Link>
               </div>
             )}

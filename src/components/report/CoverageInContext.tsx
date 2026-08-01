@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { NotePencil, Books, Paperclip, CheckCircle, Sparkle, Plant, Compass } from '@/components/icons';
+import { NotePencil, Books, Paperclip, CheckCircle, Sparkle, Plant, Compass, ArrowRight } from '@/components/icons';
 import type { CoverageNarrative } from '@/lib/report/coverage-narrative';
 
 /**
@@ -168,9 +168,9 @@ export default function CoverageInContext({
 
       <Link
         href="/our-story/portfolio"
-        className="mt-md inline-block font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+        className="hearth-link-arrow mt-md font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
       >
-        See everything in your portfolio →
+        See everything in your portfolio <ArrowRight size={14} aria-hidden="true" />
       </Link>
     </section>
   );

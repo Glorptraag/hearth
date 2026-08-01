@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Paperclip, NotePencil, Lifebuoy } from '@/components/icons';
+import { ArrowLeft, Paperclip, NotePencil, Lifebuoy } from '@/components/icons';
 import { db } from '@/lib/db';
 import {
   hearths,
@@ -143,9 +143,9 @@ export default async function SessionDetailPage({
         {/* Back nav */}
         <Link
           href={`/hearths/${hearthId}`}
-          className="flex items-center gap-sm text-text-muted font-sans text-sm cursor-pointer hover:text-ember transition-colors duration-200 mb-lg"
+          className="flex items-center gap-sm text-text-muted font-sans text-sm cursor-pointer hover:text-ember transition-colors duration-[var(--motion-quick)] mb-lg"
         >
-          ← Back to {hearth.name}
+          <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back to {hearth.name}</span>
         </Link>
 
         {/* Status badge + title */}
@@ -304,13 +304,13 @@ export default async function SessionDetailPage({
           <div className="flex items-center gap-md pt-md">
             <Link
               href={`/log?scaffold=${sessionId}&hearthId=${hearthId}`}
-              className="inline-flex items-center gap-xs px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:opacity-90 transition-opacity duration-200"
+              className="inline-flex items-center gap-xs px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:opacity-90 transition-opacity duration-[var(--motion-quick)]"
             >
               <NotePencil size={14} aria-hidden="true" /> Log this session
             </Link>
             <Link
               href={`/hearths/${hearthId}`}
-              className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm hover:border-border-medium transition-colors duration-200"
+              className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
             >
               Skip for now
             </Link>

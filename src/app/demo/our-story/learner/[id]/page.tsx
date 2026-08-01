@@ -3,6 +3,7 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { differenceInYears } from 'date-fns';
+import { ArrowRight } from '@/components/icons';
 import LearnerAvatar from '@/components/ui/LearnerAvatar';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { mockLearners, mockLearnerProfiles } from '../../../mock-data';
@@ -24,7 +25,7 @@ export default function DemoLearnerProfile({
           <p className="font-sans text-sm text-text-muted mb-lg">Learner not found</p>
           <Link
             href="/demo/our-story"
-            className="inline-flex rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200"
+            className="inline-flex rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
           >
             Back to Our Story
           </Link>
@@ -63,7 +64,7 @@ export default function DemoLearnerProfile({
           {profile.interests.map((interest) => (
             <span
               key={interest}
-              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-200"
+              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
             >
               {interest}
             </span>
@@ -78,7 +79,7 @@ export default function DemoLearnerProfile({
           {profile.strengths.map((strength) => (
             <span
               key={strength}
-              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-200"
+              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
             >
               {strength}
             </span>
@@ -109,15 +110,15 @@ export default function DemoLearnerProfile({
         </p>
         <Link
           href={`/demo/explore/activities?learner=${id}`}
-          className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
+          className="flex items-center justify-between rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-[background-color,border-color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         >
-          Find activities for {learner.name}&apos;s interests →
+          Find activities for {learner.name}&apos;s interests <ArrowRight size={14} aria-hidden="true" />
         </Link>
         <Link
           href="/demo/settings"
-          className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
+          className="flex items-center justify-between rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-[background-color,border-color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         >
-          Edit {learner.name}&apos;s profile →
+          Edit {learner.name}&apos;s profile <ArrowRight size={14} aria-hidden="true" />
         </Link>
       </div>
     </div>

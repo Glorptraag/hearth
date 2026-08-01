@@ -65,7 +65,7 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
       className="fixed inset-0 backdrop-modal z-[200] flex items-center justify-center"
       onClick={handleOverlayClick}
     >
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="invite-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="invite-modal-title" className="hearth-modal-enter bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto overscroll-contain shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-md">
           <h2 id="invite-modal-title" className="font-serif text-xl font-semibold text-text-primary">
@@ -74,7 +74,7 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
           <button
             type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary transition-all duration-200 ml-md"
+            className="text-text-muted hover:text-text-primary transition-all duration-[var(--motion-quick)] ml-md"
             aria-label="Close"
           >
             <X size={18} aria-hidden="true" />
@@ -93,14 +93,14 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-200"
+                className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={generateLink}
-                className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition-all duration-200"
+                className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
               >
                 Generate Invite Link
               </button>
@@ -135,7 +135,7 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-200 shrink-0"
+                  className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)] shrink-0"
                 >
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
@@ -153,14 +153,14 @@ export default function InviteModal({ hearthId, isOpen, onClose }: InviteModalPr
               <button
                 type="button"
                 onClick={handleRegenerate}
-                className="font-sans text-sm text-text-secondary hover:text-text-primary underline underline-offset-2 transition-all duration-200 cursor-pointer"
+                className="font-sans text-sm text-text-secondary hover:text-text-primary underline underline-offset-2 transition-all duration-[var(--motion-quick)] cursor-pointer"
               >
                 Generate new link
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-200"
+                className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
               >
                 Done
               </button>

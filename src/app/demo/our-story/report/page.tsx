@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { differenceInDays, parseISO } from 'date-fns';
+import { ArrowRight } from '@/components/icons';
 import { ChildSelector } from '@/components/ui/child-selector';
 import DomainChip, { DOMAIN_LABELS } from '@/components/ui/DomainChip';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -104,7 +105,7 @@ export default function DemoComplianceReport() {
                   aria-label={`${subject} coverage: ${count} of 5 entries`}
                 >
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${colors.text}`}
+                    className={`h-full rounded-full transition-all duration-[var(--motion-base)] ${colors.text}`}
                     style={{ width: `${percent}%` }}
                   />
                 </div>
@@ -170,15 +171,15 @@ export default function DemoComplianceReport() {
         <div className="space-y-sm">
           <Link
             href={`/demo/our-story/portfolio?child=${selectedId}`}
-            className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
+            className="flex items-center justify-between rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-[background-color,border-color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
-            View all evidence →
+            View all evidence <ArrowRight size={14} aria-hidden="true" />
           </Link>
           <Link
             href={`/demo/our-story/capabilities?child=${selectedId}`}
-            className="block rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-all duration-200"
+            className="flex items-center justify-between rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-medium text-ember hover:bg-surface-panel hover:border-border-medium transition-[background-color,border-color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
-            See capability growth →
+            See capability growth <ArrowRight size={14} aria-hidden="true" />
           </Link>
         </div>
       </div>

@@ -99,8 +99,16 @@ export default function NotificationRow({
 
   return (
     <div
-      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:shadow-hover hover:-translate-y-[2px] cursor-pointer ${accent}`}
+      role="button"
+      tabIndex={0}
+      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:shadow-hover hover:-translate-y-[2px] cursor-pointer focus-visible:outline-none focus-visible:shadow-focus ${accent}`}
       onClick={() => isUnread && onMarkRead(notification.id)}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          if (isUnread) onMarkRead(notification.id);
+        }
+      }}
     >
       <div className="flex items-start gap-md">
         {/* Tier icon */}
@@ -136,7 +144,7 @@ export default function NotificationRow({
                   e.stopPropagation();
                   if (isUnread) onMarkRead(notification.id);
                 }}
-                className="inline-flex items-center rounded-[10px] bg-ember px-[14px] py-[6px] font-sans text-[13px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover"
+                className="inline-flex items-center rounded-[10px] bg-ember px-[14px] py-[6px] font-sans text-[13px] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover"
               >
                 {actionLabel}
               </Link>
@@ -155,14 +163,14 @@ export default function NotificationRow({
         </div>
 
         {/* Snooze + Dismiss — visible on hover */}
-        <div className="mt-[-4px] mr-[-4px] flex shrink-0 flex-col gap-[2px] opacity-0 transition-all duration-200 group-hover:opacity-100">
+        <div className="mt-[-4px] mr-[-4px] flex shrink-0 flex-col gap-[2px] opacity-0 transition-opacity duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100">
           {isUnread && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onSnooze(notification.id);
               }}
-              className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
               aria-label="Snooze for 4 hours"
               title="Snooze"
             >
@@ -174,7 +182,7 @@ export default function NotificationRow({
               e.stopPropagation();
               onDismiss(notification.id);
             }}
-            className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
+            className="flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text-secondary"
             aria-label="Dismiss"
           >
             <X size={14} aria-hidden="true" />

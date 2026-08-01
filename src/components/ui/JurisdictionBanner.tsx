@@ -45,7 +45,7 @@ export function JurisdictionBanner() {
         href="/settings"
         className="shrink-0 rounded-md bg-ember px-md py-xs font-sans text-sm font-semibold text-text-inverse transition-colors duration-[var(--motion-quick)] hover:bg-ember-hover"
       >
-        Set your state →
+        Set your state
       </Link>
     </div>
   );

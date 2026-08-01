@@ -61,7 +61,7 @@ export default function StaleAlertsList({ families, onRebuild }: Props) {
               <td className="px-md">
                 <Link
                   href={`/admin/families/${f.familyId}`}
-                  className="font-sans text-sm font-medium text-ember hover:text-ember-hover transition-colors duration-200"
+                  className="font-sans text-sm font-medium text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)]"
                 >
                   {f.familyName}
                 </Link>
@@ -75,7 +75,7 @@ export default function StaleAlertsList({ families, onRebuild }: Props) {
               <td className="px-md text-right">
                 <button
                   onClick={() => onRebuild(f.familyId, f.familyName)}
-                  className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs font-medium text-text-secondary hover:border-ember hover:text-ember transition-all duration-200"
+                  className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs font-medium text-text-secondary hover:border-ember hover:text-ember transition-all duration-[var(--motion-quick)]"
                 >
                   Rebuild
                 </button>

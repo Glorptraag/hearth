@@ -27,7 +27,7 @@ export function ChildSelector({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-sm overflow-x-auto border-b border-border-subtle">
+    <div className="flex gap-sm overflow-x-auto overscroll-x-contain scrollbar-none border-b border-border-subtle">
       {learners.map((learner) => {
         const active = learner.id === selectedId;
         const age = learner.dateOfBirth
@@ -39,7 +39,7 @@ export function ChildSelector({
           <button
             key={learner.id}
             onClick={() => onChange(learner.id)}
-            className={`flex items-center gap-xs px-md py-sm font-sans text-sm font-medium border-b-2 transition-all duration-200 ease-[var(--ease-default)] ${
+            className={`flex items-center gap-xs px-md py-sm font-sans text-sm font-medium border-b-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               active
                 ? `${colors.active} ${colors.border}`
                 : 'border-transparent text-text-secondary hover:text-text-primary'

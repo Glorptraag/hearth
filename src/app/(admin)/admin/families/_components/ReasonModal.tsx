@@ -69,21 +69,21 @@ export default function ReasonModal({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="e.g. Support ticket #42, family reported stale dashboard..."
-          className="w-full rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-200 resize-none mb-lg"
+          className="w-full rounded-md border border-border-subtle bg-surface-body px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)] resize-none mb-lg"
           autoFocus
         />
 
         <div className="flex gap-sm justify-end">
           <button
             onClick={handleCancel}
-            className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
+            className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={!reason.trim() || loading}
-            className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-200"
+            className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
           >
             {loading ? 'Loading...' : confirmLabel}
           </button>

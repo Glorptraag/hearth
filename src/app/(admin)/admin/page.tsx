@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
           </span>
           <button
             onClick={fetchData}
-            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-200"
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
           >
             Refresh
           </button>
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
           <Pill label="Expiring soon" value={data.invitations.expiringSoon} warn={data.invitations.expiringSoon > 0} />
           <Link
             href="/admin/invitations"
-            className="ml-auto font-sans text-xs text-ember hover:text-ember-hover transition-colors duration-200"
+            className="ml-auto font-sans text-xs text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)]"
           >
             View all &rarr;
           </Link>
@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
                 </span>
                 <div className="flex-1 h-[20px] rounded-[6px] bg-surface-body overflow-hidden">
                   <div
-                    className={`h-full rounded-[6px] transition-all duration-200 ${BUCKET_COLORS[b.bucket] ?? 'bg-text-muted'}`}
+                    className={`h-full rounded-[6px] transition-all duration-[var(--motion-quick)] ${BUCKET_COLORS[b.bucket] ?? 'bg-text-muted'}`}
                     style={{ width: `${Math.max((b.count / maxPulse) * 100, b.count > 0 ? 4 : 0)}%` }}
                   />
                 </div>

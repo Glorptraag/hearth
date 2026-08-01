@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { Module, ActivityOverlay, QuickCaptureItem } from './types';
 import { SETTING_ICON, ENERGY_ICON, PEDAGOGY_LABELS } from './constants';
 import { ASSET_KIND_ICON, COMMONS_KIND_ICON, type AssetKind } from '@/components/content/types';
-import { Timer, Lightbulb, Eye, Asterisk, Camera, X, CaretDown } from '@/components/icons';
+import { Timer, Lightbulb, Eye, Asterisk, Camera, X, CaretDown, ArrowRight } from '@/components/icons';
 import { HearthPortableText } from './PortableTextRenderer';
 import SessionTimer from './SessionTimer';
 import QuickCapture from './QuickCapture';
@@ -78,7 +78,7 @@ export default function FacilitateMode({
             {activities.map((_, i) => (
               <div
                 key={i}
-                className={`h-2 rounded-full transition-all duration-200 ${
+                className={`h-2 rounded-full transition-all duration-[var(--motion-quick)] ${
                   i === currentIdx
                     ? 'w-6 bg-ember'
                     : i < currentIdx
@@ -140,7 +140,7 @@ export default function FacilitateMode({
         {/* Why This Works — collapsible pedagogy context */}
         {currentOverlay && (currentOverlay.lens.perspective || currentOverlay.lens.facilitatorTips) && (
           <details className="mb-lg">
-            <summary className="inline-flex items-center gap-xs font-sans text-sm text-text-secondary cursor-pointer hover:text-text-primary transition-colors duration-200 select-none">
+            <summary className="inline-flex items-center gap-xs font-sans text-sm text-text-secondary cursor-pointer hover:text-text-primary transition-colors duration-[var(--motion-quick)] select-none">
               <Lightbulb size={16} aria-hidden="true" />
               Why This Works
             </summary>
@@ -217,7 +217,7 @@ export default function FacilitateMode({
                     {onDownloadAsset && (
                       <button
                         onClick={() => onDownloadAsset(ref.asset._id)}
-                        className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                        className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-[var(--motion-quick)]"
                       >
                         Download
                       </button>
@@ -245,9 +245,9 @@ export default function FacilitateMode({
                     {onOpenReader ? (
                       <button
                         onClick={() => onOpenReader(ref.text._id)}
-                        className="shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+                        className="hearth-link-arrow shrink-0 font-sans text-[0.75rem] font-medium text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                       >
-                        Open reader →
+                        Open reader <ArrowRight size={14} aria-hidden="true" />
                       </button>
                     ) : null}
                   </div>
@@ -279,9 +279,9 @@ export default function FacilitateMode({
           <div className="mb-lg xl:hidden">
             <button
               onClick={() => setOverlayOpen((v) => !v)}
-              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
+              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] mb-sm"
             >
-              <CaretDown size={12} className={`transition-transform duration-200 ${overlayOpen ? '' : '-rotate-90'}`} aria-hidden="true" />
+              <CaretDown size={12} className={`transition-transform duration-[var(--motion-quick)] ${overlayOpen ? '' : '-rotate-90'}`} aria-hidden="true" />
               <span className="text-ember" aria-hidden="true"><Asterisk size={12} /></span>
               <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
             </button>
@@ -337,7 +337,7 @@ export default function FacilitateMode({
           <div className="mb-lg xl:hidden">
             <button
               onClick={() => setGuidanceOpen((v) => !v)}
-              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-200 mb-sm"
+              className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] mb-sm"
             >
               <span>{guidanceOpen ? '▾' : '▸'}</span>
               <span>Facilitator Guidance</span>
@@ -409,7 +409,7 @@ export default function FacilitateMode({
             {onPause && (
               <button
                 onClick={onPause}
-                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
               >
                 ⏸ Pause
               </button>
@@ -418,9 +418,9 @@ export default function FacilitateMode({
               // Last activity: "Finish & Log" is itself the end-and-log exit.
               <button
                 onClick={onFinish}
-                className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
+                className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
               >
-                Finish & Log →
+                Finish &amp; Log
               </button>
             ) : (
               <>
@@ -429,7 +429,7 @@ export default function FacilitateMode({
                 {onEndAndLog && (
                   <button
                     onClick={onEndAndLog}
-                    className="shrink-0 rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-200 hover:border-border-medium hover:text-text-primary"
+                    className="shrink-0 rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
                   >
                     End &amp; Log
                   </button>
@@ -442,9 +442,9 @@ export default function FacilitateMode({
                     setOverlayOpen(false);
                     onChunkChange?.(next);
                   }}
-                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200 shadow-ember"
+                  className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
                 >
-                  Next Activity →
+                  Next Activity
                 </button>
               </>
             )}
@@ -661,7 +661,7 @@ export default function FacilitateMode({
             )}
             <button
               onClick={() => setMobileCapture((v) => !v)}
-              className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-200 hover:bg-ember-hover relative"
+              className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-[var(--motion-quick)] hover:bg-ember-hover relative"
               aria-label="Quick capture"
             >
               {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}

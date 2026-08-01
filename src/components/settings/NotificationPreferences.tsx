@@ -41,7 +41,7 @@ export default function NotificationPreferences({ prefs, onChange }: Notificatio
         return (
           <div
             key={key}
-            className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-200 hover:border-border-medium"
+            className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-quick)] hover:border-border-medium"
           >
             <div className="flex-1">
               <p className="font-sans text-sm font-semibold text-text-primary">{label}</p>
@@ -49,14 +49,14 @@ export default function NotificationPreferences({ prefs, onChange }: Notificatio
             </div>
             <button
               onClick={() => toggle(key)}
-              className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200 ${
+              className={`hit-target relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-[var(--motion-quick)] ${
                 enabled ? 'bg-ember' : 'bg-surface-hover border border-border-medium'
               }`}
               aria-checked={enabled}
               role="switch"
             >
               <span
-                className={`absolute top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                className={`absolute top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform duration-[var(--motion-quick)] ${
                   enabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
                 }`}
               />

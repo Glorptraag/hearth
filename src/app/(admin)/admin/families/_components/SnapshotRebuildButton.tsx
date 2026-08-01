@@ -36,7 +36,7 @@ export default function SnapshotRebuildButton({ familyId, onRebuilt }: Props) {
     <>
       <button
         onClick={() => { setShowModal(true); setResult('idle'); }}
-        className="rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200"
+        className="rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
       >
         Trigger Rebuild
       </button>

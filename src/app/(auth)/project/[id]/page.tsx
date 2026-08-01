@@ -8,6 +8,7 @@ import type { PortableTextBlock } from '@portabletext/types';
 import { clientSanityRead } from '@/lib/sanity/client-read';
 import { DOMAIN_CLASSES as SUBJECT_CLASSES, DOMAIN_LABELS as SUBJECT_LABELS } from '@/components/ui/DomainChip';
 import {
+  ArrowLeft,
   CalendarBlank,
   User,
   Check,
@@ -105,9 +106,9 @@ function ProjectOverview({
       >
         <a
           href="/explore/activities"
-          className="inline-flex items-center gap-xs font-sans text-[0.85rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 mb-lg"
+          className="inline-flex items-center gap-xs font-sans text-[0.85rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] mb-lg"
         >
-          ← Explore
+          <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Explore</span>
         </a>
 
         <div className="inline-flex items-center gap-xs px-sm py-xs rounded-full font-sans text-[0.6875rem] font-semibold uppercase tracking-wider mb-md bg-child-violet/12 text-child-violet border border-child-violet/20"
@@ -245,9 +246,9 @@ function ProjectOverview({
           <div className="mt-xl text-center">
             <button
               onClick={() => onStageSelect(activeIdx)}
-              className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+              className="hearth-press bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
             >
-              Continue Stage {stages[activeIdx].stageNumber} →
+              Continue Stage {stages[activeIdx].stageNumber}
             </button>
           </div>
         )}
@@ -283,9 +284,9 @@ function StageDetail({
         {/* Back nav */}
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-xs font-sans text-[0.85rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200 mb-lg"
+          className="inline-flex items-center gap-xs font-sans text-[0.85rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] mb-lg"
         >
-          ← {project.title}
+          <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> {project.title}</span>
         </button>
 
         {/* Stage header */}
@@ -383,7 +384,7 @@ function StageDetail({
               <div className="flex gap-sm">
                 <button
                   onClick={() => onComplete(artifactNote || undefined)}
-                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
                 >
                   <span className="inline-flex items-center gap-xs">Complete Stage <Check size={14} aria-hidden="true" /></span>
                 </button>
@@ -398,7 +399,7 @@ function StageDetail({
           ) : (
             <button
               onClick={() => setShowCompletePrompt(true)}
-              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
             >
               Mark Stage Complete
             </button>
@@ -407,16 +408,16 @@ function StageDetail({
           {/* Log entry link */}
           <Link
             href={`/log?source=project_stage&projectId=${project._id}&stageNumber=${stage.stageNumber}`}
-            className="inline-flex items-center justify-center gap-xs w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-200"
+            className="inline-flex items-center justify-center gap-xs w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
           >
             <PencilLine size={14} aria-hidden="true" /> Log This Stage
           </Link>
 
           <button
             onClick={onBack}
-            className="w-full text-center bg-transparent text-text-secondary font-sans text-sm hover:text-text-primary transition-colors duration-200"
+            className="w-full text-center bg-transparent text-text-secondary font-sans text-sm hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
           >
-            ← Back to Overview
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back to Overview</span>
           </button>
         </div>
       </div>
@@ -501,7 +502,7 @@ export default function ProjectDetailPage() {
         <p className="font-sans text-sm text-text-secondary mb-lg">This project may not exist or hasn&apos;t been published yet.</p>
         <button
           onClick={() => router.push('/explore/activities')}
-          className="font-sans text-sm font-semibold px-md py-sm rounded-md border border-ember text-ember hover:bg-ember hover:text-text-inverse transition-all duration-200"
+          className="font-sans text-sm font-semibold px-md py-sm rounded-md border border-ember text-ember hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)]"
         >
           Browse Activities
         </button>

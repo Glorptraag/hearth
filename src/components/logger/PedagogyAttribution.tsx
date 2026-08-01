@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { CaretDown, CaretUp } from '@/components/icons';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 
 export interface PedagogyAttributionSource {
@@ -27,12 +28,11 @@ export function PedagogyAttribution({ sources, frameworkTitle = 'Charlotte Mason
       </p>
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className="font-sans text-xs text-text-secondary hover:text-text-primary transition-all duration-200 ease-[var(--ease-default)]"
+        className="inline-flex items-center gap-xs font-sans text-xs text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         aria-expanded={expanded}
       >
-        {expanded
-          ? `Grounded in ${frameworkTitle} ‹`
-          : `Grounded in ${frameworkTitle} ›`}
+        Grounded in {frameworkTitle}
+        {expanded ? <CaretUp size={12} aria-hidden="true" /> : <CaretDown size={12} aria-hidden="true" />}
       </button>
 
       {expanded && (

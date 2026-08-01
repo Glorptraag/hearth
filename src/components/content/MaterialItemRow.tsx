@@ -3,7 +3,7 @@
 import { createElement } from 'react';
 import Image from 'next/image';
 import { type PrintableItem, getItemIcon } from './types';
-import { Printer } from '@/components/icons';
+import { ArrowRight, DownloadSimple, Printer } from '@/components/icons';
 
 interface MaterialItemRowProps {
   item: PrintableItem;
@@ -43,8 +43,10 @@ export function MaterialItemRow({
 
   return (
     <div
-      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition-all duration-200 ease-[var(--ease-default)] ${
-        disabled ? 'opacity-50' : 'bg-surface-raised hover:bg-surface-hover cursor-pointer'
+      role="button"
+      tabIndex={disabled ? undefined : 0}
+      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+        disabled ? 'opacity-50' : 'bg-surface-raised hover:bg-surface-hover cursor-pointer focus-visible:outline-none focus-visible:shadow-focus'
       } ${selected ? 'border-ember/30 bg-ember/5' : ''} ${compact ? 'p-sm gap-sm' : ''}`}
       onClick={() => {
         if (selectable && onSelect) {
@@ -53,6 +55,12 @@ export function MaterialItemRow({
           onOpenReader(item);
         } else if (onPreview) {
           onPreview(item);
+        }
+      }}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          e.currentTarget.click();
         }
       }}
     >
@@ -105,25 +113,25 @@ export function MaterialItemRow({
           {isCommons && onOpenReader && (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenReader(item); }}
-              className="font-sans text-[0.72rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200 whitespace-nowrap"
+              className="hearth-link-arrow font-sans text-[0.72rem] font-medium text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] whitespace-nowrap"
               aria-label={`Open reader for ${item.title}`}
             >
-              Open reader →
+              Open reader <ArrowRight size={14} aria-hidden="true" />
             </button>
           )}
           {!isAudio && onDownload && (
             <button
               onClick={(e) => { e.stopPropagation(); onDownload(item); }}
-              className="p-1.5 text-text-muted hover:text-text-primary transition-colors duration-200"
+              className="hit-target p-1.5 text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               aria-label={`Download ${item.title}`}
             >
-              ↓
+              <DownloadSimple size={16} aria-hidden="true" />
             </button>
           )}
           {!isAudio && onPrint && (
             <button
               onClick={(e) => { e.stopPropagation(); onPrint(item); }}
-              className="p-1.5 text-text-muted hover:text-text-primary transition-colors duration-200"
+              className="hit-target p-1.5 text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               aria-label={`Print ${item.title}`}
             >
               <Printer size={16} aria-hidden="true" />

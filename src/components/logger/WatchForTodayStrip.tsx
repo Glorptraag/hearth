@@ -112,7 +112,7 @@ export function WatchForTodayStrip({ learners, snapshotData }: WatchForTodayStri
         <button
           onClick={() => setDismissed(true)}
           aria-label="Dismiss watch-for-today strip"
-          className="shrink-0 mt-[1px] text-text-muted hover:text-text-secondary transition-colors duration-200"
+          className="shrink-0 mt-[1px] text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
         >
           <X size={14} aria-hidden="true" />
         </button>

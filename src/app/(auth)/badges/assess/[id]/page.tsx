@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { track } from '@/lib/analytics/posthog';
 import {
   CheckCircle,
+  ArrowLeft,
   CircleHalf,
   Circle,
   Check,
@@ -195,7 +196,7 @@ export default function BadgeAssessPage() {
           <p className="font-serif text-text-primary text-xl mb-md">{error ?? 'Badge not found'}</p>
           <button
             onClick={() => router.back()}
-            className="font-sans text-sm text-ember hover:text-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+            className="font-sans text-sm text-ember hover:text-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
             Go back
           </button>
@@ -232,9 +233,9 @@ export default function BadgeAssessPage() {
                   router.back();
                 }
               }}
-              className="font-sans text-sm text-text-secondary hover:text-text-primary transition-all duration-200 ease-[var(--ease-default)]"
+              className="font-sans text-sm text-text-secondary hover:text-text-primary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
             >
-              ← Back
+              <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
             </button>
 
             {/* Progress dots */}
@@ -243,7 +244,7 @@ export default function BadgeAssessPage() {
                 {badge.assessmentQuestions.map((_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ease-[var(--ease-default)] ${
+                    className={`w-2 h-2 rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                       i < currentQ
                         ? 'bg-ember'
                         : i === currentQ
@@ -285,7 +286,7 @@ export default function BadgeAssessPage() {
             <div className="space-y-sm">
               <button
                 onClick={() => setStep('questions')}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
               >
                 Let&apos;s check
               </button>
@@ -406,7 +407,7 @@ export default function BadgeAssessPage() {
               <button
                 onClick={handleAward}
                 disabled={submitting}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover disabled:opacity-50 transition-all duration-200 ease-[var(--ease-default)]"
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
               >
                 {submitting ? 'Awarding...' : `Award ${badge.title}`}
               </button>
@@ -421,7 +422,7 @@ export default function BadgeAssessPage() {
                 <button
                   onClick={handleDefer}
                   disabled={submitting}
-                  className="font-sans text-xs font-medium text-text-muted hover:text-text-secondary transition-colors duration-200"
+                  className="font-sans text-xs font-medium text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
                 >
                   Not ready yet · defer 7 days
                 </button>
@@ -429,7 +430,7 @@ export default function BadgeAssessPage() {
               {previousAssessments.length > 0 && (
                 <button
                   onClick={() => setStep('compare')}
-                  className="w-full mt-sm font-sans text-xs text-text-muted hover:text-ember border border-border-subtle rounded-md px-md py-sm transition-all duration-200 hover:border-border-medium"
+                  className="w-full mt-sm font-sans text-xs text-text-muted hover:text-ember border border-border-subtle rounded-md px-md py-sm transition-all duration-[var(--motion-quick)] hover:border-border-medium"
                 >
                   Compare with previous assessment ({previousAssessments.length} prior)
                 </button>
@@ -517,7 +518,7 @@ export default function BadgeAssessPage() {
               <div className="space-y-sm">
                 <button
                   onClick={() => setStep('decision')}
-                  className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200"
+                  className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
                 >
                   Back to decision
                 </button>
@@ -544,9 +545,9 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                   >
-                    Next badge ({queueItems.length} remaining) →
+                    Next badge ({queueItems.length} remaining)
                   </button>
                   <button
                     onClick={() => router.push('/our-story/portfolio')}
@@ -559,7 +560,7 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={() => router.push('/our-story/portfolio')}
-                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                   >
                     View in Portfolio
                   </button>
@@ -594,9 +595,9 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                   >
-                    Next badge ({queueItems.length} remaining) →
+                    Next badge ({queueItems.length} remaining)
                   </button>
                   <button
                     onClick={() => router.push('/')}

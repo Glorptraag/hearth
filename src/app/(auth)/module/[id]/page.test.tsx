@@ -105,7 +105,7 @@ function stubApiFetch() {
 async function waitForPrepMode() {
   await waitFor(() => {
     const btn =
-      screen.queryByRole('button', { name: /Start Session →/i }) ??
+      screen.queryByRole('button', { name: /Start Session/i }) ??
       screen.queryByRole('button', { name: /Restart from Beginning/i });
     expect(btn).not.toBeNull();
   });
@@ -149,7 +149,7 @@ describe('module_session_started', () => {
     render(<ModuleDetailPage />);
     await waitForPrepMode();
 
-    screen.getByRole('button', { name: /Start Session →/i }).click();
+    screen.getByRole('button', { name: /Start Session/i }).click();
 
     await waitFor(() => {
       expect(vi.mocked(track)).toHaveBeenCalledWith('module_session_started', {
@@ -166,7 +166,7 @@ describe('module_session_resumed', () => {
     render(<ModuleDetailPage />);
     await waitForPrepMode();
 
-    const resumeBtn = await screen.findByRole('button', { name: /Resume →/i });
+    const resumeBtn = await screen.findByRole('button', { name: /Resume/i });
     resumeBtn.click();
 
     await waitFor(() => {
@@ -184,7 +184,7 @@ describe('module_session_logged', () => {
     await waitForPrepMode();
 
     // Navigate through Start → FacilitateMode (mocked) → LogMode (mocked) → save
-    screen.getByRole('button', { name: /Start Session →/i }).click();
+    screen.getByRole('button', { name: /Start Session/i }).click();
     const finishBtn = await screen.findByRole('button', { name: /Finish Session/i });
     finishBtn.click();
 

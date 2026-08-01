@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
-import { Books, Sparkle, Play, CalendarBlank, X } from '@/components/icons';
+import { ArrowRight, Books, Sparkle, Play, CalendarBlank, X } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
 import type { LibraryModuleItem } from '@/app/api/library/modules/route';
@@ -157,15 +157,15 @@ export default function LibraryClient() {
           <div className="flex items-center gap-md">
             <button
               onClick={() => setRemovedDrawerOpen(true)}
-              className="font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-200"
+              className="font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
             >
               Recently removed
             </button>
             <Link
               href="/explore/marketplace"
-              className="font-sans text-[0.8rem] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+              className="hearth-link-arrow font-sans text-[0.8rem] font-medium text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
             >
-              Browse Marketplace →
+              Browse Marketplace <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function LibraryClient() {
             Packs is the provenance / kitting view. Materials aggregates
             per-pack printables/kits. Browse is the expansive catalog of
             every module across owned packs + standalone (4.6). */}
-        <div className="flex gap-lg mb-xl border-b border-border-subtle overflow-x-auto">
+        <div className="flex gap-lg mb-xl border-b border-border-subtle overflow-x-auto overscroll-x-contain scrollbar-none">
           {([
             { key: 'modules' as const, label: 'In use', count: modulesInUse.length },
             { key: 'packs' as const, label: 'Packs', count: items.filter((i) => i.kind === 'pack').length },
@@ -184,7 +184,7 @@ export default function LibraryClient() {
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 border-b-2 ${
+              className={`pb-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] border-b-2 ${
                 tab === key
                   ? 'text-ember border-ember'
                   : 'text-text-muted border-transparent hover:text-text-secondary'
@@ -220,7 +220,7 @@ export default function LibraryClient() {
                 </p>
                 <Link
                   href="/explore/marketplace"
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
                 >
                   Explore Marketplace
                 </Link>
@@ -239,7 +239,7 @@ export default function LibraryClient() {
                 </p>
                 <button
                   onClick={() => setTab('browse')}
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
                 >
                   Browse all modules
                 </button>
@@ -273,7 +273,7 @@ export default function LibraryClient() {
                 </p>
                 <Link
                   href="/explore/marketplace"
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-200"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
                 >
                   Explore Marketplace
                 </Link>
@@ -397,7 +397,7 @@ function LibraryCard({
             e.stopPropagation();
             void onRemove();
           }}
-          className="absolute top-sm right-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-quick)] inline-flex items-center justify-center w-7 h-7 rounded-full border border-border-subtle bg-surface-panel text-text-muted hover:border-red-400 hover:text-red-400"
+          className="hit-target absolute top-sm right-sm z-10 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity duration-[var(--motion-quick)] inline-flex items-center justify-center w-7 h-7 rounded-full border border-border-subtle bg-surface-panel text-text-muted hover:border-red-400 hover:text-red-400"
           aria-label={`Remove ${item.title} from library`}
         >
           <X size={12} aria-hidden="true" />

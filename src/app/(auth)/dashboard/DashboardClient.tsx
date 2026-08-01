@@ -21,6 +21,7 @@ import {
   PencilSimpleLine,
   Flame,
   UsersThree,
+  ArrowRight,
 } from '@/components/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -313,7 +314,7 @@ export default function DashboardClient({
             <EmptyState
               icon={HandWaving}
               heading="Welcome to Hearth"
-              body="Let's set up your family. Who's learning at your hearth?"
+              body="Who's learning at your hearth? Add them to begin."
               cta={{ label: 'Add your first learner', href: `${basePath}/settings` }}
             />
           </div>
@@ -336,12 +337,12 @@ export default function DashboardClient({
               </span>
               <div>
                 <p className="font-serif text-sm text-text-secondary">
-                  It&rsquo;s been a few days. Learning has been happening &mdash; let&rsquo;s capture some of it.
+                  It&rsquo;s been a few days. Learning has been happening. Capture some of it when you&rsquo;re ready.
                 </p>
               </div>
               <Link
                 href={`${basePath}/log`}
-                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
+                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
               >
                 Log a moment
               </Link>
@@ -358,12 +359,12 @@ export default function DashboardClient({
               </h2>
               <Link
                 href={`${basePath}/our-story`}
-                className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
+                className="hearth-link-arrow font-sans text-[0.8rem] font-medium text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
               >
-                View all journeys →
+                View all <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
-            <div className="flex gap-xl overflow-x-auto pb-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-xl overflow-x-auto overscroll-x-contain snap-x pb-sm scrollbar-none">
               {learners.map((l) => {
                 const colours = getLearnerColour(l.colourToken);
                 const age = l.dateOfBirth
@@ -376,7 +377,7 @@ export default function DashboardClient({
                   <Link
                     key={l.id}
                     href={`${basePath}/our-story/learner/${l.id}`}
-                    className="flex flex-col items-center transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[4px]"
+                    className="flex snap-start flex-col items-center transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[4px]"
                   >
                     <div
                       className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[var(--motion-gentle)] ${colours.bg} ${colours.border} ${colours.text}`}
@@ -412,9 +413,9 @@ export default function DashboardClient({
               <h2 className="font-serif text-lg font-semibold text-text-primary">My Hearths</h2>
               <Link
                 href="/hearths"
-                className="font-sans text-sm text-ember font-medium hover:text-ember-hover"
+                className="hearth-link-arrow font-sans text-sm text-ember font-medium transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
               >
-                View all →
+                View all <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
             <div className="flex flex-col gap-lg">
@@ -502,9 +503,9 @@ export default function DashboardClient({
                   </h2>
                   <Link
                     href={`${basePath}/our-story/portfolio`}
-                    className="font-sans text-[0.8rem] font-medium text-ember transition-colors duration-200 hover:text-ember-hover"
+                    className="hearth-link-arrow font-sans text-[0.8rem] font-medium text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
                   >
-                    See full timeline →
+                    See full timeline <ArrowRight size={14} aria-hidden="true" />
                   </Link>
                 </div>
                   <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
@@ -525,7 +526,7 @@ export default function DashboardClient({
                       <span className="font-sans text-[0.75rem] text-text-muted mb-md">
                         Something we haven&rsquo;t captured?
                       </span>
-                      <span className="font-serif text-[1.1rem] font-semibold text-text-muted mb-sm group-hover:text-text-primary transition-colors duration-200">
+                      <span className="font-serif text-[1.1rem] font-semibold text-text-muted mb-sm group-hover:text-text-primary transition-colors duration-[var(--motion-quick)]">
                         Add another moment
                       </span>
                       <span className="font-serif text-[0.95rem] text-text-muted leading-[1.6]">
@@ -544,7 +545,7 @@ export default function DashboardClient({
         {/* Quick Log */}
         <Link
           href={`${basePath}/log`}
-          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-200 ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
+          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
         >
           <PencilSimpleLine size={18} aria-hidden="true" />
           Log a Moment
@@ -602,9 +603,9 @@ export default function DashboardClient({
               </p>
               <Link
                 href={`${basePath}/explore/activities`}
-                className="font-sans text-[0.8rem] font-medium text-sage hover:underline inline-flex items-center gap-xs"
+                className="hearth-link-arrow font-sans text-[0.8rem] font-medium text-sage hover:underline"
               >
-                See suggestions →
+                See suggestions <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
           );

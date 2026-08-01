@@ -4,7 +4,7 @@ import { sanityFetch } from '@/lib/sanity/server-fetch';
 import { PACK_INDICATORS_PROJECTION } from '@/lib/sanity/queries';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import type { Printables, Materials, AssetCounts } from '@/lib/sanity/pack-indicators';
-import { Books } from '@/components/icons';
+import { ArrowLeft, Books } from '@/components/icons';
 import { PackDetailCta } from '@/components/pack/PackDetailCta';
 
 interface PackDetail {
@@ -65,9 +65,9 @@ export default async function PackDetailPage({
         <div className="mb-lg">
           <Link
             href="/library"
-            className="font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-200"
+            className="font-sans text-[0.8rem] font-medium text-text-secondary hover:text-ember transition-colors duration-[var(--motion-quick)]"
           >
-            ← Library
+            <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Library</span>
           </Link>
         </div>
 

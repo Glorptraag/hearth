@@ -78,7 +78,7 @@ function CollapsibleSection({
     <div className="border-b border-border-subtle">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-lg py-sm hover:bg-surface-hover transition-colors duration-200"
+        className="flex w-full items-center justify-between px-lg py-sm hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
       >
         <span className="font-sans text-[0.7rem] font-semibold text-text-muted uppercase tracking-wider">
           {title}
@@ -115,7 +115,7 @@ export default function FamilyDetail({ data, loading, onClose }: Props) {
         </h3>
         <button
           onClick={onClose}
-          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
         >
           Close
         </button>

@@ -90,7 +90,7 @@ export default function PlannerGrid({
   }, [onMove]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-panel shadow-card">
+    <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border-subtle bg-surface-panel shadow-card">
       <div
         className="grid min-w-[620px]"
         style={{ gridTemplateColumns: `56px repeat(${weekDates.length}, minmax(100px, 1fr))` }}
@@ -164,7 +164,7 @@ export default function PlannerGrid({
               onDragOver={!isReadOnly && !isPast ? (e) => handleDragOver(e, morningCellKey) : undefined}
               onDragLeave={handleDragLeave}
               onDrop={!isReadOnly && !isPast ? (e) => handleDrop(e, dateStr, 'morning') : undefined}
-              className={`flex min-h-[110px] flex-col gap-xs border-b border-r border-border-subtle p-xs transition-colors duration-200 ${
+              className={`flex min-h-[110px] flex-col gap-xs border-b border-r border-border-subtle p-xs transition-colors duration-[var(--motion-quick)] ${
                 isToday ? 'bg-ember-glow/20' : ''
               } ${isPast ? 'opacity-70' : ''} ${
                 isMorningDragOver ? 'bg-ember/10 border-ember/30' : ''
@@ -187,7 +187,7 @@ export default function PlannerGrid({
               {!isReadOnly && !isPast && (
                 <button
                   onClick={() => onAdd(dateStr, 'morning')}
-                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-200 hover:border-ember hover:bg-ember-glow hover:text-ember"
+                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
                 >
                   +
                 </button>
@@ -217,7 +217,7 @@ export default function PlannerGrid({
               onDragOver={!isReadOnly && !isPast ? (e) => handleDragOver(e, afternoonCellKey) : undefined}
               onDragLeave={handleDragLeave}
               onDrop={!isReadOnly && !isPast ? (e) => handleDrop(e, dateStr, 'afternoon') : undefined}
-              className={`flex min-h-[110px] flex-col gap-xs border-r border-border-subtle p-xs transition-colors duration-200 ${
+              className={`flex min-h-[110px] flex-col gap-xs border-r border-border-subtle p-xs transition-colors duration-[var(--motion-quick)] ${
                 isToday ? 'bg-ember-glow/20' : ''
               } ${isPast ? 'opacity-70' : ''} ${
                 isAfternoonDragOver ? 'bg-ember/10 border-ember/30' : ''
@@ -240,7 +240,7 @@ export default function PlannerGrid({
               {!isReadOnly && !isPast && (
                 <button
                   onClick={() => onAdd(dateStr, 'afternoon')}
-                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-200 hover:border-ember hover:bg-ember-glow hover:text-ember"
+                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
                 >
                   +
                 </button>

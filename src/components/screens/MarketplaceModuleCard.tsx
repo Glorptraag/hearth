@@ -151,7 +151,7 @@ export function MarketplaceModuleCard({ module, inLibrary, onAddToLibrary }: Mar
                 onAddToLibrary(module._id);
               }}
               aria-label={`Add ${module.title} to your library`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-200 ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
             >
               Add to Library
             </button>

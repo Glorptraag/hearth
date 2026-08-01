@@ -22,7 +22,7 @@ export default function SignInPage() {
         <div className="flex items-center gap-sm">
           <Link
             href="/sign-up"
-            className="rounded-[10px] bg-ember px-md py-sm font-sans text-xs font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover hover:-translate-y-px"
+            className="rounded-[10px] bg-ember px-md py-sm font-sans text-xs font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover hover:-translate-y-px"
           >
             Get Started
           </Link>

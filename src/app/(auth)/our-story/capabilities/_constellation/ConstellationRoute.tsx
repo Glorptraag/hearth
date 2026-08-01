@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ChildSelector } from '@/components/ui/child-selector';
+import { CaretRight } from '@/components/icons';
 import {
   ALL_THREADS,
   ORDERED_DOMAINS,
@@ -83,7 +84,7 @@ function Stepper({
         const isCurrent = depth === s.d;
         return (
           <div key={s.d} className="flex items-center gap-xs">
-            {i > 0 && <span aria-hidden className="text-text-muted select-none">›</span>}
+            {i > 0 && <span aria-hidden className="inline-flex text-text-muted select-none"><CaretRight size={12} /></span>}
             <button
               type="button"
               aria-current={isCurrent ? 'page' : undefined}

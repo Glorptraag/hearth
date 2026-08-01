@@ -24,7 +24,7 @@ export default function DemoLanding() {
       <div className="mb-3xl flex justify-center">
         <Link
           href="/demo/dashboard"
-          className="inline-flex items-center gap-sm rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]"
+          className="inline-flex items-center gap-sm rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]"
         >
           Start exploring
         </Link>

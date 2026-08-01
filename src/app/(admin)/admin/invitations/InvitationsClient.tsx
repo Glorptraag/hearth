@@ -76,7 +76,7 @@ export default function InvitationsClient() {
         </h1>
         <button
           onClick={() => setCreateOpen(true)}
-          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200"
+          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
         >
           + New Invitation
         </button>
@@ -89,7 +89,7 @@ export default function InvitationsClient() {
             <button
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-200 border ${
+              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-[var(--motion-quick)] border ${
                 statusFilter === s
                   ? 'border-border-medium bg-surface-raised text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-subtle'
@@ -104,7 +104,7 @@ export default function InvitationsClient() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search families, emails, sources..."
-          className="flex-1 max-w-[300px] rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-200"
+          className="flex-1 max-w-[300px] rounded-md border border-border-subtle bg-surface-body px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted/50 focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
         />
       </div>
 
@@ -137,7 +137,7 @@ export default function InvitationsClient() {
                   </p>
                   <button
                     onClick={() => setCreateOpen(true)}
-                    className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-200"
+                    className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
                   >
                     + New Invitation
                   </button>
@@ -148,7 +148,7 @@ export default function InvitationsClient() {
                 <tr
                   key={inv.id}
                   onClick={() => setSelectedId(inv.id)}
-                  className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-200"
+                  className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors duration-[var(--motion-quick)]"
                   style={{ height: 'var(--admin-row-height, 40px)' }}
                 >
                   <td className="px-md font-sans text-sm font-medium text-text-primary">
@@ -181,7 +181,7 @@ export default function InvitationsClient() {
                         e.stopPropagation();
                         handleCopyCode(inv.code, inv.id);
                       }}
-                      className="font-mono text-xs text-text-muted hover:text-ember transition-colors duration-200"
+                      className="font-mono text-xs text-text-muted hover:text-ember transition-colors duration-[var(--motion-quick)]"
                       title={inv.code}
                     >
                       {copiedId === inv.id ? 'Copied!' : truncateCode(inv.code)}
@@ -204,7 +204,7 @@ export default function InvitationsClient() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-200"
+              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-[var(--motion-quick)]"
             >
               Prev
             </button>
@@ -214,7 +214,7 @@ export default function InvitationsClient() {
             <button
               onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
               disabled={page >= pageCount}
-              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-200"
+              className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors duration-[var(--motion-quick)]"
             >
               Next
             </button>

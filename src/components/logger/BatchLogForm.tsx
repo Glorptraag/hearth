@@ -146,7 +146,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
                 value={entry.title}
                 onChange={(e) => updateEntry(entry.id, 'title', e.target.value)}
                 placeholder="What did you learn?"
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-200 focus:border-ember focus:shadow-focus"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
               />
 
               <div className="flex gap-sm">
@@ -154,7 +154,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
                   type="date"
                   value={entry.dateOccurred}
                   onChange={(e) => updateEntry(entry.id, 'dateOccurred', e.target.value)}
-                  className="flex-1 bg-surface-raised border border-border-subtle rounded-md py-[8px] px-md font-sans text-sm text-text-primary outline-none transition-all duration-200 focus:border-ember"
+                  className="flex-1 bg-surface-raised border border-border-subtle rounded-md py-[8px] px-md font-sans text-sm text-text-primary outline-none transition-all duration-[var(--motion-quick)] focus:border-ember"
                 />
               </div>
 
@@ -166,7 +166,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
                       type="button"
                       onClick={() => toggleLearner(entry.id, l.id)}
                       className={[
-                        'font-sans text-xs rounded-full px-sm py-[3px] border transition-all duration-200',
+                        'font-sans text-xs rounded-full px-sm py-[3px] border transition-all duration-[var(--motion-quick)]',
                         entry.learnerIds.includes(l.id)
                           ? 'bg-ember text-text-inverse border-ember'
                           : 'border-border-subtle text-text-muted hover:border-border-medium',
@@ -185,7 +185,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
                     type="button"
                     onClick={() => toggleSubject(entry.id, s)}
                     className={[
-                      'font-sans text-xs rounded-md px-sm py-[3px] border transition-all duration-200',
+                      'font-sans text-xs rounded-md px-sm py-[3px] border transition-all duration-[var(--motion-quick)]',
                       entry.subjects.includes(s)
                         ? 'bg-surface-hover border-border-medium text-text-primary'
                         : 'border-border-subtle text-text-muted hover:border-border-medium',
@@ -203,7 +203,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
       <button
         type="button"
         onClick={addEntry}
-        className="rounded-md border border-dashed border-border-medium py-sm font-sans text-sm text-text-secondary hover:border-ember hover:text-ember transition-colors duration-200"
+        className="rounded-md border border-dashed border-border-medium py-sm font-sans text-sm text-text-secondary hover:border-ember hover:text-ember transition-colors duration-[var(--motion-quick)]"
       >
         + Add another session
       </button>
@@ -214,7 +214,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 font-sans text-sm text-text-secondary border border-border-subtle rounded-md min-h-[44px] px-lg transition-all duration-200 hover:border-border-medium"
+          className="flex-1 font-sans text-sm text-text-secondary border border-border-subtle rounded-md min-h-[44px] px-lg transition-all duration-[var(--motion-quick)] hover:border-border-medium"
         >
           Cancel
         </button>
@@ -222,7 +222,7 @@ export function BatchLogForm({ learners, onComplete, onCancel }: BatchLogFormPro
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-200 disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-[var(--motion-quick)] disabled:opacity-50"
         >
           {saving ? 'Saving…' : `Save ${validCount} session${validCount !== 1 ? 's' : ''}`}
         </button>

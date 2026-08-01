@@ -35,7 +35,7 @@ export default function BadgeAssessmentPage() {
           </p>
           <Link
             href="/demo/dashboard"
-            className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+            className="inline-block bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
           >
             Back to Dashboard
           </Link>
@@ -106,7 +106,7 @@ export default function BadgeAssessmentPage() {
         {/* Begin button */}
         <button
           onClick={() => setStep('questions')}
-          className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200 mt-xl"
+          className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] mt-xl"
         >
           Begin Assessment
         </button>
@@ -134,7 +134,7 @@ export default function BadgeAssessmentPage() {
             aria-label={`Question ${currentQuestion + 1} of ${badge.assessmentQuestions.length}`}
           >
             <div
-              className="bg-ember h-full transition-all duration-300"
+              className="bg-ember h-full transition-all duration-[var(--motion-base)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -234,7 +234,7 @@ export default function BadgeAssessmentPage() {
             <div className="w-full flex flex-col gap-md mt-xl pt-xl border-t border-border-subtle">
               <button
                 onClick={() => setStep('celebration')}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
               >
                 Award Badge
               </button>
@@ -244,7 +244,7 @@ export default function BadgeAssessmentPage() {
                   setCurrentQuestion(0);
                   setResponses([]);
                 }}
-                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-200"
+                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
               >
                 Not quite yet
               </button>
@@ -279,7 +279,7 @@ export default function BadgeAssessmentPage() {
             {/* Action */}
             <Link
               href="/demo/dashboard"
-              className="block w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200 text-center mt-xl pt-xl border-t border-border-subtle"
+              className="block w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] text-center mt-xl pt-xl border-t border-border-subtle"
             >
               Back to Dashboard
             </Link>
@@ -311,13 +311,13 @@ export default function BadgeAssessmentPage() {
         <div className="w-full flex flex-col gap-md mt-xl pt-xl border-t border-border-subtle">
           <Link
             href="/demo/dashboard"
-            className="block text-center bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-200"
+            className="block text-center bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)]"
           >
             Back to Dashboard
           </Link>
           <Link
             href="/demo/our-story/capabilities"
-            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-200"
+            className="block text-center bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm hover:border-border-medium transition-colors duration-[var(--motion-quick)]"
           >
             View Capabilities
           </Link>

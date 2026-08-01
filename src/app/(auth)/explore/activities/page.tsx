@@ -16,6 +16,7 @@ import type { ComponentType as EAComponentType } from 'react';
 type EAIconC = EAComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useSheetDrag } from '@/hooks/use-sheet-drag';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,7 +178,7 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
             In Library
           </button>
         ) : (
-          <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-200 hover:bg-ember-hover w-full">
+          <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover w-full">
             Add to Library
           </button>
         )}
@@ -200,6 +201,7 @@ function PreviewModal({
   onAddToPlanner: (module: Module) => void;
 }) {
   const trapRef = useFocusTrap(true);
+  const dragHandleProps = useSheetDrag(trapRef, onClose);
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal px-0 sm:px-md"
@@ -210,12 +212,14 @@ function PreviewModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="preview-modal-title"
-        className="bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-float p-xl max-h-[90dvh] overflow-y-auto overscroll-contain"
+        className="hearth-modal-enter bg-surface-panel w-full sm:max-w-[680px] rounded-t-[16px] sm:rounded-[24px] border border-border-subtle shadow-float p-xl max-h-[90dvh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       >
-        {/* Handle */}
-        <div className="w-10 h-1 bg-border-medium rounded-full mx-auto mb-lg sm:hidden" />
+        {/* Handle — swipe down to dismiss (mobile sheet only) */}
+        <div className="-mt-md pt-md pb-md -mb-xs sm:hidden" {...dragHandleProps}>
+          <div className="w-10 h-1 bg-border-medium rounded-full mx-auto" />
+        </div>
 
         <h2 id="preview-modal-title" className="font-serif text-xl font-semibold text-text-primary mb-sm leading-snug">
           {module.title}
@@ -292,13 +296,13 @@ function PreviewModal({
         <div className="flex gap-sm">
           <button
             onClick={() => onStartNow(module._id)}
-            className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-200"
+            className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
-            Start Now →
+            Start Now
           </button>
           <button
             onClick={() => onAddToPlanner(module)}
-            className="flex-1 bg-transparent border border-border-medium text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-surface-hover transition-all duration-200"
+            className="flex-1 bg-transparent border border-border-medium text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
           >
             + Planner
           </button>
@@ -512,7 +516,7 @@ export default function ExploreActivitiesPage() {
           {/* My Library toggle */}
           <button
             onClick={() => setLibraryOnly((v) => !v)}
-            className={`shrink-0 rounded-full border px-md py-[5px] font-sans text-[12px] font-semibold transition-all duration-200 w-fit ${
+            className={`shrink-0 rounded-full border px-md py-[5px] font-sans text-[12px] font-semibold transition-all duration-[var(--motion-quick)] w-fit ${
               libraryOnly
                 ? 'border-sage bg-sage/15 text-sage'
                 : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
@@ -524,10 +528,10 @@ export default function ExploreActivitiesPage() {
           </button>
 
           {/* Subject filter pills */}
-          <div className="flex gap-xs overflow-x-auto pb-xs">
+          <div className="flex gap-xs overflow-x-auto overscroll-x-contain pb-xs scrollbar-none">
             <button
               onClick={() => setSubjectFilter('all')}
-              className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-200 ${
+              className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-[var(--motion-quick)] ${
                 subjectFilter === 'all'
                   ? 'bg-ember text-text-inverse border-ember'
                   : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -539,7 +543,7 @@ export default function ExploreActivitiesPage() {
               <button
                 key={value}
                 onClick={() => setSubjectFilter(value)}
-                className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-200 ${
+                className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-[var(--motion-quick)] ${
                   subjectFilter === value
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -557,7 +561,7 @@ export default function ExploreActivitiesPage() {
                 <button
                   key={v}
                   onClick={() => setViewMode(v)}
-                  className={`rounded-md px-sm py-[4px] font-sans text-xs font-semibold transition-all duration-200 ${
+                  className={`rounded-md px-sm py-[4px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
                     viewMode === v
                       ? 'bg-ember text-text-inverse'
                       : 'bg-surface-raised border border-border-subtle text-text-muted hover:text-text-secondary'
@@ -570,7 +574,7 @@ export default function ExploreActivitiesPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-surface-raised border border-border-subtle rounded-md px-md py-[8px] font-sans text-sm text-text-primary outline-none focus:border-ember transition-colors duration-200"
+              className="bg-surface-raised border border-border-subtle rounded-md px-md py-[8px] font-sans text-sm text-text-primary outline-none focus:border-ember transition-colors duration-[var(--motion-quick)]"
             >
               <option value="name">Name (A–Z)</option>
               <option value="newest">Newest first</option>

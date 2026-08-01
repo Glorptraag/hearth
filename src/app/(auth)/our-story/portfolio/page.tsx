@@ -240,7 +240,7 @@ export function ExpandedCardBody({
           )}
           {entry.aiEnrichment?.journey_observation && (
             <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
-              <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Journey Observation</p>
+              <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Growth observation</p>
               <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
             </div>
           )}
@@ -276,7 +276,7 @@ export function ExpandedCardBody({
           )}
           <button
             onClick={onEdit}
-            className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-200"
+            className="mt-xs font-sans text-[10px] text-text-muted hover:text-ember transition-colors duration-[var(--motion-quick)]"
           >
             <span className="inline-flex items-center gap-xs"><PencilSimple size={12} aria-hidden="true" /> Edit</span>
           </button>
@@ -302,7 +302,7 @@ export function ExpandedCardBody({
       <div className="flex items-center gap-md mt-xs">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleWorkSample(); }}
-          className={`font-sans text-[11px] font-semibold transition-colors duration-200 ${
+          className={`font-sans text-[11px] font-semibold transition-colors duration-[var(--motion-quick)] ${
             entry.workSampleCandidate
               ? 'text-sage hover:text-sage/80'
               : 'text-text-muted hover:text-sage'
@@ -316,7 +316,7 @@ export function ExpandedCardBody({
         {entry.sourceModuleId && (
           <a
             href={`/module/${entry.sourceModuleId}`}
-            className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-200"
+            className="font-sans text-[11px] font-medium text-ember hover:text-ember/80 transition-colors duration-[var(--motion-quick)]"
           >
             <span className="inline-flex items-center gap-xs"><FilePdf size={12} aria-hidden="true" /> View activity materials</span>
           </a>
@@ -555,7 +555,7 @@ export default function PortfolioPage() {
     <div className="max-w-[1200px] mx-auto px-md py-xl lg:px-lg lg:py-2xl">
       <div className="mb-md flex flex-wrap items-start justify-between gap-md">
         <h1 className="font-serif text-2xl font-semibold text-text-primary">
-          {vocab.sessionNoun === 'session' ? 'Learning Journey' : `${vocab.learnerNoun.charAt(0).toUpperCase() + vocab.learnerNoun.slice(1)}'s Journey`}
+          {vocab.sessionNoun === 'session' ? 'Learning Story' : `${vocab.learnerNoun.charAt(0).toUpperCase() + vocab.learnerNoun.slice(1)}'s Story`}
         </h1>
         {selectedLearnerId && entries.length > 0 && (
           <a
@@ -613,7 +613,7 @@ export default function PortfolioPage() {
                 <button
                   key={f.key}
                   onClick={() => { setDateFilter(f.key); setVisibleCount(PAGE_SIZE); }}
-                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[32px] ${
+                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[32px] ${
                     dateFilter === f.key
                       ? 'bg-ember text-text-inverse'
                       : 'border border-border-subtle text-text-secondary hover:border-border-medium'
@@ -627,7 +627,7 @@ export default function PortfolioPage() {
                   type="month"
                   value={customMonth}
                   onChange={(e) => { setCustomMonth(e.target.value); setVisibleCount(PAGE_SIZE); }}
-                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-200 focus:shadow-focus min-h-[32px]"
+                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-[var(--motion-quick)] focus:shadow-focus min-h-[32px]"
                 />
               )}
             </div>
@@ -640,7 +640,7 @@ export default function PortfolioPage() {
                 <button
                   key={key}
                   onClick={() => setSubjectFilter(subjectFilter === key ? null : key)}
-                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-200 min-h-[28px] ${
+                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[28px] ${
                     subjectFilter === key
                       ? `${cfg.color} border border-current`
                       : 'text-text-muted hover:text-text-secondary'
@@ -658,7 +658,7 @@ export default function PortfolioPage() {
               <button
                 key={v}
                 onClick={() => setViewMode(v)}
-                className={`rounded-full border px-sm py-[3px] font-sans text-[11px] font-semibold transition-all duration-200 ${
+                className={`rounded-full border px-sm py-[3px] font-sans text-[11px] font-semibold transition-all duration-[var(--motion-quick)] ${
                   viewMode === v
                     ? 'border-ember bg-ember text-text-inverse'
                     : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
@@ -672,7 +672,7 @@ export default function PortfolioPage() {
           {/* Capability threads — mobile horizontal scroll. Tapping a thread
               filters the feed to that thread (the desktop sidebar mirrors this). */}
           {sortedThreads.length > 0 && (
-            <div className="lg:hidden flex gap-sm overflow-x-auto pb-sm mb-md scrollbar-none" role="group" aria-label="Filter by capability thread">
+            <div className="lg:hidden flex gap-sm overflow-x-auto overscroll-x-contain pb-sm mb-md scrollbar-none" role="group" aria-label="Filter by capability thread">
               {sortedThreads.map((t) => {
                 const active = threadFilter === t.thread_id;
                 return (
@@ -731,7 +731,7 @@ export default function PortfolioPage() {
                 </p>
                 <button
                   onClick={() => { setSubjectFilter(null); setThreadFilter(null); setDateFilter('all'); }}
-                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-[var(--motion-quick)] hover:opacity-90"
                 >
                   Clear filters
                 </button>
@@ -748,7 +748,7 @@ export default function PortfolioPage() {
                 </p>
                 <Link
                   href="/log"
-                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-200 hover:opacity-90"
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-[var(--motion-quick)] hover:opacity-90"
                 >
                   Add your first log &rarr;
                 </Link>
@@ -762,10 +762,10 @@ export default function PortfolioPage() {
                   {/* Accordion header */}
                   <button
                     onClick={() => toggleThread(threadName)}
-                    className="flex w-full items-center justify-between px-md py-sm font-serif text-base font-semibold text-text-primary hover:bg-surface-hover transition-colors duration-200"
+                    className="flex w-full items-center justify-between px-md py-sm font-serif text-base font-semibold text-text-primary hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]"
                   >
                     <span>{threadName}</span>
-                    <span className={`font-sans text-[12px] text-text-muted transition-transform duration-200 ${openThreads.has(threadName) ? 'rotate-180' : ''}`}>▾</span>
+                    <span className={`font-sans text-[12px] text-text-muted transition-transform duration-[var(--motion-quick)] ${openThreads.has(threadName) ? 'rotate-180' : ''}`}>▾</span>
                   </button>
 
                   {/* Accordion content */}
@@ -791,7 +791,7 @@ export default function PortfolioPage() {
                             {/* Clickable card header */}
                             <button
                               onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                              className="w-full text-left p-md hover:bg-surface-hover/50 transition-colors duration-200"
+                              className="w-full text-left p-md hover:bg-surface-hover/50 transition-colors duration-[var(--motion-quick)]"
                             >
                               {/* Type badge and expand indicator */}
                               <div className="flex items-start justify-between gap-sm">
@@ -799,7 +799,7 @@ export default function PortfolioPage() {
                                   <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${CARD_TYPE_BADGE[cardType]}`}>
                                     {CARD_TYPE_LABEL[cardType]}
                                   </span>
-                                  <span className={`font-sans text-[11px] text-text-muted transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
+                                  <span className={`font-sans text-[11px] text-text-muted transition-transform duration-[var(--motion-quick)] ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
                                 </div>
                                 {engValue && (
                                   <span className="text-lg shrink-0" title={`Engagement: ${engValue}`}>
@@ -929,7 +929,7 @@ export default function PortfolioPage() {
                     {/* Clickable card header */}
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                      className="w-full text-left p-md hover:bg-surface-hover/50 transition-colors duration-200"
+                      className="w-full text-left p-md hover:bg-surface-hover/50 transition-colors duration-[var(--motion-quick)]"
                     >
                       {/* Type badge and expand indicator */}
                       <div className="flex items-start justify-between gap-sm">
@@ -937,7 +937,7 @@ export default function PortfolioPage() {
                           <span className={`inline-block rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${CARD_TYPE_BADGE[cardType]}`}>
                             {CARD_TYPE_LABEL[cardType]}
                           </span>
-                          <span className={`font-sans text-[11px] text-text-muted transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
+                          <span className={`font-sans text-[11px] text-text-muted transition-transform duration-[var(--motion-quick)] ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
                         </div>
                         {engValue && (
                           <span className="text-lg shrink-0" title={`Engagement: ${engValue}`}>
@@ -1039,7 +1039,7 @@ export default function PortfolioPage() {
             <div className="mt-md text-center">
               <button
                 onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                className="font-sans text-sm text-text-secondary border border-border-subtle rounded-md px-lg py-sm hover:border-border-medium hover:text-text-primary transition-all duration-200"
+                className="font-sans text-sm text-text-secondary border border-border-subtle rounded-md px-lg py-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
               >
                 Load earlier ({sortedChronological.length - visibleCount} more)
               </button>
@@ -1056,7 +1056,7 @@ export default function PortfolioPage() {
                 </span>
                 <p className="font-serif text-base font-semibold text-text-primary mb-xs">Milestones will appear here</p>
                 <p className="font-serif text-sm text-text-secondary leading-relaxed">
-                  Badges and capability milestones are earned through logged learning. Keep going!
+                  Badges and capability milestones are earned through logged learning.
                 </p>
               </div>
             ) : (
@@ -1080,7 +1080,7 @@ export default function PortfolioPage() {
                           <button
                             type="button"
                             onClick={() => handleRestore(badge.id)}
-                            className="font-sans text-xs text-ember hover:underline transition-colors duration-200"
+                            className="font-sans text-xs text-ember hover:underline transition-colors duration-[var(--motion-quick)]"
                           >
                             Restore
                           </button>
@@ -1089,7 +1089,7 @@ export default function PortfolioPage() {
                         <button
                           type="button"
                           onClick={() => handleRetract(badge.id)}
-                          className="font-sans text-xs text-text-muted hover:text-red-400 transition-colors duration-200"
+                          className="font-sans text-xs text-text-muted hover:text-red-400 transition-colors duration-[var(--motion-quick)]"
                         >
                           Archive
                         </button>
@@ -1128,7 +1128,7 @@ export default function PortfolioPage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setThreadFilter(active ? null : t.thread_id)}
-                      className={`block w-full rounded-[10px] border bg-surface-panel p-md text-left transition-all duration-200 ease-[var(--ease-default)] ${
+                      className={`block w-full rounded-[10px] border bg-surface-panel p-md text-left transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                         active ? 'border-border-active' : 'border-border-subtle hover:border-border-medium'
                       }`}
                     >
@@ -1282,7 +1282,7 @@ function EntryEditForm({
                 type="button"
                 onClick={() => toggleSubject(key)}
                 aria-pressed={sel}
-                className={`inline-flex min-h-[32px] items-center gap-xs rounded-full px-sm py-[3px] font-sans text-[10px] font-medium transition-all duration-200 ${
+                className={`inline-flex min-h-[32px] items-center gap-xs rounded-full px-sm py-[3px] font-sans text-[10px] font-medium transition-all duration-[var(--motion-quick)] ${
                   sel ? `${cfg.color} border border-current` : 'border border-border-subtle text-text-muted hover:border-border-medium'
                 }`}
               >
@@ -1319,7 +1319,7 @@ function EntryEditForm({
                         onClick={() => setEngagement((prev) => ({ ...prev, [lid]: level }))}
                         aria-label={`Engagement level ${level} for ${learner?.name ?? 'learner'}`}
                         aria-pressed={engagement[lid] === level}
-                        className={`flex h-8 w-8 items-center justify-center rounded-md border text-base transition-all duration-200 ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-md border text-base transition-all duration-[var(--motion-quick)] ${
                           engagement[lid] === level
                             ? 'border-ember bg-ember-glow'
                             : 'border-border-subtle opacity-60 hover:border-border-medium hover:opacity-100'
@@ -1340,13 +1340,13 @@ function EntryEditForm({
         <button
           onClick={save}
           disabled={saving || !title.trim()}
-          className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-200 disabled:opacity-50"
+          className="font-sans text-xs font-semibold text-ember hover:text-ember-hover transition-colors duration-[var(--motion-quick)] disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
         <button
           onClick={onCancel}
-          className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+          className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
         >
           Cancel
         </button>

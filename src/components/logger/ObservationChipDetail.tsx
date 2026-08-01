@@ -52,7 +52,7 @@ export function ObservationChipDetail({ chip, value, onChange }: ObservationChip
   if (!config) return null;
 
   return (
-    <div className="mt-sm ml-sm pl-sm border-l-2 border-border-subtle space-y-sm animate-in fade-in slide-in-from-top-1 duration-200">
+    <div className="mt-sm ml-sm pl-sm border-l-2 border-border-subtle space-y-sm animate-in fade-in slide-in-from-top-1 duration-[var(--motion-quick)]">
       <div>
         <label
           htmlFor={inputId}
@@ -66,7 +66,7 @@ export function ObservationChipDetail({ chip, value, onChange }: ObservationChip
           onChange={(e) => onChange({ ...value, detail: e.target.value })}
           placeholder={config.placeholder}
           rows={2}
-          className="w-full resize-none rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember/40 focus:outline-none focus:ring-2 focus:ring-ember/20 transition-colors duration-200"
+          className="w-full resize-none rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember/40 focus:outline-none focus:ring-2 focus:ring-ember/20 transition-colors duration-[var(--motion-quick)]"
         />
       </div>
 
@@ -89,7 +89,7 @@ export function ObservationChipDetail({ chip, value, onChange }: ObservationChip
               onChange({ ...value, durationMin: isNaN(parsed) ? undefined : parsed });
             }}
             placeholder="e.g. 45"
-            className="w-20 rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember/40 focus:outline-none focus:ring-2 focus:ring-ember/20 transition-colors duration-200"
+            className="w-20 rounded-md border border-border-subtle bg-surface-body px-sm py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember/40 focus:outline-none focus:ring-2 focus:ring-ember/20 transition-colors duration-[var(--motion-quick)]"
           />
         </div>
       )}

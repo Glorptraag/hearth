@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from '@/components/icons';
 import { differenceInYears } from 'date-fns';
 import { ChildSelector } from '@/components/ui/child-selector';
 import LearnerAvatar from '@/components/ui/LearnerAvatar';
@@ -50,7 +51,7 @@ export default function DemoOurStoryHub() {
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.portfolioThisTerm} evidence items this term
           </p>
-          <div className="text-ember font-sans text-sm font-semibold">View portfolio →</div>
+          <div className="flex items-center gap-xs text-ember font-sans text-sm font-semibold">View portfolio <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:translate-x-[2px]" /></div>
         </Link>
 
         <Link
@@ -62,7 +63,7 @@ export default function DemoOurStoryHub() {
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.heuSamplesReady} of 6 work samples ready
           </p>
-          <div className="text-ember font-sans text-sm font-semibold">View report →</div>
+          <div className="flex items-center gap-xs text-ember font-sans text-sm font-semibold">View report <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:translate-x-[2px]" /></div>
         </Link>
 
         <Link
@@ -74,7 +75,7 @@ export default function DemoOurStoryHub() {
           <p className="font-sans text-xs text-text-muted mb-md">
             {selectedProfile.capabilityThreadsActive} threads active
           </p>
-          <div className="text-ember font-sans text-sm font-semibold">View capabilities →</div>
+          <div className="flex items-center gap-xs text-ember font-sans text-sm font-semibold">View capabilities <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:translate-x-[2px]" /></div>
         </Link>
 
         <Link
@@ -86,7 +87,7 @@ export default function DemoOurStoryHub() {
           <p className="font-sans text-xs text-text-muted mb-md">
             Interests, strengths & learning style
           </p>
-          <div className="text-ember font-sans text-sm font-semibold">View profile →</div>
+          <div className="flex items-center gap-xs text-ember font-sans text-sm font-semibold">View profile <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:translate-x-[2px]" /></div>
         </Link>
       </div>
 

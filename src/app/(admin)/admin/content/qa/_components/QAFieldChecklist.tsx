@@ -21,7 +21,7 @@ export default function QAFieldChecklist({ docId, docTitle, docType, completenes
         </h3>
         <button
           onClick={onClose}
-          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-200"
+          className="font-sans text-sm text-text-muted hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
         >
           Close
         </button>

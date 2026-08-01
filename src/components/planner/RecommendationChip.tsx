@@ -28,7 +28,7 @@ export default function RecommendationChip({ title, subject, onAdd }: Recommenda
       </div>
       <button
         onClick={() => onAdd(title)}
-        className="flex-shrink-0 rounded-[6px] bg-ember px-sm py-[2px] font-sans text-[11px] font-semibold text-text-inverse transition-colors duration-200 hover:bg-ember-hover"
+        className="flex-shrink-0 rounded-[6px] bg-ember px-sm py-[2px] font-sans text-[11px] font-semibold text-text-inverse transition-colors duration-[var(--motion-quick)] hover:bg-ember-hover"
       >
         Add
       </button>

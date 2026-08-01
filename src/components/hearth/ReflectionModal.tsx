@@ -58,7 +58,7 @@ export default function ReflectionModal({
       className="fixed inset-0 backdrop-modal z-[200] flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) handleSkip(); }}
     >
-      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reflection-modal-title" className="hearth-modal-enter bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto overscroll-contain shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') handleSkip(); }}>
         {/* Success header */}
         <div className="mb-md flex justify-center text-sage" aria-hidden="true">
           <Check size={32} />
@@ -94,14 +94,14 @@ export default function ReflectionModal({
         <div className="flex justify-end gap-md mt-xl pt-lg border-t border-border-subtle">
           <button
             onClick={handleSkip}
-            className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-200"
+            className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
           >
             Skip
           </button>
           <button
             onClick={handleShare}
             disabled={!reflectionText.trim() || submitting}
-            className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition-all duration-[var(--motion-quick)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Sharing...' : 'Share with group'}
           </button>

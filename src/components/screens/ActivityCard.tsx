@@ -139,7 +139,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
 
       {/* Expandable details */}
       {expanded && (
-        <div className="border-t border-border-subtle pt-md mt-md space-y-md animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="border-t border-border-subtle pt-md mt-md space-y-md animate-in fade-in slide-in-from-top-1 duration-[var(--motion-quick)]">
           {/* Materials */}
           {activity.materials && activity.materials.length > 0 && (
             <div>
@@ -224,14 +224,14 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
       <div className="flex items-center gap-sm mt-md">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+          className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
         >
           {expanded ? 'Show less' : 'Show details'}
         </button>
         {onStart && (
           <button
             onClick={onStart}
-            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-200 ease-[var(--ease-default)]"
+            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
             Start {vocab.sessionNoun}
           </button>

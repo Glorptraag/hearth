@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import CreateSessionModal from '@/components/hearth/CreateSessionModal';
 import InviteModal from '@/components/hearth/InviteModal';
-import { House, UsersThree, BabyCarriage, MapPin } from '@/components/icons';
+import { House, UsersThree, BabyCarriage, MapPin, ArrowLeft, ArrowRight } from '@/components/icons';
 
 // ─── Types ───
 
@@ -183,9 +183,9 @@ export default function HearthHomeClient({
         {/* Back nav */}
         <Link
           href="/dashboard"
-          className="mb-lg inline-flex items-center gap-xs font-sans text-sm text-text-muted transition-all duration-200 ease-[var(--ease-default)] hover:text-text-secondary"
+          className="mb-lg inline-flex items-center gap-xs font-sans text-sm text-text-muted transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-secondary"
         >
-          <span>←</span>
+          <ArrowLeft size={14} aria-hidden="true" />
           <span>Back to Dashboard</span>
         </Link>
 
@@ -231,7 +231,7 @@ export default function HearthHomeClient({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-sm font-sans text-sm font-semibold transition-all duration-200 ease-[var(--ease-default)] ${
+                className={`pb-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   activeTab === tab.id
                     ? 'border-b-2 border-ember text-ember'
                     : 'text-text-muted hover:text-text-secondary'
@@ -367,7 +367,7 @@ function SessionsTab({
         <div className="mb-xl">
           <button
             onClick={onCreateSession}
-            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
+            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:brightness-110"
           >
             + New Session
           </button>
@@ -476,7 +476,7 @@ function MembersTab({
         <div className="mb-xl">
           <button
             onClick={onInvite}
-            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
+            className="inline-flex items-center gap-xs rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:brightness-110"
           >
             + Invite Family
           </button>
@@ -574,7 +574,7 @@ function SettingsTab({
               type="text"
               value={editName}
               onChange={(e) => onNameChange(e.target.value)}
-              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[var(--ease-default)] focus:border-ember"
+              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:border-ember"
             />
           ) : (
             <p className="font-serif text-base text-text-primary">{hearth.name}</p>
@@ -590,7 +590,7 @@ function SettingsTab({
               value={editDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
               rows={3}
-              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-200 ease-[var(--ease-default)] focus:border-ember"
+              className="w-full rounded-[10px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-base text-text-primary outline-none transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:border-ember"
             />
           ) : (
             <p className="font-serif text-base text-text-secondary">
@@ -603,7 +603,7 @@ function SettingsTab({
           <button
             onClick={onSave}
             disabled={saving}
-            className="rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110 disabled:opacity-50"
+            className="rounded-[10px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:brightness-110 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -620,9 +620,9 @@ function SettingsTab({
         </p>
         <Link
           href="/settings"
-          className="font-sans text-sm font-semibold text-ember transition-all duration-200 ease-[var(--ease-default)] hover:brightness-110"
+          className="hearth-link-arrow font-sans text-sm font-semibold text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
         >
-          Manage in Family Settings →
+          Manage in Family Settings <ArrowRight size={14} aria-hidden="true" />
         </Link>
       </div>
 
@@ -633,7 +633,7 @@ function SettingsTab({
         </h2>
         <button
           onClick={onLeave}
-          className="rounded-[10px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all duration-200 ease-[var(--ease-default)] hover:bg-red-900/30"
+          className="rounded-[10px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-red-900/30"
         >
           Leave this Hearth
         </button>

@@ -92,7 +92,7 @@ export function SettingsMenu() {
           aria-expanded={isOpen}
           aria-controls={menuId}
           aria-label="Settings menu"
-          className={`flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color,color] duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
+          className={`hit-target hearth-press flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color,color] duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
             isOpen
               ? 'border-ember bg-ember-glow text-ember'
               : 'border-border-medium text-text-muted hover:text-text-primary'
@@ -115,7 +115,7 @@ export function SettingsMenu() {
                 role="menuitem"
                 data-state={phase === 'closing' ? 'closing' : 'open'}
                 style={{ '--row-index-from-top': i } as CSSProperties}
-                className={`${styles['settings-row']} flex items-center justify-end gap-sm`}
+                className={`${styles['settings-row']} hearth-press flex min-h-[44px] items-center justify-end gap-sm`}
               >
                 <span className="rounded-full border border-border-subtle bg-surface-panel px-md py-xs font-sans text-[0.85rem] font-medium text-text-primary shadow-inset-highlight">
                   {item.label}
@@ -137,7 +137,7 @@ export function SettingsMenu() {
                 close();
                 setFeedbackOpen(true);
               }}
-              className={`${styles['settings-row']} flex items-center justify-end gap-sm`}
+              className={`${styles['settings-row']} hearth-press flex min-h-[44px] items-center justify-end gap-sm`}
             >
               <span className="rounded-full border border-border-subtle bg-surface-panel px-md py-xs font-sans text-[0.85rem] font-medium text-text-primary shadow-inset-highlight">
                 Send Feedback

@@ -20,7 +20,7 @@ export default function ProgressBar({
         {activities.map((_, i) => (
           <div
             key={i}
-            className={`flex-1 transition-colors duration-200 ${
+            className={`flex-1 transition-colors duration-[var(--motion-quick)] ${
               i < currentIdx
                 ? 'bg-sage'
                 : i === currentIdx

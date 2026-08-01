@@ -96,21 +96,21 @@ export default function QuickCapture({
       <div className="flex gap-xs flex-wrap">
         <button
           onClick={() => setNoteOpen((v) => !v)}
-          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
         >
           <PencilSimple size={14} aria-hidden="true" /> Note
         </button>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-200 disabled:opacity-50"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-50"
         >
           <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
         </button>
         {voiceSupported && (
           <button
             onClick={isRecording ? stopVoice : startVoice}
-            className={`inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition-all duration-200 ${
+            className={`hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition-all duration-[var(--motion-quick)] ${
               isRecording
                 ? 'border-ember bg-ember/10 text-ember'
                 : 'border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -142,14 +142,14 @@ export default function QuickCapture({
           <div className="flex gap-xs justify-end">
             <button
               onClick={() => { setNoteOpen(false); setNoteText(''); }}
-              className="font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-200"
+              className="min-h-[40px] px-sm font-sans text-xs text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
             >
               Cancel
             </button>
             <button
               onClick={addNote}
               disabled={!noteText.trim()}
-              className="font-sans text-xs font-semibold bg-ember text-text-inverse rounded-md px-sm py-xs hover:bg-ember-hover transition-all duration-200 disabled:opacity-50"
+              className="hearth-press min-h-[40px] font-sans text-xs font-semibold bg-ember text-text-inverse rounded-md px-sm py-xs hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:opacity-50"
             >
               Add Note
             </button>
@@ -181,7 +181,7 @@ export default function QuickCapture({
               </div>
               <button
                 onClick={() => onRemoveCapture(cap.timestamp)}
-                className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-200"
+                className="shrink-0 text-text-muted hover:text-red-400 transition-colors duration-[var(--motion-quick)]"
                 aria-label="Remove capture"
               >
                 <X size={12} aria-hidden="true" />

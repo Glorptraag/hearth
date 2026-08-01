@@ -7,6 +7,7 @@ import { differenceInYears, format, startOfMonth } from 'date-fns';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { evidenceSrc } from '@/lib/evidence';
 import {
+  ArrowRight,
   BookOpenText,
   Sparkle,
   FolderOpen,
@@ -226,7 +227,7 @@ export default function OurStoryHubClient() {
               <button
                 key={l.id}
                 onClick={() => handleChildSelect(l.id)}
-                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-200 ease-[var(--ease-default)] ${
+                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   active
                     ? `bg-surface-raised shadow-card ${c.activeBorder}`
                     : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-raised'
@@ -308,7 +309,7 @@ export default function OurStoryHubClient() {
             </p>
             <a
               href="/log"
-              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-200 ease-[var(--ease-default)] hover:bg-ember-hover"
+              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Log a moment
             </a>
@@ -366,9 +367,9 @@ export default function OurStoryHubClient() {
           <h2 className="font-serif text-base font-semibold text-text-primary">Recent Evidence</h2>
           <Link
             href="/our-story/portfolio"
-            className="font-sans text-xs font-medium text-ember transition-colors duration-200 ease-[var(--ease-default)] hover:text-ember-hover"
+            className="hearth-link-arrow font-sans text-xs font-medium text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
           >
-            See all →
+            See all <ArrowRight size={14} aria-hidden="true" />
           </Link>
         </div>
         {statsLearnerId === selectedId && (!stats || stats.recentEvidence.length === 0) ? (
@@ -376,11 +377,11 @@ export default function OurStoryHubClient() {
             No evidence captured yet. Photos and artifacts appear here as you log.
           </p>
         ) : statsLearnerId !== selectedId ? null : (
-          <div className="flex gap-md overflow-x-auto pb-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-md overflow-x-auto overscroll-x-contain snap-x pb-sm scrollbar-none">
             {stats!.recentEvidence.map((url, i) => (
               <div
                 key={i}
-                className="flex h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-200 ease-[var(--ease-default)] hover:scale-[1.02] hover:border-border-medium"
+                className="flex snap-start h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:scale-[1.02] hover:border-border-medium"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={evidenceSrc(url)} alt="" className="h-full w-full object-cover" />
@@ -429,7 +430,7 @@ function NavCard({
         </p>
       )}
       <span className="mt-md flex items-center gap-xs font-sans text-xs font-medium text-ember">
-        View →
+        View <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] group-hover:translate-x-[2px]" />
       </span>
     </Link>
   );

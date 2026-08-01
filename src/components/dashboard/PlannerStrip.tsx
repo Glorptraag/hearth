@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarBlank } from '@/components/icons';
+import { ArrowRight, CalendarBlank } from '@/components/icons';
 
 interface PlannerItem {
   id: string;
@@ -21,9 +21,9 @@ export default function PlannerStrip({ items }: PlannerStripProps) {
         </h2>
         <Link
           href="/planner"
-          className="font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+          className="hearth-link-arrow font-sans text-xs font-semibold text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
         >
-          View planner →
+          View planner <ArrowRight size={14} aria-hidden="true" />
         </Link>
       </div>
 
@@ -35,7 +35,7 @@ export default function PlannerStrip({ items }: PlannerStripProps) {
           <p className="font-sans text-sm text-text-muted">Nothing planned for today.</p>
           <Link
             href="/planner"
-            className="ml-auto font-sans text-xs font-semibold text-ember transition-colors duration-200 hover:text-ember-hover"
+            className="ml-auto font-sans text-xs font-semibold text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
           >
             Add
           </Link>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { ArrowRight } from '@/components/icons';
 import { DloConfirmButton } from './DloConfirmButton';
 import {
   ALL_THREADS,
@@ -293,8 +294,8 @@ export function TableThreads({
                         <span className="ml-sm font-sans text-[0.75rem] text-text-muted">
                           {domainThreads.length} threads · {active} active · {ghosts} opening up
                         </span>
-                        <span className="float-right font-sans text-[0.75rem] text-ember">
-                          Drill into {domain.short.toLowerCase()} →
+                        <span className="float-right inline-flex items-center gap-xs font-sans text-[0.75rem] text-ember">
+                          Drill into {domain.short.toLowerCase()} <ArrowRight size={14} aria-hidden="true" />
                         </span>
                       </td>
                     </tr>
@@ -355,7 +356,7 @@ export function TableDLOs({
             href={`/log?source=check-in&thread=${encodeURIComponent(threadId)}&learner=${encodeURIComponent(snap.id)}`}
             className="shrink-0 rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-colors duration-[var(--motion-quick)] hover:bg-ember-hover"
           >
-            Plan a check-in →
+            Plan a check-in
           </Link>
         </div>
       )}

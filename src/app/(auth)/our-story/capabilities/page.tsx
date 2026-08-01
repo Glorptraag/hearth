@@ -194,7 +194,7 @@ export default function CapabilitiesPage() {
           >
             <span className="inline-flex items-center gap-sm font-sans text-[11px] text-text-secondary">
               <span className="text-text-muted" aria-hidden="true"><ArrowsClockwise size={14} /></span>
-              We couldn't refresh just now — nothing's lost, tap to try again.
+              We couldn&rsquo;t refresh just now — nothing&rsquo;s lost, tap to try again.
             </span>
             <button
               type="button"

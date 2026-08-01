@@ -130,7 +130,7 @@ describe('CapabilitiesPage — load failures', () => {
     latestOnDataChanged?.();
 
     await waitFor(() => {
-      expect(screen.getByText(/couldn't refresh/i)).toBeTruthy();
+      expect(screen.getByText(/couldn[’']t refresh/i)).toBeTruthy();
     });
     // Stale-but-real view stays on screen — not silent, not a zero-state.
     expect(screen.getByTestId('constellation')).toBeTruthy();

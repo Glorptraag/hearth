@@ -26,6 +26,8 @@
     "seed:pedagogy:frameworks": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-pedagogy-frameworks.ts",
     "seed:pedagogy:corpus": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts",
     "corpus:check": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts --check",
+    "corpus:review": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/corpus-review-manifest.ts",
+    "corpus:confirm": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/corpus-confirm.ts",
     "seed:pedagogy:reembed": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/reembed-pedagogy-corpus.ts",
     "verify:pkb": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-pkb-embeddings.ts",
     "verify:sanity": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-sanity-docs.ts",

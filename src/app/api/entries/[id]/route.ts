@@ -2,7 +2,7 @@ import { after, NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { learningEntries } from '@/lib/db/schema';
+import { learningEntries, workSamples } from '@/lib/db/schema';
 import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { eq, and } from 'drizzle-orm';
 import { SUBJECTS, ENTRY_SOURCES, ENTRY_STATUSES } from '@/types';
@@ -209,6 +209,20 @@ export const DELETE = routeHandler(async (request: NextRequest, { params }: Para
       { status: 400 }
     );
   }
+
+  // work_samples.entry_id is a nullable FK (schema.ts) — clearing it, not
+  // blocking the delete, matches the convention already used by
+  // PATCH /api/report/[reportId]/samples, where unassigning a slot sets
+  // entryId=null + status='empty'. Do this BEFORE deleting the entry (the
+  // neon-http driver has no interactive transaction support, so this is two
+  // statements, not one atomic unit — clearing first means a mid-failure
+  // leaves an already-empty slot rather than an orphaned entryId pointing at
+  // a row that's about to disappear, which is what let the PDF render '—'
+  // while the slot still showed 'selected').
+  await db
+    .update(workSamples)
+    .set({ entryId: null, status: 'empty', updatedAt: new Date() })
+    .where(eq(workSamples.entryId, id));
 
   await db
     .delete(learningEntries)

@@ -16,7 +16,7 @@ import { NextRequest } from 'next/server';
 import { asUser, asSignedOut, asViewer } from '@/test/clerk-helpers';
 import { db } from '@/lib/db';
 import { createFamily, createLearner, createEntry } from '@/test/db-factories';
-import { learningEntries, familyMembers } from '@/lib/db/schema';
+import { learningEntries, familyMembers, complianceReports, workSamples } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { GET, PATCH, DELETE } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../vitest.setup';
@@ -251,5 +251,75 @@ describe('DELETE /api/entries/[id]', () => {
     expect(res.status).toBe(404);
     const row = await db.query.learningEntries.findFirst({ where: eq(learningEntries.id, theirs.id) });
     expect(row?.id).toBe(theirs.id);
+  });
+
+  it('clears the work-sample slot instead of orphaning entryId when the assigned entry is deleted', async () => {
+    // A work-sample slot can point at a draft entry (the assign route
+    // (PATCH /api/report/[reportId]/samples) only checks family ownership,
+    // not status), and DELETE only ever permits removing draft entries — so
+    // this is a reachable combination, not a hypothetical.
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+    const entry = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Assigned to a report slot',
+      status: 'draft',
+    });
+    const [report] = await db
+      .insert(complianceReports)
+      .values({ familyId: TEST_FAMILY_ID, learnerId: learner.id, reportYear: 2026 })
+      .returning();
+    const [sample] = await db
+      .insert(workSamples)
+      .values({ reportId: report.id, slot: 'early_writing', entryId: entry.id, status: 'selected' })
+      .returning();
+    asUser({});
+
+    const res = await DELETE(deleteReq(`http://x/api/entries/${entry.id}`), ctx(entry.id));
+    expect(res.status).toBe(200);
+
+    const entryRow = await db.query.learningEntries.findFirst({ where: eq(learningEntries.id, entry.id) });
+    expect(entryRow).toBeUndefined();
+
+    // The slot survives (it belongs to the fixed 6-slot report shape) but is
+    // reset to the same empty state PATCH /api/report/[reportId]/samples uses
+    // when a parent unassigns a slot — no dangling entryId, no stale 'selected'.
+    const sampleRow = await db.query.workSamples.findFirst({ where: eq(workSamples.id, sample.id) });
+    expect(sampleRow?.entryId).toBeNull();
+    expect(sampleRow?.status).toBe('empty');
+  });
+
+  it('deleting an unassigned draft entry leaves unrelated work-sample slots untouched', async () => {
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+    const keeper = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Kept in its slot',
+      status: 'complete',
+    });
+    const toDelete = await createEntry(db, {
+      familyId: TEST_FAMILY_ID,
+      learnerIds: [learner.id],
+      title: 'Unassigned draft',
+      status: 'draft',
+    });
+    const [report] = await db
+      .insert(complianceReports)
+      .values({ familyId: TEST_FAMILY_ID, learnerId: learner.id, reportYear: 2026 })
+      .returning();
+    const [sample] = await db
+      .insert(workSamples)
+      .values({ reportId: report.id, slot: 'early_maths', entryId: keeper.id, status: 'selected' })
+      .returning();
+    asUser({});
+
+    const res = await DELETE(deleteReq(`http://x/api/entries/${toDelete.id}`), ctx(toDelete.id));
+    expect(res.status).toBe(200);
+
+    const sampleRow = await db.query.workSamples.findFirst({ where: eq(workSamples.id, sample.id) });
+    expect(sampleRow?.entryId).toBe(keeper.id);
+    expect(sampleRow?.status).toBe('selected');
   });
 });

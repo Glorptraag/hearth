@@ -28,19 +28,25 @@ const COMMON_OPTIONAL = ['suggestedDraft', 'source'];
 export const LAYER_CONTRACTS: Record<LayerDir, LayerContract> = {
   'source-excerpts': {
     requiredKeys: [...COMMON_REQUIRED, 'source', 'pageOrChapter', 'isParaphrase', 'tags'],
-    optionalKeys: ['suggestedDraft', 'attributionAuthor', 'attributionTitle', 'attributionYear'],
+    optionalKeys: [
+      'suggestedDraft',
+      'attributionAuthor',
+      'attributionTitle',
+      'attributionYear',
+      'ageRange',
+    ],
     requiredSections: ['text'],
     optionalSections: ['context'],
   },
   'practice-patterns': {
     requiredKeys: [...COMMON_REQUIRED, 'triggerTitle', 'tags'],
-    optionalKeys: COMMON_OPTIONAL,
+    optionalKeys: [...COMMON_OPTIONAL, 'ageRange', 'capabilityThreads'],
     requiredSections: ['trigger', 'response'],
     optionalSections: ['anti-pattern', 'grounded in'],
   },
   'observational-markers': {
     requiredKeys: [...COMMON_REQUIRED, 'markerName', 'tags'],
-    optionalKeys: COMMON_OPTIONAL,
+    optionalKeys: [...COMMON_OPTIONAL, 'ageRange', 'capabilityThreads'],
     requiredSections: ['what it indicates', 'look for'],
     optionalSections: ['grounded in'],
   },
@@ -52,13 +58,13 @@ export const LAYER_CONTRACTS: Record<LayerDir, LayerContract> = {
   },
   'contraindications': {
     requiredKeys: [...COMMON_REQUIRED, 'warnedAgainst', 'tags'],
-    optionalKeys: COMMON_OPTIONAL,
+    optionalKeys: [...COMMON_OPTIONAL, 'ageRange'],
     requiredSections: ['reasoning'],
     optionalSections: ['grounded in'],
   },
   'worked-examples': {
     requiredKeys: [...COMMON_REQUIRED, 'tags'],
-    optionalKeys: COMMON_OPTIONAL,
+    optionalKeys: [...COMMON_OPTIONAL, 'ageRange', 'capabilityThreads', 'activityType'],
     requiredSections: ['scenario', 'interpretation'],
     optionalSections: ['grounded in'],
   },

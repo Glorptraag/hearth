@@ -17,6 +17,21 @@ Machine registry: [sources.json](sources.json) (that file is authoritative; this
 | `illich-deschooling-1971` | Illich, *Deschooling Society* (1971) | in copyright | ❌ paraphrase only |
 | `dodd-strewing` | Dodd, sandradodd.com (term origin, 1990s) | in copyright | ❌ paraphrase only |
 | `unschooling-movement-consensus` | Community guidelines, no single source | in copyright (conservative) | ❌ paraphrase only |
+| `cm-parents-and-children-1904` | Mason, *Parents and Children* (Home Ed. Series vol. 2, PG #72445) | public domain | ✅ |
+| `cm-school-education-1905` | Mason, *School Education* (Home Ed. Series vol. 3, PG #77188) | public domain | ✅ |
+| `cm-ourselves-1905` | Mason, *Ourselves* (Home Ed. Series vol. 4, archive.org — PG number to confirm) | public domain | ✅ |
+| `cm-formation-of-character-1906` | Mason, *Formation of Character* (Home Ed. Series vol. 5, archive.org — PG number to confirm) | public domain | ✅ |
+| `cm-philosophy-of-education-1925` | Mason, *An Essay Towards a Philosophy of Education* (Home Ed. Series vol. 6, PG #66369) | public domain | ✅ |
+| `quintilian-institutio-oratoria` | Quintilian, *Institutes of Oratory* (Watson trans., 1856, archive.org — PG number to confirm) | public domain | ✅ |
+| `plato-republic-jowett` | Plato, *The Republic* (Jowett trans., 1888, PG #150) | public domain | ✅ |
+| `aristotle-politics-jowett` | Aristotle, *The Politics* (Jowett trans., 1885, archive.org — PG number to confirm) | public domain | ✅ |
+| `comenius-great-didactic-1896` | Comenius, *The Great Didactic* (Keatinge trans., 1896, archive.org — PG number to confirm) | public domain | ✅ |
+| `locke-some-thoughts-education-1693` | Locke, *Some Thoughts Concerning Education* (1693, archive.org — PG number to confirm) | public domain | ✅ |
+| `milton-of-education-1644` | Milton, *Of Education* (1644, archive.org — PG number to confirm) | public domain | ✅ |
+| `sayers-lost-tools-1947` | Sayers, *The Lost Tools of Learning* (1947) | in copyright | ❌ paraphrase only |
+| `steiner-foundations-human-experience-1919` | Steiner, *The Foundations of Human Experience* (1919 lectures) | in copyright (default; PD-upgrade candidate) | ❌ paraphrase only |
+| `steiner-practical-advice-teachers-1919` | Steiner, *Practical Advice to Teachers* (1919 lectures) | in copyright (default; PD-upgrade candidate) | ❌ paraphrase only |
+| `steiner-discussions-with-teachers-1919` | Steiner, *Discussions with Teachers* (1919 lectures) | in copyright (default; PD-upgrade candidate) | ❌ paraphrase only |
 
 ## Adding a source
 

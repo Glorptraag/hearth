@@ -112,5 +112,136 @@
     "licence": "in_copyright",
     "allowVerbatim": false,
     "notes": "For entries reporting widely-circulated movement guidance with no single attributable source (e.g. the deschooling one-month-per-year guideline, discussed by Dodd, Fetteroll, Farenga and others). Hearth's own words, naming practitioners where known. Commissioned-author entries (PKB12/PKB13) will supersede most uses of this key."
+  },
+  "cm-parents-and-children-1904": {
+    "author": "Mason, Charlotte M.",
+    "title": "Parents and Children",
+    "year": "1904",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://www.gutenberg.org/ebooks/72445",
+    "notes": "Home Education Series, Volume 2. Mason d. 1923 — public domain worldwide regardless of edition. Verified 2026-08-01: PG ebook #72445 reproduces the ORIGINAL 1897 first edition (title page dated 1897, dedication Nov. 1896; a collection of Parents' Review articles). Mason recast a slimmer edition as Series Vol. 2 in 1904 when she reorganised her books into the six-volume Home Education Series; that specific 1904 printing has no separately confirmed PG digitisation. Flag for Drew: worth sanity-checking which edition authoring should draw on (licence status is unaffected either way)."
+  },
+  "cm-school-education-1905": {
+    "author": "Mason, Charlotte M.",
+    "title": "School Education",
+    "year": "1905",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://www.gutenberg.org/ebooks/77188",
+    "notes": "Home Education Series, Volume 3. Mason d. 1923 — public domain worldwide. Verified 2026-08-01: first edition 1905 (preface dated November 1904); PG ebook #77188 reproduces the Second Edition (Kegan Paul, Trench, Trübner & Co., Ltd., London, 1907)."
+  },
+  "cm-ourselves-1905": {
+    "author": "Mason, Charlotte M.",
+    "title": "Ourselves",
+    "year": "1905",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/home-education-series-vol-iv-ourselves",
+    "notes": "Home Education Series, Volume 4 (Book I: Self-Knowledge; Book II: Self-Direction). Mason d. 1923 — public domain worldwide. PG number to confirm — verified 2026-08-01 via the author's Project Gutenberg catalogue page, which lists only Home Education (#71087), Parents and Children (#72445), School Education (#77188), and An Essay Towards a Philosophy of Education (#66369); archive.org scan used in the interim."
+  },
+  "cm-formation-of-character-1906": {
+    "author": "Mason, Charlotte M.",
+    "title": "Formation of Character",
+    "year": "1906",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/formationofchara00mas_soy",
+    "notes": "Home Education Series, Volume 5. Originally published as 'Some Studies in the Formation of Character', K. Paul, Trench, Trübner & Co., London, 1906. Mason d. 1923 — public domain worldwide. PG number to confirm — same author-page check as cm-ourselves-1905 (2026-08-01); archive.org scan used in the interim."
+  },
+  "cm-philosophy-of-education-1925": {
+    "author": "Mason, Charlotte M.",
+    "title": "An Essay Towards a Philosophy of Education: A Liberal Education for All",
+    "year": "1925",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://www.gutenberg.org/ebooks/66369",
+    "notes": "Home Education Series, Volume 6. Pre-1930 publication (also Mason d. 1923) — public domain. PG ebook #66369, introduction by Hon. Edward Lyttelton."
+  },
+  "quintilian-institutio-oratoria": {
+    "author": "Quintilian (Marcus Fabius Quintilianus); trans. Watson, John Selby",
+    "title": "Quintilian's Institutes of Oratory; or, Education of an Orator",
+    "year": "1856",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/in.ernet.dli.2015.159620",
+    "notes": "Rev. John Selby Watson's translation, Bohn's Classical Library, London, 1856 — pre-1930, public domain. PG number to confirm — verified 2026-08-01 that Project Gutenberg catalogues only a Latin single-book text (#21827) and a German translation (#75632) under Quintilian; archive.org scan of the Watson translation used instead."
+  },
+  "plato-republic-jowett": {
+    "author": "Plato; trans. Jowett, Benjamin",
+    "title": "The Republic",
+    "year": "1888",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://www.gutenberg.org/ebooks/150",
+    "notes": "Benjamin Jowett's translation (3rd ed., 1888) — pre-1930, public domain. PG ebook #150; an improved edition incorporating the 1908 two-volume Stephanus numbering is also on PG at #55201."
+  },
+  "aristotle-politics-jowett": {
+    "author": "Aristotle; trans. Jowett, Benjamin",
+    "title": "The Politics of Aristotle",
+    "year": "1885",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/dli.bengal.10689.7308",
+    "notes": "Jowett's translation, Clarendon Press, Oxford, 1885 (published posthumously edited) — pre-1930, public domain. PG number to confirm — verified 2026-08-01 that Project Gutenberg's Politics ebook (#6762) is the William Ellis translation, not Jowett's; archive.org scan of the Jowett edition used instead. Note re: Ethics — Jowett did NOT translate the Nicomachean Ethics (usually attributed to other pre-1930 translators, e.g. F. H. Peters or W. D. Ross); register a separate key if an Ethics excerpt is needed rather than assuming this entry covers it."
+  },
+  "comenius-great-didactic-1896": {
+    "author": "Comenius, John Amos; trans. Keatinge, M. W.",
+    "title": "The Great Didactic of John Amos Comenius",
+    "year": "1896",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/greatdidacticofj0001mwke",
+    "notes": "M. W. Keatinge's translation, Adam and Charles Black, London, 1896 — pre-1930, public domain. PG number to confirm — not found on Project Gutenberg (checked 2026-08-01); archive.org scan used. Also mirrored at Wikisource: https://en.wikisource.org/wiki/The_Great_Didactic_of_John_Amos_Comenius/The_Great_Didactic."
+  },
+  "locke-some-thoughts-education-1693": {
+    "author": "Locke, John",
+    "title": "Some Thoughts Concerning Education",
+    "year": "1693",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/somethoughtsconc00lockuoft",
+    "notes": "First published 1693; Locke d. 1704 — public domain worldwide. PG number to confirm — the only Project Gutenberg record found under this title (#61531) is a Finnish translation ('Muutamia mietteitä kasvatuksesta'), checked 2026-08-01; archive.org scan of the English text used instead. A modern proofread edition is also at Standard Ebooks: https://standardebooks.org/ebooks/john-locke/some-thoughts-concerning-education."
+  },
+  "milton-of-education-1644": {
+    "author": "Milton, John",
+    "title": "Of Education",
+    "year": "1644",
+    "licence": "public_domain",
+    "allowVerbatim": true,
+    "url": "https://archive.org/details/tractateeducati01miltgoog",
+    "notes": "Short tract, first published 1644; Milton d. 1674 — public domain worldwide. PG number to confirm — not found on Project Gutenberg as a standalone text or within a collected prose-works edition (author catalogue and site search checked 2026-08-01); archive.org scan ('Tractate of Education') used instead."
+  },
+  "sayers-lost-tools-1947": {
+    "author": "Sayers, Dorothy L.",
+    "title": "The Lost Tools of Learning",
+    "year": "1947",
+    "licence": "in_copyright",
+    "allowVerbatim": false,
+    "notes": "paraphrase-with-attribution only; optional Sayers licensing (David Higham) deferred per licensing-needs-v2 §3."
+  },
+  "steiner-foundations-human-experience-1919": {
+    "author": "Steiner, Rudolf",
+    "title": "The Foundations of Human Experience",
+    "year": "1919",
+    "licence": "in_copyright",
+    "allowVerbatim": false,
+    "notes": "German original PD; English translations mostly 1966+ — paraphrase-with-attribution unless a pre-1930 translation is verified (then Drew rubber-stamps an upgrade to public_domain)."
+  },
+  "steiner-practical-advice-teachers-1919": {
+    "author": "Steiner, Rudolf",
+    "title": "Practical Advice to Teachers",
+    "year": "1919",
+    "licence": "in_copyright",
+    "allowVerbatim": false,
+    "notes": "German original PD; English translations mostly 1966+ — paraphrase-with-attribution unless a pre-1930 translation is verified (then Drew rubber-stamps an upgrade to public_domain)."
+  },
+  "steiner-discussions-with-teachers-1919": {
+    "author": "Steiner, Rudolf",
+    "title": "Discussions with Teachers",
+    "year": "1919",
+    "licence": "in_copyright",
+    "allowVerbatim": false,
+    "notes": "German original PD; English translations mostly 1966+ — paraphrase-with-attribution unless a pre-1930 translation is verified (then Drew rubber-stamps an upgrade to public_domain)."
   }
 }

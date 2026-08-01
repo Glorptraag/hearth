@@ -55,3 +55,6 @@ docs/archive/
 # transient eval-harness run artifacts (committed results live in the audit .md docs)
 docs/audits/_eval-dlo-run-*.json
 
+# pre-downloaded pedagogy corpus source texts (PG/archive.org scans, not committed)
+corpus/.source-cache/
+

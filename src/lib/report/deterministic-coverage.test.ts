@@ -8,6 +8,7 @@ import {
   type RegulatoryMapping,
 } from './deterministic-coverage';
 import { DLO_REGULATORY_MAPPINGS } from '../../../scripts/data/dlo-regulatory-mappings';
+import { DLO_REGULATORY_MAPPINGS_TRANCHE2 } from '../../../scripts/seed-dlo-mappings-qld-tranche2.mjs';
 
 const QLD = 'ac-v9-qld';
 
@@ -77,6 +78,51 @@ describe('tranche-1 regulatory mappings (C2: every code resolves)', () => {
     // A non-empty list means a mapping code contributes ZERO coverage — the exact
     // class of bug (HASS via AC9HS) this PR reconciles. Fail loudly with the list.
     expect(unresolved).toEqual([]);
+  });
+});
+
+describe('tranche-2 regulatory mappings (P1 + PS2 HPE gap)', () => {
+  it('every authored AC9 code resolves to a subject via the reconciled map', () => {
+    const unresolved: string[] = [];
+    for (const entry of DLO_REGULATORY_MAPPINGS_TRANCHE2) {
+      for (const m of entry.mappings) {
+        for (const code of m.codes) {
+          if (descriptorToSubject(code) === null) {
+            unresolved.push(`${entry.dloId} → ${code}`);
+          }
+        }
+      }
+    }
+    expect(unresolved).toEqual([]);
+  });
+
+  it('credits HPE for a learner with demonstrating-tier P1/PS2 DLOs (closes the #204 mapping gap)', () => {
+    // Mirrors the class-A mapping-gap fixture above, but now WITH the tranche-2
+    // mappings applied — the exact gap this seed closes: real developing/
+    // demonstrating evidence on P1 (Gross Motor) and PS2 (Social Skills) that
+    // previously had nowhere to land because HPE had zero ac-v9-qld coverage.
+    const dloStatuses = {
+      'dlo.P1.demonstrating': { status: 'demonstrating' },
+      'dlo.PS2.demonstrating': { status: 'demonstrating' },
+    };
+    const mappingsByDloId = Object.fromEntries(
+      DLO_REGULATORY_MAPPINGS_TRANCHE2.map((entry) => [entry.dloId, entry.mappings]),
+    );
+    const mappings = {
+      'dlo.P1.demonstrating': mappingsByDloId['dlo.P1.demonstrating'],
+      'dlo.PS2.demonstrating': mappingsByDloId['dlo.PS2.demonstrating'],
+    };
+
+    const coverage = rollupCoverage({ dloStatuses, mappings, frameworkKey: QLD });
+    const signals = deriveCoverageSignals({ dloStatuses, mappings, frameworkKey: QLD, coverage });
+
+    expect(coverage.hpe.weightedScore).toBeGreaterThan(0);
+    expect(coverage.hpe.codes).toEqual(['AC9HP6M01', 'AC9HP6P07']);
+    expect(signals).toEqual({
+      countingDloCount: 2,
+      mappedCountingDloCount: 2, // both now target ac-v9-qld — the gap is closed
+      mappedSubjectCount: 1, // hpe
+    });
   });
 });
 

@@ -30,6 +30,7 @@ import { familySettings, learnerDloStatus } from '@/lib/db/schema';
 import { createFamily, createLearner } from '@/test/db-factories';
 import { GET } from './route';
 import { TEST_USER_ID, TEST_FAMILY_ID } from '../../../../../vitest.setup';
+import { DLO_REGULATORY_MAPPINGS_NSW_DEMO } from '../../../../../scripts/seed-dlo-mappings-nsw-demo.mjs';
 
 function req(qs = '') {
   return new NextRequest(`http://x/api/report/coverage${qs}`);
@@ -68,6 +69,20 @@ const QLD_FIXTURE = [
     ],
   },
 ];
+
+// ac-v9-nsw exit demo (WS-5): DLO_MAPPINGS_QUERY-shaped fixture built directly
+// from the seed script's own authored data (scripts/seed-dlo-mappings-nsw-demo.mjs),
+// so the test proves the transposer against the ACTUAL authored mapping, not a
+// hand-typed stand-in that could drift from what the seed script would write.
+const NSW_FIXTURE = DLO_REGULATORY_MAPPINGS_NSW_DEMO.map((entry) => {
+  const [, threadCode, tier] = entry.dloId.split('.');
+  return {
+    _id: entry.dloId,
+    tier,
+    threadRef: `capabilityThread.${threadCode}`,
+    regulatoryMappings: entry.mappings,
+  };
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -207,6 +222,62 @@ describe('GET /api/report/coverage — real DB', () => {
       const body = await res.json();
       expect(body.mode).toBe('deterministic');
       expect(body.coverage.mathematics.codes).toEqual(['AC9M3N01']);
+    });
+  });
+
+  // WS-5 exit demo: proves the transposer claim ("adding a second framework is
+  // authoring data, not code") end to end. scripts/seed-dlo-mappings-nsw-demo.mjs
+  // authors a 5-thread `ac-v9-nsw` mapping; this test proves a NSW-jurisdiction
+  // family with demonstrating/developing evidence on those threads reaches
+  // `{ mode: 'deterministic' }` through that mapping ALONE. No line in
+  // src/lib/report/*.ts changed to make this pass — frameworkKeyForState already
+  // derives `ac-v9-nsw` from state='NSW', and rollupCoverage/getDeterministicCoverage
+  // are framework-key-agnostic by construction.
+  describe('ac-v9-nsw exit demo (WS-5): mappings-only framework transposition', () => {
+    it('reaches deterministic mode for a NSW family via ac-v9-nsw mappings alone', async () => {
+      asUser({});
+      await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+      await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: 'NSW' });
+      const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+      // One DLO per seeded thread, at a status that clears the developing/
+      // demonstrating counting bar — spans all 5 subjects the demo mapping touches.
+      await db.insert(learnerDloStatus).values([
+        { learnerId: learner.id, dloId: 'dlo.L2.demonstrating', status: 'demonstrating' },
+        { learnerId: learner.id, dloId: 'dlo.M3.demonstrating', status: 'demonstrating' },
+        { learnerId: learner.id, dloId: 'dlo.S2.developing', status: 'developing' },
+        { learnerId: learner.id, dloId: 'dlo.H4.demonstrating', status: 'demonstrating' },
+        { learnerId: learner.id, dloId: 'dlo.P2.demonstrating', status: 'demonstrating' },
+      ]);
+      mocks.sanityFetch.mockResolvedValue(NSW_FIXTURE);
+
+      const res = await GET(req(`?learnerId=${learner.id}`));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+
+      expect(body.mode).toBe('deterministic');
+      expect(body.coverage.english.codes).toEqual(['AC9E5LA01']);
+      expect(body.coverage.mathematics.codes).toEqual(['AC9M5N01']);
+      expect(body.coverage.science.codes).toEqual(['AC9S3U03']);
+      expect(body.coverage.hass.codes).toEqual(['AC9HS6K07']);
+      expect(body.coverage.hpe.codes).toEqual(['AC9HP6M05']);
+      expect(body.signals.mappedSubjectCount).toBe(5);
+    });
+
+    it('does not cross-activate on a QLD-only mapping fixture (no framework bleed)', async () => {
+      asUser({});
+      await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+      await db.insert(familySettings).values({ familyId: TEST_FAMILY_ID, state: 'NSW' });
+      const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+      await db.insert(learnerDloStatus).values([
+        { learnerId: learner.id, dloId: 'dlo.L3.developing', status: 'developing' },
+      ]);
+      // QLD_FIXTURE carries only ac-v9-qld mappings — a NSW family must NOT be
+      // scored against them.
+      mocks.sanityFetch.mockResolvedValue(QLD_FIXTURE);
+
+      const res = await GET(req(`?learnerId=${learner.id}`));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ mode: 'fallback' });
     });
   });
 });

@@ -120,20 +120,41 @@ Full detail in the examination conversation; load-bearing facts, verified agains
 |---|---|---|
 | 1 | Author-declared activity→thread links are written (`learning_entries.thread_links`, `confidence: 'confirmed'`) but **never read** — snapshot aggregates only Haiku's inferred `capability_threads` | `src/lib/ai/thread-links.ts`, `src/lib/ai/snapshot-rebuild.ts:118-134` |
 | 2 | Id-format mismatch lying in wait: threadLinks store Sanity `_id`s (`capabilityThread.L1`); snapshot keys bare codes (`L1`) | same |
-| 3 | Thread tier is a frequency counter (≥8 obs = demonstrating, ≥4 = developing) | `snapshot-rebuild.ts:144-147` |
+| 3 | Thread tier is a frequency counter (≥8 obs = demonstrating, ≥4 = developing) — **SUPERSEDED 2026-07-08, see note below** | `snapshot-rebuild.ts:144-147` |
 | 4 | DLO status ratchets to `demonstrating` from a single inferred link at confidence ≥ 0.4 | `src/lib/ai/dlo-persistence.ts:102-106` |
 | 5 | Haiku maps to DLO ids whose descriptors it never sees (prompt shows only the `dlo.{thread}.{tier}` pattern); `tierById` is cached but never cross-checked | `src/lib/ai/enrich.ts:115`, `src/lib/ai/dlo-cache.ts` |
 | 6 | DLO links are copied identically to every learner on the entry | `dlo-persistence.ts` header |
 | 7 | Snapshot still fabricates `dlos_confirmed` from tier rank (constellation no longer consumes it, but the field ships in the API) | `snapshot-rebuild.ts:346-355` |
-| 8 | Report curriculum codes are LLM-recalled, format-validated only (`AC9_CODE_PATTERN` checks shape, not existence) | `enrich.ts:46,393` |
+| 8 | Report curriculum codes are LLM-recalled, format-validated only (`AC9_CODE_PATTERN` checks shape, not existence) — **partially addressed 2026-07-08, see note below** (blank-state→QLD-default risk closed; determinism itself still WS-5-gated) | `enrich.ts:46,393` |
 | 9 | v2 substrate (strands, atomic capabilities, prerequisite edges, regulatory frameworks) is schema-only — no seeds, no documents; the spec it cites (`hearth-capability-universe-v2-architecture-spec-v1.md`) is absent from the repo | `src/sanity/schemas/{strand,atomicCapability,prerequisiteEdge,regulatoryFramework}.ts` |
 | 10 | Activities cannot declare target tier; thread-links hardcodes `DEFAULT_TIER: 'developing'` | `thread-links.ts:32-33` |
 
 What's already *right* and must be preserved: append-only canon discipline, deterministic idempotent seeds, parent overrides that can only lower a tier, validation at every LLM boundary, the constellation's tested refusal to fabricate DLO status, and the v2 type contract itself.
 
+### Reconciliation notes (2026-07-08)
+
+Two of the load-bearing facts above no longer hold as written. Findings are left in place per the append-only convention; these notes record what the code now does instead. See the workstream status table at the top of Part IV for the fuller picture.
+
+- **Finding #3 — SUPERSEDED.** Thread tier is no longer a frequency counter. WS-4 shipped (PR #206): `renderedThreadTier()` derives tier from DLO evidence against `PRODUCTION_TIER_BAR`, verified live at `src/lib/ai/snapshot-rebuild.ts:497` (see also `src/lib/ai/thread-tier.ts:178,218`). The old count-based tier (`countBasedTier`) survives only as the "before" side of the one-time shift-notice comparison — it is no longer the rendered value. Finding #7 (fabricated `dlos_confirmed`) is understood to have been resolved in the same WS-4 land; re-verify the exact line before closing it out formally.
+- **Blank-state → QLD-default risk — FIXED.** The risk implied by finding #8 (an LLM-recalled report defaulting to QLD framing for a family with no recorded state) is closed at `src/lib/report/coverage.ts:68`: `getDeterministicCoverage()` now gates on an explicit, non-blank `state` — `if (!state || !state.trim()) return { mode: 'fallback' }` — before any framework key is chosen. This closes the *blank-state* failure mode specifically. Finding #8's broader claim (regulator-facing codes are LLM-recalled, not mapping-derived) is **not** resolved — that is WS-5's plumbing scope, and per the workstream table below, QLD mapping content is only tranche-1 complete (~17/57 threads).
+
 ---
 
 # Part IV — Technical workstreams
+
+## Workstream status (reconciled 2026-07-08)
+
+The plan below was written 2026-06-11 against the broken pipeline described in Part III. Several workstreams have since shipped. This table is the current source of truth for "what's left" — read it before picking up any workstream; the prose sections that follow retain the original scope/rationale and are not rewritten in place.
+
+| Workstream | Status | Evidence |
+|---|---|---|
+| WS-1 — Honour declared evidence | **Shipped** | `thread_links` wired into snapshot aggregation |
+| WS-2 — Evidence provenance + tier coherence | **Shipped** | provenance substrate landed |
+| WS-3 — Descriptor-grounded DLO mapping | **VERIFY — needs check** | State not independently confirmed this pass; do not assume shipped or unshipped without re-reading `src/lib/ai/enrich.ts` against §WS-3 scope |
+| WS-4 — One progression model | **Shipped** | PR #206 (`PRODUCTION_TIER_BAR`); thread tier is DLO-derived, verified live at `src/lib/ai/snapshot-rebuild.ts:497` (`src/lib/ai/thread-tier.ts:178,218`) |
+| WS-5 — Transposer v0 | **Plumbing shipped / mapping content partial** | `regulatoryMappings[]` + deterministic coverage path landed; QLD (`ac-v9-qld`) mapping content is tranche-1 only — roughly 17 of 57 threads authored; remaining tranches + a second framework (NSW) still open |
+| WS-6 — Activities declare the contract | **Shipped** | PR #203 (`capabilityTargets` on activities; declared-provenance DLO writes on completion) |
+| WS-7 — Truth and hygiene | **Partial** | Some hygiene items (doc currency, this reconciliation) done; per-learner attribution fix (D-OS2) and the v2-substrate spec reconstruction status not confirmed this pass |
 
 Execution rules (binding, from postmortem §4): **one workstream slice per session/PR; each PR individually green across all four CI jobs with tests at the right layer in the same PR; schema/data PRs soak before dependent behaviour PRs; no parallel-terminal mega-merges.** Migrations follow the testing-runbook lockstep rule (`src/test/factories.ts` + `db-factories.ts` updated in the same PR).
 

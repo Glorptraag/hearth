@@ -4,6 +4,11 @@ import { THREAD_NAMES, getThreadName } from '@/lib/capability-threads';
 import { ExploreView } from './ExploreView';
 import { buildSnapshot } from './topology';
 
+// The cold import of the capability-universe graph module can take well over
+// vitest's default 5000ms per-test timeout (90-150s on a cold cache) — bump
+// it for this file so `npm test` (no --testTimeout flag) stays green.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+
 const THREAD_ID = Object.keys(THREAD_NAMES)[0];
 
 const snap = buildSnapshot({ id: 'lrn1', name: 'Emma', colourToken: null }, []);

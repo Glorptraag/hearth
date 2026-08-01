@@ -47,6 +47,24 @@ export const pedagogyPracticePattern = defineType({
       options: { layout: 'tags' },
     }),
     defineField({
+      name: 'ageRange',
+      title: 'Age Range',
+      type: 'object',
+      description: 'Optional. Age band this entry is most relevant to (inclusive). Retrieval rerank boost.',
+      fields: [
+        { name: 'min', title: 'Min Age', type: 'number', validation: (r) => r.min(0).max(18) },
+        { name: 'max', title: 'Max Age', type: 'number', validation: (r) => r.min(0).max(18) },
+      ],
+    }),
+    defineField({
+      name: 'capabilityThreads',
+      title: 'Capability Threads',
+      type: 'array',
+      of: [{ type: 'string' }],
+      options: { layout: 'tags' },
+      description: 'Optional. Canonical capability thread codes (L1…C7) this entry maps to. Retrieval rerank boost.',
+    }),
+    defineField({
       name: 'suggestedDraft',
       title: 'AI-Drafted Candidate',
       type: 'boolean',

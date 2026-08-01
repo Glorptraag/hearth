@@ -2,6 +2,7 @@
 id: us.004
 markerName: Capacity to direct one's own boredom
 tags: [self_direction, autonomy, executive_function, comfort_with_uncertainty]
+capabilityThreads: [PS3]
 status: published
 suggestedDraft: true
 ---

@@ -2,6 +2,7 @@
 id: cm.002
 markerName: Habit of Attention
 tags: [attention, executive_function, self_regulation]
+capabilityThreads: [EF1]
 status: published
 suggestedDraft: false
 ---

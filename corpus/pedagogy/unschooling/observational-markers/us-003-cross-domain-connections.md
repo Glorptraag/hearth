@@ -2,6 +2,7 @@
 id: us.003
 markerName: Self-initiated knowledge connections across domains
 tags: [cross_domain_connection, conceptual_integration, vocabulary, transfer_of_learning]
+capabilityThreads: [EF3]
 status: published
 suggestedDraft: true
 ---

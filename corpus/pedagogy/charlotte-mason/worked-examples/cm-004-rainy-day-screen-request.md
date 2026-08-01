@@ -1,6 +1,8 @@
 ---
 id: cm.004
 tags: [self_regulation, attention, inner_life, boredom_management, age_5_to_7]
+ageRange: 5-7
+capabilityThreads: [PS3]
 status: published
 suggestedDraft: false
 ---

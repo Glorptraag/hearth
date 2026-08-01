@@ -1,6 +1,9 @@
 ---
 id: montessori.005
 tags: [sensitive_periods, dressing_independence, fine_motor, self_regulation, age_2_to_3]
+ageRange: 2-3
+capabilityThreads: [P2]
+activityType: practical_life_exercise
 status: published
 suggestedDraft: true
 ---

@@ -1,6 +1,9 @@
 ---
 id: montessori.001
 tags: [practical_life, concentration, fine_motor, work_cycle, age_3_to_5]
+ageRange: 3-5
+capabilityThreads: [P2, EF1]
+activityType: practical_life_exercise
 status: published
 suggestedDraft: true
 ---

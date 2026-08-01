@@ -1,6 +1,7 @@
 ---
 id: montessori.007
 tags: [prepared_environment, concentration, multi_child, parent_role, normalisation]
+capabilityThreads: [EF1]
 status: published
 suggestedDraft: true
 ---

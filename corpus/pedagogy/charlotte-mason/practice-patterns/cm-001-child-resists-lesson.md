@@ -2,6 +2,7 @@
 id: cm.001
 triggerTitle: Child resists a planned lesson
 tags: [child_resists_lesson, child_fidgets, lesson_running_long, parent_frustrated]
+capabilityThreads: [EF1]
 status: published
 suggestedDraft: false
 ---

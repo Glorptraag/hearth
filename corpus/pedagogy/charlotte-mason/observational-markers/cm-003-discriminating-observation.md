@@ -2,6 +2,7 @@
 id: cm.003
 markerName: Discriminating Observation (Nature)
 tags: [scientific_observation, biology, environmental_awareness, visual_discrimination, drawing]
+capabilityThreads: [S5]
 status: published
 suggestedDraft: false
 ---

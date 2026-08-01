@@ -2,6 +2,7 @@
 id: cm.005
 markerName: Relationships Formed (Science of Relations)
 tags: [general_knowledge, memory, cross_domain_connection, personal_engagement]
+capabilityThreads: [EF3]
 status: published
 suggestedDraft: false
 ---

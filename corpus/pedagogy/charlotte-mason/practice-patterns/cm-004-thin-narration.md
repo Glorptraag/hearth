@@ -7,6 +7,7 @@ tags:
   - parent_expected_more
   - reading_aloud_session
   - comprehension_concern
+capabilityThreads: [L1, L3]
 status: published
 suggestedDraft: false
 ---

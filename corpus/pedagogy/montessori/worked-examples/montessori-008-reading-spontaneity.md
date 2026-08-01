@@ -1,6 +1,9 @@
 ---
 id: montessori.008
 tags: [reading, language, sensitive_periods, movable_alphabet, explosion_into_reading, age_4_to_5]
+ageRange: 4-5
+capabilityThreads: [L2]
+activityType: movable_alphabet_work
 status: published
 suggestedDraft: true
 ---

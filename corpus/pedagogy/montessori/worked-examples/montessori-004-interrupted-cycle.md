@@ -1,6 +1,8 @@
 ---
 id: montessori.004
 tags: [work_cycle, praise, interruption, executive_function, parent_learning]
+capabilityThreads: [EF1]
+activityType: sensorial_work
 status: published
 suggestedDraft: true
 ---

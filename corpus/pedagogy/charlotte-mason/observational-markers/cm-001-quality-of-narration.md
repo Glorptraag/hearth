@@ -2,6 +2,7 @@
 id: cm.001
 markerName: Quality of Narration
 tags: [oral_language, comprehension, memory, composition, attention]
+capabilityThreads: [L1, L3]
 status: published
 suggestedDraft: false
 ---

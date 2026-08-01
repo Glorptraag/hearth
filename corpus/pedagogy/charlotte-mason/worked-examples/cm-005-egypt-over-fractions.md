@@ -1,6 +1,8 @@
 ---
 id: cm.005
 tags: [self_directed_learning, comprehension, history, curiosity, spontaneous_interest, age_8_to_10]
+ageRange: 8-10
+capabilityThreads: [H1, L3]
 status: published
 suggestedDraft: false
 ---

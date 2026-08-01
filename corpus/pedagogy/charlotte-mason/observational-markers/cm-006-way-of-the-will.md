@@ -2,6 +2,7 @@
 id: cm.006
 markerName: The Way of the Will
 tags: [self_regulation, executive_function, persistence, moral_reasoning]
+capabilityThreads: [PS3]
 status: published
 suggestedDraft: false
 ---

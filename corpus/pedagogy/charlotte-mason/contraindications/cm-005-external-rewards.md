@@ -1,7 +1,7 @@
 ---
 id: cm.005
 warnedAgainst: External rewards and punishments
-tags: [external_rewards, stickers, bribes, will, intrinsic_motivation]
+tags: [external_rewards, will, intrinsic_motivation]
 status: published
 suggestedDraft: false
 ---

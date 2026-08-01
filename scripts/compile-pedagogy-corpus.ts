@@ -50,6 +50,13 @@ async function run() {
     process.exit(1);
   }
 
+  if (output.warnings.length > 0) {
+    console.warn(`\n⚠ ${output.warnings.length} warning${output.warnings.length === 1 ? '' : 's'}:`);
+    for (const warning of output.warnings) {
+      console.warn(`  ⚠ ${warning.file}\n      ${warning.message}`);
+    }
+  }
+
   console.log(`\n✓ Vault valid — ${output.docs.length} compiled documents`);
 
   const confirmed = output.docs.filter((d) => d.status === 'published' && d.suggestedDraft === false);

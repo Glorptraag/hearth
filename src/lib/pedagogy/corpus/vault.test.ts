@@ -53,4 +53,12 @@ describe('corpus/pedagogy vault', () => {
       expect(doc.sourceAttribution?.title, `${doc._id} missing attribution title`).toBeTruthy();
     }
   });
+
+  it('loads tags.json as a soft gate — never throws, warnings stay an array', () => {
+    // The gate is soft by design: the vault may legitimately carry warnings
+    // (e.g. rewards/bribes/stickers alias tags pending a normalization pass),
+    // so this deliberately does NOT assert warnings.length === 0.
+    expect(() => compileVault(VAULT_ROOT)).not.toThrow();
+    expect(Array.isArray(output.warnings)).toBe(true);
+  });
 });

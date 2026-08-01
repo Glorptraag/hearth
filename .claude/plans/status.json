@@ -1,13 +1,220 @@
 {
-  "plan": "noble-hugging-meteor",
-  "feature": "B9 Module Experience Upgrade",
-  "generated": "2026-04-07",
+  "plan": "PLAN-constellation-reporting",
+  "generated": "2026-07-08",
+  "mode": "autonomous",
   "tasks": {
-    "1.1": { "status": "done", "blocked_by": [], "completed_at": "2026-04-07T13:23:00Z", "completed_by": "T1" },
-    "2.1": { "status": "done", "blocked_by": ["1.1"], "completed_at": "2026-04-07T13:30:00Z", "completed_by": "T2-sonnet" },
-    "2.2": { "status": "done", "blocked_by": ["1.1"], "completed_at": "2026-04-07T13:30:00Z", "completed_by": "T3-sonnet" },
-    "3.1": { "status": "done", "blocked_by": ["1.1"], "completed_at": "2026-04-07T13:35:00Z", "completed_by": "T1-opus" },
-    "3.2": { "status": "done", "blocked_by": ["3.1"], "completed_at": "2026-04-08T12:00:00Z", "completed_by": "T4" },
-    "3.3": { "status": "done", "blocked_by": ["3.1"], "completed_at": "2026-04-07T13:40:00Z", "completed_by": "main-session" }
-  }
+    "1.1": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Write docs/hearth-reporting-pipeline-v1.md (end-to-end reporting spec)",
+      "description": "Create a new doc that de-black-boxes the reporting pipeline end to end. Read src/lib/report/coverage.ts, src/lib/report/deterministic-coverage.ts, src/lib/report/coverage-narrative.ts, src/app/api/report/export/route.ts, src/lib/ai/annotation-draft.ts, and src/config/jurisdictions.ts first. Document: (1) surfaces (report + portfolio pages, all /api/report* routes); (2) the DB tables (complianceReports, workSamples, workSampleAnnotations, learnerDloStatus, observationDloLinks); (3) coverage resolution with the EXACT gates from coverage.ts getDeterministicCoverage \u2014 explicit non-blank state gate (coverage.ts:68) then frameworkHasMappings gate, else {mode:'fallback'}; (4) the two runtime AI touchpoints (annotation drafts, progression summaries) with their edit-protection safeguards, and confirm no read-time LLM in coverage; (5) PDF structure per tier \u2014 cd_level (QLD/SA/NT) vs learning_area (NSW/VIC/WA/TAS/ACT); (6) a 'Coverage fallback recovery' runbook section: how a blank-state family activates deterministic coverage (set state -> framework must have authored mappings -> snapshot rebuild). ALSO add two rows to the CLAUDE.md reference table: one for this doc and one for docs/hearth-constellation-architecture-v1.md (created by task 1.3). This task is the SOLE owner of CLAUDE.md edits in this plan.",
+      "files": [
+        "docs/hearth-reporting-pipeline-v1.md",
+        "CLAUDE.md"
+      ],
+      "done_when": "docs/hearth-reporting-pipeline-v1.md exists and grep finds sections for coverage resolution, fallback recovery, and PDF tiers; CLAUDE.md reference table contains rows for both hearth-reporting-pipeline-v1.md and hearth-constellation-architecture-v1.md",
+      "contracts": "Deterministic gate order (from src/lib/report/coverage.ts): (1) if state is null/blank -> {mode:'fallback'}; (2) frameworkKeyForState(state); (3) if no DLO doc has a regulatoryMapping with that frameworkKey -> {mode:'fallback'}; (4) else rollupCoverage + deriveCoverageSignals -> {mode:'deterministic'}. Only developing(0.5)/demonstrating(1.0) DLO tiers contribute; emerging/not-started = 0.",
+      "completed_at": "2026-07-08T12:38:30+00:00",
+      "completed_by": "W-1.1",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "1.2": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Reconcile hearth-outcomes-spine-plan-v1.md + fix stale PROJECT_STATUS.md line",
+      "description": "The spine plan's Part III 'verified current state' and workstream list describe June's broken pipeline as if still current; several workstreams have since shipped. Add a new 'Workstream status (reconciled 2026-07-08)' table near the top of Part IV listing: WS-1 shipped, WS-2 shipped, WS-3 VERIFY (state unknown \u2014 mark as needs-check), WS-4 shipped (PR #206 \u2014 thread tier is now DLO-derived via PRODUCTION_TIER_BAR, verified live at src/lib/ai/snapshot-rebuild.ts:497), WS-5 plumbing shipped / QLD mapping content partial (tranche 1 only ~17/57 threads), WS-6 shipped (PR #203), WS-7 partial. In Part III, annotate findings the code now contradicts: finding #3 (thread tier is a frequency counter) is SUPERSEDED \u2014 tier is DLO-derived; the blank-state->QLD default risk is FIXED at src/lib/report/coverage.ts:68 (explicit-state gate). Do NOT delete the historical findings \u2014 add dated 'RESOLVED/SUPERSEDED' annotations inline. Separately, in docs/PROJECT_STATUS.md fix the stale line under the Outcomes-spine bullet that says 'Execution: 5 sequential PRs in flight' to reflect that WS-1/2/4/5-plumbing/6 have landed and what remains (WS-3 verify, WS-5 mapping content, WS-7).",
+      "files": [
+        "docs/hearth-outcomes-spine-plan-v1.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "done_when": "spine plan contains a per-workstream status table dated 2026-07-08 and inline RESOLVED/SUPERSEDED annotations on Part III findings #3 and the blank-state item; PROJECT_STATUS.md no longer contains the literal string '5 sequential PRs in flight'",
+      "contracts": "Verified facts to cite: tier derivation is DLO-based via PRODUCTION_TIER_BAR (snapshot-rebuild.ts:497, thread-tier.ts:178,218); blank-state deterministic-coverage gate lives at coverage.ts:68 ('if (!state || !state.trim()) return {mode:\"fallback\"}').",
+      "completed_at": "2026-07-08T12:37:25+00:00",
+      "completed_by": "W-1.2",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "1.3": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Write docs/hearth-constellation-architecture-v1.md",
+      "description": "Create a new architecture doc for the constellation (capability progression) feature. Read src/app/(auth)/our-story/capabilities/page.tsx, its _constellation/ components (ConstellationRoute.tsx, topology.ts, TableView/GalleryView/ExploreView), src/app/api/capabilities/[learnerId]/route.ts, src/lib/ai/snapshot-rebuild.ts, src/lib/ai/thread-tier.ts, and src/lib/capability-alpha-suppression.ts. Document: (1) the data flow entry->enrichment->observation_dlo_links->learner_dlo_status->familyIntelligenceSnapshots->GET /api/capabilities/[learnerId]->topology.ts render; (2) the DUAL alpha-suppression seams \u2014 write-side in snapshot-rebuild.ts and read-side in the capabilities route.ts \u2014 and why both exist (stale snapshots); (3) tier derivation (deriveThreadTierFromDlos + PRODUCTION_TIER_BAR, with the count-based path noted as legacy signal); (4) a test-coverage map: what is covered (topology.test.ts, snapshot-rebuild integration, thread-tier.test.ts, capabilities route/page tests) vs the gaps (ConstellationRoute/TableView/GalleryView/ExploreView have no tests \u2014 being addressed in task 2.1); (5) note the vestigial /constellation scaffold as unlinked (keep-or-delete is a Drew decision). Do NOT edit CLAUDE.md \u2014 task 1.1 adds this doc's reference-table row.",
+      "files": [
+        "docs/hearth-constellation-architecture-v1.md"
+      ],
+      "done_when": "docs/hearth-constellation-architecture-v1.md exists and grep finds a data-flow section, a dual alpha-suppression section, a tier-derivation section, and a test-coverage map",
+      "contracts": "",
+      "completed_at": "2026-07-08T12:38:00+00:00",
+      "completed_by": "W-1.3",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "2.1": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Add constellation UI tests (ConstellationRoute + three views)",
+      "description": "The constellation UI layer has zero tests (topology.ts and the snapshot pipeline are already well covered). Add component-level unit tests following docs/test-pilot-runbook.md conventions (vitest jsdom, mocks in vitest.setup.ts, @/test/clerk-helpers). Cover: ConstellationRoute.tsx depth navigation (1-4), view toggle between table/gallery/explore, and URL state sync (view/depth/focus -> query params). Add the DLO-confirm optimistic-override happy path AND the failure/revert path (confirm click flips optimistically, a failed POST reverts the override). Add smoke render tests for TableView, GalleryView, ExploreView (they render given a topology fixture without throwing). Create NEW test files only. Do NOT touch page.test.tsx (owned by task 2.2). Reuse topology fixtures from topology.test.ts where useful.",
+      "files": [
+        "src/app/(auth)/our-story/capabilities/_constellation/ConstellationRoute.test.tsx",
+        "src/app/(auth)/our-story/capabilities/_constellation/TableView.test.tsx",
+        "src/app/(auth)/our-story/capabilities/_constellation/GalleryView.test.tsx",
+        "src/app/(auth)/our-story/capabilities/_constellation/ExploreView.test.tsx"
+      ],
+      "done_when": "the four new test files exist and `npm test -- src/app/(auth)/our-story/capabilities/_constellation` passes on node@24, including a DLO-confirm failure/revert assertion",
+      "contracts": "Run unit tests on Homebrew node@24 (not local Node 26 \u2014 avoids false localStorage failures). Clerk v7 mocks are async: use mockResolvedValue. Use asUser() from @/test/clerk-helpers.",
+      "completed_at": "2026-07-08T12:49:54+00:00",
+      "completed_by": "W-2.1",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "2.2": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Surface silent DLO-confirm background-refetch failure as a retryable notice",
+      "description": "In src/app/(auth)/our-story/capabilities/page.tsx (background refetch around lines 79-122), a failed post-confirm snapshot refetch is currently silent \u2014 the parent keeps a stale-but-real view and never learns the rebuild may not have persisted. Extend the R26 trust contract ('a failed load must never read as success/empty') to this path: when the background refetch after a DLO confirm fails, surface a gentle, retryable inline notice (e.g. 'We couldn't refresh \u2014 tap to retry') without discarding the current view. Keep copy warm and non-alarming per the parent-journey Stage 2/3 contract. Add/extend page.test.tsx to cover the failed-refetch-shows-notice-and-retry case. This task OWNS page.tsx and page.test.tsx.",
+      "files": [
+        "src/app/(auth)/our-story/capabilities/page.tsx",
+        "src/app/(auth)/our-story/capabilities/page.test.tsx"
+      ],
+      "done_when": "a failed post-confirm refetch renders a retryable notice (not silent, not a zero-state); page.test.tsx covers the case and `npm test -- src/app/(auth)/our-story/capabilities/page.test.tsx` passes on node@24",
+      "contracts": "Do not regress the existing R26 load-failure states (three cases already in page.test.tsx). Run tests on node@24. Reduced-motion + warm copy per hearth-parent-journey-v1.md.",
+      "completed_at": "2026-07-08T12:44:21+00:00",
+      "completed_by": "W-2.2",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "3.1": {
+      "status": "parked",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Work-sample orphan integrity when an assigned entry is deleted",
+      "description": "A learning entry can be assigned to a workSamples slot (workSamples.entryId FK). Verify what happens today when that entry is deleted: locate the entry-delete API route (search src/app/api/entries for the DELETE handler), and trace whether it clears or blocks slots referencing the entry. If deletion orphans the slot (entryId points to a now-missing entry -> PDF renders '\u2014', slot still shows 'selected'), add a guard: either block deletion while the entry is assigned to a slot (return a clear 409 telling the parent to remove it from the report first) OR clear the slot on delete \u2014 pick whichever matches existing cascade conventions in schema.ts and note the choice in the PR. Add a regression integration test (real Postgres per test-pilot-runbook.md) proving the chosen behaviour.",
+      "files": [
+        "src/app/api/entries/[entryId]/route.ts",
+        "src/app/api/entries/[entryId]/route.integration.test.ts"
+      ],
+      "done_when": "deleting an entry assigned to a work-sample slot no longer silently orphans the slot (blocked with 409 or slot cleared); a new integration test asserts the behaviour and passes via `npm run test:integration:local`",
+      "contracts": "Verify the actual delete-route path first (the [entryId] segment name may differ, e.g. [id]); update files accordingly. Follow existing FK cascade style in src/lib/db/schema.ts. Integration tests use transaction-rollback isolation and real pgvector Postgres.",
+      "completed_at": null,
+      "completed_by": null,
+      "dispatched_at": "2026-07-11T12:08:05+00:00",
+      "parked_reason": "awaiting decision D4"
+    },
+    "3.2": {
+      "status": "parked",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Close reporting test gaps (learning_area tier, cross-slot conflict, missing DOB)",
+      "description": "Three untested reporting paths. (1) The learning_area PDF tier (NSW/VIC/WA/TAS/ACT) has never been exercised by an integration test \u2014 add cases to src/app/api/report/export/route.integration.test.ts asserting a learning_area-tier family exports the softer 'learning areas' framing (no cd_level curriculum-descriptor table, entry portfolio by subject). (2) Cross-slot conflict: assert PATCH /api/report/[reportId]/samples rejects (409) assigning one entry to two slots \u2014 add to the samples route integration test. (3) Missing dateOfBirth: assert the export renders age gracefully (e.g. 'Age: \u2014') when learner.dateOfBirth is null \u2014 unit or integration as fits. Follow docs/test-pilot-runbook.md.",
+      "files": [
+        "src/app/api/report/export/route.integration.test.ts",
+        "src/app/api/report/[reportId]/samples/route.integration.test.ts"
+      ],
+      "done_when": "new assertions for learning_area-tier export, cross-slot 409 conflict, and null-DOB age rendering exist and pass via `npm run test:integration:local` on node@24",
+      "contracts": "learning_area tier = NSW/VIC/WA/TAS/ACT; cd_level = QLD/SA/NT (src/config/jurisdictions.ts). Use asUser()/db-factories seeders. If the samples integration test file does not yet exist, create it.",
+      "completed_at": null,
+      "completed_by": null,
+      "dispatched_at": "2026-07-11T12:08:05+00:00",
+      "parked_reason": "awaiting decision D4"
+    },
+    "3.3": {
+      "status": "done",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Author tranche-2 ac-v9-qld DLO mappings (P1 + PS2) as an idempotent seed script + rollup test",
+      "description": "Evidenced families currently show 0% coverage in subjects whose threads have no ac-v9-qld regulatoryMapping (only ~17/57 threads mapped). Fix the highest-priority pair: threads P1 and PS2 (HPE). Write a deterministic, idempotent seed script mirroring the existing DLO seed pattern (find scripts/seed-dlos.* and src/lib/sanity/mutations.ts) that patches ac-v9-qld regulatoryMappings onto the P1 and PS2 DLO documents (frameworkKey 'ac-v9-qld', appropriate AC9 HPE codes, contribution, evidenceWeight). Do NOT run it against production Sanity \u2014 publishing is a human gate (Sanity auth + council/Drew review). Add a unit test extending src/lib/report/deterministic-coverage.test.ts proving rollupCoverage now credits HPE for a learner with demonstrating-tier P1/PS2 DLOs given those mappings.",
+      "files": [
+        "scripts/seed-dlo-mappings-qld-tranche2.mjs",
+        "src/lib/report/deterministic-coverage.test.ts"
+      ],
+      "done_when": "scripts/seed-dlo-mappings-qld-tranche2.mjs exists (idempotent, deterministic ids, does not auto-publish to prod), and a new deterministic-coverage.test.ts case asserts HPE is credited from mapped P1/PS2 mappings and passes on node@24",
+      "contracts": "regulatoryMapping shape (matches DLO_MAPPINGS_QUERY / src/lib/report/coverage.ts): { frameworkKey: 'ac-v9-qld', frameworkVersion, codes: string[], contribution: 'primary'|'partial'|'incidental', evidenceWeight: number }. AC9 HPE descriptor codes are AC9HP*. Idempotent seed pattern per docs (deterministic ids, mirrors seed-dlos). Publishing to Sanity is gated on human decision D-publish.",
+      "completed_at": "2026-07-08T12:41:14+00:00",
+      "completed_by": "W-3.3",
+      "dispatched_at": "2026-07-08T12:35:10+00:00"
+    },
+    "3.4": {
+      "status": "parked",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "3.3"
+      ],
+      "title": "WS-5 exit demo: 5-thread ac-v9-nsw mapping proves zero-code-change transposition",
+      "description": "Prove the transposer claim: adding a second framework's mapping requires authoring data only, no code change. Following the exact pattern established by task 3.3's seed script, write a seed script that patches a small ac-v9-nsw regulatoryMapping (5 threads) onto their DLO docs. Then add an integration test that, for a NSW-state family with demonstrating DLOs on those threads, getDeterministicCoverage returns {mode:'deterministic'} (not fallback) and the report path renders NSW coverage \u2014 with NO change to any src/lib/report/*.ts logic (the test itself is the proof). Do NOT publish to production Sanity (same human gate as 3.3).",
+      "files": [
+        "scripts/seed-dlo-mappings-nsw-demo.mjs",
+        "src/app/api/report/coverage/route.integration.test.ts"
+      ],
+      "done_when": "scripts/seed-dlo-mappings-nsw-demo.mjs exists and a coverage integration test proves a NSW family reaches {mode:'deterministic'} via mappings-only (no src/lib/report/*.ts edits), passing via `npm run test:integration:local` on node@24",
+      "contracts": "Reuse task 3.3's regulatoryMapping shape with frameworkKey 'ac-v9-nsw'. frameworkKeyForState('NSW') must resolve to 'ac-v9-nsw' \u2014 verify in deterministic-coverage.ts; if it does not, that IS a code gap, queue a decision rather than editing report logic silently. Publishing gated on D-publish.",
+      "completed_at": null,
+      "completed_by": null,
+      "dispatched_at": "2026-07-11T12:08:05+00:00",
+      "parked_reason": "awaiting decision D4"
+    }
+  },
+  "human_gates": [
+    {
+      "id": "D-publish",
+      "question": "Publish the tranche-2 ac-v9-qld (P1+PS2) and ac-v9-nsw-demo DLO mappings to PRODUCTION Sanity? Requires Sanity auth + council/Drew review of the chosen AC9 codes. The seed scripts (tasks 3.3/3.4) are idempotent and reviewable; running them is an outward-facing content mutation held for Drew.",
+      "blocks": []
+    }
+  ],
+  "decision_queue": [
+    {
+      "id": "D-sidebar-1",
+      "question": "Interim framing for evidenced families whose threads are unmapped: until tranche-2+ mappings land, they read 'Building' against subjects where they have demonstrating-tier evidence. Acceptable, or should the report say 'outcomes mapping in progress' for unmapped threads?",
+      "recommendation": "Acceptable interim; revisit after tranche-2 lands. Not a build task.",
+      "confidence": "medium",
+      "status": "parked",
+      "blocks": []
+    },
+    {
+      "id": "D-sidebar-2",
+      "question": "Delete the vestigial /constellation scaffold (unlinked, dead) or keep it as the landing pad for the pedagogy-weighted map phase?",
+      "recommendation": "Keep for now; it is harmless and reserves the pedagogy-weight read path. Documented as vestigial in task 1.3.",
+      "confidence": "low",
+      "status": "parked",
+      "blocks": []
+    },
+    {
+      "id": "D-sidebar-3",
+      "question": "Concurrent annotation edits have no optimistic locking \u2014 co-facilitators editing the same report annotation can clobber each other. Add locking?",
+      "recommendation": "Low priority for alpha (single-facilitator families dominate). Defer.",
+      "confidence": "medium",
+      "status": "parked",
+      "blocks": []
+    },
+    {
+      "id": "D4",
+      "question": "Integration tests for 3.1 (work-sample orphan guard), 3.2 (learning_area export + cross-slot 409 + null-DOB), and 3.4 (ac-v9-nsw transposer demo) are written and typecheck-clean, but could NOT be run locally this session: Docker Desktop's VM failed to boot and no cloud DB creds (DATABASE_URL/NEON_API_KEY) are set. Verify via CI on push (GitHub uses its own Postgres service container), or run 'npm run test:integration:local' once Docker is healthy, then mark 3.1/3.2/3.4 done.",
+      "recommendation": "Push the branch and let CI's integration job verify; if green, close 3.1/3.2/3.4.",
+      "confidence": "high",
+      "blocks": [
+        "3.1",
+        "3.2",
+        "3.4"
+      ],
+      "resolved": false
+    }
+  ]
 }

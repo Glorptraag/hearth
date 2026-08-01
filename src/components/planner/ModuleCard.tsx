@@ -131,26 +131,36 @@ export default function ModuleCard({
               <FilePdf size={14} aria-hidden="true" />
             </span>
           )}
-          {indicators && (
-            <PackIndicators
-              context="card-compact"
-              printables={indicators.printables}
-              materials={indicators.materials}
-              className="ml-auto"
-            />
+          {/* Trailing group. Delete sits in flow beside the indicators rather
+              than absolutely in the corner, so its target can be sized to the
+              WCAG bar without overlapping them. */}
+          {(indicators || !isReadOnly) && (
+            <div className="ml-auto flex items-center gap-[3px]">
+              {indicators && (
+                <PackIndicators
+                  context="card-compact"
+                  printables={indicators.printables}
+                  materials={indicators.materials}
+                />
+              )}
+              {!isReadOnly && (
+                <button
+                  onClick={() => onDelete(entry.id)}
+                  // 26px clears SC 2.5.8 (24px); the negative block margin keeps
+                  // it from growing the chip row. Explicit size rather than
+                  // hit-target's 44px so the destructive target can't swallow
+                  // taps meant for the adjacent indicator dots.
+                  // Opacity (not `hidden`) so it stays focusable — display:none
+                  // drops it out of the tab order entirely.
+                  className="-my-[6px] flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded text-text-muted opacity-0 transition-[opacity,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-red-400 focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
+                  aria-label="Remove"
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              )}
+            </div>
           )}
         </div>
-
-        {/* Delete button */}
-        {!isReadOnly && (
-          <button
-            onClick={() => onDelete(entry.id)}
-            className="hit-target absolute right-xs top-xs hidden h-5 w-5 items-center justify-center rounded text-text-muted transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-red-400 group-hover:flex pointer-coarse:flex"
-            aria-label="Remove"
-          >
-            <X size={12} aria-hidden="true" />
-          </button>
-        )}
 
         {/* Status dot (toggle) + title (opens the runner when a module backs
             this entry; free-text entries keep the title as the toggle). */}

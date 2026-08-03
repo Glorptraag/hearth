@@ -66,7 +66,13 @@ export default async function RootLayout({
 }>) {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
-  const isDevPreview = pathname.startsWith("/dev-preview") || pathname.startsWith("/demo");
+  // Routes that must render without Clerk. dev-preview and demo cannot reach
+  // Clerk's API; /offline must render with no network at all, since the
+  // service worker serves it as the airplane-mode fallback.
+  const skipClerk =
+    pathname.startsWith("/dev-preview") ||
+    pathname.startsWith("/demo") ||
+    pathname.startsWith("/offline");
 
   return (
     <html
@@ -86,7 +92,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
         <IconProvider>
-          {isDevPreview ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
+          {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
         </IconProvider>
       </body>
     </html>

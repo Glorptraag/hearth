@@ -16,6 +16,10 @@ const isPublicRoute = createRouteMatcher([
   "/demo(.*)",
   "/terms",
   "/privacy",
+  // Service-worker offline fallback. Must stay public: the SW fetches it at
+  // install time, and an unauthenticated 307 to /sign-in would cache the
+  // sign-in page as the offline screen instead.
+  "/offline",
   "/api/invitations/validate",
   "/api/provider-code/validate",
   // Sanity webhooks — these self-authenticate via SANITY_WEBHOOK_SECRET

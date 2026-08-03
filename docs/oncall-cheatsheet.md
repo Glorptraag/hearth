@@ -26,6 +26,7 @@ Save these as a browser folder. The five seconds spent typing them mid-incident 
 | Switch | Effect | How |
 |---|---|---|
 | `DRAFT_INSIGHTS_ENABLED=false` | Kills the live Logger draft-insight stream. Write-time enrichment still runs; entries are unaffected. | Vercel → Project → Settings → Environment Variables → flip → Redeploy (~1 min) |
+| `NEXT_PUBLIC_DISABLE_SW=1` | Unregisters the service worker and drops its caches on every client's next load. Reach for this if a deploy leaves users on stale assets or a broken shell. **Note:** a shipped worker outlives the deploy that shipped it, so rolling back alone does NOT remove it — you need this flag. | Vercel → Settings → Environment Variables → set → Redeploy |
 | Roll back a bad deploy | Reverts prod to a known-good build | Vercel → Deployments → pick the previous green build → "Promote to Production" |
 | Pause a noisy cron | Stops `/api/admin/retention` or `/api/admin/invitations/expire` from firing | Vercel → Project → Settings → Crons → Pause |
 | Anthropic budget hit | Anthropic auto-enforces the workspace cap; your key returns 429s | Wait for window reset OR raise cap in Anthropic console (only if you trust the spike) |
@@ -41,6 +42,8 @@ Save these as a browser folder. The five seconds spent typing them mid-incident 
 | Sentry quota near cap | Lower `tracesSampleRate` or filter noisy event signature | [incident-runbook §5](./incident-runbook.md) |
 | Cron didn't fire | Vercel → Project → Settings → Crons; check last invocation time + error | [incident-runbook §6](./incident-runbook.md) |
 | Account export / delete user-reported failure | Verify in `ai_pipeline_logs` + `learning_entries` that the family rows still exist; see #21 dry-run notes | tracker #21 |
+| Users stuck on stale assets / broken shell after a deploy | Set `NEXT_PUBLIC_DISABLE_SW=1` + redeploy (rollback alone will NOT clear an installed worker) | [native-app plan Phase 1](./hearth-native-app-plan-v1.md) |
+| Parent says "I logged it offline and it never appeared" | Entry sits in the IndexedDB outbox (`hearth-logger` → `outbox`) until a flush succeeds; check the browser console and whether they've reopened the app online since | `src/lib/logger/outbox.ts` |
 | Anything else | Triage from scratch | [incident-runbook §6](./incident-runbook.md) |
 
 ## Useful SQL (`DATABASE_URL` from `.env.local` pointed at prod)

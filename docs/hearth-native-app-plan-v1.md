@@ -53,15 +53,28 @@ Three facts shape everything below:
 
 Pure web work. Ships value to the web product independently of the native pivot, and is what defuses the airplane-mode test. **Do this first and merge it on its own.**
 
-**Service worker.** Add [Serwist](https://serwist.pages.dev) (`@serwist/next`) — the maintained successor to the abandoned `next-pwa`. Precache static assets, runtime-cache `cdn.sanity.io` images and fonts, `NetworkFirst` for navigations with an offline fallback. *Risk:* Serwist's Next 16 + Turbopack integration may fight the existing `withSentryConfig` wrapper in [next.config.ts](next.config.ts). If it does, fall back to a hand-rolled `public/sw.js` registered from a client component — lower ceiling, far lower integration risk. Decide within the first session, don't grind on it.
+**Service worker.** ✅ Shipped as a hand-rolled [`public/sw.js`](public/sw.js) + [`ServiceWorkerRegistrar`](src/components/ServiceWorkerRegistrar.tsx).
+
+> **Decision (2026-08-03): Serwist ruled out.** This build runs **Turbopack** (`▲ Next.js 16.2.1 (Turbopack)`), and `@serwist/next` — like `next-pwa` — is a **webpack plugin**. Under Turbopack it never executes; adopting it would have meant forcing `next build --webpack` for the whole app. Not a fallback taken under duress: it is the correct call for this stack.
+>
+> The only thing the plugin would have bought us is a precomputed asset manifest, and that turns out not to matter — Next's static output is content-hashed and immutable, so a `CacheFirst` rule over `/_next/static/` arrives at the same place after one visit. What must survive a *cold, offline* launch (the `/offline` document and the icons) is precached explicitly at install.
+>
+> Privacy rules baked into the worker, and deliberate: navigations are **never** cached (authenticated HTML carries children's names, photos and records, and would outlive sign-out); Vercel Blob evidence photos are **never** cached; `/api/` is never cached. Only public, non-personal assets are stored.
+>
+> **Kill switch:** `NEXT_PUBLIC_DISABLE_SW=1` unregisters any installed worker and drops its caches. A shipped service worker outlives the deploy that shipped it, so "stop serving it" is not a recovery path.
 
 **New `/offline` route.** A branded Hearth screen — not a browser error — that names what *is* available offline and links to the Logger. This is the screen the reviewer sees in airplane mode.
 
-**Offline Logger queue.** Extend the existing draft machinery rather than inventing a parallel one:
-- `buildEntrySavePayload` in [`src/lib/logger/entry-payload`](src/lib/logger/) already produces the exact save payload — queue that object verbatim into an IndexedDB outbox.
-- Flush on the SW `sync` event, with an `online`-event fallback via [`useOnlineStatus()`](src/hooks/use-online-status.ts).
-- Photos are the hard part: queue the compressed blob (reusing `compressImageFile`) and upload on flush, before the entry POST.
-- New: `src/lib/logger/outbox.ts` + unit tests. This closes the deferred D-LPS-10 sync-queue item.
+**Offline Logger queue.** ✅ Shipped as [`src/lib/logger/outbox.ts`](src/lib/logger/outbox.ts) (16 unit tests, `fake-indexeddb`) + [`OutboxFlusher`](src/components/logger/OutboxFlusher.tsx), wired into `handleSave`'s offline branch. Closes the deferred D-LPS-10 sync-queue item.
+
+- `buildEntrySavePayload` already produces the exact save payload; the outbox stores that object verbatim in IndexedDB and replays it against `POST /api/entries`.
+- Three flush triggers (mount, `online`, `visibilitychange`) because none alone is reliable; `flushOutbox()` coalesces concurrent runs so an entry can never be posted twice.
+- Retry policy: 4xx (except 408/429) is dropped as permanently rejected; 5xx counts an attempt against a cap of 5; **network failure counts no attempt at all** — a fortnight offline must not silently delete a parent's entry.
+- Sync results are reported to the parent by toast. Silent sync leaves them unsure whether the entry they wrote on a bushwalk exists.
+
+> **Scope call (2026-08-03): photo evidence is NOT queued offline.** Photos upload to Blob storage at *evidence-add* time ([EvidenceModal](src/app/(auth)/log/_components/EvidenceModal.tsx) → `/api/evidence/upload`), and the payload only ever carries the returned pathname. Deferring that upload means reshaping the `deriveEvidenceRows` / `derivePhotoEvidenceUrls` contract while the `learning_entry_evidence` dual-write is still in flight — disproportionate risk for this phase.
+>
+> Text, quote, note and link entries queue and replay in full. An entry whose photo was attached *before* the connection dropped also queues correctly, since its blob is already uploaded. Revisit alongside the Phase 3 native camera work, which reopens this path anyway.
 
 **Manifest + viewport hardening.** Full icon set (192/512/1024, `any` + `maskable` as separate assets — the current single file does double duty and maskable will be visibly wrong), `screenshots`, `shortcuts` (Quick Log, Dashboard), `id`, `scope`, `orientation`, `categories`. Add a `viewport` export to [layout.tsx](src/app/layout.tsx) with `viewportFit: 'cover'` and theme colours per theme.
 
@@ -137,7 +150,7 @@ Each item below is a genuine capability a browser tab cannot offer. Push is the 
 |---|---|---|
 | 4.2 minimum-functionality rejection | **High** | Phases 1 + 3 are the entire answer. Do not submit before push + camera + offline are all live |
 | Reviewer finds a purchase path | **High** | Server-side 403 + no purchase language + regression tests |
-| Serwist ↔ Next 16 / Sentry integration friction | Medium | Timebox to one session, fall back to hand-rolled SW |
+| ~~Serwist ↔ Next 16 integration friction~~ | — | **Resolved 2026-08-03.** Serwist is a webpack plugin and this build is Turbopack; hand-rolled worker shipped instead. See Phase 1 |
 | Clerk OAuth blocked in webview | Medium | `@capacitor/browser` + universal links; email-code fallback |
 | D-U-N-S delay | Medium | Drew's track, started now, runs parallel to all build work |
 | Children's photos → privacy-label scrutiny | Medium | Accurate labels; stay out of Kids Category; deletion URL published |
@@ -147,7 +160,14 @@ Each item below is a genuine capability a browser tab cannot offer. Push is the 
 
 ## Verification
 
-**Phase 1** — `npm test` for the outbox unit tests; Lighthouse PWA ≥ 80; DevTools offline walkthrough (shell renders, Logger accepts an entry, entry syncs on reconnect).
+**Phase 1** — automated in [`e2e/offline-pwa.spec.ts`](e2e/offline-pwa.spec.ts), which drives the reviewer's exact flow via `context.setOffline(true)`: load the app, cut the network, navigate, assert Hearth's own offline screen appears rather than `ERR_INTERNET_DISCONNECTED`, then assert recovery when the network returns. **Requires a production server** — the worker refuses to register outside production:
+
+```bash
+npm run build && npm run start
+npx playwright test offline-pwa.spec.ts
+```
+
+Plus `npm test` for the outbox unit tests.
 
 **Phase 2** — `npx cap run ios` on simulator. Assert: no purchase CTA on a premium pack; `curl` the checkout endpoint with the native UA → 403; sign-in completes and returns to the app via universal link.
 

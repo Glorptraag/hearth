@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkThemeProvider from "@/components/ClerkThemeProvider";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { IconProvider } from "@/components/icons";
 import "./globals.css";
 
@@ -91,6 +92,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
+        <ServiceWorkerRegistrar />
         <IconProvider>
           {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
         </IconProvider>

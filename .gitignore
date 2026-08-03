@@ -58,3 +58,9 @@ docs/audits/_eval-dlo-run-*.json
 # pre-downloaded pedagogy corpus source texts (PG/archive.org scans, not committed)
 corpus/.source-cache/
 
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

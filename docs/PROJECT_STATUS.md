@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
-> **Last updated:** 7 July 2026
+> **Last updated:** 3 August 2026
 > **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
@@ -15,6 +15,10 @@
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (August 2026)
+
+- **Native pivot — Phase 1: offline + PWA foundation** (3 Aug) — Hearth is being taken to the iOS App Store and Google Play via Capacitor; plan of record is `hearth-native-app-plan-v1.md` (**read it before any PWA / offline / service-worker / store-compliance work**). Phase 1 is pure web work that also happens to defuse the Guideline 4.2 airplane-mode check. Landed: a **hand-rolled service worker** (`public/sw.js` + `ServiceWorkerRegistrar`) — Serwist/next-pwa were ruled out because both are webpack plugins and this build is Turbopack, so they would silently never run; a branded **`/offline`** route that renders with no Clerk and no network; and an **offline Logger outbox** (`src/lib/logger/outbox.ts`, IndexedDB, 17 unit tests) that queues a save made offline and replays it on reconnect — closing the long-deferred D-LPS-10 sync-queue item. Also fixed three latent asset bugs found on the way: the PWA icon was 507×512 while the manifest declared 512×512, it carried an alpha channel (an outright App Store rejection), and `layout.tsx` referenced `/favicon.ico` and `/icon.png` — **neither file existed**. Icons are now generated reproducibly by `scripts/generate-app-icons.mjs`. Verified end-to-end by killing the production server and confirming `/dashboard` renders Hearth's own offline screen rather than Chrome's error, with navigations provably **not** cached (children's data must not persist to disk). Regression suite: `e2e/offline-pwa.spec.ts`. New kill switch `NEXT_PUBLIC_DISABLE_SW=1` documented in the on-call cheatsheet. **Two deliberate scope calls:** digital pack purchases will be stripped from native builds rather than moved to IAP for v1 (AU storefront mandates IAP; premium packs are barely live), and offline photo evidence is **not** queued — photos upload at evidence-add time, and deferring that means reshaping the `learning_entry_evidence` dual-write mid-flight.
 
 ### Recent Milestones (July 2026)
 

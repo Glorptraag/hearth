@@ -179,60 +179,67 @@ export function flushOutbox(fetchImpl: typeof fetch = fetch): Promise<FlushResul
   if (flushInFlight) return flushInFlight;
 
   flushInFlight = (async (): Promise<FlushResult> => {
-    const records = await listQueued();
-    let sent = 0;
-    let dropped = 0;
-    let remaining = 0;
-
-    // Oldest first, so entries arrive in the order the parent wrote them.
-    for (const record of [...records].sort((a, b) => a.queuedAt - b.queuedAt)) {
-      try {
-        const res = await fetchImpl('/api/entries', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(record.payload),
-        });
-
-        if (res.ok) {
-          await removeRecord(record.id);
-          sent += 1;
-          continue;
-        }
-
-        if (isPermanentRejection(res.status)) {
-          await removeRecord(record.id);
-          dropped += 1;
-          continue;
-        }
-
-        const attempts = record.attempts + 1;
-        if (attempts >= MAX_ATTEMPTS) {
-          await removeRecord(record.id);
-          dropped += 1;
-          continue;
-        }
-        await updateRecord({ ...record, attempts, lastError: `HTTP ${res.status}` });
-        remaining += 1;
-      } catch (err) {
-        // Network failure — still offline. Do NOT count an attempt: otherwise a
-        // week of being offline would silently burn through the retry budget
-        // and delete the parent's entry.
-        await updateRecord({
-          ...record,
-          lastError: err instanceof Error ? err.message : 'network error',
-        });
-        remaining += 1;
-      }
+    try {
+      return await runFlush(fetchImpl);
+    } finally {
+      // Cleared inside the async function, so it is already null by the time
+      // the returned promise settles for any awaiter. Clearing in a trailing
+      // `.finally()` instead would leave a microtask window in which a fresh
+      // call sees a settled promise and gets its stale result rather than
+      // flushing entries queued since.
+      flushInFlight = null;
     }
-
-    return { sent, dropped, remaining };
   })();
 
-  try {
-    return flushInFlight;
-  } finally {
-    void flushInFlight.finally(() => {
-      flushInFlight = null;
-    });
+  return flushInFlight;
+}
+
+async function runFlush(fetchImpl: typeof fetch): Promise<FlushResult> {
+  const records = await listQueued();
+  let sent = 0;
+  let dropped = 0;
+  let remaining = 0;
+
+  // Oldest first, so entries arrive in the order the parent wrote them.
+  for (const record of [...records].sort((a, b) => a.queuedAt - b.queuedAt)) {
+    try {
+      const res = await fetchImpl('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record.payload),
+      });
+
+      if (res.ok) {
+        await removeRecord(record.id);
+        sent += 1;
+        continue;
+      }
+
+      if (isPermanentRejection(res.status)) {
+        await removeRecord(record.id);
+        dropped += 1;
+        continue;
+      }
+
+      const attempts = record.attempts + 1;
+      if (attempts >= MAX_ATTEMPTS) {
+        await removeRecord(record.id);
+        dropped += 1;
+        continue;
+      }
+      await updateRecord({ ...record, attempts, lastError: `HTTP ${res.status}` });
+      remaining += 1;
+    } catch (err) {
+      // Network failure — still offline. Do NOT count an attempt: otherwise a
+      // week of being offline would silently burn through the retry budget
+      // and delete the parent's entry.
+      await updateRecord({
+        ...record,
+        lastError: err instanceof Error ? err.message : 'network error',
+      });
+      remaining += 1;
+    }
   }
+
+  return { sent, dropped, remaining };
 }

@@ -18,6 +18,12 @@ import { test, expect, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 
+// Full Chromium rather than the default headless shell. Scoped to this file so
+// the rest of the e2e suite is unaffected. The shell is a trimmed build whose
+// service-worker support has historically been unreliable, and a SW that
+// silently never activates would make these tests pass for the wrong reason.
+test.use({ channel: 'chromium' });
+
 /** Waits for a service worker to take control of the page. */
 async function waitForController(page: Page): Promise<boolean> {
   return page.evaluate(async () => {

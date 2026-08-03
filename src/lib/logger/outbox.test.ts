@@ -181,6 +181,24 @@ describe('flushOutbox', () => {
     expect(await countQueued()).toBe(0);
   });
 
+  it('flushes again for entries queued after a previous flush settled', async () => {
+    // Regression: an earlier implementation cleared the in-flight guard in a
+    // trailing .finally(), leaving a microtask window where the next call
+    // returned the *previous* run's result instead of sending the new entry.
+    await queueEntry(payload({ title: 'First' }));
+
+    const fetchImpl = vi.fn(ok);
+    const first = await flushOutbox(fetchImpl as unknown as typeof fetch);
+    expect(first.sent).toBe(1);
+
+    await queueEntry(payload({ title: 'Second' }));
+    const second = await flushOutbox(fetchImpl as unknown as typeof fetch);
+
+    expect(second.sent).toBe(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(await countQueued()).toBe(0);
+  });
+
   it('is a no-op on an empty queue', async () => {
     const fetchImpl = vi.fn(ok);
     const result = await flushOutbox(fetchImpl as unknown as typeof fetch);

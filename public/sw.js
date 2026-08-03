@@ -165,6 +165,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Content-hashed build output — safe to cache indefinitely.
+  //
+  // Deliberately uncapped, unlike the image cache. Entries accumulate across
+  // deploys (each build hashes differently), and reclamation happens two ways:
+  // bumping VERSION drops the whole cache on activate, and the browser evicts
+  // under storage pressure. A FIFO trim would be worse than the problem — it
+  // could evict assets the *current* build still needs and break the offline
+  // shell, since insertion order says nothing about which build an asset is from.
   if (sameOrigin && url.pathname.startsWith('/_next/static/')) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;

@@ -15,6 +15,7 @@ import { useCoachHints } from '@/hooks/use-coach-hints';
 import { useCompletenessUi } from '@/hooks/use-completeness-ui';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { useOnlineStatus } from '@/hooks/use-online-status';
+import { queueEntry } from '@/lib/logger/outbox';
 import { useAudioTranscription } from '@/hooks/use-audio-transcription';
 import { BatchLogForm } from '@/components/logger/BatchLogForm';
 import { CsvImportForm } from '@/components/logger/CsvImportForm';
@@ -395,6 +396,32 @@ export default function LogPage() {
     return format(today, 'yyyy-MM-dd');
   }, [whenDate]);
 
+  /**
+   * Return the form to empty after an entry has been captured — whether it
+   * reached the server or was queued offline. Both paths must clear, or a
+   * queued entry sits in the form looking unsaved and gets logged twice.
+   */
+  const clearComposedEntry = () => {
+    setSelectedLearners([]);
+    setDescription('');
+    setDiscoveries({});
+    setActivityType(null);
+    setLessonSubjects([]);
+    setEngagement({});
+    setWhenDate('today');
+    setDuration(null);
+    setLocation(null);
+    setObservations([]);
+    setEvidence([]);
+    setObservationDetails({});
+    // coachHints clear automatically — the hook resets to [] when the
+    // description shrinks below threshold (which the setDescription('')
+    // above triggers).
+    setProfileNudge(null);
+    setPedagogySources([]);
+    composeStartRef.current = null;
+  };
+
   const handleSave = async () => {
     if (!canSave || isSaving) return;
     setIsSaving(true);
@@ -503,24 +530,7 @@ export default function LogPage() {
         setPostSave({ entryId: savedEntryId, evidenceCount: evidenceUrls.length, enrichment: null, savedAtMs });
       }
       const learnersToCheck = [...selectedLearners];
-      setSelectedLearners([]);
-      setDescription('');
-      setDiscoveries({});
-      setActivityType(null);
-      setLessonSubjects([]);
-      setEngagement({});
-      setWhenDate('today');
-      setDuration(null);
-      setLocation(null);
-      setObservations([]);
-      setEvidence([]);
-      setObservationDetails({});
-      // coachHints clear automatically — the hook resets to [] when the
-      // description shrinks below threshold (which the setDescription('')
-      // above triggers).
-      setProfileNudge(null);
-      setPedagogySources([]);
-      composeStartRef.current = null;
+      clearComposedEntry();
 
       // Poll for enrichment to complete (server runs it async after save).
       // Snapshot-rebuild also enqueues `badge_ready` notifications, so if the
@@ -595,12 +605,31 @@ export default function LogPage() {
       // means the draft has already been written to localStorage, so the
       // entry is not lost — just unposted.
       const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
-      setToast({
-        type: 'error',
-        message: isOffline
-          ? "You're offline. Your draft is saved locally — try again when you're back online."
-          : 'Failed to save. Your draft is safe — please try again.',
-      });
+
+      if (isOffline) {
+        // Queue it for replay instead of asking the parent to remember to come
+        // back and press Save again. This is the promise the offline screen
+        // makes; lib/logger/outbox.ts flushes on reconnect.
+        const queuedId = await queueEntry(payload);
+        if (queuedId) {
+          clearComposedEntry();
+          setToast({
+            type: 'success',
+            message: "Saved offline — it'll sync when you're back online.",
+          });
+        } else {
+          setToast({
+            type: 'error',
+            message:
+              "You're offline and this device couldn't queue the entry. Your draft is saved — try again when you're back online.",
+          });
+        }
+      } else {
+        setToast({
+          type: 'error',
+          message: 'Failed to save. Your draft is safe — please try again.',
+        });
+      }
     } finally {
       setIsSaving(false);
       setTimeout(() => setToast(null), 3000);

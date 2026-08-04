@@ -12,11 +12,24 @@ function getAutoTheme(): Theme {
   return h >= 6 && h < 18 ? 'gathering' : 'dark';
 }
 
+// Browser/OS chrome tint (status bar in standalone + installed native shells).
+// Must track --color-surface-body per theme in globals.css. Hearth's theme is
+// time-of-day driven rather than prefers-color-scheme driven, so a static
+// <meta name="theme-color"> would be wrong for half the day — the tag is
+// created by the flash-prevention script in layout.tsx and mutated here.
+const THEME_COLOURS: Record<Theme, string> = {
+  dark: '#15110D',
+  gathering: '#FDF6F0',
+};
+
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute(
     'data-theme',
     theme === 'gathering' ? 'gathering' : ''
   );
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', THEME_COLOURS[theme]);
 }
 
 // ─── Module-level store (shared across all useTheme() callers) ───

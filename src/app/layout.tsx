@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkThemeProvider from "@/components/ClerkThemeProvider";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { IconProvider } from "@/components/icons";
 import "./globals.css";
 
@@ -36,6 +37,27 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Hearth",
+    // The app paints its own surface behind the status bar; translucent lets
+    // the warm body colour run to the top edge instead of a black band.
+    statusBarStyle: "black-translucent",
+  },
+};
+
+// `themeColor` is deliberately NOT declared here. Next would emit a static
+// <meta name="theme-color">, but Hearth switches theme by time of day, so the
+// tag is created and kept in sync by the flash-prevention script below and
+// applyTheme() in src/hooks/use-theme.ts. One tag, one owner.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Required for env(safe-area-inset-*) to report real values — the mobile
+  // bottom nav and tray already consume them.
+  viewportFit: "cover",
+  // Zoom stays enabled: disabling it is a WCAG failure and Hearth targets AA.
+  userScalable: true,
 };
 
 export default async function RootLayout({
@@ -45,7 +67,13 @@ export default async function RootLayout({
 }>) {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
-  const isDevPreview = pathname.startsWith("/dev-preview") || pathname.startsWith("/demo");
+  // Routes that must render without Clerk. dev-preview and demo cannot reach
+  // Clerk's API; /offline must render with no network at all, since the
+  // service worker serves it as the airplane-mode fallback.
+  const skipClerk =
+    pathname.startsWith("/dev-preview") ||
+    pathname.startsWith("/demo") ||
+    pathname.startsWith("/offline");
 
   return (
     <html
@@ -56,13 +84,17 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('hearth-theme');var a=localStorage.getItem('hearth-theme-auto');if(a!=='false'&&!s){var h=new Date().getHours();s=(h>=6&&h<18)?'gathering':''}document.documentElement.setAttribute('data-theme',s==='gathering'?'gathering':'')}catch(e){}})()`,
+            // Mirrors the resolution order in src/hooks/use-theme.ts exactly:
+            // auto mode always wins over a stale stored value. Also owns the
+            // theme-color meta tag (created here so there is only ever one).
+            __html: `(function(){try{var stored=localStorage.getItem('hearth-theme');var isAuto=localStorage.getItem('hearth-theme-auto')!=='false';var h=new Date().getHours();var auto=(h>=6&&h<18)?'gathering':'dark';var t=(!isAuto&&stored)?stored:auto;document.documentElement.setAttribute('data-theme',t==='gathering'?'gathering':'');var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m)}m.setAttribute('content',t==='gathering'?'#FDF6F0':'#15110D')}catch(e){}})()`,
           }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
+        <ServiceWorkerRegistrar />
         <IconProvider>
-          {isDevPreview ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
+          {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
         </IconProvider>
       </body>
     </html>

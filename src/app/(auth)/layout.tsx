@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { ToastProvider } from "@/components/ui/Toast";
+import OutboxFlusher from "@/components/logger/OutboxFlusher";
 import { Wordmark } from "@/components/ui/Wordmark";
 import PostHogProvider from "@/components/analytics/PostHogProvider";
 import { MobileBottomNav } from "@/components/nav/MobileBottomNav";
@@ -258,7 +259,12 @@ export default function AuthLayout({
             scroll chaining up to the (non-scrolling) shell. The mobile nav below
             is an in-flow sibling, so no bottom padding is needed to clear it. */}
         <main className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain">
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {/* Replays offline-queued Logger entries on reconnect. Inside the
+                provider so it can report the result to the parent. */}
+            <OutboxFlusher />
+            {children}
+          </ToastProvider>
         </main>
 
         {/* Mobile bottom nav — in-flow sibling of the scroll area, hidden at lg */}

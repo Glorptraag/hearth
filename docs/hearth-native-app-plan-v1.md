@@ -86,6 +86,15 @@ Pure web work. Ships value to the web product independently of the native pivot,
 
 **Init.** `@capacitor/core` + `@capacitor/cli`, iOS + Android platforms. New top-level `capacitor.config.ts` and `ios/` + `android/` directories (both committed — they hold signing config, `Info.plist`, and native edits).
 
+> ⛔ **BLOCKED on local toolchain (checked 2026-08-04).** `npx cap add ios/android` cannot run on this machine yet:
+> - `xcode-select -p` → `/Library/Developer/CommandLineTools`. **Full Xcode is not installed**, so `xcodebuild` errors out.
+> - **CocoaPods is absent** (`pod: command not found`) — `cap add ios` runs `pod install` as its final step.
+> - **No JDK and no Android SDK** (`~/Library/Android/sdk` does not exist), so `cap add android` cannot run either.
+>
+> Needed from Drew, in this order: install **Xcode** from the App Store, then `sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer` (needs his password — an agent cannot do this), then CocoaPods (`brew install cocoapods`). Android additionally needs a JDK + Android Studio.
+>
+> Everything in Phase 2 that is *not* the platform scaffold — native detection and the commerce strip — has shipped without it, since both are pure web code. Do not run a partial `cap add`: a half-created `ios/` directory that failed at `pod install` is worse than none.
+
 **Server config.** `server.url` → production, `allowNavigation` for Clerk, Sanity CDN, and Blob hosts. Set `appendUserAgent: 'HearthNative/1'` — this is the detection hook for Phase 2b.
 
 **Native detection — server-authoritative, to avoid hydration mismatch.** [`src/proxy.ts`](src/proxy.ts) already sets `x-pathname` on every response; add an `x-hearth-native` header from the UA check alongside it. Then:

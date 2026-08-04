@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLibraryState } from '@/hooks/use-library-state';
 import { track } from '@/lib/analytics/posthog';
+import { useIsNative } from '@/components/platform/NativeProvider';
 
 /**
  * Context-aware CTA for the pack detail page. Picks one of:
@@ -12,9 +13,10 @@ import { track } from '@/lib/analytics/posthog';
  *   - Owned                        — premium pack already purchased
  *   - Get Pack                     — premium pack, redirects to Stripe
  *   - Coming soon                  — premium pack without a Stripe price
+ *   - (nothing)                    — premium + unowned inside the native shell
  *
  * Mirrors the matrix in MarketplaceCard.tsx so the marketplace and pack
- * detail page never diverge.
+ * detail page never diverge — including the native branch.
  */
 export function PackDetailCta({
   packId,
@@ -29,6 +31,7 @@ export function PackDetailCta({
 }) {
   const { libraryIds, ownedIds, loading, addToLibrary } = useLibraryState();
   const { toast } = useToast();
+  const isNative = useIsNative();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const inLibrary = libraryIds.has(packId);
@@ -108,6 +111,14 @@ export function PackDetailCta({
       </button>
     );
   }
+
+  // Premium pack this family does not own, inside the native shell. Render no
+  // affordance at all — not a disabled button, not a price, not a pointer to
+  // buying on the web. App Review treats a call to action and a hint toward one
+  // the same way, and the AU storefront has no external-purchase entitlement to
+  // fall back on. The server also 403s the checkout route; this is the visible
+  // half. See docs/hearth-native-app-plan-v1.md.
+  if (isNative) return null;
 
   if (stripePriceId) {
     return (

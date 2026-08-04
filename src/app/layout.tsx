@@ -3,6 +3,8 @@ import { Fraunces, DM_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkThemeProvider from "@/components/ClerkThemeProvider";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { NativeProvider } from "@/components/platform/NativeProvider";
+import { isNativeRequest } from "@/lib/platform/native";
 import { IconProvider } from "@/components/icons";
 import "./globals.css";
 
@@ -67,6 +69,10 @@ export default async function RootLayout({
 }>) {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
+  // Resolved once per request here, then read by client components through
+  // useIsNative(). Sniffing window.Capacitor in a client component instead
+  // would desync from this HTML on hydration.
+  const isNative = isNativeRequest(headersList);
   // Routes that must render without Clerk. dev-preview and demo cannot reach
   // Clerk's API; /offline must render with no network at all, since the
   // service worker serves it as the airplane-mode fallback.
@@ -93,9 +99,11 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
         <ServiceWorkerRegistrar />
-        <IconProvider>
-          {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
-        </IconProvider>
+        <NativeProvider isNative={isNative}>
+          <IconProvider>
+            {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
+          </IconProvider>
+        </NativeProvider>
       </body>
     </html>
   );

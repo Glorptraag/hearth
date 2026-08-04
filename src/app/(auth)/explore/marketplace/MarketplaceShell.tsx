@@ -10,6 +10,7 @@ import {
 } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 import { track } from '@/lib/analytics/posthog';
+import { useIsNative } from '@/components/platform/NativeProvider';
 import { packMatchesFilter, moduleMatchesFilter, type CatalogKind } from './catalog-filter';
 
 // ─── Subject filter config ────────────────────────────────────────────────────
@@ -45,6 +46,7 @@ export function MarketplaceShell({
   initialModules?: SanityStandaloneModule[];
 }) {
   const { toast } = useToast();
+  const isNative = useIsNative();
   const router = useRouter();
   // Normalise drifted/aliased subject values so a stale subject can't blank
   // the grid (the #102 fix). Runs client-side because normalizeSubject is a
@@ -132,6 +134,12 @@ export function MarketplaceShell({
   const showKindToggle = modules.length > 0;
 
   async function handlePurchase(id: string) {
+    // Unreachable on native — MarketplaceCard renders no purchase button there
+    // — but guarded explicitly so a future caller cannot reintroduce a checkout
+    // path into the app builds. The route itself also 403s.
+    // See docs/hearth-native-app-plan-v1.md.
+    if (isNative) return;
+
     const pack = packs.find((p) => p._id === id);
     if (!pack?.stripePriceId) return;
     try {

@@ -17,6 +17,7 @@ import {
   Books,
 } from '@/components/icons';
 import { PackIndicators } from '@/components/ui/PackIndicators';
+import { useIsNative } from '@/components/platform/NativeProvider';
 import type { Printables, Materials } from '@/lib/sanity/pack-indicators';
 
 type IconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
@@ -125,6 +126,7 @@ interface MarketplaceCardProps {
 }
 
 export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary, onPurchase }: MarketplaceCardProps) {
+  const isNative = useIsNative();
   const subjects = (pack.subjects ?? [])
     .map(normalizeSubject)
     .filter((s): s is Subject => s !== null);
@@ -261,6 +263,13 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
             >
               Owned
             </button>
+          ) : isNative ? (
+            // Native builds carry no purchase path for digital content (App
+            // Store / Play require IAP; the AU storefront has no external-link
+            // entitlement). Render nothing rather than a dead button — a hint
+            // toward buying elsewhere is treated the same as a call to action.
+            // See docs/hearth-native-app-plan-v1.md.
+            null
           ) : pack.stripePriceId ? (
             <button
               onClick={(e) => {

@@ -12,6 +12,7 @@ import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { getStripe } from '@/lib/stripe/client';
 import { rateLimit } from '@/lib/rate-limit';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
+import { isNativeRequest } from '@/lib/platform/native';
 
 const bodySchema = z.object({
   packId: z.string().min(1),
@@ -21,6 +22,18 @@ const bodySchema = z.object({
 });
 
 export const POST = routeHandler(async (request: NextRequest) => {
+  // App Store / Play compliance: digital content sold inside a native build
+  // must go through Apple IAP / Play Billing. On the Australian storefront
+  // there is no external-purchase-link entitlement to fall back on, so the
+  // native builds ship with no purchase path at all (see
+  // docs/hearth-native-app-plan-v1.md).
+  //
+  // Hiding the CTA in the UI is not sufficient on its own — App Review probes.
+  // This is the guard that actually holds.
+  if (isNativeRequest(request.headers)) {
+    return NextResponse.json({ error: 'Not available in the app' }, { status: 403 });
+  }
+
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

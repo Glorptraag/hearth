@@ -61,6 +61,7 @@ docs/                # Architecture specs, design system docs
 | `docs/hearth-constellation-architecture-v1.md` | Constellation architecture — the DLO/capability-thread visualisation surface upstream of `learner_dlo_status`. Read alongside the reporting pipeline doc for how DLO evidence reaches the coverage rollup. |
 | `docs/Hearth_AI_Intelligence_Layer_Architecture.md` | AI enrichment pipeline (Phase 6) |
 | `docs/alpha-readiness-pickup.md` | Current alpha-readiness status + honest caveats. Read first on any pilot-ops task. |
+| `docs/hearth-account-deletion-defect-v1.md` | **OPEN HIGH-SEVERITY DEFECT.** `POST /api/account/delete` 500s for most real families (27 `ON DELETE no action` FKs into `families`); the Clerk user and every evidence blob also survive deletion. Read before touching account deletion, the delete route, or store-compliance work. Carries a product decision for Drew. |
 | `docs/hearth-native-app-plan-v1.md` | **Read before any PWA / offline / service-worker / Capacitor / store-compliance work.** Phased plan for shipping to the iOS App Store and Google Play. Two rules that bind ordinary feature work: digital purchases must stay absent from native builds (AU storefront mandates IAP), and the app must survive airplane mode. |
 | `docs/deployment-runbook.md` | First-deploy + recurring deploy checklist. |
 | `docs/incident-runbook.md` | Triage flows for enrichment failures, cost spikes, rate limits, AI outages. |

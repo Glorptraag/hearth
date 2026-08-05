@@ -109,7 +109,9 @@ Pure web work. Ships value to the web product independently of the native pivot,
 
 **Auth.** Clerk social sign-in must leave the webview via `@capacitor/browser` (`ASWebAuthenticationSession` / Chrome Custom Tabs). Requires universal links — `apple-app-site-association` and `assetlinks.json` served from the Vercel domain — to catch the redirect back.
 
-> **Blocking check for Drew:** if *any* social provider (Google/Facebook) is enabled in Clerk, **Sign in with Apple is mandatory** under Guideline 4.8 and must be added to Clerk + entitlements. If sign-in is email-code only, this disappears. I can't read the Clerk dashboard — confirm before Phase 2 starts.
+> ✅ **RESOLVED 2026-08-04 — Sign in with Apple IS required.** Drew confirmed a social provider (Google) is enabled in Clerk, so Guideline **4.8** applies: an equivalent privacy-preserving login option must be offered alongside it, and in practice that means **Sign in with Apple**. This is not optional and is a common late-stage rejection.
+>
+> Work it implies, all inside Phase 2b: enable Apple as a Clerk social connection; register a Services ID + Sign in with Apple capability in the Apple developer account; add the `Sign in with Apple` entitlement to the iOS target; surface the button in the Clerk `<SignIn>`/`<SignUp>` appearance (`src/app/clerk-theme.ts` already styles `socialButtonsBlockButton`, so it will pick up the theme). 4.8 also requires that the option not collect more data than name + email and not track users — Sign in with Apple satisfies both by default.
 
 **Baseline plugins.** SplashScreen, StatusBar, Keyboard, App (hardware back button, deep links), Preferences.
 

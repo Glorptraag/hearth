@@ -182,24 +182,33 @@ Only return values for fields marked "NEEDS INFERENCE". Return null for fields a
       );
     }
 
-    // Merge inferred values back into draft
-    const mergedData = { ...data };
-    if (needsUnderstanding && result.targetUnderstanding) {
+    // Merge inferred values back into the draft. Drafts are now editable in
+    // place (resume + update-in-place saves), so re-read the row here and only
+    // fill fields that are STILL blank — the parent may have saved newer edits
+    // while the model was thinking, and those must never be clobbered.
+    const freshDraft = await db.query.moduleDrafts.findFirst({
+      where: eq(moduleDrafts.id, draftId),
+    });
+    if (!freshDraft) return result;
+    const fresh = freshDraft.draftData as ModuleDraftData;
+
+    const mergedData = { ...fresh };
+    if (!fresh.targetUnderstanding?.trim() && result.targetUnderstanding) {
       mergedData.targetUnderstanding = result.targetUnderstanding;
     }
-    if (needsWatchFor && result.watchFor) {
+    if (!fresh.watchFor?.trim() && result.watchFor) {
       mergedData.watchFor = result.watchFor;
     }
-    if (needsPivot && result.pivot) {
+    if (!fresh.pivot?.trim() && result.pivot) {
       mergedData.pivot = result.pivot;
     }
-    if (needsSteps && result.steps?.length) {
+    if (!fresh.steps?.length && result.steps?.length) {
       mergedData.steps = result.steps.map((s, i) => ({
         ...s,
         id: `ai-step-${i}`,
       })) as ModuleDraftData['steps'];
     }
-    if (needsCapabilities && result.capabilities?.length) {
+    if (!fresh.capabilities?.length && result.capabilities?.length) {
       mergedData.capabilities = result.capabilities;
     }
 

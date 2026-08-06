@@ -216,14 +216,22 @@ export default function LibraryClient() {
                   Your library is empty
                 </h3>
                 <p className="font-sans text-sm text-text-secondary mb-lg max-w-xs">
-                  Browse the marketplace to add packs, or build your own module from the Build screen.
+                  Browse the marketplace to add packs, or build your own module.
                 </p>
-                <Link
-                  href="/explore/marketplace"
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
-                >
-                  Explore Marketplace
-                </Link>
+                <div className="flex flex-wrap items-center justify-center gap-sm">
+                  <Link
+                    href="/explore/marketplace"
+                    className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+                  >
+                    Explore Marketplace
+                  </Link>
+                  <Link
+                    href="/build/modules"
+                    className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+                  >
+                    Build your own
+                  </Link>
+                </div>
               </div>
             ) : modulesInUse.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">

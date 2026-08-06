@@ -193,12 +193,20 @@ export function BrowseTab() {
         <p className="font-sans text-sm text-text-secondary mb-lg max-w-sm">
           Add packs from the Marketplace or build your own module to see the catalog here.
         </p>
-        <Link
-          href="/explore/marketplace"
-          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
-        >
-          Explore Marketplace
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-sm">
+          <Link
+            href="/explore/marketplace"
+            className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+          >
+            Explore Marketplace
+          </Link>
+          <Link
+            href="/build/modules"
+            className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+          >
+            Build your own
+          </Link>
+        </div>
       </div>
     );
   }

@@ -22,6 +22,15 @@
 export const NATIVE_UA_MARKER = 'HearthNative';
 
 /**
+ * Reverse-DNS app id — iOS bundle identifier AND Android package name, so it
+ * must stay hyphen-free (Android forbids hyphens). Consumed by the .well-known
+ * universal-link routes; capacitor.config.ts must use the same value.
+ * Unregistered with either store: changeable until Drew's first submission,
+ * permanent after.
+ */
+export const NATIVE_APP_ID = 'com.hearthlms.app';
+
+/**
  * True when the request comes from the Capacitor shell.
  *
  * Spoofing this from a browser only ever *removes* purchase affordances, so it

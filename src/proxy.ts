@@ -22,6 +22,10 @@ const isPublicRoute = createRouteMatcher([
   "/offline",
   "/api/invitations/validate",
   "/api/provider-code/validate",
+  // Universal-link manifests (Apple AASA + Android assetlinks). Apple's CDN
+  // and Google's verifier fetch these unauthenticated; a 307 to /sign-in
+  // permanently breaks app-link verification for the native builds.
+  "/.well-known(.*)",
   // Sanity webhooks — these self-authenticate via SANITY_WEBHOOK_SECRET
   // (Bearer header). They must bypass Clerk or the unauthenticated webhook
   // request is 307-redirected to /sign-in and never reaches the handler.

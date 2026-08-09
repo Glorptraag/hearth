@@ -903,3 +903,29 @@ export const observationDloLinks = pgTable(
       .where(sql`provenance = 'asserted' and observation_id is null`),
   ]
 );
+
+// ─── Native push (App Store / Play pivot, Phase 3) ───
+
+// One row per installed native app instance that granted push permission.
+// APNs/FCM tokens are device-scoped, not user-scoped: the same physical device
+// re-registering under a different sign-in must MOVE the token (upsert on the
+// unique token), never duplicate it — a duplicate would push one family's
+// notification to another family's signed-out device.
+export const deviceTokens = pgTable(
+  'device_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    familyId: uuid('family_id')
+      .notNull()
+      .references(() => families.id, { onDelete: 'cascade' }),
+    clerkUserId: text('clerk_user_id').notNull(),
+    token: text('token').notNull(),
+    platform: text('platform').notNull(), // 'ios' | 'android'
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('device_tokens_token_uniq').on(table.token),
+    index('device_tokens_family_idx').on(table.familyId),
+  ]
+);

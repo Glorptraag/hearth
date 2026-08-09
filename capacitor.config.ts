@@ -1,16 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-import { NATIVE_UA_MARKER } from './src/lib/platform/native';
+import { NATIVE_APP_ID, NATIVE_UA_MARKER } from './src/lib/platform/native';
 
 // Native-shell config for the App Store / Play pivot — the iOS and Android
 // apps are this web app loaded from production inside a Capacitor webview.
 // See docs/hearth-native-app-plan-v1.md (Phase 2).
-//
-// appId is reverse-DNS and hyphen-free because Android package names forbid
-// hyphens. It is unregistered with either store and stays changeable until
-// Drew's first store submission — after that it is permanent.
 const config: CapacitorConfig = {
-  appId: 'com.hearthlms.app',
+  appId: NATIVE_APP_ID,
   appName: 'Hearth',
   // Required by the CLI even for a remote-url app; with server.url set the
   // copied assets are never served, so the web public/ dir stands in.

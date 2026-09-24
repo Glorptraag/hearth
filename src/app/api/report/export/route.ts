@@ -143,7 +143,23 @@ export const GET = routeHandler(async (request: NextRequest) => {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generated ${format(now, 'd MMMM yyyy')}`, pageW / 2, y, { align: 'center' });
-  y += 12;
+  y += 8;
+
+  // ── Review / disclaimer note (cr-report-disclaimer) ──
+  // WORDING PENDING DREW + LEGAL SIGN-OFF — DO NOT SHIP AS-IS. See
+  // docs/batch-d/cr-report-disclaimer.md for options A/B/C and rationale.
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(128, 128, 128);
+  const disclaimer =
+    `This report is compiled from the learning moments you've logged. ` +
+    `Curriculum alignments are AI-assisted suggestions to support your record-keeping — not official determinations. ` +
+    `Please review everything before you submit it to ${config.regulatoryBody} (${config.regulatoryBodyShort}).`;
+  const disclaimerLines = doc.splitTextToSize(disclaimer, pageW - 36);
+  doc.text(disclaimerLines, pageW / 2, y, { align: 'center' });
+  y += disclaimerLines.length * 4 + 6;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
 
   // Learner info
   doc.setFontSize(12);

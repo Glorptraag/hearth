@@ -20,7 +20,7 @@ describe('capacitor.config.ts ↔ native detection contract', () => {
     expect(config.appendUserAgent).toBe(`${NATIVE_UA_MARKER}/1`);
   });
 
-  it('loads the production origin', () => {
-    expect(config.server?.url).toBe('https://hearth-lms.com');
+  it('loads the canonical production origin, not the redirecting apex', () => {
+    expect(config.server?.url).toBe('https://www.hearth-lms.com');
   });
 });

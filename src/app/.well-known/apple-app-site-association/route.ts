@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { NATIVE_APP_ID } from '@/lib/platform/native';
 
 // Apple universal-links manifest. iOS fetches this (extensionless, JSON) to
-// let the native app catch https://hearth-lms.com links — which is how the
+// let the native app catch https://www.hearth-lms.com links (www — the apex
+// redirects, and Apple does not follow redirects for this file) — which is how the
 // Clerk OAuth flow returns from ASWebAuthenticationSession to the app.
 // See docs/hearth-native-app-plan-v1.md (Phase 2, Auth).
 //

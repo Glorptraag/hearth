@@ -12,7 +12,10 @@ const config: CapacitorConfig = {
   // copied assets are never served, so the web public/ dir stands in.
   webDir: 'public',
   server: {
-    url: 'https://hearth-lms.com',
+    // www is canonical: the apex 307s to it, and Capacitor hands a redirect to
+    // any host outside server.url/allowNavigation to Safari — so an apex URL
+    // would bounce the app out of its own webview on launch.
+    url: 'https://www.hearth-lms.com',
     // Hosts allowed to navigate *inside* the webview. Deliberately minimal:
     // OAuth (Google, Apple) must leave the webview via @capacitor/browser —
     // Google returns disallowed_useragent for embedded webviews — so

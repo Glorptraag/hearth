@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
-> **Last updated:** 6 August 2026
+> **Last updated:** 6 October 2026
 > **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
@@ -15,6 +15,10 @@
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (October 2026)
+
+- **Insights engine pass** (6 Oct) — The enrichment pipeline produced more than any surface showed, and spent more than it needed to. Three engine fixes + one logger fix, each with regression tests (research log R27–R30). **Narrative cost:** the monthly narrative was one Haiku call per child on every rebuild (siblings included, dashboard loads included, and a second round after the Sonnet fallback); it now carries an input fingerprint (`monthly_narrative_signature`) and is reused when nothing changed, and a `settings_change` rebuild no longer wipes it. **Enrichment context:** a child's active threads now come from the snapshot (most-recent-first) rather than the six most recent family-wide entries, so multi-child families get real candidate DLO descriptors and pedagogy thread boosts; one snapshot read is shared with the profile nudge. **Insights feed:** a deterministic per-child `recent_insights` block (`src/lib/ai/insights-feed.ts`) assembled at rebuild from journey observations, per-child `notable` lines, milestone *reasons* (previously thrown away), newly lit threads (`first_evidence_date`) and tier rises — no new model call — now renders as a **"Hearth noticed"** card on the Dashboard main column (mobile included), linking to the thread or the learner page. The dashboard's "This Week" card finally renders (the rebuild now writes `weekStats`), the never-written `hearthVoice` card is retired, and the client receives a projection of the snapshot instead of every child's narrative. **Logger:** "Earlier" is a bounded date picker instead of a silent five-days-ago. Serves Priya (Stage 2 → 3: "is anything actually accumulating?").
 
 ### Recent Milestones (August 2026)
 

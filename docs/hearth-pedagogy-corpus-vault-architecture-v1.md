@@ -58,16 +58,17 @@ Full grammar in `corpus/pedagogy/README.md`. The load-bearing choices:
 - **The vault carries more than Sanity.** `## Context` notes, `## Grounded in` wikilinks, and registry provenance stay in the vault as authoring context; compilation projects the schema subset. Losing information at compile time is fine; losing it at authoring time is not.
 - **The human gate is a field, not a promise.** `suggestedDraft` defaults to true; the reembed pipeline and webhook exclude anything not human-confirmed. Migrated CM entries are confirmed (they shipped that way in April); every other migrated entry awaits Drew's review pass. The vault test pins that CM stays confirmed.
 
-## 4. What the vault holds today (2026-07-07)
+## 4. What the vault holds today (2026-10-06)
 
 | Framework | Entries | State |
 |---|---|---|
 | charlotte-mason | 45 | Confirmed. The April proof-of-concept, migrated verbatim from the retired `ingest-pedagogy-corpus.ts`. |
-| unschooling | 24 | Awaiting review. Structural template + Gray & Riley evidence layer + paraphrased foundations, migrated from `hearth-pedagogy-corpus-unschooling-v1.md`. Operational layers are commissioned-author territory (PKB12/PKB13) — do not bulk-author in-house. |
-| montessori | 18 | Awaiting review. The pt2 survivors (OM 004–006, facilitation grammar, 6 contraindications, 8 worked examples). **Pt1 (all SEs, all PPs, OM 001–003) was lost and needs a rebuild from the registered PD translations.** |
-| classical / waldorf-steiner | 0 | Scaffolded READMEs with source strategy; waves 2 and 4. |
+| montessori | 32 | Awaiting review. pt2 survivors (18) + the W2-CAL pt1 rebuild (14): the two practice patterns the surviving worked examples cite, markers 001–003, nine verbatim source excerpts machine-checked against PG #39863 / #29635. |
+| unschooling | 28 | Awaiting review. Structural template (24) + W5 (OM us.006, CI us.006–008). Operational layers remain commissioned-author territory (PKB12/PKB13). |
+| classical | 10 | Awaiting review. W3-CAL: FV voice anchor + 5 SE (Quintilian, Comenius) + PP/OM/CI/WE ×1. |
+| waldorf-steiner | 10 | Awaiting review. W4-CAL: FV voice anchor + 5 SE (1911 essay; 1919 cycles as mandatory paraphrases) + PP/OM/CI/WE ×1, incl. the Montessori mirror contraindication. |
 
-Wave-1 CM targets and per-framework next-steps live in each framework README — that is the authoritative worklist, not this doc.
+125 compiled documents; 45 retrievable after reembed, 80 awaiting Drew's review. Each calibration batch has a verifier manifest in `.claude/plans/corpus-fanout/review-w{2,3,4,5}-calibration.md` (all GO-WITH-EDITS, `drew-ack: pending`) and the drafting session's own handoff beside it. Per-framework next-steps live in each framework README — that is the authoritative worklist, not this doc.
 
 ## 5. Path to "engine on" (ops sequence)
 

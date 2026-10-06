@@ -44,6 +44,9 @@
   "age_11_to_13": {
     "category": "age_band"
   },
+  "age_14_to_18": {
+    "category": "age_band"
+  },
   "age_2_to_3": {
     "category": "age_band"
   },
@@ -89,6 +92,10 @@
   "anti_child_centric": {
     "category": "concept"
   },
+  "anti_corporal_punishment": {
+    "category": "concept",
+    "description": "The tradition's explicit rejection of physical punishment in teaching."
+  },
   "anti_drill": {
     "category": "concept"
   },
@@ -128,6 +135,10 @@
   "authenticity": {
     "category": "concept"
   },
+  "authority": {
+    "category": "concept",
+    "description": "The natural, loving authority of the adult the second-seven-year child needs (Waldorf)."
+  },
   "autonomy": {
     "category": "concept"
   },
@@ -157,11 +168,34 @@
   "calibrating_challenge_level": {
     "category": "concept"
   },
+  "change_of_teeth": {
+    "category": "concept",
+    "description": "Steiner's threshold between the first and second seven-year periods."
+  },
+  "charlotte_mason_tension": {
+    "category": "tension"
+  },
+  "child_argues": {
+    "category": "situation",
+    "description": "Child argues a point for its own sake or contests a rule as unfair."
+  },
   "child_asking_many_questions_about_something": {
     "category": "situation"
   },
+  "child_asks_for_help": {
+    "category": "situation",
+    "description": "Child makes a specific, purposeful request for help or a resource (distinct from asking to be entertained)."
+  },
   "child_asks_many_questions": {
     "category": "situation"
+  },
+  "child_asks_to_read": {
+    "category": "situation",
+    "description": "A young child asks to be taught to read before the tradition would introduce letters."
+  },
+  "child_asks_why": {
+    "category": "situation",
+    "description": "Child repeatedly asks for the reasons behind a fact or rule."
   },
   "child_bored": {
     "category": "situation"
@@ -218,6 +252,10 @@
   "child_resists_lesson": {
     "category": "situation"
   },
+  "child_resists_memory_work": {
+    "category": "situation",
+    "description": "Child groans at or refuses a chant, poem or table being memorised."
+  },
   "child_seems_aimless": {
     "category": "situation"
   },
@@ -245,6 +283,9 @@
   },
   "choosing_books": {
     "category": "situation"
+  },
+  "classical_tension": {
+    "category": "tension"
   },
   "classification": {
     "category": "domain"
@@ -383,6 +424,14 @@
   "dyslexia": {
     "category": "domain"
   },
+  "early_intellectualisation": {
+    "category": "concept",
+    "description": "Pressing abstract concepts and formal academics before the change of teeth (Waldorf warning)."
+  },
+  "emulation": {
+    "category": "concept",
+    "description": "Learning spurred by the wish to match a peer or model (Quintilian)."
+  },
   "environment": {
     "category": "concept"
   },
@@ -471,6 +520,10 @@
   "general_knowledge": {
     "category": "domain"
   },
+  "grammar_stage": {
+    "category": "concept",
+    "description": "Sayers' first trivium stage: collecting, naming, chanting, copying, retelling."
+  },
   "grandparent_pressure": {
     "category": "situation"
   },
@@ -526,6 +579,14 @@
     "category": "concept",
     "description": "Reference to Ivan Illich's institutional-critique writing (Deschooling Society)."
   },
+  "imaginative_picture": {
+    "category": "concept",
+    "description": "The picture or story that carries a teaching before the abstract concept (Waldorf)."
+  },
+  "imitation": {
+    "category": "concept",
+    "description": "Learning by copying a model — Quintilian's imitatio (Classical) and the young child's imitation of adult deeds (Waldorf)."
+  },
   "in_laws_disapproving_of_screens": {
     "category": "situation"
   },
@@ -580,6 +641,10 @@
   },
   "living_ideas": {
     "category": "concept"
+  },
+  "logic_stage": {
+    "category": "concept",
+    "description": "Sayers' second trivium stage: the appetite for argument, reasons and consistency (roughly 9–13)."
   },
   "long_concentration_observed": {
     "category": "situation"
@@ -744,6 +809,10 @@
   "parent_asking_how_much_outdoor_time": {
     "category": "situation"
   },
+  "parent_availability": {
+    "category": "concept",
+    "description": "Whether an engaged adult is actually present for most of the child's waking day — the invisible infrastructure of home education."
+  },
   "parent_burnout": {
     "category": "situation"
   },
@@ -875,6 +944,13 @@
   "planned_lesson_displaced": {
     "category": "situation"
   },
+  "play_as_learning": {
+    "category": "concept",
+    "description": "The tradition's insistence that young children learn through play and that instruction should feel like play."
+  },
+  "poetry": {
+    "category": "domain"
+  },
   "potential_harm": {
     "category": "concept"
   },
@@ -904,6 +980,10 @@
   "read_aloud_and_narration": {
     "category": "situation"
   },
+  "readiness": {
+    "category": "concept",
+    "description": "Signs that a child has arrived at a developmental stage the tradition names."
+  },
   "reading": {
     "category": "domain"
   },
@@ -924,6 +1004,10 @@
   "recently_lifted_screen_limits": {
     "category": "situation"
   },
+  "recitation": {
+    "category": "concept",
+    "description": "Saying a memorised piece aloud, whole, to someone — the grammar stage's check and performance (Classical)."
+  },
   "registration_paperwork_due": {
     "category": "situation"
   },
@@ -937,6 +1021,10 @@
     "category": "concept",
     "description": "The position that accepts some parental decision-making (sleep, food, screens) alongside unschooled learning (cf. radical_unschooling)."
   },
+  "resource_seeking": {
+    "category": "concept",
+    "description": "The child deliberately locating a resource or person to go further — the learner's half of the strewing exchange."
+  },
   "restless_child": {
     "category": "situation"
   },
@@ -945,6 +1033,10 @@
   },
   "reverence": {
     "category": "concept"
+  },
+  "rhythm": {
+    "category": "concept",
+    "description": "Daily, weekly and seasonal rhythm as the organising principle of the young child's day (Waldorf)."
   },
   "rich_curriculum": {
     "category": "concept"
@@ -997,12 +1089,20 @@
   "self_regulation": {
     "category": "domain"
   },
+  "senses_first": {
+    "category": "concept",
+    "description": "The senses as the root of knowledge; things before words (Comenius)."
+  },
   "sensitive_periods": {
     "category": "concept",
     "description": "Montessori's windows of heightened receptivity to a particular skill or interest."
   },
   "sensorial": {
     "category": "domain"
+  },
+  "sequence": {
+    "category": "concept",
+    "description": "Ordering learning from easier to harder, whole to parts, without leaps (Comenius)."
   },
   "settings_reading_path": {
     "category": "situation",
@@ -1021,6 +1121,10 @@
     "category": "concept",
     "description": "A deliberate practice of stillness (e.g. Montessori's 'silence game'; Mason's quiet), not merely absence of noise."
   },
+  "single_parent": {
+    "category": "situation",
+    "description": "Household context: one parent, or both parents working, carrying home education."
+  },
   "social_cooperation": {
     "category": "domain"
   },
@@ -1038,6 +1142,10 @@
   },
   "spontaneous_research": {
     "category": "situation"
+  },
+  "storytelling": {
+    "category": "concept",
+    "description": "Story as the carrier of teaching; told, not read or explained."
   },
   "strewing": {
     "category": "concept",
@@ -1097,11 +1205,19 @@
   "trust_the_child": {
     "category": "concept"
   },
+  "trust_vs_neglect": {
+    "category": "concept",
+    "description": "The distinction between active, watchful trust and parental disengagement wearing the tradition's language."
+  },
   "twaddle": {
     "category": "concept"
   },
   "under_six": {
     "category": "age_band"
+  },
+  "university_transition": {
+    "category": "concept",
+    "description": "The late-teen move from home education toward university, TAFE, apprenticeship or work."
   },
   "unschooling_tension": {
     "category": "tension"
@@ -1147,6 +1263,10 @@
   },
   "worksheets_vs_real_things": {
     "category": "concept"
+  },
+  "writing_before_reading": {
+    "category": "concept",
+    "description": "Letters introduced out of drawing and writing, before reading (Waldorf)."
   },
   "wrong_work": {
     "category": "concept",

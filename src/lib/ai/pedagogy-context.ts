@@ -1,6 +1,10 @@
 import { retrievePedagogyChunks } from '@/lib/pedagogy/retrieval';
+import { VALID_THREAD_IDS } from './thread-aggregation';
 
 const TOKEN_BUDGET = 2000;
+/** Description characters embedded for retrieval. Voyage handles far more;
+ *  this keeps the query focused on the moment itself, not a long tail. */
+export const QUERY_DESCRIPTION_CHARS = 600;
 
 interface PedagogyContextOpts {
   entryTitle: string;
@@ -8,6 +12,34 @@ interface PedagogyContextOpts {
   framework: string;
   childAges?: number[];
   capabilityThreads?: string[];
+  /** Per-child discoveries (free text) — folded into the retrieval query. */
+  discoveries?: string[];
+  /** Corpus-vocabulary situational tags (see situational-signals.ts). */
+  situationalSignals?: string[];
+  /** Corpus-vocabulary activity type (see situational-signals.ts). */
+  activityType?: string;
+}
+
+/**
+ * Compose the retrieval query. The Logger derives the title from the first
+ * ~60 characters of the description, so "title: description" repeated the
+ * opening twice; the title is only prefixed when it adds something. Up to
+ * QUERY_DESCRIPTION_CHARS of the description (was 200) plus any per-child
+ * discoveries, which often carry the sharpest observation in the entry.
+ */
+export function composeRetrievalQuery(opts: Pick<PedagogyContextOpts, 'entryTitle' | 'entryDescription' | 'discoveries'>): string {
+  const title = (opts.entryTitle ?? '').trim();
+  const description = (opts.entryDescription ?? '').trim();
+  const titleStem = title.replace(/[.…]+$/, '').trim();
+  const titleIsOpening = titleStem.length > 0 && description.toLowerCase().startsWith(titleStem.toLowerCase());
+  const parts: string[] = [];
+  if (title && !titleIsOpening) parts.push(title);
+  if (description) parts.push(description.slice(0, QUERY_DESCRIPTION_CHARS));
+  for (const d of opts.discoveries ?? []) {
+    const t = (d ?? '').trim();
+    if (t) parts.push(t.slice(0, 200));
+  }
+  return parts.join(': ');
 }
 
 export interface PedagogySource {
@@ -30,18 +62,21 @@ export async function buildPedagogyContextWithSources(
   }
 
   try {
-    const queryText = [opts.entryTitle, (opts.entryDescription ?? '').slice(0, 200)]
-      .filter(Boolean)
-      .join(': ');
+    const queryText = composeRetrievalQuery(opts);
 
     const ageMin = opts.childAges?.length ? Math.min(...opts.childAges) : 0;
     const ageMax = opts.childAges?.length ? Math.max(...opts.childAges) : 18;
 
+    // Deduped + validated: the caller unions declared and active threads
+    // across children, and the rerank's thread boost is per distinct match.
+    const capabilityThreads = [...new Set((opts.capabilityThreads ?? []).filter((t) => VALID_THREAD_IDS.has(t)))];
+
     const result = await retrievePedagogyChunks({
       pedagogyKey: opts.framework,
-      capabilityThreads: opts.capabilityThreads ?? [],
+      capabilityThreads,
       ageRange: { min: ageMin, max: ageMax },
-      situationalSignals: [],
+      activityType: opts.activityType,
+      situationalSignals: opts.situationalSignals ?? [],
       loggerEntryText: queryText,
     });
 

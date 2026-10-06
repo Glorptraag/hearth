@@ -109,6 +109,17 @@ const createEntrySchema = z.object({
   sourceSessionId: z.string().uuid().optional(),
   status: z.enum(ENTRY_STATUSES).optional(),
   observationDetails: z.record(z.string(), observationDetailSchema).optional(),
+  // The Logger's structured capture context — observation chips, activity
+  // type, where, how long. Read by the enrichment prompt and by pedagogy
+  // retrieval. Bounded so a client can't stuff the row.
+  loggerContext: z
+    .object({
+      activityType: z.string().max(40).nullable().optional(),
+      observations: z.array(z.string().max(80)).max(30).optional(),
+      location: z.string().max(40).nullable().optional(),
+      duration: z.string().max(20).nullable().optional(),
+    })
+    .optional(),
   mode: z.enum(['guided', 'quick']).optional(),
 });
 

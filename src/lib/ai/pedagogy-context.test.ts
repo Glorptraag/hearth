@@ -7,7 +7,7 @@ vi.mock('@/lib/pedagogy/retrieval', () => ({
 }));
 
 const { retrievePedagogyChunks } = await import('@/lib/pedagogy/retrieval');
-const { buildPedagogyContextWithSources } = await import('./pedagogy-context');
+const { buildPedagogyContextWithSources, composeRetrievalQuery, QUERY_DESCRIPTION_CHARS } = await import('./pedagogy-context');
 
 const mockRetrieve = vi.mocked(retrievePedagogyChunks);
 
@@ -117,5 +117,48 @@ Narration deepens retention when the child retells in their own words.
 
     expect(prompt).toBe('PEDAGOGY CONTEXT:\nFamily follows the eclectic approach.');
     expect(sources).toEqual([]);
+  });
+});
+
+
+describe('composeRetrievalQuery', () => {
+  it('drops a title that is just the description\'s opening (the Logger-derived title)', () => {
+    const description = 'Emma sorted shells into piles of five and counted them, then tried piles of ten.';
+    const title = description.slice(0, 60) + '...';
+    expect(composeRetrievalQuery({ entryTitle: title, entryDescription: description })).toBe(description);
+  });
+
+  it('keeps a title that adds something and appends discoveries', () => {
+    expect(
+      composeRetrievalQuery({
+        entryTitle: 'Pond walk',
+        entryDescription: 'We looked at tadpoles.',
+        discoveries: ['Noticed the back legs come first', '  '],
+      }),
+    ).toBe('Pond walk: We looked at tadpoles.: Noticed the back legs come first');
+  });
+
+  it(`embeds up to ${QUERY_DESCRIPTION_CHARS} description characters (was 200)`, () => {
+    const long = 'x'.repeat(2000);
+    const q = composeRetrievalQuery({ entryTitle: '', entryDescription: long });
+    expect(q.length).toBe(QUERY_DESCRIPTION_CHARS);
+    expect(QUERY_DESCRIPTION_CHARS).toBeGreaterThan(200);
+  });
+
+  it('passes situational signals, a corpus activity type and deduped valid threads to retrieval', async () => {
+    mockRetrieve.mockResolvedValue(makeResponse([makeChunk()]));
+    await buildPedagogyContextWithSources({
+      entryTitle: 'Creek',
+      entryDescription: 'Forty minutes watching water striders.',
+      framework: 'charlotte_mason',
+      capabilityThreads: ['S5', 'EF1', 'S5', 'capabilityThread.L1', 'ZZ9'],
+      situationalSignals: ['child_deeply_focused', 'outdoor_free_observation'],
+      activityType: 'nature_study',
+    });
+    const req = mockRetrieve.mock.calls[0][0];
+    expect(req.capabilityThreads).toEqual(['S5', 'EF1']);
+    expect(req.situationalSignals).toEqual(['child_deeply_focused', 'outdoor_free_observation']);
+    expect(req.activityType).toBe('nature_study');
+    expect(req.loggerEntryText).toBe('Creek: Forty minutes watching water striders.');
   });
 });

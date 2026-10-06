@@ -12,6 +12,7 @@ import {
   warmThinSaveMessage,
   THIN_SAVE_MESSAGES,
   type EntrySaveForm,
+  buildLoggerContext,
   type EntrySaveContext,
 } from './entry-payload';
 
@@ -325,5 +326,48 @@ describe('warmThinSaveMessage', () => {
       expect(msg.trim().length).toBeGreaterThan(0);
       expect(msg.toLowerCase()).not.toBe('learning entry saved!');
     }
+  });
+});
+
+
+describe('buildLoggerContext', () => {
+  it('is undefined when the parent set no structured context', () => {
+    expect(buildLoggerContext({ activityType: null })).toBeUndefined();
+    expect(buildLoggerContext({ activityType: null, observations: [], duration: null, location: null })).toBeUndefined();
+  });
+
+  it('carries chips, activity type, where and duration — and nothing blank', () => {
+    expect(
+      buildLoggerContext({
+        activityType: 'nature',
+        observations: ['Deeply focused', '  ', 'Taught someone'],
+        duration: '~30 min',
+        location: 'outdoors',
+      }),
+    ).toEqual({
+      activityType: 'nature',
+      observations: ['Deeply focused', 'Taught someone'],
+      location: 'outdoors',
+      duration: '~30 min',
+    });
+  });
+
+  it('rides the save payload in both Quick and Guided modes', () => {
+    const form = {
+      description: 'Built a marble run',
+      dateOccurred: '2026-06-01',
+      activityType: 'cooking',
+      lessonSubjects: [],
+      selectedLearners: ['L1'],
+      engagement: {},
+      discoveries: {},
+      evidence: [],
+      loggerMode: 'quick' as const,
+      observationDetails: {},
+      observations: ['Curious'],
+    };
+    const ctx = { scaffoldSessionId: undefined, projectSource: 'logger', projectId: undefined, stageNumber: undefined };
+    expect(buildEntrySavePayload(form, ctx).loggerContext).toEqual({ activityType: 'cooking', observations: ['Curious'] });
+    expect(buildEntrySavePayload({ ...form, loggerMode: 'guided' }, ctx).loggerContext).toEqual({ activityType: 'cooking', observations: ['Curious'] });
   });
 });

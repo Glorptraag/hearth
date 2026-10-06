@@ -29,6 +29,7 @@ import { moduleSkeleton } from './moduleSkeleton';
 import { asset } from './asset';
 import { commonsText } from './commonsText';
 import { kit } from './kit';
+import { siteCopy } from './siteCopy';
 
 export const schemaTypes = [
   // Pedagogical Knowledge Base
@@ -47,6 +48,8 @@ export const schemaTypes = [
   // Singletons
   lensSurfaceMap,
   bannedPhraseSet,
+  // Site copy (one doc per surface; keys owned by src/lib/copy/defaults.ts)
+  siteCopy,
   // Capability Universe v2 substrate (§3 data model)
   capabilityDomain,
   capabilityThread,

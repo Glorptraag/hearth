@@ -8,6 +8,7 @@ import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy
 import { track } from '@/lib/analytics/posthog';
 import { Plant } from '@/components/icons';
 import { JURISDICTIONS, getJurisdiction } from '@/config/jurisdictions';
+import { formatCopy, useCopy } from '@/lib/copy';
 
 const SHAPE_OPTIONS = ['🌟', '🦋', '🌿', '🔥', '🌊', '🎨'];
 
@@ -35,6 +36,8 @@ function emptyChild(index: number): ChildDraft {
 }
 
 export default function OnboardingPage() {
+  // Wording is Sanity-swappable (Studio → Site Copy → "Onboarding").
+  const copy = useCopy('onboarding');
   const { user } = useUser();
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -248,36 +251,35 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="flex flex-col items-center gap-lg text-center">
             <h1 className="font-serif text-2xl font-semibold text-text-primary">
-              Welcome to Hearth
+              {copy['step1.title']}
             </h1>
             <p className="font-serif text-text-secondary leading-relaxed max-w-[360px]">
-              Hearth helps you capture and celebrate your family&rsquo;s learning journey.
-              No lesson plans required — just honest reflection on the learning that&rsquo;s already happening.
+              {copy['step1.body']}
             </p>
             <button
               onClick={() => setStep(2)}
               className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
             >
-              Set up your family
+              {copy['step1.cta']}
             </button>
             <p className="max-w-[360px] font-sans text-[11px] text-text-muted">
-              By continuing, you agree to our{' '}
+              {copy['step1.consent.lead']}{' '}
               <a
                 href="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               >
-                Terms of Service
+                {copy['step1.consent.terms']}
               </a>{' '}
-              and{' '}
+              {copy['step1.consent.and']}{' '}
               <a
                 href="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
               >
-                Privacy Policy
+                {copy['step1.consent.privacy']}
               </a>
               .
             </p>
@@ -288,13 +290,13 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div className="flex flex-col gap-lg">
             <h1 className="font-serif text-2xl font-semibold text-text-primary text-center">
-              Your Family
+              {copy['step2.title']}
             </h1>
 
             {/* State / Territory — drives reporting copy + compliance dates */}
             <div>
               <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs block">
-                Your State or Territory
+                {copy['step2.state.label']}
               </label>
               <select
                 value={state}
@@ -302,7 +304,7 @@ export default function OnboardingPage() {
                 className="w-full rounded-[6px] border border-border-subtle bg-surface-panel px-md py-sm font-serif text-text-primary focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)] [color-scheme:dark]"
               >
                 <option value="" disabled>
-                  Select your state or territory
+                  {copy['step2.state.placeholder']}
                 </option>
                 {Object.values(JURISDICTIONS).map((j) => (
                   <option key={j.id} value={j.id} className="bg-surface-panel">
@@ -312,15 +314,18 @@ export default function OnboardingPage() {
               </select>
               <p className="mt-xs font-sans text-xs text-text-muted">
                 {state
-                  ? `Reports will be tailored for the ${getJurisdiction(state).regulatoryBody} (${getJurisdiction(state).regulatoryBodyShort}).`
-                  : 'We use this to match your reports to your state’s home-education requirements.'}
+                  ? formatCopy(copy['step2.state.hintTailored'], {
+                      regulator: getJurisdiction(state).regulatoryBody,
+                      regulatorShort: getJurisdiction(state).regulatoryBodyShort,
+                    })
+                  : copy['step2.state.hintDefault']}
               </p>
             </div>
 
             {/* Family name — optional override; defaults to Clerk surname */}
             <div>
               <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-xs block">
-                Family Name <span className="text-text-muted font-normal normal-case tracking-normal">(optional)</span>
+                {copy['step2.familyName.label']} <span className="text-text-muted font-normal normal-case tracking-normal">{copy['step2.familyName.optional']}</span>
               </label>
               <input
                 type="text"
@@ -329,7 +334,7 @@ export default function OnboardingPage() {
                   setFamilyNameTouched(true);
                   setFamilyName(e.target.value);
                 }}
-                placeholder="e.g. Douglas Family"
+                placeholder={copy['step2.familyName.placeholder']}
                 className="w-full rounded-[6px] border border-border-subtle bg-surface-panel px-md py-sm font-serif text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
               />
             </div>
@@ -337,7 +342,7 @@ export default function OnboardingPage() {
             {/* Children */}
             <div>
               <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-sm block">
-                Your Learners
+                {copy['step2.learners.label']}
               </label>
               <div className="flex flex-col gap-md">
                 {children.map((child, idx) => (
@@ -352,7 +357,7 @@ export default function OnboardingPage() {
                           type="text"
                           value={child.name}
                           onChange={(e) => updateChild(idx, 'name', e.target.value)}
-                          placeholder="Child's name"
+                          placeholder={copy['step2.learner.namePlaceholder']}
                           className="w-full rounded-[6px] border border-border-subtle bg-surface-body px-md py-xs font-serif text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none transition-colors duration-[var(--motion-quick)]"
                         />
                         {/* Date of birth */}
@@ -368,14 +373,14 @@ export default function OnboardingPage() {
                           onClick={() => removeChild(idx)}
                           className="font-sans text-xs text-text-muted hover:text-red-400 transition-colors duration-[var(--motion-quick)] mt-xs"
                         >
-                          Remove
+                          {copy['step2.learner.remove']}
                         </button>
                       )}
                     </div>
 
                     {/* Colour swatches */}
                     <div className="mt-sm flex items-center gap-xs">
-                      <span className="font-sans text-[10px] text-text-muted mr-xs">Colour</span>
+                      <span className="font-sans text-[10px] text-text-muted mr-xs">{copy['step2.learner.colour']}</span>
                       {LEARNER_COLOURS.map((colour) => (
                         <button
                           key={colour}
@@ -392,7 +397,7 @@ export default function OnboardingPage() {
 
                     {/* Shape picker */}
                     <div className="mt-sm flex items-center gap-xs">
-                      <span className="font-sans text-[10px] text-text-muted mr-xs">Shape</span>
+                      <span className="font-sans text-[10px] text-text-muted mr-xs">{copy['step2.learner.shape']}</span>
                       {SHAPE_OPTIONS.map((shape) => (
                         <button
                           key={shape}
@@ -415,14 +420,14 @@ export default function OnboardingPage() {
                     onClick={addChild}
                     className="rounded-[6px] border border-dashed border-border-medium py-sm font-sans text-sm text-text-secondary hover:border-ember hover:text-ember transition-colors duration-[var(--motion-quick)]"
                   >
-                    + Add a child
+                    {copy['step2.addChild']}
                   </button>
                 )}
               </div>
             </div>
 
             <p className="font-sans text-xs text-text-muted">
-              Next: a few questions about your educational approach. About three minutes.
+              {copy['step2.nextHint']}
             </p>
 
             {error && (
@@ -434,7 +439,7 @@ export default function OnboardingPage() {
               disabled={saving}
               className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Continue'}
+              {saving ? copy['step2.saving'] : copy['step2.continue']}
             </button>
           </div>
         )}
@@ -446,10 +451,10 @@ export default function OnboardingPage() {
               <Plant size={32} />
             </span>
             <h1 className="font-serif text-2xl font-semibold text-text-primary">
-              Your Hearth is ready
+              {copy['step4.title']}
             </h1>
             <p className="font-serif text-text-secondary leading-relaxed max-w-[340px]">
-              Think of something your family learned recently — even yesterday&rsquo;s bedtime story counts.
+              {copy['step4.body']}
             </p>
             <div className="flex flex-col gap-sm w-full max-w-[240px]">
               <button
@@ -457,14 +462,14 @@ export default function OnboardingPage() {
                 disabled={saving}
                 className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
               >
-                Log something now
+                {copy['step4.logNow']}
               </button>
               <button
                 onClick={() => handleComplete('/dashboard')}
                 disabled={saving}
                 className="rounded-[6px] border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary disabled:opacity-50"
               >
-                Explore first
+                {copy['step4.exploreFirst']}
               </button>
             </div>
           </div>

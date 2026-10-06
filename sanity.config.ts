@@ -71,6 +71,15 @@ export default defineConfig({
 
             S.divider(),
 
+            // ─── Site Copy ────────────────────────────────────────────────
+            // One document per app surface. Keys are code-owned
+            // (src/lib/copy/defaults.ts); values are edited + published here.
+            S.listItem()
+              .title('Site Copy')
+              .child(S.documentTypeList('siteCopy').title('Site Copy').defaultOrdering([{ field: 'title', direction: 'asc' }])),
+
+            S.divider(),
+
             // ─── Pedagogy Knowledge Base ──────────────────────────────────
             S.listItem()
               .title('Pedagogy Knowledge Base')

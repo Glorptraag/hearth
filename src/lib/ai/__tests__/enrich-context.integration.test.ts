@@ -123,6 +123,26 @@ describe('INTEGRATION: enrichEntry context — snapshot-backed active threads', 
     expect(prompt).toContain('dlo.M1.emerging: Counts with one-to-one correspondence.');
   });
 
+  it('puts the parent\'s tapped context in front of the model', async () => {
+    const family = await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const emma = await createLearner(db, { familyId: family.id, name: 'Emma' });
+    const entry = await createEntry(db, {
+      familyId: family.id, learnerIds: [emma.id], status: 'complete',
+      title: 'Bridge', description: 'Emma rebuilt her block bridge three times until it held the toy truck.',
+      loggerContext: {
+        activityType: 'freeplay',
+        observations: ['Persisted through difficulty', 'Self-corrected'],
+        location: 'home',
+        duration: '~30 min',
+      },
+    });
+
+    await enrichEntry({ entryId: entry.id, familyId: family.id });
+    const prompt = promptSentToHaiku();
+    expect(prompt).toContain('- activity: Free play · where: at home · duration: ~30 min');
+    expect(prompt).toContain('- Parent observed: Persisted through difficulty, Self-corrected');
+  });
+
   it('falls back to recent-entry derivation when the family has no snapshot yet', async () => {
     const family = await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
     const emma = await createLearner(db, { familyId: family.id, name: 'Emma' });

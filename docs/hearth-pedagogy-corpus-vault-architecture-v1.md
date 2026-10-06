@@ -43,7 +43,13 @@ The vault fixes both failure modes:
   WRITE-TIME CONSUMPTION (one Haiku call per save — UC5 intact)
     • Logger enrichment: <pedagogy_reference_material> in the Haiku prompt
       (src/lib/ai/pedagogy-context.ts, flag-gated, 2000-token cap, silent fallback)
+      Query = title (unless it is the description's opening) + up to 600 chars of
+      description + per-child discoveries; situationalSignals + activityType come
+      from the Logger's persisted capture context (learning_entries.logger_context)
+      via src/lib/pedagogy/situational-signals.ts — the single place the Logger's
+      chips meet tags.json's `situation` / `age_band` vocabulary (pinned by test).
     • Coach hints retrieval provider (src/lib/logger/coaching/retrieval-provider.ts)
+      — same mapper, so pre-save hints and write-time enrichment share a vocabulary
     • [content-time] Lens Bundle / Methodology Overlay generation (Kindler, per C-PL3)
 ```
 
@@ -56,7 +62,7 @@ Full grammar in `corpus/pedagogy/README.md`. The load-bearing choices:
 - **Strict, dependency-free parsing.** The frontmatter grammar and section contracts are deliberately narrow, and unknown keys/sections are hard errors. A compile gate should fail loudly, not guess — `npm run corpus:check` names the file and the line.
 - **Deterministic IDs** (`pedagogySourceExcerpt.cm.001`): recompiles update in place; no duplicate risk; the 45 migrated CM documents keep their production IDs exactly (verified by round-tripping the compiled vault against the original ingest arrays — byte-identical fields, with `_key`s added to object arrays as a Studio-editing improvement).
 - **The vault carries more than Sanity.** `## Context` notes, `## Grounded in` wikilinks, and registry provenance stay in the vault as authoring context; compilation projects the schema subset. Losing information at compile time is fine; losing it at authoring time is not.
-- **The human gate is a field, not a promise.** `suggestedDraft` defaults to true; the reembed pipeline and webhook exclude anything not human-confirmed. Migrated CM entries are confirmed (they shipped that way in April); every other migrated entry awaits Drew's review pass. The vault test pins that CM stays confirmed.
+- **The human gate is a field, not a promise.** `suggestedDraft` defaults to true; the reembed pipeline and webhook exclude anything not human-confirmed (the webhook's gate was found to check only an explicit `suggestedDraft: true` and never `status` — fixed 2026-10-06 to the same `status == published && suggestedDraft == false` predicate the reembed script uses, pinned by `sanity-webhook/route.test.ts`). Migrated CM entries are confirmed (they shipped that way in April); every other migrated entry awaits Drew's review pass. The vault test pins that CM stays confirmed.
 
 ## 4. What the vault holds today (2026-07-07)
 
@@ -79,7 +85,7 @@ The flag flip is an ops decision with a mechanical checklist, in order:
 4. Drew's review pass in Sanity Studio (or via PR edits to the vault, then recompile): flip `suggestedDraft` per entry.
 5. Confirm `pedagogy_knowledge_chunks` exists in prod (migration 0014 applies via the deploy-time migration runner; verify — the table shipped inside `0014_capability_universe_v2.sql`).
 6. `VOYAGE_API_KEY` in Vercel env (prod + preview). **Note:** the embedding module is tuned for Voyage's free tier (3 RPM, 65s inter-batch waits) — a full-corpus embed of ~600 docs will take hours on free tier; a paid key makes it minutes. The webhook path embeds one doc per publish and is fine either way.
-7. `npm run seed:pedagogy:reembed`, then `npm run verify:pkb`.
+7. `npm run seed:pedagogy:reembed`, then `npm run verify:pkb` (index shape) and `npm run verify:pkb:retrieval` (golden Logger-voice queries through the real retrieval path — `scripts/data/pkb-golden-queries.json`; classical/waldorf queries are `optional` until those corpora are populated).
 8. Configure the Sanity webhook (URL, `SANITY_WEBHOOK_SECRET`, GROQ type filter — spec §3.8) so future Studio publishes sync automatically.
 9. Set `PEDAGOGY_KB_ENABLED=true` in Vercel. Enrichment begins retrieving; fallback behaviour (framework one-liner) covers families whose pedagogy has thin coverage. Watch the `pedagogy_retrieval` structured logs and the AI cost dashboard for the first week.
 

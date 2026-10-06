@@ -38,14 +38,26 @@ export const POST = routeHandler(async (request: NextRequest) => {
     const docId = (payload._id as string).replace(/^drafts\./, '');
     const isDraft = (payload._id as string).startsWith('drafts.');
     const isDelete = payload.operation === 'delete';
-    const suggestedDraft = payload.suggestedDraft === true;
 
-    // 3. Delete chunk if: delete operation, draft state, or suggestedDraft
-    if (isDelete || isDraft || suggestedDraft) {
+    // 3. The retrievable set is exactly what the reembed script materialises:
+    //    status == "published" AND suggestedDraft == false (PKB9, the human
+    //    confirmation gate). Anything else — a Sanity draft, a delete, a doc
+    //    still awaiting review (suggestedDraft true OR absent: the vault
+    //    contract treats absence as "not yet confirmed"), or an unpublished
+    //    status — removes the chunk so a doc flipped back to review leaves the
+    //    index. Previously only an explicit `suggestedDraft: true` was
+    //    checked and `status` never was, so an unreviewed publish was embedded.
+    const retrievable = payload.status === 'published' && payload.suggestedDraft === false;
+    if (isDelete || isDraft || !retrievable) {
       await db.execute(sql`
         DELETE FROM pedagogy_knowledge_chunks WHERE id = ${docId}
       `);
-      return NextResponse.json({ ok: true, action: 'deleted', id: docId });
+      return NextResponse.json({
+        ok: true,
+        action: 'deleted',
+        id: docId,
+        reason: isDelete ? 'delete' : isDraft ? 'sanity_draft' : 'not_retrievable',
+      });
     }
 
     // 4. Create/update — compose text and check hash
@@ -70,12 +82,15 @@ export const POST = routeHandler(async (request: NextRequest) => {
     const existingRow = (existing.rows as Array<{ content_hash: string }>)[0];
 
     if (existingRow && existingRow.content_hash === contentHash) {
-      // Hash matches — update metadata only, skip embedding
+      // Hash matches — refresh metadata only (no embedding call), and only
+      // when it actually changed, mirroring the reembed script's guard.
+      const metaJson = JSON.stringify(metadata);
       await db.execute(sql`
         UPDATE pedagogy_knowledge_chunks
-        SET metadata = ${JSON.stringify(metadata)}::jsonb,
+        SET metadata = ${metaJson}::jsonb,
             updated_at = NOW()
         WHERE id = ${docId}
+          AND metadata::text IS DISTINCT FROM ${metaJson}::text
       `);
       return NextResponse.json({ ok: true, action: 'metadata_updated', id: docId });
     }

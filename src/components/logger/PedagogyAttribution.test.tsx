@@ -113,6 +113,54 @@ describe('PedagogyAttribution', () => {
     });
   });
 
+  describe('source_excerpt', () => {
+    it('renders a verbatim quote in quote marks with its attribution', () => {
+      expandAndRender([
+        source({ layer: 'source_excerpt', metadata: { text: 'Education is an atmosphere.', sourceAttribution: 'Mason, Home Education', isParaphrase: false } }),
+      ]);
+      expect(screen.getByText('From the source')).toBeTruthy();
+      expect(screen.getByText(/“Education is an atmosphere\.”/)).toBeTruthy();
+      expect(screen.getByText('Mason, Home Education')).toBeTruthy();
+    });
+
+    it('never puts a paraphrase in quote marks', () => {
+      expandAndRender([
+        source({ layer: 'source_excerpt', metadata: { text: 'Mason held that habit does most of the work.', sourceAttribution: 'after Mason', isParaphrase: true } }),
+      ]);
+      expect(screen.getByText('From the tradition (paraphrased)')).toBeTruthy();
+      expect(screen.getByText('Mason held that habit does most of the work.')).toBeTruthy();
+      expect(screen.queryByText(/“Mason held/)).toBeNull();
+    });
+
+    it('falls back to the generic humanised-layer card when text is missing', () => {
+      expandAndRender([source({ layer: 'source_excerpt', metadata: {} })]);
+      expect(screen.getByText('source excerpt')).toBeTruthy();
+    });
+  });
+
+  describe('practice_pattern', () => {
+    it('renders the trigger title and context under a tradition-reading caption', () => {
+      expandAndRender([
+        source({ layer: 'practice_pattern', metadata: { triggerTitle: 'Child resists a planned lesson', triggerContext: 'Fidgeting or refusing a short lesson.' } }),
+      ]);
+      expect(screen.getByText('How this tradition reads it')).toBeTruthy();
+      expect(screen.getByText('Child resists a planned lesson')).toBeTruthy();
+      expect(screen.getByText('Fidgeting or refusing a short lesson.')).toBeTruthy();
+    });
+
+    it('falls back to the generic humanised-layer card when triggerTitle is missing', () => {
+      expandAndRender([source({ layer: 'practice_pattern', metadata: {} })]);
+      expect(screen.getByText('practice pattern')).toBeTruthy();
+    });
+
+    it('shows the per-card framework label for a cross-tradition source', () => {
+      expandAndRender([
+        source({ layer: 'practice_pattern', pedagogyKey: 'montessori', metadata: { triggerTitle: 'Material misuse' } }),
+      ], 'Charlotte Mason');
+      expect(screen.getByText('Montessori')).toBeTruthy();
+    });
+  });
+
   it('falls back to the generic humanised-layer card for an unknown layer', () => {
     expandAndRender([source({ layer: 'some_future_layer', metadata: { anything: 'here' } })]);
     expect(screen.getByText('some future layer')).toBeInTheDocument();

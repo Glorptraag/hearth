@@ -49,10 +49,10 @@ vi.mock('../dlo-cache', () => ({
   })),
 }));
 
-import { SYSTEM_PROMPT, buildUserPrompt } from '../enrich';
+import { SYSTEM_PROMPT, buildUserPrompt, formatStructuredNotes } from '../enrich';
 
 // Minimal fixture ctx — mirrors the AssembledEnrichContext shape produced by assembleContext
-function makeCtx(overrides: { candidateThreadIds?: string[] } = {}) {
+function makeCtx(overrides: { candidateThreadIds?: string[]; loggerContext?: Record<string, unknown> | null } = {}) {
   const now = new Date().toISOString();
   return {
     entry: {
@@ -67,6 +67,7 @@ function makeCtx(overrides: { candidateThreadIds?: string[] } = {}) {
       createdAt: now,
       updatedAt: now,
       aiEnrichment: null,
+      loggerContext: overrides.loggerContext ?? null,
       discoveriesPerLearner: null,
       observationDetails: null,
       engagementPerLearner: null,
@@ -157,5 +158,37 @@ describe('buildUserPrompt — descriptor injection', () => {
     expect(prompt).toContain('ENTRY TO ENRICH:');
     expect(prompt).toContain('Test entry');
     expect(prompt).toContain('We did some maths today.');
+  });
+});
+
+
+describe('buildUserPrompt — structured notes (logger_context)', () => {
+  it('omits the block when the entry carries no logger context', async () => {
+    const { prompt } = await buildUserPrompt(makeCtx() as never);
+    expect(prompt).not.toContain("Parent's structured notes");
+  });
+
+  it('renders the chips, activity, where and duration the parent tapped', async () => {
+    const ctx = makeCtx({
+      loggerContext: {
+        activityType: 'nature',
+        observations: ['Deeply focused', 'Persisted through difficulty'],
+        location: 'outdoors',
+        duration: '~30 min',
+      },
+    });
+    const { prompt } = await buildUserPrompt(ctx as never);
+    expect(prompt).toContain("Parent's structured notes (tapped, not typed):");
+    expect(prompt).toContain('- activity: Nature study · where: outdoors · duration: ~30 min');
+    expect(prompt).toContain('- Parent observed: Deeply focused, Persisted through difficulty');
+    // The cached system prompt is untouched by this user-prompt addition.
+    expect(SYSTEM_PROMPT).not.toContain('structured notes');
+  });
+
+  it('formatStructuredNotes is empty for null, {} and blank-only chips', () => {
+    expect(formatStructuredNotes(null)).toBe('');
+    expect(formatStructuredNotes({})).toBe('');
+    expect(formatStructuredNotes({ observations: ['  '] })).toBe('');
+    expect(formatStructuredNotes({ duration: '1 hr+' })).toContain('duration: 1 hr+');
   });
 });

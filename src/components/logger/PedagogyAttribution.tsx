@@ -98,30 +98,41 @@ function SourceCard({ source, frameworkTitle }: { source: PedagogyAttributionSou
   if (source.layer === 'source_excerpt') {
     const text = (source.metadata.quotationText ?? source.metadata.text) as string | undefined;
     const attribution = source.metadata.sourceAttribution as string | undefined;
+    const isParaphrase = source.metadata.isParaphrase === true;
 
+    if (!text) {
+      return <GenericFallbackCard source={source} frameworkTitle={frameworkTitle} />;
+    }
+
+    // A paraphrase is Hearth's words with attribution — never shown in quote
+    // marks, which would claim the author said exactly this.
     return (
-      <div className="bg-surface-panel rounded-lg p-lg border border-border-subtle mb-sm">
-        {text && (
-          <p className="font-serif text-sm text-text-secondary italic leading-relaxed">
-            &ldquo;{text}&rdquo;
-          </p>
-        )}
+      <CardShell caption={isParaphrase ? 'From the tradition (paraphrased)' : 'From the source'} source={source} frameworkTitle={frameworkTitle}>
+        <p className="font-serif text-sm text-text-secondary italic leading-relaxed">
+          {isParaphrase ? text : <>&ldquo;{text}&rdquo;</>}
+        </p>
         {attribution && (
           <p className="font-sans text-xs text-text-muted mt-xs">{attribution}</p>
         )}
-      </div>
+      </CardShell>
     );
   }
 
   if (source.layer === 'practice_pattern') {
     const triggerTitle = source.metadata.triggerTitle as string | undefined;
+    const triggerContext = source.metadata.triggerContext as string | undefined;
+
+    if (!triggerTitle) {
+      return <GenericFallbackCard source={source} frameworkTitle={frameworkTitle} />;
+    }
 
     return (
-      <div className="bg-surface-panel rounded-lg p-lg border border-border-subtle mb-sm">
-        {triggerTitle && (
-          <p className="font-serif text-sm text-text-secondary font-semibold">{triggerTitle}</p>
+      <CardShell caption="How this tradition reads it" source={source} frameworkTitle={frameworkTitle}>
+        <p className="font-serif text-sm text-text-secondary font-semibold">{triggerTitle}</p>
+        {triggerContext && (
+          <p className="font-sans text-xs text-text-muted mt-xs">{triggerContext}</p>
         )}
-      </div>
+      </CardShell>
     );
   }
 

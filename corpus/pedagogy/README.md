@@ -14,7 +14,7 @@ register source in sources.json  →  author entry .md files  →  npm run corpu
     →  npm run verify:pkb                    (check the index)
 ```
 
-Retrieval only ever sees entries that are `status: published` **and** `suggestedDraft: false`. Everything else sits in Sanity awaiting review — that is the PKB9 human-confirmation gate, enforced by the reembed pipeline, not by convention.
+Retrieval only ever sees entries that are `status: published` **and** `suggestedDraft: false`. Everything else sits in Sanity awaiting review — that is the PKB9 human-confirmation gate, enforced by both the reembed pipeline and the Sanity webhook (`src/app/api/pedagogy/sanity-webhook/route.ts`), not by convention.
 
 ## Layout
 

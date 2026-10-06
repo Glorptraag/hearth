@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wordmark } from '@/components/ui/Wordmark';
+import { useCopy } from '@/lib/copy';
 import {
   House,
   NotePencil,
@@ -14,40 +15,20 @@ import {
 
 type IconC = ComponentType<{ size?: number }>;
 
-const slides: Array<{ Icon: IconC; title: string; body: string }> = [
-  {
-    Icon: House,
-    title: 'Welcome to Hearth',
-    body: "You just made one of the most important decisions for your family\u2019s education. This is your home base \u2014 let\u2019s show you around.",
-  },
-  {
-    Icon: NotePencil,
-    title: 'Capture learning as it happens',
-    body: 'Had a great morning? Open the Logger, describe what happened, and Hearth handles the rest. AI spots the learning, maps the capabilities, builds the evidence. Under two minutes.',
-  },
-  {
-    Icon: Sparkle,
-    title: "See what they\u2019re really learning",
-    body: "Every logged moment feeds the Capabilities Constellation, a living map of your child\u2019s growth across eight domains. An afternoon at the creek shows up as science, observation, and storytelling at once.",
-  },
-  {
-    Icon: Books,
-    title: 'Activities shaped by your approach',
-    body: "Structured packs, spontaneous modules, and everything in between \u2014 all filtered through your family\u2019s educational philosophy. Charlotte Mason, Classical, Montessori, or your own blend.",
-  },
-  {
-    Icon: ShieldCheck,
-    title: 'Reporting, handled',
-    body: 'Portfolio evidence, capability coverage, work sample curation \u2014 Hearth produces the documentation you need. No stress, no last-minute scramble.',
-  },
-  {
-    Icon: Flame,
-    title: 'Set up your family',
-    body: "Set up your family profile and add your learners. It takes about two minutes.",
-  },
-];
+/**
+ * Slide ORDER and icons are code-owned; every title/body is Sanity-swappable
+ * (Studio → Site Copy → "Welcome wizard"; keys in src/lib/copy/defaults.ts).
+ */
+const SLIDE_ICONS: ReadonlyArray<IconC> = [House, NotePencil, Sparkle, Books, ShieldCheck, Flame];
+const SLIDE_KEYS = ['slide1', 'slide2', 'slide3', 'slide4', 'slide5', 'slide6'] as const;
 
 export default function WelcomeWizard() {
+  const copy = useCopy('welcome');
+  const slides = SLIDE_KEYS.map((k, i) => ({
+    Icon: SLIDE_ICONS[i],
+    title: copy[`${k}.title`],
+    body: copy[`${k}.body`],
+  }));
   const [current, setCurrent] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const [animKey, setAnimKey] = useState(0);
@@ -130,7 +111,7 @@ export default function WelcomeWizard() {
           disabled={isCompleting}
           className="absolute right-md top-md z-10 rounded-[6px] px-sm py-xs font-sans text-xs font-medium text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary"
         >
-          Skip
+          {copy['action.skip']}
         </button>
 
         {/* Progress dots */}
@@ -177,7 +158,7 @@ export default function WelcomeWizard() {
               onClick={prev}
               className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
             >
-              Back
+              {copy['action.back']}
             </button>
           )}
           <button
@@ -185,7 +166,7 @@ export default function WelcomeWizard() {
             disabled={isCompleting}
             className="hearth-press flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-[background-color,transform,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
           >
-            {isCompleting ? 'Loading…' : isLast ? 'Set up my family' : 'Next'}
+            {isCompleting ? copy['action.loading'] : isLast ? copy['action.finish'] : copy['action.next']}
           </button>
         </div>
 

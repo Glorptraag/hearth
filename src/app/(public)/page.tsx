@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
 import { Wordmark } from '@/components/ui/Wordmark';
 import { NotePencil, Stack, ShieldCheck, Plant, Flame, MonitorPlay } from '@/components/icons';
+import { getCopy } from '@/lib/copy/server';
 import ProviderCodeInput from './provider-code-input';
 
 export default async function LandingPage() {
@@ -18,6 +19,10 @@ export default async function LandingPage() {
     redirect('/dashboard');
   }
 
+  // All wording on this page is Sanity-swappable (Studio → Site Copy →
+  // "Landing page"); the keys and fallbacks live in src/lib/copy/defaults.ts.
+  const c = await getCopy('landing');
+
   return (
     <>
       {/* Nav */}
@@ -30,19 +35,19 @@ export default async function LandingPage() {
             href="/demo"
             className="rounded-[6px] px-md py-sm font-sans text-xs font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] hover:text-text-primary"
           >
-            Try Demo
+            {c['nav.tryDemo']}
           </Link>
           <Link
             href="/sign-in"
             className="rounded-[10px] border border-border-subtle px-md py-sm font-sans text-xs font-medium text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           >
-            Sign In
+            {c['nav.signIn']}
           </Link>
           <Link
             href="/sign-up"
             className="rounded-[10px] bg-ember px-md py-sm font-sans text-xs font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover hover:-translate-y-px"
           >
-            Get Started
+            {c['nav.getStarted']}
           </Link>
         </div>
       </nav>
@@ -51,23 +56,23 @@ export default async function LandingPage() {
         {/* Hero */}
         <section className="mx-auto max-w-[960px] px-lg pb-4xl pt-[156px] text-center">
           <h1 className="mx-auto mb-lg max-w-[700px] font-serif text-[clamp(2rem,5vw,3.2rem)] font-semibold leading-[1.2] text-text-primary">
-            You&apos;re doing more than you think. Now you can see it.
+            {c['hero.title']}
           </h1>
           <p className="mx-auto mb-2xl max-w-[560px] font-serif text-[clamp(1rem,2.5vw,1.25rem)] leading-relaxed text-text-secondary">
-            Hearth gives homeschool families the tools that teachers train for years to use &mdash; so you can teach with confidence, track what matters, and handle compliance without the stress.
+            {c['hero.body']}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-md">
             <Link
               href="/sign-up"
               className="inline-flex items-center gap-sm rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
-              Get Started
+              {c['hero.cta']}
             </Link>
             <a
               href="#how-it-works"
               className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
-              See How It Works
+              {c['hero.secondaryCta']}
             </a>
           </div>
         </section>
@@ -75,7 +80,7 @@ export default async function LandingPage() {
         {/* Social proof */}
         <div className="px-lg py-2xl text-center">
           <p className="font-sans text-xs uppercase tracking-[0.05em] text-text-muted">
-            Built for Australian homeschool families · All Australian states supported
+            {c['proof.line']}
           </p>
         </div>
 
@@ -84,21 +89,9 @@ export default async function LandingPage() {
         {/* Value pillars */}
         <section className="mx-auto max-w-[960px] px-lg py-4xl">
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
-            <PillarCard
-              Icon={NotePencil}
-              title="Capture what's already happening"
-              body="Log learning after it happens — describe your morning, and Hearth's AI maps the literacy, numeracy, and science evidence for you. Under two minutes."
-            />
-            <PillarCard
-              Icon={Stack}
-              title="Content shaped by your approach"
-              body="Structured packs designed by educators, filtered through your family's philosophy. Charlotte Mason, Classical, Montessori — same content, your lens."
-            />
-            <PillarCard
-              Icon={ShieldCheck}
-              title="Compliance without the stress"
-              body="Home education documentation that builds itself. Capability tracking, portfolio evidence, work sample curation. Export when you need it."
-            />
+            <PillarCard Icon={NotePencil} title={c['pillars.capture.title']} body={c['pillars.capture.body']} />
+            <PillarCard Icon={Stack} title={c['pillars.content.title']} body={c['pillars.content.body']} />
+            <PillarCard Icon={ShieldCheck} title={c['pillars.compliance.title']} body={c['pillars.compliance.body']} />
           </div>
         </section>
 
@@ -107,15 +100,15 @@ export default async function LandingPage() {
         {/* How it works */}
         <section id="how-it-works" className="mx-auto max-w-[960px] px-lg py-4xl">
           <h2 className="mb-sm text-center font-serif text-2xl font-semibold text-text-primary">
-            Three steps. That&apos;s it.
+            {c['how.title']}
           </h2>
           <p className="mb-2xl text-center font-serif text-base text-text-secondary">
-            Logging takes under two minutes. Exporting a report takes one tap.
+            {c['how.subtitle']}
           </p>
           <div className="grid grid-cols-1 gap-xl md:grid-cols-3 md:gap-2xl">
-            <Step number={1} title="Log" body="Describe what happened today. Hearth spots the learning and maps it to capability threads across eight domains." />
-            <Step number={2} title="Grow" body="Watch the Capabilities Constellation fill in: one logged morning of baking shows up as maths, reading, and science at once." />
-            <Step number={3} title="Report" body="Export portfolio documentation with one tap. Evidence, curriculum coverage, and work samples — sorted for your state's requirements." />
+            <Step number={1} title={c['how.step1.title']} body={c['how.step1.body']} />
+            <Step number={2} title={c['how.step2.title']} body={c['how.step2.body']} />
+            <Step number={3} title={c['how.step3.title']} body={c['how.step3.body']} />
           </div>
         </section>
 
@@ -124,28 +117,28 @@ export default async function LandingPage() {
         {/* Who is this for */}
         <section className="mx-auto max-w-[960px] px-lg py-4xl">
           <h2 className="mb-sm text-center font-serif text-2xl font-semibold text-text-primary">
-            Wherever you&rsquo;re starting from
+            {c['audience.title']}
           </h2>
           <p className="mb-2xl text-center font-serif text-base text-text-secondary">
-            First week or fifth year, you start the same way: log what already happened today.
+            {c['audience.subtitle']}
           </p>
           <div className="grid grid-cols-1 gap-lg md:grid-cols-2">
             <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
               <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><Plant size={32} /></div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
-                New to homeschooling?
+                {c['audience.new.title']}
               </h3>
               <p className="font-serif text-[0.95rem] leading-relaxed text-text-secondary">
-                You don&apos;t need a teaching degree. Hearth puts real pedagogical frameworks in your hands and walks you through them. Start by logging what you&apos;re already doing &mdash; you&apos;ll be surprised how much learning is already happening.
+                {c['audience.new.body']}
               </p>
             </div>
             <div className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card">
               <div className="mb-md inline-flex text-ember" aria-hidden="true"><Flame size={32} /></div>
               <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
-                Already homeschooling?
+                {c['audience.experienced.title']}
               </h3>
               <p className="font-serif text-[0.95rem] leading-relaxed text-text-secondary">
-                Bring your experience. Hearth adds the professional lens, the capability tracking, and the compliance documentation that turns your good work into legible evidence. Build your own modules or explore curated packs.
+                {c['audience.experienced.body']}
               </p>
             </div>
           </div>
@@ -156,32 +149,32 @@ export default async function LandingPage() {
         {/* Pricing */}
         <section className="mx-auto max-w-[960px] px-lg py-4xl text-center">
           <h2 className="mb-sm font-serif text-2xl font-semibold text-text-primary">
-            Simple pricing. Everything included.
+            {c['pricing.title']}
           </h2>
           <p className="mb-2xl font-serif text-base text-text-secondary">
-            No feature tiers. No content gates. Full access from day one.
+            {c['pricing.subtitle']}
           </p>
           <div className="relative mx-auto max-w-[480px] overflow-hidden rounded-[24px] border border-border-medium bg-surface-panel p-2xl shadow-float">
             {/* Ember top-line */}
             <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, var(--color-ember), transparent)' }} />
 
             <div className="mb-md font-serif text-lg font-semibold text-text-primary">
-              Hearth Membership
+              {c['pricing.planName']}
             </div>
             <div className="leading-none">
               <span className="align-super font-sans text-base font-medium text-text-muted">$</span>
-              <span className="font-serif text-[2.5rem] font-semibold text-text-primary">8</span>
-              <span className="ml-xs font-sans text-sm text-text-muted">/month AUD</span>
+              <span className="font-serif text-[2.5rem] font-semibold text-text-primary">{c['pricing.amount']}</span>
+              <span className="ml-xs font-sans text-sm text-text-muted">{c['pricing.amountSuffix']}</span>
             </div>
             <p className="my-lg font-serif text-[0.95rem] leading-[1.8] text-text-secondary">
-              All content packs · All features · All compliance tools<br />
-              Unlimited learners · AI-powered insights · Learning report export
+              {c['pricing.includesLine1']}<br />
+              {c['pricing.includesLine2']}
             </p>
             <Link
               href="/sign-up"
               className="inline-flex w-full items-center justify-center rounded-[10px] bg-ember px-xl py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong"
             >
-              Get Started
+              {c['pricing.cta']}
             </Link>
             <ProviderCodeInput />
           </div>
@@ -194,16 +187,16 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-[560px] rounded-[16px] border border-border-subtle bg-surface-raised p-2xl">
             <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><MonitorPlay size={32} /></div>
             <h3 className="mb-sm font-serif text-lg font-semibold text-text-primary">
-              Want to explore first?
+              {c['demo.title']}
             </h3>
             <p className="mb-lg font-serif text-[0.95rem] text-text-secondary">
-              Take a self-guided tour through Hearth with sample data. See the Logger, the Constellation, the compliance tools &mdash; no sign-up required.
+              {c['demo.body']}
             </p>
             <Link
               href="/demo"
               className="inline-flex items-center gap-sm rounded-[10px] border border-border-subtle px-xl py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary hover:-translate-y-px"
             >
-              Try the Interactive Demo
+              {c['demo.cta']}
             </Link>
           </div>
         </section>
@@ -216,15 +209,15 @@ export default async function LandingPage() {
               textClassName="font-serif text-base font-semibold text-text-primary"
             />
             <span className="font-sans text-xs text-text-muted">
-              Built in Australia · Hosted in Australia
+              {c['footer.tagline']}
             </span>
           </div>
           <div className="flex gap-lg">
-            <Link href="/terms" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Terms</Link>
-            <Link href="/privacy" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Privacy</Link>
-            <a href="mailto:hello@hearthlearning.au" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">Contact</a>
+            <Link href="/terms" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">{c['footer.terms']}</Link>
+            <Link href="/privacy" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">{c['footer.privacy']}</Link>
+            <a href="mailto:hello@hearthlearning.au" className="font-sans text-xs text-text-muted transition-colors duration-[var(--motion-quick)] hover:text-text-secondary">{c['footer.contact']}</a>
           </div>
-          <div className="font-sans text-xs text-text-muted">© 2026 Hearth Learning Pty Ltd</div>
+          <div className="font-sans text-xs text-text-muted">{c['footer.copyright']}</div>
         </footer>
       </div>
     </>

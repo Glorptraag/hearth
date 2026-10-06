@@ -2,19 +2,23 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
-> **Last updated:** 6 August 2026
+> **Last updated:** 6 October 2026
 > **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
 
 ## Current Phase: Pilot Hardening (trackers closed; conceptual-gaps workstream active)
 
-**Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 100+ API route files, 38 Drizzle tables, **19 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.
+**Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 100+ API route files, 38 Drizzle tables, **20 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons + site copy), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.
 **Design system:** v2 + v2.1 token system **landed in code** 2026-05-01 (Fraunces + DM Sans, desaturated status palette, cream-tinted borders, motion tokens, gathering theme via `[data-theme]`). Phosphor icons adopted across all UI surfaces 2026-05-01.
 **Mobile UX:** Trayed bottom nav shipped 2026-05-06 — 5 tabs (Home/Story/Log/Plan/Explore) with anchored vertical trays for Plan + Explore.
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (October 2026)
+
+- **Site copy moved to Sanity** (6 Oct) — Non-generative web copy is now swappable in Studio without a deploy. New `siteCopy` document type (one doc per surface: `landing`, `auth`, `welcome`, `onboarding`, `dashboard`), with **keys and fallbacks owned by code** (`src/lib/copy/defaults.ts`, typed so a bad key is a compile error) and **values owned by Sanity**. Server components read `getCopy(surface)` through the existing tagged content cache (the publish webhook already covers it — a Studio publish is live in seconds, 300 s self-heal); client components read `useCopy(surface)` from a provider mounted once in the root layout that ships only the diff against the defaults. The loader never throws: no Sanity, no doc, no key, empty value → code default renders, so copy cannot take a route down. `npm run seed:copy` pushes keys non-destructively (editor edits survive re-seeds; removed keys are dropped; `--reset`, `--dry-run`, and `npm run copy:check` for drift). Migrated end-to-end: the whole public funnel (landing page, sign-in/up chrome, welcome wizard, onboarding steps) and the Dashboard (greeting templates with `{placeholders}`, empty states, section labels, sidebar, pedagogy prompt/tip cards). Nav/IA labels, aria-labels, validation errors, legal pages and the pedagogy/capability catalogues deliberately stay in code or their existing Sanity types (rationale + ranked backlog of the remaining signed-in surfaces: `docs/hearth-site-copy-system-v1.md`). 22 unit tests pin the defaults contract, merge rules, fallback and seed planning. **Ops step for Drew:** run `npm run seed:copy` once against production (needs `SANITY_API_TOKEN`) so the Studio section is populated; until then every surface renders its code default, which matches the previous hard-coded wording (the landing page's straight apostrophes were normalised to the curly form the rest of the app already uses).
 
 ### Recent Milestones (August 2026)
 

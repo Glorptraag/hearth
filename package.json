@@ -23,6 +23,8 @@
     "seed:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/seed-sample-packs/index.ts",
     "generate:audio": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/generate-commons-audio.ts",
     "promote:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/promote-packs/index.ts",
+    "seed:copy": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-site-copy.ts",
+    "copy:check": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-site-copy.ts --check",
     "seed:pedagogy:frameworks": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-pedagogy-frameworks.ts",
     "seed:pedagogy:corpus": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts",
     "corpus:check": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts --check",

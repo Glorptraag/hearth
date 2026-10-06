@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useTheme } from '@/hooks/use-theme';
 import { Wordmark } from '@/components/ui/Wordmark';
 import { getClerkAppearance } from '../../../clerk-theme';
+import { useCopy } from '@/lib/copy';
 
 export default function SignUpPage() {
   const { theme } = useTheme();
+  const copy = useCopy('auth');
 
   return (
     <>
@@ -24,7 +26,7 @@ export default function SignUpPage() {
             href="/sign-in"
             className="rounded-[10px] border border-border-subtle px-md py-sm font-sans text-xs font-medium text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           >
-            Sign In
+            {copy['nav.signIn']}
           </Link>
         </div>
       </nav>

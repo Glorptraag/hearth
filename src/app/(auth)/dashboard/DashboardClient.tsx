@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { differenceInYears } from 'date-fns';
 import { getPedagogyVocabulary, adaptGreeting } from '@/lib/pedagogy/adapter';
 import { getGentlePrompt } from '@/lib/dashboard/gentle-prompt';
+import { formatCopy, useCopy, type CopyBundle } from '@/lib/copy';
 import type { SnapshotData as FamilySnapshot } from '@/types/snapshot';
 import EmptyState from '@/components/ui/EmptyState';
 import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
@@ -109,7 +110,17 @@ function getTimeLabel(): string {
   return `${day} ${tod}`;
 }
 
+type DashboardCopy = CopyBundle<'dashboard'>;
+
+/**
+ * Greeting logic (which variant fires) is code-owned; every string is
+ * Sanity-swappable via the `dashboard` copy surface (keys in
+ * src/lib/copy/defaults.ts). Placeholders: {name} family display name (wrapped
+ * in <strong> here), {names} learner names, {count}, {moments}/{sessions}
+ * (pluralised units), {subjects} (" covering maths and science" or empty).
+ */
 function getGreetingMessage(
+  copy: DashboardCopy,
   timeOfDay: TimeOfDay,
   familyName: string,
   todayEntryCount: number,
@@ -124,68 +135,88 @@ function getGreetingMessage(
   const names = learnerNames.length === 1
     ? learnerNames[0]
     : learnerNames.length === 2
-    ? `${learnerNames[0]} and ${learnerNames[1]}`
+    ? formatCopy(copy['names.pair'], { a: learnerNames[0], b: learnerNames[1] })
     : learnerNames.length > 2
-    ? `${learnerNames[0]}, ${learnerNames[1]} and ${learnerNames.length - 2} more`
+    ? formatCopy(copy['names.more'], { a: learnerNames[0], b: learnerNames[1], n: learnerNames.length - 2 })
     : null;
   const subjectNote = todaySubjects.length > 0
-    ? ` covering ${todaySubjects.slice(0, 2).join(' and ')}`
+    ? formatCopy(copy['message.subjectsPrefix'], { list: todaySubjects.slice(0, 2).join(' and ') })
     : '';
+  const unit = (count: number, one: string, many: string) => (count === 1 ? one : many);
+  const vars = {
+    name: displayName,
+    names: names ?? '',
+    subjects: subjectNote,
+    count: todayEntryCount,
+    moments: unit(todayEntryCount, copy['unit.moment.one'], copy['unit.moment.many']),
+  };
+  // The heading renders {name} in ember via <strong>; the name is user-entered
+  // text, so escape it before it meets dangerouslySetInnerHTML.
+  const heading = (key: keyof DashboardCopy) =>
+    formatCopy(copy[key], { name: `<strong>${escapeHtml(displayName)}</strong>` });
 
   if (timeOfDay === 'evening') {
     if (todayEntryCount > 0) {
       return {
-        heading: `A gentle close to the day, <strong>${displayName}</strong>.`,
+        heading: heading('greeting.evening.logged'),
         message: names
-          ? `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} for ${names}${subjectNote}. A good day\u2019s learning.`
-          : `Today brought ${todayEntryCount} logged moment${todayEntryCount > 1 ? 's' : ''} of learning${subjectNote}. The ${displayName}’s hearth has been busy.`,
+          ? formatCopy(copy['message.evening.loggedNamed'], vars)
+          : formatCopy(copy['message.evening.logged'], vars),
       };
     }
-    return {
-      heading: `Good evening, <strong>${displayName}</strong>.`,
-      message: "Quiet day. That\u2019s okay \u2014 every day counts. What did you notice today?",
-    };
+    return { heading: heading('greeting.evening.quiet'), message: copy['message.evening.quiet'] };
   }
 
   if (timeOfDay === 'morning') {
     if (todayPlannerCount > 0) {
+      const planned = {
+        ...vars,
+        count: todayPlannerCount,
+        sessions: unit(todayPlannerCount, copy['unit.session.one'], copy['unit.session.many']),
+      };
       return {
-        heading: `Good morning, <strong>${displayName}</strong>.`,
+        heading: heading('greeting.morning'),
         message: names
-          ? `${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned for ${names} today${subjectNote}. What will the day bring?`
-          : `You have ${todayPlannerCount} session${todayPlannerCount > 1 ? 's' : ''} planned${subjectNote}. What will the day bring?`,
+          ? formatCopy(copy['message.morning.plannedNamed'], planned)
+          : formatCopy(copy['message.morning.planned'], planned),
       };
     }
     return {
-      heading: `Good morning, <strong>${displayName}</strong>.`,
-      message: names
-        ? `Ready to learn with ${names} today. What will today look like?`
-        : "What will today\u2019s learning look like?",
+      heading: heading('greeting.morning'),
+      message: names ? formatCopy(copy['message.morning.openNamed'], vars) : copy['message.morning.open'],
     };
   }
 
   // afternoon
   if (todayEntryCount === 0) {
     return {
-      heading: `Good afternoon, <strong>${displayName}</strong>.`,
-      message: names
-        ? `Nothing logged for ${names} yet \u2014 capture what you\u2019ve been up to.`
-        : "Nothing logged yet today \u2014 capture what you\u2019ve been up to.",
+      heading: heading('greeting.afternoon'),
+      message: names ? formatCopy(copy['message.afternoon.nothingNamed'], vars) : copy['message.afternoon.nothing'],
     };
   }
+  const logged = {
+    ...vars,
+    sessions: unit(todayEntryCount, copy['unit.session.one'], copy['unit.session.many']),
+  };
   return {
-    heading: `Good afternoon, <strong>${displayName}</strong>.`,
+    heading: heading('greeting.afternoon'),
     message: names
-      ? `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged for ${names} today${subjectNote}. Keep it up!`
-      : `${todayEntryCount} session${todayEntryCount > 1 ? 's' : ''} logged today${subjectNote}. Keep it up!`,
+      ? formatCopy(copy['message.afternoon.loggedNamed'], logged)
+      : formatCopy(copy['message.afternoon.logged'], logged),
   };
 }
 
-const SECTION_LABELS: Record<string, { title: string; subtitle: string }> = {
-  morning:   { title: "TODAY'S SHAPE",    subtitle: 'Plan your day' },
-  afternoon: { title: 'HAPPENING NOW',    subtitle: 'Sessions in progress' },
-  evening:   { title: "TODAY'S MOMENTS",  subtitle: 'How did it go?' },
-};
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function sectionLabels(copy: DashboardCopy, timeOfDay: TimeOfDay): { title: string; subtitle: string } {
+  return { title: copy[`section.${timeOfDay}.title`], subtitle: copy[`section.${timeOfDay}.subtitle`] };
+}
 
 const SUBJECT_PIP: Record<string, string> = {
   english:      'bg-domain-english',
@@ -233,6 +264,8 @@ export default function DashboardClient({
     fetch('/api/snapshots/rebuild', { method: 'POST' }).catch(() => {});
   }, [hasMissingNarrative]);
 
+  // Dashboard wording is Sanity-swappable (Studio → Site Copy → "Dashboard").
+  const copy = useCopy('dashboard');
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const timeLabel = useMemo(() => getTimeLabel(), []);
   const learnerNames = useMemo(() => learners.map((l) => l.name.split(' ')[0]), [learners]);
@@ -241,8 +274,8 @@ export default function DashboardClient({
     [todayPlanner]
   );
   const { heading, message } = useMemo(
-    () => getGreetingMessage(timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects),
-    [timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects]
+    () => getGreetingMessage(copy, timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects),
+    [copy, timeOfDay, familyName, todayEntryCount, todayPlanner.length, learnerNames, todaySubjects]
   );
 
   const adaptedHeading = useMemo(
@@ -313,9 +346,9 @@ export default function DashboardClient({
           <div className="mb-3xl">
             <EmptyState
               icon={HandWaving}
-              heading="Welcome to Hearth"
-              body="Who's learning at your hearth? Add them to begin."
-              cta={{ label: 'Add your first learner', href: `${basePath}/settings` }}
+              heading={copy['empty.noChildren.title']}
+              body={copy['empty.noChildren.body']}
+              cta={{ label: copy['empty.noChildren.cta'], href: `${basePath}/settings` }}
             />
           </div>
         )}
@@ -323,9 +356,9 @@ export default function DashboardClient({
           <div className="mb-3xl">
             <EmptyState
               icon={Plant}
-              heading="Your hearth is ready"
-              body="Start by logging something that happened today — even five minutes of play counts."
-              cta={{ label: 'Log a moment', href: `${basePath}/log` }}
+              heading={copy['empty.noEntries.title']}
+              body={copy['empty.noEntries.body']}
+              cta={{ label: copy['empty.noEntries.cta'], href: `${basePath}/log` }}
             />
           </div>
         )}
@@ -337,7 +370,7 @@ export default function DashboardClient({
               </span>
               <div>
                 <p className="font-serif text-sm text-text-secondary">
-                  It&rsquo;s been a few days. Learning has been happening. Capture some of it when you&rsquo;re ready.
+                  {copy['empty.inactive.body']}
                 </p>
               </div>
               <Link
@@ -434,10 +467,10 @@ export default function DashboardClient({
                 <div className="flex items-center justify-between mb-lg">
                   <div>
                     <h2 className="font-serif text-[1.1rem] font-semibold text-text-primary">
-                      {SECTION_LABELS[timeOfDay].title}
+                      {sectionLabels(copy, timeOfDay).title}
                     </h2>
                     <p className="font-sans text-[0.85rem] text-text-muted mt-xs">
-                      {SECTION_LABELS[timeOfDay].subtitle}
+                      {sectionLabels(copy, timeOfDay).subtitle}
                     </p>
                   </div>
                 </div>
@@ -564,7 +597,7 @@ export default function DashboardClient({
               &ldquo;{snapshot.hearthVoice}&rdquo;
             </p>
             <p className="mt-md font-sans text-[0.7rem] uppercase tracking-[0.05em] text-text-muted">
-              &mdash; Pedagogical Insight
+              {copy['insight.attribution']}
             </p>
           </div>
         )}
@@ -573,19 +606,19 @@ export default function DashboardClient({
         {weekStats && (
           <div className="mb-2xl">
             <h3 className="font-serif text-base font-semibold text-text-primary mb-lg">
-              This Week
+              {copy['week.title']}
             </h3>
             <div className="rounded-[16px] border border-border-subtle bg-surface-raised p-xl shadow-card">
-              <WeekStat label="Moments logged" value={weekStats.momentsLogged ?? 0} />
+              <WeekStat label={copy['week.momentsLogged']} value={weekStats.momentsLogged ?? 0} />
               <WeekStat
-                label="Collaborative activities"
+                label={copy['week.collaborative']}
                 value={weekStats.collaborativeActivities ?? 0}
                 positive
               />
-              <WeekStat label="New capabilities" value={weekStats.newCapabilities ?? 0} />
+              <WeekStat label={copy['week.newCapabilities']} value={weekStats.newCapabilities ?? 0} />
               <WeekStat
-                label="Evidence collected"
-                value={`${weekStats.evidenceCollected ?? 0} items`}
+                label={copy['week.evidence']}
+                value={formatCopy(copy['week.evidenceUnit'], { count: weekStats.evidenceCollected ?? 0 })}
                 last
               />
             </div>
@@ -599,13 +632,13 @@ export default function DashboardClient({
           return (
             <div className="rounded-[10px] border-l-[3px] border-l-sage-muted bg-[rgba(123,191,138,0.08)] p-lg mb-2xl">
               <p className="font-serif text-[0.9rem] leading-[1.6] text-text-secondary mb-md">
-                {prompt.text} — &ldquo;{prompt.moduleTitle}&rdquo; could be a gentle next step.
+                {formatCopy(copy['gentlePrompt.suffix'], { text: prompt.text, module: prompt.moduleTitle })}
               </p>
               <Link
                 href={`${basePath}/explore/activities`}
                 className="hearth-link-arrow font-sans text-[0.8rem] font-medium text-sage hover:underline"
               >
-                See suggestions <ArrowRight size={14} aria-hidden="true" />
+                {copy['gentlePrompt.cta']} <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
           );
@@ -614,29 +647,15 @@ export default function DashboardClient({
         {/* Pedagogical Prompt */}
         {pedagogy !== 'eclectic' && (() => {
           const vocab = getPedagogyVocabulary(pedagogy);
-          const prompts: Record<string, { prompt: string; tip: string }> = {
-            charlotte_mason: {
-              prompt: 'What living ideas captured attention today?',
-              tip: 'Look for narration moments — when your child retells in their own words, learning is taking root.',
-            },
-            classical: {
-              prompt: 'What was practised or memorised today?',
-              tip: 'The grammar stage thrives on repetition and chanting. Even small daily drills compound over time.',
-            },
-            montessori: {
-              prompt: 'What did the child choose to work on?',
-              tip: 'Notice periods of deep concentration — these are signs the prepared environment is working.',
-            },
-            waldorf_steiner: {
-              prompt: 'What stories or art shaped today\'s learning?',
-              tip: 'Rhythm and beauty support the whole child. Trust the seasonal pace of the main lesson.',
-            },
-            unschooling: {
-              prompt: 'What sparked curiosity today?',
-              tip: 'Interest-led doesn\'t mean unintentional. Notice the threads your child keeps returning to.',
-            },
-          };
-          const p = prompts[pedagogy];
+          // One prompt + tip per approach, keyed `pedagogy.<key>.prompt|tip`
+          // in the dashboard copy surface. Approaches without a pair (eclectic,
+          // anything new) render nothing rather than a blank card.
+          const promptKey = `pedagogy.${pedagogy}.prompt`;
+          const tipKey = `pedagogy.${pedagogy}.tip`;
+          const hasPair = promptKey in copy && tipKey in copy;
+          const p = hasPair
+            ? { prompt: copy[promptKey as keyof DashboardCopy], tip: copy[tipKey as keyof DashboardCopy] }
+            : null;
           if (!p) return null;
           return (
             <div className="mt-auto rounded-[16px] border border-border-subtle bg-surface-raised p-lg">

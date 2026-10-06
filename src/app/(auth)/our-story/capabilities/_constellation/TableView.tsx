@@ -10,17 +10,33 @@ import {
   TIER_GLYPH,
   TIER_LABEL,
   THREADS_BY_ID,
+  DLO_STATUS_LABEL,
   buildDLOs,
   domainColor,
+  isNewlyLit,
+  isRecentlyActive,
+  nextDloToWatch,
   threadCurrentTier,
   type LearnerSnapshot,
   type SanityDLO,
   type SynthDLO,
   type Tier,
   type ThreadNode,
+  type ThreadTrajectory,
 } from './topology';
 
 type DLO = SynthDLO;
+
+/**
+ * Trajectory as the rebuild reads it (4-week window split in two halves) —
+ * computed for every active thread since WS-4 but never shown until now.
+ */
+const TRAJECTORY_LABEL: Record<ThreadTrajectory, { glyph: string; label: string; cls: string }> = {
+  accelerating:  { glyph: '↗', label: 'Picking up',   cls: 'text-sage' },
+  steady_growth: { glyph: '→', label: 'Steady',       cls: 'text-text-secondary' },
+  plateau:       { glyph: '…', label: 'Quiet lately', cls: 'text-text-muted' },
+  new:           { glyph: '✦', label: 'Just started', cls: 'text-ember' },
+};
 
 type EvidenceEntry = {
   id: string;
@@ -112,6 +128,10 @@ function ThreadRow({
   const isGhostish = state === 'ghost' || state === 'dormant';
   const pips = 5;
   const filled = Math.min(pips, Math.ceil(obs / 3));
+  const newlyLit = isNewlyLit(snap, thread.id);
+  const recent = isRecentlyActive(snap, thread.id);
+  const trajectory = snap.trajectoryByThread[thread.id];
+  const traj = trajectory && obs >= 3 ? TRAJECTORY_LABEL[trajectory] : null;
 
   return (
     <tr
@@ -122,8 +142,27 @@ function ThreadRow({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDrillDown(thread); } }}
     >
       <td className="p-md align-middle">
-        <span className="block font-serif text-base font-semibold text-text-primary">{thread.name}</span>
-        <span className="mt-[2px] block font-sans text-[0.7rem] tracking-[0.04em] text-text-muted">{thread.id}</span>
+        <span className="flex flex-wrap items-center gap-sm">
+          <span className="font-serif text-base font-semibold text-text-primary">{thread.name}</span>
+          {newlyLit && (
+            <span className="rounded-full bg-ember-glow px-sm py-[1px] font-sans text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-ember">
+              New
+            </span>
+          )}
+          {!newlyLit && recent && (
+            <span
+              className="inline-block h-[6px] w-[6px] rounded-full bg-sage"
+              aria-label="Active in the last week"
+              title="Active in the last week"
+            />
+          )}
+        </span>
+        <span className="mt-[2px] block font-sans text-[0.7rem] tracking-[0.04em] text-text-muted">
+          {thread.id}
+          {/* Below 900px the Last-activity column is hidden — keep the one
+              date a parent actually scans for next to the name. */}
+          {last && <span className="min-[900px]:hidden"> · {relTime(last)}</span>}
+        </span>
       </td>
       {showDomain && (
         <td className="col-domain-col p-md align-middle hidden min-[900px]:table-cell">
@@ -137,6 +176,12 @@ function ThreadRow({
         <span className="flex items-center gap-[6px] font-sans">
           <span className={`text-[1.1rem] leading-none ${tierClass(tier)}`}>{TIER_GLYPH[tier]}</span>
           <span className="text-[0.78rem] text-text-muted">{TIER_LABEL[tier]}</span>
+          {traj && (
+            <span className={`ml-xs inline-flex items-center gap-[3px] text-[0.72rem] ${traj.cls}`} title={traj.label} aria-label={`Trajectory: ${traj.label}`}>
+              <span aria-hidden="true">{traj.glyph}</span>
+              <span className="hidden min-[600px]:inline">{traj.label}</span>
+            </span>
+          )}
         </span>
       </td>
       <td className="p-md align-middle">
@@ -250,6 +295,11 @@ export function TableThreads({
   const sortArrow = (key: SortKey) => sort.key === key
     ? <span className="ml-1 text-[0.7em] text-ember">{sort.dir === 'asc' ? '▲' : '▼'}</span>
     : null;
+  const ariaSort = (key: SortKey): 'ascending' | 'descending' | 'none' =>
+    sort.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+  const headerKeys = (key: SortKey) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onHeader(key)(); }
+  };
 
   return (
     <div>
@@ -259,13 +309,13 @@ export function TableThreads({
         <table className="cap-table w-full border-collapse">
           <thead>
             <tr>
-              <th onClick={onHeader('name')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Thread{sortArrow('name')}</th>
+              <th onClick={onHeader('name')} onKeyDown={headerKeys('name')} tabIndex={0} aria-sort={ariaSort('name')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Thread{sortArrow('name')}</th>
               {depth === 1 && (
                 <th className="col-domain-col cursor-default p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hidden min-[900px]:table-cell">Domain</th>
               )}
-              <th onClick={onHeader('tier')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Tier{sortArrow('tier')}</th>
-              <th onClick={onHeader('obs')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Observations{sortArrow('obs')}</th>
-              <th onClick={onHeader('last')} className="col-last cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary hidden min-[900px]:table-cell">Last activity{sortArrow('last')}</th>
+              <th onClick={onHeader('tier')} onKeyDown={headerKeys('tier')} tabIndex={0} aria-sort={ariaSort('tier')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Tier{sortArrow('tier')}</th>
+              <th onClick={onHeader('obs')} onKeyDown={headerKeys('obs')} tabIndex={0} aria-sort={ariaSort('obs')} className="cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary">Observations{sortArrow('obs')}</th>
+              <th onClick={onHeader('last')} onKeyDown={headerKeys('last')} tabIndex={0} aria-sort={ariaSort('last')} className="col-last cursor-pointer select-none p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hover:text-text-secondary hidden min-[900px]:table-cell">Last activity{sortArrow('last')}</th>
               <th className="col-badge-label p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hidden min-[600px]:table-cell">Badge</th>
               <th className="col-state p-md text-left font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted border-b border-border-subtle bg-surface-panel sticky top-0 hidden min-[600px]:table-cell">State</th>
             </tr>
@@ -282,9 +332,12 @@ export function TableThreads({
                 <Fragment key={domain.key}>
                   {depth === 1 && (
                     <tr
-                      className="cursor-pointer"
+                      className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember"
                       onClick={(e) => { e.stopPropagation(); onDomainTap?.(domain.key); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDomainTap?.(domain.key); } }}
                       role="button"
+                      tabIndex={0}
+                      aria-label={`Drill into ${domain.label}`}
                     >
                       <td colSpan={7} className="p-lg pr-md bg-surface-body border-b border-border-subtle">
                         <span className="inline-flex items-center gap-sm font-serif text-[1.05rem] font-semibold text-text-primary">
@@ -334,6 +387,9 @@ export function TableDLOs({
 }) {
   const thread = THREADS_BY_ID[threadId];
   const dlos = useMemo(() => buildDLOs(threadId, snap, dlosByThread), [threadId, snap, dlosByThread]);
+  // The first objective (in tier order) the child has not yet reached — the
+  // concrete "what would the next tier look like" a parent can watch for.
+  const watchNext = useMemo(() => nextDloToWatch(dlos), [dlos]);
 
   if (!thread) return null;
   const approaching = snap.badges.find((b) => b.thread === threadId && b.status === 'approaching');
@@ -343,6 +399,11 @@ export function TableDLOs({
       <div className="bg-surface-raised px-lg py-md font-serif italic text-text-secondary">
         <em>{thread.name}</em> · {dlos.length} discrete learning objectives. Each glows when{' '}
         {snap.name} has demonstrated it.
+        {watchNext && (
+          <span className="mt-xs block not-italic font-sans text-[0.78rem] text-text-muted">
+            Next to watch for: <span className="text-text-secondary">{watchNext.descriptor}</span>
+          </span>
+        )}
       </div>
       {approaching && (
         <div className="flex items-center justify-between gap-md border-b border-border-subtle bg-ember-glow px-lg py-md">
@@ -362,32 +423,46 @@ export function TableDLOs({
       )}
       {dlos.map((dlo) => {
         const tierColor = dlo.tier === 'demonstrating' ? 'var(--color-sage)' : dlo.tier === 'developing' ? 'var(--color-child-amber)' : 'var(--color-text-muted)';
+        // Four states, one per learner_dlo_status value. 'developing' used to
+        // be collapsed into 'emerging' here, so the middle rung was invisible.
         const statusChip =
           dlo.status === 'confirmed' ? 'bg-sage-muted text-sage-text' :
+          dlo.status === 'developing' ? 'bg-child-amber/15 text-child-amber' :
           dlo.status === 'emerging' ? 'bg-ember-glow text-ember' :
           'text-text-muted bg-surface-hover';
+        const isNext = watchNext?.id === dlo.id;
         const confirmed = confirmedDloIds?.has(dlo.id) ?? false;
         const pending = pendingDloIds?.has(dlo.id) ?? false;
         return (
           <div
             key={dlo.id}
-            className="flex items-center gap-sm border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)] px-md py-sm sm:gap-md sm:px-lg sm:py-md"
+            className={`flex items-center gap-sm border-t border-border-subtle first:border-t-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)] px-md py-sm sm:gap-md sm:px-lg sm:py-md ${isNext ? 'bg-ember/[0.04]' : ''}`}
           >
             <button
               type="button"
               onClick={() => onDrillDown(dlo)}
               className="flex min-w-0 flex-1 items-center gap-sm text-left sm:gap-md"
-              aria-label={`${dlo.descriptor} — open moments`}
+              aria-label={`${dlo.descriptor} — ${DLO_STATUS_LABEL[dlo.status]}${isNext ? ', next to watch for' : ''} — open moments`}
             >
               <span className="inline-flex w-[28px] shrink-0 justify-center text-[1.6rem] leading-none sm:w-[36px]" style={{ color: tierColor }}>{dlo.glyph}</span>
               <div className="min-w-0 flex-1">
                 <div className="font-serif text-base font-medium text-text-primary">{dlo.descriptor}</div>
-                <div className="mt-[2px] font-sans text-[0.75rem] text-text-muted">
-                  {dlo.tierLabel} tier · {dlo.badgeLevel} badge · {dlo.id}
+                <div className="mt-[2px] flex flex-wrap items-center gap-x-sm gap-y-[2px] font-sans text-[0.75rem] text-text-muted">
+                  <span>{dlo.tierLabel} tier · {dlo.badgeLevel} badge</span>
+                  {/* Status is always visible — on phones as this compact chip,
+                      since the wide chip on the right is hidden below sm. */}
+                  <span className={`inline-block rounded-sm px-[6px] py-[1px] text-[0.65rem] uppercase tracking-[0.05em] sm:hidden ${statusChip}`}>
+                    {DLO_STATUS_LABEL[dlo.status]}
+                  </span>
+                  {isNext && (
+                    <span className="inline-flex items-center gap-[4px] rounded-full border border-ember/30 bg-ember-glow px-sm py-[1px] text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-ember">
+                      Watch for this next
+                    </span>
+                  )}
                 </div>
               </div>
               <span className={`hidden shrink-0 rounded-sm px-sm py-[4px] font-sans text-[0.75rem] uppercase tracking-[0.05em] sm:inline-block ${statusChip}`}>
-                {dlo.status === 'confirmed' ? 'Demonstrating' : dlo.status === 'emerging' ? 'Emerging' : 'Not yet observed'}
+                {DLO_STATUS_LABEL[dlo.status]}
               </span>
             </button>
             {onConfirmDlo && (
@@ -414,7 +489,8 @@ export function TableDLOs({
  * facing rationale Haiku wrote.
  */
 type DloEvidence = {
-  entryId: string;
+  /** null for a parent confirmation (an asserted link with no entry). */
+  entryId: string | null;
   title: string;
   dateOccurred: string;
   source: string;
@@ -450,8 +526,10 @@ export function TableMoments({
     setEvidence(null);
     setFallback(null);
 
+    // Guarded: a 5xx must not become `[]` via a JSON parse of an error body —
+    // that read as "no moments yet" to an established family.
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`dlo-evidence ${r.status}`))))
       .then((data: { evidence?: DloEvidence[] }) => {
         if (cancelled) return;
         setEvidence(Array.isArray(data?.evidence) ? data.evidence : []);
@@ -460,7 +538,7 @@ export function TableMoments({
 
     // Fire the fallback in parallel so it's ready instantly if DLO returns empty.
     fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`entries ${r.status}`))))
       .then((data: EvidenceEntry[]) => {
         if (cancelled) return;
         const filtered = (Array.isArray(data) ? data : []).filter((e) =>
@@ -499,17 +577,22 @@ export function TableMoments({
             </tr>
           </thead>
           <tbody>
-            {evidence.map((m) => {
+            {evidence.map((m, i) => {
               const badge = TIER_BADGE[m.tier] ?? TIER_BADGE.emerging;
+              const isAssertion = m.entryId === null;
               return (
-                <tr key={m.entryId} className="border-b border-border-subtle last:border-b-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]">
+                <tr key={m.entryId ?? `assertion-${i}`} className="border-b border-border-subtle last:border-b-0 hover:bg-surface-hover transition-colors duration-[var(--motion-quick)]">
                   <td className="p-md align-top">
-                    <Link
-                      href={`/our-story/portfolio#entry-${m.entryId}`}
-                      className="block font-serif text-[0.95rem] font-medium text-text-primary hover:text-ember transition-colors duration-[var(--motion-quick)]"
-                    >
-                      {m.title}
-                    </Link>
+                    {isAssertion ? (
+                      <span className="block font-serif text-[0.95rem] font-medium text-text-primary">{m.title}</span>
+                    ) : (
+                      <Link
+                        href={`/our-story/portfolio#entry-${m.entryId}`}
+                        className="block font-serif text-[0.95rem] font-medium text-text-primary hover:text-ember transition-colors duration-[var(--motion-quick)]"
+                      >
+                        {m.title}
+                      </Link>
+                    )}
                     <div className="font-sans text-[0.7rem] uppercase tracking-[0.06em] text-text-muted">
                       {m.dateOccurred} · {relTime(m.dateOccurred)}
                     </div>

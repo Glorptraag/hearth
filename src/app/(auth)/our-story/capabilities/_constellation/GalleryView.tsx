@@ -6,6 +6,7 @@ import {
   ALL_THREADS,
   ORDERED_DOMAINS,
   THREADS_BY_ID,
+  DLO_STATUS_LABEL,
   buildDLOs,
   domainColor,
   makeRng,
@@ -519,7 +520,7 @@ export function GalleryThreads({
 /* ─── Depth 3 : DLOs of one thread ─────────────────────────────────────
    Layout: three columns (emerging → developing → demonstrating), each stacking
    its DLOs vertically. n-DLOs-per-tier is supported — Sanity may publish any
-   number per tier. DLO status (confirmed / emerging / not-started) is read from
+   number per tier. DLO status (confirmed / developing / emerging / not-started) is read from
    `learner_dlo_status` only — there is no separate per-column moments heuristic,
    which would contradict the authoritative status shown on each node. */
 export function GalleryDLOs({
@@ -587,9 +588,10 @@ export function GalleryDLOs({
         const col = dlosByTier[t];
         return col.map((dlo, ri) => {
           const y = topY + ri * rowSpacing;
-          const r = dlo.status === 'confirmed' ? 26 : dlo.status === 'emerging' ? 20 : 15;
-          const fill = dlo.status === 'confirmed' ? dColor : dlo.status === 'emerging' ? dColor : 'transparent';
-          const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'emerging' ? 0.6 : 0.4;
+          // Four states: demonstrating (confirmed) · developing · emerging · not yet.
+          const r = dlo.status === 'confirmed' ? 26 : dlo.status === 'developing' ? 23 : dlo.status === 'emerging' ? 20 : 15;
+          const fill = dlo.status === 'not-started' ? 'transparent' : dColor;
+          const opacity = dlo.status === 'confirmed' ? 0.95 : dlo.status === 'developing' ? 0.8 : dlo.status === 'emerging' ? 0.6 : 0.4;
           return (
             <g
               key={dlo.id}
@@ -597,7 +599,7 @@ export function GalleryDLOs({
               style={{ cursor: 'pointer' }}
               role="button"
               tabIndex={0}
-              aria-label={`${dlo.descriptor}, ${dlo.tier} tier, ${dlo.status}. Drill in for moments.`}
+              aria-label={`${dlo.descriptor}, ${dlo.tier} tier, ${DLO_STATUS_LABEL[dlo.status]}. Drill in for moments.`}
               onClick={() => onDrill(dlo)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -608,6 +610,9 @@ export function GalleryDLOs({
             >
               {dlo.status === 'confirmed' && (
                 <circle cx={cx} cy={y} r={r + 6} fill="none" stroke={dColor} strokeWidth={1} opacity={0.3} />
+              )}
+              {dlo.status === 'developing' && (
+                <circle cx={cx} cy={y} r={r + 5} fill="none" stroke="var(--color-child-amber)" strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
               )}
               {dlo.tier === 'demonstrating' && dlo.status === 'confirmed' && (
                 <circle cx={cx} cy={y} r={r + 14} fill="none" stroke="var(--color-sage)" strokeWidth={0.8} opacity={0.4} />
@@ -635,17 +640,18 @@ type GalleryMoment = {
   id: string;
   date: string;
   title: string;
-  source: 'logger' | 'module';
+  source: 'logger' | 'module' | 'parent';
   tier: 'emerging' | 'developing' | 'demonstrating' | null;
   rationale: string | null;
   provenance: string | null;
+  /** True when the moments shown are thread-level matches, not DLO-level evidence. */
+  threadLevel?: boolean;
 };
 
-// Today the live pipeline only ever writes `inferred` provenance, so "Hearth
-// noticed" is the only label that renders — which is accurate, not misleading.
-// `declared`/`asserted` are kept ready for the Phase-3 provenance wiring (set
-// `declared` for module-sourced thread links, `asserted` on explicit parent
-// confirmation); until that lands they are intentionally unreachable, not dead.
+// All three provenances are live: `inferred` from Haiku, `declared` when the
+// entry's activity author-declared the target (enrich.ts), `asserted` from a
+// parent's explicit confirmation (an observation-less link the evidence route
+// now returns).
 const GALLERY_PROVENANCE_LABEL: Record<string, string> = {
   inferred:  'Hearth noticed',
   declared:  'From a module',
@@ -704,17 +710,19 @@ export function GalleryMoments({
     // Try the DLO-precise endpoint first (post-Phase 2). Fall back to the
     // thread-level entries endpoint if it returns no rows — covers legacy
     // entries logged before observation_dlo_links existed.
+    // Guarded: a 5xx must not become "no moments yet" via a JSON parse of an
+    // error body.
     fetch(`/api/capabilities/${snap.id}/dlo-evidence?dloId=${encodeURIComponent(dlo.id)}`)
-      .then((r) => r.json())
-      .then((data: { evidence?: Array<{ entryId: string; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null; provenance?: string | null }> }) => {
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`dlo-evidence ${r.status}`))))
+      .then((data: { evidence?: Array<{ entryId: string | null; title: string; dateOccurred: string; source: string; tier?: string | null; rationale?: string | null; provenance?: string | null }> }) => {
         if (cancelled) return;
         const evidence = Array.isArray(data?.evidence) ? data.evidence : [];
         if (evidence.length > 0) {
-          const ms: GalleryMoment[] = evidence.map((e) => ({
-            id: e.entryId,
+          const ms: GalleryMoment[] = evidence.map((e, i) => ({
+            id: e.entryId ?? `assertion-${i}`,
             title: e.title,
             date: e.dateOccurred,
-            source: e.source === 'module' ? 'module' : 'logger',
+            source: e.entryId === null || e.source === 'parent' ? 'parent' : e.source === 'module' ? 'module' : 'logger',
             tier: e.tier === 'emerging' || e.tier === 'developing' || e.tier === 'demonstrating' ? e.tier : null,
             rationale: e.rationale ?? null,
             provenance: e.provenance ?? null,
@@ -723,9 +731,10 @@ export function GalleryMoments({
           return;
         }
         // Fallback path: thread-level matches (legacy entries without dlo links carry
-        // no tier/rationale — only fields we have are title, date, source).
+        // no tier/rationale — only fields we have are title, date, source). The
+        // chart says so (threadLevel) instead of presenting them as DLO evidence.
         fetch(`/api/entries?learnerId=${snap.id}&limit=500`)
-          .then((r) => r.json())
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`entries ${r.status}`))))
           .then((entries: Array<{ id: string; title: string; dateOccurred: string; source: string; aiEnrichment: { capability_threads?: Array<{ thread_id: string; confidence: number }> } | null }>) => {
             if (cancelled) return;
             const ms: GalleryMoment[] = (Array.isArray(entries) ? entries : [])
@@ -733,7 +742,7 @@ export function GalleryMoments({
               .map((e) => ({
                 id: e.id, title: e.title, date: e.dateOccurred,
                 source: e.source === 'module' ? 'module' : 'logger',
-                tier: null, rationale: null, provenance: null,
+                tier: null, rationale: null, provenance: null, threadLevel: true,
               }));
             setMoments(ms);
           })
@@ -784,6 +793,7 @@ export function GalleryMoments({
   }
 
   const sorted = [...moments].sort((a, b) => a.date.localeCompare(b.date));
+  const threadLevelOnly = sorted.every((m) => m.threadLevel);
   const minD = new Date(sorted[0].date).getTime();
   const maxD = new Date(sorted[sorted.length - 1].date).getTime();
   const range = Math.max(1, maxD - minD);
@@ -803,7 +813,9 @@ export function GalleryMoments({
       <desc id="cap-moments-desc">{`${sorted.length} ${sorted.length === 1 ? 'moment' : 'moments'} plotted left-to-right by date. Top lane is module-sourced, bottom lane is parent-logged.`}</desc>
       <text x={padL} y={28} className="cap-band-label">Moments for &ldquo;{dlo.descriptor}&rdquo;</text>
       <text x={padL} y={48} className="cap-band-meta">
-        Left to right is time. Top lane is module-sourced, bottom lane is parent-logged.
+        {threadLevelOnly
+          ? 'Thread-level matches — this objective has no DLO-level evidence yet.'
+          : 'Left to right is time. Top lane is module-sourced, bottom lane is parent-logged or parent-confirmed.'}
       </text>
 
       <text x={padL - 12} y={yModule + 5} textAnchor="end" className="cap-band-meta">MODULE</text>
@@ -819,8 +831,10 @@ export function GalleryMoments({
 
       {sorted.map((m) => {
         const x = xFor(m.date);
-        const y = m.source === 'logger' ? yLogger : yModule;
-        const color = m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)';
+        // Parent confirmations sit on the logger lane (the parent's own
+        // evidence) in sage, so they read as corroboration rather than a log.
+        const y = m.source === 'module' ? yModule : yLogger;
+        const color = m.source === 'parent' ? 'var(--color-sage)' : m.source === 'logger' ? 'var(--color-ember)' : 'var(--color-text-secondary)';
         const tierColor = m.tier ? TIER_COLOR[m.tier] : null;
         const isHovered = hovered === m.id;
         return (
@@ -837,12 +851,12 @@ export function GalleryMoments({
               <circle cx={x} cy={y} r={10} fill="none" stroke={tierColor} strokeWidth={1.4} opacity={0.7} />
             )}
             <circle cx={x} cy={y} r={7} fill={color} opacity={0.9} />
-            <text x={x} y={y + (m.source === 'logger' ? 26 : -16)} textAnchor="middle"
+            <text x={x} y={y + (m.source !== 'module' ? 26 : -16)} textAnchor="middle"
                   style={{ fontFamily: 'var(--font-serif)', fontSize: '11px', fill: 'var(--color-text-primary)' }}>
               {m.title.length > 38 ? `${m.title.slice(0, 36)}…` : m.title}
             </text>
             {m.provenance && (
-              <text x={x} y={y + (m.source === 'logger' ? 38 : -28)} textAnchor="middle"
+              <text x={x} y={y + (m.source !== 'module' ? 38 : -28)} textAnchor="middle"
                     style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', fill: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>
                 {GALLERY_PROVENANCE_LABEL[m.provenance] ?? 'Hearth noticed'}
               </text>
@@ -851,7 +865,7 @@ export function GalleryMoments({
               <g pointerEvents="none">
                 <rect
                   x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140))}
-                  y={m.source === 'logger' ? y + 40 : y - 76}
+                  y={m.source !== 'module' ? y + 40 : y - 76}
                   width={280}
                   height={64}
                   rx={6}
@@ -862,7 +876,7 @@ export function GalleryMoments({
                 />
                 <foreignObject
                   x={Math.max(padL - 8, Math.min(W - padR - 280, x - 140)) + 10}
-                  y={(m.source === 'logger' ? y + 40 : y - 76) + 8}
+                  y={(m.source !== 'module' ? y + 40 : y - 76) + 8}
                   width={260}
                   height={48}
                   style={{ pointerEvents: 'none' }}

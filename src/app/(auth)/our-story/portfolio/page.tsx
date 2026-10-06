@@ -336,7 +336,13 @@ export default function PortfolioPage() {
   const [entriesFetchedAtMs, setEntriesFetchedAtMs] = useState<number>(0);
   const [badges, setBadges] = useState<BadgeAward[]>([]);
   const [threads, setThreads] = useState<ActiveThread[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // The constellation's Moments rows deep-link to `/our-story/portfolio#entry-<id>`.
+  // Open that card on arrival so the link lands on the moment, not the page top.
+  const [expandedId, setExpandedId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const m = window.location.hash.match(/^#entry-(.+)$/);
+    return m ? decodeURIComponent(m[1]) : null;
+  });
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [threadFilter, setThreadFilter] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<'month' | 'last' | 'all' | 'custom'>('all');
@@ -783,7 +789,8 @@ export default function PortfolioPage() {
                         return (
                           <div
                             key={entry.id}
-                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                            id={`entry-${entry.id}`}
+                            className="relative scroll-mt-xl overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                           >
                             {/* Type-specific top line */}
                             <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -921,7 +928,8 @@ export default function PortfolioPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    id={`entry-${entry.id}`}
+                    className="relative scroll-mt-xl overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     {/* Type-specific top line */}
                     <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />

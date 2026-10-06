@@ -9,14 +9,15 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { useSearchParams } from 'next/navigation';
 import CapabilitiesPage from './page';
 
 let latestOnDataChanged: (() => void) | undefined;
 
 vi.mock('./_constellation/ConstellationRoute', () => ({
-  ConstellationRoute: (props: { onDataChanged?: () => void }) => {
+  ConstellationRoute: (props: { onDataChanged?: () => void; learnerId: string }) => {
     latestOnDataChanged = props.onDataChanged;
-    return <div data-testid="constellation" />;
+    return <div data-testid="constellation" data-learner={props.learnerId} />;
   },
   buildSnapshotFromApi: (learner: { id: string; name: string }) => ({
     learnerId: learner.id,
@@ -54,6 +55,7 @@ function jsonResponse(body: unknown, status = 200): Promise<Response> {
 
 beforeEach(() => {
   vi.useRealTimers();
+  vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
 });
 afterEach(() => {
   cleanup();
@@ -145,5 +147,32 @@ describe('CapabilitiesPage — load failures', () => {
       expect(screen.queryByText(/couldn't refresh/i)).toBeNull();
     });
     expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/api/capabilities/')).length).toBeGreaterThan(2);
+  });
+});
+
+
+describe('CapabilitiesPage — learner selection from the URL', () => {
+  const two = [
+    { id: 'learner-1', name: 'Sage', dateOfBirth: null, shapeIcon: null, colourToken: null },
+    { id: 'learner-2', name: 'Ren', dateOfBirth: null, shapeIcon: null, colourToken: null },
+  ];
+
+  it('opens on the learner named by ?learner= (the hub carries the selected child across)', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ learner: 'learner-2' }) as ReturnType<typeof useSearchParams>);
+    const fetchMock = mockFetch({ learners: () => jsonResponse(two) });
+    render(<CapabilitiesPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId('constellation')).toHaveAttribute('data-learner', 'learner-2');
+    });
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/capabilities/learner-2'))).toBe(true);
+  });
+
+  it('ignores a ?learner= that is not one of the family\'s children', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ learner: 'someone-else' }) as ReturnType<typeof useSearchParams>);
+    mockFetch({ learners: () => jsonResponse(two) });
+    render(<CapabilitiesPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId('constellation')).toHaveAttribute('data-learner', 'learner-1');
+    });
   });
 });

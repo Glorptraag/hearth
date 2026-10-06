@@ -259,6 +259,26 @@ describe('INTEGRATION: persistDloLinks', () => {
     expect(status.status).toBe('demonstrating');
   });
 
+  it('a lone parent confirmation of a developing-tier DLO rolls up to developing, not not-started', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+
+    const res = await upsertParentAssertion({
+      learnerId: learner.id,
+      dloId: 'dlo.M1.developing',
+      observedAt: new Date(),
+    });
+    expect(res).toEqual({ tier: 'developing' });
+
+    const [status] = await db
+      .select()
+      .from(learnerDloStatus)
+      .where(and(eq(learnerDloStatus.learnerId, learner.id), eq(learnerDloStatus.dloId, 'dlo.M1.developing')));
+    // Before: `developing >= 2` was the only path, so the parent pressed
+    // Confirm and the status said nothing had been seen.
+    expect(status.status).toBe('developing');
+  });
+
   it('upsertParentAssertion is idempotent — a re-confirm adds no duplicate row', async () => {
     const family = await createFamily(db);
     const learner = await createLearner(db, { familyId: family.id });

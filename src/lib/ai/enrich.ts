@@ -26,6 +26,7 @@ import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
 import { sanityServerClient } from '@/lib/sanity/client';
 import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
+import type { SnapshotData } from '@/types/snapshot';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -157,7 +158,7 @@ interface EnrichmentContext {
 }
 
 async function assembleContext(entryId: string, familyId: string) {
-  const [entry, settings, recentEntries] = await Promise.all([
+  const [entry, settings, recentEntries, snapshotRow] = await Promise.all([
     db.query.learningEntries.findFirst({
       where: eq(learningEntries.id, entryId),
     }),
@@ -170,6 +171,12 @@ async function assembleContext(entryId: string, familyId: string) {
       .where(and(eq(learningEntries.familyId, familyId), eq(learningEntries.status, 'complete')))
       .orderBy(desc(learningEntries.createdAt))
       .limit(6),
+    // The family snapshot is the full per-child aggregate (every thread the
+    // child has ever lit, with recency + volume). Read once here and shared
+    // with the profile-nudge step so enrichment does a single snapshot read.
+    db.query.familyIntelligenceSnapshots.findFirst({
+      where: eq(familyIntelligenceSnapshots.familyId, familyId),
+    }),
   ]);
 
   if (!entry) throw new Error(`Entry ${entryId} not found`);
@@ -179,18 +186,28 @@ async function assembleContext(entryId: string, familyId: string) {
     ? await db.select().from(learners).where(inArray(learners.id, entryLearnerIds))
     : [];
 
-  // Derive active threads from previous entries' aiEnrichment
+  const snapshotData = (snapshotRow?.snapshotData ?? null) as SnapshotData | null;
+
+  // Active threads per child. Primary source is the snapshot's per-child
+  // active_threads — the whole history, ordered most-recently-evidenced first
+  // (ties by volume) so the candidate-DLO cap and the pedagogy retrieval boost
+  // see the threads most likely to recur in a new entry. Before this, the
+  // profile was derived from the six most recent FAMILY-wide entries, so in a
+  // multi-child family a child with forty logged moments could read "none
+  // yet" and get no candidate descriptors at all. The recent-entry derivation
+  // is kept as a union so threads from saves the snapshot hasn't incorporated
+  // yet (rebuild is fire-and-forget) are never lost.
   const activeThreads: Record<string, string[]> = {};
   for (const child of childRecords) {
+    const ordered = new Set<string>(snapshotActiveThreadIds(snapshotData, child.id));
     const childEntries = recentEntries.filter((e) => e.learnerIds?.includes(child.id));
-    const threadIds = new Set<string>();
     for (const e of childEntries) {
       const enrichment = e.aiEnrichment as EnrichmentResult | null;
       for (const t of enrichment?.capability_threads ?? []) {
-        threadIds.add(t.thread_id);
+        if (VALID_THREAD_IDS.has(t.thread_id)) ordered.add(t.thread_id);
       }
     }
-    activeThreads[child.name] = [...threadIds];
+    activeThreads[child.name] = [...ordered];
   }
 
   const recent = recentEntries
@@ -260,11 +277,29 @@ async function assembleContext(entryId: string, familyId: string) {
   const merged = new Set<string>([...declaredThreadIds, ...activeThreadSet]);
   const candidateThreadIds = [...merged].slice(0, MAX_CANDIDATE_THREADS);
 
-  return { entry, settings, childRecords, activeThreads, recentEntries: recent, candidateThreadIds, declaredTargets };
+  return { entry, settings, childRecords, activeThreads, recentEntries: recent, candidateThreadIds, declaredTargets, snapshotData };
 }
 
 /** Exported for eval harness and unit tests — assembleContext stays private. */
 export type AssembledEnrichContext = Awaited<ReturnType<typeof assembleContext>>;
+
+/**
+ * Thread ids a child has lit, from the family snapshot, most-recently-
+ * evidenced first (then by observation volume). Pure; exported for tests.
+ * Returns [] when there is no snapshot or no block for this learner.
+ */
+export function snapshotActiveThreadIds(snapshotData: SnapshotData | null | undefined, learnerId: string): string[] {
+  const rows = snapshotData?.children?.[learnerId]?.active_threads;
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+  return [...rows]
+    .filter((t) => t && typeof t.thread_id === 'string' && VALID_THREAD_IDS.has(t.thread_id))
+    .sort((a, b) => {
+      const byRecency = (b.last_evidence_date ?? '').localeCompare(a.last_evidence_date ?? '');
+      if (byRecency !== 0) return byRecency;
+      return (b.observation_count ?? 0) - (a.observation_count ?? 0);
+    })
+    .map((t) => t.thread_id);
+}
 
 export async function buildUserPrompt(ctx: AssembledEnrichContext): Promise<{ prompt: string; pedagogySources: PedagogySource[] }> {
   const { entry, settings, childRecords, activeThreads, recentEntries, candidateThreadIds } = ctx;
@@ -405,11 +440,15 @@ const nudgeProvider = new TemplateNudgeProvider();
 // shape the nudge provider expects (perChild keyed by learner_id). Returns null
 // if no snapshot exists yet (new family) — callers should treat that as "no
 // nudge this entry."
-async function loadSnapshotSignals(familyId: string): Promise<SnapshotSignals | null> {
-  const snap = await db.query.familyIntelligenceSnapshots.findFirst({
-    where: eq(familyIntelligenceSnapshots.familyId, familyId),
-  });
-  const data = snap?.snapshotData as { children?: Record<string, unknown> } | null;
+async function loadSnapshotSignals(
+  familyId: string,
+  preloaded?: SnapshotData | null,
+): Promise<SnapshotSignals | null> {
+  const data = preloaded !== undefined
+    ? (preloaded as { children?: Record<string, unknown> } | null)
+    : ((await db.query.familyIntelligenceSnapshots.findFirst({
+        where: eq(familyIntelligenceSnapshots.familyId, familyId),
+      }))?.snapshotData as { children?: Record<string, unknown> } | null);
   const children = data?.children;
   if (!children || typeof children !== 'object') return null;
 
@@ -436,13 +475,14 @@ async function attachProfileNudge(
   validated: EnrichmentResult,
   familyId: string,
   childRecords: { id: string; name: string }[],
+  preloadedSnapshot?: SnapshotData | null,
 ): Promise<void> {
   try {
     if (childRecords.length === 0) {
       validated.profile_nudge = null;
       return;
     }
-    const signals = await loadSnapshotSignals(familyId);
+    const signals = await loadSnapshotSignals(familyId, preloadedSnapshot);
     if (!signals) {
       validated.profile_nudge = null;
       return;
@@ -598,7 +638,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     if (pedagogySources.length > 0) {
       validated.pedagogy_sources = pedagogySources;
     }
-    await attachProfileNudge(validated, familyId, ctx.childRecords);
+    await attachProfileNudge(validated, familyId, ctx.childRecords, ctx.snapshotData);
 
     const validatedDlos = await validateDlos(result.discrete_learning_objectives);
     validated.discrete_learning_objectives = validatedDlos;

@@ -40,7 +40,7 @@ import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { CompletenessRing } from './_components/SectionHeader';
 import { WhoSection } from './_components/WhoSection';
 import { EngagementSection } from './_components/EngagementSection';
-import { WhenWhereSection } from './_components/WhenWhereSection';
+import { WhenWhereSection, defaultEarlierDate } from './_components/WhenWhereSection';
 import { ObserveSection } from './_components/ObserveSection';
 import { EvidenceSection } from './_components/EvidenceSection';
 import { EvidenceModal } from './_components/EvidenceModal';
@@ -100,6 +100,9 @@ export default function LogPage() {
   const [lessonSubjects, setLessonSubjects] = useState<string[]>([]);
   const [engagement, setEngagement] = useState<Record<string, number>>({});
   const [whenDate, setWhenDate] = useState<'today' | 'yesterday' | 'earlier'>('today');
+  // The concrete yyyy-MM-dd behind "Earlier". Previously "Earlier" silently
+  // saved as exactly five days ago; the parent now picks the real date.
+  const [earlierDate, setEarlierDate] = useState<string | null>(null);
   const [duration, setDuration] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
   const [observations, setObservations] = useState<string[]>([]);
@@ -158,12 +161,13 @@ export default function LogPage() {
     lessonSubjects,
     engagement,
     whenDate,
+    earlierDate,
     duration,
     location,
     observations,
     evidence,
     observationDetails,
-  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence, observationDetails]);
+  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, earlierDate, duration, location, observations, evidence, observationDetails]);
 
   const { draftRestored, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft } = useLoggerDraft({
     state: draftState,
@@ -177,6 +181,7 @@ export default function LogPage() {
       if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
       if (d.engagement) setEngagement(d.engagement);
       if (d.whenDate) setWhenDate(d.whenDate);
+      if (d.earlierDate) setEarlierDate(d.earlierDate);
       if (d.duration) setDuration(d.duration);
       if (d.location) setLocation(d.location);
       if (d.observations?.length) setObservations(d.observations);
@@ -392,9 +397,9 @@ export default function LogPage() {
   const getDateOccurred = useCallback(() => {
     const today = new Date();
     if (whenDate === 'yesterday') return format(subDays(today, 1), 'yyyy-MM-dd');
-    if (whenDate === 'earlier') return format(subDays(today, 5), 'yyyy-MM-dd');
+    if (whenDate === 'earlier') return earlierDate ?? defaultEarlierDate(today);
     return format(today, 'yyyy-MM-dd');
-  }, [whenDate]);
+  }, [whenDate, earlierDate]);
 
   /**
    * Return the form to empty after an entry has been captured — whether it
@@ -409,6 +414,7 @@ export default function LogPage() {
     setLessonSubjects([]);
     setEngagement({});
     setWhenDate('today');
+    setEarlierDate(null);
     setDuration(null);
     setLocation(null);
     setObservations([]);
@@ -884,6 +890,8 @@ export default function LogPage() {
                 done={sectionDone[4]}
                 whenDate={whenDate}
                 onWhenDateChange={setWhenDate}
+                earlierDate={earlierDate}
+                onEarlierDateChange={setEarlierDate}
                 duration={duration}
                 onDurationChange={setDuration}
                 location={location}

@@ -1,12 +1,34 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { createHash } from 'crypto';
 
-interface MonthlyNarrativeInput {
+export interface MonthlyNarrativeInput {
   childName: string;
   entryCount: number;
   subjects: string[];
   threadNames: string[];
   topActivities: string[];
   badgesEarned: string[];
+}
+
+/**
+ * Stable fingerprint of everything the narrative prompt is built from, scoped
+ * to a calendar month. The snapshot rebuild stores it beside the narrative so
+ * a rebuild whose inputs haven't changed (a dashboard load, a DLO confirm, a
+ * sibling's entry save, an admin rebuild) reuses the prior text instead of
+ * spending a Haiku call per child. Order-insensitive on the set-like fields;
+ * order-sensitive on topActivities, which is already most-recent-first.
+ */
+export function narrativeSignature(input: MonthlyNarrativeInput, monthKey: string): string {
+  const canonical = JSON.stringify({
+    m: monthKey,
+    c: input.childName,
+    n: input.entryCount,
+    s: [...input.subjects].sort(),
+    t: [...input.threadNames].sort(),
+    a: input.topActivities,
+    b: [...input.badgesEarned].sort(),
+  });
+  return createHash('sha1').update(canonical, 'utf8').digest('hex').slice(0, 16);
 }
 
 export async function generateMonthlyNarrative(

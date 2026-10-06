@@ -9,6 +9,7 @@ import type { SnapshotData as FamilySnapshot } from '@/types/snapshot';
 import EmptyState from '@/components/ui/EmptyState';
 import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
+import HearthNoticed, { type NoticedItem } from '@/components/dashboard/HearthNoticed';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import { sanityClient } from '@/lib/sanity/client';
@@ -19,7 +20,6 @@ import {
   Plant,
   Sun,
   PencilSimpleLine,
-  Flame,
   UsersThree,
   ArrowRight,
 } from '@/components/icons';
@@ -57,6 +57,8 @@ interface SnapshotData {
   lastLogDate?: string;
   weeklyThreadCoverage?: number;
   activeModulesCount?: number;
+  /** @deprecated Never written by the rebuild; the "Hearth noticed" feed
+   *  (`noticed` prop) replaced the card. Kept so demo mock data still types. */
   hearthVoice?: string;
   weekStats?: {
     momentsLogged?: number;
@@ -89,6 +91,8 @@ interface DashboardClientProps {
   dashboardState?: DashboardState;
   hearths?: HearthItem[];
   hasMissingNarrative?: boolean;
+  /** Freshest insights across children, from each child's snapshot feed. */
+  noticed?: NoticedItem[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -224,6 +228,7 @@ export default function DashboardClient({
   dashboardState = 'active',
   hearths,
   hasMissingNarrative = false,
+  noticed = [],
 }: DashboardClientProps) {
   // Fire a debounced background snapshot rebuild when any child has a stale
   // monthly narrative. The endpoint itself enforces a 24h debounce so a
@@ -349,6 +354,9 @@ export default function DashboardClient({
             </div>
           </div>
         )}
+
+        {/* Hearth noticed — the enrichment's insights, carried forward */}
+        <HearthNoticed items={noticed} basePath={basePath} />
 
         {/* Your Learners */}
         {learners.length > 0 && (
@@ -550,24 +558,6 @@ export default function DashboardClient({
           <PencilSimpleLine size={18} aria-hidden="true" />
           Log a Moment
         </Link>
-
-        {/* Hearth Voice */}
-        {snapshot.hearthVoice && (
-          <div className="relative rounded-[16px] border border-border-medium bg-[linear-gradient(135deg,var(--color-surface-raised),var(--color-surface-panel))] p-xl mb-2xl shadow-inset-highlight">
-            <div className="absolute left-xl right-xl top-[-1px] h-[2px] bg-[linear-gradient(90deg,transparent,var(--color-ember),transparent)] opacity-60" />
-            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember-glow mb-md shadow-[0_0_12px_rgba(217,123,58,0.2)]">
-              <span className="text-ember" aria-hidden="true">
-                <Flame size={16} />
-              </span>
-            </div>
-            <p className="font-serif text-[0.95rem] italic leading-[1.65] text-text-secondary">
-              &ldquo;{snapshot.hearthVoice}&rdquo;
-            </p>
-            <p className="mt-md font-sans text-[0.7rem] uppercase tracking-[0.05em] text-text-muted">
-              &mdash; Pedagogical Insight
-            </p>
-          </div>
-        )}
 
         {/* This Week */}
         {weekStats && (

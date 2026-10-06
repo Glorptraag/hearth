@@ -1,12 +1,25 @@
+import { format, subDays } from 'date-fns';
 import { SectionHeader } from './SectionHeader';
 import { DURATION_OPTIONS, WHERE_OPTIONS } from './loggerConstants';
 
 type WhenValue = 'today' | 'yesterday' | 'earlier';
 
+/** How far back the inline picker reaches; older moments go through Batch log. */
+export const EARLIER_MAX_DAYS_BACK = 30;
+
+/** The date the picker opens on when "Earlier" is first chosen — the day
+ *  before yesterday, since today and yesterday have their own chips. */
+export function defaultEarlierDate(now: Date = new Date()): string {
+  return format(subDays(now, 2), 'yyyy-MM-dd');
+}
+
 interface WhenWhereSectionProps {
   done: boolean;
   whenDate: WhenValue;
   onWhenDateChange: (value: WhenValue) => void;
+  /** yyyy-MM-dd chosen for "Earlier"; null until the parent picks one. */
+  earlierDate?: string | null;
+  onEarlierDateChange?: (value: string) => void;
   duration: string | null;
   onDurationChange: (value: string | null) => void;
   location: string | null;
@@ -23,6 +36,8 @@ export function WhenWhereSection({
   done,
   whenDate,
   onWhenDateChange,
+  earlierDate = null,
+  onEarlierDateChange,
   duration,
   onDurationChange,
   location,
@@ -39,7 +54,15 @@ export function WhenWhereSection({
             {(['today', 'yesterday', 'earlier'] as const).map((w) => (
               <button
                 key={w}
-                onClick={() => onWhenDateChange(w)}
+                type="button"
+                aria-pressed={whenDate === w}
+                onClick={() => {
+                  onWhenDateChange(w);
+                  // Seed the picker the first time "Earlier" is chosen so the
+                  // saved date is always one the parent can see and change —
+                  // never a hidden default.
+                  if (w === 'earlier' && !earlierDate) onEarlierDateChange?.(defaultEarlierDate());
+                }}
                 className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   whenDate === w
                     ? 'bg-ember-glow border border-ember text-text-primary'
@@ -50,6 +73,28 @@ export function WhenWhereSection({
               </button>
             ))}
           </div>
+          {whenDate === 'earlier' && (() => {
+            const today = new Date();
+            const max = format(today, 'yyyy-MM-dd');
+            const min = format(subDays(today, EARLIER_MAX_DAYS_BACK), 'yyyy-MM-dd');
+            return (
+              <div className="mt-sm">
+                <label htmlFor="log-earlier-date" className="sr-only">Date it happened</label>
+                <input
+                  id="log-earlier-date"
+                  type="date"
+                  value={earlierDate ?? defaultEarlierDate(today)}
+                  min={min}
+                  max={max}
+                  onChange={(e) => { if (e.target.value) onEarlierDateChange?.(e.target.value); }}
+                  className="min-h-[36px] w-full max-w-[200px] rounded-sm border border-border-subtle bg-surface-input px-sm py-xs font-sans text-[0.8rem] text-text-primary transition-[border-color] duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:border-border-focus focus:outline-none"
+                />
+                <p className="mt-xs font-sans text-[0.7rem] text-text-muted">
+                  Up to {EARLIER_MAX_DAYS_BACK} days back. For older moments, use Batch log.
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Duration */}

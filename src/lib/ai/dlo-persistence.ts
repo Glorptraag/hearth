@@ -14,7 +14,8 @@
  *
  * learner_dlo_status is rolled up from 'observed' rows ONLY:
  *        - ≥1 'demonstrating' evidence → 'demonstrating'
- *        - else ≥2 'developing'        → 'developing'
+ *        - else ≥2 'developing', or ≥1 'developing' that is parent-asserted
+ *          or author-declared                → 'developing'
  *        - else ≥1 'emerging'          → 'emerging'
  *      Status mirrors evidence accumulated to date, not just this entry.
  *
@@ -161,6 +162,7 @@ async function recomputeLearnerDloStatus(args: {
   const counts = await db
     .select({
       tier: observationDloLinks.tier,
+      provenance: observationDloLinks.provenance,
       n: sql<number>`count(*)::int`,
     })
     .from(observationDloLinks)
@@ -172,19 +174,28 @@ async function recomputeLearnerDloStatus(args: {
         eq(observationDloLinks.evidenceState, 'observed'),
       ),
     )
-    .groupBy(observationDloLinks.tier);
+    .groupBy(observationDloLinks.tier, observationDloLinks.provenance);
 
   let demonstrating = 0;
   let developing = 0;
   let emerging = 0;
+  let developingCorroborated = 0;
   for (const row of counts) {
-    if (row.tier === 'demonstrating') demonstrating = row.n;
-    else if (row.tier === 'developing') developing = row.n;
-    else if (row.tier === 'emerging') emerging = row.n;
+    if (row.tier === 'demonstrating') demonstrating += row.n;
+    else if (row.tier === 'developing') {
+      developing += row.n;
+      // A parent assertion or an author-declared target is corroboration in
+      // itself (WS-4: declared/asserted clears the bar on its own), so one is
+      // enough. Before this, a lone parent confirm of a developing-tier DLO
+      // rolled up to 'not-started' — the parent pressed Confirm and the
+      // status said nothing had been seen.
+      if (row.provenance === 'asserted' || row.provenance === 'declared') developingCorroborated += row.n;
+    }
+    else if (row.tier === 'emerging') emerging += row.n;
   }
   const status =
     demonstrating >= 1 ? 'demonstrating'
-    : developing >= 2 ? 'developing'
+    : developing >= 2 || developingCorroborated >= 1 ? 'developing'
     : emerging >= 1 ? 'emerging'
     : 'not-started';
 

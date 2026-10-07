@@ -227,7 +227,7 @@ export default function OurStoryHubClient() {
               <button
                 key={l.id}
                 onClick={() => handleChildSelect(l.id)}
-                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`flex items-center gap-sm rounded-[10px] border p-md text-left transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   active
                     ? `bg-surface-raised shadow-card ${c.activeBorder}`
                     : 'border-border-subtle bg-surface-panel hover:border-border-medium hover:bg-surface-raised'
@@ -309,7 +309,7 @@ export default function OurStoryHubClient() {
             </p>
             <a
               href="/log"
-              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+              className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Log a moment
             </a>
@@ -381,7 +381,7 @@ export default function OurStoryHubClient() {
             {stats!.recentEvidence.map((url, i) => (
               <div
                 key={i}
-                className="flex snap-start h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:scale-[1.02] hover:border-border-medium"
+                className="flex snap-start h-[90px] w-[120px] shrink-0 overflow-hidden rounded-[10px] border border-border-subtle bg-surface-raised transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={evidenceSrc(url)} alt="" className="h-full w-full object-cover" />
@@ -416,7 +416,7 @@ function NavCard({
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
+      className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] ease-[var(--ease-default)] group-hover:opacity-100" />
       <div className="mb-md inline-flex text-text-secondary" aria-hidden="true"><Icon size={32} /></div>

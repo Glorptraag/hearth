@@ -103,7 +103,7 @@ export default function TierComparisonPanel() {
         <BarKnob label="…or inferred distinct days ≥" value={demDays} onChange={setDemDays} />
         <button
           onClick={load}
-          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)]"
         >
           Apply bar
         </button>

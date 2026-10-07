@@ -74,7 +74,7 @@ export default function ModuleSidebar({
             <button
               key={appr._id}
               onClick={() => onApproachSelect(idx)}
-              className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 selectedApproachIdx === idx && mode !== 'approach-pick'
                   ? 'bg-ember-glow border-l-ember'
                   : 'border-l-transparent hover:bg-ember-glow'
@@ -107,7 +107,7 @@ export default function ModuleSidebar({
           {/* Prep item */}
           <button
             onClick={() => onModeChange('prep')}
-            className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+            className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               mode === 'prep'
                 ? 'bg-ember-glow border-l-ember'
                 : 'border-l-transparent hover:bg-ember-glow'
@@ -132,7 +132,7 @@ export default function ModuleSidebar({
               <div key={activity._id}>
                 <button
                   onClick={() => onActivitySelect(idx)}
-                  className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                  className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                     isActive
                       ? 'bg-ember-glow border-l-ember'
                       : 'border-l-transparent hover:bg-ember-glow'
@@ -184,7 +184,7 @@ export default function ModuleSidebar({
           {/* End & Log item */}
           <button
             onClick={() => onModeChange('log')}
-            className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+            className={`flex items-center gap-md w-full px-xl py-md border-l-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               mode === 'log'
                 ? 'bg-ember-glow border-l-ember'
                 : 'border-l-transparent hover:bg-ember-glow'
@@ -207,7 +207,7 @@ export default function ModuleSidebar({
         <div className="p-lg border-t border-border-subtle">
           <button
             onClick={() => onModeChange('log')}
-            className="w-full rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[13px] text-text-secondary text-center transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-ember hover:text-text-primary"
+            className="w-full rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[13px] text-text-secondary text-center transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-ember hover:text-text-primary"
           >
             End &amp; Log
           </button>

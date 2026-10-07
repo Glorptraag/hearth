@@ -58,7 +58,7 @@ export default function ProviderCodeInput() {
         <button
           onClick={apply}
           disabled={status === 'loading'}
-          className="whitespace-nowrap rounded-[6px] border border-ember px-md py-sm font-sans text-xs font-semibold text-ember transition-all duration-[var(--motion-quick)] hover:bg-[rgba(217,123,58,0.15)] disabled:opacity-60"
+          className="whitespace-nowrap rounded-[6px] border border-ember px-md py-sm font-sans text-xs font-semibold text-ember transition duration-[var(--motion-quick)] hover:bg-[rgba(217,123,58,0.15)] disabled:opacity-60"
         >
           {status === 'loading' ? '…' : 'Apply'}
         </button>

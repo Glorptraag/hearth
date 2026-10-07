@@ -59,7 +59,7 @@ export default function MoveSheet({ isOpen, entry, days, onMove, onClose }: Move
     <>
       {/* Backdrop — above the mobile bottom nav (z-100) so the sheet is truly modal */}
       <div
-        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-[var(--motion-base)] ease-[var(--ease-default)] ${
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
@@ -70,7 +70,7 @@ export default function MoveSheet({ isOpen, entry, days, onMove, onClose }: Move
         role="dialog"
         aria-modal="true"
         aria-labelledby="move-sheet-title"
-        className={`fixed bottom-0 left-0 right-0 z-[200] flex max-h-[85dvh] flex-col rounded-t-[16px] border-t border-border-subtle bg-surface-panel shadow-float transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
+        className={`fixed bottom-0 left-0 right-0 z-[200] flex max-h-[85dvh] flex-col rounded-t-[16px] border-t border-border-subtle bg-surface-panel shadow-float transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-out)] ${
           isOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'
         }`}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}

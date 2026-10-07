@@ -161,7 +161,7 @@ export default function AuthLayout({
             {unreadCount > 0 && (
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute left-[24px] top-[-2px] h-2.5 w-2.5 rounded-full bg-ember ring-2 ring-surface-panel"
+                className="hearth-pop-in pointer-events-none absolute left-[24px] top-[-2px] h-2.5 w-2.5 rounded-full bg-ember ring-2 ring-surface-panel"
               />
             )}
           </Link>
@@ -276,15 +276,15 @@ export default function AuthLayout({
 }
 
 const DESKTOP_NAV_ROW_BASE =
-  'mb-xs flex w-full items-center gap-md rounded-md border px-md py-md text-left font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+  'mb-xs flex w-full items-center gap-md rounded-md border px-md py-md text-left font-sans text-[0.9rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
 const DESKTOP_NAV_ROW_ACTIVE =
   'border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight';
 const DESKTOP_NAV_ROW_IDLE =
   'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary';
 const DESKTOP_TRAY_BASE =
-  'mb-xs ml-xl flex flex-col gap-px border-l border-border-subtle pl-sm';
+  'hearth-popover-enter mb-xs ml-xl flex flex-col gap-px border-l border-border-subtle pl-sm';
 const DESKTOP_TRAY_ITEM_BASE =
-  'flex w-full items-center gap-sm rounded-md border px-sm py-xs text-left font-sans text-[0.85rem] font-medium transition-colors duration-150 ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
+  'flex w-full items-center gap-sm rounded-md border px-sm py-xs text-left font-sans text-[0.85rem] font-medium transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)]';
 
 function DesktopNavRow({
   row,
@@ -437,7 +437,7 @@ function DesktopCommunityRow({
         <span className="relative inline-flex" aria-hidden="true">
           <UsersThree size={18} />
           {hasUnread && (
-            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-ember ring-2 ring-surface-panel" />
+            <span className="hearth-pop-in absolute -right-1 -top-1 h-2 w-2 rounded-full bg-ember ring-2 ring-surface-panel" />
           )}
         </span>
         <span className="flex-1">Community</span>

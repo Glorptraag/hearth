@@ -105,7 +105,7 @@ export default function DemoComplianceReport() {
                   aria-label={`${subject} coverage: ${count} of 5 entries`}
                 >
                   <div
-                    className={`h-full rounded-full transition-all duration-[var(--motion-base)] ${colors.text}`}
+                    className={`h-full rounded-full transition-[width] duration-[var(--motion-base)] ${colors.text}`}
                     style={{ width: `${percent}%` }}
                   />
                 </div>

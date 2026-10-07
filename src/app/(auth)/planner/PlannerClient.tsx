@@ -404,7 +404,7 @@ export default function PlannerClient({
       <div className="mb-lg flex items-center gap-md">
         <button
           onClick={() => navWeek(-1)}
-          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           aria-label="Previous week"
         >
           <CaretLeft size={16} aria-hidden="true" />
@@ -422,7 +422,7 @@ export default function PlannerClient({
 
         <button
           onClick={() => navWeek(1)}
-          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+          className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-panel font-sans text-base text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           aria-label="Next week"
         >
           <CaretRight size={16} aria-hidden="true" />
@@ -443,12 +443,12 @@ export default function PlannerClient({
           <span className="font-sans text-xs text-text-muted">Read-only — past week</span>
         )}
         {loading && (
-          <span className="font-sans text-xs text-text-muted animate-pulse">Loading...</span>
+          <span className="font-sans text-xs text-text-muted hearth-pulse">Loading...</span>
         )}
         {totalMaterialCount > 0 && (
           <button
             onClick={() => setShowPrintSheet(true)}
-            className="ml-auto flex items-center gap-xs rounded-md border border-border-subtle bg-surface-panel px-sm py-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:border-border-medium hover:text-ember transition-all duration-[var(--motion-quick)]"
+            className="ml-auto flex items-center gap-xs rounded-md border border-border-subtle bg-surface-panel px-sm py-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:border-border-medium hover:text-ember transition duration-[var(--motion-quick)]"
             title="Print materials for this week"
           >
             <Printer size={14} aria-hidden="true" /> Print ({totalMaterialCount})
@@ -482,7 +482,7 @@ export default function PlannerClient({
               </p>
               <a
                 href={`${basePath}/explore/marketplace`}
-                className="inline-block rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+                className="inline-block rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
               >
                 Explore the marketplace
               </a>

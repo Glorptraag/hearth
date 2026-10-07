@@ -133,7 +133,7 @@ export default function BottomSheet({
     <>
       {/* Backdrop — above the mobile bottom nav (z-100) so the sheet is truly modal */}
       <div
-        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-[var(--motion-quick)] ${
+        className={`fixed inset-0 z-[190] backdrop-modal transition-opacity duration-[var(--motion-base)] ease-[var(--ease-default)] ${
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
@@ -145,7 +145,7 @@ export default function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
-        className={`fixed bottom-0 left-0 right-0 z-[200] flex max-h-[85dvh] flex-col rounded-t-[16px] border-t border-border-subtle bg-surface-panel shadow-[0_-8px_32px_rgba(0,0,0,0.5)] transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
+        className={`fixed bottom-0 left-0 right-0 z-[200] flex max-h-[85dvh] flex-col rounded-t-[16px] border-t border-border-subtle bg-surface-panel shadow-[0_-8px_32px_rgba(0,0,0,0.5)] transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-out)] ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
         onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
@@ -175,7 +175,7 @@ export default function BottomSheet({
         <div className="flex gap-xs px-md pb-sm">
           <button
             onClick={() => setSession('morning')}
-            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition duration-[var(--motion-quick)] ${
               session === 'morning'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
@@ -185,7 +185,7 @@ export default function BottomSheet({
           </button>
           <button
             onClick={() => setSession('afternoon')}
-            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
+            className={`inline-flex items-center gap-xs rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition duration-[var(--motion-quick)] ${
               session === 'afternoon'
                 ? 'border-ember/40 bg-ember-glow text-ember'
                 : 'border-border-subtle bg-transparent text-text-muted'
@@ -202,7 +202,7 @@ export default function BottomSheet({
               <button
                 key={l.id}
                 onClick={() => toggleLearner(l.id)}
-                className={`flex-shrink-0 rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
+                className={`flex-shrink-0 rounded-full border px-sm py-[3px] font-sans text-xs font-semibold transition duration-[var(--motion-quick)] ${
                   selectedLearners.includes(l.id)
                     ? (COLOUR_CHIP[l.colourToken ?? ''] ?? 'bg-ember-glow text-ember border-ember/30')
                     : 'border-border-subtle bg-transparent text-text-muted'
@@ -289,7 +289,7 @@ export default function BottomSheet({
                 className="w-full rounded-[6px] border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-border-medium focus:outline-none"
               />
               {catalogLoading && (
-                <p className="py-md text-center font-sans text-xs text-text-muted animate-pulse">Loading library...</p>
+                <p className="py-md text-center font-sans text-xs text-text-muted hearth-pulse">Loading library...</p>
               )}
               {!catalogLoading && filteredCatalog.length === 0 && (
                 <div className="py-lg text-center">
@@ -326,7 +326,7 @@ export default function BottomSheet({
               <button
                 onClick={() => handleSubmit(title)}
                 disabled={!title.trim() || saving}
-                className="w-full rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-40"
+                className="w-full rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-40"
               >
                 {saving ? 'Adding...' : 'Add to planner'}
               </button>

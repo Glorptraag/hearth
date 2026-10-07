@@ -260,7 +260,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
           <h3 className="font-serif text-lg font-semibold text-text-primary">{packTitle}</h3>
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p className="font-sans text-sm text-text-muted animate-pulse">Loading materials…</p>
+          <p className="font-sans text-sm text-text-muted hearth-pulse">Loading materials…</p>
         </div>
       </div>
     );
@@ -308,7 +308,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
             <button
               key={chip.value}
               onClick={() => setFilter(chip.value)}
-              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-[var(--motion-quick)] ${
+              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition duration-[var(--motion-quick)] ${
                 filter === chip.value
                   ? 'bg-ember text-text-inverse border-ember'
                   : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -378,7 +378,7 @@ export function PackMaterialsList({ packId, packTitle, inLibrary, onBack }: Pack
         <div className="px-xl py-md border-t border-border-subtle bg-surface-panel">
           <button
             onClick={() => setShowPrintSheet(true)}
-            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
           >
             Print {selectedIds.size} selected item{selectedIds.size !== 1 ? 's' : ''}
           </button>

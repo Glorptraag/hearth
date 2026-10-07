@@ -96,21 +96,21 @@ export default function QuickCapture({
       <div className="flex gap-xs flex-wrap">
         <button
           onClick={() => setNoteOpen((v) => !v)}
-          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
         >
           <PencilSimple size={14} aria-hidden="true" /> Note
         </button>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)] disabled:opacity-50"
         >
           <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
         </button>
         {voiceSupported && (
           <button
             onClick={isRecording ? stopVoice : startVoice}
-            className={`hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition-all duration-[var(--motion-quick)] ${
+            className={`hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition duration-[var(--motion-quick)] ${
               isRecording
                 ? 'border-ember bg-ember/10 text-ember'
                 : 'border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary'

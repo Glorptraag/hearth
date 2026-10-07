@@ -1,6 +1,6 @@
 export default function InvitationsLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="flex items-center justify-between mb-lg">
         <div className="h-6 w-32 rounded bg-surface-raised" />
         <div className="h-8 w-28 rounded-md bg-surface-raised" />

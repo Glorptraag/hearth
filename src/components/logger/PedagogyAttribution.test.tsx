@@ -36,10 +36,14 @@ describe('PedagogyAttribution', () => {
         sources={[source({ layer: 'source_excerpt', metadata: { text: 'Education is an atmosphere.' } })]}
       />,
     );
-    expect(screen.queryByText(/Education is an atmosphere/)).toBeNull();
+    // Collapsed content stays mounted for the grid-rows expand animation but is
+    // hidden from assistive tech (and from Tab, via visibility: hidden in CSS).
+    const quote = screen.getByText(/Education is an atmosphere/);
+    expect(quote.closest('.hearth-expand-content')).toHaveAttribute('aria-hidden', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: /Grounded in/ }));
-    expect(screen.getByText(/Education is an atmosphere/)).toBeInTheDocument();
+    expect(quote.closest('.hearth-expand-content')).toHaveAttribute('aria-hidden', 'false');
+    expect(screen.getByRole('button', { name: /Grounded in/ })).toHaveAttribute('aria-expanded', 'true');
   });
 
   describe('worked_example', () => {

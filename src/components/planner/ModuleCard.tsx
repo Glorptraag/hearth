@@ -89,7 +89,7 @@ export default function ModuleCard({
         onDragStart?.(entry.id);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         !isReadOnly ? 'cursor-grab active:cursor-grabbing' : ''
       } ${
         isComplete

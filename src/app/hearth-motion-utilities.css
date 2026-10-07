@@ -28,7 +28,7 @@
 }
 
 .hearth-fade-in {
-  animation: hearth-fade-in var(--motion-base) var(--ease-out) both;
+  animation: hearth-fade-in var(--motion-base) var(--ease-out) backwards;
 }
 
 .hearth-fade-out {
@@ -94,6 +94,28 @@
   opacity: 1;
 }
 
+/* Collapsed content must not be reachable by Tab or screen readers. The
+   visibility flip is delayed on close so it lands after the rows have shut. */
+.hearth-expand > .hearth-expand-content {
+  visibility: hidden;
+  transition: visibility 0s linear var(--motion-gentle);
+}
+
+.hearth-expand.is-open > .hearth-expand-content {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+/* Chevron that turns with the panel — put on the CaretDown next to the trigger. */
+.hearth-expand-chevron {
+  transition: transform var(--motion-quick) var(--ease-default);
+}
+
+[aria-expanded="true"] > .hearth-expand-chevron,
+[aria-expanded="true"] .hearth-expand-chevron {
+  transform: rotate(180deg);
+}
+
 /* --------------------------------------------------------------------------
    5. Modal entrance / exit
    Backdrop fade + content lift. Closing is faster (250ms) — dismissals
@@ -110,26 +132,82 @@
   to   { opacity: 0; transform: translateY(4px); }
 }
 
+/* `backwards` (not `both`): once the entrance lands, no transform stays applied,
+   so a modal panel never becomes the containing block for fixed descendants. */
 .hearth-modal-enter {
-  animation: hearth-modal-enter var(--motion-gentle) var(--ease-out) both;
+  animation: hearth-modal-enter var(--motion-gentle) var(--ease-out) backwards;
 }
 
 .hearth-modal-exit {
   animation: hearth-modal-exit 250ms var(--ease-in) both;
 }
 
-/* --------------------------------------------------------------------------
-   6. Page entrance — Next.js route changes
-   Fade + 4px lift, no slide-from-right (too iOS), no scale (too Material).
-   -------------------------------------------------------------------------- */
+/* Backdrop — opacity 0 → 1 over --motion-base, per spec. Put on the
+   `backdrop-modal` layer (or the fixed inset-0 container when it doubles as
+   the backdrop). The panel inside runs .hearth-modal-enter on top of it. */
+.hearth-backdrop-enter {
+  animation: hearth-fade-in var(--motion-base) var(--ease-default) backwards;
+}
 
-@keyframes hearth-page-enter {
-  from { opacity: 0; transform: translateY(4px); }
+/* Toast — rises 8px as it fades in; leaves with .hearth-fade-out. */
+@keyframes hearth-toast-enter {
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.hearth-toast-enter {
+  animation: hearth-toast-enter var(--motion-base) var(--ease-out) backwards;
+}
+
+/* --------------------------------------------------------------------------
+   6. Page entrance — Next.js route changes (applied by (auth)/template.tsx)
+   Fade only. The spec's 4px lift is deliberately omitted here: an animating
+   transform on the page wrapper would make it the containing block for every
+   `position: fixed` descendant (sticky save bars, facilitate-mode footers)
+   for the length of the animation. Opacity has no such side effect. No
+   slide-from-right (too iOS), no scale (too Material).
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-page-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .hearth-page-enter {
-  animation: hearth-page-enter var(--motion-base) var(--ease-out) both;
+  animation: hearth-page-enter var(--motion-base) var(--ease-out) backwards;
+}
+
+/* Tab panel cross-fade — incoming panel fades in with the spec's 50ms delay so
+   the outgoing one (unmounted) reads as having gone first. Key the panel on the
+   active tab so the animation replays on each switch. */
+@keyframes hearth-panel-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.hearth-panel-enter {
+  animation: hearth-panel-enter var(--motion-quick) var(--ease-out) 50ms backwards;
+}
+
+/* Inline reveal — a block that appears below its trigger (chip detail, "show
+   more" that is conditionally rendered). 4px settle, no bounce. */
+@keyframes hearth-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hearth-reveal {
+  animation: hearth-reveal var(--motion-base) var(--ease-out) backwards;
+}
+
+/* Popover / hover-menu entrance — quicker than a modal, anchored to its trigger. */
+@keyframes hearth-popover-enter {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.hearth-popover-enter {
+  animation: hearth-popover-enter var(--motion-quick) var(--ease-out) backwards;
 }
 
 /* --------------------------------------------------------------------------
@@ -146,6 +224,17 @@
 .hearth-skeleton {
   animation: hearth-skeleton-shimmer 1.5s var(--ease-default) infinite;
   border-radius: var(--radius-sm);
+}
+
+/* Contemplative pulse for "Loading…" copy — the text equivalent of the
+   skeleton shimmer. Opacity only, slow, low amplitude. */
+@keyframes hearth-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+.hearth-pulse {
+  animation: hearth-pulse 2s var(--ease-default) infinite;
 }
 
 /* --------------------------------------------------------------------------
@@ -184,6 +273,84 @@
 }
 
 /* --------------------------------------------------------------------------
+   9b. Pop-in — the check inside a checkbox, the dot inside a toggle, the unread
+   count on the bell. scale(0.6) → 1 with the soft spring; one of the few
+   places a spring is warranted.
+   -------------------------------------------------------------------------- */
+
+@keyframes hearth-pop-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.hearth-pop-in {
+  animation: hearth-pop-in 250ms var(--ease-soft-spring) backwards;
+}
+
+/* Native checkbox restyled so the tick can pop. Replaces `accent-ember`.
+   Sized by the consumer (w-4 h-4 / w-5 h-5); the tick scales with it. */
+.hearth-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--color-border-medium);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-input);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-quick) var(--ease-default),
+    border-color     var(--motion-quick) var(--ease-default),
+    box-shadow       var(--motion-quick) var(--ease-default);
+}
+
+.hearth-checkbox::before {
+  content: '';
+  width: 60%;
+  height: 60%;
+  background-color: var(--color-text-inverse);
+  clip-path: polygon(14% 44%, 0 65%, 38% 100%, 100% 20%, 84% 6%, 38% 72%);
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform 250ms var(--ease-soft-spring),
+    opacity   var(--motion-quick) var(--ease-default);
+}
+
+.hearth-checkbox:checked {
+  background-color: var(--color-ember);
+  border-color: var(--color-ember);
+}
+
+.hearth-checkbox:checked::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.hearth-checkbox:hover:not(:disabled) {
+  border-color: var(--color-border-active, var(--color-ember));
+}
+
+.hearth-checkbox:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.hearth-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Toggle knob — colour at --motion-quick on the track, the knob slides with
+   the soft spring (spec: toggle / checkbox). Pair with translate-x utilities. */
+.hearth-switch-knob {
+  transition: transform var(--motion-base) var(--ease-soft-spring);
+}
+
+/* --------------------------------------------------------------------------
    10. Badge arrival — earned-badge moment
    Single dignified pulse. No confetti, no sparkle, no sound.
    -------------------------------------------------------------------------- */
@@ -201,8 +368,14 @@
 
 .hearth-badge-arrive {
   animation:
-    hearth-badge-arrive 500ms var(--ease-out),
+    hearth-badge-arrive 500ms var(--ease-out) backwards,
     hearth-badge-glow-once 1200ms var(--ease-default) 200ms;
+}
+
+/* The descriptor beneath the badge arrives 200ms after it — the words carry
+   the moment, so they get their own beat. */
+.hearth-badge-caption {
+  animation: hearth-fade-in var(--motion-base) var(--ease-out) 200ms backwards;
 }
 
 /* --------------------------------------------------------------------------
@@ -230,6 +403,29 @@
 }
 
 /* --------------------------------------------------------------------------
+   Tab indicator — the ONLY tracking motion in the system. A 1px-wide bar
+   scaled to the active tab's width and translated under it (transform only;
+   width never animates). Driven by useSlidingTabIndicator().
+   -------------------------------------------------------------------------- */
+
+.hearth-tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 1px;
+  background-color: var(--color-ember);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  transition: transform 250ms var(--ease-default), opacity var(--motion-quick) var(--ease-default);
+}
+
+.hearth-tab-indicator[data-ready="false"] {
+  opacity: 0;
+  transition: none;
+}
+
+/* --------------------------------------------------------------------------
    Drawer entrance — side drawers slide in from the right edge.
    -------------------------------------------------------------------------- */
 
@@ -239,7 +435,7 @@
 }
 
 .hearth-drawer-enter {
-  animation: hearth-drawer-enter var(--motion-gentle) var(--ease-out) both;
+  animation: hearth-drawer-enter var(--motion-gentle) var(--ease-out) backwards;
 }
 
 /* --------------------------------------------------------------------------

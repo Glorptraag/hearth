@@ -138,7 +138,7 @@ export default function WelcomeWizard() {
           {slides.map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-2 rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`h-2 w-2 rounded-full transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 i === current
                   ? 'bg-ember shadow-[0_0_8px_rgba(217,123,58,0.4)]'
                   : i < current
@@ -175,7 +175,7 @@ export default function WelcomeWizard() {
           {!isFirst && (
             <button
               onClick={prev}
-              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
+              className="rounded-[10px] border border-border-subtle bg-surface-raised px-lg py-md font-sans text-sm font-medium text-text-secondary transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-surface-hover hover:text-text-primary"
             >
               Back
             </button>

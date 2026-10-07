@@ -105,7 +105,7 @@ export default function PackDetailClient({ packId }: Props) {
         <button
           onClick={handleRecheck}
           disabled={rechecking}
-          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
+          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition duration-[var(--motion-quick)]"
         >
           {rechecking ? 'Rechecking...' : 'Run Integrity Check'}
         </button>

@@ -93,7 +93,7 @@ export default function JoinClient({
               type="checkbox"
               checked={consentObs}
               onChange={(e) => setConsentObs(e.target.checked)}
-              className="w-5 h-5 mt-xs accent-ember flex-shrink-0"
+              className="hearth-checkbox w-5 h-5 mt-xs flex-shrink-0"
             />
           </label>
 
@@ -111,7 +111,7 @@ export default function JoinClient({
               type="checkbox"
               checked={consentEvidence}
               onChange={(e) => setConsentEvidence(e.target.checked)}
-              className="w-5 h-5 mt-xs accent-ember flex-shrink-0"
+              className="hearth-checkbox w-5 h-5 mt-xs flex-shrink-0"
             />
           </label>
         </div>
@@ -125,14 +125,14 @@ export default function JoinClient({
         <div className="flex items-center gap-md">
           <a
             href="/dashboard"
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-transparent border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-[10px] hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-transparent border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-[10px] hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
           >
             Back to Dashboard
           </a>
           <button
             onClick={handleJoin}
             disabled={joining}
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed transition duration-[var(--motion-quick)]"
           >
             {joining ? 'Joining…' : `Join ${hearthName}`}
           </button>

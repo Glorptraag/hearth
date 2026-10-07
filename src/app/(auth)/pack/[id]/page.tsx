@@ -125,7 +125,7 @@ export default async function PackDetailPage({
                 <Link
                   key={m._id}
                   href={`/module/${m._id}`}
-                  className="group block bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                  className="group block bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 >
                   <h3 className="font-serif text-[1rem] font-semibold text-text-primary mb-xs">
                     {m.title}

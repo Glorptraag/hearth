@@ -237,7 +237,7 @@ export default function OnboardingPage() {
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
-              className={`h-[8px] w-[8px] rounded-full transition-all duration-[var(--motion-quick)] ${
+              className={`h-[8px] w-[8px] rounded-full transition duration-[var(--motion-quick)] ${
                 s === step ? 'bg-ember w-[24px]' : s < step ? 'bg-ember/40' : 'bg-surface-hover'
               }`}
             />
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
             </p>
             <button
               onClick={() => setStep(2)}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
             >
               Set up your family
             </button>
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
                           key={colour}
                           onClick={() => updateChild(idx, 'colourToken', colour)}
                           aria-label={`Colour ${colour}`}
-                          className={`h-[32px] w-[32px] rounded-full ${COLOUR_CONFIG[colour].bg} transition-all duration-[var(--motion-quick)] ${
+                          className={`h-[32px] w-[32px] rounded-full ${COLOUR_CONFIG[colour].bg} transition duration-[var(--motion-quick)] ${
                             child.colourToken === colour
                               ? `ring-2 ${COLOUR_CONFIG[colour].ring} ring-offset-2 ring-offset-surface-panel`
                               : 'opacity-50 hover:opacity-75'
@@ -397,7 +397,7 @@ export default function OnboardingPage() {
                         <button
                           key={shape}
                           onClick={() => updateChild(idx, 'shapeIcon', shape)}
-                          className={`h-[32px] w-[32px] rounded-[6px] flex items-center justify-center text-sm transition-all duration-[var(--motion-quick)] ${
+                          className={`h-[32px] w-[32px] rounded-[6px] flex items-center justify-center text-sm transition duration-[var(--motion-quick)] ${
                             child.shapeIcon === shape
                               ? 'bg-surface-hover ring-1 ring-border-medium'
                               : 'opacity-50 hover:opacity-75'
@@ -432,7 +432,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleSaveFamily}
               disabled={saving}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Continue'}
             </button>
@@ -455,14 +455,14 @@ export default function OnboardingPage() {
               <button
                 onClick={() => handleComplete('/log')}
                 disabled={saving}
-                className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
+                className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover disabled:opacity-50"
               >
                 Log something now
               </button>
               <button
                 onClick={() => handleComplete('/dashboard')}
                 disabled={saving}
-                className="rounded-[6px] border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary disabled:opacity-50"
+                className="rounded-[6px] border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary disabled:opacity-50"
               >
                 Explore first
               </button>

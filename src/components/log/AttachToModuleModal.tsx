@@ -80,7 +80,7 @@ export function AttachToModuleModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center hearth-backdrop-enter backdrop-modal backdrop-blur-sm p-0 sm:p-lg"
       onClick={onClose}
     >
       <div
@@ -137,7 +137,7 @@ export function AttachToModuleModal({
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-xl pb-md space-y-xs">
           {loading ? (
-            <p className="font-sans text-sm text-text-muted py-md text-center animate-pulse">
+            <p className="font-sans text-sm text-text-muted py-md text-center hearth-pulse">
               Loading your library…
             </p>
           ) : filtered.length === 0 ? (
@@ -160,7 +160,7 @@ export function AttachToModuleModal({
                 key={m.id}
                 onClick={() => attach(m.id)}
                 disabled={attaching != null}
-                className="w-full text-left bg-surface-raised border border-border-subtle rounded-md px-md py-sm hover:border-border-medium hover:bg-surface-panel transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+                className="w-full text-left bg-surface-raised border border-border-subtle rounded-md px-md py-sm hover:border-border-medium hover:bg-surface-panel transition duration-[var(--motion-quick)] disabled:opacity-50"
               >
                 <p className="font-serif text-sm font-semibold text-text-primary">
                   {m.title}

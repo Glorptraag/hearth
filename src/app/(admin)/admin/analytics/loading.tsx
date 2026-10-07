@@ -1,6 +1,6 @@
 export default function AnalyticsLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="h-6 w-32 rounded bg-surface-raised mb-lg" />
       <div className="grid gap-lg">
         {Array.from({ length: 3 }).map((_, i) => (

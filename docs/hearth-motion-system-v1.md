@@ -271,23 +271,40 @@ Framer Motion is permitted only for the Constellation map and any future viz tha
 
 A single CSS module that defines reusable motion classes. Components import the class names rather than re-declaring transitions. Spec for this file is in the prompts document — Claude Code produces it as part of the v2 system rollout.
 
-Class surface (preview):
+Class surface (as shipped in `src/app/hearth-motion-utilities.css`):
 
 ```
-.hearth-fade-in
-.hearth-fade-out
+.hearth-fade-in / .hearth-fade-out
 .hearth-lift-card
 .hearth-press
-.hearth-expand
-.hearth-modal-enter
-.hearth-modal-exit
-.hearth-page-enter
-.hearth-skeleton
+.hearth-expand (+ .is-open, .hearth-expand-content, .hearth-expand-chevron)
+.hearth-backdrop-enter          backdrop fade, --motion-base
+.hearth-modal-enter / .hearth-modal-exit
+.hearth-toast-enter
+.hearth-popover-enter           hover menus, info popovers, desktop nav trays
+.hearth-page-enter              applied by src/app/(auth)/template.tsx
+.hearth-panel-enter             tab panel cross-fade (key the panel on the active tab)
+.hearth-reveal                  inline block that appears beneath its trigger
+.hearth-skeleton / .hearth-pulse
 .hearth-thinking
-.hearth-engagement-select
-.hearth-badge-arrive
+.hearth-engagement-select / .hearth-engagement-not-selected
+.hearth-pop-in                  check / dot / unread count, scale 0.6 → 1 soft-spring
+.hearth-checkbox                restyled native checkbox whose tick pops
+.hearth-switch-knob             toggle knob, soft-spring slide
+.hearth-tab-indicator           driven by useSlidingTabIndicator()
+.hearth-badge-arrive / .hearth-badge-caption
 .hearth-glow-pulse
+.hearth-drawer-enter
+.hearth-link-arrow
 ```
+
+### Implementation notes (October 2026 conformance pass)
+
+- **Default transition tokens.** `globals.css` sets `--default-transition-duration: var(--motion-quick)` and `--default-transition-timing-function: var(--ease-default)` in `@theme`, so any Tailwind `transition-*` utility without an explicit `duration-`/`ease-` already consumes the tokens. `transition-all` is retired app-wide in favour of the scoped `transition` (colours, opacity, shadow, transform); progress bars that genuinely animate width use `transition-[width]`.
+- **Acknowledgement is global.** A base-layer rule gives every enabled `<button>` and `[role="button"]` the `scale(0.98)` press at `--motion-instant`; `.hearth-press` remains for links styled as buttons.
+- **Page enter is opacity-only.** The 4px lift above is not applied to the route wrapper: an animating transform would make the wrapper the containing block for every `position: fixed` descendant while it runs. Entrance utilities use `animation-fill-mode: backwards` for the same reason — no identity transform lingers after the animation lands.
+- **Dashboard drift is transform-based.** `body[data-hero="dashboard"]::before` (set by `DashboardClient`) translates an oversized ember layer by ~2% over 30s instead of animating `background-position`, keeping the only looping animation on the compositor.
+- **Collapsed `.hearth-expand` content is `visibility: hidden`** (delayed on close) so it cannot take focus; consumers also set `aria-hidden` on `.hearth-expand-content`.
 
 ---
 

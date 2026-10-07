@@ -105,7 +105,7 @@ export default function BuildBadgesPage() {
     setError(null);
   };
 
-  const inputCls = 'w-full bg-surface-raised border border-border-subtle rounded-[6px] px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus';
+  const inputCls = 'w-full bg-surface-raised border border-border-subtle rounded-[6px] px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus';
 
   if (saved) {
     return (
@@ -126,7 +126,7 @@ export default function BuildBadgesPage() {
           </div>
           <button
             onClick={handleReset}
-            className="w-full rounded-md border border-ember px-lg py-sm font-sans text-sm font-semibold text-ember transition-all duration-[var(--motion-quick)] hover:bg-ember-glow"
+            className="w-full rounded-md border border-ember px-lg py-sm font-sans text-sm font-semibold text-ember transition duration-[var(--motion-quick)] hover:bg-ember-glow"
           >
             Create another
           </button>
@@ -167,7 +167,7 @@ export default function BuildBadgesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
                 placeholder=""
                 maxLength={2}
-                className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+                className="w-16 rounded-[6px] border border-border-subtle bg-surface-raised py-sm text-center font-sans text-xl text-text-primary outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
               />
             </div>
             {/* Name */}
@@ -195,7 +195,7 @@ export default function BuildBadgesPage() {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Read independently for 20+ minutes and discuss what they've understood..."
               rows={3}
-              className="w-full resize-y rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm leading-relaxed text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+              className="w-full resize-y rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-serif text-sm leading-relaxed text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
             />
           </div>
         </section>
@@ -238,7 +238,7 @@ export default function BuildBadgesPage() {
             <button
               type="button"
               onClick={addIndicator}
-              className="mt-xs flex items-center gap-xs rounded-md border border-dashed border-border-medium px-md py-sm font-sans text-sm text-text-muted transition-all duration-[var(--motion-quick)] hover:border-ember hover:text-ember"
+              className="mt-xs flex items-center gap-xs rounded-md border border-dashed border-border-medium px-md py-sm font-sans text-sm text-text-muted transition duration-[var(--motion-quick)] hover:border-ember hover:text-ember"
             >
               <span>+</span> Add indicator statement
             </button>
@@ -254,7 +254,7 @@ export default function BuildBadgesPage() {
               value={threadSearch}
               onChange={(e) => setThreadSearch(e.target.value)}
               placeholder="Search capability threads..."
-              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-[var(--motion-quick)]"
+              className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition duration-[var(--motion-quick)]"
             />
             {threadSearch && (
               <div className="absolute left-0 right-0 top-full z-10 mt-xs rounded-md border border-border-subtle bg-surface-panel shadow-float">
@@ -289,7 +289,7 @@ export default function BuildBadgesPage() {
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, observationThreshold: Math.max(1, f.observationThreshold - 1) }))}
-              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
             >
               –
             </button>
@@ -299,7 +299,7 @@ export default function BuildBadgesPage() {
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, observationThreshold: Math.min(20, f.observationThreshold + 1) }))}
-              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-md border border-border-subtle bg-surface-raised font-sans text-lg text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
             >
               +
             </button>
@@ -316,14 +316,14 @@ export default function BuildBadgesPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-md border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+            className="rounded-md border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-50"
+            className="rounded-md bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Create badge'}
           </button>

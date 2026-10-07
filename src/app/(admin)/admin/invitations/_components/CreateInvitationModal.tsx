@@ -98,9 +98,9 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center hearth-backdrop-enter backdrop-modal" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
+        className="hearth-modal-enter w-full max-w-[480px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -122,13 +122,13 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
             <div className="flex gap-sm mb-lg">
               <button
                 onClick={handleCopyCode}
-                className="flex-1 rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+                className="flex-1 rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
               >
                 {copied === 'code' ? 'Copied!' : 'Copy code'}
               </button>
               <button
                 onClick={handleCopyMessage}
-                className="flex-1 rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+                className="flex-1 rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
               >
                 {copied === 'message' ? 'Copied!' : 'Copy as message'}
               </button>
@@ -139,7 +139,7 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
             </p>
             <button
               onClick={handleDone}
-              className="w-full rounded-md bg-ember px-md py-sm font-sans text-[0.85rem] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover"
+              className="w-full rounded-md bg-ember px-md py-sm font-sans text-[0.85rem] font-semibold text-text-inverse transition duration-[var(--motion-quick)] hover:bg-ember-hover"
             >
               Done
             </button>
@@ -241,14 +241,14 @@ export default function CreateInvitationModal({ open, onClose, onCreated }: Prop
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.85rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+                className="rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.85rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!familyName.trim() || submitting}
-                className="rounded-md bg-ember px-md py-sm font-sans text-[0.85rem] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md bg-ember px-md py-sm font-sans text-[0.85rem] font-semibold text-text-inverse transition duration-[var(--motion-quick)] hover:bg-ember-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Generating...' : 'Generate Invitation'}
               </button>

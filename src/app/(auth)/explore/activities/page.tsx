@@ -97,7 +97,7 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
 
   return (
     <div
-      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] w-full flex flex-col h-full relative"
+      className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] w-full flex flex-col h-full relative"
     >
       <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
 
@@ -178,7 +178,7 @@ function ModuleCard({ module, onPreview, isInLibrary, onAddToLibrary }: { module
             In Library
           </button>
         ) : (
-          <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover w-full">
+          <button onClick={() => onAddToLibrary(module._id)} className="rounded-md bg-ember px-sm py-[4px] font-sans text-[11px] font-semibold text-text-inverse transition duration-[var(--motion-quick)] hover:bg-ember-hover w-full">
             Add to Library
           </button>
         )}
@@ -204,7 +204,7 @@ function PreviewModal({
   const dragHandleProps = useSheetDrag(trapRef, onClose);
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal px-0 sm:px-md"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center hearth-backdrop-enter backdrop-modal px-0 sm:px-md"
       onClick={onClose}
     >
       <div
@@ -302,7 +302,7 @@ function PreviewModal({
           </button>
           <button
             onClick={() => onAddToPlanner(module)}
-            className="flex-1 bg-transparent border border-border-medium text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
+            className="flex-1 bg-transparent border border-border-medium text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-surface-hover transition duration-[var(--motion-quick)]"
           >
             + Planner
           </button>
@@ -516,7 +516,7 @@ export default function ExploreActivitiesPage() {
           {/* My Library toggle */}
           <button
             onClick={() => setLibraryOnly((v) => !v)}
-            className={`shrink-0 rounded-full border px-md py-[5px] font-sans text-[12px] font-semibold transition-all duration-[var(--motion-quick)] w-fit ${
+            className={`shrink-0 rounded-full border px-md py-[5px] font-sans text-[12px] font-semibold transition duration-[var(--motion-quick)] w-fit ${
               libraryOnly
                 ? 'border-sage bg-sage/15 text-sage'
                 : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
@@ -531,7 +531,7 @@ export default function ExploreActivitiesPage() {
           <div className="flex gap-xs overflow-x-auto overscroll-x-contain pb-xs scrollbar-none">
             <button
               onClick={() => setSubjectFilter('all')}
-              className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-[var(--motion-quick)] ${
+              className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition duration-[var(--motion-quick)] ${
                 subjectFilter === 'all'
                   ? 'bg-ember text-text-inverse border-ember'
                   : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -543,7 +543,7 @@ export default function ExploreActivitiesPage() {
               <button
                 key={value}
                 onClick={() => setSubjectFilter(value)}
-                className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition-all duration-[var(--motion-quick)] ${
+                className={`font-sans text-xs shrink-0 rounded-full px-sm py-[3px] border transition duration-[var(--motion-quick)] ${
                   subjectFilter === value
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -561,7 +561,7 @@ export default function ExploreActivitiesPage() {
                 <button
                   key={v}
                   onClick={() => setViewMode(v)}
-                  className={`rounded-md px-sm py-[4px] font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] ${
+                  className={`rounded-md px-sm py-[4px] font-sans text-xs font-semibold transition duration-[var(--motion-quick)] ${
                     viewMode === v
                       ? 'bg-ember text-text-inverse'
                       : 'bg-surface-raised border border-border-subtle text-text-muted hover:text-text-secondary'
@@ -589,7 +589,7 @@ export default function ExploreActivitiesPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-lg">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse bg-surface-panel rounded-[16px] p-lg border border-border-subtle h-40" />
+              <div key={i} className="hearth-skeleton bg-surface-panel rounded-[16px] p-lg border border-border-subtle h-40" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -738,7 +738,7 @@ export default function ExploreActivitiesPage() {
                   <button
                     key={project._id}
                     onClick={() => router.push(`/project/${project._id}`)}
-                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    className="group relative text-left bg-surface-panel rounded-[16px] p-lg border border-border-subtle shadow-card overflow-hidden hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     <div className={`absolute inset-0 rounded-[inherit] bg-gradient-to-b ${SUBJECT_GRADIENT[primarySubject] ?? 'from-transparent to-transparent'} pointer-events-none`} />
                     <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(158,143,184,0.6),var(--color-ember),transparent)] opacity-60" />

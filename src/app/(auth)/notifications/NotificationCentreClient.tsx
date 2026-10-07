@@ -124,7 +124,7 @@ export default function NotificationCentreClient({
           <div className="flex items-center gap-sm">
             <button
               onClick={() => setQuietDay((v) => !v)}
-              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`flex items-center gap-xs rounded-full border px-[12px] py-[5px] font-sans text-[12px] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 quietDay
                   ? 'border-sage/60 bg-sage/10 text-sage'
                   : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -151,7 +151,7 @@ export default function NotificationCentreClient({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`flex shrink-0 items-center gap-xs rounded-full border px-[14px] py-[6px] font-sans text-[13px] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   isActive
                     ? 'border-ember bg-ember text-text-inverse'
                     : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -173,8 +173,8 @@ export default function NotificationCentreClient({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-md py-md">
+      {/* Content — keyed so the cross-fade replays per filter */}
+      <div key={activeTab} className="hearth-panel-enter px-md py-md">
         {/* Empty state */}
         {filtered.length === 0 && (
           <EmptyState

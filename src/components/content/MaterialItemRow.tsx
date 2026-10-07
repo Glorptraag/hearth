@@ -45,7 +45,7 @@ export function MaterialItemRow({
     <div
       role="button"
       tabIndex={disabled ? undefined : 0}
-      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`flex items-center gap-md p-md rounded-[10px] border border-border-subtle transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         disabled ? 'opacity-50' : 'bg-surface-raised hover:bg-surface-hover cursor-pointer focus-visible:outline-none focus-visible:shadow-focus'
       } ${selected ? 'border-ember/30 bg-ember/5' : ''} ${compact ? 'p-sm gap-sm' : ''}`}
       onClick={() => {
@@ -70,7 +70,7 @@ export function MaterialItemRow({
           checked={selected}
           onChange={(e) => onSelect?.(item.id, e.target.checked)}
           disabled={disabled || isAudio}
-          className="shrink-0 w-4 h-4 rounded-[6px] accent-ember"
+          className="hearth-checkbox shrink-0 w-4 h-4"
           aria-label={`Select ${item.title}`}
           onClick={(e) => e.stopPropagation()}
         />

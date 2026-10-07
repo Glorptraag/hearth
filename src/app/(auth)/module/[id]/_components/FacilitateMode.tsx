@@ -78,7 +78,7 @@ export default function FacilitateMode({
             {activities.map((_, i) => (
               <div
                 key={i}
-                className={`h-2 rounded-full transition-all duration-[var(--motion-quick)] ${
+                className={`h-2 rounded-full transition duration-[var(--motion-quick)] ${
                   i === currentIdx
                     ? 'w-6 bg-ember'
                     : i < currentIdx
@@ -279,13 +279,15 @@ export default function FacilitateMode({
           <div className="mb-lg xl:hidden">
             <button
               onClick={() => setOverlayOpen((v) => !v)}
+              aria-expanded={overlayOpen}
               className="flex items-center gap-xs font-sans text-sm text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] mb-sm"
             >
-              <CaretDown size={12} className={`transition-transform duration-[var(--motion-quick)] ${overlayOpen ? '' : '-rotate-90'}`} aria-hidden="true" />
+              <CaretDown size={12} className={`transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${overlayOpen ? '' : '-rotate-90'}`} aria-hidden="true" />
               <span className="text-ember" aria-hidden="true"><Asterisk size={12} /></span>
               <span>{pedagogy ? (PEDAGOGY_LABELS[pedagogy] ?? 'Your Lens') : 'Pedagogy Lens'}</span>
             </button>
-            {overlayOpen && (
+            <div className={`hearth-expand ${overlayOpen ? 'is-open' : ''}`}>
+              <div className="hearth-expand-content" aria-hidden={!overlayOpen}>
               <div className="rounded-lg border border-border-medium bg-ember-glow p-lg space-y-md">
                 {currentOverlay.lens.perspective && (
                   <div>
@@ -328,7 +330,8 @@ export default function FacilitateMode({
                   </div>
                 )}
               </div>
-            )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -409,7 +412,7 @@ export default function FacilitateMode({
             {onPause && (
               <button
                 onClick={onPause}
-                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+                className="shrink-0 rounded-md border border-border-subtle bg-surface-panel px-md py-sm font-sans text-sm font-semibold text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
               >
                 ⏸ Pause
               </button>
@@ -429,7 +432,7 @@ export default function FacilitateMode({
                 {onEndAndLog && (
                   <button
                     onClick={onEndAndLog}
-                    className="shrink-0 rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-all duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
+                    className="shrink-0 rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition duration-[var(--motion-quick)] hover:border-border-medium hover:text-text-primary"
                   >
                     End &amp; Log
                   </button>
@@ -661,7 +664,7 @@ export default function FacilitateMode({
             )}
             <button
               onClick={() => setMobileCapture((v) => !v)}
-              className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition-all duration-[var(--motion-quick)] hover:bg-ember-hover relative"
+              className="w-12 h-12 rounded-full bg-ember text-text-inverse shadow-ember flex items-center justify-center text-lg font-semibold transition duration-[var(--motion-quick)] hover:bg-ember-hover relative"
               aria-label="Quick capture"
             >
               {mobileCapture ? <X size={22} aria-hidden="true" /> : <Camera size={22} aria-hidden="true" />}

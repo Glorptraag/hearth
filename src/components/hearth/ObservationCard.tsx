@@ -62,15 +62,15 @@ export default function ObservationCard({
       {/* Actions */}
       {status === 'pending' ? (
         <div className="flex gap-sm">
-          <button onClick={handleAccept} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-sage/10 text-sage border border-sage/20 rounded-[6px] font-sans text-sm font-semibold cursor-pointer hover:bg-sage/20 transition-all duration-[var(--motion-quick)]">
+          <button onClick={handleAccept} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-sage/10 text-sage border border-sage/20 rounded-[6px] font-sans text-sm font-semibold cursor-pointer hover:bg-sage/20 transition duration-[var(--motion-quick)]">
             <Check size={14} aria-hidden="true" /> Accept
           </button>
           {onEdit && (
-            <button onClick={() => onEdit(id)} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-transparent text-text-secondary border border-border-subtle rounded-[6px] font-sans text-sm cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)]">
+            <button onClick={() => onEdit(id)} className="inline-flex items-center gap-xs px-3.5 py-1.5 bg-transparent text-text-secondary border border-border-subtle rounded-[6px] font-sans text-sm cursor-pointer hover:bg-surface-hover transition duration-[var(--motion-quick)]">
               <PencilSimple size={14} aria-hidden="true" /> Edit &amp; Accept
             </button>
           )}
-          <button onClick={handleDismiss} className="px-3.5 py-1.5 bg-transparent text-text-muted border-none font-sans text-sm cursor-pointer hover:text-text-secondary transition-all duration-[var(--motion-quick)]">
+          <button onClick={handleDismiss} className="px-3.5 py-1.5 bg-transparent text-text-muted border-none font-sans text-sm cursor-pointer hover:text-text-secondary transition duration-[var(--motion-quick)]">
             Dismiss
           </button>
         </div>

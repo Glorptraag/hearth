@@ -660,7 +660,7 @@ export default function LogPage() {
         />
         {toast && (
           <div
-            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
+            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition duration-[var(--motion-quick)] ${
               toast.type === 'badge'
                 ? 'bg-ember/20 text-ember border border-ember/30'
                 : toast.type === 'success'
@@ -688,7 +688,7 @@ export default function LogPage() {
     // region stretches and the `sticky bottom-0` save bar always pins flush above
     // the nav — even when the form is shorter than the viewport. Desktop reverts
     // to the original block flow (the sticky bar is lg:hidden).
-    <div className="relative flex min-h-full flex-col lg:block">
+    <div className="relative flex min-h-full flex-1 flex-col lg:block">
       {/* Offline banner — sits above the draft-restored banner so it's the
           first thing the parent sees if a network drop interrupts them.
           The 10s autosave keeps writing to localStorage regardless of
@@ -776,7 +776,7 @@ export default function LogPage() {
         <button
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
             canSave
               ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
               : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
@@ -963,7 +963,8 @@ export default function LogPage() {
       <div className="lg:hidden sticky bottom-0 z-50">
         {/* AI Insights drawer + toggle — Full view only */}
         {view === 'full' && (<>
-        {insightsExpanded && (
+        <div className={`hearth-expand ${insightsExpanded ? 'is-open' : ''}`}>
+          <div className="hearth-expand-content" aria-hidden={!insightsExpanded}>
           <div className="max-h-[55vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
             <div className="flex items-center gap-sm mb-md">
               <span className="text-ember" aria-hidden="true"><Sparkle size={18} /></span>
@@ -980,7 +981,8 @@ export default function LogPage() {
             />
             <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
           </div>
-        )}
+          </div>
+        </div>
         <button
           onClick={() => setInsightsExpanded(!insightsExpanded)}
           aria-expanded={insightsExpanded}
@@ -992,7 +994,7 @@ export default function LogPage() {
           <CaretDown
             size={14}
             aria-hidden="true"
-            className={`text-text-secondary transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${insightsExpanded ? '' : 'rotate-180'}`}
+            className="hearth-expand-chevron rotate-180 text-text-secondary"
           />
         </button>
         </>)}
@@ -1019,7 +1021,7 @@ export default function LogPage() {
               <button
                 onClick={handleSave}
                 disabled={!canSave || isSaving}
-                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   canSave
                     ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
                     : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
@@ -1051,7 +1053,7 @@ export default function LogPage() {
       {/* ─── Toast ─── */}
       {toast && (
         <div
-          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
+          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition duration-[var(--motion-quick)] ${
             toast.type === 'badge'
               ? 'bg-ember/20 text-ember border border-ember/30'
               : toast.type === 'success'

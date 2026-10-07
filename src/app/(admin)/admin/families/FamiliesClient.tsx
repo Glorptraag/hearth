@@ -111,7 +111,7 @@ export default function FamiliesClient() {
             <button
               key={t.value}
               onClick={() => setSearchType(t.value)}
-              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-[var(--motion-quick)] border ${
+              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition duration-[var(--motion-quick)] border ${
                 searchType === t.value
                   ? 'border-border-medium bg-surface-raised text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-subtle'
@@ -138,7 +138,7 @@ export default function FamiliesClient() {
         <button
           onClick={handleSearch}
           disabled={!query.trim() || searching}
-          className="rounded-md bg-ember px-md py-xs font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
+          className="rounded-md bg-ember px-md py-xs font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition duration-[var(--motion-quick)]"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>

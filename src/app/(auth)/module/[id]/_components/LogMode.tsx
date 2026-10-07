@@ -264,7 +264,7 @@ export default function LogMode({
               <button
                 key={l.id}
                 onClick={() => toggleLearner(l.id)}
-                className={`font-sans text-sm px-md py-sm rounded-full border transition-all duration-[var(--motion-quick)] ${
+                className={`font-sans text-sm px-md py-sm rounded-full border transition duration-[var(--motion-quick)] ${
                   selectedLearnerIds.includes(l.id)
                     ? 'bg-ember text-text-inverse border-ember'
                     : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'
@@ -329,7 +329,7 @@ export default function LogMode({
                     <button
                       key={key}
                       onClick={() => setUnderstandingLevel((prev) => ({ ...prev, [lid]: prev[lid] === key ? '' : key }))}
-                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition-all duration-[var(--motion-quick)] ${
+                      className={`rounded-full px-sm py-[3px] font-sans text-[11px] font-medium border transition duration-[var(--motion-quick)] ${
                         understandingLevel[lid] === key
                           ? badge
                           : 'bg-transparent border-border-subtle text-text-muted hover:border-border-medium'
@@ -402,7 +402,7 @@ export default function LogMode({
                 <button
                   key={prompt}
                   onClick={() => togglePrompt(prompt)}
-                  className={`font-sans text-xs px-sm py-xs rounded-full border transition-all duration-[var(--motion-quick)] ${
+                  className={`font-sans text-xs px-sm py-xs rounded-full border transition duration-[var(--motion-quick)] ${
                     activePrompts.includes(prompt)
                       ? 'bg-sage/20 text-sage border-sage/30'
                       : 'bg-transparent text-text-muted border-border-subtle hover:border-border-medium'

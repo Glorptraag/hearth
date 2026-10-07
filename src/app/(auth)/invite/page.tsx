@@ -60,7 +60,7 @@ export default function InvitePage() {
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="mt-lg rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover"
+              className="mt-lg rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover"
             >
               Go to Dashboard
             </button>
@@ -77,7 +77,7 @@ export default function InvitePage() {
             <p className="mt-sm font-sans text-sm text-text-secondary">{errorMsg}</p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="mt-lg rounded-[6px] border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition-all hover:text-text-primary"
+              className="mt-lg rounded-[6px] border border-border-subtle px-lg py-sm font-sans text-sm font-semibold text-text-secondary transition hover:text-text-primary"
             >
               Go to Dashboard
             </button>

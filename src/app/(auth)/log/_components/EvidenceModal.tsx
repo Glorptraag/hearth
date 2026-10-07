@@ -94,7 +94,7 @@ export function EvidenceModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center">
-      <div className="absolute inset-0 backdrop-modal" onClick={onClose} />
+      <div className="absolute inset-0 hearth-backdrop-enter backdrop-modal" onClick={onClose} />
       <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" className="hearth-modal-enter relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-xl lg:rounded-xl border border-border-subtle bg-surface-panel p-xl shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         <div className="flex items-center justify-between mb-lg">
           <h3 id="evidence-modal-title" className="font-serif text-lg font-semibold text-text-primary">{titles[type]}</h3>
@@ -108,7 +108,7 @@ export function EvidenceModal({
             <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full rounded-md border-2 border-dashed border-border-medium p-xl text-center font-sans text-sm text-text-secondary hover:border-ember transition-all duration-[var(--motion-quick)]"
+              className="w-full rounded-md border-2 border-dashed border-border-medium p-xl text-center font-sans text-sm text-text-secondary hover:border-ember transition duration-[var(--motion-quick)]"
             >
               <span className="inline-flex items-center gap-xs"><Camera size={16} aria-hidden="true" /> {previewUrl ? 'Photo selected — tap to change' : 'Tap to select photo'}</span>
             </button>
@@ -159,7 +159,7 @@ export function EvidenceModal({
         <button
           onClick={handleSave}
           disabled={uploading || !canSubmit}
-          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] min-h-[44px] disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-lg w-full rounded-md bg-ember py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)] min-h-[44px] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {uploading ? 'Uploading...' : 'Add Evidence'}
         </button>

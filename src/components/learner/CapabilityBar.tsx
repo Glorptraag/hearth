@@ -35,7 +35,7 @@ export default function CapabilityBar({
         aria-label={`${domain} progress: ${count} of ${maxCount} observations`}
       >
         <div
-          className={`h-full rounded-full transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${colorClass}`}
+          className={`h-full rounded-full transition-[width] duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${colorClass}`}
           style={{ width: `${pct}%` }}
         />
       </div>

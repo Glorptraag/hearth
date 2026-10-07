@@ -89,7 +89,7 @@ export default function ModuleCard({
         onDragStart?.(entry.id);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`group relative flex flex-col gap-xs rounded-md border overflow-hidden transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         !isReadOnly ? 'cursor-grab active:cursor-grabbing' : ''
       } ${
         isComplete
@@ -116,7 +116,7 @@ export default function ModuleCard({
               // status dot is — it must not swallow taps meant for its
               // neighbours. Persistent on coarse pointers: it is the only way
               // to move an entry where HTML5 drag never fires.
-              className="hearth-press -my-[7px] flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-muted opacity-0 transition-[opacity,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
+              className="hearth-press -my-[7px] flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-muted opacity-0 hover:text-ember focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
             >
               <ArrowsOutCardinal size={12} aria-hidden="true" />
             </button>

@@ -101,7 +101,7 @@ export default function NotificationRow({
     <div
       role="button"
       tabIndex={0}
-      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:shadow-hover hover:-translate-y-[2px] cursor-pointer focus-visible:outline-none focus-visible:shadow-focus ${accent}`}
+      className={`group relative rounded-[10px] border border-border-subtle bg-surface-panel p-md shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised hover:shadow-hover hover:-translate-y-[2px] cursor-pointer focus-visible:outline-none focus-visible:shadow-focus ${accent}`}
       onClick={() => isUnread && onMarkRead(notification.id)}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
@@ -144,7 +144,7 @@ export default function NotificationRow({
                   e.stopPropagation();
                   if (isUnread) onMarkRead(notification.id);
                 }}
-                className="inline-flex items-center rounded-[10px] bg-ember px-[14px] py-[6px] font-sans text-[13px] font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] hover:bg-ember-hover"
+                className="inline-flex items-center rounded-[10px] bg-ember px-[14px] py-[6px] font-sans text-[13px] font-semibold text-text-inverse transition duration-[var(--motion-quick)] hover:bg-ember-hover"
               >
                 {actionLabel}
               </Link>

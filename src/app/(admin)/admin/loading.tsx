@@ -1,6 +1,6 @@
 export default function AdminDashboardLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="h-6 w-40 rounded bg-surface-raised mb-lg" />
       <div className="grid grid-cols-2 gap-md mb-lg">
         {Array.from({ length: 4 }).map((_, i) => (

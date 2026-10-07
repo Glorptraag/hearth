@@ -162,7 +162,7 @@ export function PrintSheet({
     <div className="fixed inset-0 z-[200] flex items-end lg:items-center lg:justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-modal transition-opacity duration-[var(--motion-quick)]"
+        className="hearth-backdrop-enter absolute inset-0 backdrop-modal"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -173,7 +173,7 @@ export function PrintSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="print-sheet-title"
-        className="relative z-10 w-full max-h-[90dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-float flex flex-col transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+        className="hearth-modal-enter relative z-10 w-full max-h-[90dvh] rounded-t-[16px] lg:rounded-[16px] lg:max-w-lg bg-surface-panel border border-border-subtle shadow-float flex flex-col"
       >
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-sm lg:hidden">
@@ -284,7 +284,7 @@ export function PrintSheet({
                           type="checkbox"
                           checked={selectedIds.has(item.id)}
                           onChange={(e) => toggleItem(item.id, e.target.checked)}
-                          className="shrink-0 w-4 h-4 rounded-[6px] accent-ember"
+                          className="hearth-checkbox shrink-0 w-4 h-4"
                         />
                         <span className="shrink-0 inline-flex text-text-secondary" aria-hidden="true"><ItemIcon size={16} /></span>
                         <span className="flex-1 min-w-0 font-serif text-sm text-text-primary truncate">
@@ -334,14 +334,14 @@ export function PrintSheet({
             <button
               onClick={() => handleGenerate(false)}
               disabled={generating || selectedItems.length === 0}
-              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
+              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-ember text-text-inverse hover:bg-ember/90 disabled:opacity-50 disabled:cursor-not-allowed transition duration-[var(--motion-quick)]"
             >
               {generating ? 'Preparing...' : 'Download PDF'}
             </button>
             <button
               onClick={() => handleGenerate(true)}
               disabled={generating || selectedItems.length === 0}
-              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-[var(--motion-quick)]"
+              className="flex-1 font-sans text-sm font-semibold px-md py-sm rounded-[10px] bg-transparent text-ember border border-ember/30 hover:border-ember hover:bg-ember/5 disabled:opacity-50 disabled:cursor-not-allowed transition duration-[var(--motion-quick)]"
             >
               {generating ? 'Preparing...' : 'Print now'}
             </button>

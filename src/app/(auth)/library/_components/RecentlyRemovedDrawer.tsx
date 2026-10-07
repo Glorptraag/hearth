@@ -76,7 +76,7 @@ export function RecentlyRemovedDrawer({
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
       <div
-        className="hearth-fade-in absolute inset-0 backdrop-modal"
+        className="hearth-backdrop-enter absolute inset-0 backdrop-modal"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -112,7 +112,7 @@ export function RecentlyRemovedDrawer({
         </div>
 
         {items === null ? (
-          <p className="font-sans text-sm text-text-muted animate-pulse">Loading…</p>
+          <p className="font-sans text-sm text-text-muted hearth-pulse">Loading…</p>
         ) : items.length === 0 ? (
           <p className="font-sans text-sm text-text-muted">
             Nothing recently removed.
@@ -137,7 +137,7 @@ export function RecentlyRemovedDrawer({
                 <button
                   onClick={() => restore(item)}
                   disabled={restoring === item.rowId}
-                  className="inline-flex items-center gap-xs bg-ember text-text-inverse font-sans text-xs font-semibold rounded-md px-sm py-xs hover:bg-ember/90 transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+                  className="inline-flex items-center gap-xs bg-ember text-text-inverse font-sans text-xs font-semibold rounded-md px-sm py-xs hover:bg-ember/90 transition duration-[var(--motion-quick)] disabled:opacity-50"
                 >
                   <ArrowsClockwise size={12} aria-hidden="true" />
                   {restoring === item.rowId ? 'Restoring…' : 'Restore'}

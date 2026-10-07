@@ -463,7 +463,7 @@ export default function ModuleDetailPage() {
   if (loading) {
     return (
       <div className="px-md py-xl">
-        <div className="animate-pulse space-y-md">
+        <div className="hearth-skeleton space-y-md">
           <div className="h-6 bg-surface-raised rounded w-2/3" />
           <div className="h-4 bg-surface-raised rounded w-full" />
           <div className="h-4 bg-surface-raised rounded w-4/5" />
@@ -534,7 +534,7 @@ export default function ModuleDetailPage() {
         </p>
         <button
           onClick={() => router.push('/explore/marketplace')}
-          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+          className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition duration-[var(--motion-quick)]"
         >
           Browse Marketplace
         </button>

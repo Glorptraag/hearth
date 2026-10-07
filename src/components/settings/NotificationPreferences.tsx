@@ -41,7 +41,7 @@ export default function NotificationPreferences({ prefs, onChange }: Notificatio
         return (
           <div
             key={key}
-            className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-quick)] hover:border-border-medium"
+            className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition duration-[var(--motion-quick)] hover:border-border-medium"
           >
             <div className="flex-1">
               <p className="font-sans text-sm font-semibold text-text-primary">{label}</p>
@@ -56,7 +56,7 @@ export default function NotificationPreferences({ prefs, onChange }: Notificatio
               role="switch"
             >
               <span
-                className={`absolute top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform duration-[var(--motion-quick)] ${
+                className={`hearth-switch-knob absolute top-[2px] h-5 w-5 rounded-full bg-white shadow ${
                   enabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
                 }`}
               />

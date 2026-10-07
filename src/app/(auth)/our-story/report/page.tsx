@@ -432,17 +432,17 @@ export default function ReportPage() {
           aria-label="Report timeline progress"
         >
           <div
-            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-all duration-[var(--motion-slow)] ease-[var(--ease-default)]"
+            className="absolute left-0 top-0 h-full rounded-full bg-ember transition-[width] duration-[var(--motion-slow)] ease-[var(--ease-default)]"
             style={{ width: `${timelineProgress}%` }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-ember border-2 border-surface-raised transition-all duration-[var(--motion-slow)] ease-[var(--ease-default)]"
+            className="absolute top-1/2 -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-ember shadow-ember border-2 border-surface-raised transition duration-[var(--motion-slow)] ease-[var(--ease-default)]"
             style={{ left: `${timelineProgress}%`, marginLeft: '-7px' }}
           />
         </div>
 
         {daysUntilDue !== null && (
-          <div className={`text-center mt-lg ${daysUntilDue <= 30 ? 'animate-pulse' : ''}`}>
+          <div className="text-center mt-lg">
             <p className={`font-sans text-4xl font-semibold ${isOverdue ? 'text-child-rose' : 'text-text-primary'}`}>
               {Math.abs(daysUntilDue)}
             </p>
@@ -512,7 +512,7 @@ export default function ReportPage() {
                   <button
                     key={slot.id}
                     onClick={() => setCurationSlot(slot)}
-                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-raised p-md text-left transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] cursor-pointer ${domain?.border ?? 'border-t-border-medium'}`}
                   >
                     <div className="flex items-center justify-between mb-sm">
                       <span className={`rounded-full px-sm py-[2px] font-sans text-[10px] font-semibold ${domain?.pill ?? 'bg-surface-hover text-text-muted'}`}>
@@ -604,7 +604,7 @@ export default function ReportPage() {
                       aria-label={`${s.label} coverage: ${s.count} entries`}
                     >
                       <div
-                        className={`h-full rounded-full transition-all duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
+                        className={`h-full rounded-full transition-[width] duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
                         style={{ width: `${Math.min(s.pct, 100)}%` }}
                       />
                     </div>
@@ -718,7 +718,7 @@ export default function ReportPage() {
                 return (
                   <div
                     key={s.key}
-                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover ${domain?.border ?? 'border-t-border-medium'}`}
+                    className={`relative rounded-lg border-t-2 border border-border-subtle bg-surface-panel p-md transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover ${domain?.border ?? 'border-t-border-medium'}`}
                   >
                     <div className="flex items-center justify-between mb-sm">
                       <span className="inline-flex text-text-secondary" aria-hidden="true"><s.Icon size={22} /></span>
@@ -736,7 +736,7 @@ export default function ReportPage() {
                       aria-label={`${s.label} coverage: ${s.count} entries`}
                     >
                       <div
-                        className={`h-full rounded-full transition-all duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
+                        className={`h-full rounded-full transition-[width] duration-[var(--motion-slow)] ${domain?.bar ?? 'bg-text-muted'}`}
                         style={{ width: `${Math.min(s.pct, 100)}%` }}
                       />
                     </div>
@@ -842,7 +842,7 @@ export default function ReportPage() {
             }
           }}
           disabled={!selectedLearnerId || entries.length === 0}
-          className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] ${
+          className={`rounded-md px-lg py-sm font-sans text-sm font-semibold transition duration-[var(--motion-quick)] ${
             selectedLearnerId && entries.length > 0
               ? 'bg-ember text-text-inverse hover:bg-ember-hover shadow-ember'
               : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'

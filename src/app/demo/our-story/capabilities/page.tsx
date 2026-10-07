@@ -86,7 +86,7 @@ export default function DemoCapabilities() {
                   return (
                     <div
                       key={thread.threadId}
-                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                      className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                     >
                       <div className="mb-md flex items-start justify-between">
                         <h4 className="font-serif font-semibold text-text-primary flex-1">{thread.threadName}</h4>
@@ -116,7 +116,7 @@ export default function DemoCapabilities() {
                           aria-label={`${thread.threadName} observations: ${thread.observationCount} of 10`}
                         >
                           <div
-                            className="h-full rounded-full bg-sage transition-all duration-[var(--motion-base)]"
+                            className="h-full rounded-full bg-sage transition-[width] duration-[var(--motion-base)]"
                             style={{ width: `${observationPercent}%` }}
                           />
                         </div>

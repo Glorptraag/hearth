@@ -94,7 +94,7 @@ export default function SnapshotsClient() {
           )}
           <button
             onClick={fetchAll}
-            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
           >
             Refresh
           </button>
@@ -135,7 +135,7 @@ export default function SnapshotsClient() {
       {/* Rebuild reason modal */}
       {modal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
+          className="hearth-modal-enter fixed inset-0 z-50 flex items-center justify-center hearth-backdrop-enter backdrop-modal"
           role="dialog"
           aria-modal="true"
           aria-labelledby="rebuild-modal-title"
@@ -170,14 +170,14 @@ export default function SnapshotsClient() {
               <button
                 onClick={() => setModal(null)}
                 disabled={rebuilding}
-                className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-40"
+                className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-medium text-text-secondary hover:text-text-primary transition duration-[var(--motion-quick)] disabled:opacity-40"
               >
                 Cancel
               </button>
               <button
                 onClick={submitRebuild}
                 disabled={rebuilding || !reason.trim()}
-                className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] disabled:opacity-40"
+                className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)] disabled:opacity-40"
               >
                 {rebuilding ? 'Queuing…' : 'Queue Rebuild'}
               </button>

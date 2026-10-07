@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSlidingTabIndicator } from '@/hooks/use-sliding-tab-indicator';
 import Link from 'next/link';
 import { LibraryMaterialsTab } from '@/components/content/LibraryMaterialsTab';
 import { ArrowRight, Books, Sparkle, Play, CalendarBlank, X } from '@/components/icons';
@@ -74,6 +75,7 @@ export default function LibraryClient() {
   // Modules (in use) is the default tab — typical family has 5 packs × 6
   // modules and modules are the unit a parent actually runs in a session.
   const [tab, setTab] = useState<Tab>('modules');
+  const { listRef: tabsRef, indicatorProps: tabsIndicator } = useSlidingTabIndicator(tab);
   // Task 4.7 — Recently-Removed drawer state.
   const [removedDrawerOpen, setRemovedDrawerOpen] = useState(false);
 
@@ -174,7 +176,7 @@ export default function LibraryClient() {
             Packs is the provenance / kitting view. Materials aggregates
             per-pack printables/kits. Browse is the expansive catalog of
             every module across owned packs + standalone (4.6). */}
-        <div className="flex gap-lg mb-xl border-b border-border-subtle overflow-x-auto overscroll-x-contain scrollbar-none">
+        <div ref={tabsRef} className="relative flex gap-lg mb-xl border-b border-border-subtle overflow-x-auto overscroll-x-contain scrollbar-none">
           {([
             { key: 'modules' as const, label: 'In use', count: modulesInUse.length },
             { key: 'packs' as const, label: 'Packs', count: items.filter((i) => i.kind === 'pack').length },
@@ -183,11 +185,10 @@ export default function LibraryClient() {
           ]).map(({ key, label, count }) => (
             <button
               key={key}
+              data-tab-key={key}
               onClick={() => setTab(key)}
-              className={`pb-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] border-b-2 ${
-                tab === key
-                  ? 'text-ember border-ember'
-                  : 'text-text-muted border-transparent hover:text-text-secondary'
+              className={`pb-sm font-sans text-sm font-semibold transition duration-[var(--motion-quick)] border-b-2 border-transparent ${
+                tab === key ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
               }`}
             >
               {label}
@@ -198,14 +199,16 @@ export default function LibraryClient() {
               )}
             </button>
           ))}
+          <span {...tabsIndicator} />
         </div>
 
-        {/* Content */}
+        {/* Content — keyed so the cross-fade replays per tab */}
+        <div key={tab} className="hearth-panel-enter">
         {tab === 'modules' && (
           <>
             {loading ? (
               <div className="py-20 text-center">
-                <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
+                <p className="font-sans text-sm text-text-muted hearth-pulse">Loading library…</p>
               </div>
             ) : modules.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -221,13 +224,13 @@ export default function LibraryClient() {
                 <div className="flex flex-wrap items-center justify-center gap-sm">
                   <Link
                     href="/explore/marketplace"
-                    className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+                    className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
                   >
                     Explore Marketplace
                   </Link>
                   <Link
                     href="/build/modules"
-                    className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+                    className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
                   >
                     Build your own
                   </Link>
@@ -247,7 +250,7 @@ export default function LibraryClient() {
                 </p>
                 <button
                   onClick={() => setTab('browse')}
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
                 >
                   Browse all modules
                 </button>
@@ -266,7 +269,7 @@ export default function LibraryClient() {
           <>
             {loading ? (
               <div className="py-20 text-center">
-                <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
+                <p className="font-sans text-sm text-text-muted hearth-pulse">Loading library…</p>
               </div>
             ) : packItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -281,7 +284,7 @@ export default function LibraryClient() {
                 </p>
                 <Link
                   href="/explore/marketplace"
-                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+                  className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
                 >
                   Explore Marketplace
                 </Link>
@@ -315,6 +318,7 @@ export default function LibraryClient() {
         )}
 
         {tab === 'browse' && <BrowseTab />}
+        </div>
       </div>
       <RecentlyRemovedDrawer
         open={removedDrawerOpen}
@@ -331,7 +335,7 @@ function ModuleCard({ module: m, status }: { module: LibraryModuleItem; status?:
   return (
     <Link
       href={`/module/${m.id}`}
-      className="group block bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+      className="group block bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
     >
       <div className="flex items-start justify-between gap-sm mb-xs">
         <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
@@ -395,7 +399,7 @@ function LibraryCard({
   const subjects = item.subjects ?? [];
   const content = (
     <div
-      className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+      className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
     >
       <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-lg bg-ember opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-gentle)]" />
       {onRemove && (

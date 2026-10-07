@@ -262,7 +262,7 @@ export function ExpandedCardBody({
                 <button
                   type="button"
                   onClick={onRetryEnrichment}
-                  className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                  className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary"
                 >
                   Generate now
                 </button>
@@ -613,7 +613,7 @@ export default function PortfolioPage() {
                 <button
                   key={f.key}
                   onClick={() => { setDateFilter(f.key); setVisibleCount(PAGE_SIZE); }}
-                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[32px] ${
+                  className={`rounded-full px-sm py-xs font-sans text-xs transition duration-[var(--motion-quick)] min-h-[32px] ${
                     dateFilter === f.key
                       ? 'bg-ember text-text-inverse'
                       : 'border border-border-subtle text-text-secondary hover:border-border-medium'
@@ -627,7 +627,7 @@ export default function PortfolioPage() {
                   type="month"
                   value={customMonth}
                   onChange={(e) => { setCustomMonth(e.target.value); setVisibleCount(PAGE_SIZE); }}
-                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition-all duration-[var(--motion-quick)] focus:shadow-focus min-h-[32px]"
+                  className="rounded-full border border-ember bg-ember/10 px-sm py-xs font-sans text-xs text-ember outline-none transition duration-[var(--motion-quick)] focus:shadow-focus min-h-[32px]"
                 />
               )}
             </div>
@@ -640,7 +640,7 @@ export default function PortfolioPage() {
                 <button
                   key={key}
                   onClick={() => setSubjectFilter(subjectFilter === key ? null : key)}
-                  className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[28px] ${
+                  className={`rounded-full px-sm py-xs font-sans text-xs transition duration-[var(--motion-quick)] min-h-[28px] ${
                     subjectFilter === key
                       ? `${cfg.color} border border-current`
                       : 'text-text-muted hover:text-text-secondary'
@@ -658,7 +658,7 @@ export default function PortfolioPage() {
               <button
                 key={v}
                 onClick={() => setViewMode(v)}
-                className={`rounded-full border px-sm py-[3px] font-sans text-[11px] font-semibold transition-all duration-[var(--motion-quick)] ${
+                className={`rounded-full border px-sm py-[3px] font-sans text-[11px] font-semibold transition duration-[var(--motion-quick)] ${
                   viewMode === v
                     ? 'border-ember bg-ember text-text-inverse'
                     : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
@@ -731,7 +731,7 @@ export default function PortfolioPage() {
                 </p>
                 <button
                   onClick={() => { setSubjectFilter(null); setThreadFilter(null); setDateFilter('all'); }}
-                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-[var(--motion-quick)] hover:opacity-90"
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition duration-[var(--motion-quick)] hover:opacity-90"
                 >
                   Clear filters
                 </button>
@@ -748,7 +748,7 @@ export default function PortfolioPage() {
                 </p>
                 <Link
                   href="/log"
-                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-all duration-[var(--motion-quick)] hover:opacity-90"
+                  className="inline-flex items-center font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition duration-[var(--motion-quick)] hover:opacity-90"
                 >
                   Add your first log &rarr;
                 </Link>
@@ -783,7 +783,7 @@ export default function PortfolioPage() {
                         return (
                           <div
                             key={entry.id}
-                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                            className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                           >
                             {/* Type-specific top line */}
                             <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -921,7 +921,7 @@ export default function PortfolioPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    className="relative overflow-hidden rounded-[10px] border border-border-subtle bg-surface-panel shadow-card hover:border-border-medium hover:translate-y-[-2px] hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     {/* Type-specific top line */}
                     <div className={`absolute left-0 right-0 top-0 h-[2px] ${CARD_TYPE_TOP[cardType]}`} />
@@ -1039,7 +1039,7 @@ export default function PortfolioPage() {
             <div className="mt-md text-center">
               <button
                 onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                className="font-sans text-sm text-text-secondary border border-border-subtle rounded-md px-lg py-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+                className="font-sans text-sm text-text-secondary border border-border-subtle rounded-md px-lg py-sm hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
               >
                 Load earlier ({sortedChronological.length - visibleCount} more)
               </button>
@@ -1064,7 +1064,7 @@ export default function PortfolioPage() {
                 {badges.map((badge) => (
                   <div
                     key={badge.id}
-                    className={`rounded-[16px] border bg-surface-panel p-md shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
+                    className={`rounded-[16px] border bg-surface-panel p-md shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${badge.retractedAt ? 'border-border-subtle opacity-50' : 'border-border-subtle hover:border-border-medium hover:translate-y-[-1px]'}`}
                   >
                     <span className={`text-2xl ${badge.retractedAt ? 'grayscale' : ''}`}>{badge.badgeEmoji}</span>
                     <h3 className="font-serif text-sm font-semibold text-text-primary mt-xs">
@@ -1128,7 +1128,7 @@ export default function PortfolioPage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setThreadFilter(active ? null : t.thread_id)}
-                      className={`block w-full rounded-[10px] border bg-surface-panel p-md text-left transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                      className={`block w-full rounded-[10px] border bg-surface-panel p-md text-left transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                         active ? 'border-border-active' : 'border-border-subtle hover:border-border-medium'
                       }`}
                     >
@@ -1282,7 +1282,7 @@ function EntryEditForm({
                 type="button"
                 onClick={() => toggleSubject(key)}
                 aria-pressed={sel}
-                className={`inline-flex min-h-[32px] items-center gap-xs rounded-full px-sm py-[3px] font-sans text-[10px] font-medium transition-all duration-[var(--motion-quick)] ${
+                className={`inline-flex min-h-[32px] items-center gap-xs rounded-full px-sm py-[3px] font-sans text-[10px] font-medium transition duration-[var(--motion-quick)] ${
                   sel ? `${cfg.color} border border-current` : 'border border-border-subtle text-text-muted hover:border-border-medium'
                 }`}
               >
@@ -1319,7 +1319,7 @@ function EntryEditForm({
                         onClick={() => setEngagement((prev) => ({ ...prev, [lid]: level }))}
                         aria-label={`Engagement level ${level} for ${learner?.name ?? 'learner'}`}
                         aria-pressed={engagement[lid] === level}
-                        className={`flex h-8 w-8 items-center justify-center rounded-md border text-base transition-all duration-[var(--motion-quick)] ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-md border text-base transition duration-[var(--motion-quick)] ${
                           engagement[lid] === level
                             ? 'border-ember bg-ember-glow'
                             : 'border-border-subtle opacity-60 hover:border-border-medium hover:opacity-100'

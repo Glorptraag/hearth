@@ -40,7 +40,7 @@ export function PackDetailCta({
 
   if (loading) {
     return (
-      <div className="w-full bg-surface-raised rounded-md px-md py-sm h-10 animate-pulse" />
+      <div className="w-full bg-surface-raised rounded-md px-md py-sm h-10 hearth-skeleton" />
     );
   }
 
@@ -91,7 +91,7 @@ export function PackDetailCta({
     return (
       <button
         onClick={handleAdd}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
       >
         Add to Library
       </button>
@@ -105,7 +105,7 @@ export function PackDetailCta({
     return (
       <button
         onClick={handleAdd}
-        className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-sage/30 transition-all duration-[var(--motion-quick)]"
+        className="w-full bg-sage/20 text-sage font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-sage/30 transition duration-[var(--motion-quick)]"
       >
         Owned — Add to Library
       </button>
@@ -125,7 +125,7 @@ export function PackDetailCta({
       <button
         onClick={handlePurchase}
         disabled={checkoutLoading}
-        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] shadow-ember disabled:opacity-50"
+        className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition duration-[var(--motion-quick)] shadow-ember disabled:opacity-50"
       >
         {checkoutLoading ? 'Loading…' : 'Get Pack'}
       </button>

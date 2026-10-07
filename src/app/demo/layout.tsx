@@ -114,7 +114,7 @@ export default function DemoLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
+                  className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
                     active
                       ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                       : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
@@ -135,7 +135,7 @@ export default function DemoLayout({
           </div>
           <button
             onClick={toggleTheme}
-            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
+            className={`mb-xs flex w-full items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
               gathering
                 ? 'border-border-medium bg-surface-raised text-ember shadow-card'
                 : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -148,7 +148,7 @@ export default function DemoLayout({
           {!isAutoMode && (
             <button
               onClick={resetToAuto}
-              className="mb-xs flex w-full items-center gap-md rounded-md px-md py-sm font-sans text-[0.75rem] font-medium text-text-muted transition-all duration-[var(--motion-quick)] hover:text-text-secondary"
+              className="mb-xs flex w-full items-center gap-md rounded-md px-md py-sm font-sans text-[0.75rem] font-medium text-text-muted transition duration-[var(--motion-quick)] hover:text-text-secondary"
               aria-label="Reset to automatic theme switching"
             >
               Reset to auto
@@ -156,7 +156,7 @@ export default function DemoLayout({
           )}
           <Link
             href="/demo/notifications"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
+            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
               isActive(pathname, "/demo/notifications")
                 ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
@@ -174,7 +174,7 @@ export default function DemoLayout({
           </Link>
           <Link
             href="/demo/settings"
-            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
+            className={`mb-xs flex items-center gap-md rounded-md px-md py-md font-sans text-[0.9rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
               isActive(pathname, "/demo/settings")
                 ? "border-border-medium bg-surface-raised text-ember shadow-card shadow-inset-highlight"
                 : "border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary"
@@ -216,7 +216,7 @@ export default function DemoLayout({
             </span>
             <Link
               href="/demo/notifications"
-              className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
+              className="relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
               <span className="text-lg" aria-hidden="true">🔔</span>
@@ -241,7 +241,7 @@ export default function DemoLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`flex flex-col items-center gap-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 item.primary
                   ? active
                     ? "text-ember"

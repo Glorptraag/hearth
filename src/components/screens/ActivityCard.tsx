@@ -62,7 +62,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
   const hasOverlay = overlay && (overlay.perspective || overlay.facilitatorTips || overlay.watchFor);
 
   return (
-    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-md sm:p-lg lg:p-xl shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]">
+    <div className="group relative bg-surface-panel rounded-[16px] border border-border-subtle p-md sm:p-lg lg:p-xl shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]">
       {/* Ember top-line */}
       <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[16px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 
@@ -139,7 +139,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
 
       {/* Expandable details */}
       {expanded && (
-        <div className="border-t border-border-subtle pt-md mt-md space-y-md animate-in fade-in slide-in-from-top-1 duration-[var(--motion-quick)]">
+        <div className="hearth-reveal border-t border-border-subtle pt-md mt-md space-y-md">
           {/* Materials */}
           {activity.materials && activity.materials.length > 0 && (
             <div>
@@ -231,7 +231,7 @@ export function ActivityCard({ activity, pedagogy, overlay, onStart }: ActivityC
         {onStart && (
           <button
             onClick={onStart}
-            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+            className="ml-auto bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
             Start {vocab.sessionNoun}
           </button>

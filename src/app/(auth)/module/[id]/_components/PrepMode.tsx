@@ -169,7 +169,7 @@ export default function PrepMode({
                   className="flex items-center gap-sm w-full text-left group"
                 >
                   <span
-                    className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center transition-all duration-[var(--motion-quick)] ${
+                    className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center transition duration-[var(--motion-quick)] ${
                       checked[key]
                         ? 'bg-ember border-ember text-text-inverse'
                         : 'border-border-medium bg-transparent'
@@ -274,7 +274,7 @@ export default function PrepMode({
             {onPrintMaterials && printableCount > 0 && (
               <button
                 onClick={onPrintMaterials}
-                className="mt-md inline-flex w-full items-center justify-center gap-xs bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+                className="mt-md inline-flex w-full items-center justify-center gap-xs bg-transparent border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
               >
                 <Printer size={16} aria-hidden="true" />
                 Print materials for this module
@@ -422,7 +422,7 @@ export default function PrepMode({
       {/* Start button */}
       <button
         onClick={onStart}
-        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
+        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover shadow-ember"
       >
         {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session'}
       </button>

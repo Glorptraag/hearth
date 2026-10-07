@@ -1,6 +1,6 @@
 export default function AuditLogLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="h-6 w-28 rounded bg-surface-raised mb-lg" />
       <div className="flex gap-xs mb-md">
         {Array.from({ length: 6 }).map((_, i) => (

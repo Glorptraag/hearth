@@ -184,7 +184,7 @@ export default function BadgeAssessPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-body flex items-center justify-center">
-        <p className="font-sans text-text-secondary animate-pulse">Loading assessment...</p>
+        <p className="font-sans text-text-secondary hearth-pulse">Loading assessment...</p>
       </div>
     );
   }
@@ -196,7 +196,7 @@ export default function BadgeAssessPage() {
           <p className="font-serif text-text-primary text-xl mb-md">{error ?? 'Badge not found'}</p>
           <button
             onClick={() => router.back()}
-            className="font-sans text-sm text-ember hover:text-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+            className="font-sans text-sm text-ember hover:text-ember-hover transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
           >
             Go back
           </button>
@@ -233,7 +233,7 @@ export default function BadgeAssessPage() {
                   router.back();
                 }
               }}
-              className="font-sans text-sm text-text-secondary hover:text-text-primary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+              className="font-sans text-sm text-text-secondary hover:text-text-primary transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
             >
               <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
             </button>
@@ -244,7 +244,7 @@ export default function BadgeAssessPage() {
                 {badge.assessmentQuestions.map((_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                    className={`w-2 h-2 rounded-full transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                       i < currentQ
                         ? 'bg-ember'
                         : i === currentQ
@@ -286,13 +286,13 @@ export default function BadgeAssessPage() {
             <div className="space-y-sm">
               <button
                 onClick={() => setStep('questions')}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
               >
                 Let&apos;s check
               </button>
               <button
                 onClick={() => router.back()}
-                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
               >
                 Not now
               </button>
@@ -407,7 +407,7 @@ export default function BadgeAssessPage() {
               <button
                 onClick={handleAward}
                 disabled={submitting}
-                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover disabled:opacity-50 transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
               >
                 {submitting ? 'Awarding...' : `Award ${badge.title}`}
               </button>
@@ -415,7 +415,7 @@ export default function BadgeAssessPage() {
                 <button
                   onClick={handleDefer}
                   disabled={submitting}
-                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium disabled:opacity-50 transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium disabled:opacity-50 transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 >
                   Not yet — we&apos;ll check again later
                 </button>
@@ -430,7 +430,7 @@ export default function BadgeAssessPage() {
               {previousAssessments.length > 0 && (
                 <button
                   onClick={() => setStep('compare')}
-                  className="w-full mt-sm font-sans text-xs text-text-muted hover:text-ember border border-border-subtle rounded-md px-md py-sm transition-all duration-[var(--motion-quick)] hover:border-border-medium"
+                  className="w-full mt-sm font-sans text-xs text-text-muted hover:text-ember border border-border-subtle rounded-md px-md py-sm transition duration-[var(--motion-quick)] hover:border-border-medium"
                 >
                   Compare with previous assessment ({previousAssessments.length} prior)
                 </button>
@@ -518,7 +518,7 @@ export default function BadgeAssessPage() {
               <div className="space-y-sm">
                 <button
                   onClick={() => setStep('decision')}
-                  className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+                  className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition duration-[var(--motion-quick)]"
                 >
                   Back to decision
                 </button>
@@ -530,28 +530,30 @@ export default function BadgeAssessPage() {
         {/* ── CELEBRATION ── */}
         {step === 'celebration' && (
           <div className="pt-2xl text-center">
-            <div className="w-32 h-32 mx-auto mb-lg rounded-full bg-surface-panel border-2 border-ember flex items-center justify-center text-7xl shadow-ember-strong">
+            <div className="hearth-badge-arrive w-32 h-32 mx-auto mb-lg rounded-full bg-surface-panel border-2 border-ember flex items-center justify-center text-7xl shadow-ember-strong">
               {badge.emoji}
             </div>
-            <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
-              {learnerName} earned {badge.title}!
-            </h1>
-            <p className="font-serif text-text-secondary mb-2xl">
-              This badge is now part of {learnerName}&apos;s learning story.
-            </p>
+            <div className="hearth-badge-caption">
+              <h1 className="font-serif text-2xl font-semibold text-text-primary mb-sm">
+                {learnerName} earned {badge.title}!
+              </h1>
+              <p className="font-serif text-text-secondary mb-2xl">
+                This badge is now part of {learnerName}&apos;s learning story.
+              </p>
+            </div>
 
-            <div className="space-y-sm">
+            <div className="hearth-badge-caption space-y-sm">
               {hasQueue ? (
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover"
                   >
                     Next badge ({queueItems.length} remaining)
                   </button>
                   <button
                     onClick={() => router.push('/our-story/portfolio')}
-                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     Stop here · View in Portfolio
                   </button>
@@ -560,13 +562,13 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={() => router.push('/our-story/portfolio')}
-                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                    className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
                   >
                     View in Portfolio
                   </button>
                   <button
                     onClick={() => router.push('/')}
-                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     Back to Dashboard
                   </button>
@@ -595,13 +597,13 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover"
                   >
                     Next badge ({queueItems.length} remaining)
                   </button>
                   <button
                     onClick={() => router.push('/')}
-                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                    className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   >
                     Stop here · Back to Dashboard
                   </button>
@@ -609,7 +611,7 @@ export default function BadgeAssessPage() {
               ) : (
                 <button
                   onClick={() => router.push('/')}
-                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                  className="w-full bg-transparent border border-border-subtle text-text-secondary font-sans rounded-md px-md py-sm hover:border-border-medium transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 >
                   Back to Dashboard
                 </button>
@@ -644,7 +646,7 @@ function ResponseOption({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-lg border p-lg transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${borderClass}`}
+      className={`w-full text-left rounded-lg border p-lg transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${borderClass}`}
     >
       <p className="font-serif font-semibold text-text-primary">{label}</p>
       <p className="font-sans text-sm text-text-muted mt-xs">{sublabel}</p>

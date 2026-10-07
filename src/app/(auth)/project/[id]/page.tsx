@@ -186,7 +186,7 @@ function ProjectOverview({
                 <button
                   onClick={() => { if (!isLocked) onStageSelect(idx); }}
                   disabled={isLocked}
-                  className={`w-full flex items-start gap-md rounded-lg border p-lg text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
+                  className={`w-full flex items-start gap-md rounded-lg border p-lg text-left transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
                     isCompleted
                       ? 'border-sage/20 bg-sage/5 hover:border-sage/30'
                       : isActive
@@ -246,7 +246,7 @@ function ProjectOverview({
           <div className="mt-xl text-center">
             <button
               onClick={() => onStageSelect(activeIdx)}
-              className="hearth-press bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+              className="hearth-press bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover"
             >
               Continue Stage {stages[activeIdx].stageNumber}
             </button>
@@ -328,7 +328,7 @@ function StageDetail({
                       type="checkbox"
                       checked={materialsChecked[key] ?? false}
                       onChange={() => setMaterialsChecked((prev) => ({ ...prev, [key]: !prev[key] }))}
-                      className="mt-[3px] accent-ember"
+                      className="hearth-checkbox mt-[3px] h-4 w-4 shrink-0"
                     />
                     <div>
                       <span className={`font-serif text-sm ${materialsChecked[key] ? 'text-text-muted line-through' : 'text-text-primary'}`}>
@@ -384,7 +384,7 @@ function StageDetail({
               <div className="flex gap-sm">
                 <button
                   onClick={() => onComplete(artifactNote || undefined)}
-                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+                  className="flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition duration-[var(--motion-quick)]"
                 >
                   <span className="inline-flex items-center gap-xs">Complete Stage <Check size={14} aria-hidden="true" /></span>
                 </button>
@@ -399,7 +399,7 @@ function StageDetail({
           ) : (
             <button
               onClick={() => setShowCompletePrompt(true)}
-              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+              className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition duration-[var(--motion-quick)]"
             >
               Mark Stage Complete
             </button>
@@ -408,7 +408,7 @@ function StageDetail({
           {/* Log entry link */}
           <Link
             href={`/log?source=project_stage&projectId=${project._id}&stageNumber=${stage.stageNumber}`}
-            className="inline-flex items-center justify-center gap-xs w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
+            className="inline-flex items-center justify-center gap-xs w-full text-center bg-surface-panel text-text-primary font-sans font-semibold rounded-md px-md py-sm text-sm border border-border-medium hover:bg-surface-hover transition duration-[var(--motion-quick)]"
           >
             <PencilLine size={14} aria-hidden="true" /> Log This Stage
           </Link>
@@ -483,7 +483,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="px-md py-xl">
-        <div className="animate-pulse space-y-md">
+        <div className="hearth-skeleton space-y-md">
           <div className="h-8 bg-surface-raised rounded w-2/3" />
           <div className="h-4 bg-surface-raised rounded w-1/2" />
           <div className="h-32 bg-surface-raised rounded" />
@@ -502,7 +502,7 @@ export default function ProjectDetailPage() {
         <p className="font-sans text-sm text-text-secondary mb-lg">This project may not exist or hasn&apos;t been published yet.</p>
         <button
           onClick={() => router.push('/explore/activities')}
-          className="font-sans text-sm font-semibold px-md py-sm rounded-md border border-ember text-ember hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)]"
+          className="font-sans text-sm font-semibold px-md py-sm rounded-md border border-ember text-ember hover:bg-ember hover:text-text-inverse transition duration-[var(--motion-quick)]"
         >
           Browse Activities
         </button>

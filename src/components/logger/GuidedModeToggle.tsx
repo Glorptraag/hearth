@@ -110,7 +110,7 @@ export function GuidedModeToggle({ mode, onChange }: GuidedModeToggleProps) {
           id={popoverId}
           ref={popoverRef}
           role="tooltip"
-          className="absolute top-full right-0 mt-xs z-20 w-64 rounded-lg border border-border-subtle bg-surface-panel shadow-float p-md"
+          className="hearth-popover-enter absolute top-full right-0 mt-xs z-20 w-64 rounded-lg border border-border-subtle bg-surface-panel shadow-float p-md"
         >
           <p className="font-serif text-sm font-semibold text-text-primary mb-xs">
             Guided Mode

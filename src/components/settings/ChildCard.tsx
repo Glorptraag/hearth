@@ -78,7 +78,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
                 <button
                   key={c.token}
                   onClick={() => setColour(c.token)}
-                  className={`h-8 w-8 rounded-full transition-all duration-[var(--motion-quick)] ${c.bg} ${
+                  className={`h-8 w-8 rounded-full transition duration-[var(--motion-quick)] ${c.bg} ${
                     colour === c.token ? `ring-2 ring-offset-2 ring-offset-surface-raised ${c.ring}` : ''
                   }`}
                   aria-label={c.label}
@@ -90,7 +90,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
             <button
               onClick={handleSave}
               disabled={!name.trim() || saving}
-              className="flex-1 rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+              className="flex-1 rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover disabled:opacity-40"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
@@ -107,7 +107,7 @@ export default function ChildCard({ child, onUpdate, onDelete }: ChildCardProps)
   }
 
   return (
-    <div className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] hover:border-border-medium">
+    <div className="flex items-center gap-md rounded-[10px] border border-border-subtle bg-surface-panel p-md transition duration-[var(--motion-gentle)] hover:border-border-medium">
       {/* Colour swatch */}
       <div className={`h-9 w-9 flex-shrink-0 rounded-full ${currentColour.bg} flex items-center justify-center`}>
         <span className="font-sans text-sm font-semibold text-text-inverse">

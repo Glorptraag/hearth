@@ -67,7 +67,7 @@ export default function CreateSessionModal({
 
   return (
     <div
-      className="fixed inset-0 backdrop-modal z-[200] flex items-center justify-center"
+      className="fixed inset-0 hearth-backdrop-enter backdrop-modal z-[200] flex items-center justify-center"
       onClick={handleOverlayClick}
     >
       <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="create-session-title" className="hearth-modal-enter bg-surface-panel border border-border-subtle rounded-[24px] p-2xl w-[90%] max-w-[520px] max-h-[85vh] overflow-y-auto overscroll-contain shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
@@ -157,14 +157,14 @@ export default function CreateSessionModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition-all duration-[var(--motion-quick)]"
+              className="px-4 py-2 bg-surface-raised text-text-primary border border-border-subtle rounded-[10px] font-sans text-sm font-medium cursor-pointer hover:bg-surface-hover transition duration-[var(--motion-quick)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition-all duration-[var(--motion-quick)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] cursor-pointer hover:bg-ember-hover transition duration-[var(--motion-quick)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Creating…' : 'Create Session'}
             </button>

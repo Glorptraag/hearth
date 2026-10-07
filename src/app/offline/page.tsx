@@ -44,7 +44,7 @@ export default function OfflinePage() {
 
         <Link
           href="/log"
-          className="hearth-press inline-flex w-full items-center justify-center gap-sm rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+          className="hearth-press inline-flex w-full items-center justify-center gap-sm rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember hover:bg-ember-hover"
         >
           <NotePencil size={18} weight="regular" />
           Log a moment anyway

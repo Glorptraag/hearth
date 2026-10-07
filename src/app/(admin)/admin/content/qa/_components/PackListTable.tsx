@@ -94,7 +94,7 @@ export default function PackListTable({ packs, loading }: Props) {
                 <div className="flex items-center gap-sm">
                   <div className="flex-1 h-1.5 rounded-full bg-surface-raised overflow-hidden max-w-[100px]">
                     <div
-                      className={`h-full rounded-full ${completenessColor(pack.completeness)} transition-all duration-[var(--motion-gentle)]`}
+                      className={`h-full rounded-full ${completenessColor(pack.completeness)} transition-[width] duration-[var(--motion-gentle)]`}
                       style={{ width: `${pack.completeness}%` }}
                     />
                   </div>

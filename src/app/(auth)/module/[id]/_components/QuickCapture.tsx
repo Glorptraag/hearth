@@ -96,21 +96,21 @@ export default function QuickCapture({
       <div className="flex gap-xs flex-wrap">
         <button
           onClick={() => setNoteOpen((v) => !v)}
-          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary"
         >
           <PencilSimple size={14} aria-hidden="true" /> Note
         </button>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+          className="hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary disabled:opacity-50"
         >
           <Camera size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Photo'}
         </button>
         {voiceSupported && (
           <button
             onClick={isRecording ? stopVoice : startVoice}
-            className={`hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border transition-all duration-[var(--motion-quick)] ${
+            className={`hearth-press min-h-[40px] inline-flex items-center gap-xs font-sans text-sm px-sm py-xs rounded-md border ${
               isRecording
                 ? 'border-ember bg-ember/10 text-ember'
                 : 'border-border-subtle bg-surface-panel text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -149,7 +149,7 @@ export default function QuickCapture({
             <button
               onClick={addNote}
               disabled={!noteText.trim()}
-              className="hearth-press min-h-[40px] font-sans text-xs font-semibold bg-ember text-text-inverse rounded-md px-sm py-xs hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:opacity-50"
+              className="hearth-press min-h-[40px] font-sans text-xs font-semibold bg-ember text-text-inverse rounded-md px-sm py-xs hover:bg-ember-hover disabled:opacity-50"
             >
               Add Note
             </button>

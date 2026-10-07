@@ -183,7 +183,7 @@ export default function WelcomeWizard() {
           <button
             onClick={isLast ? complete : next}
             disabled={isCompleting}
-            className="hearth-press flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember transition-[background-color,transform,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
+            className="hearth-press flex-1 rounded-[10px] bg-ember px-lg py-md font-sans text-[0.95rem] font-semibold text-text-inverse shadow-ember hover:bg-ember-hover hover:-translate-y-px hover:shadow-ember-strong disabled:opacity-60"
           >
             {isCompleting ? 'Loading…' : isLast ? 'Set up my family' : 'Next'}
           </button>

@@ -262,7 +262,7 @@ export function ExpandedCardBody({
                 <button
                   type="button"
                   onClick={onRetryEnrichment}
-                  className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                  className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle px-sm py-[4px] font-sans text-xs font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary"
                 >
                   Generate now
                 </button>

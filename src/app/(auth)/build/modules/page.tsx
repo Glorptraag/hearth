@@ -353,7 +353,7 @@ function FormActions({
         type="button"
         onClick={onContinue}
         disabled={saving}
-        className="hearth-press flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:opacity-50"
+        className="hearth-press flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember disabled:opacity-50"
       >
         {saving ? 'Saving…' : (continueLabel ?? 'Continue')}
       </button>
@@ -1787,7 +1787,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
               onClick={() => {
                 setEditing(normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>));
               }}
-              className="hearth-press font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+              className="hearth-press font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px]"
             >
               Start from scratch
             </button>

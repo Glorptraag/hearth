@@ -41,7 +41,7 @@ export function EvidenceSection({
             <button
               key={tool.key}
               onClick={() => onOpenTool(tool.key)}
-              className={`hearth-press flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] min-h-[44px] ${
+              className={`hearth-press flex flex-col items-center gap-xs rounded-md border-2 p-md font-sans text-sm min-h-[44px] ${
                 hasItems
                   ? 'border-sage bg-sage/5 text-sage'
                   : 'border-dashed border-border-medium text-text-secondary hover:border-ember hover:text-text-primary'

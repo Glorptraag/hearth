@@ -58,8 +58,18 @@
    The ONLY snappy moment in the system; physical feedback should be instant
    -------------------------------------------------------------------------- */
 
+/* Owns the element's whole transition list: press at --motion-instant, colour /
+   shadow / opacity at --motion-quick. Do NOT add a `transition-*` utility to a
+   .hearth-press element — the utility layer wins and would replace this list,
+   turning the press into a snap. (motion-conformance.test.ts checks this.) */
 .hearth-press {
-  transition: transform var(--motion-instant) var(--ease-default);
+  transition:
+    transform        var(--motion-instant) var(--ease-default),
+    color            var(--motion-quick)   var(--ease-default),
+    background-color var(--motion-quick)   var(--ease-default),
+    border-color     var(--motion-quick)   var(--ease-default),
+    box-shadow       var(--motion-quick)   var(--ease-default),
+    opacity          var(--motion-quick)   var(--ease-default);
 }
 
 .hearth-press:active {

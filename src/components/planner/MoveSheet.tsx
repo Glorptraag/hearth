@@ -117,7 +117,7 @@ export default function MoveSheet({ isOpen, entry, days, onMove, onClose }: Move
                       disabled={day.isPast}
                       aria-current={isCurrent ? 'true' : undefined}
                       aria-label={`${label}, ${day.label} ${day.dayNumber}${isCurrent ? ' — current' : ''}`}
-                      className={`hearth-press flex min-h-[40px] flex-1 items-center justify-center gap-xs rounded-md border px-sm font-sans text-xs font-semibold transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 ${
+                      className={`hearth-press flex min-h-[40px] flex-1 items-center justify-center gap-xs rounded-md border px-sm font-sans text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
                         isCurrent
                           ? 'border-border-active bg-ember-glow text-ember'
                           : 'border-border-subtle bg-surface-raised text-text-secondary enabled:hover:border-border-medium enabled:hover:text-text-primary'

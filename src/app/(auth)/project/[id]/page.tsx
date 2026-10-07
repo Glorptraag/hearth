@@ -246,7 +246,7 @@ function ProjectOverview({
           <div className="mt-xl text-center">
             <button
               onClick={() => onStageSelect(activeIdx)}
-              className="hearth-press bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+              className="hearth-press bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover"
             >
               Continue Stage {stages[activeIdx].stageNumber}
             </button>

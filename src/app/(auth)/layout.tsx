@@ -239,7 +239,7 @@ export default function AuthLayout({
             </Link>
             <Link
               href="/notifications"
-              className="hit-target hearth-press relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted transition-[background-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-glow hover:text-text-primary"
+              className="hit-target hearth-press relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
             >
               <Bell size={18} aria-hidden="true" />

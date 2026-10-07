@@ -547,7 +547,7 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover"
                   >
                     Next badge ({queueItems.length} remaining)
                   </button>
@@ -597,7 +597,7 @@ export default function BadgeAssessPage() {
                 <>
                   <button
                     onClick={goToNextInQueue}
-                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+                    className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm hover:bg-ember-hover"
                   >
                     Next badge ({queueItems.length} remaining)
                   </button>

@@ -421,7 +421,7 @@ export default function LogMode({
       <button
         onClick={handleSave}
         disabled={saving || selectedLearnerIds.length === 0}
-        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember disabled:opacity-50 disabled:cursor-not-allowed"
+        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover shadow-ember disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving ? 'Saving…' : 'Save to Portfolio'}
       </button>

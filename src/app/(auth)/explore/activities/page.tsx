@@ -296,7 +296,7 @@ function PreviewModal({
         <div className="flex gap-sm">
           <button
             onClick={() => onStartNow(module._id)}
-            className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+            className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover"
           >
             Start Now
           </button>

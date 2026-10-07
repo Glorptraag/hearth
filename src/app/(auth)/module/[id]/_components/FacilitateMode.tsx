@@ -421,7 +421,7 @@ export default function FacilitateMode({
               // Last activity: "Finish & Log" is itself the end-and-log exit.
               <button
                 onClick={onFinish}
-                className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
+                className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover shadow-ember"
               >
                 Finish &amp; Log
               </button>
@@ -445,7 +445,7 @@ export default function FacilitateMode({
                     setOverlayOpen(false);
                     onChunkChange?.(next);
                   }}
-                  className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
+                  className="hearth-press flex-1 bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover shadow-ember"
                 >
                   Next Activity
                 </button>

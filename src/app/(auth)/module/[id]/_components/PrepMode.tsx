@@ -422,7 +422,7 @@ export default function PrepMode({
       {/* Start button */}
       <button
         onClick={onStart}
-        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember"
+        className="hearth-press w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember-hover shadow-ember"
       >
         {savedChunkIdx !== undefined && savedChunkIdx > 0 ? 'Restart from Beginning' : 'Start Session'}
       </button>

@@ -62,6 +62,19 @@ describe('motion conformance', () => {
     ).toEqual([]);
   });
 
+  it('a .hearth-press element never carries its own transition utility (it would override the press)', () => {
+    const bad = files
+      .filter((f) => f.path.endsWith('.tsx'))
+      .flatMap((f) =>
+        f.text
+          .split('\n')
+          .map((line, i) => ({ line, i }))
+          .filter(({ line }) => line.includes('hearth-press') && /\btransition(?:-|\s|$)/.test(line))
+          .map(({ i }) => `${f.path}:${i + 1}`),
+      );
+    expect(bad).toEqual([]);
+  });
+
   it('the motion utilities file still defines every class the docs promise', () => {
     const css = files.find((f) => f.path === 'app/hearth-motion-utilities.css')!.text;
     for (const cls of [

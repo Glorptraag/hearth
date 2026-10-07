@@ -8,9 +8,17 @@
  * a first-use state.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { cleanup, configure, render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { useSearchParams } from 'next/navigation';
 import CapabilitiesPage from './page';
+
+// The page's load path is two sequential fetches then a render. RTL's default
+// 1000ms `waitFor` window is tight when a sibling vitest worker is cold-importing
+// the capability-universe graph (observed timing out under load, passing in
+// isolation). Same per-test guard the _constellation/*.test.tsx files carry,
+// plus a wider async-utility window.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+configure({ asyncUtilTimeout: 5000 });
 
 let latestOnDataChanged: (() => void) | undefined;
 

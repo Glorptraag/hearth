@@ -64,10 +64,31 @@ Two data quirks worth knowing:
   (`Array.isArray(data)`) alongside the current `{ activeThreads, dloStatus, gapAnalysis,
   curriculumCoverage }` shape — a back-compat branch for snapshots written before the
   richer response shape landed.
-- **`dloStatusById` collapse.** The persisted `learner_dlo_status.status` has four values
-  (`emerging | developing | demonstrating | not-started`), but `topology.ts`'s `buildDLOs()`
-  collapses these into three UI render states for Gallery/Table (`confirmed` for
-  demonstrating, `emerging` for emerging-or-developing, `not-started` otherwise).
+- **`dloStatusById` mirrors the table one-to-one (since 2026-10-06).** The persisted
+  `learner_dlo_status.status` has four values (`emerging | developing | demonstrating |
+  not-started`) and `topology.ts`'s `buildDLOs()` renders four states (`confirmed` for
+  demonstrating, then `developing`, `emerging`, `not-started`). Until then `developing`
+  was collapsed into `emerging`, so the middle rung was invisible in Gallery and Table.
+  `nextDloToWatch()` picks the first DLO (tier order) the child has not yet reached at its
+  own tier — the "Next to watch for" line at depth 3.
+- **Thread recency / trajectory.** Snapshot rows now carry `first_evidence_date` and the
+  rebuild's `trajectory`; `buildSnapshot()` keeps them (`firstDateByThread`,
+  `trajectoryByThread`) and `TableThreads` shows a "New" chip (first evidence ≤14 days), a
+  recent-activity dot (≤7 days) and the trajectory read next to the tier. Older snapshots
+  without the fields simply show no marker.
+- **Parent confirmations are moments.** `upsertParentAssertion` writes an `asserted` link
+  with no `observation_id`; the evidence route LEFT-joins entries so that row appears as
+  "You confirmed this" (source `parent`, dated by the confirmation). The route previously
+  inner-joined, so the one moment the parent contributed never appeared in their own list.
+  `recomputeLearnerDloStatus` treats one asserted or declared developing-tier link as
+  corroboration (previously two developing links were required, so a lone parent confirm
+  of a developing DLO rolled up to `not-started`).
+- **Deep links.** `?focus=` accepts a real Sanity DLO id (`dlo.L3.emerging`, the shape the
+  URL sync writes at depth 4) via `parseFocus()`; the old parser only understood `L3.e`, so
+  reloading a depth-4 view rendered an empty stage.
+- **Phones get the Table.** Below 640px the Gallery option is hidden and a requested Gallery
+  view renders as Table (`useNarrowViewport`): the fixed-viewBox SVGs render their 11px
+  labels at roughly 3px on a 375px phone.
 
 ## 2. Dual alpha-suppression seams
 
@@ -200,6 +221,12 @@ These three are called out because they carry real interaction logic (drill navi
 confirm/dispute optimistic-update flow surfaced through Gallery's `GalleryMoments`, deep-link
 focus resolution) that is currently only exercised manually. **Closing this gap is task 2.1** —
 do not duplicate that work here; this doc only records the gap as of 2026-07.
+
+Partially closed 2026-10-06: `ConstellationRoute.test.tsx` now covers `parseFocus` (DLO id /
+legacy / thread / domain), a depth-4 deep link rendering the Moments step, and the phone-width
+Gallery→Table fallback; `TableView.test.tsx` covers the four-state DLO chip, the
+"Watch for this next" marker, the "New" / trajectory markers, and a parent confirmation row;
+`topology.test.ts` covers the status mapping, `nextDloToWatch`, and the recency helpers.
 
 ## 5. Vestigial `/constellation` route
 

@@ -269,6 +269,27 @@ The Logger derives the title from the first ~60 characters of the description, a
 **Regression test:** `src/lib/ai/pedagogy-context.test.ts` (`composeRetrievalQuery` cases; pinned prompt unchanged).
 **Fix:** `composeRetrievalQuery` — title only when it adds something, up to 600 description characters, discoveries appended; threads deduped + validated with candidates first. **Date logged:** 2026-10-06.
 
+### R34 — Code audit (2026-10-06): the constellation hid the "developing" rung and the parent's own confirmations.
+
+`buildDLOs()` collapsed `developing` into `emerging`, so a child practising with support read as merely noticing, in both Gallery and Table; the depth-3 status chip was hidden below `sm`, so on a phone no per-DLO status showed at all. The evidence route inner-joined `learning_entries`, so a parent's asserted link (no entry) never appeared in the Moments list and the "You confirmed" provenance label could never render. Separately, a lone parent confirm of a developing-tier DLO rolled up to `not-started` (`developing >= 2` was the only path).
+**Spec affected:** `hearth-outcomes-spine-plan-v1.md` WS-4 honesty model; `hearth-constellation-architecture-v1.md` §1.
+**Regression test:** `topology.test.ts` (four-state mapping, `nextDloToWatch`); `TableView.test.tsx`; `dlo-evidence/route.integration.test.ts` (asserted row); `dlo-persistence.integration.test.ts` (lone developing confirm → developing).
+**Fix:** four render states mirroring `learner_dlo_status`; compact status chip on phones; "Next to watch for" at depth 3; LEFT join + "You confirmed this" moments; asserted/declared developing counts as corroboration. **Date logged:** 2026-10-06.
+
+### R35 — Code audit (2026-10-06): depth-4 deep links resolved to an empty stage; the Gallery was illegible on phones.
+
+The `?focus=` parser accepted only a one-letter tier suffix (`L3.e`) while the URL sync wrote real DLO ids (`dlo.L3.emerging`), so reloading at depth 4 — or following any depth-4 link — rendered nothing. The Gallery's 1200-unit SVGs shrink to ~277px of content width on a 375px phone, rendering 11px labels at roughly 3px with sub-4px tap targets. The hub's Capabilities card dropped the selected child (`?child=`) on the way in, and Moments rows linked to `#entry-<id>` anchors the Portfolio never rendered.
+**Spec affected:** `hearth-mobile-bottom-nav-spec-v1.md` (mobile-first rule); `Hearth_System_Interaction_Map.md` Our Story ↔ Capabilities.
+**Regression test:** `ConstellationRoute.test.tsx` (`parseFocus`, depth-4 link, narrow-viewport fallback); `capabilities/page.test.tsx` (`?learner=` selection).
+**Fix:** `parseFocus()`; Gallery hidden/falls back to Table below 640px; `?learner=` honoured and passed by the hub; Portfolio renders `id="entry-…"` anchors and opens the linked card; the DLO catalog is cached per session. **Date logged:** 2026-10-06.
+
+### R36 — Code audit (2026-10-06): computed thread signals never reached the constellation; the Explore lens mislabelled quiet threads.
+
+`trajectory` and `first_evidence_date` were computed by the rebuild for every active thread and discarded at the API→topology boundary; nothing told a parent a thread was newly lit or picking up. Explore's "Suggested threads" were concretely "threads not touched in 30 days" — a recommendation Hearth had no basis for.
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 3 ("seeing growth").
+**Regression test:** `topology.test.ts` (recency helpers, snapshot carries trajectory); `TableView.test.tsx` ("New" + trajectory); `ExploreView.test.tsx` ("Gone quiet lately").
+**Fix:** "New" chip, recent-activity dot and trajectory read on thread rows; honest "Gone quiet lately" label with explanation. **Date logged:** 2026-10-06.
+
 ---
 
-*Next entry: R34. Append below; never edit above.*
+*Next entry: R37. Append below; never edit above.*

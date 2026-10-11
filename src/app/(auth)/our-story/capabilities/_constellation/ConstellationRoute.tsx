@@ -38,6 +38,56 @@ type ViewMode = 'table' | 'gallery' | 'explore';
 type Depth = 1 | 2 | 3 | 4;
 type Focus = { domain: string | null; thread: string | null; dlo: string | null };
 
+/**
+ * Resolve a `?focus=` value to a drill focus. Accepts a Sanity DLO id
+ * (`dlo.L3.emerging`, the shape the URL sync writes at depth 4), a thread id
+ * (`L3`) or a domain key (`languageLiteracy`). Before this, the parser only
+ * understood a one-character tier suffix (`L3.e`), so reloading a depth-4
+ * view — or following any depth-4 link — rendered an empty stage.
+ * Exported for tests.
+ */
+export function parseFocus(f: string | null): Focus {
+  if (!f) return { domain: null, thread: null, dlo: null };
+  const dlo = f.match(/^dlo\.([A-Za-z]+\d*)\.(emerging|developing|demonstrating)(?:\..*)?$/);
+  if (dlo) {
+    const t = THREADS_BY_ID[dlo[1]];
+    if (t) return { domain: t.domain, thread: dlo[1], dlo: f };
+  }
+  // Legacy shape "L3.e" from early deep links.
+  const legacy = f.match(/^([A-Za-z]+\d*)\.([a-z])$/);
+  if (legacy) {
+    const t = THREADS_BY_ID[legacy[1]];
+    if (t) return { domain: t.domain, thread: legacy[1], dlo: f };
+  }
+  const directThread = THREADS_BY_ID[f];
+  if (directThread) return { domain: directThread.domain, thread: f, dlo: null };
+  if (ORDERED_DOMAINS.some((d) => d.key === f)) return { domain: f, thread: null, dlo: null };
+  return { domain: null, thread: null, dlo: null };
+}
+
+/** Below this viewport width the Gallery's 1200-unit SVGs render labels at ~3px. */
+export const GALLERY_MIN_WIDTH_PX = 640;
+
+/**
+ * True when the viewport is too narrow for the Gallery. The Gallery is a
+ * fixed-viewBox SVG that shrinks to fit; at phone widths its 11px labels
+ * render at under 3px, so phones get the Table instead and the toggle hides
+ * the option. Reads matchMedia once and tracks changes; SSR and jsdom
+ * without matchMedia report "wide".
+ */
+function useNarrowViewport(): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia(`(max-width: ${GALLERY_MIN_WIDTH_PX - 1}px)`);
+    const update = () => setNarrow(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+  return narrow;
+}
+
 function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
   const active = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'active').length;
   const ghosts = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'ghost').length;
@@ -110,7 +160,7 @@ function Stepper({
   );
 }
 
-function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+function ViewToggle({ view, onChange, hideGallery = false }: { view: ViewMode; onChange: (v: ViewMode) => void; hideGallery?: boolean }) {
   return (
     <div role="radiogroup" aria-label="View mode"
          className="inline-flex gap-[2px] rounded-md border border-border-subtle bg-surface-panel p-[3px]">
@@ -118,7 +168,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
         { id: 'table' as const, glyph: '☰', label: 'Table' },
         { id: 'gallery' as const, glyph: '✦', label: 'Gallery' },
         { id: 'explore' as const, glyph: '◎', label: 'Explore' },
-      ]).map((v) => {
+      ]).filter((v) => !(hideGallery && v.id === 'gallery')).map((v) => {
         const active = view === v.id;
         return (
           <button
@@ -194,29 +244,15 @@ export function ConstellationRoute({
     const n = Number(search.get('d') ?? '1');
     return n === 2 || n === 3 || n === 4 ? (n as Depth) : 1;
   })();
-  const initialFocus: Focus = (() => {
-    const f = search.get('focus');
-    if (!f) return { domain: null, thread: null, dlo: null };
-    // DLO IDs look like "L3.e" — try splitting first.
-    const parts = f.split('.');
-    if (parts.length >= 2) {
-      const threadId = parts.slice(0, -1).join('.');
-      const tier = parts[parts.length - 1];
-      const t = THREADS_BY_ID[threadId];
-      if (t && tier.length === 1) {
-        return { domain: t.domain, thread: threadId, dlo: f };
-      }
-    }
-    // Otherwise it's either a thread id (e.g. "L3") or a domain key (e.g. "literacy").
-    const directThread = THREADS_BY_ID[f];
-    if (directThread) return { domain: directThread.domain, thread: f, dlo: null };
-    if (ORDERED_DOMAINS.some((d) => d.key === f)) return { domain: f, thread: null, dlo: null };
-    return { domain: null, thread: null, dlo: null };
-  })();
+  const initialFocus: Focus = parseFocus(search.get('focus'));
 
-  const [view, setView] = useState<ViewMode>(initialView);
+  const [requestedView, setView] = useState<ViewMode>(initialView);
   const [depth, setDepth] = useState<Depth>(initialDepth);
   const [focus, setFocus] = useState<Focus>(initialFocus);
+  // Phones get the Table in place of the Gallery (see useNarrowViewport); the
+  // requested view is remembered so widening the window restores it.
+  const narrow = useNarrowViewport();
+  const view: ViewMode = narrow && requestedView === 'gallery' ? 'table' : requestedView;
 
   // Parent DLO confirmations. `assertOverrides` is the optimistic layer (dloId →
   // intended confirmed-state) laid over the snapshot's durable
@@ -354,7 +390,7 @@ export function ConstellationRoute({
             <ContextLine snap={snap} depth={depth} focus={focus} dlosByThread={dlosByThread} />
           )}
         </div>
-        <ViewToggle view={view} onChange={setView} />
+        <ViewToggle view={view} onChange={setView} hideGallery={narrow} />
       </div>
 
       {depth === 1 && view !== 'explore' && <HearthVoiceCard snap={snap} />}

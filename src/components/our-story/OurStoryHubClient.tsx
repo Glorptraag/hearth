@@ -339,7 +339,7 @@ export default function OurStoryHubClient() {
         />
 
         <NavCard
-          href="/our-story/capabilities"
+          href={selectedId ? `/our-story/capabilities?learner=${encodeURIComponent(selectedId)}` : '/our-story/capabilities'}
           Icon={Sparkle}
           title="Capabilities"
           stat1={statsLearnerId !== selectedId ? '—' : `${stats?.capabilityThreadsActive ?? 0} threads active`}

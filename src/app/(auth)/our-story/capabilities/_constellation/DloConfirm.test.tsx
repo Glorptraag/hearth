@@ -78,9 +78,10 @@ describe('DLO confirm control — TableView L3 (TableDLOs)', () => {
         onConfirmDlo={vi.fn()}
       />,
     );
-    // The demonstrating tier chip now reads "Demonstrating", leaving "Confirm…"
-    // exclusively to the parent-assertion control.
-    expect(screen.getByText('Demonstrating')).toBeInTheDocument();
+    // The status chip reads "Demonstrating" (once wide, once as the compact
+    // phone chip), leaving "Confirm…" exclusively to the parent-assertion control.
+    expect(screen.getAllByText('Demonstrating').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Confirmed')).toBeNull();
   });
 
   it('omits the control entirely when no onConfirmDlo handler is provided', () => {

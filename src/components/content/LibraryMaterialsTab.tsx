@@ -206,7 +206,7 @@ export function LibraryMaterialsTab({ packs }: LibraryMaterialsTabProps) {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <p className="font-sans text-sm text-text-muted animate-pulse">Loading materials…</p>
+        <p className="font-sans text-sm text-text-muted hearth-pulse">Loading materials…</p>
       </div>
     );
   }
@@ -240,7 +240,7 @@ export function LibraryMaterialsTab({ packs }: LibraryMaterialsTabProps) {
             <button
               key={chip.value}
               onClick={() => setKindFilter(chip.value)}
-              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-[var(--motion-quick)] ${
+              className={`font-sans text-[0.72rem] font-semibold px-2.5 py-1 rounded-full border transition duration-[var(--motion-quick)] ${
                 kindFilter === chip.value
                   ? 'bg-ember text-text-inverse border-ember'
                   : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium'
@@ -326,7 +326,7 @@ export function LibraryMaterialsTab({ packs }: LibraryMaterialsTabProps) {
         <div className="sticky bottom-0 bg-surface-body border-t border-border-subtle px-md py-md -mx-md">
           <button
             onClick={() => setShowPrintSheet(true)}
-            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+            className="w-full bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
           >
             Print {selectedIds.size} selected item{selectedIds.size !== 1 ? 's' : ''}
           </button>

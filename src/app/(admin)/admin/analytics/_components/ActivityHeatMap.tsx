@@ -76,7 +76,7 @@ export default function ActivityHeatMap({ moduleId }: Props) {
                 ? 'Insufficient data'
                 : `Stage ${cell.stageNumber}: ${cell.logCount} log${cell.logCount !== 1 ? 's' : ''} from ${cell.familyCount} famil${cell.familyCount !== 1 ? 'ies' : 'y'}`
             }
-            className="relative rounded-md border border-border-subtle flex flex-col items-center justify-center p-sm gap-xs cursor-default transition-all duration-[var(--motion-quick)] hover:border-border-medium"
+            className="relative rounded-md border border-border-subtle flex flex-col items-center justify-center p-sm gap-xs cursor-default transition duration-[var(--motion-quick)] hover:border-border-medium"
             style={{
               background: cell.suppressed ? 'rgba(114,100,88,0.1)' : heatColor(cell.logCount ?? 0, maxCount),
               minHeight: 64,

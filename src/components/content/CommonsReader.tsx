@@ -137,7 +137,7 @@ export function CommonsReader({
       role="dialog"
       aria-modal="true"
       aria-labelledby="commons-reader-title"
-      className="fixed inset-0 z-50 bg-surface-body overflow-y-auto"
+      className="hearth-fade-in fixed inset-0 z-50 bg-surface-body overflow-y-auto"
     >
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-lg py-md bg-surface-body/95 backdrop-blur-sm border-b border-border-subtle">
@@ -278,7 +278,7 @@ function ModeButton({
   return (
     <button
       onClick={onClick}
-      className={`font-sans text-sm px-md py-xs rounded-[10px] border transition-all duration-[var(--motion-quick)] ${
+      className={`font-sans text-sm px-md py-xs rounded-[10px] border transition duration-[var(--motion-quick)] ${
         active
           ? 'bg-ember text-text-inverse border-ember font-semibold'
           : 'bg-transparent text-text-secondary border-border-subtle hover:border-border-medium'

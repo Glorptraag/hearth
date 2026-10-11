@@ -25,7 +25,7 @@ export default function DemoLearnerProfile({
           <p className="font-sans text-sm text-text-muted mb-lg">Learner not found</p>
           <Link
             href="/demo/our-story"
-            className="inline-flex rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+            className="inline-flex rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)]"
           >
             Back to Our Story
           </Link>
@@ -64,7 +64,7 @@ export default function DemoLearnerProfile({
           {profile.interests.map((interest) => (
             <span
               key={interest}
-              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
             >
               {interest}
             </span>
@@ -79,7 +79,7 @@ export default function DemoLearnerProfile({
           {profile.strengths.map((strength) => (
             <span
               key={strength}
-              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+              className="rounded-full border border-border-subtle bg-surface-raised px-md py-xs font-sans text-sm text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
             >
               {strength}
             </span>

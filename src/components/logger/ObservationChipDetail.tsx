@@ -52,7 +52,7 @@ export function ObservationChipDetail({ chip, value, onChange }: ObservationChip
   if (!config) return null;
 
   return (
-    <div className="mt-sm ml-sm pl-sm border-l-2 border-border-subtle space-y-sm animate-in fade-in slide-in-from-top-1 duration-[var(--motion-quick)]">
+    <div className="hearth-reveal mt-sm ml-sm pl-sm border-l-2 border-border-subtle space-y-sm">
       <div>
         <label
           htmlFor={inputId}

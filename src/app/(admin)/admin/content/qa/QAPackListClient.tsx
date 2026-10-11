@@ -37,7 +37,7 @@ export default function QAPackListClient() {
         </div>
         <Link
           href="/admin/content/qa/issues"
-          className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-semibold text-text-secondary hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+          className="rounded-md border border-border-subtle px-md py-sm font-sans text-[0.8rem] font-semibold text-text-secondary hover:text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
         >
           All Issues
         </Link>

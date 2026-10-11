@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Pedagogy } from '@/types';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useSlidingTabIndicator } from '@/hooks/use-sliding-tab-indicator';
 import { ArrowLeft, CaretDown, CaretUp, Check, Flame, X } from '@/components/icons';
 import {
   PHILOSOPHIES,
@@ -250,7 +251,7 @@ export function PedagogyWizard({
                 <div className="flex flex-col items-center gap-xs">
                   <div
                     className={[
-                      'flex h-8 w-8 items-center justify-center rounded-full border-2 font-sans text-xs font-semibold transition-all duration-[var(--motion-quick)] md:h-9 md:w-9 md:text-sm',
+                      'flex h-8 w-8 items-center justify-center rounded-full border-2 font-sans text-xs font-semibold transition duration-[var(--motion-quick)] md:h-9 md:w-9 md:text-sm',
                       isActive
                         ? 'bg-ember text-text-inverse border-transparent shadow-[0_0_16px_rgba(217,123,58,0.5)]'
                         : isComplete
@@ -335,7 +336,7 @@ export function PedagogyWizard({
               type="button"
               onClick={goBack}
               disabled={saving}
-              className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+              className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)] disabled:opacity-50"
             >
               <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Back</span>
             </button>
@@ -360,7 +361,7 @@ export function PedagogyWizard({
               type="button"
               onClick={goNext}
               disabled={!canProceed || saving}
-              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
+              className="rounded-[6px] bg-ember px-lg py-sm font-sans text-sm font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ember"
             >
               {step < 3
                 ? 'Continue'
@@ -415,7 +416,7 @@ function PhilosophyStep({
               onClick={() => onSelect(p.id)}
               aria-pressed={isSelected}
               className={[
-                'group relative overflow-hidden rounded-lg p-md text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] md:p-xl',
+                'group relative overflow-hidden rounded-lg p-md text-left transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] md:p-xl',
                 'border shadow-card',
                 isSelected
                   ? 'border-border-medium bg-surface-raised shadow-float -translate-y-[2px]'
@@ -601,7 +602,7 @@ function PriorityStep({
                 disabled={atCap}
                 aria-pressed={isSelected}
                 className={[
-                  'group flex flex-col gap-xs rounded-[10px] border p-md text-left transition-all duration-[var(--motion-quick)]',
+                  'group flex flex-col gap-xs rounded-[10px] border p-md text-left transition duration-[var(--motion-quick)]',
                   isSelected
                     ? 'border-ember/40 bg-ember-glow'
                     : atCap
@@ -705,6 +706,7 @@ function ReviewStep({
 }) {
   // One ref per tab for roving-tabindex focus management (WAI-ARIA APG pattern).
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { listRef: tabListRef, indicatorProps: tabIndicator } = useSlidingTabIndicator(insightTab);
   const handleTabKeyDown = useCallback<React.KeyboardEventHandler<HTMLButtonElement>>(
     (e) => {
       const idx = INSIGHT_TABS.indexOf(insightTab);
@@ -844,9 +846,10 @@ function ReviewStep({
           </div>
 
           {/* Insight tabs */}
-          <div role="tablist" aria-label="Sample activity insights" className="flex gap-xs border-b border-border-subtle">
+          <div ref={tabListRef} role="tablist" aria-label="Sample activity insights" className="relative flex gap-xs border-b border-border-subtle">
             <InsightTab
               id="insight-tab-philosophy"
+              tabKey="philosophy"
               controls="insight-panel-philosophy"
               label="Philosophy Lens"
               active={insightTab === 'philosophy'}
@@ -856,6 +859,7 @@ function ReviewStep({
             />
             <InsightTab
               id="insight-tab-values"
+              tabKey="values"
               controls="insight-panel-values"
               label="Values"
               active={insightTab === 'values'}
@@ -865,6 +869,7 @@ function ReviewStep({
             />
             <InsightTab
               id="insight-tab-practices"
+              tabKey="practices"
               controls="insight-panel-practices"
               label="Next Steps"
               active={insightTab === 'practices'}
@@ -872,12 +877,14 @@ function ReviewStep({
               buttonRef={(el) => { tabRefs.current[2] = el; }}
               onKeyDown={handleTabKeyDown}
             />
+            <span {...tabIndicator} />
           </div>
           <div
+            key={insightTab}
             role="tabpanel"
             id={`insight-panel-${insightTab}`}
             aria-labelledby={`insight-tab-${insightTab}`}
-            className="pt-md"
+            className="hearth-panel-enter pt-md"
           >
             <p className="mb-xs font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ember">
               {activeInsight.title}
@@ -945,6 +952,7 @@ function InsightTab({
   id,
   controls,
   label,
+  tabKey,
   active,
   onClick,
   buttonRef,
@@ -953,6 +961,7 @@ function InsightTab({
   id: string;
   controls: string;
   label: string;
+  tabKey: string;
   active: boolean;
   onClick: () => void;
   buttonRef?: (el: HTMLButtonElement | null) => void;
@@ -963,6 +972,7 @@ function InsightTab({
       ref={buttonRef}
       type="button"
       id={id}
+      data-tab-key={tabKey}
       aria-controls={controls}
       aria-selected={active}
       role="tab"
@@ -970,10 +980,8 @@ function InsightTab({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={[
-        'relative -mb-[1px] border-b-2 px-sm py-xs font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)]',
-        active
-          ? 'border-ember text-ember'
-          : 'border-transparent text-text-muted hover:text-text-secondary',
+        '-mb-[1px] border-b-2 border-transparent px-sm py-xs font-sans text-xs font-semibold transition-colors duration-[var(--motion-quick)]',
+        active ? 'text-ember' : 'text-text-muted hover:text-text-secondary',
       ].join(' ')}
     >
       {label}

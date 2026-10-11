@@ -39,7 +39,7 @@ export function ChildSelector({
           <button
             key={learner.id}
             onClick={() => onChange(learner.id)}
-            className={`flex items-center gap-xs px-md py-sm font-sans text-sm font-medium border-b-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+            className={`flex items-center gap-xs px-md py-sm font-sans text-sm font-medium border-b-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               active
                 ? `${colors.active} ${colors.border}`
                 : 'border-transparent text-text-secondary hover:text-text-primary'

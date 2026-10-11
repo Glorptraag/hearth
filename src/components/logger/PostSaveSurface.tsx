@@ -240,14 +240,14 @@ function ExitRow({ onLogAnother }: { onLogAnother: () => void }) {
     <div className="flex flex-col-reverse gap-sm pt-sm sm:flex-row sm:justify-end">
       <Link
         href="/"
-        className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+        className="hearth-press inline-flex items-center justify-center rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary"
       >
         Back to Dashboard
       </Link>
       <button
         type="button"
         onClick={onLogAnother}
-        className="hearth-press inline-flex items-center justify-center rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+        className="hearth-press inline-flex items-center justify-center rounded-md bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse shadow-ember"
       >
         Log Another
       </button>

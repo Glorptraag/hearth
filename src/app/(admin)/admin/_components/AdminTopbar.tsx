@@ -49,7 +49,7 @@ export default function AdminTopbar() {
         </span>
 
         <SignOutButton>
-          <button className="rounded-md px-sm py-xs font-sans text-[0.75rem] font-medium text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all duration-[var(--motion-quick)] border border-transparent hover:border-border-subtle">
+          <button className="rounded-md px-sm py-xs font-sans text-[0.75rem] font-medium text-text-muted hover:text-text-primary hover:bg-surface-raised transition duration-[var(--motion-quick)] border border-transparent hover:border-border-subtle">
             Logout
           </button>
         </SignOutButton>

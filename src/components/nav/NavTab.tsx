@@ -21,7 +21,7 @@ export function NavTab({ href, label, Icon, active, onNavigate }: NavTabProps) {
       href={href}
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
-      className={`hearth-press flex min-h-[44px] flex-col items-center justify-end gap-xs px-xs py-sm font-sans text-[0.65rem] font-semibold uppercase tracking-[0.08em] transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`hearth-press flex min-h-[44px] flex-col items-center justify-end gap-xs px-xs py-sm font-sans text-[0.65rem] font-semibold uppercase tracking-[0.08em] ${
         active ? 'text-ember' : 'text-text-muted'
       }`}
     >

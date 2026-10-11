@@ -76,7 +76,7 @@ export default function InvitationsClient() {
         </h1>
         <button
           onClick={() => setCreateOpen(true)}
-          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+          className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)]"
         >
           + New Invitation
         </button>
@@ -89,7 +89,7 @@ export default function InvitationsClient() {
             <button
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition-all duration-[var(--motion-quick)] border ${
+              className={`rounded-[6px] px-sm py-xs font-sans text-[0.7rem] font-semibold uppercase tracking-wider transition duration-[var(--motion-quick)] border ${
                 statusFilter === s
                   ? 'border-border-medium bg-surface-raised text-text-primary'
                   : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-subtle'
@@ -137,7 +137,7 @@ export default function InvitationsClient() {
                   </p>
                   <button
                     onClick={() => setCreateOpen(true)}
-                    className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+                    className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)]"
                   >
                     + New Invitation
                   </button>

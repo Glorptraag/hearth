@@ -66,7 +66,7 @@ export default function DloIntegrityPanel() {
               <button
                 key={o.days}
                 onClick={() => setDays(o.days)}
-                className={`rounded-md px-md py-sm font-sans text-[0.8rem] font-medium border transition-all duration-[var(--motion-quick)] ${
+                className={`rounded-md px-md py-sm font-sans text-[0.8rem] font-medium border transition duration-[var(--motion-quick)] ${
                   days === o.days
                     ? 'bg-surface-raised border-border-medium text-ember'
                     : 'bg-transparent border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'

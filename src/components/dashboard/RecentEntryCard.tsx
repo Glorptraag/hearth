@@ -51,7 +51,7 @@ export default function RecentEntryCard({ entry, learners }: RecentEntryCardProp
   })();
 
   return (
-    <div className="flex flex-col gap-sm rounded-[10px] border border-border-subtle bg-surface-panel p-md transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised">
+    <div className="flex flex-col gap-sm rounded-[10px] border border-border-subtle bg-surface-panel p-md transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:bg-surface-raised">
       {/* Learner chips + timestamp */}
       <div className="flex items-center justify-between gap-sm">
         <div className="flex flex-wrap gap-xs">

@@ -70,7 +70,7 @@ export default function AuditLogClient() {
         </h1>
         <button
           onClick={() => fetchEntries(page, filter)}
-          className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition-all duration-[var(--motion-quick)]"
+          className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary hover:border-border-medium transition duration-[var(--motion-quick)]"
         >
           Refresh
         </button>
@@ -82,7 +82,7 @@ export default function AuditLogClient() {
           <button
             key={g.value}
             onClick={() => handleFilterChange(g.value)}
-            className={`rounded-md px-sm py-xs font-sans text-[0.7rem] font-medium border transition-all duration-[var(--motion-quick)] ${
+            className={`rounded-md px-sm py-xs font-sans text-[0.7rem] font-medium border transition duration-[var(--motion-quick)] ${
               filter === g.value
                 ? 'border-border-medium bg-surface-raised text-ember'
                 : 'border-border-subtle text-text-muted hover:text-text-primary hover:border-border-medium'
@@ -141,7 +141,7 @@ export default function AuditLogClient() {
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition duration-[var(--motion-quick)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -151,7 +151,7 @@ export default function AuditLogClient() {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasMore}
-            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition-all duration-[var(--motion-quick)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-md border border-border-subtle px-sm py-xs font-sans text-[0.7rem] font-medium text-text-muted hover:text-text-primary transition duration-[var(--motion-quick)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next
           </button>
@@ -167,7 +167,7 @@ function AuditLogSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-lg border border-border-subtle bg-surface-panel p-md animate-pulse"
+          className="rounded-lg border border-border-subtle bg-surface-panel p-md hearth-skeleton"
         >
           <div className="flex items-start justify-between gap-md">
             <div className="flex-1">

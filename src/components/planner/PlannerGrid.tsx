@@ -231,7 +231,7 @@ export default function PlannerGrid({
               {!isReadOnly && !isPast && (
                 <button
                   onClick={() => onAdd(dateStr, 'morning')}
-                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
+                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
                 >
                   +
                 </button>
@@ -285,7 +285,7 @@ export default function PlannerGrid({
               {!isReadOnly && !isPast && (
                 <button
                   onClick={() => onAdd(dateStr, 'afternoon')}
-                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition-all duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
+                  className="mt-auto flex items-center justify-center rounded-md border border-dashed border-text-muted/20 py-xs font-sans text-xs text-text-muted/40 transition duration-[var(--motion-quick)] hover:border-ember hover:bg-ember-glow hover:text-ember"
                 >
                   +
                 </button>

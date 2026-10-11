@@ -203,7 +203,7 @@ export function MarketplaceShell({
           >
             <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Dashboard</span>
           </Link>
-          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition-all duration-[var(--motion-quick)] cursor-pointer">
+          <div className="flex items-center gap-2 font-sans text-[0.8rem] font-medium text-text-secondary bg-surface-raised border border-border-subtle rounded-[10px] px-3 py-2 hover:border-border-medium hover:text-ember transition duration-[var(--motion-quick)] cursor-pointer">
             <Books size={16} aria-hidden="true" />
             <span>My Library</span>
             {libraryCount > 0 && (
@@ -269,7 +269,7 @@ export function MarketplaceShell({
         <div className="flex flex-wrap gap-xs mb-xl">
           <button
             onClick={() => setActiveSubject(null)}
-            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)] ${
+            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition duration-[var(--motion-quick)] ${
               activeSubject === null
                 ? 'bg-ember text-text-inverse border-ember'
                 : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -284,7 +284,7 @@ export function MarketplaceShell({
               <button
                 key={s.value}
                 onClick={() => setActiveSubject(isActive ? null : s.value)}
-                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)]"
+                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition duration-[var(--motion-quick)]"
                 style={{
                   color: s.hex,
                   background: isActive ? `rgba(${rgb},0.22)` : `rgba(${rgb},0.08)`,
@@ -300,7 +300,7 @@ export function MarketplaceShell({
         {/* ── Loading state ── */}
         {loading ? (
           <div className="py-20 text-center">
-            <p className="font-sans text-sm text-text-muted animate-pulse">Loading marketplace…</p>
+            <p className="font-sans text-sm text-text-muted hearth-pulse">Loading marketplace…</p>
           </div>
         ) : (
           <>
@@ -468,7 +468,7 @@ export function MarketplaceShell({
                 {hasContent && (
                   <button
                     onClick={() => { setSearch(''); setActiveSubject(null); setKind('all'); }}
-                    className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)]"
+                    className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition duration-[var(--motion-quick)]"
                   >
                     Reset filters
                   </button>

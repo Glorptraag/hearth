@@ -108,7 +108,7 @@ export default function DemoActivities() {
           <button
             key={d.key}
             onClick={() => setSelectedDuration(d.key)}
-            className={`rounded-md px-md py-xs font-sans text-xs border transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+            className={`rounded-md px-md py-xs font-sans text-xs border transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
               selectedDuration === d.key
                 ? 'border-ember text-ember bg-ember/10'
                 : 'border-border-subtle text-text-muted hover:border-border-medium'
@@ -126,7 +126,7 @@ export default function DemoActivities() {
             <Link
               key={m.id}
               href={`/demo/module/${m.id}`}
-              className="group bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
+              className="group bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
             >
               <h3 className="font-serif text-base font-semibold text-text-primary mb-sm">
                 {m.title}

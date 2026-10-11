@@ -78,7 +78,7 @@ export default async function JoinPage({
           </p>
           <a
             href="/dashboard"
-            className="inline-flex px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+            className="inline-flex px-6 py-3 bg-ember text-text-inverse font-sans text-sm font-semibold rounded-[10px] hover:bg-ember-hover transition duration-[var(--motion-quick)]"
           >
             Back to Dashboard
           </a>

@@ -75,7 +75,7 @@ export default function StaleAlertsList({ families, onRebuild }: Props) {
               <td className="px-md text-right">
                 <button
                   onClick={() => onRebuild(f.familyId, f.familyName)}
-                  className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs font-medium text-text-secondary hover:border-ember hover:text-ember transition-all duration-[var(--motion-quick)]"
+                  className="rounded-md border border-border-subtle px-sm py-xs font-sans text-xs font-medium text-text-secondary hover:border-ember hover:text-ember transition duration-[var(--motion-quick)]"
                 >
                   Rebuild
                 </button>

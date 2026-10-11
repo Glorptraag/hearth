@@ -63,7 +63,7 @@ export function WhenWhereSection({
                   // never a hidden default.
                   if (w === 'earlier' && !earlierDate) onEarlierDateChange?.(defaultEarlierDate());
                 }}
-                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap ${
                   whenDate === w
                     ? 'bg-ember-glow border border-ember text-text-primary'
                     : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
@@ -105,7 +105,7 @@ export function WhenWhereSection({
               <button
                 key={d}
                 onClick={() => onDurationChange(duration === d ? null : d)}
-                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap ${
                   duration === d
                     ? 'bg-ember-glow border border-ember text-text-primary'
                     : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
@@ -125,7 +125,7 @@ export function WhenWhereSection({
               <button
                 key={w.key}
                 onClick={() => onLocationChange(location === w.key ? null : w.key)}
-                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`hearth-press min-h-[36px] rounded-sm px-sm py-xs font-sans text-[0.75rem] font-medium whitespace-nowrap ${
                   location === w.key
                     ? 'bg-ember-glow border border-ember text-text-primary'
                     : 'bg-surface-body border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'

@@ -222,12 +222,12 @@ function DailyChart({ rows }: { rows: DayRow[] }) {
             </span>
             <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-surface-raised">
               <div
-                className="absolute inset-y-0 left-0 transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                className="absolute inset-y-0 left-0 transition-[width] duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 style={{ width: `${fullPct}%`, background: 'rgba(217,123,58,0.7)' }}
                 title={`Full enrichment: $${d.full.toFixed(4)}`}
               />
               <div
-                className="absolute inset-y-0 transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                className="absolute inset-y-0 transition-[width] duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 style={{
                   width: `${draftPct}%`,
                   left: `${fullPct}%`,

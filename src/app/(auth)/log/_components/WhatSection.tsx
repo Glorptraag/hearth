@@ -1,4 +1,4 @@
-import { Microphone, ChatCircleDots, CircleNotch } from '@/components/icons';
+import { Microphone, ChatCircleDots } from '@/components/icons';
 import { SectionHeader } from './SectionHeader';
 import { CHILD_COLORS } from './childColors';
 import { ACTIVITY_TYPES, SUBJECTS } from './loggerConstants';
@@ -77,7 +77,7 @@ export function WhatSection({
             placeholder={placeholder}
             aria-label={label}
             rows={4}
-            className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body px-md pt-md pb-[52px] font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition-all duration-[var(--motion-quick)] resize-none"
+            className="w-full min-h-[100px] rounded-lg border border-border-subtle bg-surface-body px-md pt-md pb-[52px] font-serif text-base text-text-primary leading-[1.7] placeholder:text-text-muted focus:border-ember focus:outline-none focus:shadow-focus transition duration-[var(--motion-quick)] resize-none"
           />
           <div className="absolute bottom-2 right-2 flex items-center gap-xs">
             {/* Live audio-level bars — visible while recording. They sit at a
@@ -112,17 +112,15 @@ export function WhatSection({
                     : 'Start voice input'
               }
               title={voiceSupported ? undefined : 'Voice needs microphone access in a recent browser'}
-              className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] before:absolute before:-inset-1 before:content-[''] ${
+              className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full transition duration-[var(--motion-quick)] ease-[var(--ease-default)] before:absolute before:-inset-1 before:content-[''] ${
                 isRecording
                   ? 'bg-ember text-text-inverse shadow-ember'
                   : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-              } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
+              } ${isTranscribing ? 'hearth-thinking' : ''} disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
             >
-              {isTranscribing ? (
-                <CircleNotch size={18} aria-hidden="true" className="animate-spin" />
-              ) : (
-                <Microphone size={18} weight={isRecording ? 'fill' : 'regular'} aria-hidden="true" />
-              )}
+              {/* Transcribing shows as the slow ember "thinking" pulse on the button —
+                  the voice is working with the parent, not a spinner saying "busy". */}
+              <Microphone size={18} weight={isRecording ? 'fill' : 'regular'} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -156,7 +154,7 @@ export function WhatSection({
             return (
               <div
                 key={id}
-                className={`rounded-md border ${colors.border} p-md ${colors.ring} ring-1 ring-transparent transition-all duration-[var(--motion-quick)]`}
+                className={`rounded-md border ${colors.border} p-md ${colors.ring} ring-1 ring-transparent transition duration-[var(--motion-quick)]`}
               >
                 <label className={`flex items-center gap-sm font-sans text-[0.75rem] font-semibold ${colors.text} mb-sm`}>
                   <span className={`h-[10px] w-[10px] rounded-full ${colors.border.replace('border', 'bg')}`} />
@@ -204,7 +202,7 @@ export function WhatSection({
               <button
                 key={type.key}
                 onClick={() => onActivityTypeChange(selected ? null : type.key)}
-                className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`flex flex-col items-center gap-xs rounded-md border-[1.5px] px-sm py-md font-sans text-[0.6875rem] font-semibold transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                   selected
                     ? 'border-ember bg-ember-glow text-text-primary'
                     : 'border-border-subtle bg-surface-body text-text-secondary hover:border-border-medium hover:bg-surface-raised'
@@ -231,7 +229,7 @@ export function WhatSection({
                 <button
                   key={s.key}
                   onClick={() => onToggleLessonSubject(s.key)}
-                  className={`flex items-center gap-xs rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[32px] ${
+                  className={`flex items-center gap-xs rounded-full px-sm py-xs font-sans text-xs transition duration-[var(--motion-quick)] min-h-[32px] ${
                     sel
                       ? 'bg-ember-glow border border-ember text-text-primary'
                       : 'border border-border-subtle text-text-secondary hover:border-border-medium'

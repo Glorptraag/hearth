@@ -134,7 +134,7 @@ export default function BadgeAssessmentPage() {
             aria-label={`Question ${currentQuestion + 1} of ${badge.assessmentQuestions.length}`}
           >
             <div
-              className="bg-ember h-full transition-all duration-[var(--motion-base)]"
+              className="bg-ember h-full transition-[width] duration-[var(--motion-base)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -159,7 +159,7 @@ export default function BadgeAssessmentPage() {
         <div className="flex flex-col gap-md mt-lg pt-lg border-t border-border-subtle">
           <button
             onClick={() => handleResponse('yes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-sage/30 hover:bg-sage/10 hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
             <p className="font-sans font-semibold text-sage mb-xs">
               Yes — consistently
@@ -171,7 +171,7 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('sometimes')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-amber-status/30 hover:bg-amber-status/20 hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-amber-status/30 hover:bg-amber-status/20 hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
             <p className="font-sans font-semibold text-amber-status mb-xs">
               Sometimes
@@ -183,7 +183,7 @@ export default function BadgeAssessmentPage() {
 
           <button
             onClick={() => handleResponse('not_yet')}
-            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
+            className="block w-full bg-surface-panel rounded-lg p-lg border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
           >
             <p className="font-sans font-semibold text-text-secondary mb-xs">
               Not yet
@@ -295,7 +295,7 @@ export default function BadgeAssessmentPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-md py-xl gap-lg max-w-2xl mx-auto">
         <div className="text-center space-y-lg">
           {/* Badge with glow effect */}
-          <div className="text-7xl filter drop-shadow-[0_0_20px_rgba(217,123,58,0.5)] animate-pulse">
+          <div className="text-7xl filter drop-shadow-[0_0_20px_rgba(217,123,58,0.5)] hearth-skeleton">
             {badge.emoji}
           </div>
 

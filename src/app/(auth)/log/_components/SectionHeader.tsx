@@ -9,7 +9,7 @@ import { Check } from '@/components/icons';
 export function SectionIndicator({ number, done }: { number: number; done: boolean }) {
   return (
     <div
-      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full font-sans text-[0.6875rem] font-semibold transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         done ? 'bg-ember border border-ember text-text-inverse' : 'bg-surface-raised border border-border-subtle text-text-muted'
       }`}
     >
@@ -80,7 +80,7 @@ export function CompletenessRing({
           strokeDashoffset={offset}
           strokeLinecap="round"
           transform="rotate(-90 20 20)"
-          className="transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+          className="transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         />
         {!ready && (
           <text

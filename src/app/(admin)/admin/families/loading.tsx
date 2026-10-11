@@ -1,6 +1,6 @@
 export default function FamiliesLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="h-6 w-28 rounded bg-surface-raised mb-lg" />
       <div className="h-10 rounded-md bg-surface-raised mb-md" />
       <div className="space-y-xs">

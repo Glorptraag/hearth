@@ -85,7 +85,7 @@ export default function DemoLog() {
                   <button
                     key={t.key}
                     onClick={() => setActivityType(t.key)}
-                    className={`rounded-md px-md py-sm font-sans text-sm border transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] text-left ${
+                    className={`rounded-md px-md py-sm font-sans text-sm border transition duration-[var(--motion-quick)] ease-[var(--ease-default)] text-left ${
                       activityType === t.key
                         ? 'border-ember text-ember bg-ember/10'
                         : 'border-border-subtle text-text-secondary bg-surface-raised hover:border-border-medium'
@@ -150,7 +150,7 @@ export default function DemoLog() {
                     <button
                       key={l.id}
                       onClick={() => toggleLearner(l.id)}
-                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                      className={`flex items-center gap-sm rounded-md px-md py-sm font-sans text-sm border-2 transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                         selected
                           ? `${LEARNER_BORDER[l.colourToken] ?? 'border-ember'} text-text-primary bg-surface-raised`
                           : 'border-border-subtle text-text-muted hover:border-border-medium'
@@ -190,7 +190,7 @@ export default function DemoLog() {
             <button
               onClick={handleSave}
               disabled={!title.trim()}
-              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`w-full rounded-md bg-ember px-xl py-md font-sans text-base font-semibold text-text-inverse shadow-ember transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
                 title.trim()
                   ? 'hover:bg-ember-hover hover:shadow-ember-strong hover:translate-y-[-2px]'
                   : 'opacity-50 cursor-not-allowed'
@@ -221,8 +221,8 @@ export default function DemoLog() {
 
       {/* Success overlay */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" className="bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-float text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center hearth-backdrop-enter backdrop-modal backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" className="hearth-modal-enter bg-surface-panel rounded-lg p-3xl border border-border-subtle shadow-float text-center">
             <div className="text-5xl mb-lg" aria-hidden="true">✨</div>
             <h2 className="font-serif text-xl font-semibold text-text-primary mb-sm">
               Moment captured!

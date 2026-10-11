@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { clientSanityRead } from '@/lib/sanity/client-read';
+import { CaretDown } from '@/components/icons';
 
 interface SourceExcerpt {
   text: string;
@@ -99,17 +100,16 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+        className="flex w-full items-center justify-between rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-secondary transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
           Explore {frameworkLabel}
         </span>
-        <span className="font-sans text-xs text-text-muted" aria-hidden="true">
-          {open ? '▲' : '▼'}
-        </span>
+        <CaretDown size={14} aria-hidden="true" className="hearth-expand-chevron text-text-muted" />
       </button>
 
-      {open && (
+      <div className={`hearth-expand ${open ? 'is-open' : ''}`}>
+        <div className="hearth-expand-content" aria-hidden={!open}>
         <div className="mt-md flex flex-col gap-md">
           <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-text-muted">
             Reading Path
@@ -139,7 +139,8 @@ export function PedagogyLearnMore({ pedagogyKey }: PedagogyLearnMoreProps) {
             </div>
           ))}
         </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

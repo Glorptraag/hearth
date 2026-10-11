@@ -20,7 +20,7 @@ export default function BadgeChip({ badge }: BadgeChipProps) {
   const badgeEmoji = badge.badgeEmoji;
 
   return (
-    <div className="flex flex-col items-center gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition-all duration-[var(--motion-gentle)] hover:border-border-medium hover:bg-surface-raised">
+    <div className="flex flex-col items-center gap-xs rounded-[10px] border border-border-subtle bg-surface-panel p-sm text-center transition duration-[var(--motion-gentle)] hover:border-border-medium hover:bg-surface-raised">
       {badgeEmoji ? (
         <span className="text-2xl" aria-hidden="true">{badgeEmoji}</span>
       ) : (

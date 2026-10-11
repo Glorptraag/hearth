@@ -168,7 +168,7 @@ export function BrowseTab() {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <p className="font-sans text-sm text-text-muted animate-pulse">Loading library…</p>
+        <p className="font-sans text-sm text-text-muted hearth-pulse">Loading library…</p>
       </div>
     );
   }
@@ -196,13 +196,13 @@ export function BrowseTab() {
         <div className="flex flex-wrap items-center justify-center gap-sm">
           <Link
             href="/explore/marketplace"
-            className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)]"
+            className="bg-ember text-text-inverse font-sans font-semibold rounded-md px-md py-sm text-sm hover:bg-ember/90 transition duration-[var(--motion-quick)]"
           >
             Explore Marketplace
           </Link>
           <Link
             href="/build/modules"
-            className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition-all duration-[var(--motion-quick)]"
+            className="border border-border-subtle text-text-secondary font-sans font-semibold rounded-md px-md py-sm text-sm hover:border-border-medium hover:text-text-primary transition duration-[var(--motion-quick)]"
           >
             Build your own
           </Link>
@@ -349,7 +349,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center font-sans text-xs px-sm py-xs rounded-full border transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+      className={`inline-flex items-center font-sans text-xs px-sm py-xs rounded-full border transition duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
         active
           ? (className ?? 'bg-ember/15 text-ember border-ember/30')
           : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium'
@@ -394,7 +394,7 @@ function BrowseModuleCard({
   };
 
   return (
-    <div className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]">
+    <div className="group relative bg-surface-panel rounded-lg border border-border-subtle p-lg shadow-card hover:border-border-medium hover:shadow-hover hover:-translate-y-[2px] transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]">
       <div className="flex items-start justify-between gap-sm mb-xs">
         <h3 className="font-serif text-[1rem] font-semibold text-text-primary">
           {m.title}
@@ -456,13 +456,13 @@ function BrowseModuleCard({
               });
             }
           }}
-          className="flex-1 inline-flex items-center justify-center gap-xs bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember/90 transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+          className="flex-1 inline-flex items-center justify-center gap-xs bg-ember text-text-inverse font-sans text-sm font-semibold rounded-md px-md py-sm hover:bg-ember/90 transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         >
           <Play size={14} aria-hidden="true" /> Start Now
         </Link>
         <button
           onClick={addToToday}
-          className="inline-flex items-center justify-center gap-xs border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-md px-md py-sm hover:border-ember hover:text-text-primary transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+          className="inline-flex items-center justify-center gap-xs border border-border-subtle text-text-secondary font-sans text-sm font-semibold rounded-md px-md py-sm hover:border-ember hover:text-text-primary transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         >
           <CalendarBlank size={14} aria-hidden="true" /> Today
         </button>

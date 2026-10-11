@@ -144,7 +144,7 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
     <article
       role="article"
       aria-label={`${pack.title} — ${moduleCount} modules${ageStr ? `, ${ageStr}` : ''}`}
-      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-card overflow-hidden transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-hover ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
+      className={`group relative flex flex-col bg-surface-panel rounded-[16px] border border-border-subtle shadow-card overflow-hidden transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-0.5 hover:border-border-medium hover:shadow-hover ${inLibrary ? 'opacity-65 hover:opacity-80' : ''}`}
     >
       {/* Ember top-line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-ember to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-gentle)] z-10" />
@@ -251,7 +251,7 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
                 onAddToLibrary(pack._id);
               }}
               aria-label={`Add ${pack.title} to your library`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] cursor-pointer whitespace-nowrap"
             >
               Add to Library
             </button>
@@ -277,7 +277,7 @@ export function MarketplaceCard({ pack, inLibrary, owned = false, onAddToLibrary
                 onPurchase?.(pack._id);
               }}
               aria-label={`Purchase ${pack.title}`}
-              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)] cursor-pointer whitespace-nowrap shadow-ember"
+              className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-[6px] bg-ember text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)] cursor-pointer whitespace-nowrap shadow-ember"
             >
               Get Pack
             </button>

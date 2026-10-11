@@ -92,7 +92,7 @@ export function SettingsMenu() {
           aria-expanded={isOpen}
           aria-controls={menuId}
           aria-label="Settings menu"
-          className={`hit-target hearth-press flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color,color] duration-[var(--motion-gentle)] ease-[var(--ease-default)] ${
+          className={`hit-target hearth-press flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] ${
             isOpen
               ? 'border-ember bg-ember-glow text-ember'
               : 'border-border-medium text-text-muted hover:text-text-primary'

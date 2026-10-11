@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           {toasts.map((t) => (
             <div
               key={t.id}
-              className={`${t.leaving ? 'hearth-fade-out' : 'hearth-fade-in'} rounded-[10px] border border-border-subtle bg-surface-panel px-lg py-sm font-sans text-sm shadow-float ${
+              className={`${t.leaving ? 'hearth-fade-out' : 'hearth-toast-enter'} rounded-[10px] border border-border-subtle bg-surface-panel px-lg py-sm font-sans text-sm shadow-float ${
                 t.type === 'error' ? 'text-red-400' : 'text-text-secondary'
               }`}
             >

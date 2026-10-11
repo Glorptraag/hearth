@@ -67,7 +67,7 @@ export default function AnalyticsClient() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-xs rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition-all duration-[var(--motion-quick)] border ${
+            className={`flex items-center gap-xs rounded-md px-md py-sm font-sans text-[0.8rem] font-medium transition duration-[var(--motion-quick)] border ${
               activeTab === tab.id
                 ? 'border-border-medium bg-surface-raised text-ember'
                 : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -246,7 +246,7 @@ function AbandonmentTab({
       {moduleId !== submittedId && moduleId && (
         <button
           onClick={() => setSubmittedId(moduleId)}
-          className="mb-lg rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition-all duration-[var(--motion-quick)]"
+          className="mb-lg rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover transition duration-[var(--motion-quick)]"
         >
           Load
         </button>
@@ -311,7 +311,7 @@ function AbandonmentChart({ moduleId }: { moduleId: string }) {
                 </div>
               ) : (
                 <div
-                  className="h-full rounded-sm transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                  className="h-full rounded-sm transition-[width] duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                   style={{ width: `${pct}%`, background: 'rgba(217,123,58,0.7)' }}
                 />
               )}

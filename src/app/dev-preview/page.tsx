@@ -29,7 +29,7 @@ export default function DevPreviewIndex() {
           <Link
             key={route.href}
             href={route.href}
-            className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
+            className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-lg shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover"
           >
             <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
             <div className="flex items-center gap-md">

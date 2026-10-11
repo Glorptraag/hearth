@@ -1,5 +1,7 @@
 @import "tailwindcss";
-@import "./hearth-motion-utilities.css";
+/* Layered as components so a Tailwind utility on the same element (w-5, rounded-full,
+   hover:opacity-100, transition-colors) overrides the hearth class, never the reverse. */
+@import "./hearth-motion-utilities.css" layer(components);
 
 /* ==========================================================================
    Hearth LMS — Design Tokens v2 (Tailwind v4)
@@ -137,6 +139,12 @@
   --ease-out:         cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in:          cubic-bezier(0.7, 0, 0.84, 0);
   --ease-soft-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+
+  /* Tailwind's `transition-*` utilities fall back to these when no
+     duration-/ease- utility is present. Pinning them to the tokens means a
+     bare `transition-colors` is 200ms ease-default, not Tailwind's 150ms. */
+  --default-transition-duration:        var(--motion-quick);
+  --default-transition-timing-function: var(--ease-default);
 
   /* ---------- Icon sizes (Phosphor regular weight — see docs/hearth-icon-system-v1.md) ---------- */
   --icon-xs: 14px;
@@ -368,16 +376,20 @@
    ========================================================================== */
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in { animation: fadeInUp 0.6s var(--ease-out) forwards; }
+/* `forwards` is required: the .delay-* classes pre-hide via opacity: 0 and the
+   held end state is what keeps the section visible. The keyframe ends on
+   `transform: none` (not translateY(0)) so the held state never establishes
+   a containing block for fixed descendants such as modals. */
+.animate-in { animation: fadeInUp var(--motion-slow) var(--ease-out) forwards; }
 .delay-1 { animation-delay: 0.1s; opacity: 0; }
 .delay-2 { animation-delay: 0.2s; opacity: 0; }
 .delay-3 { animation-delay: 0.3s; opacity: 0; }
@@ -462,6 +474,52 @@ summary,
 label {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* Acknowledgement — every button gets press feedback within 100ms (motion
+   spec: the only snappy moment in the system). `scale(0.98)` on :active for
+   the duration of the press; disabled controls stay still. Lives in the base
+   layer so any component-level transform utility still wins. Tailwind v4's
+   translate/scale/rotate utilities use the individual transform properties,
+   so this `transform` composes with them rather than overriding. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    transition: transform var(--motion-instant) var(--ease-default);
+  }
+
+  button:not(:disabled):active,
+  [role='button']:not([aria-disabled='true']):active {
+    transform: scale(0.98);
+  }
+
+  /* Form fields — border colour at --motion-quick, focus ring fades in rather
+     than snapping. Components that set their own `transition-*` utility
+     override this wholesale, which is fine: the utility now consumes the
+     same tokens via --default-transition-*. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    transition:
+      border-color     var(--motion-quick) var(--ease-default),
+      background-color var(--motion-quick) var(--ease-default),
+      box-shadow       var(--motion-quick) var(--ease-default);
+  }
+}
+
+/* Dashboard ambient drift — the ONLY looping decorative motion in the system.
+   DashboardClient sets `data-hero="dashboard"` on <body> while mounted; the
+   ember gradient layer then drifts by ~2% over a 30s cycle. The layer is
+   oversized so the translate never reveals an edge. Transform only, so it
+   stays on the compositor instead of repainting a full-viewport gradient. */
+@keyframes hearth-hero-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(2%, -2%, 0); }
+}
+
+body[data-hero='dashboard']::before {
+  inset: -6%;
+  animation: hearth-hero-drift 30s var(--ease-default) infinite;
 }
 
 /* Expand a small control's tap area to a 44px minimum per axis without

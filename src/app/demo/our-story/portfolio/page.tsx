@@ -74,7 +74,7 @@ export default function DemoPortfolio() {
           placeholder="Search moments..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-border-medium focus:ring-1 focus:ring-ember/30 transition-all duration-[var(--motion-quick)]"
+          className="w-full rounded-md border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-border-medium focus:ring-1 focus:ring-ember/30 transition duration-[var(--motion-quick)]"
         />
       </div>
 
@@ -89,7 +89,7 @@ export default function DemoPortfolio() {
               <button
                 key={subject}
                 onClick={() => toggleSubject(subject)}
-                className={`rounded-full px-sm py-xs font-sans text-xs font-medium transition-all duration-[var(--motion-quick)] border ${
+                className={`rounded-full px-sm py-xs font-sans text-xs font-medium transition duration-[var(--motion-quick)] border ${
                   selectedSubjects.includes(subject)
                     ? 'border-border-medium bg-surface-raised text-text-primary'
                     : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium'
@@ -122,7 +122,7 @@ export default function DemoPortfolio() {
               {entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                  className="rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                 >
                   <h4 className="mb-sm font-serif font-semibold text-text-primary">{entry.title}</h4>
                   <p className="mb-md line-clamp-2 font-serif text-sm text-text-secondary">

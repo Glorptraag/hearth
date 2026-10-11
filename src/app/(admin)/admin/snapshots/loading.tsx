@@ -1,6 +1,6 @@
 export default function SnapshotsLoading() {
   return (
-    <div className="p-lg max-w-[960px] animate-pulse">
+    <div className="p-lg max-w-[960px] hearth-skeleton">
       <div className="h-6 w-36 rounded bg-surface-raised mb-lg" />
       <div className="rounded-lg border border-border-subtle bg-surface-panel p-md mb-lg">
         <div className="h-3 w-48 rounded bg-surface-raised mb-md" />

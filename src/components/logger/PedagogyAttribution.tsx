@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { CaretDown, CaretUp } from '@/components/icons';
+import { CaretDown } from '@/components/icons';
 import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
 
 export interface PedagogyAttributionSource {
@@ -32,16 +32,18 @@ export function PedagogyAttribution({ sources, frameworkTitle = 'Charlotte Mason
         aria-expanded={expanded}
       >
         Grounded in {frameworkTitle}
-        {expanded ? <CaretUp size={12} aria-hidden="true" /> : <CaretDown size={12} aria-hidden="true" />}
+        <CaretDown size={12} aria-hidden="true" className="hearth-expand-chevron" />
       </button>
 
-      {expanded && (
-        <div className="mt-md space-y-sm">
-          {sources.map((source) => (
-            <SourceCard key={source.id} source={source} frameworkTitle={frameworkTitle} />
-          ))}
+      <div className={`hearth-expand ${expanded ? 'is-open' : ''}`}>
+        <div className="hearth-expand-content" aria-hidden={!expanded}>
+          <div className="mt-md space-y-sm">
+            {sources.map((source) => (
+              <SourceCard key={source.id} source={source} frameworkTitle={frameworkTitle} />
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

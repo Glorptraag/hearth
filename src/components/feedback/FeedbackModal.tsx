@@ -79,7 +79,7 @@ export function FeedbackModal({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-end justify-center backdrop-modal backdrop-blur-sm p-0 sm:items-center sm:p-lg"
+      className="fixed inset-0 z-[200] flex items-end justify-center hearth-backdrop-enter backdrop-modal backdrop-blur-sm p-0 sm:items-center sm:p-lg"
       onClick={close}
     >
       <div

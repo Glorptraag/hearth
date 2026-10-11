@@ -68,7 +68,7 @@ export default function DemoMarketplace() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
+            className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover"
           >
             <div className="flex items-start gap-lg">
               <span className="text-4xl">{p.imageEmoji}</span>

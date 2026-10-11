@@ -129,7 +129,7 @@ export default function ModuleExperiencePage() {
                   setCheckedObservations(new Set());
                   setMode('prep');
                 }}
-                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
+                className="bg-surface-panel rounded-lg p-xl border border-border-subtle shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] text-left"
               >
                 <div className="flex items-start gap-md">
                   <div className="text-2xl">
@@ -237,7 +237,7 @@ export default function ModuleExperiencePage() {
                     type="checkbox"
                     checked={checkedMaterials.has(idx)}
                     onChange={() => toggleMaterial(idx)}
-                    className="w-5 h-5 rounded border-border-subtle accent-ember cursor-pointer"
+                    className="hearth-checkbox w-5 h-5"
                   />
                   <div className="flex-1">
                     <span className="font-sans text-sm text-text-primary">
@@ -304,7 +304,7 @@ export default function ModuleExperiencePage() {
             aria-label={`Step ${currentStep + 1} of ${totalActivities}`}
           >
             <div
-              className="bg-ember h-full transition-all duration-[var(--motion-base)]"
+              className="bg-ember h-full transition-[width] duration-[var(--motion-base)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -378,7 +378,7 @@ export default function ModuleExperiencePage() {
                     type="checkbox"
                     checked={checkedObservations.has(idx)}
                     onChange={() => toggleObservation(idx)}
-                    className="w-5 h-5 rounded border-border-subtle accent-ember cursor-pointer mt-xs flex-shrink-0"
+                    className="hearth-checkbox w-5 h-5 mt-xs flex-shrink-0"
                   />
                   <span className="font-serif text-sm text-text-primary">
                     {prompt}

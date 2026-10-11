@@ -44,7 +44,7 @@ export default function DemoOurStoryHub() {
       <div className="mb-3xl grid grid-cols-1 gap-lg sm:grid-cols-2">
         <Link
           href={`/demo/our-story/portfolio?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">📷</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">{selected.name}&apos;s Portfolio</h3>
@@ -56,7 +56,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/report?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">📄</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">Learning Report</h3>
@@ -68,7 +68,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/capabilities?child=${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">🌟</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">Capabilities</h3>
@@ -80,7 +80,7 @@ export default function DemoOurStoryHub() {
 
         <Link
           href={`/demo/our-story/learner/${selectedId}`}
-          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+          className="group rounded-lg border border-border-subtle bg-surface-panel p-lg shadow-card hover:translate-y-[-2px] hover:border-border-medium hover:shadow-hover transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
         >
           <div className="mb-md text-3xl" aria-hidden="true">💡</div>
           <h3 className="mb-sm font-serif font-semibold text-text-primary">About {selected.name}</h3>

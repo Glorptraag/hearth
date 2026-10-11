@@ -27,6 +27,8 @@ import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
 import { sanityServerClient } from '@/lib/sanity/client';
 import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
 import type { SnapshotData } from '@/types/snapshot';
+import type { LoggerContext } from '@/types/logger-context';
+import { deriveSituationalSignals } from '@/lib/pedagogy/situational-signals';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -283,6 +285,33 @@ async function assembleContext(entryId: string, familyId: string) {
 /** Exported for eval harness and unit tests — assembleContext stays private. */
 export type AssembledEnrichContext = Awaited<ReturnType<typeof assembleContext>>;
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  nature: 'Nature study', cooking: 'Kitchen science', reading: 'Reading', art: 'Creative arts',
+  physical: 'Physical', social: 'Social', structured: 'Lesson', freeplay: 'Free play',
+};
+const LOCATION_LABELS: Record<string, string> = {
+  home: 'at home', outdoors: 'outdoors', community: 'in the community', online: 'online',
+};
+
+/**
+ * The parent's structured notes as a prompt block, or '' when the entry has
+ * none (rows saved before logger_context existed, or a parent who typed only).
+ * Exported for the prompt tests.
+ */
+export function formatStructuredNotes(ctx: LoggerContext | null | undefined): string {
+  if (!ctx) return '';
+  const facts: string[] = [];
+  if (ctx.activityType) facts.push(`activity: ${ACTIVITY_LABELS[ctx.activityType] ?? ctx.activityType}`);
+  if (ctx.location) facts.push(`where: ${LOCATION_LABELS[ctx.location] ?? ctx.location}`);
+  if (ctx.duration) facts.push(`duration: ${ctx.duration}`);
+  const chips = (ctx.observations ?? []).filter((o) => typeof o === 'string' && o.trim());
+  if (facts.length === 0 && chips.length === 0) return '';
+  const lines = ['', "Parent's structured notes (tapped, not typed):"];
+  if (facts.length > 0) lines.push(`- ${facts.join(' · ')}`);
+  if (chips.length > 0) lines.push(`- Parent observed: ${chips.join(', ')}`);
+  return lines.join('\n') + '\n';
+}
+
 /**
  * Thread ids a child has lit, from the family snapshot, most-recently-
  * evidenced first (then by observation volume). Pure; exported for tests.
@@ -368,14 +397,34 @@ export async function buildUserPrompt(ctx: AssembledEnrichContext): Promise<{ pr
         .join(', ')
     : '';
 
-  // Build pedagogy context (retrieval + formatting, gated by PEDAGOGY_KB_ENABLED)
+  // The Logger's structured capture context (chips / activity / where / how
+  // long). Null on rows saved before logger_context existed.
+  const loggerContext = (entry.loggerContext ?? null) as LoggerContext | null;
+  const situational = deriveSituationalSignals({
+    context: loggerContext,
+    engagement: engagementData,
+    childAges,
+  });
+
+  // Build pedagogy context (retrieval + formatting, gated by PEDAGOGY_KB_ENABLED).
+  // Threads: author-declared / candidate threads first, then the children's
+  // active threads — deduped and validated inside buildPedagogyContextWithSources.
   const { prompt: pedagogySection, sources: pedagogySources } = await buildPedagogyContextWithSources({
     entryTitle: entry.title ?? '',
     entryDescription: entry.description ?? '',
     framework: pedagogy,
     childAges,
-    capabilityThreads: activeThreadList,
+    capabilityThreads: [...(candidateThreadIds ?? []), ...activeThreadList],
+    discoveries: discoveries ? Object.values(discoveries) : [],
+    situationalSignals: situational.signals,
+    activityType: situational.activityType,
   });
+
+  // Structured notes block — what the parent tapped, not just what they
+  // typed. "Persisted through difficulty" or "Taught someone" is exactly the
+  // evidence the DLO tiering and the journey_observation rules ask for, and
+  // until this landed none of it reached the model.
+  const structuredNotesBlock = formatStructuredNotes(loggerContext);
 
   // Build DLO descriptor block for candidate threads (WS-3).
   // Injected into the USER prompt so the system prompt stays byte-identical
@@ -428,7 +477,7 @@ Description: ${entry.description ?? '(none)'}
 
 Per-child observations:
 ${discoveriesLine || '(none)'}
-${observationDetailsBlock}
+${observationDetailsBlock}${structuredNotesBlock}
 Engagement selections: ${engagementLine || '(none)'}`;
 
   return { prompt, pedagogySources };

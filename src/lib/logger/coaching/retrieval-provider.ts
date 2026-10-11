@@ -9,6 +9,7 @@ import {
   retrievePedagogyChunks,
   type RetrievedChunk,
 } from '@/lib/pedagogy/retrieval';
+import { deriveSituationalSignals } from '@/lib/pedagogy/situational-signals';
 import type {
   CoachHintProvider,
   CoachHintInput,
@@ -47,15 +48,22 @@ export class RetrievalCoachProvider implements CoachHintProvider {
     let hints: CoachHint[] = [];
     try {
       const framework = await this.getFramework(input.familyId);
-      const activeThreads = Object.values(input.snapshotSignals?.perChild ?? {})
-        .flatMap((s) => s.active ?? []);
+      const activeThreads = [...new Set(
+        Object.values(input.snapshotSignals?.perChild ?? {}).flatMap((s) => s.active ?? []),
+      )];
+
+      // Chip labels and the UI activity key are translated into the corpus
+      // vocabulary; the raw labels ("Deeply focused") matched no tag at all.
+      const situational = deriveSituationalSignals({
+        context: { activityType: input.activityType, observations: input.observations },
+      });
 
       const result = await this.retrieve({
         pedagogyKey: framework,
         capabilityThreads: activeThreads,
         ageRange: { min: 0, max: 18 },
-        activityType: input.activityType ?? undefined,
-        situationalSignals: input.observations,
+        activityType: situational.activityType,
+        situationalSignals: situational.signals,
         loggerEntryText: input.description.slice(0, 400),
         topN: MAX_HINTS,
       });
@@ -79,7 +87,10 @@ export class RetrievalCoachProvider implements CoachHintProvider {
       .slice(0, 16);
     const learners = [...input.learnerIds].sort().join(',');
     const activity = input.activityType ?? 'none';
-    return `${descHash}|${learners}|${activity}`;
+    // Observations are a retrieval input, so they belong in the key — a chip
+    // toggled mid-sentence previously served the stale pre-chip hints.
+    const chips = [...input.observations].sort().join(',');
+    return `${descHash}|${learners}|${activity}|${chips}`;
   }
 }
 

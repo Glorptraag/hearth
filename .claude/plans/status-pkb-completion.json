@@ -1,102 +1,650 @@
 {
   "plan": "PLAN-pkb-completion",
-  "generated": "2026-07-08T00:00:00Z",
-  "note": "Bulk wave tasks additionally require the drew-ack line in corpus-fanout/review-<wave>-calibration.md to read 'go' — the ACK tasks encode that gate. W3/W4 interpretive tasks soft-gate on their source's SE bulk (wikilinks must resolve); encoded as blocked_by where hard.",
+  "generated": "2026-10-06T00:00:00Z",
+  "note": "Bulk wave tasks additionally require the drew-ack line in corpus-fanout/review-<wave>-calibration.md to read 'go' \u2014 the ACK tasks encode that gate. W3/W4 interpretive tasks soft-gate on their source's SE bulk (wikilinks must resolve); encoded as blocked_by where hard. Reconciled against main 2026-10-06: E1\u2013E9 and W0.1\u2013W0.6 are all merged; CAL batches for W2/W3/W4 and the W5 task were drafted 2026-10-06 (see corpus-fanout/review-*-calibration.md) and await Drew's VERIFY/ACK.",
   "tasks": {
-    "P0": { "status": "done", "blocked_by": [], "completed_at": "2026-07-08T00:00:00Z", "completed_by": "fable-session", "note": "This file + PLAN-pkb-completion.md + corpus-fanout/ stubs + architecture-doc §6 correction." },
-
-    "E1": { "status": "done", "blocked_by": [], "completed_by": "worker-haiku", "pr": 263, "completed_at": "2026-07-08T00:00:00Z", "note": "5 PKB schemas gain optional ageRange/capabilityThreads/activityType. Verified: allocation matches spec, FV untouched, tsc+eslint clean. PR off origin/main." },
-    "E2": { "status": "pending", "blocked_by": ["E1", "258-MERGE"], "note": "Compiler passthrough — parse.ts/compile.ts only exist on the vault stack; branch off goofy-cartwright once #258 merges." },
-    "E3": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 261, "completed_at": "2026-07-08T00:00:00Z", "note": "Unified metadata writers + reembed metadata-refresh. Verified: buildChunkText untouched (hashes stable), 25 tests, IS-DISTINCT-FROM guarded UPDATE. PR off origin/main." },
-    "E4": { "status": "pending", "blocked_by": ["E3"] },
-    "E5": { "status": "pending", "blocked_by": ["E3"] },
-    "E6": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 262, "completed_at": "2026-07-08T00:00:00Z", "note": "Eclectic multi-lens (IN-query LIMIT 100 + selectEclectic + tension surfacing). Verified: non-eclectic SQL+prompt byte-identical (prompt pinned in test), 9 tests. PR off origin/main." },
-    "E7": { "status": "pending", "blocked_by": ["E5", "E6"] },
-    "E8": { "status": "pending", "blocked_by": ["E6", "OPS-POPULATE"] },
-    "E9": { "status": "done", "blocked_by": [], "completed_by": "worker-sonnet", "pr": 260, "completed_at": "2026-07-08T00:00:00Z", "note": "SPEC-ONLY doc; single file. Worker cross-referenced existing hearth-lens-loop-implementation-plan-v1.md and positioned E9 as the narrower verifiable interim step." },
-
-    "W0.1": { "status": "pending", "blocked_by": [] },
-    "W0.2": { "status": "pending", "blocked_by": ["W0.1"] },
-    "W0.3": { "status": "pending", "blocked_by": ["W0.1", "E3"] },
-    "W0.4": { "status": "pending", "blocked_by": [] },
-    "W0.5": { "status": "pending", "blocked_by": [] },
-    "W0.6": { "status": "pending", "blocked_by": ["E2"] },
-
-    "W1-CAL": { "status": "pending", "blocked_by": ["W0.5"] },
-    "W1-VERIFY": { "status": "pending", "blocked_by": ["W1-CAL", "W0.2", "W0.4"] },
-    "W1-ACK": { "status": "pending", "blocked_by": ["W1-VERIFY"], "owner": "drew" },
-    "W1-SE-2": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-SE-3": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-SE-4": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-SE-5": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-SE-6": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-PP": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-CI": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-WE-1": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-WE-2": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-WE-3": { "status": "pending", "blocked_by": ["W1-ACK"] },
-    "W1-CLOSE": { "status": "pending", "blocked_by": ["W1-SE-2", "W1-SE-3", "W1-SE-4", "W1-SE-5", "W1-SE-6", "W1-PP", "W1-CI", "W1-WE-1", "W1-WE-2", "W1-WE-3"] },
-
-    "W2-CAL": { "status": "pending", "blocked_by": ["W0.5"] },
-    "W2-VERIFY": { "status": "pending", "blocked_by": ["W2-CAL", "W0.2", "W0.4"] },
-    "W2-ACK": { "status": "pending", "blocked_by": ["W2-VERIFY"], "owner": "drew" },
-    "W2-PP": { "status": "pending", "blocked_by": ["W2-ACK"] },
-    "W2-OM": { "status": "pending", "blocked_by": ["W2-ACK"] },
-    "W2-SE-1": { "status": "pending", "blocked_by": ["W2-ACK"] },
-    "W2-SE-2": { "status": "pending", "blocked_by": ["W2-ACK"] },
-    "W2-CLOSE": { "status": "pending", "blocked_by": ["W2-PP", "W2-OM", "W2-SE-1", "W2-SE-2"] },
-    "W2B-OPTIONAL": { "status": "pending", "blocked_by": ["W2-CLOSE"], "note": "WE montessori.009–020 (3 batches) + CI .007–.008. Dispatch only if Drew wants Montessori at full Wave-1 volume now." },
-
-    "W3-CAL": { "status": "pending", "blocked_by": ["W0.5"] },
-    "W3-VERIFY": { "status": "pending", "blocked_by": ["W3-CAL", "W0.2", "W0.4"] },
-    "W3-ACK": { "status": "pending", "blocked_by": ["W3-VERIFY"], "owner": "drew" },
-    "W3-SE-1": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-2": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-3": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-4": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-5": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-6": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-7": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-SE-8": { "status": "pending", "blocked_by": ["W3-ACK"] },
-    "W3-PP-1": { "status": "pending", "blocked_by": ["W3-SE-1", "W3-SE-2"] },
-    "W3-PP-2": { "status": "pending", "blocked_by": ["W3-SE-3", "W3-SE-4"] },
-    "W3-OM": { "status": "pending", "blocked_by": ["W3-SE-1", "W3-SE-2"] },
-    "W3-CI-1": { "status": "pending", "blocked_by": ["W3-SE-1", "W3-SE-2"] },
-    "W3-CI-2": { "status": "pending", "blocked_by": ["W3-SE-5", "W3-SE-6"] },
-    "W3-WE-1": { "status": "pending", "blocked_by": ["W3-SE-1", "W3-SE-2"] },
-    "W3-WE-2": { "status": "pending", "blocked_by": ["W3-SE-3", "W3-SE-4"] },
-    "W3-WE-3": { "status": "pending", "blocked_by": ["W3-SE-5", "W3-SE-6"] },
-    "W3-WE-4": { "status": "pending", "blocked_by": ["W3-SE-7", "W3-SE-8"] },
-    "W3-CLOSE": { "status": "pending", "blocked_by": ["W3-PP-1", "W3-PP-2", "W3-OM", "W3-CI-1", "W3-CI-2", "W3-WE-1", "W3-WE-2", "W3-WE-3", "W3-WE-4"] },
-
-    "W4-CAL": { "status": "pending", "blocked_by": ["W0.5"] },
-    "W4-VERIFY": { "status": "pending", "blocked_by": ["W4-CAL", "W0.2", "W0.4"] },
-    "W4-ACK": { "status": "pending", "blocked_by": ["W4-VERIFY"], "owner": "drew" },
-    "W4-SE-1": { "status": "pending", "blocked_by": ["W4-ACK"] },
-    "W4-SE-2": { "status": "pending", "blocked_by": ["W4-ACK"] },
-    "W4-SE-3": { "status": "pending", "blocked_by": ["W4-ACK"] },
-    "W4-SE-4": { "status": "pending", "blocked_by": ["W4-ACK"] },
-    "W4-SE-5": { "status": "pending", "blocked_by": ["W4-ACK"] },
-    "W4-SE-6": { "status": "pending", "blocked_by": ["W4-ACK"], "note": "1919 cycles — isParaphrase: true mandatory" },
-    "W4-SE-7": { "status": "pending", "blocked_by": ["W4-ACK"], "note": "1919 cycles — isParaphrase: true mandatory" },
-    "W4-SE-8": { "status": "pending", "blocked_by": ["W4-ACK"], "note": "1919 cycles — isParaphrase: true mandatory" },
-    "W4-SE-9": { "status": "pending", "blocked_by": ["W4-ACK"], "note": "1919 cycles — isParaphrase: true mandatory" },
-    "W4-PP-1": { "status": "pending", "blocked_by": ["W4-SE-1", "W4-SE-2"] },
-    "W4-PP-2": { "status": "pending", "blocked_by": ["W4-SE-3", "W4-SE-4"] },
-    "W4-OM": { "status": "pending", "blocked_by": ["W4-SE-1", "W4-SE-2"] },
-    "W4-CI-1": { "status": "pending", "blocked_by": ["W4-SE-1", "W4-SE-2"] },
-    "W4-CI-2": { "status": "pending", "blocked_by": ["W4-SE-3", "W4-SE-4"] },
-    "W4-WE-1": { "status": "pending", "blocked_by": ["W4-SE-1", "W4-SE-2"] },
-    "W4-WE-2": { "status": "pending", "blocked_by": ["W4-SE-3", "W4-SE-4"] },
-    "W4-WE-3": { "status": "pending", "blocked_by": ["W4-SE-5"] },
-    "W4-WE-4": { "status": "pending", "blocked_by": ["W4-SE-6", "W4-SE-7"] },
-    "W4-CLOSE": { "status": "pending", "blocked_by": ["W4-PP-1", "W4-PP-2", "W4-OM", "W4-CI-1", "W4-CI-2", "W4-WE-1", "W4-WE-2", "W4-WE-3", "W4-WE-4", "W4-SE-8", "W4-SE-9"] },
-
-    "W5-TASK": { "status": "pending", "blocked_by": ["W0.5"] },
-    "W5-VERIFY": { "status": "pending", "blocked_by": ["W5-TASK", "W0.2", "W0.4"] },
-
-    "W0.6-REEMBED-OPS": { "status": "pending", "blocked_by": ["W0.6", "E3"], "owner": "drew", "note": "seed:pedagogy:corpus + seed:pedagogy:reembed after metadata backfill; E3's refresh path makes --force unnecessary." },
-    "OPS-POPULATE": { "status": "pending", "blocked_by": ["W1-CLOSE", "W2-CLOSE", "W3-CLOSE", "W4-CLOSE", "W5-VERIFY", "W0.6"], "owner": "drew", "note": "Architecture doc §5: hygiene → compile → corpus:review/confirm → VOYAGE_API_KEY → reembed → verify:pkb(+retrieval)." },
-    "OPS-FLAG-FLIP": { "status": "pending", "blocked_by": ["OPS-POPULATE", "E4", "E5", "E7"], "owner": "drew", "note": "Webhook config + PEDAGOGY_KB_ENABLED=true + 1-week log/cost watch." }
+    "P0": {
+      "status": "done",
+      "blocked_by": [],
+      "completed_at": "2026-07-08T00:00:00Z",
+      "completed_by": "fable-session",
+      "note": "This file + PLAN-pkb-completion.md + corpus-fanout/ stubs + architecture-doc \u00a76 correction."
+    },
+    "E1": {
+      "status": "done",
+      "blocked_by": [],
+      "completed_by": "worker-haiku",
+      "pr": 263,
+      "completed_at": "2026-07-08T00:00:00Z",
+      "note": "5 PKB schemas gain optional ageRange/capabilityThreads/activityType. Verified: allocation matches spec, FV untouched, tsc+eslint clean. PR off origin/main."
+    },
+    "E2": {
+      "status": "done",
+      "blocked_by": [
+        "E1",
+        "258-MERGE"
+      ],
+      "note": "Compiler passthrough of ageRange/capabilityThreads/activityType (parse.ts LAYER_CONTRACTS + compile.ts validation). Reconciled 2026-10-06 against main.",
+      "pr": 266,
+      "completed_at": "2026-10-06T00:00:00Z"
+    },
+    "E3": {
+      "status": "done",
+      "blocked_by": [],
+      "completed_by": "worker-sonnet",
+      "pr": 261,
+      "completed_at": "2026-07-08T00:00:00Z",
+      "note": "Unified metadata writers + reembed metadata-refresh. Verified: buildChunkText untouched (hashes stable), 25 tests, IS-DISTINCT-FROM guarded UPDATE. PR off origin/main."
+    },
+    "E4": {
+      "status": "done",
+      "blocked_by": [
+        "E3"
+      ],
+      "pr": 264,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "PedagogyAttribution layer cards + generic fallback + per-card framework label. SE/PP branches moved onto CardShell (caption, paraphrase never quoted, fallback) in the 2026-10-06 PKB engine PR."
+    },
+    "E5": {
+      "status": "done",
+      "blocked_by": [
+        "E3"
+      ],
+      "pr": 265,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "pkb-factories + pedagogy-attribution-pipeline.integration.test. Reconciled 2026-10-06."
+    },
+    "E6": {
+      "status": "done",
+      "blocked_by": [],
+      "completed_by": "worker-sonnet",
+      "pr": 262,
+      "completed_at": "2026-07-08T00:00:00Z",
+      "note": "Eclectic multi-lens (IN-query LIMIT 100 + selectEclectic + tension surfacing). Verified: non-eclectic SQL+prompt byte-identical (prompt pinned in test), 9 tests. PR off origin/main."
+    },
+    "E7": {
+      "status": "done",
+      "blocked_by": [
+        "E5",
+        "E6"
+      ],
+      "pr": 271,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "retrieval.integration.test \u2014 8 cases. Tags case now asserts exact controlled-vocabulary matching (2026-10-06)."
+    },
+    "E8": {
+      "status": "done",
+      "blocked_by": [
+        "E6",
+        "OPS-POPULATE"
+      ],
+      "pr": null,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "scripts/verify-pkb-retrieval.ts + scripts/data/pkb-golden-queries.json + npm run verify:pkb:retrieval. Evaluation logic in src/lib/pedagogy/golden-queries.ts (unit-tested); not CI. Landed in the 2026-10-06 PKB engine PR."
+    },
+    "E9": {
+      "status": "done",
+      "blocked_by": [],
+      "completed_by": "worker-sonnet",
+      "pr": 260,
+      "completed_at": "2026-07-08T00:00:00Z",
+      "note": "SPEC-ONLY doc; single file. Worker cross-referenced existing hearth-lens-loop-implementation-plan-v1.md and positioned E9 as the narrower verifiable interim step."
+    },
+    "W0.1": {
+      "status": "done",
+      "blocked_by": [],
+      "pr": 269,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "tags.json bootstrapped (363 tags; one alias cluster). Reconciled 2026-10-06 against main."
+    },
+    "W0.2": {
+      "status": "done",
+      "blocked_by": [
+        "W0.1"
+      ],
+      "pr": 272,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "Compiler soft warnings (tags.ts, vault warnings, CLI \u26a0 block). Reconciled 2026-10-06 against main."
+    },
+    "W0.3": {
+      "status": "done",
+      "blocked_by": [
+        "W0.1",
+        "E3"
+      ],
+      "pr": 273,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "Rewards-cluster normalisation. Reconciled 2026-10-06 against main."
+    },
+    "W0.4": {
+      "status": "done",
+      "blocked_by": [],
+      "pr": 270,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "corpus:review + corpus:confirm scripts. Reconciled 2026-10-06 against main."
+    },
+    "W0.5": {
+      "status": "done",
+      "blocked_by": [],
+      "pr": 268,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "All wave sources registered (28). Reconciled 2026-10-06 against main."
+    },
+    "W0.6": {
+      "status": "done",
+      "blocked_by": [
+        "E2"
+      ],
+      "pr": 273,
+      "completed_at": "2026-10-06T00:00:00Z",
+      "note": "Conservative metadata backfill (14 ageRange / 25 capabilityThreads / 9 activityType). Reconciled 2026-10-06 against main."
+    },
+    "W1-CAL": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.5"
+      ]
+    },
+    "W1-VERIFY": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-CAL",
+        "W0.2",
+        "W0.4"
+      ]
+    },
+    "W1-ACK": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-VERIFY"
+      ],
+      "owner": "drew"
+    },
+    "W1-SE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-SE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-SE-4": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-SE-5": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-SE-6": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-PP": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-CI": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-WE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-WE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-WE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-ACK"
+      ]
+    },
+    "W1-CLOSE": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-SE-2",
+        "W1-SE-3",
+        "W1-SE-4",
+        "W1-SE-5",
+        "W1-SE-6",
+        "W1-PP",
+        "W1-CI",
+        "W1-WE-1",
+        "W1-WE-2",
+        "W1-WE-3"
+      ]
+    },
+    "W2-CAL": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.5"
+      ]
+    },
+    "W2-VERIFY": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-CAL",
+        "W0.2",
+        "W0.4"
+      ]
+    },
+    "W2-ACK": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-VERIFY"
+      ],
+      "owner": "drew"
+    },
+    "W2-PP": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-ACK"
+      ]
+    },
+    "W2-OM": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-ACK"
+      ]
+    },
+    "W2-SE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-ACK"
+      ]
+    },
+    "W2-SE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-ACK"
+      ]
+    },
+    "W2-CLOSE": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-PP",
+        "W2-OM",
+        "W2-SE-1",
+        "W2-SE-2"
+      ]
+    },
+    "W2B-OPTIONAL": {
+      "status": "pending",
+      "blocked_by": [
+        "W2-CLOSE"
+      ],
+      "note": "WE montessori.009\u2013020 (3 batches) + CI .007\u2013.008. Dispatch only if Drew wants Montessori at full Wave-1 volume now."
+    },
+    "W3-CAL": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.5"
+      ]
+    },
+    "W3-VERIFY": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-CAL",
+        "W0.2",
+        "W0.4"
+      ]
+    },
+    "W3-ACK": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-VERIFY"
+      ],
+      "owner": "drew"
+    },
+    "W3-SE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-4": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-5": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-6": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-7": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-SE-8": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-ACK"
+      ]
+    },
+    "W3-PP-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-1",
+        "W3-SE-2"
+      ]
+    },
+    "W3-PP-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-3",
+        "W3-SE-4"
+      ]
+    },
+    "W3-OM": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-1",
+        "W3-SE-2"
+      ]
+    },
+    "W3-CI-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-1",
+        "W3-SE-2"
+      ]
+    },
+    "W3-CI-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-5",
+        "W3-SE-6"
+      ]
+    },
+    "W3-WE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-1",
+        "W3-SE-2"
+      ]
+    },
+    "W3-WE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-3",
+        "W3-SE-4"
+      ]
+    },
+    "W3-WE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-5",
+        "W3-SE-6"
+      ]
+    },
+    "W3-WE-4": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-SE-7",
+        "W3-SE-8"
+      ]
+    },
+    "W3-CLOSE": {
+      "status": "pending",
+      "blocked_by": [
+        "W3-PP-1",
+        "W3-PP-2",
+        "W3-OM",
+        "W3-CI-1",
+        "W3-CI-2",
+        "W3-WE-1",
+        "W3-WE-2",
+        "W3-WE-3",
+        "W3-WE-4"
+      ]
+    },
+    "W4-CAL": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.5"
+      ]
+    },
+    "W4-VERIFY": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-CAL",
+        "W0.2",
+        "W0.4"
+      ]
+    },
+    "W4-ACK": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-VERIFY"
+      ],
+      "owner": "drew"
+    },
+    "W4-SE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ]
+    },
+    "W4-SE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ]
+    },
+    "W4-SE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ]
+    },
+    "W4-SE-4": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ]
+    },
+    "W4-SE-5": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ]
+    },
+    "W4-SE-6": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ],
+      "note": "1919 cycles \u2014 isParaphrase: true mandatory"
+    },
+    "W4-SE-7": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ],
+      "note": "1919 cycles \u2014 isParaphrase: true mandatory"
+    },
+    "W4-SE-8": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ],
+      "note": "1919 cycles \u2014 isParaphrase: true mandatory"
+    },
+    "W4-SE-9": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-ACK"
+      ],
+      "note": "1919 cycles \u2014 isParaphrase: true mandatory"
+    },
+    "W4-PP-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-1",
+        "W4-SE-2"
+      ]
+    },
+    "W4-PP-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-3",
+        "W4-SE-4"
+      ]
+    },
+    "W4-OM": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-1",
+        "W4-SE-2"
+      ]
+    },
+    "W4-CI-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-1",
+        "W4-SE-2"
+      ]
+    },
+    "W4-CI-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-3",
+        "W4-SE-4"
+      ]
+    },
+    "W4-WE-1": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-1",
+        "W4-SE-2"
+      ]
+    },
+    "W4-WE-2": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-3",
+        "W4-SE-4"
+      ]
+    },
+    "W4-WE-3": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-5"
+      ]
+    },
+    "W4-WE-4": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-SE-6",
+        "W4-SE-7"
+      ]
+    },
+    "W4-CLOSE": {
+      "status": "pending",
+      "blocked_by": [
+        "W4-PP-1",
+        "W4-PP-2",
+        "W4-OM",
+        "W4-CI-1",
+        "W4-CI-2",
+        "W4-WE-1",
+        "W4-WE-2",
+        "W4-WE-3",
+        "W4-WE-4",
+        "W4-SE-8",
+        "W4-SE-9"
+      ]
+    },
+    "W5-TASK": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.5"
+      ]
+    },
+    "W5-VERIFY": {
+      "status": "pending",
+      "blocked_by": [
+        "W5-TASK",
+        "W0.2",
+        "W0.4"
+      ]
+    },
+    "W0.6-REEMBED-OPS": {
+      "status": "pending",
+      "blocked_by": [
+        "W0.6",
+        "E3"
+      ],
+      "owner": "drew",
+      "note": "seed:pedagogy:corpus + seed:pedagogy:reembed after metadata backfill; E3's refresh path makes --force unnecessary."
+    },
+    "OPS-POPULATE": {
+      "status": "pending",
+      "blocked_by": [
+        "W1-CLOSE",
+        "W2-CLOSE",
+        "W3-CLOSE",
+        "W4-CLOSE",
+        "W5-VERIFY",
+        "W0.6"
+      ],
+      "owner": "drew",
+      "note": "Architecture doc \u00a75: hygiene \u2192 compile \u2192 corpus:review/confirm \u2192 VOYAGE_API_KEY \u2192 reembed \u2192 verify:pkb(+retrieval)."
+    },
+    "OPS-FLAG-FLIP": {
+      "status": "pending",
+      "blocked_by": [
+        "OPS-POPULATE",
+        "E4",
+        "E5",
+        "E7"
+      ],
+      "owner": "drew",
+      "note": "Webhook config + PEDAGOGY_KB_ENABLED=true + 1-week log/cost watch."
+    }
   }
 }

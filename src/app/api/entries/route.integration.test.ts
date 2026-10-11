@@ -157,6 +157,43 @@ describe('POST /api/entries — activity-level source fields (workstream D)', ()
     ]);
   });
 
+  it('persists the Logger\'s structured capture context (chips, activity, where, how long)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Creek walk',
+        description: 'Watched water striders for forty minutes.',
+        status: 'draft',
+        loggerContext: {
+          activityType: 'nature',
+          observations: ['Deeply focused', 'Asked questions'],
+          location: 'outdoors',
+          duration: '~30 min',
+        },
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const [row] = await db.select().from(learningEntries).where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(row.loggerContext).toEqual({
+      activityType: 'nature',
+      observations: ['Deeply focused', 'Asked questions'],
+      location: 'outdoors',
+      duration: '~30 min',
+    });
+  });
+
+  it('leaves logger_context null when the client sends none (pre-column clients)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const res = await POST(jsonReq('http://x/api/entries', { title: 'Plain save', status: 'draft' }));
+    expect(res.status).toBe(201);
+    const [row] = await db.select().from(learningEntries).where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(row.loggerContext).toBeNull();
+  });
+
   it('defaults sourceActivityIds to [] when omitted', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });

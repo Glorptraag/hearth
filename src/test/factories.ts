@@ -158,6 +158,7 @@ export function buildEntry(overrides: Partial<LearningEntry> = {}): LearningEntr
     plannerEntryId: null,
     status: 'draft',
     observationDetails: {},
+    loggerContext: null,
     aiEnrichment: null,
     workSampleCandidate: false,
     workSampleQuality: null,

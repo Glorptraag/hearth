@@ -148,6 +148,40 @@ describe('RetrievalCoachProvider', () => {
   });
 });
 
+describe('RetrievalCoachProvider — situational signals', () => {
+  beforeEach(() => {
+    vi.stubEnv('PEDAGOGY_KB_ENABLED', 'true');
+  });
+
+  it('translates chip labels and the UI activity key into corpus vocabulary before retrieval', async () => {
+    const mockRetrieve = vi.fn<(opts: import('@/lib/pedagogy/retrieval').RetrievalRequest) => Promise<RetrievalResponse>>()
+      .mockResolvedValue({ chunks: [], totalMatched: 0, retrievalLatencyMs: 1, fallbackUsed: false });
+    const provider = new RetrievalCoachProvider(mockRetrieve, vi.fn().mockResolvedValue('charlotte_mason'));
+
+    await provider.getHints(makeInput({ activityType: 'reading', observations: ['Deeply focused', 'Asked questions'] }));
+
+    const req = mockRetrieve.mock.calls[0][0];
+    expect(req.activityType).toBe('read_aloud_and_narration');
+    expect(req.situationalSignals).toEqual([
+      'child_deeply_focused',
+      'long_concentration_observed',
+      'child_asks_many_questions',
+      'reading_aloud_session',
+      'after_reading',
+    ]);
+  });
+
+  it('includes the observation chips in the cache key', async () => {
+    const mockRetrieve = vi.fn<(opts: import('@/lib/pedagogy/retrieval').RetrievalRequest) => Promise<RetrievalResponse>>()
+      .mockResolvedValue({ chunks: [], totalMatched: 0, retrievalLatencyMs: 1, fallbackUsed: false });
+    const provider = new RetrievalCoachProvider(mockRetrieve, vi.fn().mockResolvedValue('charlotte_mason'));
+
+    await provider.getHints(makeInput({ observations: [] }));
+    await provider.getHints(makeInput({ observations: ['Curious'] }));
+    expect(mockRetrieve).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('mapChunksToHints', () => {
   it('uses metadata heading as title when present', () => {
     const hints = mapChunksToHints([makeChunk({ metadata: { heading: 'My Heading' } })]);

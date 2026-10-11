@@ -51,9 +51,12 @@ vi.mock('../sanity-thread-cache', () => ({
   ])),
 }));
 
-vi.mock('../generate-monthly-narrative', () => ({
-  generateMonthlyNarrative: vi.fn(async () => ''),
-}));
+// Mock only the Haiku call; keep the pure narrativeSignature so the rebuild's
+// reuse logic runs for real.
+vi.mock('../generate-monthly-narrative', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../generate-monthly-narrative')>();
+  return { ...actual, generateMonthlyNarrative: vi.fn(async () => '') };
+});
 
 vi.mock('@/lib/notifications/triggers', () => ({
   triggerBadgeReady: vi.fn(async () => {}),
@@ -454,6 +457,129 @@ describe('INTEGRATION: rebuildSnapshot — milestone markers (P0-5)', () => {
     const flags = await entryFlags(family.id);
     expect(flags).toHaveLength(1);
     expect(flags[0].flag).toBe(false); // reconciled back to false
+  });
+});
+
+describe('INTEGRATION: rebuildSnapshot — monthly narrative reuse', () => {
+  const thisMonth = `${new Date().toISOString().slice(0, 7)}-10`;
+  const enriched = (thread: string) => ({
+    status: 'enriched' as const,
+    capability_threads: [{ thread_id: thread, confidence: 0.9 }],
+  });
+
+  it('reuses the prior narrative without an LLM call when its inputs are unchanged', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id, learnerIds: [learner.id], status: 'complete',
+      dateOccurred: thisMonth, aiEnrichment: enriched('L1'),
+    });
+
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('A steady month of stories.');
+    await rebuildSnapshot(family.id, 'manual');
+    expect(generateMonthlyNarrative).toHaveBeenCalledTimes(1);
+
+    const first = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+    expect(first.monthly_narrative).toBe('A steady month of stories.');
+    expect(first.monthly_narrative_signature).toMatch(/^[0-9a-f]{16}$/);
+    expect(first.monthly_narrative_generated_at).toBeTruthy();
+
+    // A dashboard-triggered rebuild with nothing new: same text, zero calls.
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    await rebuildSnapshot(family.id, 'user_dashboard');
+    expect(generateMonthlyNarrative).not.toHaveBeenCalled();
+
+    const second = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+    expect(second.monthly_narrative).toBe('A steady month of stories.');
+    expect(second.monthly_narrative_signature).toBe(first.monthly_narrative_signature);
+    expect(second.monthly_narrative_generated_at).toBe(first.monthly_narrative_generated_at);
+  });
+
+  it('regenerates when a new entry changes the inputs', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, {
+      familyId: family.id, learnerIds: [learner.id], status: 'complete',
+      dateOccurred: thisMonth, aiEnrichment: enriched('L1'),
+    });
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('First version.');
+    await rebuildSnapshot(family.id, 'manual');
+    const before = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+
+    await createEntry(db, {
+      familyId: family.id, learnerIds: [learner.id], status: 'complete',
+      dateOccurred: thisMonth, title: 'Bridge building', aiEnrichment: enriched('M6'),
+    });
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('Second version.');
+    await rebuildSnapshot(family.id, 'entry_saved');
+    expect(generateMonthlyNarrative).toHaveBeenCalledTimes(1);
+
+    const after = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+    expect(after.monthly_narrative).toBe('Second version.');
+    expect(after.monthly_narrative_signature).not.toBe(before.monthly_narrative_signature);
+  });
+
+  it("a sibling's save does not regenerate an unchanged child's narrative", async () => {
+    const family = await createFamily(db);
+    const a = await createLearner(db, { familyId: family.id, name: 'Ada' });
+    const b = await createLearner(db, { familyId: family.id, name: 'Ben' });
+    await createEntry(db, { familyId: family.id, learnerIds: [a.id], status: 'complete', dateOccurred: thisMonth, aiEnrichment: enriched('L1') });
+    await createEntry(db, { familyId: family.id, learnerIds: [b.id], status: 'complete', dateOccurred: thisMonth, aiEnrichment: enriched('M1') });
+
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    vi.mocked(generateMonthlyNarrative).mockImplementation(async (input) => `${input.childName}'s month.`);
+    await rebuildSnapshot(family.id, 'manual');
+    expect(generateMonthlyNarrative).toHaveBeenCalledTimes(2);
+
+    // Only Ada logs something new.
+    await createEntry(db, { familyId: family.id, learnerIds: [a.id], status: 'complete', dateOccurred: thisMonth, title: 'Poem', aiEnrichment: enriched('L7') });
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    await rebuildSnapshot(family.id, 'entry_saved');
+    expect(generateMonthlyNarrative).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(generateMonthlyNarrative).mock.calls[0][0].childName).toBe('Ada');
+
+    const snap = (await getSnapshot(family.id))!;
+    expect((snap.children[b.id] as ChildSnapshot).monthly_narrative).toBe("Ben's month.");
+  });
+
+  it('a settings_change rebuild keeps the existing narrative instead of wiping it', async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, { familyId: family.id, learnerIds: [learner.id], status: 'complete', dateOccurred: thisMonth, aiEnrichment: enriched('L1') });
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('Kept across a settings change.');
+    await rebuildSnapshot(family.id, 'manual');
+
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    await rebuildSnapshot(family.id, 'settings_change');
+    expect(generateMonthlyNarrative).not.toHaveBeenCalled();
+    const child = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+    expect(child.monthly_narrative).toBe('Kept across a settings change.');
+  });
+
+  it("keeps this month's prior text when generation fails, and retries next time", async () => {
+    const family = await createFamily(db);
+    const learner = await createLearner(db, { familyId: family.id });
+    await createEntry(db, { familyId: family.id, learnerIds: [learner.id], status: 'complete', dateOccurred: thisMonth, aiEnrichment: enriched('L1') });
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('Good text.');
+    await rebuildSnapshot(family.id, 'manual');
+    const good = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+
+    // New input (another entry) but the API fails (returns '').
+    await createEntry(db, { familyId: family.id, learnerIds: [learner.id], status: 'complete', dateOccurred: thisMonth, title: 'Map making', aiEnrichment: enriched('H3') });
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('');
+    await rebuildSnapshot(family.id, 'entry_saved');
+    const degraded = (await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot;
+    expect(degraded.monthly_narrative).toBe('Good text.');
+    // Signature left stale on purpose so the next generating rebuild retries.
+    expect(degraded.monthly_narrative_signature).toBe(good.monthly_narrative_signature);
+
+    vi.mocked(generateMonthlyNarrative).mockClear();
+    vi.mocked(generateMonthlyNarrative).mockResolvedValue('Recovered text.');
+    await rebuildSnapshot(family.id, 'user_dashboard');
+    expect(generateMonthlyNarrative).toHaveBeenCalledTimes(1);
+    expect(((await getSnapshot(family.id))!.children[learner.id] as ChildSnapshot).monthly_narrative).toBe('Recovered text.');
   });
 });
 

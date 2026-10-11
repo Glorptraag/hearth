@@ -31,6 +31,7 @@ import {
   omitSuppressedKeys,
 } from '@/lib/capability-alpha-suppression';
 import { detectMilestoneEntries } from './milestone-detect';
+import { buildChildInsights } from './insights-feed';
 import {
   triggerBadgeReady,
   triggerComplianceNudge,
@@ -40,7 +41,7 @@ import {
   triggerConstellationHonestyNotice,
   cleanStaleNotifications,
 } from '@/lib/notifications/triggers';
-import { generateMonthlyNarrative } from './generate-monthly-narrative';
+import { generateMonthlyNarrative, narrativeSignature, type MonthlyNarrativeInput } from './generate-monthly-narrative';
 import { getCachedThreads } from './sanity-thread-cache';
 import { scoreModules, type ScoringModule, type PedagogyContext } from './recommend';
 import { descriptorToSubject, SUBJECT_KEYS } from '@/lib/report/deterministic-coverage';
@@ -48,7 +49,7 @@ import { sanityServerClient } from '@/lib/sanity/client';
 import { SCORING_MODULES_QUERY, SCORING_OWN_MODULES_QUERY } from '@/lib/sanity/queries';
 import type {
   SnapshotActiveThread, SnapshotPlannerSuggestion, SnapshotRecommendation, ChildSnapshot,
-  ThreadTrajectory, EvidenceQuality, SubjectBalance,
+  SnapshotData, SnapshotWeekStats, ThreadTrajectory, EvidenceQuality, SubjectBalance,
 } from '@/types/snapshot';
 
 type RebuildTrigger =
@@ -322,7 +323,7 @@ export async function rebuildSnapshot(
       if (handled) return;
     }
 
-    const [familyLearners, settings, allEntries, badges, libraryPackIds, weekPlanned] = await Promise.all([
+    const [familyLearners, settings, allEntries, badges, libraryPackIds, weekPlanned, existing] = await Promise.all([
       db.select().from(learners).where(eq(learners.familyId, familyId)),
       db.query.familySettings.findFirst({ where: eq(familySettings.familyId, familyId) }),
       db
@@ -346,10 +347,18 @@ export async function rebuildSnapshot(
             lte(plannerEntries.date, weekEndStr)
           )
         ),
+      // The prior snapshot row: reused for the upsert below and, per child, to
+      // carry the monthly narrative forward when its inputs haven't changed.
+      db.query.familyIntelligenceSnapshots.findFirst({
+        where: eq(familyIntelligenceSnapshots.familyId, familyId),
+      }),
     ]);
+    const priorChildren = ((existing?.snapshotData as SnapshotData | null | undefined)?.children ?? {}) as
+      Record<string, Partial<ChildSnapshot> | undefined>;
 
     const sevenDaysAgo = format(subDays(now, 7), 'yyyy-MM-dd');
     const thirtyDaysAgo = format(subDays(now, 30), 'yyyy-MM-dd');
+    const today = format(now, 'yyyy-MM-dd');
 
     const childSnapshots: Record<string, unknown> = {};
     const pendingNotifications: unknown[] = [];
@@ -440,7 +449,7 @@ export async function rebuildSnapshot(
       );
 
       const subjectCounts: Record<string, number> = {};
-      const threadCounts: Record<string, { count: number; lastDate: string; tier: string; inferred: number; declared: number }> = {};
+      const threadCounts: Record<string, { count: number; lastDate: string; firstDate: string; tier: string; inferred: number; declared: number }> = {};
       const descriptorSet = new Set<string>();
 
       for (const entry of childEntries) {
@@ -457,12 +466,14 @@ export async function rebuildSnapshot(
           if (existing) {
             existing.count++;
             if (entry.dateOccurred > existing.lastDate) existing.lastDate = entry.dateOccurred;
+            if (entry.dateOccurred < existing.firstDate) existing.firstDate = entry.dateOccurred;
             if (inferred) existing.inferred++;
             if (declared) existing.declared++;
           } else {
             threadCounts[threadId] = {
               count: 1,
               lastDate: entry.dateOccurred,
+              firstDate: entry.dateOccurred,
               tier: 'emerging',
               inferred: inferred ? 1 : 0,
               declared: declared ? 1 : 0,
@@ -674,6 +685,7 @@ export async function rebuildSnapshot(
             thread_name: meta?.title ?? threadId,
             observation_count: data.count,
             last_evidence_date: data.lastDate,
+            first_evidence_date: data.firstDate,
             suggested_tier: data.tier as SnapshotActiveThread['suggested_tier'],
             current_badge_level: badgeInfo?.current ?? null,
             next_badge: badgeInfo?.next ?? null,
@@ -718,14 +730,25 @@ export async function rebuildSnapshot(
         .filter(([, data]) => data.lastDate < thirtyDaysAgo)
         .map(([threadId]) => threadId);
 
-      // Monthly narrative (AI-generated, only when entries exist this month)
+      // Monthly narrative (AI-generated, only when entries exist this month).
+      //
+      // One Haiku call per child per rebuild was the single biggest hidden
+      // cost in the pipeline: a save for one child regenerated every
+      // sibling's narrative, and a dashboard load or DLO confirm regenerated
+      // all of them with identical inputs. The narrative now carries a
+      // fingerprint of its inputs; when the fingerprint is unchanged the
+      // prior text is reused and no call is made. A `settings_change`
+      // rebuild never generates (as before) but no longer wipes the text.
       const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
       const monthEntries = childEntries.filter((e) => e.dateOccurred >= monthStart);
+      const priorChild = priorChildren[child.id];
+      const priorNarrative = (priorChild?.monthly_narrative ?? '').trim();
+      const priorGeneratedAt = priorChild?.monthly_narrative_generated_at;
+      const priorIsThisMonth = !!priorGeneratedAt && priorGeneratedAt.slice(0, 7) === monthStart.slice(0, 7);
       let monthlyNarrative = '';
-      if (
-        monthEntries.length > 0 &&
-        (trigger === 'entry_saved' || trigger === 'manual' || trigger === 'user_dashboard')
-      ) {
+      let narrativeSig: string | undefined;
+      let narrativeGeneratedAt: string | undefined;
+      if (monthEntries.length > 0) {
         const monthSubjects = [...new Set(monthEntries.flatMap((e) => e.subjects ?? []))];
         const monthThreadNames = Object.entries(threadCounts)
           .filter(([, d]) => d.lastDate >= monthStart)
@@ -733,15 +756,43 @@ export async function rebuildSnapshot(
           .slice(0, 5)
           .map(([id]) => id);
         const topActivities = monthEntries.slice(0, 4).map((e) => e.title);
-
-        monthlyNarrative = await generateMonthlyNarrative({
+        const narrativeInput: MonthlyNarrativeInput = {
           childName: child.name,
           entryCount: monthEntries.length,
           subjects: monthSubjects,
           threadNames: monthThreadNames,
           topActivities,
           badgesEarned: badgeReady.map((b) => String((b as Record<string, unknown>).badge_id)),
-        });
+        };
+        const signature = narrativeSignature(narrativeInput, monthStart);
+        const generates = trigger === 'entry_saved' || trigger === 'manual' || trigger === 'user_dashboard';
+
+        if (priorNarrative && priorChild?.monthly_narrative_signature === signature) {
+          // Inputs unchanged — carry the text forward, no call.
+          monthlyNarrative = priorNarrative;
+          narrativeSig = signature;
+          narrativeGeneratedAt = priorGeneratedAt;
+        } else if (generates) {
+          const fresh = (await generateMonthlyNarrative(narrativeInput)).trim();
+          if (fresh) {
+            monthlyNarrative = fresh;
+            narrativeSig = signature;
+            narrativeGeneratedAt = now.toISOString();
+          } else if (priorNarrative && priorIsThisMonth) {
+            // Generation failed (API error → ''): keep this month's prior text
+            // rather than blanking the dashboard. The signature stays stale on
+            // purpose so the next rebuild retries.
+            monthlyNarrative = priorNarrative;
+            narrativeSig = priorChild?.monthly_narrative_signature;
+            narrativeGeneratedAt = priorGeneratedAt;
+          }
+        } else if (priorNarrative && priorIsThisMonth) {
+          // Non-generating trigger (settings_change): keep what the parent
+          // already has instead of wiping it until the next entry save.
+          monthlyNarrative = priorNarrative;
+          narrativeSig = priorChild?.monthly_narrative_signature;
+          narrativeGeneratedAt = priorGeneratedAt;
+        }
       }
 
       // Milestone crossings for this child — reuses the same tier (>=4, >=8)
@@ -762,6 +813,35 @@ export async function rebuildSnapshot(
       );
       for (const id of childMilestones.keys()) milestoneEntryIds.add(id);
 
+      // "Hearth noticed" feed — the enrichment's journey observations, per-child
+      // notable lines, milestone reasons, newly lit threads and tier rises,
+      // assembled deterministically (no model call) so they outlive the one
+      // post-save screen that used to be their only home.
+      const priorTierByThread: Record<string, string> = {};
+      for (const t of priorChild?.active_threads ?? []) {
+        if (t?.thread_id) priorTierByThread[t.thread_id] = t.suggested_tier;
+      }
+      const newTierByThread: Record<string, string> = {};
+      const firstEvidenceByThread: Record<string, string> = {};
+      for (const [threadId, data] of Object.entries(threadCounts)) {
+        newTierByThread[threadId] = data.tier;
+        firstEvidenceByThread[threadId] = data.firstDate;
+      }
+      const recentInsights = buildChildInsights({
+        childId: child.id,
+        childName: child.name,
+        entries: childEntries.map((e) => ({ id: e.id, dateOccurred: e.dateOccurred, aiEnrichment: e.aiEnrichment })),
+        milestones: childMilestones,
+        badgeTitles: new Map(badges.map((b) => [b.id, b.title])),
+        firstEvidenceByThread,
+        priorTierByThread,
+        newTierByThread,
+        priorInsights: priorChild?.recent_insights ?? [],
+        threadName: (id) => threadMetaMap.get(id)?.title ?? id,
+        isSuppressedThread,
+        today,
+      });
+
       childSnapshots[child.id] = {
         learner_id: child.id,
         name: child.name,
@@ -779,6 +859,9 @@ export async function rebuildSnapshot(
           suggested_focus_threads: suggestedFocusThreads,
         },
         monthly_narrative: monthlyNarrative,
+        ...(narrativeSig ? { monthly_narrative_signature: narrativeSig } : {}),
+        ...(narrativeGeneratedAt ? { monthly_narrative_generated_at: narrativeGeneratedAt } : {}),
+        recent_insights: recentInsights,
         dlo_status: omitSuppressedKeys(dloStatusByLearner[child.id] ?? {}),
       };
     }
@@ -800,7 +883,6 @@ export async function rebuildSnapshot(
 
     // Streak calculation
     let streakCount = 0;
-    const today = format(now, 'yyyy-MM-dd');
     const entryDates = [...new Set(allEntries.map((e) => e.dateOccurred))].sort().reverse();
     if (entryDates.length > 0) {
       let checkDate = today;
@@ -855,6 +937,25 @@ export async function rebuildSnapshot(
       .where(and(eq(familyLibrary.familyId, familyId), isNull(familyLibrary.removedAt)))
       .then((r) => r[0]?.count ?? 0);
 
+    // Dashboard "This Week" counters. The card has read `weekStats` since the
+    // dashboard shipped, but nothing ever wrote it, so it never rendered
+    // outside the demo mock data. "New capabilities" = threads first lit this
+    // week, summed across children.
+    let newCapabilitiesThisWeek = 0;
+    for (const cs of Object.values(childSnapshots) as ChildSnapshot[]) {
+      for (const t of cs.active_threads) {
+        if (t.first_evidence_date && t.first_evidence_date >= sevenDaysAgo) newCapabilitiesThisWeek++;
+      }
+    }
+    const weekStats: SnapshotWeekStats = {
+      momentsLogged: weekEntries.length,
+      collaborativeActivities: weekEntries.filter(
+        (e) => (e.learnerIds?.length ?? 0) > 1 || e.source === 'hearth_session',
+      ).length,
+      newCapabilities: newCapabilitiesThisWeek,
+      evidenceCollected: weekEntries.reduce((n, e) => n + (e.evidenceUrls?.length ?? 0), 0),
+    };
+
     const snapshotData = {
       family_id: familyId,
       rebuilt_at: now.toISOString(),
@@ -884,15 +985,12 @@ export async function rebuildSnapshot(
       weeklyThreadCoverage,
       activeModulesCount,
       lastLogDate: entryDates[0] ?? null,
+      weekStats,
     };
 
     const rebuildDuration = Date.now() - startTime;
 
-    // Upsert snapshot
-    const existing = await db.query.familyIntelligenceSnapshots.findFirst({
-      where: eq(familyIntelligenceSnapshots.familyId, familyId),
-    });
-
+    // Upsert snapshot (the prior row was read alongside the entry queries above)
     if (existing) {
       await db
         .update(familyIntelligenceSnapshots)

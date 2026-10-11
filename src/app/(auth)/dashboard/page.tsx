@@ -19,6 +19,7 @@ import { safeLoad } from '@/lib/server/safe-load';
 import EmptyState from '@/components/ui/EmptyState';
 import { Lifebuoy } from '@/components/icons';
 import DashboardClient from './DashboardClient';
+import { collectNoticed } from '@/components/dashboard/HearthNoticed';
 
 function DashboardErrorState() {
   return (
@@ -170,26 +171,11 @@ export default async function DashboardPage() {
     if (daysSince > 7) dashboardState = 'returning-inactive';
   }
 
-  const snapshotData = (snapshot?.snapshotData ?? {}) as {
-    activityStreak?: number;
-    lastLogDate?: string;
-    weeklyThreadCoverage?: number;
-    activeModulesCount?: number;
-    hearthVoice?: string;
-    weekStats?: {
-      momentsLogged?: number;
-      collaborativeActivities?: number;
-      newCapabilities?: number;
-      evidenceCollected?: number;
-    };
-    recommendations?: FamilySnapshot['recommendations'];
-    children?: Record<string, { monthly_narrative?: string }>;
-  };
+  const snapshotData = (snapshot?.snapshotData ?? {}) as Partial<FamilySnapshot>;
 
   // True when any child has a non-empty entry history (recentEntries proves it)
   // but the snapshot's monthly narrative is missing. The Dashboard client uses
-  // this single boolean to fire a debounced background rebuild; we never leak
-  // narrative text into the client bundle.
+  // this single boolean to fire a debounced background rebuild.
   const hasMissingNarrative =
     recentEntries.length > 0 &&
     familyLearners.some((l) => {
@@ -197,10 +183,26 @@ export default async function DashboardPage() {
       return !text || text.trim() === '';
     });
 
+  // Project only what the client renders. The per-child blocks (monthly
+  // narratives, full thread tables, DLO status) stay server-side — the client
+  // gets the three freshest "Hearth noticed" lines across children instead.
+  const clientSnapshot = {
+    activityStreak: snapshotData.activityStreak,
+    lastLogDate: snapshotData.lastLogDate ?? undefined,
+    weeklyThreadCoverage: snapshotData.weeklyThreadCoverage,
+    activeModulesCount: snapshotData.activeModulesCount,
+    weekStats: snapshotData.weekStats,
+    recommendations: snapshotData.recommendations,
+  };
+  const noticed = collectNoticed(
+    familyLearners.map((l) => ({ id: l.id, name: l.name, insights: snapshotData.children?.[l.id]?.recent_insights })),
+  );
+
   return (
     <DashboardClient
       familyName={family.familyName}
-      snapshot={snapshotData}
+      snapshot={clientSnapshot}
+      noticed={noticed}
       recentEntries={recentEntries.map((e) => ({
         id: e.id,
         title: e.title,

@@ -37,7 +37,7 @@ export default function SnapshotAgeHistogram({ buckets, total }: Props) {
           </span>
           <div className="flex-1 h-[20px] rounded-[6px] bg-surface-body overflow-hidden">
             <div
-              className={`h-full rounded-[6px] transition-all duration-[var(--motion-quick)] ${BUCKET_COLORS[b.key] ?? 'bg-text-muted'}`}
+              className={`h-full rounded-[6px] transition-[width] duration-[var(--motion-quick)] ${BUCKET_COLORS[b.key] ?? 'bg-text-muted'}`}
               style={{ width: `${Math.max((b.count / max) * 100, b.count > 0 ? 4 : 0)}%` }}
             />
           </div>

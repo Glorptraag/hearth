@@ -36,7 +36,7 @@ export default function DevPreviewActivities() {
         </div>
         <Link
           href="/dev-preview/explore/marketplace"
-          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+          className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
         >
           Browse Marketplace
         </Link>

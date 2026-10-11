@@ -158,7 +158,7 @@ function PillButton({
       type="button"
       onClick={onClick}
       className={[
-        'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]',
+        'font-sans text-sm font-medium px-md py-xs rounded-md border min-h-[36px] transition duration-[var(--motion-quick)] ease-[var(--ease-default)]',
         active
           ? 'bg-ember text-text-inverse border-ember'
           : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium',
@@ -210,7 +210,7 @@ function QuickSettings({
         <select
           value={duration}
           onChange={(e) => onDuration(e.target.value)}
-          className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary outline-none transition-all duration-[var(--motion-quick)] focus:border-ember"
+          className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary outline-none transition duration-[var(--motion-quick)] focus:border-ember"
         >
           <option value="">Select…</option>
           {DURATION_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -320,7 +320,7 @@ function SavedView({ outcome, onBack, preview }: { outcome: SaveOutcome; onBack:
 
       <button
         onClick={onBack}
-        className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+        className="font-sans text-sm font-semibold text-ember border border-ember rounded-md px-md py-sm min-h-[44px] transition duration-[var(--motion-quick)] ease-[var(--ease-default)]"
       >
         Back to pathways
       </button>
@@ -345,7 +345,7 @@ function FormActions({
         type="button"
         onClick={onDraft}
         disabled={saving}
-        className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+        className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition duration-[var(--motion-quick)] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save as draft'}
       </button>
@@ -353,7 +353,7 @@ function FormActions({
         type="button"
         onClick={onContinue}
         disabled={saving}
-        className="hearth-press flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:opacity-50"
+        className="hearth-press flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember disabled:opacity-50"
       >
         {saving ? 'Saving…' : (continueLabel ?? 'Continue')}
       </button>
@@ -651,7 +651,7 @@ function ModulePreview({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition-all duration-[var(--motion-quick)]"
+          className="flex-1 font-sans text-sm font-semibold text-ember border border-ember rounded-md min-h-[44px] px-lg transition duration-[var(--motion-quick)]"
         >
           <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Edit</span>
         </button>
@@ -659,7 +659,7 @@ function ModulePreview({
           type="button"
           onClick={onPublish}
           disabled={saving || blockers.length > 0}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition duration-[var(--motion-quick)] disabled:opacity-50"
         >
           {saving ? 'Publishing…' : 'Publish module'}
         </button>
@@ -853,7 +853,7 @@ function SharedEditView({
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder="Give this module a name"
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -867,7 +867,7 @@ function SharedEditView({
             onChange={(e) => setForm((f) => ({ ...f, targetUnderstanding: e.target.value }))}
             placeholder="The key understanding this module develops — required for publishing."
             rows={2}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -956,7 +956,7 @@ function SharedEditView({
               onChange={(e) => setForm((f) => ({ ...f, watchFor: e.target.value }))}
               placeholder="What moments of understanding should you look for?"
               rows={2}
-              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember"
+              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember"
             />
           </div>
           <div className="flex-1">
@@ -966,7 +966,7 @@ function SharedEditView({
               onChange={(e) => setForm((f) => ({ ...f, pivot: e.target.value }))}
               placeholder="If things go sideways, what's a good redirect?"
               rows={2}
-              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember"
+              className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember"
             />
           </div>
         </div>
@@ -1104,7 +1104,7 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
             value={form.resourceName}
             onChange={(e) => setForm((f) => ({ ...f, resourceName: e.target.value }))}
             placeholder="e.g. The Secret Garden, Planet Earth II, LEGO Mindstorms..."
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1115,7 +1115,7 @@ function MaterialPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; 
             onChange={(e) => setForm((f) => ({ ...f, excitement: e.target.value }))}
             placeholder="What drew you to this resource? What do you hope your learner will get from it?"
             rows={3}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1247,7 +1247,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             value={form.activityName}
             onChange={(e) => setForm((f) => ({ ...f, activityName: e.target.value }))}
             placeholder="e.g. Building a birdhouse, Sourdough bread, Nature journalling..."
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1258,7 +1258,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             onChange={(e) => setForm((f) => ({ ...f, whatHappens: e.target.value }))}
             placeholder="Describe what you do, step by step or in broad strokes. The learning spine will emerge from this."
             rows={4}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1283,7 +1283,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
               aria-checked={form.hasProduct}
             >
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-text-primary shadow ring-0 transition duration-[var(--motion-quick)] mt-[1px] ${
+                className={`hearth-switch-knob pointer-events-none inline-block h-4 w-4 rounded-full bg-text-primary shadow ring-0 mt-[1px] ${
                   form.hasProduct ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
@@ -1295,7 +1295,7 @@ function ProcessPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
               value={form.productName}
               onChange={(e) => setForm((f) => ({ ...f, productName: e.target.value }))}
               placeholder="e.g. A painted birdhouse, a loaf of bread..."
-              className="mt-sm w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember"
+              className="mt-sm w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember"
             />
           )}
         </div>
@@ -1418,7 +1418,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             value={form.question}
             onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
             placeholder="e.g. Why do leaves change colour in autumn?"
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-base text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
           <p className="font-sans text-[11px] text-text-muted mt-xs">Use their exact words if you remember them</p>
         </div>
@@ -1432,7 +1432,7 @@ function InquiryPathwayForm({ onBack, onSwitchPathway }: { onBack: () => void; o
             onChange={(e) => setForm((f) => ({ ...f, priorKnowledge: e.target.value }))}
             placeholder="Starting from what you know helps shape the exploration — even guesses count."
             rows={3}
-            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+            className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
           />
         </div>
 
@@ -1581,7 +1581,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
       <PathwayHeader Icon={ClockCounterClockwise} name="Retrospective Lift" subtitle="We'll find patterns in your logs and turn them into a reusable module." onBack={onBack} />
 
       {loadingEntries ? (
-        <p className="font-sans text-sm text-text-muted animate-pulse">Looking through your logs…</p>
+        <p className="font-sans text-sm text-text-muted hearth-pulse">Looking through your logs…</p>
       ) : patterns.length === 0 ? (
         <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
           <span className="mb-md inline-flex justify-center text-text-secondary" aria-hidden="true">
@@ -1605,7 +1605,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
                     type="button"
                     onClick={() => { setSelectedPattern(pattern); setModuleName(pattern.subject); }}
                     className={[
-                      'flex items-start gap-md rounded-lg border p-md text-left transition-all duration-[var(--motion-quick)]',
+                      'flex items-start gap-md rounded-lg border p-md text-left transition duration-[var(--motion-quick)]',
                       active
                         ? 'border-ember/40 bg-ember-glow'
                         : 'border-border-subtle bg-surface-raised hover:border-border-medium',
@@ -1647,7 +1647,7 @@ function RetrospectiveLiftPathwayForm({ onBack }: { onBack: () => void }) {
                   value={moduleName}
                   onChange={(e) => setModuleName(e.target.value)}
                   placeholder={selectedPattern.subject}
-                  className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember"
+                  className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember"
                 />
               </div>
 
@@ -1775,7 +1775,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
         </div>
 
         {loadingSkeletons ? (
-          <p className="font-sans text-sm text-text-muted animate-pulse">Finding ideas for you…</p>
+          <p className="font-sans text-sm text-text-muted hearth-pulse">Finding ideas for you…</p>
         ) : skeletons.length === 0 ? (
           <div className="rounded-lg border border-border-subtle bg-surface-panel p-xl text-center">
             <span className="mb-md inline-flex justify-center text-ember" aria-hidden="true">
@@ -1787,7 +1787,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
               onClick={() => {
                 setEditing(normalizeToEditData('understanding', { ...form, mode } as unknown as Record<string, unknown>));
               }}
-              className="hearth-press font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px] transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+              className="hearth-press font-sans text-sm font-semibold bg-ember text-text-inverse rounded-md px-md py-sm min-h-[44px]"
             >
               Start from scratch
             </button>
@@ -1811,7 +1811,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                   editData.materials = skeleton.suggestedMaterials.map((m) => m.name);
                   setEditing(editData);
                 }}
-                className="bg-surface-panel rounded-lg border border-border-subtle p-lg text-left transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:translate-y-[-1px]"
+                className="bg-surface-panel rounded-lg border border-border-subtle p-lg text-left transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-border-medium hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:translate-y-[-1px]"
               >
                 <div className="flex items-start justify-between gap-sm mb-sm">
                   <h3 className="font-serif text-base font-semibold text-text-primary">{skeleton.title}</h3>
@@ -1862,7 +1862,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
               type="button"
               onClick={() => { setMode(m); setForm((f) => ({ ...f, mode: m })); }}
               className={[
-                'flex-1 rounded-md py-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)]',
+                'flex-1 rounded-md py-sm font-sans text-sm font-semibold transition duration-[var(--motion-quick)]',
                 mode === m
                   ? 'bg-ember text-text-inverse shadow-[0_2px_8px_rgba(217,123,58,0.3)]'
                   : 'text-text-muted hover:text-text-secondary',
@@ -1886,7 +1886,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 onChange={(e) => setForm((f) => ({ ...f, goal: e.target.value }))}
                 placeholder="e.g. I want them to get more confident with fractions, or understand how ecosystems work…"
                 rows={3}
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
               />
             </div>
 
@@ -1899,7 +1899,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 onChange={(e) => setForm((f) => ({ ...f, successLooksLike: e.target.value }))}
                 placeholder="e.g. They'd start noticing fractions in everyday life, or confidently explain how one living thing affects another…"
                 rows={2}
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition-all duration-[var(--motion-quick)] focus:border-ember"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-serif text-sm text-text-primary placeholder:text-text-muted outline-none resize-y leading-relaxed transition duration-[var(--motion-quick)] focus:border-ember"
               />
             </div>
 
@@ -1921,7 +1921,7 @@ function GoalForwardPathwayForm({ onBack, onSwitchPathway }: { onBack: () => voi
                 value={threadSearch}
                 onChange={(e) => setThreadSearch(e.target.value)}
                 placeholder="Search e.g. fractions, reading, science…"
-                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition-all duration-[var(--motion-quick)] focus:border-ember mb-sm"
+                className="w-full bg-surface-raised border border-border-subtle rounded-md py-[10px] px-md font-sans text-sm text-text-primary placeholder:text-text-muted outline-none transition duration-[var(--motion-quick)] focus:border-ember mb-sm"
               />
               <div className="rounded-lg border border-border-subtle bg-surface-raised overflow-hidden divide-y divide-border-subtle max-h-[280px] overflow-y-auto">
                 {Object.entries(threadsByDomain).map(([domain, threads]) => (
@@ -2131,7 +2131,7 @@ export default function BuildModulesPage() {
             <button
               type="button"
               onClick={restoreAutosave}
-              className="font-sans text-xs font-semibold text-ember border border-ember rounded-md px-sm min-h-[36px] transition-all duration-[var(--motion-quick)]"
+              className="font-sans text-xs font-semibold text-ember border border-ember rounded-md px-sm min-h-[36px] transition duration-[var(--motion-quick)]"
             >
               Restore
             </button>
@@ -2192,7 +2192,7 @@ export default function BuildModulesPage() {
             key={pathway.id}
             onClick={() => setSelected(pathway.id)}
             className={[
-              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
+              'flex items-start gap-md bg-surface-panel border rounded-lg p-md text-left w-full shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]',
               pathway.id === 'retrospective' ? 'border-ember/25' : 'border-border-subtle',
             ].join(' ')}
           >
@@ -2225,7 +2225,7 @@ export default function BuildModulesPage() {
 
       <button
         onClick={() => setSelected(GOAL_PATHWAY.id)}
-        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
+        className="flex items-start gap-md bg-surface-panel border border-border-subtle rounded-lg p-md text-left w-full shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:bg-surface-hover hover:border-border-medium hover:translate-y-[-1px]"
       >
         <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-surface-raised rounded-md text-text-secondary">
           <GOAL_PATHWAY.Icon size={18} aria-hidden="true" />

@@ -343,7 +343,7 @@ export default function WorkSampleCuration({
   const isComplete = filledFields === 4;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-modal backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center hearth-backdrop-enter backdrop-modal backdrop-blur-sm">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="work-sample-title" className="hearth-modal-enter w-full max-w-[640px] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-2xl bg-surface-body border border-border-subtle shadow-float" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}>
         {/* Header */}
         <div className="sticky top-0 z-10 bg-surface-body border-b border-border-subtle px-lg py-md flex items-center justify-between">
@@ -430,7 +430,7 @@ export default function WorkSampleCuration({
                         key={entry.id}
                         onClick={() => handleSelect(entry.id)}
                         disabled={saving}
-                        className={`w-full text-left rounded-lg border p-md transition-all duration-[var(--motion-quick)] ${
+                        className={`w-full text-left rounded-lg border p-md transition duration-[var(--motion-quick)] ${
                           isSelected
                             ? 'border-ember bg-ember/5'
                             : 'border-border-subtle bg-surface-raised hover:border-border-medium hover:translate-y-[-1px]'
@@ -610,7 +610,7 @@ export default function WorkSampleCuration({
               <button
                 onClick={handleConfirm}
                 disabled={saving || !isComplete}
-                className={`mt-lg w-full rounded-md py-sm font-sans text-sm font-semibold transition-all duration-[var(--motion-quick)] ${
+                className={`mt-lg w-full rounded-md py-sm font-sans text-sm font-semibold transition duration-[var(--motion-quick)] ${
                   isComplete
                     ? 'bg-sage text-surface-body hover:bg-sage/90 shadow-[0_4px_16px_rgba(123,191,138,0.20)]'
                     : 'bg-surface-raised text-text-muted cursor-not-allowed opacity-50'

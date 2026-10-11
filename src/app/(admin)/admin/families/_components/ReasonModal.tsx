@@ -40,7 +40,7 @@ export default function ReasonModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center backdrop-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center hearth-backdrop-enter backdrop-modal"
       onClick={handleCancel}
     >
       <div
@@ -49,7 +49,7 @@ export default function ReasonModal({
         aria-modal="true"
         aria-labelledby="reason-modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[440px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
+        className="hearth-modal-enter w-full max-w-[440px] rounded-lg border border-border-subtle bg-surface-panel p-xl shadow-float"
       >
         <h2
           id="reason-modal-title"
@@ -83,7 +83,7 @@ export default function ReasonModal({
           <button
             onClick={handleConfirm}
             disabled={!reason.trim() || loading}
-            className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition-all duration-[var(--motion-quick)]"
+            className="rounded-md bg-ember px-md py-sm font-sans text-[0.8rem] font-semibold text-text-inverse hover:bg-ember-hover disabled:opacity-50 transition duration-[var(--motion-quick)]"
           >
             {loading ? 'Loading...' : confirmLabel}
           </button>

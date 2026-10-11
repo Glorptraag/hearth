@@ -107,7 +107,7 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveSubject(null)}
-            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)] ${
+            className={`font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition duration-[var(--motion-quick)] ${
               activeSubject === null
                 ? 'bg-ember text-text-inverse border-ember'
                 : 'bg-surface-raised border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -122,7 +122,7 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
               <button
                 key={s.value}
                 onClick={() => setActiveSubject(isActive ? null : s.value)}
-                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition-all duration-[var(--motion-quick)]"
+                className="font-sans text-[0.75rem] font-semibold px-3 py-1.5 rounded-full border transition duration-[var(--motion-quick)]"
                 style={{
                   color: s.hex,
                   background: isActive ? `rgba(${rgb},0.22)` : `rgba(${rgb},0.08)`,
@@ -163,7 +163,7 @@ export function DevMarketplaceClient({ packs }: DevMarketplaceClientProps) {
             </p>
             <button
               onClick={() => { setSearch(''); setActiveSubject(null); }}
-              className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition-all duration-[var(--motion-quick)]"
+              className="font-sans text-sm font-semibold px-4 py-2 rounded-[6px] border border-ember text-ember bg-transparent hover:bg-ember hover:text-text-inverse transition duration-[var(--motion-quick)]"
             >
               Reset filters
             </button>

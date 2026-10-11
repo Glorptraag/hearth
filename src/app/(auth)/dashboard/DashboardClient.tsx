@@ -212,6 +212,22 @@ function getSubjectLabel(s: string): string {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+/**
+ * Marks <body> while the Dashboard is mounted so the ambient ember layer drifts
+ * (globals.css › body[data-hero="dashboard"]::before). The motion spec allows
+ * exactly one looping decorative animation and locks it to the Dashboard hero;
+ * scoping via a body attribute keeps every other route still.
+ */
+function HeroDrift() {
+  useEffect(() => {
+    document.body.dataset.hero = 'dashboard';
+    return () => {
+      delete document.body.dataset.hero;
+    };
+  }, []);
+  return null;
+}
+
 export default function DashboardClient({
   familyName,
   snapshot,
@@ -289,6 +305,7 @@ export default function DashboardClient({
 
   return (
     <div className="mx-auto max-w-6xl px-md py-xl lg:px-4xl lg:py-3xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-xl">
+      <HeroDrift />
       {/* ── Main column ── */}
       <div>
         <JurisdictionBanner />
@@ -342,7 +359,7 @@ export default function DashboardClient({
               </div>
               <Link
                 href={`${basePath}/log`}
-                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
+                className="ml-auto shrink-0 rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:bg-ember-hover"
               >
                 Log a moment
               </Link>
@@ -380,7 +397,7 @@ export default function DashboardClient({
                     className="flex snap-start flex-col items-center transition-transform duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[4px]"
                   >
                     <div
-                      className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition-all duration-[var(--motion-gentle)] ${colours.bg} ${colours.border} ${colours.text}`}
+                      className={`flex h-[72px] w-[72px] items-center justify-center rounded-full mb-md text-[2rem] border transition duration-[var(--motion-gentle)] ${colours.bg} ${colours.border} ${colours.text}`}
                     >
                       {l.shapeIcon ?? '🌟'}
                     </div>
@@ -447,7 +464,7 @@ export default function DashboardClient({
                     return (
                       <div
                         key={item.id}
-                        className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
+                        className="rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)]"
                       >
                         <div className="flex items-start justify-between gap-md">
                           <h3 className="font-serif text-[1.1rem] font-semibold text-text-primary">
@@ -521,7 +538,7 @@ export default function DashboardClient({
                     {/* Add card */}
                     <Link
                       href={`${basePath}/log`}
-                      className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-ember hover:bg-ember-glow"
+                      className="group relative flex flex-col rounded-[16px] border border-dashed border-text-muted p-xl transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:border-ember hover:bg-ember-glow"
                     >
                       <span className="font-sans text-[0.75rem] text-text-muted mb-md">
                         Something we haven&rsquo;t captured?
@@ -545,7 +562,7 @@ export default function DashboardClient({
         {/* Quick Log */}
         <Link
           href={`${basePath}/log`}
-          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
+          className="flex items-center justify-center gap-md w-full px-lg py-lg bg-ember text-text-inverse rounded-[10px] font-sans text-[0.95rem] font-semibold transition duration-[var(--motion-quick)] ease-[var(--ease-default)] shadow-ember hover:bg-ember-hover hover:-translate-y-[2px] hover:shadow-ember-strong mb-2xl"
         >
           <PencilSimpleLine size={18} aria-hidden="true" />
           Log a Moment
@@ -672,7 +689,7 @@ function MomentCard({
   const isTogether = entryLearners.length > 1;
 
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition-all duration-[var(--motion-gentle)] ease-[var(--ease-default)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
+    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
       {/* Ember top-line on hover */}
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 

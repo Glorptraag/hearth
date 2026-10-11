@@ -75,7 +75,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
         <button
           type="button"
           onClick={onComplete}
-          className="font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg transition-all duration-[var(--motion-quick)] hover:bg-ember-hover"
+          className="font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg transition duration-[var(--motion-quick)] hover:bg-ember-hover"
         >
           Done
         </button>
@@ -111,7 +111,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
           onChange={(e) => { setCsvText(e.target.value); setError(null); }}
           rows={8}
           placeholder={'title,dateOccurred,subjects,description\n"Session title",2026-03-15,"mathematics","Description..."'}
-          className="w-full rounded-md border border-border-subtle bg-surface-raised font-mono text-xs text-text-secondary placeholder:text-text-muted outline-none p-md resize-none transition-all duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
+          className="w-full rounded-md border border-border-subtle bg-surface-raised font-mono text-xs text-text-secondary placeholder:text-text-muted outline-none p-md resize-none transition duration-[var(--motion-quick)] focus:border-ember focus:shadow-focus"
         />
       </div>
 
@@ -121,7 +121,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 font-sans text-sm text-text-secondary border border-border-subtle rounded-md min-h-[44px] px-lg transition-all duration-[var(--motion-quick)] hover:border-border-medium"
+          className="flex-1 font-sans text-sm text-text-secondary border border-border-subtle rounded-md min-h-[44px] px-lg transition duration-[var(--motion-quick)] hover:border-border-medium"
         >
           Cancel
         </button>
@@ -129,7 +129,7 @@ export function CsvImportForm({ onComplete, onCancel }: CsvImportFormProps) {
           type="button"
           onClick={handleImport}
           disabled={importing || !csvText.trim()}
-          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition-all duration-[var(--motion-quick)] disabled:opacity-50"
+          className="flex-1 font-sans text-sm font-semibold text-text-inverse bg-ember rounded-md min-h-[44px] px-lg shadow-ember transition duration-[var(--motion-quick)] disabled:opacity-50"
         >
           {importing ? 'Importing…' : 'Import Sessions'}
         </button>

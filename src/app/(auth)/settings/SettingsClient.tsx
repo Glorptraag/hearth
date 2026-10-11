@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSlidingTabIndicator } from '@/hooks/use-sliding-tab-indicator';
 import { useSearchParams } from 'next/navigation';
 import ChildCard from '@/components/settings/ChildCard';
 import PedagogySelector from '@/components/settings/PedagogySelector';
@@ -77,7 +78,7 @@ function AccountSecurityPanel() {
         </p>
         <button
           onClick={() => window.open('/api/account/export', '_blank')}
-          className="mt-md rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-semibold text-text-primary transition-all hover:border-border-medium hover:text-ember"
+          className="mt-md rounded-[6px] border border-border-subtle bg-surface-raised px-md py-sm font-sans text-sm font-semibold text-text-primary transition hover:border-border-medium hover:text-ember"
         >
           Download export
         </button>
@@ -92,7 +93,7 @@ function AccountSecurityPanel() {
         {!showDelete ? (
           <button
             onClick={() => setShowDelete(true)}
-            className="mt-md rounded-[6px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition-all hover:bg-red-900/30"
+            className="mt-md rounded-[6px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition hover:bg-red-900/30"
           >
             Delete account
           </button>
@@ -113,7 +114,7 @@ function AccountSecurityPanel() {
               <button
                 onClick={handleDelete}
                 disabled={confirmation !== 'DELETE MY ACCOUNT' || deleting}
-                className="rounded-[6px] bg-red-600 px-md py-sm font-sans text-sm font-semibold text-white transition-all hover:bg-red-500 disabled:opacity-40"
+                className="rounded-[6px] bg-red-600 px-md py-sm font-sans text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-40"
               >
                 {deleting ? 'Deleting...' : 'Permanently delete'}
               </button>
@@ -243,7 +244,7 @@ function FamilyAccessPanel() {
           <button
             onClick={handleInvite}
             disabled={!inviteEmail.trim() || inviting}
-            className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+            className="rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover disabled:opacity-40"
           >
             {inviting ? 'Inviting...' : 'Invite'}
           </button>
@@ -296,7 +297,7 @@ function FamilyAccessPanel() {
               </div>
               <button
                 onClick={() => handleRemove(member.id)}
-                className="rounded-[6px] border border-red-900/30 bg-red-900/20 px-sm py-xs font-sans text-xs text-red-400 transition-all hover:bg-red-900/30"
+                className="rounded-[6px] border border-red-900/30 bg-red-900/20 px-sm py-xs font-sans text-xs text-red-400 transition hover:bg-red-900/30"
               >
                 Remove
               </button>
@@ -361,6 +362,7 @@ export default function SettingsClient({
   const [activeTab, setActiveTab] = useState<Tab>(() =>
     isValidTab(tabParam) ? tabParam : 'profile',
   );
+  const { listRef: mobileTabsRef, indicatorProps: mobileTabsIndicator } = useSlidingTabIndicator(activeTab);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync tab when the ?tab= deep-link changes
     if (isValidTab(tabParam)) setActiveTab(tabParam);
@@ -489,26 +491,26 @@ export default function SettingsClient({
       </div>
 
       {/* Tab bar — mobile only */}
-      <div className="mb-xl flex overflow-x-auto overscroll-x-contain scrollbar-none border-b border-border-subtle pb-[1px] lg:hidden">
+      <div ref={mobileTabsRef} className="relative mb-xl flex overflow-x-auto overscroll-x-contain scrollbar-none border-b border-border-subtle lg:hidden">
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            data-tab-key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-shrink-0 px-md pb-sm font-sans text-sm font-semibold transition-colors duration-[var(--motion-quick)] ${
-              activeTab === tab.id
-                ? 'border-b-2 border-ember text-ember'
-                : 'text-text-muted hover:text-text-secondary'
+            className={`flex-shrink-0 border-b-2 border-transparent px-md pb-sm font-sans text-sm font-semibold transition-colors duration-[var(--motion-quick)] ${
+              activeTab === tab.id ? 'text-ember' : 'text-text-muted hover:text-text-secondary'
             }`}
           >
             {tab.label}
           </button>
         ))}
+        <span {...mobileTabsIndicator} />
       </div>
 
       {/* Mobile sidebar toggle button */}
       <button
         onClick={() => setSidebarOpen((v) => !v)}
-        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
+        className="md:hidden mb-md flex items-center gap-sm font-sans text-sm font-medium text-text-secondary border border-border-subtle rounded-md px-md py-sm transition duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
       >
         {sidebarOpen
           ? <span className="inline-flex items-center gap-xs"><ArrowLeft size={14} aria-hidden="true" /> Hide menu</span>
@@ -525,7 +527,7 @@ export default function SettingsClient({
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
+              className={`flex items-center gap-sm rounded-md px-md py-sm text-left font-sans text-[0.875rem] font-medium transition duration-[var(--motion-quick)] ease-[var(--ease-default)] border ${
                 activeTab === tab.id
                   ? 'border-border-medium bg-surface-raised text-ember shadow-card'
                   : 'border-transparent text-text-secondary hover:border-border-subtle hover:bg-ember-glow hover:text-text-primary'
@@ -537,8 +539,8 @@ export default function SettingsClient({
           ))}
         </nav>
 
-        {/* Content panel */}
-        <div>
+        {/* Content panel — keyed so the cross-fade replays per tab */}
+        <div key={activeTab} className="hearth-panel-enter">
 
       {/* ─── Family Profile ─── */}
       {activeTab === 'profile' && (
@@ -562,7 +564,7 @@ export default function SettingsClient({
           <button
             onClick={() => saveSettings({})}
             disabled={saving}
-            className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+            className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover disabled:opacity-40"
           >
             {saving
               ? 'Saving…'
@@ -617,7 +619,7 @@ export default function SettingsClient({
                         key={c.token}
                         onClick={() => setNewChildColour(c.token)}
                         aria-label={`Colour ${c.token}`}
-                        className={`h-8 w-8 rounded-full transition-all duration-[var(--motion-quick)] ${c.bg} ${
+                        className={`h-8 w-8 rounded-full transition duration-[var(--motion-quick)] ${c.bg} ${
                           newChildColour === c.token ? 'ring-2 ring-offset-2 ring-offset-surface-raised ring-ember' : ''
                         }`}
                       />
@@ -628,7 +630,7 @@ export default function SettingsClient({
                   <button
                     onClick={handleAddChild}
                     disabled={!newChildName.trim() || saving}
-                    className="flex-1 rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+                    className="flex-1 rounded-[6px] bg-ember py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover disabled:opacity-40"
                   >
                     {saving ? 'Adding...' : 'Add child'}
                   </button>
@@ -742,7 +744,7 @@ export default function SettingsClient({
           <button
             onClick={() => saveSettings({})}
             disabled={saving}
-            className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition-all hover:bg-ember-hover disabled:opacity-40"
+            className="self-start rounded-[6px] bg-ember px-md py-sm font-sans text-sm font-semibold text-text-inverse transition hover:bg-ember-hover disabled:opacity-40"
           >
             {saving
               ? 'Saving…'

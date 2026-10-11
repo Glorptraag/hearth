@@ -54,7 +54,7 @@ export function ObserveSection({
                     <div key={chip}>
                       <button
                         onClick={() => onToggleObservation(chip)}
-                        className={`rounded-full px-sm py-xs font-sans text-xs transition-all duration-[var(--motion-quick)] min-h-[32px] ${
+                        className={`rounded-full px-sm py-xs font-sans text-xs transition duration-[var(--motion-quick)] min-h-[32px] ${
                           sel
                             ? `${colorClasses.selectedBg} border ${colorClasses.selectedBorder} text-text-primary`
                             : 'border border-border-subtle text-text-secondary hover:border-border-medium'

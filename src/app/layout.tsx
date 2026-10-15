@@ -6,6 +6,8 @@ import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { NativeProvider } from "@/components/platform/NativeProvider";
 import { isNativeRequest } from "@/lib/platform/native";
 import { IconProvider } from "@/components/icons";
+import { CopyProvider } from "@/lib/copy";
+import { fetchCopyOverrides } from "@/lib/copy/server";
 import "./globals.css";
 
 // Hearth Design System v2: Fraunces (variable, with SOFT axis) replaces Crimson Text.
@@ -80,6 +82,12 @@ export default async function RootLayout({
     pathname.startsWith("/dev-preview") ||
     pathname.startsWith("/demo") ||
     pathname.startsWith("/offline");
+  // Site copy overrides from Sanity (published `siteCopy` docs), read once per
+  // request through the tagged data cache and handed to client components via
+  // CopyProvider / useCopy(). Only the diff against the code defaults crosses
+  // the wire; a Sanity failure yields {} and every surface renders its
+  // defaults. See docs/hearth-site-copy-system-v1.md.
+  const copyOverrides = await fetchCopyOverrides();
 
   return (
     <html
@@ -100,9 +108,11 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-surface-body text-text-primary font-sans">
         <ServiceWorkerRegistrar />
         <NativeProvider isNative={isNative}>
-          <IconProvider>
-            {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
-          </IconProvider>
+          <CopyProvider overrides={copyOverrides}>
+            <IconProvider>
+              {skipClerk ? children : <ClerkThemeProvider>{children}</ClerkThemeProvider>}
+            </IconProvider>
+          </CopyProvider>
         </NativeProvider>
       </body>
     </html>

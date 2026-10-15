@@ -421,3 +421,14 @@ export interface SkeletonRecord {
   estimatedDuration?: number;
   setting?: string;
 }
+
+// ─── Site copy ───────────────────────────────────────────────────────────────
+// Every published `siteCopy` document (one per surface). Not a gated content
+// type: Sanity's own draft/publish is the swap mechanism, and the app merges
+// values over code defaults (src/lib/copy/defaults.ts) so a missing doc or key
+// is never a failure. Tokenless readers never see drafts, so no draft filter
+// is needed here.
+export const SITE_COPY_QUERY = `*[_type == "siteCopy"]{
+  surface,
+  "entries": entries[]{ key, value }
+}`;

@@ -36,8 +36,9 @@ src/
     content-qa/      # Read-only content validation (completeness + cross-field rules) → /admin/content/qa
     ai/              # Write-time enrichment pipeline
     utils/           # Design tokens, constants
+    copy/            # Site copy: Sanity-swappable web copy (keys in code, values in Sanity)
   sanity/
-    schemas/         # 19 Sanity document type definitions
+    schemas/         # 20 Sanity document type definitions (incl. siteCopy — swappable web copy)
   hooks/
   types/
 prototypes/          # Original HTML/JSX prototypes (VISUAL REFERENCE ONLY)
@@ -74,6 +75,7 @@ docs/                # Architecture specs, design system docs
 | `docs/external-services-guide.md` | All-in-one reference for every external service Hearth depends on (Clerk, Neon, Sanity, Anthropic, PostHog, Sentry, Vercel, Upstash) — rationale + alternatives. |
 | `docs/oncall-cheatsheet.md` | One-page on-call reference: dashboards, kill-switches, symptom→first-move table. |
 | `docs/hearth-icon-system-v1.md` | Phosphor icon rules — weight, size tokens (`--icon-xs..xl`), colour, placement, custom-mark specs. |
+| `docs/hearth-site-copy-system-v1.md` | **Read before adding or changing any parent-facing static string.** Non-generative web copy lives in Sanity (`siteCopy`, one doc per surface) with code-owned keys + fallbacks in `src/lib/copy/defaults.ts`. Covers the in/out rules, the add/swap/remove recipe, `npm run seed:copy`, and the ranked migration backlog. |
 
 When building a specific screen, also read its spec doc (e.g., `docs/hearth-logger-spec-v1.md`) and look at its prototype in `prototypes/`.
 
@@ -211,7 +213,7 @@ Per S8 the spec calls for Lucide; this implementation uses **Phosphor Icons** (`
 5. **Portfolio is a filtered view,** not an independent data store. No "add to portfolio" button. No sync drift.
 6. **Australian Curriculum mapping is backend.** UI shows capability threads and plain-language descriptors only.
 7. **No freemium language.** Membership-included content has zero transactional UI.
-8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types (plus 15 supporting schemas — projects, badges, capability threads, pedagogy knowledge base, assets, commons text, module skeletons).
+8. **Content hierarchy:** Pack → Module → Approach → Activity. Four independent Sanity document types (plus 16 supporting schemas — projects, badges, capability threads, pedagogy knowledge base, assets, commons text, module skeletons, site copy).
 9. **Sanity = reusable content. Postgres = user/transactional data.** **Modules, approaches, activities, packs, projects, badges, capability threads, and the pedagogy knowledge base all live in Sanity.** The Next.js app reads them via GROQ at runtime through `src/lib/sanity/{client,queries}.ts`. Never store user data in Sanity. Never store portable content in Postgres.
 10. **Two authoring paths into Sanity, by writer:**
     - **In-app parent path** (operator UI): Module Builder → `/api/modules/publish` (parent / family-authored). Uses `src/lib/sanity/mutations.ts` (auto-sets `authorFamilyId`). The in-app admin **Content Studio** editorial route (`/api/admin/content/publish` + `src/lib/content-studio/`) was retired (#117, commit `0baa3d8`); editorial authoring now happens directly in **Sanity Studio**, with the publish guardrails ported into the Sanity schemas. The surviving read-only validation surface is **Content QA** (`src/lib/content-qa/`, dashboard `/admin/content/qa`) — it flags non-blocking issues and does NOT gate publish.
@@ -235,6 +237,7 @@ Non-obvious locations for features that come up often:
 | Logger offline minimum | `useOnlineStatus()` hook + offline banner on `/log`. 10s autosave to `localStorage`; save-failure toast distinguishes offline from server error. Full PWA / sync queue stays Phase 2. |
 | Logger screen architecture | `/log` (`src/app/(auth)/log/page.tsx`) is a thin composition root wiring hooks + section components — **not** a monolith (decomposed from ~1566 lines over refactor phases 1–5, 2026-06; behaviour preserved verbatim). **State hooks** (`src/hooks/use-logger-*`): `useLoggerDraft`, `useLearnersFetch`, `useScaffoldFetch`, `useLoggerModeAndSnapshot`, `useKeywordMatch`, `useCoachHints`, `useCompletenessUi`. **Save/derivation logic** (`src/lib/logger/`, all unit-tested): `entry-payload` (`buildEntrySavePayload`, `isThinEntry`, subject/title/evidence derivations), `badge-check` (`checkBadgeThresholds`, `buildBadgeReadyToast`), `enrichment-poll` (`pollEntryEnrichment`), `draft`, `completeness`. **Form sections** (`src/app/(auth)/log/_components/`): `WhoSection`, `WhatSection`, `EngagementSection`, `WhenWhereSection`, `ObserveSection`, `EvidenceSection` + `EvidenceModal`, `InsightsContent`, `SectionHeader`; shared option catalogs in `loggerConstants.ts`, child colours in `childColors.ts`. `handleSave` stays in the page as the orchestrator but delegates payload-build / badge-check / enrichment-poll to the tested lib. |
 | Noisy-family detection | Daily retention cron runs `detectNoisyFamilies()`. Above `NOISY_FAMILY_TOKEN_THRESHOLD` (default 200k tokens / 24h, env-tweakable) → `admin_audit_log` row + Sentry breadcrumb. |
+| Site copy (Sanity-swappable web copy) | `src/lib/copy/` — `defaults.ts` (typed keys + fallbacks + editor notes, one namespace per surface), `server.ts` (`getCopy(surface)` for RSCs; tagged cache, never throws), `CopyProvider.tsx` (`useCopy(surface)` for client components; provider mounted in root `layout.tsx`), `resolve.ts` (`formatCopy` for `{placeholders}`). Sanity type `siteCopy` (`src/sanity/schemas/siteCopy.ts`), Studio section "Site Copy". Seed/refresh: `npm run seed:copy` (non-destructive), drift: `npm run copy:check`. Migrated surfaces: landing, auth, welcome, onboarding, dashboard; backlog ranked in `docs/hearth-site-copy-system-v1.md` §5. New parent-facing strings on a migrated surface go in `defaults.ts`, not inline JSX. |
 | Pedagogy corpus vault (PKB intake) | `corpus/pedagogy/` — one md file = one PKB entry = one Sanity doc, licence registry in `sources.json` (copyright is a lookup, never a debate — PKB11 mechanised). Compiler lib `src/lib/pedagogy/corpus/`; CLI `scripts/compile-pedagogy-corpus.ts` (`npm run corpus:check` / `seed:pedagogy:corpus`); vault validity pinned in CI by `vault.test.ts`. Engine consuming it: `src/lib/pedagogy/{retrieval,embedding,chunk-builder}.ts` + `src/lib/ai/pedagogy-context.ts`, gated by `PEDAGOGY_KB_ENABLED`. Read `corpus/pedagogy/README.md` before authoring corpus entries; architecture in `docs/hearth-pedagogy-corpus-vault-architecture-v1.md`. |
 
 ## Testing
@@ -371,4 +374,5 @@ Do not span multiple phases in one session.
 - Using `text-white` on colored backgrounds instead of `text-surface-body` or `text-text-inverse` (exception: danger confirm buttons)
 - Hardcoding `data-theme="dark"` — theme is managed by the inline script and `useTheme()` hook
 - Re-inlining `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden` instead of the `.scrollbar-none` utility
+- Hard-coding a parent-facing string in JSX on a surface that already has a copy namespace (`landing`, `auth`, `welcome`, `onboarding`, `dashboard`) — add a key to `src/lib/copy/defaults.ts` and read it via `getCopy()` / `useCopy()` so it stays Sanity-swappable
 - Fixed-width (`w-[NNNpx]`) or fixed grid tracks (`grid-cols-[…px…]`) that apply at the mobile base without a responsive prefix or an `overflow-x-auto` wrapper — they clip/overflow on phones. Gate them behind `sm:`/`lg:` or pair fixed slide-overs with `w-full max-w-[NNNpx]`

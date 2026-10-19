@@ -1,1108 +1,242 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { format, subDays } from 'date-fns';
-import { generateReflectionPrompts, type ReflectionPrompt } from '@/lib/ai/keyword-matcher';
-import { track, hashForAnalytics } from '@/lib/analytics/posthog';
-import { useDraftInsight } from '@/hooks/use-draft-insight';
-import { useLoggerDraft } from '@/hooks/use-logger-draft';
+import { usePedagogy } from '@/hooks/use-pedagogy';
+import { useToast } from '@/hooks/use-toast';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useLearnersFetch } from '@/hooks/use-learners-fetch';
 import { useScaffoldFetch, type ScaffoldData } from '@/hooks/use-scaffold-fetch';
-import { useLoggerModeAndSnapshot } from '@/hooks/use-logger-mode-and-snapshot';
-import { useKeywordMatch } from '@/hooks/use-keyword-match';
-import { useCoachHints } from '@/hooks/use-coach-hints';
-import { useCompletenessUi } from '@/hooks/use-completeness-ui';
-import { usePedagogy } from '@/hooks/use-pedagogy';
-import { useOnlineStatus } from '@/hooks/use-online-status';
-import { queueEntry } from '@/lib/logger/outbox';
+import { useNoticeForm } from '@/hooks/use-notice-form';
+import { useLoggerDraft } from '@/hooks/use-logger-draft';
 import { useAudioTranscription } from '@/hooks/use-audio-transcription';
-import { BatchLogForm } from '@/components/logger/BatchLogForm';
-import { CsvImportForm } from '@/components/logger/CsvImportForm';
+import { useNoticeSave } from '@/hooks/use-notice-save';
+import { parseNoticeSource } from '@/lib/logger/source';
+import { saveBlock } from '@/lib/logger/notice';
+import type { LoggerDraft } from '@/lib/logger/draft';
+import { getThreadName } from '@/lib/capability-threads';
+import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
+import { track } from '@/lib/analytics/posthog';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
-import { PedagogyAttribution, type PedagogyAttributionSource } from '@/components/logger/PedagogyAttribution';
-import { GuidedModeToggle } from '@/components/logger/GuidedModeToggle';
-import { PostSaveSurface } from '@/components/logger/PostSaveSurface';
-import type { AiEnrichment } from '@/types/enrichment';
-import type { ChipDetailValue } from '@/components/logger/ObservationChipDetail';
-import { scoreCompleteness, canSaveEntry } from '@/lib/logger/completeness';
-import type { LoggerDraftFields } from '@/lib/logger/draft';
-import {
-  buildEntrySavePayload,
-  coerceEntrySource,
-  isThinEntry,
-  warmThinSaveMessage,
-} from '@/lib/logger/entry-payload';
-import { checkBadgeThresholds, buildBadgeReadyToast } from '@/lib/logger/badge-check';
-import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
+import { ConfirmSurface } from '@/components/logger/confirm/ConfirmSurface';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
-import { CompletenessRing } from './_components/SectionHeader';
-import { WhoSection } from './_components/WhoSection';
-import { EngagementSection } from './_components/EngagementSection';
-import { WhenWhereSection } from './_components/WhenWhereSection';
-import { ObserveSection } from './_components/ObserveSection';
-import { EvidenceSection } from './_components/EvidenceSection';
+import { NoticeForm } from './_components/NoticeForm';
 import { EvidenceModal } from './_components/EvidenceModal';
-import { InsightsContent } from './_components/InsightsContent';
-import { frameworkLabel } from '@/lib/pedagogy/framework-labels';
-import { WhatSection } from './_components/WhatSection';
-import {
-  Sparkle,
-  Check, WifiSlash, NotePencil, ClipboardText,
-  Lightbulb, CaretDown,
-} from '@/components/icons';
+import { noticeCopy } from './_components/noticeCopy';
 
+type EvidenceKind = 'photo' | 'quote' | 'link';
 
-type EvidenceItem = {
-  type: 'photo' | 'quote' | 'note' | 'link';
-  content: string;
-  caption?: string;
-  url?: string;
-  name?: string;
-};
-
-
+/**
+ * The Logger — Notice, then Confirm.
+ *
+ * Notice: who · what happened (typed or dictated) · when · how it felt · what
+ * each child said or noticed · evidence. Save creates the entry and the server
+ * reads it (one Haiku call) for proposed evidence.
+ * Confirm: the post-save surface shows those proposals as tappable chips; a
+ * tap confirms. No insights rail, no completeness ring — the chips are the
+ * insight. See docs/hearth-logger-spec-v2.md.
+ *
+ * This file is a composition root: state lives in the hooks, every string in
+ * noticeCopy / confirmCopy, every derivation in src/lib/logger.
+ */
 export default function LogPage() {
-  const { vocab, pedagogy } = usePedagogy();
   const searchParams = useSearchParams();
-  const projectContext = {
-    source: coerceEntrySource(searchParams.get('source')),
-    projectId: searchParams.get('projectId') ?? undefined,
-    stageNumber: searchParams.get('stageNumber') ?? undefined,
-  };
-
-  // ─── Scaffold (from Hearth session) ───
-  const scaffoldSessionId = searchParams.get('scaffold');
-  const [showReflection, setShowReflection] = useState(false);
-  // Workstream F — after a non-scaffold Logger save, prompt the parent to
-  // attach the entry to a module they have in their library. Suppressed
-  // once per session if they pick "Skip".
-  const [attachEntryId, setAttachEntryId] = useState<string | null>(null);
-
-  // ─── Data ───
-  // /api/learners is guarded inside useLearnersFetch — a 5xx must NOT crash
-  // the Logger via a JSON-parse SyntaxError (incident 2026-05-25).
-  const { learners, isLoading: isLoadingLearners } = useLearnersFetch();
-
-  // ─── Form state ───
-  const [showBatch, setShowBatch] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  // Two-tier Logger surface: `quick` is the default lean capture (Who + What +
-  // Engagement → save, in under a minute); `full` reveals the complete form.
-  // The quick view is the primary path; the longer guided form is secondary.
-  // See D-LPS-13.
-  const [view, setView] = useState<'quick' | 'full'>('quick');
-  const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
-  const [description, setDescription] = useState('');
-  const [discoveries, setDiscoveries] = useState<Record<string, string>>({});
-  const [activityType, setActivityType] = useState<string | null>(null);
-  const [lessonSubjects, setLessonSubjects] = useState<string[]>([]);
-  const [engagement, setEngagement] = useState<Record<string, number>>({});
-  const [whenDate, setWhenDate] = useState<'today' | 'yesterday' | 'earlier'>('today');
-  const [duration, setDuration] = useState<string | null>(null);
-  const [location, setLocation] = useState<string | null>(null);
-  const [observations, setObservations] = useState<string[]>([]);
-  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
-
-  // ─── Guided Mode state ───
-  const [observationDetails, setObservationDetails] = useState<Record<string, ChipDetailValue>>({});
-  const [profileNudge, setProfileNudge] = useState<{ text: string; thread_id: string } | null>(null);
-  const [pedagogySources, setPedagogySources] = useState<PedagogyAttributionSource[]>([]);
-  const [postSaveInsights, setPostSaveInsights] = useState<string[]>([]);
-
-  // Post-save second-screen state. Non-null hides the form and renders
-  // PostSaveSurface in its place. Thin entries skip this (toast-only).
-  // See docs/hearth-logger-post-save-resolution-v1.md.
-  const [postSave, setPostSave] = useState<{
-    entryId: string;
-    evidenceCount: number;
-    enrichment: AiEnrichment | null;
-    savedAtMs: number;
-  } | null>(null);
-
-  // Guard so an in-flight enrichment poll can't write post-save UI state into
-  // a new entry. Holds the entryId being polled; cleared when the parent
-  // starts typing again (see the new-entry clearing effect below).
-  const activeEnrichmentEntryIdRef = useRef<string | null>(null);
-
-  // Tracks when the parent first typed anything in the current entry so we can
-  // report compose_ms on entry_created. Null until description becomes non-empty;
-  // reset in the post-save field-reset block alongside description.
-  const composeStartRef = useRef<number | null>(null);
-
-  const { loggerMode, setLoggerMode, snapshotData, snapshotSignals } =
-    useLoggerModeAndSnapshot();
-
-  // Scaffold data pre-fills description / location / attending learners when
-  // the parent navigates from a hearth session. onLoad fires exactly once.
-  const scaffoldData = useScaffoldFetch({
-    scaffoldSessionId,
-    onLoad: useCallback((data: ScaffoldData) => {
-      setDescription(data.session.sharedRecord ?? data.session.description ?? '');
-      if (data.session.location) setLocation(data.session.location);
-      if (data.attendingLearnerIds.length > 0) setSelectedLearners(data.attendingLearnerIds);
-    }, []),
-  });
-
-  // ─── Draft auto-save (10s to localStorage) ───
-  // The autosave + restore + clear wiring lives in useLoggerDraft (the React
-  // side of `lib/logger/draft.ts`). We memo the draft state so the hook's
-  // autosave timer only restarts when a field actually changes — preserving
-  // the original deps-driven `useEffect` cadence.
-  const draftState = useMemo<LoggerDraftFields>(() => ({
-    description,
-    selectedLearners,
-    discoveries,
-    activityType,
-    lessonSubjects,
-    engagement,
-    whenDate,
-    duration,
-    location,
-    observations,
-    evidence,
-    observationDetails,
-  }), [description, selectedLearners, discoveries, activityType, lessonSubjects, engagement, whenDate, duration, location, observations, evidence, observationDetails]);
-
-  const { draftRestored, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft } = useLoggerDraft({
-    state: draftState,
-    onRestore: useCallback((d) => {
-      // Each setter is gated on the corresponding field's presence — same shape
-      // as the original inline restore effect.
-      if (d.description) setDescription(d.description);
-      if (d.selectedLearners?.length) setSelectedLearners(d.selectedLearners);
-      if (d.discoveries) setDiscoveries(d.discoveries);
-      if (d.activityType) setActivityType(d.activityType);
-      if (d.lessonSubjects?.length) setLessonSubjects(d.lessonSubjects);
-      if (d.engagement) setEngagement(d.engagement);
-      if (d.whenDate) setWhenDate(d.whenDate);
-      if (d.duration) setDuration(d.duration);
-      if (d.location) setLocation(d.location);
-      if (d.observations?.length) setObservations(d.observations);
-      if (d.evidence?.length) setEvidence(d.evidence);
-      if (d.observationDetails && Object.keys(d.observationDetails).length) setObservationDetails(d.observationDetails);
-    }, []),
-  });
-
+  const source = useMemo(() => parseNoticeSource(searchParams), [searchParams]);
+  const { vocab, pedagogy } = usePedagogy();
+  const { toast } = useToast();
   const online = useOnlineStatus();
+  const { learners, isLoading, failed, reload } = useLearnersFetch();
+  const { fields, dispatch, composeStartedAt } = useNoticeForm();
 
-  // ─── AI Insights ───
-  // Two tiers: instant keyword matcher for fast feedback, debounced Haiku
-  // draft-insight for warmer reflective copy + better thread detection.
-  // The Haiku call only fires when description length ≥ 50 chars; the hook
-  // enforces a 20-call-per-session client cap (decision B — firm caps).
-  const selectedChildNames = useMemo(
-    () =>
-      learners
-        .filter((l) => selectedLearners.includes(l.id))
-        .map((l) => l.name),
-    [learners, selectedLearners]
+  // ─── Draft autosave + restore (localStorage primary, Postgres mirror) ───
+  const onRestore = useCallback(
+    (draft: LoggerDraft) =>
+      dispatch({
+        type: 'restore',
+        fields: {
+          learnerIds: draft.learnerIds,
+          text: draft.text,
+          dateOccurred: draft.dateOccurred,
+          felt: draft.felt,
+          noticed: draft.noticed,
+          evidence: draft.evidence,
+        },
+      }),
+    [dispatch],
   );
+  const draft = useLoggerDraft({ state: fields, onRestore });
 
-  const keywordMatch = useKeywordMatch(description, selectedChildNames);
-
-  const { insight: aiInsight, loading: aiLoading } = useDraftInsight(
-    description,
-    selectedChildNames
-  );
-
-  // Clear post-save insights when parent starts a new entry. Also invalidates
-  // any in-flight enrichment poll so its setState calls become no-ops.
-  // Also captures the first-meaningful-interaction timestamp for compose_ms.
-  useEffect(() => {
-    if (description.length > 0) {
-      activeEnrichmentEntryIdRef.current = null;
-      // Clears stale post-save insights when parent starts a new entry; gated on description.length.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPostSaveInsights([]);
-      setProfileNudge(null);
-      setPedagogySources([]);
-      if (composeStartRef.current === null) {
-        composeStartRef.current = Date.now();
-      }
-    }
-  }, [description]);
-
-  // ─── Reflection prompts (Socratic coaching questions) ───
-  const reflectionPrompts = useMemo((): ReflectionPrompt[] => {
-    if (description.length < 10) return [];
-    const engagementByName: Record<string, number> = {};
-    const discoveryByName: Record<string, string> = {};
-    const learnerNamesById: Record<string, string> = {};
-    for (const id of selectedLearners) {
-      const learner = learners.find((l) => l.id === id);
-      if (!learner) continue;
-      learnerNamesById[id] = learner.name;
-      if (engagement[id]) engagementByName[learner.name] = engagement[id];
-      if (discoveries[id]) discoveryByName[learner.name] = discoveries[id];
-    }
-    return generateReflectionPrompts({
-      match: keywordMatch,
-      descriptionLength: description.length,
-      observations,
-      activityType,
-      engagementByName,
-      discoveryByName,
-      snapshotSignals,
-      learnerNamesById,
-    });
-  }, [keywordMatch, description, selectedLearners, learners, engagement, discoveries, observations, activityType, snapshotSignals]);
-
-  // ─── Coach hints (debounced fetch) ───
-  const coachHints = useCoachHints({
-    description,
-    selectedLearners,
-    activityType,
-    observations,
+  // ─── Working from: a Hearth session pre-fills words + children ───
+  const scaffold = useScaffoldFetch({
+    scaffoldSessionId: source.kind === 'hearth_session' ? source.sessionId : null,
+    onLoad: useCallback(
+      (data: ScaffoldData) =>
+        dispatch({
+          type: 'init-from-source',
+          learnerIds: data.attendingLearnerIds,
+          text: data.session.sharedRecord ?? data.session.description ?? '',
+        }),
+      [dispatch],
+    ),
   });
 
-  // ─── UI state ───
-  const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'badge'; message: string; action?: { label: string; href: string } } | null>(null);
-  const [evidenceModal, setEvidenceModal] = useState<string | null>(null);
-  const [insightsExpanded, setInsightsExpanded] = useState(false);
+  // Preselect the check-in child, or the only child. `init-from-source` is a
+  // no-op once the form holds anything (a restored draft always wins).
+  useEffect(() => {
+    if (isLoading || learners.length === 0) return;
+    const checkInId = source.kind === 'check_in' ? source.learnerId : null;
+    if (checkInId && learners.some((l) => l.id === checkInId)) {
+      dispatch({ type: 'init-from-source', learnerIds: [checkInId] });
+    } else if (learners.length === 1) {
+      dispatch({ type: 'init-from-source', learnerIds: [learners[0].id] });
+    }
+  }, [isLoading, learners, source, dispatch]);
 
-  const {
-    isRecording,
-    isTranscribing,
-    audioLevel,
-    isSupported: voiceSupported,
-    start: startVoiceInput,
-    stop: stopVoiceInput,
-  } = useAudioTranscription({
-    onTranscript: (transcript) => setDescription((prev) => prev + (prev ? ' ' : '') + transcript),
-    onUnsupported: () => {
-      setToast({ type: 'error', message: 'Voice needs microphone access in a recent browser.' });
-      setTimeout(() => setToast(null), 3000);
-    },
-    onError: (kind) => {
-      const message =
-        kind === 'permission'
-          ? 'Microphone access is blocked — enable it in your browser settings.'
-          : kind === 'network'
-            ? "Couldn't reach the transcriber — check your connection and try again."
-            : kind === 'no-speech'
-              ? "Didn't catch any speech — try again, or type instead."
-              : 'Voice transcription failed — please try again, or type instead.';
-      setToast({ type: 'error', message });
-      setTimeout(() => setToast(null), 3000);
+  // ─── Voice (record → Deepgram → append) ───
+  const voice = useAudioTranscription({
+    onTranscript: (text) => dispatch({ type: 'append-text', text }),
+    onUnsupported: () => toast(noticeCopy.voiceErrors.unsupported, 'error'),
+    onError: (kind) => toast(noticeCopy.voiceErrors[kind], 'error'),
+  });
+
+  // ─── Save → Confirm ───
+  const resetForm = useCallback(() => dispatch({ type: 'reset' }), [dispatch]);
+  const { state, isSaving, save, retryEnrichment, badgeReady, logAnother } = useNoticeSave({
+    source,
+    learners,
+    clearDraft: draft.clearDraft,
+    resetForm,
+    toast,
+    analytics: {
+      resumedFromDraft: draft.draftRestored,
+      draftSavedAt: draft.draftSavedAt,
+      composeStartedAt,
     },
   });
 
-  // In Quick view the save gate is always the lean 'quick' threshold,
-  // regardless of the Guided/Quick mode toggle (which lives in Full view).
-  const effectiveMode = view === 'quick' ? 'quick' : loggerMode;
+  const [evidenceKind, setEvidenceKind] = useState<EvidenceKind | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [attachedTitle, setAttachedTitle] = useState<string | null>(null);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
 
-  // ─── Completeness ───
-  const completeness = useMemo(() => scoreCompleteness({
-    selectedLearners,
-    description,
-    activityType,
-    engagement,
-    discoveries,
-    observations,
-    observationDetails,
-    duration,
-    location,
-    evidence,
-    mode: effectiveMode,
-  }), [selectedLearners, description, discoveries, activityType, engagement, duration, location, observations, evidence, effectiveMode, observationDetails]);
+  // A Hearth-session save also asks for the shared reflection, over the surface.
+  const savedEntryId = state && state.kind !== 'queued' ? state.entryId : null;
+  const showReflection = Boolean(savedEntryId) && source.kind === 'hearth_session' && !reflectionDismissed;
+  const dismissReflection = () => setReflectionDismissed(true);
 
-  const sectionDone = useMemo(
-    () => ({
-      1: selectedLearners.length > 0,
-      2: description.length > 20 && activityType !== null,
-      3: selectedLearners.length > 0 && selectedLearners.every((id) => engagement[id]),
-      4: duration !== null || location !== null,
-      5: observations.length > 0,
-      6: evidence.length > 0,
-    }),
-    [selectedLearners, description, activityType, engagement, duration, location, observations, evidence]
-  );
-
-  const {
-    label: completenessLabel,
-    hint: completenessHint,
-    missingItems,
-  } = useCompletenessUi({
-    completeness,
-    loggerMode: effectiveMode,
-    selectedLearners,
-    description,
-    activityType,
-    engagement,
-  });
-
-  const canSave = canSaveEntry(completeness, effectiveMode);
-
-  // Fire `logger_completed_50pct` exactly once per Logger session, the
-  // moment completeness first crosses the save threshold. Useful for
-  // measuring funnel drop-off between started-typing and saved.
-  const fired50Ref = useRef(false);
-  useEffect(() => {
-    if (!fired50Ref.current && completeness >= 50) {
-      fired50Ref.current = true;
-      track('logger_completed_50pct', {
-        learner_count: selectedLearners.length,
-        has_evidence: evidence.length > 0,
-      });
-    }
-  }, [completeness, selectedLearners.length, evidence.length]);
-
-  // ─── Handlers ───
-  const toggleLearner = (id: string) => {
-    const wasSelected = selectedLearners.includes(id);
-    setSelectedLearners((prev) =>
-      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
-    );
-    // Deselecting a learner clears their per-child engagement + discovery so an
-    // orphaned rating can't linger in state, skew completeness, or be sent on
-    // save. Mirrors toggleObservation's detail purge. buildEntrySavePayload also
-    // filters to selectedLearners as the save-boundary guarantee.
-    if (wasSelected) {
-      setEngagement((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-      setDiscoveries((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-    }
+  const handleLogAnother = () => {
+    setAttachedTitle(null);
+    setAttachOpen(false);
+    setReflectionDismissed(false);
+    logAnother();
   };
 
-  const toggleObservation = (chip: string) => {
-    const wasSelected = observations.includes(chip);
-    setObservations((prev) =>
-      prev.includes(chip) ? prev.filter((o) => o !== chip) : [...prev, chip]
-    );
-    // Deselecting a chip clears any Guided-mode detail captured for it.
-    if (wasSelected) {
-      setObservationDetails((prev) => {
-        const next = { ...prev };
-        delete next[chip];
-        return next;
-      });
-    }
-  };
+  if (isLoading) return <SkeletonLoader />;
 
-  const getDateOccurred = useCallback(() => {
-    const today = new Date();
-    if (whenDate === 'yesterday') return format(subDays(today, 1), 'yyyy-MM-dd');
-    if (whenDate === 'earlier') return format(subDays(today, 5), 'yyyy-MM-dd');
-    return format(today, 'yyyy-MM-dd');
-  }, [whenDate]);
-
-  /**
-   * Return the form to empty after an entry has been captured — whether it
-   * reached the server or was queued offline. Both paths must clear, or a
-   * queued entry sits in the form looking unsaved and gets logged twice.
-   */
-  const clearComposedEntry = () => {
-    setSelectedLearners([]);
-    setDescription('');
-    setDiscoveries({});
-    setActivityType(null);
-    setLessonSubjects([]);
-    setEngagement({});
-    setWhenDate('today');
-    setDuration(null);
-    setLocation(null);
-    setObservations([]);
-    setEvidence([]);
-    setObservationDetails({});
-    // coachHints clear automatically — the hook resets to [] when the
-    // description shrinks below threshold (which the setDescription('')
-    // above triggers).
-    setProfileNudge(null);
-    setPedagogySources([]);
-    composeStartRef.current = null;
-  };
-
-  const handleSave = async () => {
-    if (!canSave || isSaving) return;
-    setIsSaving(true);
-
-    const payload = buildEntrySavePayload(
-      {
-        description,
-        dateOccurred: getDateOccurred(),
-        activityType,
-        lessonSubjects,
-        selectedLearners,
-        engagement,
-        discoveries,
-        evidence,
-        loggerMode: effectiveMode,
-        observationDetails,
-      },
-      {
-        scaffoldSessionId: scaffoldData?.session.id,
-        projectSource: projectContext.source,
-        projectId: projectContext.projectId,
-        stageNumber: projectContext.stageNumber,
-      },
-    );
-    const evidenceUrls = payload.evidenceUrls;
-
-    try {
-      const res = await fetch('/api/entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('Save failed');
-
-      const savedEntry = await res.json().catch(() => ({})) as { id?: string };
-      const savedEntryId = savedEntry?.id;
-      const savedAtMs = Date.now();
-
-      // Thin entries skip the substantive second screen and keep the fast
-      // "Saved" toast (see spec §2 Item 2 density table). See
-      // lib/logger/entry-payload.ts → isThinEntry for the four-signal rule.
-      const thinEntry = isThinEntry({
-        description,
-        observationDetails,
-        evidenceUrlCount: evidenceUrls.length,
-        completeness,
-      });
-
-      const rawComposeMs =
-        composeStartRef.current !== null ? savedAtMs - composeStartRef.current : null;
-      const compose_ms =
-        rawComposeMs !== null
-          ? Math.round(Math.min(rawComposeMs, 4 * 60 * 60 * 1000) / 1000) * 1000
-          : null;
-
-      const entryIdHash = savedEntryId
-        ? await hashForAnalytics(savedEntryId).catch(() => null)
-        : null;
-
-      const entryCreatedProps: Record<string, string | number | boolean> = {
-        source: scaffoldData ? 'hearth_session' : projectContext.source,
-        learner_count: selectedLearners.length,
-        has_evidence: evidenceUrls.length > 0,
-        activity_type: activityType ?? 'none',
-        thin: thinEntry,
-        resumed_from_draft: draftRestored,
-      };
-      if (entryIdHash) entryCreatedProps.entry_id = entryIdHash;
-      if (compose_ms !== null) entryCreatedProps.compose_ms = compose_ms;
-      if (draftRestored && draftSavedAt !== null) {
-        entryCreatedProps.draft_age_ms = Math.round(savedAtMs - draftSavedAt);
-      }
-      track('entry_created', entryCreatedProps);
-
-      clearDraft();
-
-      // Scaffold (hearth session) entries also surface the post-save second
-      // screen — per the resolution doc, PostSaveSurface is where enrichment
-      // is most crucial to surface. ReflectionModal layers on top for the
-      // session-specific data capture.
-      if (scaffoldData) {
-        setShowReflection(true);
-      } else if (savedEntryId) {
-        // Workstream F — offer to attach the entry to a library module.
-        // Suppressed for the rest of this session if the parent picked
-        // "Skip" on a previous save. Scaffolded entries already carry
-        // sourceSessionId; the attach flow is for free-text retrospectives.
-        let skipped = false;
-        try {
-          skipped = sessionStorage.getItem('hearth_skip_attach') === '1';
-        } catch {
-          /* sessionStorage may be unavailable; default to showing once */
-        }
-        if (!skipped) setAttachEntryId(savedEntryId);
-      }
-
-      if (thinEntry || !savedEntryId) {
-        // Thin entries skip the substantive post-save screen, so this toast is
-        // the only feedback on the quick days — keep it warm, not a flat "saved".
-        if (!scaffoldData) setToast({ type: 'success', message: warmThinSaveMessage() });
-      } else {
-        // Substantive entry → render the inline post-save second screen.
-        // Enrichment starts as null; the poll below populates it as the
-        // server's after() job lands data.
-        setPostSave({ entryId: savedEntryId, evidenceCount: evidenceUrls.length, enrichment: null, savedAtMs });
-      }
-      const learnersToCheck = [...selectedLearners];
-      clearComposedEntry();
-
-      // Poll for enrichment to complete (server runs it async after save).
-      // Snapshot-rebuild also enqueues `badge_ready` notifications, so if the
-      // parent misses this toast the Notification Centre will still surface it.
-      if (savedEntryId) activeEnrichmentEntryIdRef.current = savedEntryId;
-      (async () => {
-        if (savedEntryId) {
-          // The poll's timing / in-flight guard / pending→terminal state
-          // machine lives in lib/logger/enrichment-poll.ts; the React
-          // state-mapping stays here behind onEnrichment.
-          await pollEntryEnrichment(savedEntryId, {
-            isCurrent: () => activeEnrichmentEntryIdRef.current === savedEntryId,
-            clearCurrent: () => {
-              activeEnrichmentEntryIdRef.current = null;
-            },
-            onEnrichment: (enrichment) => {
-              setPostSave((prev) =>
-                prev && prev.entryId === savedEntryId ? { ...prev, enrichment } : prev
-              );
-
-              const sources = enrichment.pedagogy_sources ?? [];
-              if (sources.length > 0) {
-                setPedagogySources(sources);
-                setInsightsExpanded(true);
-              }
-              const suggestions = enrichment.insight_suggestions ?? [];
-              if (suggestions.length > 0) {
-                setPostSaveInsights(suggestions);
-                setInsightsExpanded(true);
-              }
-              const nudge = enrichment.profile_nudge;
-              if (nudge) {
-                setProfileNudge(nudge);
-                setInsightsExpanded(true);
-              }
-            },
-            // Poll timed out without a terminal status. Spec: "never a spinner
-            // that hangs." Resolve the surface to a failed view so the parent
-            // can exit; the DB row may still finish enriching later, and the
-            // Portfolio retry affordance covers that case.
-            onTimeout: () => {
-              setPostSave((prev) => {
-                if (!prev || prev.entryId !== savedEntryId) return prev;
-                if (prev.enrichment?.status === 'enriched' || prev.enrichment?.status === 'failed') {
-                  return prev;
-                }
-                return {
-                  ...prev,
-                  enrichment: { status: 'failed' as const, failedAt: new Date().toISOString() },
-                };
-              });
-            },
-          });
-        }
-
-        try {
-          const ready = await checkBadgeThresholds(learnersToCheck);
-          const badgeToast = buildBadgeReadyToast(
-            ready,
-            new Map(learners.map((l) => [l.id, l.name])),
-          );
-          if (badgeToast) {
-            setToast(badgeToast);
-            setTimeout(() => setToast(null), 10000);
-          }
-        } catch {
-          // badge check is non-critical — silently ignore
-        }
-      })();
-    } catch {
-      // Differentiate offline vs server-side failure. The 10s autosave
-      // means the draft has already been written to localStorage, so the
-      // entry is not lost — just unposted.
-      const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
-
-      if (isOffline) {
-        // Queue it for replay instead of asking the parent to remember to come
-        // back and press Save again. This is the promise the offline screen
-        // makes; lib/logger/outbox.ts flushes on reconnect.
-        const queuedId = await queueEntry(payload);
-        if (queuedId) {
-          clearComposedEntry();
-          setToast({
-            type: 'success',
-            message: "Saved offline — it'll sync when you're back online.",
-          });
-        } else {
-          setToast({
-            type: 'error',
-            message:
-              "You're offline and this device couldn't queue the entry. Your draft is saved — try again when you're back online.",
-          });
-        }
-      } else {
-        setToast({
-          type: 'error',
-          message: 'Failed to save. Your draft is safe — please try again.',
-        });
-      }
-    } finally {
-      setIsSaving(false);
-      setTimeout(() => setToast(null), 3000);
-    }
-  };
-
-
-
-  // ─── Render ───
-  if (isLoadingLearners) {
-    return <SkeletonLoader />;
-  }
-
-  // Substantive entry just saved — show the deliberate second screen in
-  // place of the form (spec §2 Item 2: inline morph, parent-controlled exit).
-  // Badge-readiness toasts still render here so a quick-check prompt isn't
-  // lost when an entry trips a badge threshold.
-  if (postSave) {
+  if (state) {
+    const canAttach = state.kind !== 'queued' && source.kind !== 'hearth_session';
     return (
-      <div className="relative">
-        <PostSaveSurface
-          enrichment={postSave.enrichment}
-          evidenceCount={postSave.evidenceCount}
-          onLogAnother={() => setPostSave(null)}
-          entryId={postSave.entryId}
-          savedAtMs={postSave.savedAtMs}
-          scaffolded={Boolean(scaffoldData)}
+      <>
+        <ConfirmSurface
+          state={state}
+          learners={learners}
+          frameworkTitle={frameworkLabel(pedagogy)}
+          badgeReady={badgeReady}
+          onLogAnother={handleLogAnother}
+          onRetryEnrichment={retryEnrichment}
+          attach={
+            canAttach
+              ? {
+                  onOpen: () => {
+                    track('logger_attach_opened');
+                    setAttachOpen(true);
+                  },
+                  attachedTitle,
+                }
+              : undefined
+          }
         />
-        {toast && (
-          <div
-            className={`fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
-              toast.type === 'badge'
-                ? 'bg-ember/20 text-ember border border-ember/30'
-                : toast.type === 'success'
-                ? 'bg-sage/20 text-sage border border-sage/30'
-                : 'bg-red-900/20 text-red-400 border border-red-900/30'
-            }`}
-          >
-            <span>{toast.message}</span>
-            {toast.action && (
-              <a
-                href={toast.action.href}
-                className="ml-sm font-semibold underline underline-offset-2 hover:no-underline"
-              >
-                {toast.action.label}
-              </a>
-            )}
-          </div>
+        {attachOpen && savedEntryId && (
+          <AttachToModuleModal
+            entryId={savedEntryId}
+            onClose={() => setAttachOpen(false)}
+            onAttached={(_moduleId, title) => setAttachedTitle(title ?? 'your module')}
+          />
         )}
-      </div>
+        {scaffold && (
+          <ReflectionModal
+            isOpen={showReflection}
+            sessionId={scaffold.session.id}
+            hearthId={scaffold.session.hearthId}
+            hearthName={scaffold.session.hearthName ?? 'Hearth'}
+            sessionTitle={scaffold.session.title}
+            onClose={dismissReflection}
+            onShared={dismissReflection}
+            onSkipped={dismissReflection}
+          />
+        )}
+      </>
     );
   }
+
+  const checkInLearner =
+    source.kind === 'check_in' && source.learnerId
+      ? learners.find((l) => l.id === source.learnerId) ?? null
+      : null;
 
   return (
-    // Mobile: fill the scroll container as a flex column so the `flex-1` content
-    // region stretches and the `sticky bottom-0` save bar always pins flush above
-    // the nav — even when the form is shorter than the viewport. Desktop reverts
-    // to the original block flow (the sticky bar is lg:hidden).
-    <div className="relative flex min-h-full flex-col lg:block">
-      {/* Offline banner — sits above the draft-restored banner so it's the
-          first thing the parent sees if a network drop interrupts them.
-          The 10s autosave keeps writing to localStorage regardless of
-          connection state, so "your draft is safe locally" is literally
-          true and worth surfacing. */}
-      {!online && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex items-center gap-sm border-b border-border-subtle bg-surface-raised px-md py-xs"
-        >
-          <span className="text-text-muted" aria-hidden="true"><WifiSlash size={14} /></span>
-          <p className="font-sans text-[11px] text-text-secondary">
-            Offline — your draft is being saved locally. Save will resume when you&rsquo;re back online.
-          </p>
-        </div>
-      )}
-
-      {/* Draft restored banner */}
-      {draftRestored && (
-        <div className="flex items-center justify-between border-b border-border-subtle bg-ember-glow px-md py-xs">
-          <p className="inline-flex items-center gap-xs font-sans text-[11px] text-text-secondary"><NotePencil size={14} aria-hidden="true" /> Draft restored from your last session</p>
-          <button
-            onClick={dismissDraftRestored}
-            className="font-sans text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-[var(--motion-quick)]"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Scaffold banner (from Hearth session) */}
-      {scaffoldData && (
-        <div className="flex items-center gap-md p-md px-lg bg-ember/[0.08] border border-ember/15 rounded-[10px] mx-md mt-md mb-sm">
-          <span className="shrink-0 inline-flex text-ember" aria-hidden="true"><ClipboardText size={22} /></span>
-          <div className="min-w-0">
-            <div className="font-sans text-sm text-ember font-medium">
-              Logging from: {scaffoldData.session.hearthName ?? 'Hearth'}
-            </div>
-            <div className="font-sans text-xs text-text-muted truncate">
-              {scaffoldData.session.title} · {scaffoldData.session.date} · Pre-filled from shared record
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header bar with completeness */}
-      <div className="sticky top-0 z-10 flex items-center gap-md border-b border-border-subtle bg-surface-panel px-md py-sm lg:px-lg">
-        <div className="flex-1 min-w-0">
-          <h1 className="font-serif text-[1.1rem] font-semibold text-text-primary">Log a Learning Moment</h1>
-          <p className="font-sans text-[0.75rem] text-text-muted hidden sm:block">
-            {lastSavedAt
-              ? `Draft saved · ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : vocab.logNudge}
-          </p>
-          {view === 'full' && (<div className="mt-xs flex flex-wrap items-center gap-xs">
-            <button
-              type="button"
-              onClick={() => setShowBatch(true)}
-              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
-            >
-              <ClipboardText size={12} aria-hidden="true" /> Batch log
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-xs rounded-full border border-border-subtle bg-transparent px-sm py-[3px] font-sans text-[0.6875rem] font-medium text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary"
-            >
-              <ClipboardText size={12} aria-hidden="true" /> Import CSV
-            </button>
-          </div>)}
-        </div>
-        {view === 'full' && <GuidedModeToggle mode={loggerMode} onChange={setLoggerMode} />}
-        <div className="hidden lg:flex items-center gap-sm">
-          <CompletenessRing
-            score={completeness}
-            ready={canSave}
-            valueText={canSave ? 'Ready to save' : completenessHint}
-          />
-          <div className="hidden sm:block text-left">
-            <p className="font-sans text-[0.6875rem] font-semibold text-text-secondary leading-tight">{completenessLabel}</p>
-            <p className="font-sans text-[0.6875rem] text-text-muted leading-tight">{completenessHint}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={!canSave || isSaving}
-          className={`hidden lg:flex items-center gap-sm rounded-md px-lg py-sm font-sans text-[0.8125rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
-            canSave
-              ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
-              : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
-          }`}
-        >
-          {isSaving
-            ? 'Saving…'
-            : canSave
-              ? <span className="inline-flex items-center gap-xs"><Check size={14} aria-hidden="true" /> Save</span>
-              : 'Save'}
-        </button>
-      </div>
-
-      {showBatch && (
-        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
-          <div className="w-full max-w-[560px] xl:max-w-[600px]">
-            <BatchLogForm
-              learners={learners.map((l) => ({ id: l.id, name: l.name }))}
-              onComplete={() => setShowBatch(false)}
-              onCancel={() => setShowBatch(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {showImport && (
-        <div className="flex-1 overflow-y-auto px-md py-lg lg:flex lg:justify-center">
-          <div className="w-full max-w-[560px] xl:max-w-[600px]">
-            <CsvImportForm
-              onComplete={() => setShowImport(false)}
-              onCancel={() => setShowImport(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {!showBatch && !showImport && <div className="flex-1 lg:flex">
-        {/* ─── Left: Capture Form ─── */}
-        <div className="flex-1 overflow-y-auto px-md pt-lg pb-[120px] lg:py-lg lg:flex lg:justify-center">
-          <div className="w-full max-w-[560px] xl:max-w-[600px] space-y-xl">
-          {view === 'full' && (
-            <button
-              type="button"
-              onClick={() => setView('quick')}
-              className="inline-flex items-center gap-xs font-sans text-[0.75rem] font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
-            >
-              <CaretDown size={14} aria-hidden="true" className="rotate-90" /> Back to Quick Log
-            </button>
-          )}
-          {/* Section 1: Who Was Learning? */}
-          <WhoSection
-            learners={learners}
-            selectedLearners={selectedLearners}
-            onToggleLearner={toggleLearner}
-            snapshotData={snapshotData}
-            done={sectionDone[1]}
-          />
-
-          {/* Section 2: What Happened? */}
-          <WhatSection
-            label={vocab.logWhatLabel}
-            placeholder={vocab.logWhatPlaceholder}
-            minimal={view === 'quick'}
-            done={view === 'quick' ? description.length > 20 : sectionDone[2]}
-            description={description}
-            onDescriptionChange={setDescription}
-            isRecording={isRecording}
-            isTranscribing={isTranscribing}
-            audioLevel={audioLevel}
-            voiceSupported={voiceSupported}
-            onStartVoice={startVoiceInput}
-            onStopVoice={stopVoiceInput}
-            learners={learners}
-            selectedLearners={selectedLearners}
-            discoveries={discoveries}
-            onDiscoveryChange={(id, value) =>
-              setDiscoveries((prev) => ({ ...prev, [id]: value }))
-            }
-            engagement={engagement}
-            activityType={activityType}
-            onActivityTypeChange={setActivityType}
-            lessonSubjects={lessonSubjects}
-            onToggleLessonSubject={(key) =>
-              setLessonSubjects((prev) =>
-                prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
-              )
-            }
-          />
-
-          {/* Section 3: How Engaged Were They? */}
-          <EngagementSection
-            done={sectionDone[3]}
-            learners={learners}
-            selectedLearners={selectedLearners}
-            engagement={engagement}
-            onEngagementChange={(id, value) =>
-              setEngagement((prev) => ({ ...prev, [id]: value }))
-            }
-          />
-
-          {/* Sections 4–5 (When/Where · Observe) — Full view only */}
-          {view === 'full' && (
-            <>
-              <WhenWhereSection
-                done={sectionDone[4]}
-                whenDate={whenDate}
-                onWhenDateChange={setWhenDate}
-                duration={duration}
-                onDurationChange={setDuration}
-                location={location}
-                onLocationChange={setLocation}
-              />
-
-              <ObserveSection
-                done={sectionDone[5]}
-                label={vocab.logObserveLabel}
-                observations={observations}
-                observationDetails={observationDetails}
-                onToggleObservation={toggleObservation}
-                onObservationDetailChange={(chip, value) =>
-                  setObservationDetails((prev) => ({ ...prev, [chip]: value }))
-                }
-                isGuided={loggerMode === 'guided'}
-              />
-            </>
-          )}
-
-          {/* Section 6: Evidence (optional) — available in both Quick and Full.
-              In Quick it follows Engagement; in Full it follows Observe. */}
-          <EvidenceSection
-            done={sectionDone[6]}
-            evidence={evidence}
-            onOpenTool={setEvidenceModal}
-            onRemoveEvidence={(index) =>
-              setEvidence((prev) => prev.filter((_, idx) => idx !== index))
-            }
-          />
-
-          {/* Quick view: invite into the full form without crowding it */}
-          {view === 'quick' && (
-            <div className="pt-sm">
-              <button
-                type="button"
-                onClick={() => setView('full')}
-                className="inline-flex items-center gap-xs rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-[0.8125rem] font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors duration-[var(--motion-quick)]"
-              >
-                Add more detail — switch to Full Log
-              </button>
-              <p className="mt-xs font-sans text-[0.6875rem] text-text-muted">
-                Quick Log captures the essentials in under a minute. Full Log adds activity type, observations, evidence and more.
-              </p>
-            </div>
-          )}
-          </div>
-        </div>
-
-        {/* ─── Right: AI Insights Panel (desktop, Full view only) ─── */}
-        {view === 'full' && (
-        <aside className="hidden lg:flex lg:w-[400px] xl:w-[440px] shrink-0 flex-col gap-lg border-l border-border-subtle bg-surface-panel p-lg overflow-y-auto">
-          <div className="flex items-center gap-sm pb-md border-b border-border-subtle">
-            <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-ember shadow-ember text-text-inverse">
-              <Lightbulb size={16} aria-hidden="true" />
-            </div>
-            <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
-          </div>
-          <InsightsContent
-            match={keywordMatch}
-            aiInsight={aiInsight}
-            aiLoading={aiLoading}
-            reflectionPrompts={reflectionPrompts}
-            coachHints={coachHints}
-            profileNudge={profileNudge}
-            postSaveInsights={postSaveInsights}
-          />
-          <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
-        </aside>
-        )}
-      </div>}
-
-      {/* ─── Mobile bottom stack: AI Insights drawer + Save bar ───
-          `sticky bottom-0` inside the scrolling <main> pins this flush above the
-          in-flow MobileBottomNav regardless of the nav's safe-area height — no
-          magic offset, no separate scroll. */}
-      <div className="lg:hidden sticky bottom-0 z-50">
-        {/* AI Insights drawer + toggle — Full view only */}
-        {view === 'full' && (<>
-        {insightsExpanded && (
-          <div className="max-h-[55vh] overflow-y-auto border-t border-border-subtle bg-surface-panel p-xl">
-            <div className="flex items-center gap-sm mb-md">
-              <span className="text-ember" aria-hidden="true"><Sparkle size={18} /></span>
-              <h3 className="font-serif text-base font-semibold text-text-primary">Hearth Insights</h3>
-            </div>
-            <InsightsContent
-              match={keywordMatch}
-              aiInsight={aiInsight}
-              aiLoading={aiLoading}
-              reflectionPrompts={reflectionPrompts}
-              coachHints={coachHints}
-              profileNudge={profileNudge}
-              postSaveInsights={postSaveInsights}
-            />
-            <PedagogyAttribution sources={pedagogySources} frameworkTitle={frameworkLabel(pedagogy)} />
-          </div>
-        )}
-        <button
-          onClick={() => setInsightsExpanded(!insightsExpanded)}
-          aria-expanded={insightsExpanded}
-          className="w-full flex items-center justify-center gap-xs border-t border-border-subtle bg-surface-panel px-md py-sm"
-        >
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {insightsExpanded ? 'Hide' : 'Show'} Insights
-          </span>
-          <CaretDown
-            size={14}
-            aria-hidden="true"
-            className={`text-text-secondary transition-transform duration-[var(--motion-quick)] ease-[var(--ease-default)] ${insightsExpanded ? '' : 'rotate-180'}`}
-          />
-        </button>
-        </>)}
-
-        {/* Save bar — primary action anchored at the bottom on mobile */}
-        {!showBatch && !showImport && (
-          <div className="border-t border-border-subtle bg-surface-panel px-md py-sm pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
-            <div className="flex items-center gap-md">
-              <CompletenessRing
-                score={completeness}
-                ready={canSave}
-                valueText={canSave ? 'Ready to save' : completenessHint}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="font-sans text-[0.75rem] font-semibold text-text-secondary leading-tight">
-                  {completenessLabel}
-                </p>
-                <p className="font-sans text-[0.6875rem] text-text-muted leading-tight truncate">
-                  {canSave
-                    ? completenessHint
-                    : `${missingItems.length} thing${missingItems.length === 1 ? '' : 's'} left`}
-                </p>
-              </div>
-              <button
-                onClick={handleSave}
-                disabled={!canSave || isSaving}
-                className={`flex shrink-0 items-center justify-center gap-sm rounded-md px-xl py-sm font-sans text-[0.875rem] font-semibold transition-all duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
-                  canSave
-                    ? 'bg-ember border border-ember text-text-inverse cursor-pointer hover:bg-ember-hover hover:shadow-ember'
-                    : 'bg-surface-raised border border-border-subtle text-text-muted opacity-50 cursor-not-allowed'
-                }`}
-              >
-                {isSaving
-                  ? 'Saving…'
-                  : canSave
-                    ? <span className="inline-flex items-center gap-xs"><Check size={16} aria-hidden="true" /> Save</span>
-                    : 'Save'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ─── Evidence Modal ─── */}
-      {evidenceModal && (
+    <>
+      <NoticeForm
+        fields={fields}
+        learners={learners}
+        learnersFailed={failed}
+        onReloadLearners={reload}
+        source={source}
+        scaffold={scaffold}
+        online={online}
+        draft={{
+          restored: draft.draftRestored,
+          dateReset: draft.dateReset,
+          lastSavedAt: draft.lastSavedAt,
+          onDismiss: draft.dismissDraftRestored,
+          onStartFresh: () => {
+            draft.clearDraft();
+            resetForm();
+          },
+        }}
+        voice={{
+          isRecording: voice.isRecording,
+          isTranscribing: voice.isTranscribing,
+          audioLevel: voice.audioLevel,
+          supported: voice.isSupported,
+          onStart: voice.start,
+          onStop: voice.stop,
+        }}
+        whatPlaceholder={vocab.logWhatPlaceholder || noticeCopy.whatPlaceholderFallback}
+        sourceLearnerName={checkInLearner?.name ?? null}
+        sourceThreadName={
+          source.kind === 'check_in' && source.threadId ? getThreadName(source.threadId) : null
+        }
+        onToggleLearner={(id) => dispatch({ type: 'toggle-learner', id })}
+        onTextChange={(text) => dispatch({ type: 'set-text', text })}
+        onFelt={(id, level) => dispatch({ type: 'set-felt', id, level })}
+        onNoticed={(id, text) => dispatch({ type: 'set-noticed', id, text })}
+        onDate={(dateOccurred) => dispatch({ type: 'set-date', dateOccurred })}
+        onAddEvidence={setEvidenceKind}
+        onRemoveEvidence={(index) => dispatch({ type: 'remove-evidence', index })}
+        save={{ block: saveBlock(fields), saving: isSaving, onSave: () => void save(fields) }}
+      />
+      {evidenceKind && (
         <EvidenceModal
-          type={evidenceModal}
-          onClose={() => setEvidenceModal(null)}
+          type={evidenceKind}
+          onClose={() => setEvidenceKind(null)}
           onSave={(item) => {
-            setEvidence((prev) => [...prev, item]);
-            setEvidenceModal(null);
+            dispatch({ type: 'add-evidence', item });
+            setEvidenceKind(null);
           }}
         />
       )}
-
-      {/* ─── Toast ─── */}
-      {toast && (
-        <div
-          className={`fixed bottom-[150px] lg:bottom-[80px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-md rounded-md px-lg py-sm font-sans text-sm font-medium shadow-float transition-all duration-[var(--motion-quick)] ${
-            toast.type === 'badge'
-              ? 'bg-ember/20 text-ember border border-ember/30'
-              : toast.type === 'success'
-              ? 'bg-sage/20 text-sage border border-sage/30'
-              : 'bg-red-900/20 text-red-400 border border-red-900/30'
-          }`}
-        >
-          <span>{toast.message}</span>
-          {toast.action && (
-            <a
-              href={toast.action.href}
-              className="ml-sm font-semibold underline underline-offset-2 hover:no-underline"
-            >
-              {toast.action.label}
-            </a>
-          )}
-        </div>
-      )}
-
-      {/* ─── Reflection Modal (hearth session scaffold) ─── */}
-      {scaffoldData && (
-        <ReflectionModal
-          isOpen={showReflection}
-          sessionId={scaffoldData.session.id}
-          hearthId={scaffoldData.session.hearthId}
-          hearthName={scaffoldData.session.hearthName ?? 'Hearth'}
-          sessionTitle={scaffoldData.session.title}
-          onClose={() => setShowReflection(false)}
-          onShared={() => setShowReflection(false)}
-          onSkipped={() => setShowReflection(false)}
-        />
-      )}
-
-      {/* ─── Attach-to-module Modal (workstream F) ───
-          Retro-attaches the just-saved entry to a library module. PATCHes
-          sourceModuleId via /api/entries/[id]. Per-session skip flag. */}
-      {attachEntryId && (
-        <AttachToModuleModal
-          entryId={attachEntryId}
-          onClose={() => {
-            try {
-              sessionStorage.setItem('hearth_skip_attach', '1');
-            } catch {
-              /* ignore */
-            }
-            setAttachEntryId(null);
-          }}
-          onAttached={() => setAttachEntryId(null)}
-        />
-      )}
-    </div>
+    </>
   );
 }
-

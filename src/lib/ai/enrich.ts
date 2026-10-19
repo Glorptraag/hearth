@@ -26,6 +26,7 @@ import { trackServer } from '@/lib/analytics/posthog-server';
 import { VALID_THREAD_IDS, normalizeThreadId } from './thread-aggregation';
 import { sanityServerClient } from '@/lib/sanity/client';
 import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
+import { subjectsFill } from './subjects-normalise';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -723,11 +724,15 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       wsUpdate.workSampleCandidate = validated.work_sample.flag;
       wsUpdate.workSampleQuality = validated.work_sample.quality.toFixed(2);
     }
+    // The Logger no longer asks for subjects: fill `subjects` from the reading
+    // when the parent gave none; never overwrite a writer-set value (runner /
+    // batch / CSV / Portfolio edit).
     await db
       .update(learningEntries)
       .set({
         aiEnrichment: { ...validated, status: 'enriched' as const },
         ...wsUpdate,
+        ...subjectsFill(ctx.entry.subjects, validated.subjects_detected),
         updatedAt: new Date(),
       })
       .where(eq(learningEntries.id, entryId));
@@ -741,7 +746,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
     // If low confidence, queue async Sonnet re-enrichment
     if (validated.confidence < 0.5) {
-      sonnetFallback(entryId, familyId, userPrompt, childNames)
+      sonnetFallback(entryId, familyId, userPrompt, childNames, ctx.entry.subjects ?? null)
         .catch((err) => console.error('[enrichEntry] Sonnet fallback failed:', err));
     }
   } catch (error) {
@@ -788,6 +793,7 @@ async function sonnetFallback(
   familyId: string,
   userPrompt: string,
   childNames: string[],
+  existingSubjects: string[] | null,
 ): Promise<void> {
   const startTime = Date.now();
   const client = new Anthropic();
@@ -846,6 +852,7 @@ async function sonnetFallback(
     .set({
       aiEnrichment: { ...validated, status: 'enriched' as const },
       ...wsUpdate,
+      ...subjectsFill(existingSubjects, validated.subjects_detected),
       updatedAt: new Date(),
     })
     .where(eq(learningEntries.id, entryId));

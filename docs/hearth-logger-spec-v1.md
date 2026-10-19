@@ -1,6 +1,8 @@
 # Hearth LMS — Retrospective Logger v2
 ## UX & Functional Design Specification
 
+> **Superseded (2026-10-07)** for the capture and post-save surfaces by `hearth-logger-spec-v2.md` (Notice → Confirm, D-LPS-14). §5 AI insights panel, §4 completeness gate and §7.2 density branch are retired; the rest is retained as history.
+
 **Screen:** `hearth-logger-workspace-v2.html`
 **Status:** Design complete, specification ready for development handoff
 **Last updated:** March 2026

@@ -318,3 +318,67 @@ describe('GET /api/entries — cross-family isolation', () => {
     expect(body.map((e) => e.title)).not.toContain('B — hidden');
   });
 });
+
+describe('POST /api/entries — project-stage provenance', () => {
+  it('persists source_project_id and source_stage_number from a Logger project-stage payload', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID });
+
+    // The shape `buildEntrySavePayload` emits for `{ kind: 'project_stage' }`.
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Stage 2: built the frame',
+        description: 'Measured and cut the uprights.',
+        dateOccurred: '2026-10-06',
+        learnerIds: [learner.id],
+        engagementPerLearner: { [learner.id]: 4 },
+        discoveriesPerLearner: {},
+        evidenceUrls: [],
+        evidence: [],
+        source: 'project_stage',
+        sourceProjectId: 'proj-1',
+        sourceStageNumber: 2,
+        status: 'draft',
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].source).toBe('project_stage');
+    expect(rows[0].sourceProjectId).toBe('proj-1');
+    expect(rows[0].sourceStageNumber).toBe(2);
+  });
+
+  it('still 201s a legacy payload sending projectId/stageNumber, with null provenance (strip, not reject)', async () => {
+    // An old client, or an outbox record queued before the rebuild, sends the
+    // keys the route never validated. They are stripped — the save must land.
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await POST(
+      jsonReq('http://x/api/entries', {
+        title: 'Queued before the rebuild',
+        status: 'draft',
+        source: 'project_stage',
+        projectId: 'proj-1',
+        stageNumber: '2',
+        mode: 'quick',
+      })
+    );
+    expect(res.status).toBe(201);
+
+    const rows = await db
+      .select()
+      .from(learningEntries)
+      .where(eq(learningEntries.familyId, TEST_FAMILY_ID));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].source).toBe('project_stage');
+    expect(rows[0].sourceProjectId).toBeNull();
+    expect(rows[0].sourceStageNumber).toBeNull();
+  });
+});

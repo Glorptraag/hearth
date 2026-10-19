@@ -84,11 +84,12 @@ export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
 
 /**
  * Active-state matchers for direct tabs. `Story` covers the entire `/our-story`
- * subtree because the Capabilities tray destination lives under it.
+ * subtree because the Capabilities tray destination lives under it. `Log`
+ * covers `/log/*` (batch, import) so the tab stays lit on the Logger's sub-pages.
  */
 export function isDirectTabActive(pathname: string, href: string): boolean {
   if (href === '/dashboard') return pathname === '/dashboard';
   if (href === '/our-story') return pathname === '/our-story' || pathname.startsWith('/our-story/');
-  if (href === '/log') return pathname === '/log';
+  if (href === '/log') return pathname === '/log' || pathname.startsWith('/log/');
   return pathname === href;
 }

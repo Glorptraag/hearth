@@ -50,7 +50,7 @@ function isActive(pathname: string, href: string): boolean {
   if (href === "/our-story") return pathname === "/our-story";
   if (href === "/our-story/capabilities") return pathname.startsWith("/our-story/capabilities");
   if (href === "/our-story/portfolio") return pathname.startsWith("/our-story/portfolio");
-  if (href === "/log") return pathname === "/log";
+  if (href === "/log") return pathname === "/log" || pathname.startsWith("/log/");
   if (href === "/planner") return pathname.startsWith("/planner");
   if (href === "/build/badges") return pathname.startsWith("/build/badges");
   if (href === "/build/modules") return pathname.startsWith("/build/modules");

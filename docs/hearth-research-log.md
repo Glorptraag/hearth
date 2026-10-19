@@ -220,6 +220,29 @@ A failed module load surfaced as an unhandled rejection plus "Module not availab
 **Regression test:** `src/app/(auth)/our-story/capabilities/page.test.tsx`; `src/lib/modules/completion.test.ts` clamp cases.
 **Fix:** PR #255. **Date logged:** 2026-07-03.
 
+### R27 — Code audit (2026-10-07): project-stage provenance was silently dropped on every Logger save from a project page.
+
+The Logger payload sent `projectId` / `stageNumber` (strings); `POST /api/entries` validates `sourceProjectId` / `sourceStageNumber` (number) and its non-strict zod strips unknown keys, so no Logger entry ever carried project provenance. The unit test had enshrined the wrong key names, which is why it stayed green. Rebuilt payload (`buildEntrySavePayload`) sends the route's keys with a numeric stage; legacy queued outbox records still replay (the server strips the old keys).
+**Spec affected:** `hearth-logger-spec-v2.md` §2 (mapping table) and §7 (source banner); project-stage provenance in `Hearth_System_Interaction_Map.md`.
+**Regression test:** `src/lib/logger/entry-payload.test.ts` (`sourceProjectId` + numeric `sourceStageNumber`); `src/app/api/entries/route.integration.test.ts` project-stage `describe` (provenance persists; legacy keys still 201).
+**Fix:** Logger rebuild branch `claude/hearth-logger-rebuild-0b8907` (D-LPS-14). **Date logged:** 2026-10-07. *Numbering provisional — renumber if another PR appends first.*
+
+### R28 — Code audit (2026-10-07): the "Earlier" date option meant a hidden five days ago.
+
+`whenDate: 'earlier'` resolved to `subDays(today, 5)` with no date shown to the parent, so an entry logged "earlier" landed on an arbitrary day and skewed streaks and weekly balance. Replaced by a real date: **Today · Yesterday · Another day** (native date picker, `max` today); the stored value is the resolved `yyyy-MM-dd`, the segment highlight is derived from it, and a legacy draft that said "earlier" restores with the date reset to today and a banner saying so.
+**Spec affected:** `hearth-logger-spec-v2.md` §6 and §9 (draft migration `dateReset`).
+**Regression test:** `src/lib/logger/notice.test.ts` (`resolveDateOccurred`: null → today, yesterday across a month boundary, explicit date, future clamp, invalid → today; `whenKindFor`); `src/lib/logger/draft.test.ts` (`earlier` → null + `dateReset`).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07. *Numbering provisional — renumber if another PR appends first.*
+
+### R29 — Code audit (2026-10-07): the constellation check-in deep link's `learner` and `thread` params were ignored.
+
+`/log?source=check-in&learner=<id>&thread=<id>` coerced to `source: 'logger'` and discarded both params, so a parent tapping "check in" on a thread arrived at a blank form. `parseNoticeSource` now yields a `check_in` source: the child is preselected once learners load (never over a restored draft), the banner reads "Checking in on {Name}'s {threadName}", and the thread is passed to `deriveProposals` as `preferThreadId` so the matching chip sorts first. The thread is never persisted (not an `ENTRY_SOURCES` value and no column — SIDEBAR S2); unknown or H6-suppressed thread ids are dropped.
+**Spec affected:** `hearth-logger-spec-v2.md` §7; `hearth-constellation-architecture-v1.md` (check-in entry point).
+**Regression test:** `src/lib/logger/source.test.ts` (four kinds; suppressed and unknown thread dropped; `resume` ignored); `src/lib/logger/proposals.test.ts` (`preferThreadId` ordering); `src/hooks/use-notice-form.test.tsx` (check-in preselect not over a restored draft).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07. *Numbering provisional — renumber if another PR appends first.*
+
+*Note (2026-10-07):* R13's regression test `src/app/(auth)/log/_components/WhoSection.test.tsx` was deleted with the old form in the Notice → Confirm rebuild; its guard (fan-out note shows at 2+ children) now lives in `src/app/(auth)/log/_components/WhoRow.test.tsx`.
+
 ---
 
-*Next entry: R27. Append below; never edit above.*
+*Next entry: R30. Append below; never edit above.*

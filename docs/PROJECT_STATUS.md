@@ -2,7 +2,7 @@
 
 > **Purpose:** Current state, priorities, and strategic context. Read this first before any new work.
 > **Companion files:** `Hearth_System_Interaction_Map.md` for cross-screen coherence. `hearth-canonical-design-tokens-v2.md` + `hearth-design-system-v2.1-addendum.md` for design values. The alpha-pilot trackers (`pre-release-tracker.md`, `production-readiness-tracker.md`) are **closed and archived** in `docs/archive/` — they are historical record, not status.
-> **Last updated:** 6 August 2026
+> **Last updated:** 7 October 2026
 > **Currency convention:** this file is updated in the same PR as the work it describes, or the claim carries a "trails reality — check `git log`" caveat. When in doubt, `git log` wins.
 
 ---
@@ -15,6 +15,10 @@
 **Content:** Starter Pack seeded (121 Sanity docs, 79 activities). Three additional sample-pack drafts code-seeded (`First Term Foundations`, `Outdoor Naturalist`, `Storytellers`); editorial pass + AC mapping pending.
 **Launch target:** 10-20 test families across Australia (QLD-anchored pilot; jurisdiction config covers all 8 states/territories via `src/config/jurisdictions.ts`).
 **Founding Brief:** `hearth-founding-brief-v1.md` is the canonical purpose/mission/vision/values document.
+
+### Recent Milestones (October 2026)
+
+- **Logger rebuilt as Notice → Confirm** (7 Oct) — `/log` was rebuilt from scratch against the owner's "Three Passes Toward a Coherent System" brief (Pass 1 §1.4, Pass 2 §2.5): **Logger = Notice, post-save = Confirm.** The capture is now exactly the consumption set — who, what happened (typed or dictated), when (a real date), per-child felt experience (Loved it / Into it / Went along / Hard going → `engagementPerLearner`), per-child "said / asked / noticed" (→ `discoveriesPerLearner`), and evidence (photo / their words / link) — with a two-condition save gate (≥1 child and any text or evidence) and no score. **Deleted:** the completeness score and ring, Quick/Full view, Guided/Quick mode, the activity grid and lesson subjects, duration/location, the 24 observation chips, the while-typing insights rail (keyword matcher, the debounced Haiku draft-insight endpoint and its `DRAFT_INSIGHTS_ENABLED` switch, coach hints), the thin-entry fast toast, the proactive attach modal and `PostSaveSurface` — 38 files, zero migrations (the columns stay; the Logger simply stops writing them). **Every save lands on one Confirm surface with five honest states** (`queued` / `pending` / `proposals` / `nothing` / `failed`): proposed evidence renders as per-child chips ("Number Sense · developing?") derived client-side from the enrichment's `discrete_learning_objectives` under the D-OS2 attribution mirror and H6 suppression; a tap writes an `asserted` row through the existing DLO confirm endpoint (now write-checked), a second tap clears it, all behind the one seam `confirmProposal()` so the proposed→confirmed ledger can swap in later. Subjects are now filled server-side from enrichment when the parent gave none (never overwriting runner/batch/import values) so subject balance stays lit. Batch log and CSV import moved to `/log/batch` and `/log/import`; drafts migrated to a v2 shape with legacy restore; honest offline/403/429/learners-failed states. **Three latent bugs fixed on the way** (R27–R29): project-stage provenance was silently dropped (`projectId`/`stageNumber` vs the route's `sourceProjectId`/`sourceStageNumber`, enshrined by the old unit test); "Earlier" meant a hidden five days ago; the constellation check-in deep link ignored its `learner`/`thread` params. **Decisions** D-LPS-14 (supersedes D-LPS-3/11/13), D-LPS-15 (server-side subjects fill), D-LPS-16 (confirm seam). Spec of record: `docs/hearth-logger-spec-v2.md`; v1 banner-superseded. **Sidebars for Drew** (S1–S7 in the v2 spec): what a chip tap means under `PRODUCTION_TIER_BAR`, check-in provenance, whether a filtered Haiku sentence returns to Confirm, subjects depending on enrichment, shared confirmation vocabulary with #288, every-save-shows-Confirm, felt vocabulary. **Open-PR conflict note:** #285, #286 and #290 all touch `log/page.tsx`, `entry-payload.ts`, `draft.ts` and `enrich.ts`; the rebuild lands first, #290 rebases and drops hunks for deleted files, #285/#286 are expected to close unmerged; #288's `dlo-persistence.ts` is deliberately untouched (client mirror + parity test instead). `logger_completed_50pct` retired; `entry_created` props changed — PostHog dashboards keyed on `activity_type`/`thin` need a note.
 
 ### Recent Milestones (August 2026)
 
@@ -70,7 +74,7 @@
 | Route | Screen |
 |-------|--------|
 | `/dashboard` | Dashboard (learner rows, moments grid, desktop right panel) |
-| `/log` | Retrospective Logger (offline banner + autosave) |
+| `/log` | Logger — Notice → Confirm (offline outbox + draft v2 autosave; `/log/batch`, `/log/import`) |
 | `/planner` | Weekly Planner |
 | `/settings` | Family Settings |
 | `/notifications` | Notification Centre |
@@ -196,7 +200,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 
 ### AI Pipeline
 - **Enrichment** (`src/lib/ai/enrich.ts`): Claude Haiku enriches entries at save-time with subject detection, capability mapping, AC V9 descriptors, engagement scores, insight suggestions.
-- **Keyword fallback** (`src/lib/ai/keyword-matcher.ts`): Baseline subject detection when AI unavailable.
+- ~~**Keyword fallback** (`src/lib/ai/keyword-matcher.ts`)~~ — retired 2026-10-07 with the Logger insights rail (D-LPS-14); subjects now come from write-time enrichment (D-LPS-15).
 - **Snapshot rebuild** (`src/lib/ai/snapshot-rebuild.ts`): Aggregates entries into per-child capability profiles, triggers badge threshold checks.
 - **Pipeline logging:** Token usage, latency, confidence scores tracked in `aiPipelineLogs`.
 - **Hearth narrative** (`src/lib/ai/hearth-narrative.ts`): Generates collective term narrative for community groups from session records and family reflections. Cached in hearth settings JSONB.
@@ -283,7 +287,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 - **End-to-end validation** — critical path traced and verified (onboard → log → enrich → snapshot → dashboard). Capability tracking uses AC V9 descriptor counting from AI enrichment (deprecated `capabilityObservations` table removed from schema). First-deploy smoke test still pending (#5 in tracker).
 - **Production error handling** — RESOLVED: `parseBody()` utility added, all JSON-accepting API routes now safely handle malformed requests. Evidence upload route handles missing blob token gracefully.
 - **Photo/media storage** — RESOLVED (28 June): `BLOB_READ_WRITE_TOKEN` provisioned in Production + Preview and redeployed; evidence uploads live end-to-end (private blob → authed `/api/evidence` read proxy → `evidenceSrc`). Until 28 June the token sat only in the operator's local `.env.local`, so prod silently 503'd from 5 June (R19). Runner `QuickCapture` hardened to Logger parity (client compression + failure toast). Upload + read/preview paths verified end-to-end (an early preview miss was a stale-cache artifact, not a defect).
-- **Offline support** — Logger autosaves drafts to `localStorage` every 10s; offline banner + offline-aware save error live (`useOnlineStatus()` hook). Full PWA / sync queue is Phase 2.
+- **Offline support** — Logger autosaves drafts to `localStorage` every 10s (v2 shape, Postgres mirror); offline banner, outbox-queued save (`queued` Confirm state) and offline-aware save errors live (`useOnlineStatus()` hook, `src/lib/logger/outbox.ts`). Photos still need a connection. Service worker + `/offline` route landed in the native Phase 1 (Aug).
 - **Rate limiting** — In-process limiter today. Redis/Upstash migration plan landed (`docs/redis-rate-limiter-plan.md`); flip behind `LIMITER_BACKEND` switch when one of the trigger conditions hits.
 
 ### Cross-Screen Coherence (Open Design Questions)
@@ -294,7 +298,7 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 | 7 | **Regression handling** — can parents un-confirm a DLO? | RESOLVED — tier override API at `/api/capabilities/[learnerId]/override`. Overrides stored in learner `profileData.tierOverrides`, respected in snapshot rebuild (can only lower, never raise). UI added to Constellation thread detail panel. |
 | 8 | **Historical data import / batch retrospective logging** | PARTIAL — 30-day backdating exists, bulk import not designed |
 | 10 | **Repeat module logging evolution** | RESOLVED — Module log mode detects attempt number, shifts prompts (Session 1: capture, Session 2: what shifted, Session 3+: deepening). Reflection prompts replace observation prompts on repeat runs. |
-| 11 | **Voice input integration** | RESOLVED — Web Speech API implemented in Logger (en-AU). Other screens not applicable. |
+| 11 | **Voice input integration** | RESOLVED — server-side STT (Deepgram, D-LPS-12) in the Logger's `WhatField`. Other screens not applicable. |
 | 12 | **Empty / first-use states per screen** | RESOLVED — Dashboard, Planner, Portfolio, Notifications, Settings, Capabilities, Report, Our Story Hub, and Explore screens all have empty states. |
 | 13 | **Gentle migration from retro logging to modules** | RESOLVED — `module_nudge` notification trigger fires after 10+ retro entries with no module usage. 2-week cooldown, pedagogy-aware copy, links to marketplace. |
 | 16 | **Offline / poor connectivity** | OPEN |

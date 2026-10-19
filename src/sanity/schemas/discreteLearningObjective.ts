@@ -118,6 +118,49 @@ export const discreteLearningObjective = defineType({
       ],
     }),
     defineField({
+      name: 'watchForNext',
+      title: 'Watch for next',
+      type: 'object',
+      description:
+        'What a parent might notice next as this DLO develops. The neutral text is the canonical, philosophy-neutral version; per-pedagogy variants are optional overlays keyed by pedagogyKey.',
+      fields: [
+        defineField({
+          name: 'neutral',
+          title: 'Neutral text',
+          type: 'text',
+          rows: 3,
+          validation: (r) => r.required(),
+        }),
+        defineField({
+          name: 'variants',
+          title: 'Per-pedagogy variants',
+          type: 'object',
+          description: 'Optional. Fields are keyed by pedagogyKey; absent keys fall back to the neutral text.',
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            { name: 'charlotte_mason', title: 'Charlotte Mason', type: 'text', rows: 3 },
+            { name: 'classical', title: 'Classical', type: 'text', rows: 3 },
+            { name: 'montessori', title: 'Montessori', type: 'text', rows: 3 },
+            { name: 'waldorf_steiner', title: 'Waldorf / Steiner', type: 'text', rows: 3 },
+            { name: 'unschooling', title: 'Unschooling', type: 'text', rows: 3 },
+            { name: 'eclectic', title: 'Eclectic', type: 'text', rows: 3 },
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'watchForConfirmedAt',
+      title: 'Watch-for confirmed at',
+      type: 'datetime',
+      description: 'When a human confirmed the watch-for text.',
+    }),
+    defineField({
+      name: 'watchForConfirmedBy',
+      title: 'Watch-for confirmed by',
+      type: 'string',
+      description: 'Who confirmed the watch-for text.',
+    }),
+    defineField({
       name: 'status',
       title: 'Status',
       type: 'string',

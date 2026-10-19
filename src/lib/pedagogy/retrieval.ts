@@ -157,22 +157,22 @@ export async function retrievePedagogyChunks(
         }
       }
 
-      // Tags-based match (covers chunks with only tags metadata)
+      // Tags-based match (covers chunks with only tags metadata). Signals and
+      // tags share one controlled vocabulary (corpus/pedagogy/tags.json, fed
+      // by situational-signals.ts), so matching is exact and case-insensitive.
+      // The former substring match let `age` hit every age band and `screen`
+      // hit a dozen unrelated tags.
       const docTags = meta.tags as string[] | undefined;
       if (docTags && docTags.length > 0) {
-        // Match situational signals against tags
-        const tagSignalMatches = opts.situationalSignals.filter((s) =>
-          docTags.some((t) => t === s || t.includes(s) || s.includes(t))
-        );
+        const tagSet = new Set(docTags.map((t) => t.toLowerCase()));
+        const tagSignalMatches = opts.situationalSignals.filter((s) => tagSet.has(s.toLowerCase()));
         if (tagSignalMatches.length > 0) {
           boost += Math.min(tagSignalMatches.length * 0.05, 0.15);
           reasons.push(`tags matched signals: ${tagSignalMatches.join(', ')}`);
         }
 
-        // Match capability threads against tags
-        const tagThreadMatches = opts.capabilityThreads.filter((thread) =>
-          docTags.some((t) => t === thread || t.includes(thread) || thread.includes(t))
-        );
+        // Match capability threads against tags (exact code match)
+        const tagThreadMatches = opts.capabilityThreads.filter((thread) => tagSet.has(thread.toLowerCase()));
         if (tagThreadMatches.length > 0) {
           boost += Math.min(tagThreadMatches.length * 0.03, 0.09);
           reasons.push(`tags matched threads: ${tagThreadMatches.join(', ')}`);

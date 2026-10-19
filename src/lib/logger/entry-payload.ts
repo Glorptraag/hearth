@@ -17,6 +17,7 @@
  * without mounting the Logger. The pass-through fields stay inline at the call
  * site — they carry no logic to protect.
  */
+import type { LoggerContext } from '@/types/logger-context';
 import { ENTRY_SOURCES } from '@/types';
 import type { DraftEvidenceItem } from './draft';
 
@@ -237,6 +238,12 @@ export interface EntrySaveForm {
   evidence: ReadonlyArray<Pick<DraftEvidenceItem, 'type' | 'content' | 'caption' | 'url' | 'name'>>;
   loggerMode: LoggerSaveMode;
   observationDetails: Record<string, unknown>;
+  /** Observation chip labels as selected (both Quick and Guided modes). */
+  observations?: string[];
+  /** Duration chip label, if chosen. */
+  duration?: string | null;
+  /** Where-it-happened chip key, if chosen. */
+  location?: string | null;
 }
 
 /** Save-time context not held in the form: scaffold session + project provenance. */
@@ -266,12 +273,33 @@ export interface EntrySavePayload {
    */
   evidence: EvidencePayloadItem[];
   observationDetails: Record<string, unknown> | undefined;
+  /**
+   * Structured capture context persisted on the row (`logger_context`): the
+   * activity-type chip, the observation chips, where and how long. Before
+   * this existed every one of them was dropped at save — the enrichment never
+   * saw "Persisted through difficulty" and retrieval had no situational
+   * signals to match. Sent whenever any field is set.
+   */
+  loggerContext?: LoggerContext;
   mode: LoggerSaveMode;
   source: string;
   sourceSessionId: string | undefined;
   projectId: string | undefined;
   stageNumber: string | undefined;
   status: 'complete';
+}
+
+/** The persisted capture context, or undefined when the parent set none of it. */
+export function buildLoggerContext(
+  form: Pick<EntrySaveForm, 'activityType' | 'observations' | 'duration' | 'location'>,
+): LoggerContext | undefined {
+  const observations = (form.observations ?? []).filter((o) => typeof o === 'string' && o.trim().length > 0);
+  const ctx: LoggerContext = {};
+  if (form.activityType) ctx.activityType = form.activityType;
+  if (observations.length > 0) ctx.observations = observations;
+  if (form.location) ctx.location = form.location;
+  if (form.duration) ctx.duration = form.duration;
+  return Object.keys(ctx).length > 0 ? ctx : undefined;
 }
 
 /**
@@ -308,6 +336,7 @@ export function buildEntrySavePayload(
     evidenceUrls: derivePhotoEvidenceUrls(form.evidence),
     evidence: deriveEvidenceRows(form.evidence),
     observationDetails: form.loggerMode === 'guided' ? form.observationDetails : undefined,
+    loggerContext: buildLoggerContext(form),
     mode: form.loggerMode,
     source: isScaffold ? 'hearth_session' : ctx.projectSource,
     sourceSessionId: ctx.scaffoldSessionId,

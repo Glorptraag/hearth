@@ -248,6 +248,27 @@ In a multi-child family the six-entry window is shared across siblings, so a chi
 **Regression test:** `src/app/(auth)/log/_components/WhenWhereSection.test.tsx`.
 **Fix:** "Earlier" opens a bounded date picker (≤30 days back), seeded visibly to the day before yesterday; the chosen date persists in the draft. **Date logged:** 2026-10-06.
 
+### R31 — Code audit (2026-10-06): the Logger's chips, activity type, where and how long were dropped at save.
+
+Of the structured context the Logger collects — the activity-type chip, the 24 observation chips (Engagement / Social / Thinking / Emotional), where, how long — only the activity type survived, and only as a derived `subjects[]`. "Persisted through difficulty", "Taught someone", "Self-corrected" never reached the enrichment prompt, so the DLO tiering and the journey-observation rules were judging from free text alone; pedagogy retrieval's situational layer had no inputs at all at write time, and the one caller that sent signals (coach hints) sent raw chip labels that match no corpus tag.
+**Spec affected:** `hearth-logger-spec-v1.md` (Observe section is described as evidence, yet was not persisted); `hearth-pedagogy-knowledge-base-implementation-spec-v1.md` (retrieval request contract).
+**Regression test:** `src/app/api/entries/route.integration.test.ts` (persists `logger_context`; null for pre-column clients); `src/lib/ai/__tests__/enrich-prompt.test.ts` (structured notes block; system prompt untouched); `src/lib/ai/__tests__/enrich-context.integration.test.ts`; `src/lib/pedagogy/situational-signals.test.ts` (every emitted token exists in tags.json; every chip has a mapping); `src/lib/logger/coaching/__tests__/retrieval-provider.test.ts`.
+**Fix:** `learning_entries.logger_context` (migration 0030), carried by `buildLoggerContext`; `formatStructuredNotes` in the user prompt; `situational-signals.ts` mapper feeding both retrieval callers; exact-vocabulary tag matching in the rerank. **Date logged:** 2026-10-06.
+
+### R32 — Code audit (2026-10-06): the Sanity → pgvector webhook skipped the human review gate.
+
+`/api/pedagogy/sanity-webhook` deleted a chunk only for a Sanity draft id, a delete operation, or an explicit `suggestedDraft: true`. A published document with `suggestedDraft` absent (the vault contract's default, meaning "awaiting review") or with `status: draft` was embedded and became retrievable. The reembed script applied the correct `status == published && suggestedDraft == false` predicate, so the two write paths disagreed about what the index contains.
+**Spec affected:** `hearth-pedagogy-knowledge-base-decisions-addendum-v2.md` PKB9; `hearth-pedagogy-corpus-vault-architecture-v1.md` §3.
+**Regression test:** `src/app/api/pedagogy/sanity-webhook/route.test.ts`.
+**Fix:** webhook uses the same predicate, removes the chunk for anything else, and guards the metadata-only refresh with `IS DISTINCT FROM`. **Date logged:** 2026-10-06.
+
+### R33 — Code audit (2026-10-06): retrieval query text duplicated the entry's opening and read only 200 characters.
+
+The Logger derives the title from the first ~60 characters of the description, and the retrieval query was `title: description.slice(0, 200)` — the opening twice, then a hard cut, with per-child discoveries (often the sharpest observation) never embedded. Threads sent for the rerank boost were neither deduped across children nor validated, and the author-declared threads from the entry's activities were not sent.
+**Spec affected:** `hearth-pedagogy-knowledge-base-implementation-spec-v1.md` A3 (query composition).
+**Regression test:** `src/lib/ai/pedagogy-context.test.ts` (`composeRetrievalQuery` cases; pinned prompt unchanged).
+**Fix:** `composeRetrievalQuery` — title only when it adds something, up to 600 description characters, discoveries appended; threads deduped + validated with candidates first. **Date logged:** 2026-10-06.
+
 ---
 
-*Next entry: R31. Append below; never edit above.*
+*Next entry: R34. Append below; never edit above.*

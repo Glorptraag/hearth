@@ -30,6 +30,7 @@
     "corpus:confirm": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/corpus-confirm.ts",
     "seed:pedagogy:reembed": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/reembed-pedagogy-corpus.ts",
     "verify:pkb": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-pkb-embeddings.ts",
+    "verify:pkb:retrieval": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-pkb-retrieval.ts",
     "verify:sanity": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/verify-sanity-docs.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:deploy": "node scripts/deploy-migrate.mjs",

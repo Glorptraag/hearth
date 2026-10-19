@@ -444,6 +444,9 @@ export default function LogPage() {
         evidence,
         loggerMode: effectiveMode,
         observationDetails,
+        observations,
+        duration,
+        location,
       },
       {
         scaffoldSessionId: scaffoldData?.session.id,

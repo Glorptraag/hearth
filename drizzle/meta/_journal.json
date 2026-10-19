@@ -211,6 +211,13 @@
       "when": 1786490000000,
       "tag": "0029_device_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791331200000,
+      "tag": "0030_logger_context",
+      "breakpoints": true
     }
   ]
 }

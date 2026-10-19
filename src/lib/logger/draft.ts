@@ -47,6 +47,9 @@ export type LoggerDraft = {
   lessonSubjects: string[];
   engagement: Record<string, number>;
   whenDate: 'today' | 'yesterday' | 'earlier';
+  /** The real yyyy-MM-dd behind an "earlier" pick. Optional: drafts saved
+   *  before the picker existed have no value and restore as unset. */
+  earlierDate?: string | null;
   duration: string | null;
   location: string | null;
   observations: string[];

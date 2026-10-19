@@ -220,6 +220,34 @@ A failed module load surfaced as an unhandled rejection plus "Module not availab
 **Regression test:** `src/app/(auth)/our-story/capabilities/page.test.tsx`; `src/lib/modules/completion.test.ts` clamp cases.
 **Fix:** PR #255. **Date logged:** 2026-07-03.
 
+### R27 — Code audit (2026-10-06): the monthly narrative cost one Haiku call per child on every snapshot rebuild.
+
+`rebuildSnapshot` regenerated every child's monthly narrative on every `entry_saved` / `manual` / `user_dashboard` rebuild, including siblings whose inputs had not changed, a dashboard load with nothing new, and a DLO confirm. The Sonnet low-confidence fallback triggered a second full round. A `settings_change` rebuild wiped the narrative to `''` (the trigger was outside the allowlist) and the Dashboard's 24h-debounced refresh then refused to restore it. The one-call-per-save invariant (UC5) held only for the enrichment call itself.
+**Spec affected:** `Hearth_AI_Intelligence_Layer_Architecture.md` (two-layer AI; write-time cost posture); `docs/incident-runbook.md` cost-spike triage.
+**Regression test:** `src/lib/ai/__tests__/snapshot-rebuild.integration.test.ts` — "monthly narrative reuse" describe (unchanged inputs → zero calls; sibling save → one call; settings_change keeps text; failed generation keeps this month's text and retries); `src/lib/ai/generate-monthly-narrative.test.ts` (signature).
+**Fix:** narrative carries an input fingerprint (`monthly_narrative_signature`) and is reused when unchanged. **Date logged:** 2026-10-06.
+
+### R28 — Code audit (2026-10-06): enrichment derived a child's active threads from the six most recent family-wide entries.
+
+In a multi-child family the six-entry window is shared across siblings, so a child with forty logged moments could read "none yet" in the Haiku prompt — meaning no candidate DLO descriptors were injected for them and pedagogy retrieval had no threads to boost. The snapshot already held the full per-child profile and was read anyway for the profile nudge.
+**Spec affected:** `hearth-outcomes-spine-plan-v1.md` WS-3 (descriptor injection budget assumes a real candidate list).
+**Regression test:** `src/lib/ai/__tests__/enrich-context.integration.test.ts`; `src/lib/ai/__tests__/enrich-context.test.ts`.
+**Fix:** snapshot-backed active threads (most-recent-first) unioned with the recent-entry derivation; one snapshot read shared with the nudge step. **Date logged:** 2026-10-06.
+
+### R29 — Code audit (2026-10-06): most of what the enrichment notices was persisted and never shown again.
+
+`journey_observation` reached a parent only as a Portfolio expanded-card callout; `per_child_signals.notable`, `trajectory`, `recent_evidence_quality`, `source_counts`, `work_sample.rationale` and the milestone *reason* (which thread, which badge) were never rendered anywhere; `insight_suggestions`, `profile_nudge` and `pedagogy_sources` appeared once on the Logger and were cleared on the next keystroke. The Dashboard's "Pedagogical Insight" and "This Week" cards read `hearthVoice` / `weekStats`, which the rebuild never wrote — they rendered only in demo mock data. The Dashboard also shipped the whole snapshot (every child's narrative) to the client while a comment claimed it did not.
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 2→3 ("the constellation growing" must be visible day to day, not only post-save); `Hearth_System_Interaction_Map.md` Dashboard ↔ snapshot.
+**Regression test:** `src/lib/ai/insights-feed.test.ts`; `src/components/dashboard/HearthNoticed.test.tsx`.
+**Fix:** deterministic per-child `recent_insights` feed assembled at rebuild (journey, notable, milestone reasons, newly lit threads, tier rises) → Dashboard "Hearth noticed" card (mobile too); `weekStats` written; client receives a projection. Trajectory / evidence quality in the constellation remain a follow-up. **Date logged:** 2026-10-06.
+
+### R30 — Code audit (2026-10-06): the Logger's "Earlier" chip saved every such entry as exactly five days ago.
+
+`getDateOccurred` mapped `earlier` → `subDays(today, 5)` with no way to see or change the date. Any retrospective moment older than yesterday was silently misdated, which also skews streaks, weekly coverage and report date ranges.
+**Spec affected:** `hearth-logger-spec-v1.md` When & Where; Known Gap #8 (30-day backdating).
+**Regression test:** `src/app/(auth)/log/_components/WhenWhereSection.test.tsx`.
+**Fix:** "Earlier" opens a bounded date picker (≤30 days back), seeded visibly to the day before yesterday; the chosen date persists in the draft. **Date logged:** 2026-10-06.
+
 ---
 
-*Next entry: R27. Append below; never edit above.*
+*Next entry: R31. Append below; never edit above.*

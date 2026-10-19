@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { learners } from '@/lib/db/schema';
-import { getFamilyByClerkId } from '@/lib/auth/helpers';
+import { getFamilyByClerkId, checkWritePermission } from '@/lib/auth/helpers';
 import { parseBody, routeHandler } from '@/lib/api-helpers';
 import { eq, and } from 'drizzle-orm';
 import { rebuildSnapshot } from '@/lib/ai/snapshot-rebuild';
@@ -21,6 +21,7 @@ import { parseDloId } from '@/lib/ai/thread-tier';
  * snapshot is rebuilt fire-and-forget; the UI flips optimistically and refetches.
  *
  * Cross-family isolation: 404 if the learner isn't in the signed-in family.
+ * Viewers (read-only members) get 403 before any row is written.
  */
 type Params = { params: Promise<{ learnerId: string; dloId: string }> };
 
@@ -32,6 +33,11 @@ export const POST = routeHandler(async (request: NextRequest, { params }: Params
 
   const family = await getFamilyByClerkId(userId);
   if (!family) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  const writeCheck = await checkWritePermission(userId, family.id);
+  if (!writeCheck.allowed) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: writeCheck.statusCode });
+  }
 
   const { learnerId, dloId: rawDloId } = await params;
   const dloId = decodeURIComponent(rawDloId);

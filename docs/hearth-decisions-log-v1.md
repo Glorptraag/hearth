@@ -236,6 +236,45 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 ---
 
+### D-LPS-14 — The Logger is Notice → Confirm: one capture set, one post-save surface
+
+**Decision:** The Logger captures exactly the **consumption set** — the union of what downstream actually reads: who (`learnerIds`), what happened (`text`, typed or dictated), when (`dateOccurred`, a real date), per-child felt experience (`felt`, ordinal 1..4 → `engagementPerLearner`), per-child "said / asked / noticed" (`noticed` → `discoveriesPerLearner`), and evidence (photo / their words / link). The completeness score and ring, the Quick/Full view, the Guided/Quick mode, the activity grid, lesson subjects, duration/location, the 24 observation chips, and the while-typing insights rail (keyword matcher, draft-insight, coach hints) are **removed**. The save gate is `saveBlock()`: ≥1 child AND (any text OR any evidence). Every save lands on **one Confirm surface** with **five honest states** — `queued` (offline, outbox accepted), `pending` (reading it now, exit row live immediately), `proposals` (per-child DLO chips with provenance), `nothing` (single-child / nobody-named / other-multi sentences, "It still counts"), `failed` (safe in Portfolio, parent-initiated "Read it again"). The thin-entry fast path is collapsed into the same surface. Binding provenance rule: every node on Confirm is the parent's own words, a chip with provenance, human-authored copy, or licence attribution — no `insight_suggestions`, `journey_observation`, `profile_nudge`, "builds the X thread" line, or work-sample pill.
+
+**Why:** The owner's "Hearth — Three Passes Toward a Coherent System" (v1, 2026-10-07; Pass 1 §1.4, Pass 2 §2.5) names the model: Logger = Notice, post-save = Confirm, and the proposal chips *are* the insight. Every removed field was captured and then read by nothing (duration, location, observation chips, activity type) or only by the score that justified it; the score itself read as a grade (R14, R18) and the insights rail was decoration with a runtime Haiku cost. One surface with honest states keeps the 5-minute rule and the Stage-2 relief moment without a density branch to tune. **Supersedes D-LPS-3** (density states), **D-LPS-11** (completeness ring) and **D-LPS-13** (two-tier Quick/Full); **keeps D-LPS-1, 2, 4, 5, 6, 7, 8, 9 and 12.**
+
+**Document of record:** `docs/hearth-logger-spec-v2.md`
+**Implementation:** `src/app/(auth)/log/page.tsx` (~240-line composition root (under 300 by construction)), `src/app/(auth)/log/_components/` (`NoticeForm`, `WhoRow`, `WhatField`, `PerChildRow`, `WhenRow`, `EvidenceRow`, `SourceBanner`, `SaveBar`, `noticeCopy.ts`), `src/components/logger/confirm/` (`ConfirmSurface`, `ProposalGroup`, `ProposalChip`, `BadgeReadyRow`, `ConfirmExitRow`, `confirmCopy.ts`), `src/hooks/use-notice-form.ts`, `src/hooks/use-notice-save.ts`, `src/lib/logger/{notice,source,proposals,confirm-state,entry-payload,draft}.ts`
+**Tests:** `src/lib/logger/notice.test.ts`, `source.test.ts`, `proposals.test.ts` (incl. parity with `gateLearnersByNamedSignals`), `entry-payload.test.ts`, `draft.test.ts`, `src/hooks/use-notice-form.test.tsx`, `use-notice-save.test.tsx`, `src/components/logger/confirm/ConfirmSurface.test.tsx`, `ProposalChip.test.tsx`, `src/app/(auth)/log/_components/*.test.tsx`
+**Date:** 2026-10-07
+
+---
+
+### D-LPS-15 — Subjects are filled server-side from enrichment when the parent gave none
+
+**Decision:** `learning_entries.subjects` is filled inside `enrichEntry` from `subjects_detected` (normalised onto the lowercase `SUBJECTS` enum via `src/lib/ai/subjects-normalise.ts`) **only when the entry's existing `subjects` is empty**. A writer-set value — module runner, batch log, CSV import, Portfolio edit — is never overwritten. The fill is applied at both `status: 'enriched'` write sites (the main path and `sonnetFallback`, which gained an `existingSubjects` parameter). The Logger no longer sends `subjects`.
+
+**Why:** Removing the activity grid (D-LPS-14) would otherwise leave Logger entries with no subjects and send the weekly/monthly subject balance in `snapshot-rebuild.ts` dark. A client PATCH of `subjects` would trigger `needsReenrich` and loop; a server fill inside `enrichEntry` is loop-free and benefits the retry route, PATCH re-enrich, batch and import alike, and `rebuildSnapshot` runs after it in the same `after()`. Known trade: a failed enrichment leaves subjects empty until retry (SIDEBAR S4 in the v2 spec).
+
+**Document of record:** `docs/hearth-logger-spec-v2.md` §4
+**Implementation:** `src/lib/ai/subjects-normalise.ts` (`normaliseDetectedSubjects`, `subjectsFill`); `src/lib/ai/enrich.ts` (both enriched writes)
+**Tests:** `src/lib/ai/subjects-normalise.test.ts`; `src/lib/ai/__tests__/enrich-subjects-fill.integration.test.ts`
+**Date:** 2026-10-07
+
+---
+
+### D-LPS-16 — Confirm chips reuse the DLO parent-assertion endpoint behind one seam
+
+**Decision:** A chip on the Confirm surface calls exactly one function, `confirmProposal(p, action)` in `src/lib/logger/confirm-client.ts`, which today POSTs to the existing `/api/capabilities/[learnerId]/dlo/[dloId]/confirm`. **First tap = `confirm`** → `upsertParentAssertion` (one `asserted` row at the DLO's tier, idempotent). **Second tap = `dispute`** → `clearParentAssertion` (the `inferred` row stays). Optimistic UI, revert + retry toast on failure, one in-flight request per key (`useProposalConfirm`). The route now runs `checkWritePermission` (viewer → 403). When the proposed→confirmed ledger (Three Passes, Pass 2 §2.1) lands, it swaps in behind `confirmProposal()`; the surface does not change.
+
+**Why:** The assertion endpoint already exists, is cross-family safe and recomputes `learner_dlo_status`, so the rebuild ships Confirm without a schema change (zero migrations). Isolating the call behind one function keeps the ledger a drop-in rather than a second surface rewrite. Under `PRODUCTION_TIER_BAR` a tap is the corroboration that can lift a thread to demonstrating, which is why the vocabulary ("confirm you've seen this", undo on second tap) is kept modest — what a tap *should* mean long-term is SIDEBAR S1; shared vocabulary with PR #288 is SIDEBAR S5.
+
+**Document of record:** `docs/hearth-logger-spec-v2.md` §5.4
+**Implementation:** `src/lib/logger/confirm-client.ts`; `src/hooks/use-proposal-confirm.ts`; `src/app/api/capabilities/[learnerId]/dlo/[dloId]/confirm/route.ts` (write check)
+**Tests:** `src/lib/logger/confirm-client.test.ts`; `src/hooks/use-proposal-confirm.test.tsx`; `src/app/api/capabilities/[learnerId]/dlo/[dloId]/confirm/route.integration.test.ts`
+**Date:** 2026-10-07
+
+---
+
 ## Process
 
 ### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention

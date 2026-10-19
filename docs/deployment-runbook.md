@@ -212,7 +212,7 @@ All events are opt-in (only fire when `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_P
 |---|---|---|
 | `entry_created` | client | Logger save handler (`src/app/(auth)/log/page.tsx`) |
 | `entry_enriched` | server | `/api/entries` POST, after `enrichEntry()` resolves or throws |
-| `logger_completed_50pct` | client | Logger, once per session when completeness first ≥ 50 |
+| `enrichment_viewed` | client | Confirm surface, once per saved entry when it scrolls into view (`useViewedOnce`); replaced `logger_completed_50pct` 2026-10-07 — the completeness score no longer exists (D-LPS-14). Companions: `logger_proposal_confirmed` / `logger_proposal_cleared` / `logger_attach_opened` |
 | `module_added_to_library` | client | Marketplace "Add to Library" click (`src/app/(auth)/explore/marketplace/page.tsx`) |
 | `badge_awarded`, `badge_deferred` | client | Badge assessment page |
 | `report_exported` | client | HEU report Export button (`src/app/(auth)/our-story/report/page.tsx`) |

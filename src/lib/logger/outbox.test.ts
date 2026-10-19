@@ -16,22 +16,40 @@ function payload(overrides: Partial<EntrySavePayload> = {}): EntrySavePayload {
     title: 'Made a volcano',
     description: 'Bicarb and vinegar on the back step.',
     dateOccurred: '2026-08-03',
-    subjects: ['science'],
     learnerIds: ['learner-1'],
     engagementPerLearner: { 'learner-1': 4 },
     discoveriesPerLearner: {},
     evidenceUrls: [],
     evidence: [],
-    observationDetails: undefined,
-    mode: 'quick',
-    source: 'manual',
-    sourceSessionId: undefined,
-    projectId: undefined,
-    stageNumber: undefined,
+    source: 'logger',
     status: 'complete',
     ...overrides,
   };
 }
+
+/**
+ * The shape the six-section Logger queued before the Notice rebuild. A record
+ * like this can still be sitting in a parent's IndexedDB when the new client
+ * ships; it must replay untouched (the server's non-strict zod strips the
+ * retired keys) rather than be rejected client-side.
+ */
+const legacyPayload = {
+  title: 'Queued before the rebuild',
+  description: 'Still in the outbox when the new Logger deployed.',
+  dateOccurred: '2026-08-03',
+  subjects: ['science'],
+  learnerIds: ['learner-1'],
+  engagementPerLearner: { 'learner-1': 4 },
+  discoveriesPerLearner: {},
+  evidenceUrls: [],
+  evidence: [],
+  observationDetails: { 'learner-1': { detail: 'focused' } },
+  mode: 'quick',
+  source: 'project',
+  projectId: 'proj-1',
+  stageNumber: '2',
+  status: 'complete',
+};
 
 const ok = () => new Response(JSON.stringify({ id: 'entry-1' }), { status: 200 });
 const status = (code: number) => () => new Response('', { status: code });
@@ -103,6 +121,23 @@ describe('flushOutbox', () => {
     expect(url).toBe('/api/entries');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual(payload());
+  });
+
+  it('replays a legacy-shaped record byte-for-byte and removes it on success', async () => {
+    await queueEntry(legacyPayload as unknown as EntrySavePayload);
+
+    const fetchImpl = vi.fn(
+      (_url: string, _init: RequestInit) =>
+        new Response(JSON.stringify({ id: 'entry-legacy' }), { status: 201 }),
+    );
+    const result = await flushOutbox(fetchImpl as unknown as typeof fetch);
+
+    expect(result).toEqual({ sent: 1, dropped: 0, remaining: 0 });
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('/api/entries');
+    expect(init.method).toBe('POST');
+    expect(init.body).toBe(JSON.stringify(legacyPayload));
+    expect(await countQueued()).toBe(0);
   });
 
   it('keeps the entry queued while the network is still down', async () => {

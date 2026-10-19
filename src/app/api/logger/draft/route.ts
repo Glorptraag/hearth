@@ -25,27 +25,21 @@ const draftEvidenceSchema = z.object({
   name: z.string().optional(),
 });
 
-const draftObservationDetailSchema = z.object({
-  detail: z.string(),
-  durationMin: z.number().optional(),
-});
+// Mirrors the LoggerDraft (v2) shape in src/lib/logger/draft.ts. The
+// `satisfies` below pins the two together so a future field on LoggerDraft
+// fails the build here until it's validated. Legacy v1 blobs are rejected on
+// PUT (the hook only ever writes v2); GET returns whatever is stored raw and
+// the client migrates it.
+const feltLevelSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
 
-// Mirrors the LoggerDraft shape in src/lib/logger/draft.ts. The `satisfies`
-// below pins the two together so a future field on LoggerDraft fails the build
-// here until it's validated.
 const loggerDraftSchema = z.object({
-  description: z.string(),
-  selectedLearners: z.array(z.string()),
-  discoveries: z.record(z.string(), z.string()),
-  activityType: z.string().nullable(),
-  lessonSubjects: z.array(z.string()),
-  engagement: z.record(z.string(), z.number()),
-  whenDate: z.enum(['today', 'yesterday', 'earlier']),
-  duration: z.string().nullable(),
-  location: z.string().nullable(),
-  observations: z.array(z.string()),
+  v: z.literal(2),
+  learnerIds: z.array(z.string()),
+  text: z.string(),
+  dateOccurred: z.string().nullable(),
+  felt: z.record(z.string(), feltLevelSchema),
+  noticed: z.record(z.string(), z.string()),
   evidence: z.array(draftEvidenceSchema),
-  observationDetails: z.record(z.string(), draftObservationDetailSchema),
   savedAt: z.number(),
 }) satisfies z.ZodType<LoggerDraft>;
 

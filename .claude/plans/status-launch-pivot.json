@@ -1,0 +1,623 @@
+{
+  "plan": "PLAN-launch-pivot",
+  "generated": "2026-10-19",
+  "mode": "autonomous",
+  "tasks": {
+    "0.1": {
+      "status": "pending",
+      "model": "haiku",
+      "size": "micro",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Commit the uncommitted logger rebuild",
+      "description": "Worktree /Users/drewdouglas/Desktop/Codebases/hearth/.claude/worktrees/hearth-logger-rebuild-0b8907 (branch claude/hearth-logger-rebuild-0b8907) holds ~75 files of UNCOMMITTED Notice->Confirm logger rebuild work from 7 Oct. Inside that worktree only: `git add -A`, commit as 'WIP: logger Notice->Confirm rebuild (D-LPS-14..16)' with the Co-Authored-By trailer, and `git push -u origin claude/hearth-logger-rebuild-0b8907`. Change NO file contents. Do not touch any other worktree.",
+      "files": [
+        "branch:claude/hearth-logger-rebuild-0b8907"
+      ],
+      "done_when": "`git -C <that worktree> status --short` is empty and `git ls-remote origin claude/hearth-logger-rebuild-0b8907` returns a sha equal to its HEAD",
+      "contracts": "",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "0.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Merge PRs #285, #286, #288, #287 to main",
+      "description": "Drew approved (19 Oct) merging the CI-green draft stack in GitHub repo Glorptraag/hearth: #285 (insights) -> #286 (PKB logger context, stacked on #285, has migration 0030) -> #288 (constellation, stacked on #286), plus independent #287 (corpus). For each, in order: mark ready (`gh pr ready`), ensure base is main (retarget/rebase stacked PRs after their parent squash-merges; resolve conflicts preserving both sides' intent), wait for CI checks green (`gh pr checks --watch`), then `gh pr merge --squash --delete-branch`. If a PR's CI fails for a real code reason, fix it on that PR's branch; if a fix needs a product decision, stop and report fail with details. Do not merge any other PR.",
+      "files": [
+        "branch:main"
+      ],
+      "done_when": "`gh pr view 285 --json state -q .state` (and 286, 288, 287) all print MERGED, and `gh run list --branch main --limit 1` shows success or in_progress",
+      "contracts": "Work in a fresh clone-free way: use a new git worktree under /Users/drewdouglas/Desktop/Codebases/hearth/.claude/worktrees/ for any branch edits, and remove it afterwards with `git worktree remove` (no --force). Bash with dangerouslyDisableSandbox.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "0.3": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.1",
+        "0.2"
+      ],
+      "title": "Rebase logger rebuild onto main, land on integration",
+      "description": "Branch claude/hearth-logger-rebuild-0b8907 (one WIP commit on top of cb830cd) must be brought onto current origin/main (which now includes #285-#288 and #290 motion). Expect conflicts in src/lib/ai/dlo-persistence.ts (#288), logger context / chips (#286 persisted Logger chips that the rebuild REMOVED - keep the rebuild's capture set per D-LPS-14 but keep #286's server-side context plumbing working, dropping only inputs the new UI no longer sends), the insights rail (#285), and motion classes (#290 - apply motion-system conventions to the rebuild's new components). Resolve so the logger matches docs/hearth-logger-spec-v2.md. Then merge the result into the integration branch: `git checkout -B pivot/T0.3 origin/claude/hearth-launch-pivot-v1-175462`, merge the rebased logger branch, push to claude/hearth-launch-pivot-v1-175462. Also push the rebased logger branch and open a DRAFT PR for it against main titled 'feat(logger): Notice -> Confirm rebuild' (do not merge it).",
+      "files": [
+        "src/app/(auth)/log/page.tsx",
+        "src/app/(auth)/log/_components/",
+        "src/components/logger/",
+        "src/lib/logger/",
+        "src/hooks/use-notice-form.ts",
+        "src/hooks/use-notice-save.ts",
+        "src/lib/ai/enrich.ts",
+        "src/lib/ai/dlo-persistence.ts",
+        "src/components/nav/navConfig.ts",
+        "docs/hearth-decisions-log-v1.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "done_when": "On origin/claude/hearth-launch-pivot-v1-175462: `npx tsc --noEmit`, `npm run lint`, `npm test` all pass, `npm run test:integration:local` passes (or only the known TZ flake: run with TZ=UTC), and docs/hearth-logger-spec-v2.md exists",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T0.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task). This task's BRANCHING differs: rebase the logger branch first, then merge into the integration branch as described.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "0.4": {
+      "status": "pending",
+      "model": "haiku",
+      "size": "micro",
+      "batch": null,
+      "blocked_by": [
+        "0.3"
+      ],
+      "title": "Log pivot decisions + status",
+      "description": "Append decisions D-LP-1..D-LP-10 (pivot P1-P10, one-paragraph each: Decision / Why / Date 2026-10-19) and amendments A1-A9 from docs/hearth-launch-pivot-plan-v1.md section 1 to docs/hearth-decisions-log-v1.md, matching the existing entry format. Add a 'Launch pivot (Expo 9 Nov)' current-priority section at the top of docs/PROJECT_STATUS.md pointing to the plan doc.",
+      "files": [
+        "docs/hearth-decisions-log-v1.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "done_when": "`grep -c 'D-LP-' docs/hearth-decisions-log-v1.md` >= 10 on the integration branch",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T0.4 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "1.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.4"
+      ],
+      "title": "Migration: read + working-from + opt-in columns",
+      "description": "Add to src/lib/db/schema.ts: learning_entries.drafted_by text NOT NULL default 'parent' (check in parent|read), learning_entries.read_output jsonb null, learning_entries.working_from jsonb null ({resourceId, lesson?, source:'read'|'parent'}), families.photo_read_opt_in boolean null (null = never asked). Write the next-numbered SQL migration in drizzle/ by hand (drizzle meta snapshots are stale past 0015 - do not commit a regenerated stale snapshot; follow drizzle/META_README.md). Update src/test/factories.ts defaults in lockstep.",
+      "files": [
+        "src/lib/db/schema.ts",
+        "drizzle/",
+        "src/test/factories.ts"
+      ],
+      "done_when": "tsc passes; `npm run test:integration:local` passes against the migrated container; migration file adds exactly these 4 columns",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T1.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "1.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Client photo prep: downscale, strip GPS, keep date",
+      "description": "Create src/lib/images/capture-prep.ts: given a File/Blob image, return a JPEG Blob downscaled to 768px long edge (canvas/createImageBitmap), with all EXIF dropped (so GPS is gone) and the original EXIF DateTimeOriginal returned separately as an ISO date string (parse minimally - a small dependency-free EXIF date reader is fine). Pure functions where possible; unit tests in capture-prep.test.ts (jsdom: test the EXIF date parser and the size math; mock canvas). Do not wire into UI.",
+      "files": [
+        "src/lib/images/capture-prep.ts",
+        "src/lib/images/capture-prep.test.ts"
+      ],
+      "done_when": "`npm test src/lib/images/capture-prep.test.ts` passes; tsc passes",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T1.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "1.3": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Read prompt + validated output schema",
+      "description": "Create src/lib/ai/read.prompt.md (versioned header) and src/lib/ai/read-schema.ts. Read output (Zod): seen string[] (<=8 short noun phrases), doing string (one observable present-tense sentence <=20 words, no evaluation, no names), artefact enum worksheet|book|writing|drawing|build|nature|cooking|screen|other, printedText string (<=12 words: a visible title/lesson/page header only), peopleVisible int>=0, confidence high|low. Prompt rules: describe only what is visible; never name a skill, subject, outcome, age or quality; never guess identity; transcribe headers only, never page body (copyright); low confidence -> doing ''. Export parseReadOutput(raw): ReadOutput|null (invalid/refusal -> null, never invented), and a prompt-section builder that enrich.ts can splice into its existing call. Unit tests for parsing, truncation, refusal.",
+      "files": [
+        "src/lib/ai/read.prompt.md",
+        "src/lib/ai/read-schema.ts",
+        "src/lib/ai/read-schema.test.ts"
+      ],
+      "done_when": "`npm test src/lib/ai/read-schema.test.ts` passes; tsc passes",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T1.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task). Contract: export type ReadOutput; export function parseReadOutput(raw: unknown): ReadOutput | null; export function buildReadPromptSection(): string; export const READ_PROMPT_VERSION: string.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "1.4": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.1",
+        "1.3"
+      ],
+      "title": "Photo Read inside enrichEntry (flag-gated)",
+      "description": "Spec: plan doc section 1 A1-A3 and W1.4. In src/lib/ai/enrich.ts, when isPhotoReadAllowed(family) (new src/lib/ai/read-flags.ts: env PHOTO_READ_ENABLED==='true' AND (family.photo_read_opt_in===true) AND (PHOTO_READ_FAMILY_ALLOWLIST unset OR contains family id)) and the entry has photo evidence, attach up to 2 photo image blocks (already downscaled at upload) to the SAME Haiku call, splice buildReadPromptSection() into the prompt, extend the output parsing to pull the read section through parseReadOutput, and persist learning_entries.read_output. Never write entry text from Read (the parent accepts it later). Read output (seen, doing) also feeds DLO proposal context. Keep one call per save; Sonnet fallback path ignores images. Record read tokens in the existing AI usage logging with a 'read' marker so the cost dashboard sees it. Tests: unit for read-flags; integration test for enrichEntry persisting read_output with a mocked Anthropic response.",
+      "files": [
+        "src/lib/ai/enrich.ts",
+        "src/lib/ai/read-flags.ts",
+        "src/lib/ai/read-flags.test.ts",
+        "src/lib/ai/__tests__/enrich-read.integration.test.ts"
+      ],
+      "done_when": "unit + integration tests named pass; tsc + lint pass; with PHOTO_READ_ENABLED unset the enrich prompt/request is byte-identical to before (asserted in a test)",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T1.4 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task). Uses parseReadOutput/buildReadPromptSection from src/lib/ai/read-schema.ts.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "1.5": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.3",
+        "2.3"
+      ],
+      "title": "Photo fixture harness",
+      "description": "Create fixtures/photos/README.md + fixtures/photos/cases.json with 10 cases (worksheet with header, worksheet no header, child's drawing, LEGO build, creek/rocks, baking, picture book, handwriting page, nature table, tablet screen). Each case: imagePath (placeholder path; Drew supplies real photos later), a recorded/mock ReadOutput, expected artefact, expected Shelf match (or null), expected route note. Add src/lib/ai/__tests__/read-fixtures.test.ts that runs each recorded ReadOutput through parseReadOutput and matchShelf (with a fixture shelf list) and asserts expectations. No live API calls.",
+      "files": [
+        "fixtures/photos/",
+        "src/lib/ai/__tests__/read-fixtures.test.ts"
+      ],
+      "done_when": "`npm test src/lib/ai/__tests__/read-fixtures.test.ts` passes with 10 cases",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T1.5 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "2.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Sanity shelfResource schema (local only)",
+      "description": "Add src/sanity/schemas/shelfResource.ts: title, publisher, slug, kind (curriculum|universal), aliases string[] (strings likely printed on pages), lessonPattern (regex string capturing a lesson/chapter number), levels [{name, aliases[]}], ageBand {min,max}, isUniversal boolean, status draft|published. Register in src/sanity/schemas/index.ts. Add a TS type in src/lib/shelf/types.ts. Do NOT deploy the schema.",
+      "files": [
+        "src/sanity/schemas/shelfResource.ts",
+        "src/sanity/schemas/index.ts",
+        "src/lib/shelf/types.ts"
+      ],
+      "done_when": "tsc passes; schema exported from index.ts",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T2.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "2.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "2.1"
+      ],
+      "title": "Shelf wave-1 seed script (not run)",
+      "description": "Create scripts/seed-shelf.ts writing 6 shelfResource docs with deterministic ids (shelfResource.<slug>): Math-U-See (levels Primer, Alpha, Beta, Gamma, Delta, Epsilon, Zeta...; 'Lesson N'), The Good and the Beautiful (Language Arts / Math levels; 'Lesson N'), All About Reading (Pre-reading, Level 1-4; 'Lesson N'), Story of the World (Volumes 1-4; 'Chapter N'), plus universal 'My own plan' and 'An AI-made plan'. Script defaults to --dry-run printing the docs; only writes with --write and an explicit SANITY dataset arg. Add npm script seed:shelf. Do NOT run it with --write.",
+      "files": [
+        "scripts/seed-shelf.ts",
+        "package.json"
+      ],
+      "done_when": "`npx tsx scripts/seed-shelf.ts` (dry run) prints 6 docs and exits 0",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T2.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "2.3": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "2.1"
+      ],
+      "title": "Deterministic Shelf matcher",
+      "description": "Create src/lib/shelf/match.ts: matchShelf(printedText, resources) -> {resourceId, level?, lesson?, confidence:'alias'|'pattern'} | null, case/punctuation-insensitive alias match, level detection from level aliases, lesson number from lessonPattern. Zero LLM. Plus src/lib/shelf/query.ts: getShelfResources() reading published shelfResource docs via sanityServerClient (dotted ids are invisible to tokenless reads) with a short in-memory cache. Tests in match.test.ts covering each wave-1 resource and no-match.",
+      "files": [
+        "src/lib/shelf/match.ts",
+        "src/lib/shelf/match.test.ts",
+        "src/lib/shelf/query.ts"
+      ],
+      "done_when": "`npm test src/lib/shelf/match.test.ts` passes; tsc passes",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T2.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task). Contract: export function matchShelf(printedText: string, resources: ShelfResource[]): ShelfMatch | null.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "2.5": {
+      "status": "parked",
+      "model": "haiku",
+      "size": "micro",
+      "batch": null,
+      "blocked_by": [
+        "2.2",
+        "4.1",
+        "4.3"
+      ],
+      "title": "Sanity ops: deploy schema, seed shelf, push note drafts",
+      "description": "HUMAN-GATED (Drew approval). Deploy the Sanity Studio schema (shelfResource + DLO watchForNext fields), run `npm run seed:shelf -- --write` against production, and push the DLO note drafts from content/dlo-notes/ as Sanity DRAFTS (drafts.* ids, never published) via the push script from task 4.3.",
+      "files": [
+        "ops:sanity-prod"
+      ],
+      "done_when": "Sanity query count(*[_type=='shelfResource' && !(_id in path('drafts.**'))]) == 6 and draft DLO notes visible in Studio",
+      "contracts": "",
+      "completed_at": null,
+      "completed_by": null,
+      "parked_reason": "awaiting decision D1"
+    },
+    "3.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.1"
+      ],
+      "title": "Photo Read disclosure sheet + opt-in API",
+      "description": "Create src/components/logger/PhotoReadDisclosure.tsx: a one-screen bottom sheet (role=dialog, aria-modal, useFocusTrap, backdrop-modal) shown at a family's first photo when families.photo_read_opt_in is null: what is sent (a downscaled copy, location removed), that Hearth keeps only the reading it produced, how to turn it off (Settings), buttons 'Read my photos' / 'Just store them'. Copy in src/components/logger/photoReadCopy.ts marked DRAFT - awaiting Drew approval. API: src/app/api/family/photo-read/route.ts GET/PATCH {optIn:boolean} with checkWritePermission. Add a Settings toggle row reusing the same API (find the settings page component). Tests for route (integration) + component.",
+      "files": [
+        "src/components/logger/PhotoReadDisclosure.tsx",
+        "src/components/logger/photoReadCopy.ts",
+        "src/app/api/family/photo-read/",
+        "src/app/(auth)/settings/"
+      ],
+      "done_when": "route integration test + component test pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T3.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "3.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.2",
+        "3.2"
+      ],
+      "title": "Photo-first capture on /log",
+      "description": "Make the camera/photo action the primary visual action in the Notice form evidence row (src/app/(auth)/log/_components/EvidenceRow.tsx and NoticeForm.tsx, copy in noticeCopy.ts). Route every picked photo through prepareCapturePhoto from src/lib/images/capture-prep.ts before upload; default dateOccurred from the returned EXIF date when the parent hasn't set one. On first photo when opt-in is null, show PhotoReadDisclosure. Save gate unchanged (D-LPS-14). Update component tests.",
+      "files": [
+        "src/app/(auth)/log/_components/EvidenceRow.tsx",
+        "src/app/(auth)/log/_components/NoticeForm.tsx",
+        "src/app/(auth)/log/_components/noticeCopy.ts",
+        "src/app/(auth)/log/_components/EvidenceRow.test.tsx"
+      ],
+      "done_when": "log component tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T3.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "3.3": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.4",
+        "2.3"
+      ],
+      "title": "Confirm: Read draft row + Working-from chip",
+      "description": "Spec: plan doc A1, A4, W3.3. On the Confirm surface (src/components/logger/confirm/), when the saved entry gains read_output (extend the existing pending-state poll in src/hooks/use-notice-save.ts / src/lib/logger/confirm-state.ts), show (a) a Read draft row: read_output.doing as a quoted draft with 'Use this' / 'Edit' -> PATCH entry text + drafted_by='read' (new route src/app/api/entries/[id]/read-draft/route.ts, checkWritePermission, cross-family safe); (b) a Working-from chip when matchShelf(read_output.printedText) hits: 'Working from: <resource> \u00b7 <level> \u00b7 Lesson N?' with confirm / not this -> writes learning_entries.working_from via the same route family; plus a manual picker including 'My own plan' / 'An AI-made plan'. Pending copy 'Reading your photo...'. Every node keeps the binding provenance rule (parent words, chip with provenance, authored copy). Tests: component + route integration.",
+      "files": [
+        "src/components/logger/confirm/",
+        "src/hooks/use-notice-save.ts",
+        "src/lib/logger/confirm-state.ts",
+        "src/app/api/entries/[id]/read-draft/"
+      ],
+      "done_when": "confirm component tests + new route integration test pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T3.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "4.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "micro",
+      "batch": null,
+      "blocked_by": [],
+      "title": "DLO schema: watchForNext + confirmation fields",
+      "description": "In src/sanity/schemas/discreteLearningObjective.ts add watchForNext (object: neutral text required, optional per-pedagogy variants keyed by pedagogyKey for the 6 traditions) and watchForConfirmedAt (datetime) / watchForConfirmedBy (string). Do NOT deploy.",
+      "files": [
+        "src/sanity/schemas/discreteLearningObjective.ts"
+      ],
+      "done_when": "tsc passes; fields present in schema",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T4.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "4.2": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [],
+      "title": "Rank and pick ~50 F-Y3 DLOs for notes",
+      "description": "Using docs/hearth-capability-dlo-reference.md and the capability universe in src/lib/capability-universe-v2.ts, pick ~50 DLOs relevant to ages 4-9 prioritised: early literacy, early number, science/nature, art/making, plus whatever the 10 photo fixture categories (plan W1.5) and the 4 Shelf wave-1 resources would hit. Write docs/hearth-dlo-notes-targets-v1.md: ranked table (dlo id, thread, tier, why, which fixture/resource hits it) split into 5 batches of ~10, batch 1 = highest demo value.",
+      "files": [
+        "docs/hearth-dlo-notes-targets-v1.md"
+      ],
+      "done_when": "doc exists with >=45 DLO ids that all appear in docs/hearth-capability-dlo-reference.md",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T4.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "4.3": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "4.1",
+        "4.2"
+      ],
+      "title": "Draft DLO 'watch for next' notes + push script",
+      "description": "For every DLO in docs/hearth-dlo-notes-targets-v1.md write a 'watch for next' note: 1-2 sentences, concrete, observable, warm, what a parent might notice next as this grows (not praise, not a task list, no jargon, philosophy-neutral base text), plus short optional variants for Charlotte Mason, Classical, Montessori, Waldorf/Steiner, Unschooling, Eclectic in each tradition's own vocabulary (see docs/hearth-pedagogy-lens-bundle-v1.md and src/lib/pedagogy/adapter.ts). Write content/dlo-notes/batch-{1..5}.json and a script scripts/push-dlo-note-drafts.ts that patches them onto drafts.<dloId> documents only (dry-run default, --write flag). Do NOT run --write. Australian English.",
+      "files": [
+        "content/dlo-notes/",
+        "scripts/push-dlo-note-drafts.ts"
+      ],
+      "done_when": "5 batch files with notes for every target DLO; `npx tsx scripts/push-dlo-note-drafts.ts` dry run exits 0",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T4.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "4.4": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "4.1",
+        "3.3"
+      ],
+      "title": "Render confirmed 'watch for next' lines",
+      "description": "Create src/lib/notes/watch-for.ts: getWatchForNext(dloIds, pedagogyKey) reading DLO watchForNext ONLY where watchForConfirmedAt is set (sanityServerClient), picking the tradition variant else neutral. Render as a quiet line under each CONFIRMED chip on the Confirm surface (new src/components/logger/confirm/WatchForNext.tsx, wired into ConfirmSurface) labelled 'Watch for next'. Unconfirmed or missing -> render nothing. Tests pin: unconfirmed never renders; variant fallback.",
+      "files": [
+        "src/lib/notes/watch-for.ts",
+        "src/lib/notes/watch-for.test.ts",
+        "src/components/logger/confirm/WatchForNext.tsx",
+        "src/components/logger/confirm/ConfirmSurface.tsx"
+      ],
+      "done_when": "tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T4.4 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "5.1": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.4"
+      ],
+      "title": "Annotated work samples in Report + PDF",
+      "description": "Spec: pivot P7 / plan W5.1; read docs/hearth-reporting-pipeline-v1.md first. An entry with a photo AND >=1 parent-confirmed DLO (asserted) renders as an annotated sample: photo, parent's words, DLO plain-language line, band sentence (authored descriptor for the tier) - no generated text. Group per learning area in the report screen and the PDF (both cd_level and learning_area tiers). Put the assembly in src/lib/report/annotated-samples.ts with unit tests; wire into the existing report page and PDF render.",
+      "files": [
+        "src/lib/report/annotated-samples.ts",
+        "src/lib/report/annotated-samples.test.ts",
+        "src/app/(auth)/our-story/",
+        "src/lib/pdf/"
+      ],
+      "done_when": "unit tests pass; existing report tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T5.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "5.2": {
+      "status": "pending",
+      "model": "haiku",
+      "size": "micro",
+      "batch": null,
+      "blocked_by": [
+        "5.1"
+      ],
+      "title": "Constellation copy: what's growing",
+      "description": "Change Constellation surface headings/intro copy to frame it as 'what's growing' and point to the Report as 'what's evidenced' (pivot P10). Copy only, in the constellation components under src/app/(auth)/our-story/capabilities/_constellation/ (or wherever the intro copy lives). Update snapshot/text tests.",
+      "files": [
+        "src/app/(auth)/our-story/capabilities/_constellation/"
+      ],
+      "done_when": "constellation tests pass; tsc passes",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T5.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "5.3": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "4.4",
+        "7.1"
+      ],
+      "title": "Dashboard: recent moments, chips to confirm, one watch-for",
+      "description": "Simplify the dashboard (src/app/(auth)/dashboard/) to three blocks for the expo: recent moments, chips still to confirm (entries with unconfirmed DLO proposals, deep link to Confirm), and one confirmed 'watch for next' line via getWatchForNext. Hide other dashboard blocks only when LAUNCH_SCOPE==='expo' (use isExpoScope from src/lib/launch-scope.ts). Tests.",
+      "files": [
+        "src/app/(auth)/dashboard/"
+      ],
+      "done_when": "dashboard tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T5.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "6.1": {
+      "status": "pending",
+      "model": "opus",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.4"
+      ],
+      "title": "Fix account deletion: D1 = transfer ownership",
+      "description": "Read docs/hearth-account-deletion-defect-v1.md. Decision D1 (Drew, 19 Oct): transfer ownership - if another adult member exists, ownership transfers to them (oldest editor, else viewer promoted? -> choose oldest adult member, promoted to owner) and the deleting user is removed; a sole owner deletes the whole Hearth. Fix all ON DELETE no-action FK paths (cover every table into families), delete the Clerk user (clerkClient.users.deleteUser), and delete every Blob evidence object (@vercel/blob del) for a deleted Hearth. Logic in src/lib/account/delete.ts, route src/app/api/account/delete/route.ts. Flip the it.fails pin in orphan-tables.integration.test.ts to a passing test; add transfer-path tests. Update the defect doc status.",
+      "files": [
+        "src/lib/account/",
+        "src/app/api/account/delete/",
+        "docs/hearth-account-deletion-defect-v1.md"
+      ],
+      "done_when": "`npm run test:integration:local` passes including orphan-tables and new transfer tests; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T6.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "6.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "6.1",
+        "3.2"
+      ],
+      "title": "Deletion UI: transfer step",
+      "description": "In the settings account-deletion flow, when co-members exist show who becomes owner before the confirm; sole owner sees that the whole Hearth and all photos are deleted. Danger button convention per CLAUDE.md. Component tests.",
+      "files": [
+        "src/components/settings/AccountDelete.tsx"
+      ],
+      "done_when": "component tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T6.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task). If the delete UI lives elsewhere, edit it there and note the path in your done report; do not touch src/app/(auth)/settings/ files other than the delete flow's.",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "7.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.4"
+      ],
+      "title": "LAUNCH_SCOPE=expo hides cut surfaces",
+      "description": "Create src/lib/launch-scope.ts (isExpoScope() from NEXT_PUBLIC_LAUNCH_SCOPE==='expo'). When on: hide Module Builder, Planner, Marketplace, badges from src/components/nav/navConfig.ts and redirect their routes (/build, /planner, /explore marketplace, /badges) to /dashboard via a guard in each route's layout or the proxy. Reversible, nothing deleted. Tests for navConfig filtering.",
+      "files": [
+        "src/lib/launch-scope.ts",
+        "src/components/nav/navConfig.ts",
+        "src/app/(auth)/build/",
+        "src/app/(auth)/planner/",
+        "src/app/(auth)/badges/"
+      ],
+      "done_when": "nav tests pass; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T7.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "7.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "1.1",
+        "1.3",
+        "2.2"
+      ],
+      "title": "Demo family seed + reset with 6 photo moments",
+      "description": "Create scripts/seed-demo-family.ts (+ npm script demo:reset): idempotently (re)creates a 'stand demo' family with 2 children, a Shelf entry, ~12 moments of which 6 have photos (placeholder images in fixtures/demo/ until Drew supplies real ones) with pre-baked read_output, working_from and confirmed DLO links so Report annotated samples and Constellation render. Refuses to run against prod unless --confirm-prod and the DEMO_FAMILY_ID env matches. Do not run against prod.",
+      "files": [
+        "scripts/seed-demo-family.ts",
+        "fixtures/demo/",
+        "package.json"
+      ],
+      "done_when": "script runs against the local docker test DB (document the command) and exits 0",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T7.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "7.3": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "0.4"
+      ],
+      "title": "/expo landing page",
+      "description": "Create src/app/(public)/expo/page.tsx: banner 'Any curriculum. Or none. Ready for the HEU.', the three verbs Snap / Confirm / Report, the four copy points (other apps write a caption, Hearth writes evidence; nothing becomes the record until you confirm it; works with whatever you already use; one price, no ads, no upsell), CTA to sign-up with founding $99/yr + 14-day trial. No Spark/Servo mentions anywhere in public pages (remove if present). Mobile-first, canonical tokens.",
+      "files": [
+        "src/app/(public)/expo/"
+      ],
+      "done_when": "page test renders banner; tsc + lint pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T7.3 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "8.1": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "3.1",
+        "3.3",
+        "4.4",
+        "5.2",
+        "5.3",
+        "6.2",
+        "7.2",
+        "7.3",
+        "1.5"
+      ],
+      "title": "Docs propagation + registry",
+      "description": "Update docs per pivot \u00a710 / plan W8.1: docs/COMPONENT_REGISTRY.md (Logger v4 photo-first, Confirm read row + working-from chip, annotated samples, flagged-off screens), docs/hearth-reporting-pipeline-v1.md (annotated samples + read_output), docs/external-services-guide.md + docs/deployment-runbook.md (PHOTO_READ_ENABLED, PHOTO_READ_FAMILY_ALLOWLIST, NEXT_PUBLIC_LAUNCH_SCOPE), CLAUDE.md key-surfaces table rows for Shelf, Photo Read, watch-for notes, launch scope.",
+      "files": [
+        "docs/COMPONENT_REGISTRY.md",
+        "docs/hearth-reporting-pipeline-v1.md",
+        "docs/external-services-guide.md",
+        "docs/deployment-runbook.md",
+        "CLAUDE.md"
+      ],
+      "done_when": "each named doc mentions its new surface (grep)",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T8.1 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    },
+    "8.2": {
+      "status": "pending",
+      "model": "sonnet",
+      "size": "standard",
+      "batch": null,
+      "blocked_by": [
+        "8.1"
+      ],
+      "title": "Go/no-go checklist + integration PR",
+      "description": "Write docs/hearth-expo-go-no-go-v1.md (golden replay, 90-second demo x3 on stand phone, deletion test, Read OFF in prod unless ZDR confirmed, env flags per environment, Drew gates outstanding). Run the full suite on the integration branch (tsc, lint, unit, integration local). Open a PR from claude/hearth-launch-pivot-v1-175462 to main titled 'Launch pivot: Photo Read, Shelf, annotated samples, deletion fix' with a summary per workstream and the outstanding Drew gates. Do NOT merge.",
+      "files": [
+        "docs/hearth-expo-go-no-go-v1.md"
+      ],
+      "done_when": "PR exists (`gh pr list --head claude/hearth-launch-pivot-v1-175462`) and all four suites pass",
+      "contracts": "BRANCHING: read the repo CLAUDE.md first; use worktree-absolute paths; Bash with dangerouslyDisableSandbox. Start: `git fetch origin && git checkout -B pivot/T8.2 origin/claude/hearth-launch-pivot-v1-175462`. Commit messages imperative, <50 chars, ending with a blank line + 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'. Before reporting done: `git fetch origin && git rebase origin/claude/hearth-launch-pivot-v1-175462`, rerun your checks, then `git push origin HEAD:claude/hearth-launch-pivot-v1-175462` (on rejection: fetch, rebase, retry). NEVER push or merge to main, NEVER write to production Sanity or the production database, NEVER run seeds against prod. Unit tests: `npm test` on Node 24 (PATH=/opt/homebrew/opt/node@24/bin:$PATH). Typecheck: `npx tsc --noEmit`. Lint: `npm run lint` (hard gate; escape apostrophes in JSX). Design rules (tokens, motion, serif/sans, ember-only-for-actions) in CLAUDE.md are binding for any UI. Spec of record: docs/hearth-launch-pivot-plan-v1.md (read only the section named in your task).",
+      "completed_at": null,
+      "completed_by": null
+    }
+  },
+  "human_gates": [
+    "2.5"
+  ],
+  "decision_queue": [
+    {
+      "id": "D1",
+      "question": "Approve Sanity prod ops: deploy Studio schema (shelfResource + DLO watchForNext), publish the 6 Shelf seed docs, push DLO note drafts (unpublished) for your Studio review?",
+      "recommendation": "Approve once 2.2 and 4.3 land; review seed + batch-1 notes in the PR diff first",
+      "confidence": "high",
+      "blocks": [
+        "2.5"
+      ],
+      "resolved": false
+    }
+  ]
+}

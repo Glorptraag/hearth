@@ -108,7 +108,8 @@ function isoDayOrNull(value: unknown): string | null {
  *   selectedLearners → learnerIds · description → text · engagement → felt
  *   (1..4 only, selected children only) · discoveries → noticed (non-empty,
  *   selected children only) · evidence → evidence · whenDate 'yesterday' is
- *   anchored to the draft's own savedAt · 'earlier' becomes today + dateReset.
+ *   anchored to the draft's own savedAt · 'earlier' keeps a stored `earlierDate`
+ *   (#285), else becomes today + dateReset.
  */
 export function migrateDraft(raw: unknown, now: number): DraftMigration | null {
   if (!isRecord(raw)) return null;
@@ -133,8 +134,14 @@ export function migrateDraft(raw: unknown, now: number): DraftMigration | null {
   const learnerIds = stringArray(raw.selectedLearners);
   const savedAt = typeof raw.savedAt === 'number' ? raw.savedAt : now;
   const whenDate = raw.whenDate;
+  // #285 gave 'earlier' a real picked date (`earlierDate`); carry it over when
+  // present. Only an 'earlier' with no date (the old hidden −5-day offset)
+  // resets to today.
+  const earlierDate = whenDate === 'earlier' ? isoDayOrNull(raw.earlierDate) : null;
   const dateOccurred =
-    whenDate === 'yesterday' ? format(subDays(new Date(savedAt), 1), 'yyyy-MM-dd') : null;
+    whenDate === 'yesterday'
+      ? format(subDays(new Date(savedAt), 1), 'yyyy-MM-dd')
+      : earlierDate;
   const draft: LoggerDraft = {
     v: LOGGER_DRAFT_VERSION,
     learnerIds,
@@ -145,7 +152,9 @@ export function migrateDraft(raw: unknown, now: number): DraftMigration | null {
     evidence: evidenceArray(raw.evidence),
     savedAt,
   };
-  return isRestorableDraft(draft) ? { draft, dateReset: whenDate === 'earlier' } : null;
+  return isRestorableDraft(draft)
+    ? { draft, dateReset: whenDate === 'earlier' && earlierDate === null }
+    : null;
 }
 
 /**

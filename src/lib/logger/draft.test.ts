@@ -254,6 +254,18 @@ describe('logger draft persistence', () => {
       expect(out?.dateReset).toBe(true);
     });
 
+    it("keeps the picked date of an 'earlier' draft that stored earlierDate (#285)", () => {
+      const out = migrateDraft(legacy({ whenDate: 'earlier', earlierDate: '2026-09-28' }), NOW);
+      expect(out?.draft.dateOccurred).toBe('2026-09-28');
+      expect(out?.dateReset).toBe(false);
+    });
+
+    it("resets an 'earlier' draft whose earlierDate is malformed", () => {
+      const out = migrateDraft(legacy({ whenDate: 'earlier', earlierDate: 'last week' }), NOW);
+      expect(out?.draft.dateOccurred).toBeNull();
+      expect(out?.dateReset).toBe(true);
+    });
+
     it('returns null when only dropped fields survive (activityType / duration / location)', () => {
       expect(
         migrateDraft(

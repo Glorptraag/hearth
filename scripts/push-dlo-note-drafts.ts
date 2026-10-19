@@ -40,7 +40,7 @@ const PEDAGOGY_KEYS = [
 ] as const;
 type PedagogyKey = (typeof PEDAGOGY_KEYS)[number];
 
-const TIERS = ['emerging', 'developing', 'demonstrating'] as const;
+type Tier = 'emerging' | 'developing' | 'demonstrating';
 const DLO_ID = /^dlo\.([A-Z]+\d+)\.(emerging|developing|demonstrating)$/;
 const CONFIRMATION_FIELDS = ['watchForConfirmedAt', 'watchForConfirmedBy'] as const;
 
@@ -55,7 +55,7 @@ type WatchForNext = {
 type Note = {
   dloId: string;
   thread: string;
-  tier: (typeof TIERS)[number];
+  tier: Tier;
   watchForNext: WatchForNext;
 };
 

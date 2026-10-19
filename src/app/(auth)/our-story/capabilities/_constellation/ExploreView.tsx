@@ -20,6 +20,11 @@ import {
  * curriculum_coverage (surfaced by GET /api/capabilities/[learnerId]). No drill
  * depth — a flat, scannable companion to the Table/Gallery progression views.
  *
+ * `suggested_focus_threads` is, concretely, "threads this child has lit before
+ * but not in the last 30 days" (snapshot-rebuild.ts). The section says exactly
+ * that — it used to be labelled "Suggested threads", which read as a
+ * recommendation Hearth had no basis for.
+ *
  * Coverage is shown as a gentle activity signal, never a shaming "coverage %"
  * (the snapshot's coverage_percentage is just an entry-volume proxy — see B6,
  * coverage-narrative.ts). The word comes from subjectActivityLabel; the bar is
@@ -68,7 +73,10 @@ export function ExploreView({
             {focusThreads.length > 0 && (
               <div>
                 <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  Suggested threads
+                  Gone quiet lately
+                </p>
+                <p className="mt-xs font-sans text-[0.75rem] text-text-muted">
+                  Threads {snap.name} has lit before, but not in the last month. Tap one to see what it looked like.
                 </p>
                 <div className="mt-sm flex flex-wrap gap-sm">
                   {focusThreads.map((id) => {

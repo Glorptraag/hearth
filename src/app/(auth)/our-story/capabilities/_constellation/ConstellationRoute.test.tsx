@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { THREAD_NAMES } from '@/lib/capability-threads';
 import { ToastProvider } from '@/components/ui/Toast';
-import { ConstellationRoute } from './ConstellationRoute';
+import { ConstellationRoute, parseFocus, GALLERY_MIN_WIDTH_PX } from './ConstellationRoute';
 import { THREADS_BY_ID, buildSnapshot, type SanityDLO } from './topology';
 
 // The cold import of the capability-universe graph module can take well over
@@ -48,6 +48,25 @@ function renderRoute(overrides: Partial<React.ComponentProps<typeof Constellatio
   );
 }
 
+describe('parseFocus (deep links)', () => {
+  it('resolves a real Sanity DLO id to thread + dlo focus', () => {
+    expect(parseFocus(`dlo.${THREAD_ID}.emerging`)).toEqual({ domain: DOMAIN_KEY, thread: THREAD_ID, dlo: `dlo.${THREAD_ID}.emerging` });
+    expect(parseFocus(`dlo.${THREAD_ID}.developing.b`)).toEqual({ domain: DOMAIN_KEY, thread: THREAD_ID, dlo: `dlo.${THREAD_ID}.developing.b` });
+  });
+
+  it('still accepts the legacy one-letter tier shape, bare thread ids and domain keys', () => {
+    expect(parseFocus(`${THREAD_ID}.e`)).toEqual({ domain: DOMAIN_KEY, thread: THREAD_ID, dlo: `${THREAD_ID}.e` });
+    expect(parseFocus(THREAD_ID)).toEqual({ domain: DOMAIN_KEY, thread: THREAD_ID, dlo: null });
+    expect(parseFocus(DOMAIN_KEY)).toEqual({ domain: DOMAIN_KEY, thread: null, dlo: null });
+  });
+
+  it('falls back to no focus for unknown values', () => {
+    expect(parseFocus('dlo.ZZ9.emerging')).toEqual({ domain: null, thread: null, dlo: null });
+    expect(parseFocus('nonsense')).toEqual({ domain: null, thread: null, dlo: null });
+    expect(parseFocus(null)).toEqual({ domain: null, thread: null, dlo: null });
+  });
+});
+
 describe('ConstellationRoute', () => {
   let replace: ReturnType<typeof vi.fn>;
 
@@ -67,6 +86,36 @@ describe('ConstellationRoute', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  describe('deep links and viewport', () => {
+    it('opens straight at depth 4 for a ?focus=dlo.<thread>.<tier> link', () => {
+      vi.mocked(useSearchParams).mockReturnValue(
+        new URLSearchParams({ view: 'table', d: '4', focus: DLO_ID }) as ReturnType<typeof useSearchParams>,
+      );
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ evidence: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+      renderRoute();
+      const nav = screen.getByRole('navigation', { name: 'Depth navigation' });
+      expect(nav).toHaveTextContent('Moments');
+      expect(nav).toHaveTextContent('Recognises a pattern');
+    });
+
+    it('hides the Gallery option and renders the Table on a phone-width viewport', () => {
+      vi.mocked(useSearchParams).mockReturnValue(
+        new URLSearchParams({ view: 'gallery' }) as ReturnType<typeof useSearchParams>,
+      );
+      vi.stubGlobal('matchMedia', vi.fn((q: string) => ({
+        matches: q.includes(`${GALLERY_MIN_WIDTH_PX - 1}px`),
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })));
+      renderRoute();
+      expect(screen.queryByRole('radio', { name: /Gallery/ })).toBeNull();
+      expect(screen.getByRole('radio', { name: /Table/ })).toHaveAttribute('aria-checked', 'true');
+      // The table renders (domain header rows), not the SVG gallery.
+      expect(screen.getAllByRole('button', { name: /Drill into/i }).length).toBeGreaterThan(0);
+    });
   });
 
   describe('depth navigation', () => {

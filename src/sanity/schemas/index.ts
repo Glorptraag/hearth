@@ -29,6 +29,7 @@ import { moduleSkeleton } from './moduleSkeleton';
 import { asset } from './asset';
 import { commonsText } from './commonsText';
 import { kit } from './kit';
+import { shelfResource } from './shelfResource';
 
 export const schemaTypes = [
   // Pedagogical Knowledge Base
@@ -59,6 +60,7 @@ export const schemaTypes = [
   asset,
   commonsText,
   kit,
+  shelfResource,
   activity,
   approach,
   moduleSchema,

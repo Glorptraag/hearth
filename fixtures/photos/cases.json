@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "note": "recordedRead is the mock model output (photo_read) for each photo. No live API calls. Replace imagePath files with real photos when available; re-record recordedRead from a real Read at that point.",
+  "cases": [
+    {
+      "id": "worksheet-with-header",
+      "description": "Maths workbook page with a printed curriculum header",
+      "imagePath": "fixtures/photos/images/worksheet-with-header.jpg",
+      "recordedRead": {
+        "seen": ["maths worksheet", "pencil", "eraser", "wooden desk"],
+        "doing": "A child is writing answers on a maths worksheet at a desk.",
+        "artefact": "worksheet",
+        "printedText": "Math-U-See Beta Lesson 12",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "worksheet",
+      "expectedShelfMatch": {
+        "resourceId": "shelfResource.math-u-see",
+        "level": "Beta",
+        "lesson": 12,
+        "confidence": "alias"
+      },
+      "expectedRouteNote": "strong: alias match with level and lesson"
+    },
+    {
+      "id": "worksheet-no-header",
+      "description": "Worksheet photographed below the header, nothing to identify it",
+      "imagePath": "fixtures/photos/images/worksheet-no-header.jpg",
+      "recordedRead": {
+        "seen": ["times-table worksheet", "pencil", "ruler"],
+        "doing": "A child is filling in a times-table grid on a worksheet.",
+        "artefact": "worksheet",
+        "printedText": "",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "worksheet",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: artefact only, no shelf match"
+    },
+    {
+      "id": "childs-drawing",
+      "description": "Crayon drawing of a house and garden",
+      "imagePath": "fixtures/photos/images/childs-drawing.jpg",
+      "recordedRead": {
+        "seen": ["crayon drawing", "house", "sun", "green grass", "crayons"],
+        "doing": "A child holds up a crayon drawing of a house.",
+        "artefact": "drawing",
+        "printedText": "",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "drawing",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: artefact only, no shelf match"
+    },
+    {
+      "id": "lego-build",
+      "description": "LEGO bridge built on a living-room floor",
+      "imagePath": "fixtures/photos/images/lego-build.jpg",
+      "recordedRead": {
+        "seen": ["LEGO bridge", "plastic bricks", "toy cars", "rug"],
+        "doing": "Two children are building a bridge from plastic bricks on the floor.",
+        "artefact": "build",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "expectedArtefact": "build",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: artefact only, no shelf match"
+    },
+    {
+      "id": "creek-rocks",
+      "description": "Children turning over rocks at a creek",
+      "imagePath": "fixtures/photos/images/creek-rocks.jpg",
+      "recordedRead": {
+        "seen": ["shallow creek", "river rocks", "bucket", "gum trees"],
+        "doing": "Children are lifting rocks in a shallow creek.",
+        "artefact": "nature",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "expectedArtefact": "nature",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: artefact only, no shelf match"
+    },
+    {
+      "id": "baking",
+      "description": "Kitchen bench, mixing bowl and measuring cups",
+      "imagePath": "fixtures/photos/images/baking.jpg",
+      "recordedRead": {
+        "seen": ["mixing bowl", "measuring cups", "flour", "wooden spoon", "kitchen bench"],
+        "doing": "A child is stirring batter in a mixing bowl on a kitchen bench.",
+        "artefact": "cooking",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "expectedArtefact": "cooking",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: artefact only, no shelf match"
+    },
+    {
+      "id": "picture-book",
+      "description": "Open history read-aloud with the chapter heading visible",
+      "imagePath": "fixtures/photos/images/picture-book.jpg",
+      "recordedRead": {
+        "seen": ["open book", "illustrated page", "blanket"],
+        "doing": "An adult is holding an open book on a couch.",
+        "artefact": "book",
+        "printedText": "Story of the World Volume 1 Chapter 4",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "book",
+      "expectedShelfMatch": {
+        "resourceId": "shelfResource.story-of-the-world",
+        "level": "Volume 1",
+        "lesson": 4,
+        "confidence": "alias"
+      },
+      "expectedRouteNote": "strong: alias match with level and chapter"
+    },
+    {
+      "id": "handwriting-page",
+      "description": "Handwriting practice page with a lesson number but no resource name",
+      "imagePath": "fixtures/photos/images/handwriting-page.jpg",
+      "recordedRead": {
+        "seen": ["handwriting page", "lined paper", "pencil"],
+        "doing": "A child is copying a sentence onto lined paper.",
+        "artefact": "writing",
+        "printedText": "Copywork Lesson 31",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "writing",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "weak: lesson number alone is not enough to match a resource"
+    },
+    {
+      "id": "nature-table",
+      "description": "Shelf display of gumnuts, feathers and a bird nest",
+      "imagePath": "fixtures/photos/images/nature-table.jpg",
+      "recordedRead": {
+        "seen": ["gumnuts", "feathers", "bird nest", "pine cones", "wooden shelf"],
+        "doing": "",
+        "artefact": "nature",
+        "printedText": "",
+        "peopleVisible": 0,
+        "confidence": "low"
+      },
+      "expectedArtefact": "nature",
+      "expectedShelfMatch": null,
+      "expectedRouteNote": "none: low confidence, no people, nothing to match"
+    },
+    {
+      "id": "tablet-screen",
+      "description": "Tablet showing an online reading lesson",
+      "imagePath": "fixtures/photos/images/tablet-screen.jpg",
+      "recordedRead": {
+        "seen": ["tablet", "reading app", "headphones"],
+        "doing": "A child is tapping a tablet screen showing a reading lesson.",
+        "artefact": "screen",
+        "printedText": "Level 2 Lesson 7",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "expectedArtefact": "screen",
+      "expectedShelfMatch": {
+        "resourceId": "shelfResource.all-about-reading",
+        "level": "Level 2",
+        "lesson": 7,
+        "confidence": "pattern"
+      },
+      "expectedRouteNote": "weak: pattern-only match (unique level and lesson, no resource name)"
+    }
+  ]
+}

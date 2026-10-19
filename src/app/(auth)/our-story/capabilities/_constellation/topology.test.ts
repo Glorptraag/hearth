@@ -11,6 +11,12 @@ import {
   topoColumn,
   type ActiveThreadRow,
   type SanityDLO,
+  DLO_STATUS_LABEL,
+  nextDloToWatch,
+  isNewlyLit,
+  isRecentlyActive,
+  daysSince,
+  type DLO,
 } from './topology';
 
 describe('topology', () => {
@@ -212,5 +218,65 @@ describe('topology', () => {
 
   it('THREADS_BY_ID resolves by id', () => {
     expect(THREADS_BY_ID['L1']?.name).toBe('Oral Communication');
+  });
+
+  it('buildDLOs mirrors learner_dlo_status one-to-one — developing is no longer collapsed into emerging', () => {
+    const rows: ActiveThreadRow[] = [
+      {
+        thread_id: 'L1', thread_name: 'Oral Communication',
+        observation_count: 5, suggested_tier: 'developing', last_evidence_date: '2026-05-01',
+        current_badge_level: null, next_badge: null, next_badge_progress: 0,
+      },
+    ];
+    const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows, {
+      'dlo.L1.emerging': { status: 'demonstrating' },
+      'dlo.L1.developing': { status: 'developing' },
+      'dlo.L1.demonstrating': { status: 'emerging' },
+      'dlo.L1.extra': { status: 'not-started' },
+    });
+    const sanityByThread: Record<string, SanityDLO[]> = {
+      L1: [
+        { _id: 'dlo.L1.emerging', threadRef: 'capabilityThread.L1', tier: 'emerging', descriptor: 'A' },
+        { _id: 'dlo.L1.developing', threadRef: 'capabilityThread.L1', tier: 'developing', descriptor: 'B' },
+        { _id: 'dlo.L1.demonstrating', threadRef: 'capabilityThread.L1', tier: 'demonstrating', descriptor: 'C' },
+      ],
+    };
+    const dlos = buildDLOs('L1', snap, sanityByThread);
+    expect(dlos.map((d) => d.status)).toEqual(['confirmed', 'developing', 'emerging']);
+    expect(DLO_STATUS_LABEL[dlos[1].status]).toBe('Developing');
+  });
+
+  it('nextDloToWatch is the first objective the child has not yet reached at its own tier', () => {
+    const mk = (tier: DLO['tier'], status: DLO['status'], id = `${tier}-${status}`): DLO => ({
+      id, thread: 'L1', domain: 'languageLiteracy', tier, glyph: '○', tierLabel: tier, descriptor: id,
+      badgeLevel: 'foundation', status, source: 'sanity',
+    });
+    // Emerging reached (status emerging), developing not yet (status emerging) → developing is next.
+    expect(nextDloToWatch([mk('emerging', 'emerging'), mk('developing', 'emerging'), mk('demonstrating', 'not-started')])?.tier).toBe('developing');
+    // Nothing observed → the emerging objective is next.
+    expect(nextDloToWatch([mk('emerging', 'not-started'), mk('developing', 'not-started')])?.tier).toBe('emerging');
+    // Everything at or above its tier → nothing to watch for.
+    expect(nextDloToWatch([mk('emerging', 'confirmed'), mk('developing', 'confirmed'), mk('demonstrating', 'confirmed')])).toBeNull();
+    expect(nextDloToWatch([])).toBeNull();
+  });
+
+  it('buildSnapshot carries first_evidence_date and trajectory; newly-lit / recent read calendar days', () => {
+    const now = new Date('2026-10-06T09:00:00');
+    const rows: ActiveThreadRow[] = [
+      { thread_id: 'L1', thread_name: 'Oral Communication', observation_count: 3, suggested_tier: 'emerging', last_evidence_date: '2026-10-05', first_evidence_date: '2026-09-30', trajectory: 'accelerating', current_badge_level: null, next_badge: null, next_badge_progress: 0 },
+      { thread_id: 'M1', thread_name: 'Number Sense', observation_count: 9, suggested_tier: 'developing', last_evidence_date: '2026-08-01', first_evidence_date: '2026-03-01', trajectory: 'plateau', current_badge_level: null, next_badge: null, next_badge_progress: 0 },
+      { thread_id: 'S1', thread_name: 'Scientific Inquiry', observation_count: 1, suggested_tier: 'emerging', last_evidence_date: '2026-10-06', current_badge_level: null, next_badge: null, next_badge_progress: 0 },
+    ];
+    const snap = buildSnapshot({ id: 'x', name: 'Test', colourToken: null }, rows);
+    expect(snap.firstDateByThread).toEqual({ L1: '2026-09-30', M1: '2026-03-01' });
+    expect(snap.trajectoryByThread).toEqual({ L1: 'accelerating', M1: 'plateau' });
+    expect(isNewlyLit(snap, 'L1', now)).toBe(true);
+    expect(isNewlyLit(snap, 'M1', now)).toBe(false);
+    expect(isNewlyLit(snap, 'S1', now)).toBe(false); // no first date on an older snapshot → no marker
+    expect(isRecentlyActive(snap, 'L1', now)).toBe(true);
+    expect(isRecentlyActive(snap, 'S1', now)).toBe(true);
+    expect(isRecentlyActive(snap, 'M1', now)).toBe(false);
+    expect(daysSince('2026-10-06', now)).toBe(0);
+    expect(daysSince('not a date', now)).toBeNull();
   });
 });

@@ -25,22 +25,34 @@ const OTHER_FAMILY_ID = '00000000-0000-4000-8000-0000000000ff';
 
 function draft(overrides: Partial<LoggerDraft> = {}): LoggerDraft {
   return {
-    description: 'Emma measured flour for pancakes',
-    selectedLearners: ['l1'],
-    discoveries: {},
-    activityType: 'kitchen',
-    lessonSubjects: [],
-    engagement: { l1: 4 },
-    whenDate: 'today',
-    duration: null,
-    location: null,
-    observations: [],
+    v: 2,
+    learnerIds: ['l1'],
+    text: 'Emma measured flour for pancakes',
+    dateOccurred: null,
+    felt: { l1: 4 },
+    noticed: {},
     evidence: [],
-    observationDetails: {},
     savedAt: 1_700_000_000_000,
     ...overrides,
   };
 }
+
+/** A pre-rebuild (v1, six-section Logger) blob as an existing row may still hold it. */
+const LEGACY_DRAFT = {
+  description: 'Worm digging before the rebuild',
+  selectedLearners: ['l1'],
+  discoveries: {},
+  activityType: 'nature',
+  lessonSubjects: [],
+  engagement: { l1: 3 },
+  whenDate: 'earlier',
+  duration: null,
+  location: null,
+  observations: [],
+  evidence: [],
+  observationDetails: {},
+  savedAt: 1_700_000_000_000,
+};
 
 function putReq(body: unknown) {
   return new NextRequest('http://x/api/logger/draft', {
@@ -76,25 +88,60 @@ describe('/api/logger/draft — real DB', () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
 
-    const putRes = await PUT(putReq({ draft: draft({ description: 'Worm digging' }) }));
+    const putRes = await PUT(putReq({ draft: draft({ text: 'Worm digging' }) }));
     expect(putRes.status).toBe(200);
 
     const getRes = await GET();
-    expect((await getRes.json()).draft.description).toBe('Worm digging');
+    expect((await getRes.json()).draft).toEqual(draft({ text: 'Worm digging' }));
 
     // Second PUT overwrites (upsert on the unique clerkUserId), not duplicates.
-    await PUT(putReq({ draft: draft({ description: 'Worm digging, take two', savedAt: 1_700_000_001_000 }) }));
+    await PUT(putReq({ draft: draft({ text: 'Worm digging, take two', savedAt: 1_700_000_001_000 }) }));
     const rows = await db.select().from(loggerDrafts).where(eq(loggerDrafts.clerkUserId, TEST_USER_ID));
     expect(rows).toHaveLength(1);
-    expect((rows[0].draftData as LoggerDraft).description).toBe('Worm digging, take two');
+    expect((rows[0].draftData as LoggerDraft).text).toBe('Worm digging, take two');
   });
 
   it('rejects a malformed draft body with 400', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
 
-    const res = await PUT(putReq({ draft: { description: 'missing required fields' } }));
+    const res = await PUT(putReq({ draft: { text: 'missing required fields' } }));
     expect(res.status).toBe(400);
+  });
+
+  it('rejects a legacy v1-shaped draft body with 400 (the hook only ever writes v2)', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await PUT(putReq({ draft: LEGACY_DRAFT }));
+    expect(res.status).toBe(400);
+    const rows = await db.select().from(loggerDrafts).where(eq(loggerDrafts.clerkUserId, TEST_USER_ID));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('rejects a felt level outside 1..4 with 400', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+
+    const res = await PUT(putReq({ draft: draft({ felt: { l1: 5 as never } }) }));
+    expect(res.status).toBe(400);
+  });
+
+  it('GET returns a stored legacy row raw — migration is the client’s job', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    // Inserted directly: the factory's v2 defaults would otherwise merge into the blob.
+    await db.insert(loggerDrafts).values({
+      clerkUserId: TEST_USER_ID,
+      familyId: TEST_FAMILY_ID,
+      draftData: LEGACY_DRAFT as unknown as LoggerDraft,
+    });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.draft).toMatchObject(LEGACY_DRAFT);
+    expect(body.draft.v).toBeUndefined();
   });
 
   it('DELETE removes the caller’s draft', async () => {
@@ -124,7 +171,7 @@ describe('/api/logger/draft — real DB', () => {
     // User A banks a draft.
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
-    await PUT(putReq({ draft: draft({ description: "A's private draft" }) }));
+    await PUT(putReq({ draft: draft({ text: "A's private draft" }) }));
 
     // User B (different Clerk user + family) must see nothing of A's.
     await createFamily(db, { id: OTHER_FAMILY_ID, clerkUserId: OTHER_USER_ID });
@@ -133,9 +180,9 @@ describe('/api/logger/draft — real DB', () => {
     expect((await bGet.json()).draft).toBeNull();
 
     // B writing their own draft must not touch A's row.
-    await PUT(putReq({ draft: draft({ description: "B's draft" }) }));
+    await PUT(putReq({ draft: draft({ text: "B's draft" }) }));
     const aRows = await db.select().from(loggerDrafts).where(eq(loggerDrafts.clerkUserId, TEST_USER_ID));
-    expect((aRows[0].draftData as LoggerDraft).description).toBe("A's private draft");
+    expect((aRows[0].draftData as LoggerDraft).text).toBe("A's private draft");
 
     // And B's DELETE must not remove A's row.
     await DELETE();

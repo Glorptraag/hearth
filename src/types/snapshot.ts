@@ -10,6 +10,10 @@ export interface SnapshotActiveThread {
   thread_name: string;
   observation_count: number;
   last_evidence_date: string;
+  // Date of the first entry that lit this thread for the child. Lets surfaces
+  // mark a thread as newly lit without re-deriving it from entries. Absent on
+  // snapshots written before it landed.
+  first_evidence_date?: string;
   // WS-4: DLO-evidence-derived. 'unobserved' ("Not yet") when a thread has
   // logging volume but no DLO evidence clears the bar.
   suggested_tier: ObservationStatus | 'unobserved';
@@ -19,6 +23,34 @@ export interface SnapshotActiveThread {
   trajectory: ThreadTrajectory;
   recent_evidence_quality: EvidenceQuality;
   source_counts?: { inferred: number; declared: number };
+}
+
+// ─── Insights feed ───
+
+export type SnapshotInsightKind =
+  | 'journey'      // enrichment journey_observation (cross-domain / independence / metacognition / transfer)
+  | 'notable'      // enrichment per_child_signals[child].notable
+  | 'milestone'    // a volume boundary crossed (4th / 8th moment on a thread, or a badge threshold)
+  | 'thread_lit'   // a thread evidenced for the first time
+  | 'tier_shift';  // a thread's parent-facing tier rose between rebuilds
+
+/**
+ * One line in the per-child "Hearth noticed" feed. Assembled deterministically
+ * at snapshot-rebuild time from signals the enrichment pipeline already
+ * persists — no new model call. `id` is stable across rebuilds so surfaces
+ * can dedupe and "seen" state can key on it.
+ */
+export interface SnapshotInsight {
+  id: string;
+  kind: SnapshotInsightKind;
+  text: string;
+  /** yyyy-MM-dd — the entry date (journey / notable / milestone), the first
+   *  evidence date (thread_lit), or the rebuild date (tier_shift). */
+  date: string;
+  entry_id?: string;
+  thread_id?: string;
+  trigger?: 'cross_domain' | 'independence' | 'metacognition' | 'transfer';
+  tier?: ObservationStatus;
 }
 
 // ─── Recommendations (Phase 2) ───
@@ -92,6 +124,16 @@ export interface ChildSnapshot {
     suggested_focus_threads: string[];
   };
   monthly_narrative: string;
+  // Fingerprint of the inputs the current monthly_narrative was generated
+  // from (see narrativeSignature in generate-monthly-narrative.ts) plus when
+  // it was generated. The rebuild reuses the narrative when the signature is
+  // unchanged, so a snapshot refresh is not a Haiku call per child. Absent on
+  // snapshots written before this landed — the next rebuild regenerates once.
+  monthly_narrative_signature?: string;
+  monthly_narrative_generated_at?: string;
+  // Newest-first, capped. Absent on snapshots written before the feed landed
+  // — readers treat absence as "nothing noticed yet", never as an error.
+  recent_insights?: SnapshotInsight[];
   // Per-DLO status keyed by Sanity DLO `_id`. Absent before any DLO links exist
   // for the learner (older snapshots, or before Phase 2 rebuild) — readers must
   // default to 'not-started' when the entry is missing.
@@ -162,4 +204,15 @@ export interface SnapshotData {
   weeklyThreadCoverage: number;
   activeModulesCount: number;
   lastLogDate: string | null;
+  // Rolling seven-day family counters for the Dashboard "This Week" card
+  // (camelCase to match the card's long-standing prop shape). Absent on
+  // snapshots written before the rebuild started writing it.
+  weekStats?: SnapshotWeekStats;
+}
+
+export interface SnapshotWeekStats {
+  momentsLogged: number;
+  collaborativeActivities: number;
+  newCapabilities: number;
+  evidenceCollected: number;
 }

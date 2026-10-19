@@ -103,6 +103,37 @@ describe('GET /api/capabilities/[learnerId]/dlo-evidence — real DB', () => {
     expect(body.evidence[1].title).toBe('Older moment');
   });
 
+  it('includes a parent confirmation (asserted link with no entry) as a moment', async () => {
+    asUser({});
+    await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });
+    const learner = await createLearner(db, { familyId: TEST_FAMILY_ID, name: 'Sage' });
+    const entry = await createEntry(db, { familyId: TEST_FAMILY_ID, title: 'Logged moment', dateOccurred: '2026-04-22' });
+    await seedLink({ learnerId: learner.id, entryId: entry.id, dloId: 'dlo-target', tier: 'emerging', confidence: 0.6, rationale: 'Seen once' });
+    await db.insert(observationDloLinks).values({
+      observationId: null,
+      learnerId: learner.id,
+      dloId: 'dlo-target',
+      tier: 'developing',
+      confidence: '1',
+      rationale: null,
+      provenance: 'asserted',
+      evidenceState: 'observed',
+    });
+
+    const res = await GET(
+      getReq(`http://x/api/capabilities/${learner.id}/dlo-evidence?dloId=dlo-target`),
+      { params: Promise.resolve({ learnerId: learner.id }) },
+    );
+    const body = await res.json();
+    expect(body.evidence).toHaveLength(2);
+    const assertion = body.evidence.find((e: { provenance: string }) => e.provenance === 'asserted');
+    expect(assertion).toMatchObject({ entryId: null, title: 'You confirmed this', source: 'parent', tier: 'developing' });
+    expect(assertion.dateOccurred).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Newest first: the confirmation was made today, the entry is dated April.
+    expect(body.evidence[0].provenance).toBe('asserted');
+    expect(body.evidence[1].title).toBe('Logged moment');
+  });
+
   it('returns an empty evidence array for a dlo with no links', async () => {
     asUser({});
     await createFamily(db, { id: TEST_FAMILY_ID, clerkUserId: TEST_USER_ID });

@@ -26,7 +26,7 @@ Hearth is a Learning Management System (LMS) specifically tailored for Australia
 - `src/app/api`: 48 route files (65 handlers) — entries, badges, capabilities, planner, notifications, report, family, modules, stripe, admin.
 - `src/components`: Shared UI primitives (`ui/`), layout components (`layout/`), screen-specific groups (`screens/`).
 - `src/lib/db`: Drizzle schema (19 tables), client, migrations.
-- `src/lib/ai`: AI enrichment pipeline — `enrich.ts` (Haiku enrichment), `keyword-matcher.ts` (fallback), `snapshot-rebuild.ts` (aggregation).
+- `src/lib/ai`: AI enrichment pipeline — `enrich.ts` (Haiku enrichment), `subjects-normalise.ts` (subjects from enrichment), `snapshot-rebuild.ts` (aggregation).
 - `src/lib/pedagogy`: Pedagogy vocabulary adapter — maps 6 pedagogies (Charlotte Mason, Classical, Montessori, Waldorf, Unschooling, Eclectic) to UI terminology.
 - `src/sanity/schemas`: 10 content schemas (capabilityThread, badge, activity, approach, module, pack, project, projectStage, pedagogyOverlay, moduleSkeleton).
 - `docs/`: Canonical specifications and architectural decision logs.

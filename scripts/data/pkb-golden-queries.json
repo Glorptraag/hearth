@@ -1,0 +1,171 @@
+{
+  "$comment": "Golden queries for scripts/verify-pkb-retrieval.ts (PLAN-pkb-completion E8). Each query is written in Logger-entry voice. Expectations are at framework/layer level only — never document ids — so corpus growth doesn't break them. `optional: true` marks frameworks whose corpus may not be populated yet: an empty result there is reported, not failed.",
+  "queries": [
+    {
+      "id": "cm-narration-short",
+      "pedagogyKey": "charlotte_mason",
+      "text": "Read a chapter of Paddle-to-the-Sea aloud once and asked Ivy (7) to tell it back. She gave me two sentences and shrugged. I wasn't sure whether to read it again.",
+      "situationalSignals": ["after_reading", "child_telling_back", "age_6_to_8"],
+      "childAges": [7],
+      "expect": { "minChunks": 3, "layersInclude": ["source_excerpt", "practice_pattern"], "frameworksOnly": ["charlotte_mason"] }
+    },
+    {
+      "id": "cm-absorbed-ants",
+      "pedagogyKey": "charlotte_mason",
+      "text": "Had maths planned but Theo (5) spent forty minutes flat on his stomach watching an ant trail across the verandah. I didn't interrupt. Was that a wasted morning?",
+      "situationalSignals": ["child_deeply_focused", "planned_lesson_displaced", "long_concentration_observed", "outdoor_free_observation"],
+      "childAges": [5],
+      "expect": { "minChunks": 3, "layersInclude": ["practice_pattern"], "frameworksOnly": ["charlotte_mason"] }
+    },
+    {
+      "id": "cm-resists-copywork",
+      "pedagogyKey": "charlotte_mason",
+      "text": "Copywork turned into a fight again. Ten minutes in and Lily (8) was slumped over the table saying it's boring. I pushed through to the end of the passage and we were both cross.",
+      "situationalSignals": ["child_resists_lesson", "copywork_session", "lesson_running_long", "parent_frustrated"],
+      "childAges": [8],
+      "expect": { "minChunks": 3, "layersInclude": ["practice_pattern", "source_excerpt"], "frameworksOnly": ["charlotte_mason"] }
+    },
+    {
+      "id": "cm-stickers",
+      "pedagogyKey": "charlotte_mason",
+      "text": "Started a sticker chart for finishing readers. Worked for three days, then Max (6) asked what he gets for the next one before he'd open the book.",
+      "situationalSignals": ["child_demands_entertainment"],
+      "childAges": [6],
+      "expect": { "minChunks": 2, "layersInclude": ["contraindication"], "frameworksOnly": ["charlotte_mason"] }
+    },
+    {
+      "id": "cm-heu-report",
+      "pedagogyKey": "charlotte_mason",
+      "text": "HEU report due next month and I'm panicking about what counts as literacy evidence when most of our reading is me reading aloud and the kids narrating.",
+      "situationalSignals": ["HEU_report_due", "HEU_report_preparation", "parent_anxious_about_documentation"],
+      "childAges": [7, 9],
+      "expect": { "minChunks": 2, "frameworksOnly": ["charlotte_mason"] }
+    },
+
+    {
+      "id": "mont-praise-interrupt",
+      "pedagogyKey": "montessori",
+      "text": "Maya (4) was deep in the knobbed cylinders and I said 'wow, great job!' She looked up, smiled, and drifted off to something else. I think I broke it.",
+      "situationalSignals": ["child_deeply_focused", "interruption", "age_3_to_5"],
+      "childAges": [4],
+      "expect": { "minChunks": 2, "layersInclude": ["worked_example"], "frameworksOnly": ["montessori"] }
+    },
+    {
+      "id": "mont-material-misuse",
+      "pedagogyKey": "montessori",
+      "text": "Otis (3) keeps stacking the pink tower then kicking it over and laughing. Do I take it away?",
+      "situationalSignals": ["material_misuse", "age_2_to_4"],
+      "childAges": [3],
+      "expect": { "minChunks": 2, "frameworksOnly": ["montessori"] }
+    },
+    {
+      "id": "mont-spill",
+      "pedagogyKey": "montessori",
+      "text": "Poured her own milk for the first time, spilled half of it, and went straight for the cloth without being asked. I nearly jumped in.",
+      "situationalSignals": ["child_prefers_hands_on", "age_2_to_4"],
+      "childAges": [3],
+      "expect": { "minChunks": 2, "frameworksOnly": ["montessori"] }
+    },
+    {
+      "id": "mont-fantasy",
+      "pedagogyKey": "montessori",
+      "text": "Grandma gave Ava (4) a fairy book and now every game is fairies. I thought Montessori was against fantasy for little ones — am I supposed to steer her off it?",
+      "situationalSignals": ["criticism_from_relatives", "age_3_to_5"],
+      "childAges": [4],
+      "expect": { "minChunks": 2, "layersInclude": ["contraindication"], "frameworksOnly": ["montessori"] }
+    },
+    {
+      "id": "mont-older-teaching-younger",
+      "pedagogyKey": "montessori",
+      "text": "Watched Sam (6) show his little sister how to roll the mat and carry the tray, step by step, without me saying anything.",
+      "situationalSignals": ["multi_child", "quiet_observation_moment"],
+      "childAges": [3, 6],
+      "expect": { "minChunks": 2, "layersInclude": ["observational_marker"], "frameworksOnly": ["montessori"] }
+    },
+
+    {
+      "id": "us-gaming-hours",
+      "pedagogyKey": "unschooling",
+      "text": "Jack (11) has played Minecraft for most of three days. He's building a redstone sorting machine and watching tutorials. Part of me is fine, part of me is panicking.",
+      "situationalSignals": ["child_gaming_hours", "parent_worried_about_screens", "age_11_to_13"],
+      "childAges": [11],
+      "expect": { "minChunks": 3, "layersInclude": ["practice_pattern"], "frameworksOnly": ["unschooling"] }
+    },
+    {
+      "id": "us-not-reading",
+      "pedagogyKey": "unschooling",
+      "text": "Ruby is 8 and not reading yet. Her cousin the same age reads chapter books. My mother-in-law brought it up again at lunch.",
+      "situationalSignals": ["child_not_reading_yet", "late_reader_concern", "grandparent_pressure", "age_7_to_9"],
+      "childAges": [8],
+      "expect": { "minChunks": 3, "layersInclude": ["practice_pattern", "source_excerpt"], "frameworksOnly": ["unschooling"] }
+    },
+    {
+      "id": "us-deschooling-nothing",
+      "pedagogyKey": "unschooling",
+      "text": "Six weeks out of school and Finn (10) has done nothing I'd call learning. Sleeping in, drawing, watching stuff. When does this end?",
+      "situationalSignals": ["family_just_left_school", "deschooling_progression", "child_seems_aimless", "parent_anxious_during_transition"],
+      "childAges": [10],
+      "expect": { "minChunks": 3, "layersInclude": ["worked_example"], "frameworksOnly": ["unschooling"] }
+    },
+    {
+      "id": "us-ap-visit",
+      "pedagogyKey": "unschooling",
+      "text": "NSW registration visit in three weeks. We don't do lessons. How do I show the AP what the kids are learning without turning our life into a performance?",
+      "situationalSignals": ["AP_visit_upcoming", "registration_preparation", "documentation"],
+      "childAges": [7, 12],
+      "expect": { "minChunks": 2, "frameworksOnly": ["unschooling"] }
+    },
+    {
+      "id": "us-sustained-interest",
+      "pedagogyKey": "unschooling",
+      "text": "Third month of Mia (9) and the backyard chooks: she's keeping an egg log, read two library books on breeds, and emailed a breeder with questions.",
+      "situationalSignals": ["spontaneous_research", "child_deeply_interested_in_topic", "age_8_to_10"],
+      "childAges": [9],
+      "expect": { "minChunks": 2, "layersInclude": ["observational_marker"], "frameworksOnly": ["unschooling"] }
+    },
+
+    {
+      "id": "classical-memory-work",
+      "pedagogyKey": "classical",
+      "optional": true,
+      "text": "Eli (7) chanted the seven-times table while skipping and got the whole thing. Then asked why seven eights is the same as eight sevens.",
+      "situationalSignals": ["age_6_to_8"],
+      "childAges": [7],
+      "expect": { "minChunks": 1, "frameworksOnly": ["classical"] }
+    },
+    {
+      "id": "waldorf-asks-to-read",
+      "pedagogyKey": "waldorf_steiner",
+      "optional": true,
+      "text": "Nora (5) asked me to teach her to read today because her cousin can. I've been holding letters back on purpose and now I feel unsure.",
+      "situationalSignals": ["age_4_to_6", "under_six"],
+      "childAges": [5],
+      "expect": { "minChunks": 1, "frameworksOnly": ["waldorf_steiner"] }
+    },
+
+    {
+      "id": "eclectic-focus",
+      "pedagogyKey": "eclectic",
+      "text": "Zoe (6) spent an hour sorting shells by size and colour on the back step, totally absorbed, talking to herself the whole time.",
+      "situationalSignals": ["child_deeply_focused", "child_sorting_or_classifying", "long_concentration_observed", "age_5_to_7"],
+      "childAges": [6],
+      "expect": { "minChunks": 4, "minFrameworks": 2, "layersInclude": ["contraindication"] }
+    },
+    {
+      "id": "eclectic-screens",
+      "pedagogyKey": "eclectic",
+      "text": "We lifted the screen limits a month ago. Some days are all YouTube. I keep swinging between trusting it and wanting rules back.",
+      "situationalSignals": ["recently_lifted_screen_limits", "parent_worried_about_screens", "parent_questions_freedom"],
+      "childAges": [9, 12],
+      "expect": { "minChunks": 4, "minFrameworks": 2 }
+    },
+    {
+      "id": "eclectic-praise",
+      "pedagogyKey": "eclectic",
+      "text": "I praised Harry (5) mid-drawing and he stopped and handed it to me as if it was finished. Was that me?",
+      "situationalSignals": ["child_deeply_focused", "interruption", "age_4_to_6"],
+      "childAges": [5],
+      "expect": { "minChunks": 4, "minFrameworks": 2 }
+    }
+  ]
+}

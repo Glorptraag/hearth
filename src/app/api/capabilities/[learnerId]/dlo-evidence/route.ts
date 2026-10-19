@@ -19,10 +19,10 @@ import { routeHandler } from '@/lib/api-helpers';
  * Response shape:
  *   {
  *     evidence: Array<{
- *       entryId: string;
- *       title: string;
- *       dateOccurred: string;        // ISO date
- *       source: string;              // 'logger' | 'module' | 'hearth_session' | ...
+ *       entryId: string | null;      // null for a parent confirmation (no entry)
+ *       title: string;               // 'You confirmed this' for a parent confirmation
+ *       dateOccurred: string;        // ISO date (the confirmation day for assertions)
+ *       source: string;              // 'logger' | 'module' | 'hearth_session' | 'parent' | ...
  *       tier: 'emerging' | 'developing' | 'demonstrating';
  *       confidence: number | null;   // 0..1
  *       rationale: string | null;    // 1-2 sentence parent-facing Haiku output
@@ -55,7 +55,12 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
   if (!learner) return NextResponse.json({ error: 'Learner not found' }, { status: 404 });
 
   // Join links → entries so we can return human-readable titles + dates in a
-  // single query rather than an N+1 fetch from the client.
+  // single query rather than an N+1 fetch from the client. LEFT join: a
+  // parent's explicit confirmation is an `asserted` link with no observation
+  // (upsertParentAssertion), and it is evidence — the inner join used here
+  // before meant the one moment the parent contributed never appeared in
+  // their own evidence list, and the "You confirmed" provenance label could
+  // never render.
   const rows = await db
     .select({
       entryId: observationDloLinks.observationId,
@@ -69,7 +74,7 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
       createdAt: observationDloLinks.createdAt,
     })
     .from(observationDloLinks)
-    .innerJoin(learningEntries, eq(learningEntries.id, observationDloLinks.observationId))
+    .leftJoin(learningEntries, eq(learningEntries.id, observationDloLinks.observationId))
     .where(and(
       eq(observationDloLinks.learnerId, learnerId),
       eq(observationDloLinks.dloId, dloId),
@@ -79,17 +84,27 @@ export const GET = routeHandler(async (request: NextRequest, { params }: Params)
     ))
     .orderBy(desc(learningEntries.dateOccurred), desc(observationDloLinks.createdAt));
 
-  const evidence = rows.map((r) => ({
-    entryId: r.entryId,
-    title: r.title,
-    dateOccurred: r.dateOccurred,
-    source: r.source,
-    tier: r.tier,
-    confidence: r.confidence != null ? Number(r.confidence) : null,
-    rationale: r.rationale,
-    provenance: r.provenance,
-    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
-  }));
+  const evidence = rows
+    // A link whose entry was deleted (observationId set, no entry row) is
+    // dangling — skip it rather than render a blank moment.
+    .filter((r) => r.entryId === null || r.title !== null)
+    .map((r) => {
+      const createdAt = r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt);
+      const isAssertion = r.entryId === null;
+      return {
+        entryId: r.entryId,
+        title: isAssertion ? 'You confirmed this' : r.title!,
+        dateOccurred: isAssertion ? createdAt.slice(0, 10) : r.dateOccurred!,
+        source: isAssertion ? 'parent' : r.source!,
+        tier: r.tier,
+        confidence: r.confidence != null ? Number(r.confidence) : null,
+        rationale: r.rationale,
+        provenance: r.provenance,
+        createdAt,
+      };
+    })
+    // Newest first across both kinds (an assertion sorts by the day it was made).
+    .sort((a, b) => b.dateOccurred.localeCompare(a.dateOccurred) || b.createdAt.localeCompare(a.createdAt));
 
   return NextResponse.json({ evidence });
 }, { route: 'GET /api/capabilities/[learnerId]/dlo-evidence' });

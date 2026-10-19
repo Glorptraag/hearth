@@ -129,6 +129,10 @@ export const learningEntries = pgTable(
     plannerEntryId: uuid('planner_entry_id').references(() => plannerEntries.id),
     status: text('status').notNull().default('draft'),
     observationDetails: jsonb('observation_details').default({}),
+    // The Logger's structured capture context (activity-type chip, observation
+    // chips, where, how long). Read by the enrichment prompt and by pedagogy
+    // retrieval's situational signals. Null on rows saved before it existed.
+    loggerContext: jsonb('logger_context').$type<import('@/types/logger-context').LoggerContext>(),
     aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
     workSampleQuality: decimal('work_sample_quality', { precision: 3, scale: 2 }),

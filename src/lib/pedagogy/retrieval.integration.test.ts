@@ -175,7 +175,7 @@ describe('INTEGRATION: retrievePedagogyChunks', () => {
     expect(boost).toBeCloseTo(0.15, 6);
   });
 
-  it('falls back to tag substring matching against situational signals', async () => {
+  it('matches situational signals against tags exactly (controlled vocabulary, no substring)', async () => {
     await insertPedagogyChunk(db, {
       id: 'tag-fallback',
       pedagogyKey: 'unschooling',
@@ -186,12 +186,14 @@ describe('INTEGRATION: retrievePedagogyChunks', () => {
 
     mockQueryEmbedding(unitVector({ 0: 1 }));
     const res = await retrievePedagogyChunks(
-      makeRequest({ pedagogyKey: 'unschooling', situationalSignals: ['outdoor'] })
+      makeRequest({ pedagogyKey: 'unschooling', situationalSignals: ['nature_walk', 'outdoor'] })
     );
 
     const chunk = res.chunks.find((c) => c.id === 'tag-fallback')!;
     expect(chunk).toBeDefined();
-    expect(chunk.matchReasons.some((r) => r === 'tags matched signals: outdoor')).toBe(true);
+    // `nature_walk` is an exact tag; the bare fragment `outdoor` no longer
+    // matches `outdoor_play` by substring.
+    expect(chunk.matchReasons).toContain('tags matched signals: nature_walk');
   });
 
   it('surfaces minority layers (practice_pattern, worked_example) alongside a majority of source_excerpt chunks', async () => {

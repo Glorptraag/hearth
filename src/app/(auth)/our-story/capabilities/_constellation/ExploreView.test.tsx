@@ -14,7 +14,7 @@ const THREAD_ID = Object.keys(THREAD_NAMES)[0];
 const snap = buildSnapshot({ id: 'lrn1', name: 'Emma', colourToken: null }, []);
 
 describe('ExploreView (Explore / gap lens)', () => {
-  it('renders suggested threads as drillable chips and an underserved subject', () => {
+  it('renders quiet threads as drillable chips (honestly labelled) and an underserved subject', () => {
     const onDrillThread = vi.fn();
     render(
       <ExploreView
@@ -29,6 +29,8 @@ describe('ExploreView (Explore / gap lens)', () => {
     expect(onDrillThread).toHaveBeenCalledWith(THREAD_ID);
     // Underserved subject surfaces in its own section (it also appears in the
     // activity list below, hence getAllByText).
+    expect(screen.getByText('Gone quiet lately')).toBeInTheDocument();
+    expect(screen.queryByText('Suggested threads')).toBeNull();
     expect(screen.getByText('Lighter subjects lately')).toBeInTheDocument();
     expect(screen.getAllByText('Science').length).toBeGreaterThanOrEqual(1);
   });
@@ -42,7 +44,7 @@ describe('ExploreView (Explore / gap lens)', () => {
         onDrillThread={vi.fn()}
       />,
     );
-    expect(screen.queryByText('Suggested threads')).toBeNull();
+    expect(screen.queryByText('Gone quiet lately')).toBeNull();
   });
 
   it('renders an activity progressbar for every subject', () => {

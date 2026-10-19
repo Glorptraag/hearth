@@ -5,10 +5,12 @@ import {
   DRAFT_KEY,
   isRestorableDraft,
   isStaleDraft,
+  migrateDraft,
   parseDraft,
   pickNewerDraft,
   serializeDraft,
   shouldPersistDraft,
+  type DraftMigration,
   type LoggerDraft,
   type LoggerDraftFields,
 } from '@/lib/logger/draft';
@@ -32,20 +34,27 @@ export type UseLoggerDraftArgs = {
    */
   state: LoggerDraftFields;
   /**
-   * Called once on mount with the parsed draft if storage held one. The
-   * caller is responsible for hydrating its form state (each setter gated on
-   * field presence — same shape as the original inline effect).
+   * Called once on mount with the migrated draft if storage held one (and
+   * again if the server mirror turns out to be newer). The caller is
+   * responsible for hydrating its form state. `meta.dateReset` is true when
+   * a legacy draft's "earlier" date could not be carried over — the restored
+   * banner tells the parent the date is now today.
    */
-  onRestore: (draft: LoggerDraft) => void;
+  onRestore: (draft: LoggerDraft, meta: { dateReset: boolean }) => void;
 };
 
 export type UseLoggerDraftReturn = {
   /**
-   * True when the parsed draft had real content (a description or at least
-   * one selected learner) — drives the "Draft restored" banner.
+   * True when the parsed draft had real content (text, a selected learner or
+   * evidence) — drives the "Picked up where you left off" banner.
    */
   draftRestored: boolean;
-  /** Dismiss the "Draft restored" banner. */
+  /**
+   * True when the restored draft came from a legacy "earlier" date that is
+   * now today. Drives the banner's date-reset suffix. Cleared with the banner.
+   */
+  dateReset: boolean;
+  /** Dismiss the "Picked up where you left off" banner. */
   dismissDraftRestored: () => void;
   /** Wall-clock ms of the most recent autosave write, or null. */
   lastSavedAt: number | null;
@@ -61,19 +70,24 @@ export type UseLoggerDraftReturn = {
  * Extracted from `app/(auth)/log/page.tsx` so the page can describe its form
  * state without also owning the `localStorage` I/O and timer plumbing.
  *
- * Behaviour preserved verbatim from the inline effects:
- *  - on mount, read `DRAFT_KEY`, hand the parsed draft to `onRestore` once;
+ * Behaviour preserved from the inline effects:
+ *  - on mount, read `DRAFT_KEY`, run it through `parseDraft` (which migrates
+ *    legacy v1 drafts and sanitises v2 ones) and hand the result to
+ *    `onRestore` once;
  *  - if the parsed draft is restorable, raise the banner;
  *  - if the parsed draft is stale (> 4 h), fire a `draft_resume` notification;
- *  - every 10 s of idle form state, write the current draft to storage;
+ *  - every 10 s of idle form state, write the current draft (always v2) to storage;
  *  - `clearDraft` wipes both `localStorage` and the local banner/timestamp.
  *
  * Cross-device sync (additive, never blocks — `localStorage` stays the
  * offline-first primary):
- *  - on mount, after the local restore, best-effort `GET` the Postgres mirror;
- *    if the server draft is newer (`pickNewerDraft`), restore from it and write
- *    it back to `localStorage`. Offline → skipped, local behaviour unchanged;
- *  - each autosave tick also fires a best-effort `PUT` of the same draft;
+ *  - on mount, after the local restore, best-effort `GET` the Postgres mirror.
+ *    The route returns the stored blob raw, so the body also runs through
+ *    `migrateDraft` before comparison; if the server draft is newer
+ *    (`pickNewerDraft`), restore from it and write it back to `localStorage`.
+ *    Offline → skipped, local behaviour unchanged;
+ *  - each autosave tick also fires a best-effort `PUT` of the same v2 draft
+ *    (the route rejects anything else with 400, swallowed here);
  *  - `clearDraft` also fires a best-effort `DELETE` so a save on one device
  *    doesn't leave a stale draft to resurface on another.
  *  Every server call swallows its error (like the `draft_resume` fetch) so a
@@ -97,6 +111,7 @@ export type UseLoggerDraftReturn = {
  */
 export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLoggerDraftReturn {
   const [draftRestored, setDraftRestored] = useState(false);
+  const [dateReset, setDateReset] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
 
@@ -106,15 +121,23 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
   }, [onRestore]);
 
   useEffect(() => {
-    const local = parseDraft(localStorage.getItem(DRAFT_KEY));
+    const applyRestore = (migration: DraftMigration) => {
+      const { draft } = migration;
+      onRestoreRef.current(draft, { dateReset: migration.dateReset });
+      if (isRestorableDraft(draft)) {
+        setDraftRestored(true);
+        setDateReset(migration.dateReset);
+      }
+      if (draft.savedAt) setDraftSavedAt(draft.savedAt);
+    };
+
+    const now = Date.now();
+    const local = parseDraft(localStorage.getItem(DRAFT_KEY), now);
     if (local) {
-      onRestoreRef.current(local);
       // Restoring banner state from localStorage on mount; gated on presence of restorable content.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (isRestorableDraft(local)) setDraftRestored(true);
-      if (local.savedAt) setDraftSavedAt(local.savedAt);
-      if (isStaleDraft(local, Date.now())) {
-        const draftTitle = local.description?.slice(0, 40) || undefined;
+      applyRestore(local);
+      if (isStaleDraft(local.draft, now)) {
+        const draftTitle = local.draft.text.slice(0, 40) || undefined;
         fetch('/api/notifications/trigger', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -130,13 +153,12 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     if (!isOnline()) return;
     fetch(DRAFT_ENDPOINT)
       .then((r) => (r.ok ? r.json() : null))
-      .then((body: { draft: LoggerDraft | null } | null) => {
-        const server = body?.draft ?? null;
-        if (pickNewerDraft(local, server) !== server || !server) return;
-        onRestoreRef.current(server);
-        if (isRestorableDraft(server)) setDraftRestored(true);
-        if (server.savedAt) setDraftSavedAt(server.savedAt);
-        localStorage.setItem(DRAFT_KEY, serializeDraft(server, server.savedAt));
+      .then((body: { draft: unknown } | null) => {
+        const server = body?.draft == null ? null : migrateDraft(body.draft, Date.now());
+        if (!server) return;
+        if (pickNewerDraft(local?.draft ?? null, server.draft) !== server.draft) return;
+        applyRestore(server);
+        localStorage.setItem(DRAFT_KEY, serializeDraft(server.draft, server.draft.savedAt));
       })
       .catch(() => {});
   }, []);
@@ -145,7 +167,7 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     const timer = setInterval(() => {
       if (!shouldPersistDraft(state)) return;
       const now = Date.now();
-      const draft: LoggerDraft = { ...state, savedAt: now };
+      const draft: LoggerDraft = { ...state, v: 2, savedAt: now };
       localStorage.setItem(DRAFT_KEY, serializeDraft(state, now));
       setLastSavedAt(now);
       // Best-effort mirror to Postgres for cross-device pickup. Fire-and-forget;
@@ -165,6 +187,7 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     localStorage.removeItem(DRAFT_KEY);
     setLastSavedAt(null);
     setDraftRestored(false);
+    setDateReset(false);
     // Best-effort: drop the server mirror too, so a save on this device doesn't
     // leave a stale draft to resurface on another. Offline / failure is fine —
     // the next save's DELETE (or the 7-day server expiry) cleans it up.
@@ -173,7 +196,10 @@ export function useLoggerDraft({ state, onRestore }: UseLoggerDraftArgs): UseLog
     }
   }, []);
 
-  const dismissDraftRestored = useCallback(() => setDraftRestored(false), []);
+  const dismissDraftRestored = useCallback(() => {
+    setDraftRestored(false);
+    setDateReset(false);
+  }, []);
 
-  return { draftRestored, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft };
+  return { draftRestored, dateReset, dismissDraftRestored, lastSavedAt, draftSavedAt, clearDraft };
 }

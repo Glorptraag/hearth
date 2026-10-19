@@ -220,6 +220,101 @@ A failed module load surfaced as an unhandled rejection plus "Module not availab
 **Regression test:** `src/app/(auth)/our-story/capabilities/page.test.tsx`; `src/lib/modules/completion.test.ts` clamp cases.
 **Fix:** PR #255. **Date logged:** 2026-07-03.
 
+### R27 — Code audit (2026-10-06): the monthly narrative cost one Haiku call per child on every snapshot rebuild.
+
+`rebuildSnapshot` regenerated every child's monthly narrative on every `entry_saved` / `manual` / `user_dashboard` rebuild, including siblings whose inputs had not changed, a dashboard load with nothing new, and a DLO confirm. The Sonnet low-confidence fallback triggered a second full round. A `settings_change` rebuild wiped the narrative to `''` (the trigger was outside the allowlist) and the Dashboard's 24h-debounced refresh then refused to restore it. The one-call-per-save invariant (UC5) held only for the enrichment call itself.
+**Spec affected:** `Hearth_AI_Intelligence_Layer_Architecture.md` (two-layer AI; write-time cost posture); `docs/incident-runbook.md` cost-spike triage.
+**Regression test:** `src/lib/ai/__tests__/snapshot-rebuild.integration.test.ts` — "monthly narrative reuse" describe (unchanged inputs → zero calls; sibling save → one call; settings_change keeps text; failed generation keeps this month's text and retries); `src/lib/ai/generate-monthly-narrative.test.ts` (signature).
+**Fix:** narrative carries an input fingerprint (`monthly_narrative_signature`) and is reused when unchanged. **Date logged:** 2026-10-06.
+
+### R28 — Code audit (2026-10-06): enrichment derived a child's active threads from the six most recent family-wide entries.
+
+In a multi-child family the six-entry window is shared across siblings, so a child with forty logged moments could read "none yet" in the Haiku prompt — meaning no candidate DLO descriptors were injected for them and pedagogy retrieval had no threads to boost. The snapshot already held the full per-child profile and was read anyway for the profile nudge.
+**Spec affected:** `hearth-outcomes-spine-plan-v1.md` WS-3 (descriptor injection budget assumes a real candidate list).
+**Regression test:** `src/lib/ai/__tests__/enrich-context.integration.test.ts`; `src/lib/ai/__tests__/enrich-context.test.ts`.
+**Fix:** snapshot-backed active threads (most-recent-first) unioned with the recent-entry derivation; one snapshot read shared with the nudge step. **Date logged:** 2026-10-06.
+
+### R29 — Code audit (2026-10-06): most of what the enrichment notices was persisted and never shown again.
+
+`journey_observation` reached a parent only as a Portfolio expanded-card callout; `per_child_signals.notable`, `trajectory`, `recent_evidence_quality`, `source_counts`, `work_sample.rationale` and the milestone *reason* (which thread, which badge) were never rendered anywhere; `insight_suggestions`, `profile_nudge` and `pedagogy_sources` appeared once on the Logger and were cleared on the next keystroke. The Dashboard's "Pedagogical Insight" and "This Week" cards read `hearthVoice` / `weekStats`, which the rebuild never wrote — they rendered only in demo mock data. The Dashboard also shipped the whole snapshot (every child's narrative) to the client while a comment claimed it did not.
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 2→3 ("the constellation growing" must be visible day to day, not only post-save); `Hearth_System_Interaction_Map.md` Dashboard ↔ snapshot.
+**Regression test:** `src/lib/ai/insights-feed.test.ts`; `src/components/dashboard/HearthNoticed.test.tsx`.
+**Fix:** deterministic per-child `recent_insights` feed assembled at rebuild (journey, notable, milestone reasons, newly lit threads, tier rises) → Dashboard "Hearth noticed" card (mobile too); `weekStats` written; client receives a projection. Trajectory / evidence quality in the constellation remain a follow-up. **Date logged:** 2026-10-06.
+
+### R30 — Code audit (2026-10-06): the Logger's "Earlier" chip saved every such entry as exactly five days ago.
+
+`getDateOccurred` mapped `earlier` → `subDays(today, 5)` with no way to see or change the date. Any retrospective moment older than yesterday was silently misdated, which also skews streaks, weekly coverage and report date ranges.
+**Spec affected:** `hearth-logger-spec-v1.md` When & Where; Known Gap #8 (30-day backdating).
+**Regression test:** `src/app/(auth)/log/_components/WhenWhereSection.test.tsx`.
+**Fix:** "Earlier" opens a bounded date picker (≤30 days back), seeded visibly to the day before yesterday; the chosen date persists in the draft. **Date logged:** 2026-10-06.
+
+### R31 — Code audit (2026-10-06): the Logger's chips, activity type, where and how long were dropped at save.
+
+Of the structured context the Logger collects — the activity-type chip, the 24 observation chips (Engagement / Social / Thinking / Emotional), where, how long — only the activity type survived, and only as a derived `subjects[]`. "Persisted through difficulty", "Taught someone", "Self-corrected" never reached the enrichment prompt, so the DLO tiering and the journey-observation rules were judging from free text alone; pedagogy retrieval's situational layer had no inputs at all at write time, and the one caller that sent signals (coach hints) sent raw chip labels that match no corpus tag.
+**Spec affected:** `hearth-logger-spec-v1.md` (Observe section is described as evidence, yet was not persisted); `hearth-pedagogy-knowledge-base-implementation-spec-v1.md` (retrieval request contract).
+**Regression test:** `src/app/api/entries/route.integration.test.ts` (persists `logger_context`; null for pre-column clients); `src/lib/ai/__tests__/enrich-prompt.test.ts` (structured notes block; system prompt untouched); `src/lib/ai/__tests__/enrich-context.integration.test.ts`; `src/lib/pedagogy/situational-signals.test.ts` (every emitted token exists in tags.json; every chip has a mapping); `src/lib/logger/coaching/__tests__/retrieval-provider.test.ts`.
+**Fix:** `learning_entries.logger_context` (migration 0030), carried by `buildLoggerContext`; `formatStructuredNotes` in the user prompt; `situational-signals.ts` mapper feeding both retrieval callers; exact-vocabulary tag matching in the rerank. **Date logged:** 2026-10-06.
+
+### R32 — Code audit (2026-10-06): the Sanity → pgvector webhook skipped the human review gate.
+
+`/api/pedagogy/sanity-webhook` deleted a chunk only for a Sanity draft id, a delete operation, or an explicit `suggestedDraft: true`. A published document with `suggestedDraft` absent (the vault contract's default, meaning "awaiting review") or with `status: draft` was embedded and became retrievable. The reembed script applied the correct `status == published && suggestedDraft == false` predicate, so the two write paths disagreed about what the index contains.
+**Spec affected:** `hearth-pedagogy-knowledge-base-decisions-addendum-v2.md` PKB9; `hearth-pedagogy-corpus-vault-architecture-v1.md` §3.
+**Regression test:** `src/app/api/pedagogy/sanity-webhook/route.test.ts`.
+**Fix:** webhook uses the same predicate, removes the chunk for anything else, and guards the metadata-only refresh with `IS DISTINCT FROM`. **Date logged:** 2026-10-06.
+
+### R33 — Code audit (2026-10-06): retrieval query text duplicated the entry's opening and read only 200 characters.
+
+The Logger derives the title from the first ~60 characters of the description, and the retrieval query was `title: description.slice(0, 200)` — the opening twice, then a hard cut, with per-child discoveries (often the sharpest observation) never embedded. Threads sent for the rerank boost were neither deduped across children nor validated, and the author-declared threads from the entry's activities were not sent.
+**Spec affected:** `hearth-pedagogy-knowledge-base-implementation-spec-v1.md` A3 (query composition).
+**Regression test:** `src/lib/ai/pedagogy-context.test.ts` (`composeRetrievalQuery` cases; pinned prompt unchanged).
+**Fix:** `composeRetrievalQuery` — title only when it adds something, up to 600 description characters, discoveries appended; threads deduped + validated with candidates first. **Date logged:** 2026-10-06.
+
+### R34 — Code audit (2026-10-06): the constellation hid the "developing" rung and the parent's own confirmations.
+
+`buildDLOs()` collapsed `developing` into `emerging`, so a child practising with support read as merely noticing, in both Gallery and Table; the depth-3 status chip was hidden below `sm`, so on a phone no per-DLO status showed at all. The evidence route inner-joined `learning_entries`, so a parent's asserted link (no entry) never appeared in the Moments list and the "You confirmed" provenance label could never render. Separately, a lone parent confirm of a developing-tier DLO rolled up to `not-started` (`developing >= 2` was the only path).
+**Spec affected:** `hearth-outcomes-spine-plan-v1.md` WS-4 honesty model; `hearth-constellation-architecture-v1.md` §1.
+**Regression test:** `topology.test.ts` (four-state mapping, `nextDloToWatch`); `TableView.test.tsx`; `dlo-evidence/route.integration.test.ts` (asserted row); `dlo-persistence.integration.test.ts` (lone developing confirm → developing).
+**Fix:** four render states mirroring `learner_dlo_status`; compact status chip on phones; "Next to watch for" at depth 3; LEFT join + "You confirmed this" moments; asserted/declared developing counts as corroboration. **Date logged:** 2026-10-06.
+
+### R35 — Code audit (2026-10-06): depth-4 deep links resolved to an empty stage; the Gallery was illegible on phones.
+
+The `?focus=` parser accepted only a one-letter tier suffix (`L3.e`) while the URL sync wrote real DLO ids (`dlo.L3.emerging`), so reloading at depth 4 — or following any depth-4 link — rendered nothing. The Gallery's 1200-unit SVGs shrink to ~277px of content width on a 375px phone, rendering 11px labels at roughly 3px with sub-4px tap targets. The hub's Capabilities card dropped the selected child (`?child=`) on the way in, and Moments rows linked to `#entry-<id>` anchors the Portfolio never rendered.
+**Spec affected:** `hearth-mobile-bottom-nav-spec-v1.md` (mobile-first rule); `Hearth_System_Interaction_Map.md` Our Story ↔ Capabilities.
+**Regression test:** `ConstellationRoute.test.tsx` (`parseFocus`, depth-4 link, narrow-viewport fallback); `capabilities/page.test.tsx` (`?learner=` selection).
+**Fix:** `parseFocus()`; Gallery hidden/falls back to Table below 640px; `?learner=` honoured and passed by the hub; Portfolio renders `id="entry-…"` anchors and opens the linked card; the DLO catalog is cached per session. **Date logged:** 2026-10-06.
+
+### R36 — Code audit (2026-10-06): computed thread signals never reached the constellation; the Explore lens mislabelled quiet threads.
+
+`trajectory` and `first_evidence_date` were computed by the rebuild for every active thread and discarded at the API→topology boundary; nothing told a parent a thread was newly lit or picking up. Explore's "Suggested threads" were concretely "threads not touched in 30 days" — a recommendation Hearth had no basis for.
+**Spec affected:** `hearth-parent-journey-v1.md` Stage 3 ("seeing growth").
+**Regression test:** `topology.test.ts` (recency helpers, snapshot carries trajectory); `TableView.test.tsx` ("New" + trajectory); `ExploreView.test.tsx` ("Gone quiet lately").
+**Fix:** "New" chip, recent-activity dot and trajectory read on thread rows; honest "Gone quiet lately" label with explanation. **Date logged:** 2026-10-06.
+
+### R37 — Code audit (2026-10-07): project-stage provenance was silently dropped on every Logger save from a project page.
+
+The Logger payload sent `projectId` / `stageNumber` (strings); `POST /api/entries` validates `sourceProjectId` / `sourceStageNumber` (number) and its non-strict zod strips unknown keys, so no Logger entry ever carried project provenance. The unit test had enshrined the wrong key names, which is why it stayed green. Rebuilt payload (`buildEntrySavePayload`) sends the route's keys with a numeric stage; legacy queued outbox records still replay (the server strips the old keys).
+**Spec affected:** `hearth-logger-spec-v2.md` §2 (mapping table) and §7 (source banner); project-stage provenance in `Hearth_System_Interaction_Map.md`.
+**Regression test:** `src/lib/logger/entry-payload.test.ts` (`sourceProjectId` + numeric `sourceStageNumber`); `src/app/api/entries/route.integration.test.ts` project-stage `describe` (provenance persists; legacy keys still 201).
+**Fix:** Logger rebuild branch `claude/hearth-logger-rebuild-0b8907` (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R38 — Code audit (2026-10-07): the "Earlier" date option meant a hidden five days ago (rebuild follow-through on R30).
+
+Same defect as R30, found independently by the rebuild audit. R30's bounded "Earlier" picker lived in `WhenWhereSection`, which the rebuild deletes, so the fix is carried by the Notice form instead: **Today · Yesterday · Another day** (native date picker, `max` today); the stored value is the resolved `yyyy-MM-dd`, the segment highlight is derived from it, and a legacy draft that said "earlier" restores its R30 `earlierDate` when one was stored, otherwise resets to today with a banner saying so.
+**Spec affected:** `hearth-logger-spec-v2.md` §6 and §9 (draft migration `dateReset`).
+**Regression test:** `src/lib/logger/notice.test.ts` (`resolveDateOccurred`: null → today, yesterday across a month boundary, explicit date, future clamp, invalid → today; `whenKindFor`); `src/lib/logger/draft.test.ts` (`earlier` → null + `dateReset`; `earlier` + `earlierDate` keeps the date).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R39 — Code audit (2026-10-07): the constellation check-in deep link's `learner` and `thread` params were ignored.
+
+`/log?source=check-in&learner=<id>&thread=<id>` coerced to `source: 'logger'` and discarded both params, so a parent tapping "check in" on a thread arrived at a blank form. `parseNoticeSource` now yields a `check_in` source: the child is preselected once learners load (never over a restored draft), the banner reads "Checking in on {Name}'s {threadName}", and the thread is passed to `deriveProposals` as `preferThreadId` so the matching chip sorts first. The thread is never persisted (not an `ENTRY_SOURCES` value and no column — SIDEBAR S2); unknown or H6-suppressed thread ids are dropped.
+**Spec affected:** `hearth-logger-spec-v2.md` §7; `hearth-constellation-architecture-v1.md` (check-in entry point).
+**Regression test:** `src/lib/logger/source.test.ts` (four kinds; suppressed and unknown thread dropped; `resume` ignored); `src/lib/logger/proposals.test.ts` (`preferThreadId` ordering); `src/hooks/use-notice-form.test.tsx` (check-in preselect not over a restored draft).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+*Note (2026-10-07):* R13's regression test `src/app/(auth)/log/_components/WhoSection.test.tsx` was deleted with the old form in the Notice → Confirm rebuild; its guard (fan-out note shows at 2+ children) now lives in `src/app/(auth)/log/_components/WhoRow.test.tsx`.
+
+*Note (2026-10-20, rebuild rebase):* R30's regression test `src/app/(auth)/log/_components/WhenWhereSection.test.tsx` was deleted with `WhenWhereSection`; the guard now lives in `src/lib/logger/notice.test.ts` and `src/app/(auth)/log/_components/WhenRow.test.tsx` (R38). R31's `src/lib/logger/coaching/__tests__/retrieval-provider.test.ts` was deleted with the coach-hints rail (D-LPS-14); `logger_context` persistence, the structured-notes prompt block and `situational-signals.ts` keep their tests. The Notice form captures none of the R31 chips, so new `/log` saves write a null `logger_context`.
+
 ---
 
-*Next entry: R27. Append below; never edit above.*
+*Next entry: R40. Append below; never edit above.*

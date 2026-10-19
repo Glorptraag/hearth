@@ -2,6 +2,8 @@
 
 # Logger Short Mode — UX spec (proposal)
 
+> **Superseded 2026-10-07.** The Guided/Quick modes and completeness system this proposal reshaped were removed in the Logger Notice → Confirm rebuild (D-LPS-14, `hearth-logger-spec-v2.md`). Kept as history.
+
 > **This is a decision-draft.** It proposes a genuinely short default Logger mode and
 > names the code changes it implies. Nothing here is built. Drew approves (or
 > reshapes) the interaction before a single line ships.

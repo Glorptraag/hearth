@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ConstellationRoute, buildSnapshotFromApi } from './_constellation/ConstellationRoute';
 import {
   indexDLOsByThread,
@@ -23,14 +24,49 @@ type Learner = {
   colourToken: string | null;
 };
 
+// The DLO descriptor catalog (171 Sanity docs) is identical for every learner
+// and changes only when content is re-authored; one fetch per browser session
+// is plenty, and skipping it on the second visit removes a visible flash of
+// "0 learning objectives" at depth 3.
+const DLO_CATALOG_CACHE_KEY = 'hearth:dlo-catalog:v1';
+
+function readCachedCatalog(): SanityDLO[] | null {
+  try {
+    const raw = sessionStorage.getItem(DLO_CATALOG_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) && parsed.length > 0 ? (parsed as SanityDLO[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedCatalog(rows: SanityDLO[]): void {
+  try {
+    if (rows.length > 0) sessionStorage.setItem(DLO_CATALOG_CACHE_KEY, JSON.stringify(rows));
+  } catch {
+    /* storage unavailable (private mode, quota) — the fetch still populated state */
+  }
+}
+
 export default function CapabilitiesPage() {
+  const searchParams = useSearchParams();
+  // `?learner=` (or the hub's `?child=`) selects the child on arrival; without
+  // it the page always opened on the first learner, so a parent who switched
+  // child on the hub lost that choice one tap later.
+  const requestedLearnerId = searchParams?.get('learner') ?? searchParams?.get('child') ?? null;
   const [learners, setLearners] = useState<Learner[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [activeThreads, setActiveThreads] = useState<ActiveThreadRow[]>([]);
   const [dloStatus, setDloStatus] = useState<Record<string, DloStatusLite>>({});
   const [gapAnalysis, setGapAnalysis] = useState<GapAnalysis>({ underserved_subjects: [], suggested_focus_threads: [] });
   const [curriculumCoverage, setCurriculumCoverage] = useState<CurriculumCoverage>({});
-  const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>({});
+  // Seeded from the per-session catalog cache so the first paint of depth 3
+  // already has descriptors; the effect below refreshes from the network.
+  const [dlosByThread, setDlosByThread] = useState<Record<string, SanityDLO[]>>(() => {
+    const cached = readCachedCatalog();
+    return cached ? indexDLOsByThread(cached) : {};
+  });
   const [loading, setLoading] = useState(true);
   // A fetch failure must be distinguishable from "nothing observed yet" — an
   // established family seeing the first-use zero-state because a request
@@ -60,24 +96,35 @@ export default function CapabilitiesPage() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setLearners(data);
-          setSelectedLearnerId((prev) => prev || data[0].id);
+          const requested = requestedLearnerId && data.some((l: Learner) => l.id === requestedLearnerId)
+            ? requestedLearnerId
+            : null;
+          setSelectedLearnerId((prev) => prev || requested || data[0].id);
         }
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
+    // requestedLearnerId is read once on arrival; later child switches are
+    // in-page state, so a URL change must not re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnersNonce]);
 
-  // DLO content is shared across learners — fetch once.
+  // DLO content is shared across learners — fetch once per session. A cached
+  // copy renders immediately; the network copy refreshes it in the background.
   useEffect(() => {
     let cancelled = false;
+    const hadCache = readCachedCatalog() !== null;
     // discreteLearningObjective uses dotted ids (dark to the tokenless browser
     // client) — read the DLO descriptor catalog through the authed proxy.
     clientSanityRead<SanityDLO[]>('allDlos')
       .then((rows) => {
         if (cancelled) return;
-        setDlosByThread(indexDLOsByThread(Array.isArray(rows) ? rows : []));
+        const list = Array.isArray(rows) ? rows : [];
+        // An empty network answer never wipes a cached catalog that is on screen.
+        if (list.length > 0 || !hadCache) setDlosByThread(indexDLOsByThread(list));
+        writeCachedCatalog(list);
       })
-      .catch(() => { /* fall back to placeholder descriptors in topology.ts */ });
+      .catch(() => { /* keep the cached catalog if we had one; depth 3 renders an empty state otherwise */ });
     return () => { cancelled = true; };
   }, []);
 

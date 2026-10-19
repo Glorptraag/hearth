@@ -185,6 +185,11 @@ export type LearnerSnapshot = {
   tierByThread: Record<string, Tier>;
   observationsByThread: Record<string, number>;
   lastDateByThread: Record<string, string>;
+  // First evidence date per thread (for "newly lit") and the rebuild's
+  // trajectory read. Both sparse: only threads whose snapshot row carried
+  // the field.
+  firstDateByThread: Record<string, string>;
+  trajectoryByThread: Record<string, ThreadTrajectory>;
   threadState: Record<string, ThreadState>;
   badges: Array<{ thread: string; level?: string | null; status?: 'approaching' | 'awarded' }>;
   // Per-DLO status keyed by Sanity DLO `_id`. Populated by the snapshot rebuild
@@ -203,7 +208,41 @@ export type ActiveThreadRow = {
   current_badge_level: string | null;
   next_badge: string | null;
   next_badge_progress: number;
+  // Optional: present on snapshots written after the insights-engine pass.
+  // The API passes the full SnapshotActiveThread row through, so these arrive
+  // whenever the rebuild wrote them; absent → no marker, never an error.
+  first_evidence_date?: string;
+  trajectory?: 'steady_growth' | 'accelerating' | 'plateau' | 'new';
+  recent_evidence_quality?: 'weak' | 'adequate' | 'strong';
 };
+
+export type ThreadTrajectory = NonNullable<ActiveThreadRow['trajectory']>;
+
+/** Days within which a thread's first evidence counts as "newly lit". */
+export const NEWLY_LIT_DAYS = 14;
+/** Days within which a thread's last evidence counts as "recent". */
+export const RECENT_DAYS = 7;
+
+export function daysSince(dateStr: string | undefined, now: Date = new Date()): number | null {
+  if (!dateStr) return null;
+  const t = Date.parse(dateStr);
+  if (Number.isNaN(t)) return null;
+  // Calendar-day arithmetic on a yyyy-MM-dd (treated as a local day).
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const d = new Date(dateStr);
+  const dayStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()).getTime();
+  return Math.round((start - dayStart) / 86_400_000);
+}
+
+export function isNewlyLit(snap: LearnerSnapshot, threadId: string, now: Date = new Date()): boolean {
+  const d = daysSince(snap.firstDateByThread[threadId], now);
+  return d !== null && d <= NEWLY_LIT_DAYS;
+}
+
+export function isRecentlyActive(snap: LearnerSnapshot, threadId: string, now: Date = new Date()): boolean {
+  const d = daysSince(snap.lastDateByThread[threadId], now);
+  return d !== null && d <= RECENT_DAYS;
+}
 
 export function buildSnapshot(
   learner: { id: string; name: string; colourToken: string | null },
@@ -213,6 +252,8 @@ export function buildSnapshot(
   const tier: Record<string, Tier> = {};
   const obs: Record<string, number> = {};
   const last: Record<string, string> = {};
+  const first: Record<string, string> = {};
+  const trajectory: Record<string, ThreadTrajectory> = {};
   const badges: LearnerSnapshot['badges'] = [];
 
   for (const r of rows) {
@@ -220,6 +261,8 @@ export function buildSnapshot(
     tier[r.thread_id] = t === 'emerging' || t === 'developing' || t === 'demonstrating' ? t : 'unobserved';
     obs[r.thread_id] = r.observation_count ?? 0;
     if (r.last_evidence_date) last[r.thread_id] = r.last_evidence_date;
+    if (r.first_evidence_date) first[r.thread_id] = r.first_evidence_date;
+    if (r.trajectory) trajectory[r.thread_id] = r.trajectory;
     if (r.current_badge_level) {
       badges.push({ thread: r.thread_id, level: r.current_badge_level, status: 'awarded' });
     } else if (r.next_badge && (r.next_badge_progress ?? 0) >= 0.6) {
@@ -234,6 +277,8 @@ export function buildSnapshot(
     tierByThread: tier,
     observationsByThread: obs,
     lastDateByThread: last,
+    firstDateByThread: first,
+    trajectoryByThread: trajectory,
     threadState: deriveThreadStates(tier),
     badges,
     dloStatusById: dloStatusById ?? {},
@@ -282,9 +327,44 @@ export type DLO = {
   tierLabel: string;
   descriptor: string;
   badgeLevel: 'foundation' | 'practising' | 'mastery';
-  status: 'confirmed' | 'emerging' | 'not-started';
+  // Four render states mirroring learner_dlo_status.status one-to-one:
+  // 'confirmed' = demonstrating (kept for compatibility), 'developing',
+  // 'emerging', 'not-started'. 'developing' used to be collapsed into
+  // 'emerging', so a parent could never see the middle rung.
+  status: DloRenderStatus;
   source: 'sanity';
 };
+
+export type DloRenderStatus = 'confirmed' | 'developing' | 'emerging' | 'not-started';
+
+export const DLO_STATUS_LABEL: Record<DloRenderStatus, string> = {
+  confirmed: 'Demonstrating',
+  developing: 'Developing',
+  emerging: 'Emerging',
+  'not-started': 'Not yet observed',
+};
+
+/** Rank of a render status for "how far along" comparisons. */
+export const DLO_STATUS_RANK: Record<DloRenderStatus, number> = {
+  'not-started': 0,
+  emerging: 1,
+  developing: 2,
+  confirmed: 3,
+};
+
+/**
+ * The next objective worth watching for: the first DLO in tier order whose
+ * learner status has not yet reached its own tier. Returns null when every
+ * DLO is at or above its tier (the thread is fully evidenced) or the list
+ * is empty.
+ */
+export function nextDloToWatch(dlos: DLO[]): DLO | null {
+  for (const d of dlos) {
+    const reached = DLO_STATUS_RANK[d.status] >= TIER_RANK[d.tier];
+    if (!reached) return d;
+  }
+  return null;
+}
 
 /* Back-compat alias — keeps SynthDLO importable while call sites migrate. */
 export type SynthDLO = DLO;
@@ -309,10 +389,8 @@ const BADGE_LEVEL_BY_TIER: Record<Exclude<Tier, 'unobserved'>, DLO['badgeLevel']
    DLO content (seed-dlos.ts authors 57 × 3). Per-DLO status comes from
    `snap.dloStatusById`, populated by the snapshot rebuild from the
    `learner_dlo_status` table. The persisted status uses four values
-   (emerging | developing | demonstrating | not-started); the constellation's
-   DLO type collapses these into three render states ('confirmed' for
-   demonstrating, 'emerging' for emerging/developing, 'not-started' for absent
-   entries) to keep Gallery/Table rendering stable. Returns [] for unknown
+   (emerging | developing | demonstrating | not-started) and the render
+   status mirrors them one-to-one ('confirmed' for demonstrating). Returns [] for unknown
    threads or threads with no Sanity content (caller renders an empty state). */
 export function buildDLOs(
   threadId: string,
@@ -324,7 +402,8 @@ export function buildDLOs(
   const stateFor = (id: string): DLO['status'] => {
     const persisted = snap.dloStatusById?.[id]?.status;
     if (persisted === 'demonstrating') return 'confirmed';
-    if (persisted === 'developing' || persisted === 'emerging') return 'emerging';
+    if (persisted === 'developing') return 'developing';
+    if (persisted === 'emerging') return 'emerging';
     return 'not-started';
   };
 

@@ -7,6 +7,16 @@
 
 ---
 
+## Current Priority: Launch Pivot (Expo, Mon 9 Nov 2026)
+
+The expo is the current priority and overrides the pilot-hardening framing below for scheduling. Plan of record: `docs/hearth-launch-pivot-plan-v1.md` (workstreams W0–W8, Drew's gates in §3, cut order in §2). Decisions: `docs/hearth-decisions-log-v1.md` D-LP-1…10 and A1…A9 (dated 2026-10-19).
+
+- **Shape:** Photo Read runs post-save inside the existing enrichment call, off in production until zero-data-retention is confirmed (A1, A3). The Shelf is a Sanity `shelfResource` type with four wave-1 resources plus two universal sources (A4). "Watch for next" notes are about 50 F–Y3 notes, each confirmed by Drew before it renders (A5). The expo runs on the web app; native submission follows (A6). Account deletion (D1 = transfer ownership) is a go-live gate (A7).
+- **Gates:** freeze Wed 4 Nov, go/no-go Fri 6 Nov. Drew's open gates (ZDR request, Apple/Play enrolment, Sanity schema approvals, disclosure copy, demo photos) are listed in plan §3.
+- **Status (20 Oct):** #285, #287, #288 and #292 (re-open of #286) are on `main`. The logger rebuild is rebased onto them in the pivot branch (`1359e68`); its own PR to `main` is not yet verified as merged. This log and status entry is W0.4. W1 (Photo Read), W2 (Shelf) and W4 (notes) are next. Trails reality: check `git log` for the live state.
+
+---
+
 ## Current Phase: Pilot Hardening (trackers closed; conceptual-gaps workstream active)
 
 **Build progress:** Next.js 16 app fully implemented — 33 auth-protected pages (incl. admin + dev-preview, 68 page routes overall), 100+ API route files, 38 Drizzle tables, **19 Sanity schemas** (4 content types + projects + badges + capability threads + 7-doc pedagogy knowledge base + assets / commons text / module skeletons), AI enrichment + snapshot pipeline operational. Community (Hearth) feature complete. Admin panel with analytics, content management, QA tools, invitation management, audit logging, and an editorial workbench publish path.

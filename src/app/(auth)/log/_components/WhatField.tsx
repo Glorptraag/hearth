@@ -1,4 +1,4 @@
-import { Microphone, CircleNotch } from '@/components/icons';
+import { Microphone } from '@/components/icons';
 import { noticeCopy } from './noticeCopy';
 
 export interface VoiceControls {
@@ -77,13 +77,9 @@ export function WhatField({ value, onChange, placeholder, voice }: WhatFieldProp
               isRecording
                 ? 'bg-ember text-text-inverse shadow-ember'
                 : 'bg-surface-raised border border-border-subtle text-text-muted hover:border-border-medium hover:text-text-secondary'
-            } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
+            } ${isTranscribing ? 'hearth-thinking' : ''} disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-subtle disabled:hover:text-text-muted`}
           >
-            {isTranscribing ? (
-              <CircleNotch size={18} aria-hidden="true" className="animate-spin" />
-            ) : (
-              <Microphone size={18} weight={isRecording ? 'fill' : 'regular'} aria-hidden="true" />
-            )}
+            <Microphone size={18} weight={isRecording ? 'fill' : 'regular'} aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -22,7 +22,7 @@ export function PerChildRow({ learner, felt, noticed, onFelt, onNoticed }: PerCh
   return (
     <section
       aria-labelledby={groupId}
-      className="rounded-md border border-border-subtle bg-surface-panel p-md"
+      className="hearth-reveal rounded-md border border-border-subtle bg-surface-panel p-md"
     >
       <div className="mb-sm flex items-center gap-sm">
         <span className={`h-[10px] w-[10px] shrink-0 rounded-full ${colour.dot}`} aria-hidden="true" />
@@ -41,7 +41,7 @@ export function PerChildRow({ learner, felt, noticed, onFelt, onNoticed }: PerCh
               role="radio"
               aria-checked={checked}
               onClick={() => onFelt(value)}
-              className={`hearth-press min-h-[44px] rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`hearth-press min-h-[44px] rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium ${
                 checked
                   ? 'border-border-active bg-surface-raised text-text-primary'
                   : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'

@@ -46,7 +46,7 @@ function groupByLearner(proposals: Proposal[]): LearnerGroup[] {
 
 const SENTENCE_CLASS = 'body-serif text-[1.05rem] leading-relaxed text-text-secondary';
 const GHOST_CLASS =
-  'hearth-press inline-flex min-h-[44px] items-center justify-center rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:border-border-medium hover:text-text-primary';
+  'hearth-press inline-flex min-h-[44px] items-center justify-center rounded-md border border-border-subtle bg-transparent px-md py-sm font-sans text-sm font-semibold text-text-secondary hover:border-border-medium hover:text-text-primary';
 
 export function ConfirmSurface({
   state,
@@ -120,7 +120,7 @@ export function ConfirmSurface({
       ref={surfaceRef}
       role="region"
       aria-label={confirmCopy.region}
-      className="hearth-modal-enter mx-auto flex max-w-[560px] flex-col gap-lg px-md py-xl"
+      className="hearth-page-enter mx-auto flex max-w-[560px] flex-col gap-lg px-md py-xl"
     >
       <div className="flex flex-col gap-sm">
         <div className="inline-flex items-center gap-sm text-text-secondary">
@@ -159,7 +159,7 @@ export function ConfirmSurface({
 
       {state.kind === 'proposals' && (
         <>
-          <div className="flex flex-col gap-md">
+          <div className="hearth-reveal flex flex-col gap-md">
             {groups.map((g) => (
               <ProposalGroup
                 key={g.learnerId}
@@ -216,7 +216,7 @@ export function ConfirmSurface({
             <button
               type="button"
               onClick={attach.onOpen}
-              className="hearth-press inline-flex min-h-[44px] items-center font-sans text-[13px] text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary"
+              className="hearth-press inline-flex min-h-[44px] items-center font-sans text-[13px] text-text-secondary hover:text-text-primary"
             >
               {confirmCopy.attachLink}
             </button>

@@ -51,7 +51,7 @@ export function EvidenceRow({ evidence, online, onAdd, onRemove }: EvidenceRowPr
               onClick={() => onAdd(kind)}
               disabled={disabled}
               title={disabled ? noticeCopy.photosNeedConnection : undefined}
-              className="hearth-press flex min-h-[44px] flex-col items-center gap-xs rounded-md border border-dashed border-border-medium p-md font-sans text-xs text-text-secondary hover:border-border-active hover:text-text-primary transition-[border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-medium disabled:hover:text-text-secondary"
+              className="hearth-press flex min-h-[44px] flex-col items-center gap-xs rounded-md border border-dashed border-border-medium p-md font-sans text-xs text-text-secondary hover:border-border-active hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-medium disabled:hover:text-text-secondary"
             >
               <span className="inline-flex" aria-hidden="true">
                 <Icon size={22} />

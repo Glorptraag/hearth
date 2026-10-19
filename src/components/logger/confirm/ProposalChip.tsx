@@ -12,7 +12,7 @@ export type ProposalChipProps = {
 };
 
 const BASE =
-  'hearth-press inline-flex min-h-[44px] items-center gap-xs rounded-full border px-md py-sm font-sans text-[13px] transition-[border-color,background-color] duration-[var(--motion-quick)] ease-[var(--ease-default)]';
+  'hearth-press inline-flex min-h-[44px] items-center gap-xs rounded-full border px-md py-sm font-sans text-[13px]';
 const PROPOSED = 'border-border-subtle bg-surface-raised text-text-primary hover:border-border-medium';
 const CONFIRMED = 'border-border-active bg-ember-glow text-text-primary';
 
@@ -26,7 +26,7 @@ export function ProposalChip({ proposal, confirmed, busy, onToggle }: ProposalCh
       onClick={() => onToggle(proposal)}
       className={`${BASE} ${confirmed ? CONFIRMED : PROPOSED}${busy ? ' opacity-60' : ''}`}
     >
-      {confirmed && <Check size={14} weight="bold" aria-hidden="true" />}
+      {confirmed && <Check size={14} weight="bold" aria-hidden="true" className="hearth-pop-in" />}
       <span>{confirmCopy.chipLabel(proposal.threadName, proposal.tier, confirmed)}</span>
     </button>
   );

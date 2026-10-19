@@ -28,7 +28,7 @@ export function SaveBar({ block, saving, onSave }: SaveBarProps) {
           onClick={onSave}
           disabled={block !== null || saving}
           aria-describedby={hint ? hintId : undefined}
-          className="hearth-press min-h-[48px] w-full rounded-md bg-ember px-md py-sm font-sans text-base font-semibold text-text-inverse shadow-ember transition-[opacity,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none lg:w-auto lg:min-w-[160px]"
+          className="hearth-press min-h-[48px] w-full rounded-md bg-ember px-md py-sm font-sans text-base font-semibold text-text-inverse shadow-ember disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none lg:w-auto lg:min-w-[160px]"
         >
           {saving ? noticeCopy.saving : noticeCopy.save}
         </button>

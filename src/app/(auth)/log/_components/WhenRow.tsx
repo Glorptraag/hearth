@@ -47,7 +47,7 @@ export function WhenRow({ dateOccurred, onChange, now = new Date() }: WhenRowPro
               type="button"
               aria-pressed={lit}
               onClick={() => select(seg.kind)}
-              className={`hearth-press min-h-[44px] rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+              className={`hearth-press min-h-[44px] rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium ${
                 lit
                   ? 'border-border-active bg-surface-raised text-text-primary'
                   : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'
@@ -65,7 +65,7 @@ export function WhenRow({ dateOccurred, onChange, now = new Date() }: WhenRowPro
           value={resolveDateOccurred(dateOccurred, now)}
           onChange={(e) => onChange(e.target.value || null)}
           aria-label={noticeCopy.pickDate}
-          className="mt-sm block min-h-[44px] rounded-md border border-border-subtle bg-surface-input px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none focus:shadow-focus transition-[border-color,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+          className="hearth-reveal mt-sm block min-h-[44px] rounded-md border border-border-subtle bg-surface-input px-md py-sm font-sans text-sm text-text-primary focus:border-ember focus:outline-none focus:shadow-focus transition-[border-color,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
         />
       )}
     </section>

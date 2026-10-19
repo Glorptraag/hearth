@@ -44,7 +44,7 @@ export interface NoticeFormProps {
 }
 
 const BANNER_BUTTON =
-  'hearth-press min-h-[44px] rounded-sm px-sm font-sans text-xs font-medium text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)]';
+  'hearth-press min-h-[44px] rounded-sm px-sm font-sans text-xs font-medium text-text-secondary hover:text-text-primary';
 
 /**
  * The Notice form — every row the parent fills, in order, plus the honest
@@ -83,7 +83,7 @@ export function NoticeForm({
         {!online && (
           <div
             role="status"
-            className="flex items-start gap-sm rounded-md border border-border-subtle bg-surface-raised p-md"
+            className="hearth-reveal flex items-start gap-sm rounded-md border border-border-subtle bg-surface-raised p-md"
           >
             <WifiSlash size={18} className="mt-[1px] shrink-0 text-text-secondary" aria-hidden="true" />
             <p className="font-sans text-sm text-text-secondary">{noticeCopy.offlineBanner}</p>
@@ -93,7 +93,7 @@ export function NoticeForm({
         {draft.restored && (
           <div
             role="status"
-            className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised p-md"
+            className="hearth-reveal flex flex-wrap items-center justify-between gap-sm rounded-md border border-border-subtle bg-surface-raised p-md"
           >
             <p className="font-sans text-sm text-text-secondary">
               {noticeCopy.draftRestored}

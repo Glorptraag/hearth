@@ -15,7 +15,7 @@ export function BadgeReadyRow({ badge }: BadgeReadyRowProps) {
       <p className="font-sans text-[13px] text-text-primary">{badge.message}</p>
       <Link
         href={badge.action.href}
-        className="hearth-press inline-flex min-h-[44px] items-center font-sans text-[13px] font-semibold text-ember transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-ember-hover"
+        className="hearth-press inline-flex min-h-[44px] items-center font-sans text-[13px] font-semibold text-ember hover:text-ember-hover"
       >
         {confirmCopy.badgeAction}
       </Link>

@@ -38,7 +38,7 @@ export function WhoRow({ learners, selected, failed, onToggle, onReload }: WhoRo
           <button
             type="button"
             onClick={onReload}
-            className="hearth-press min-h-[44px] rounded-sm border border-border-subtle bg-transparent px-md font-sans text-sm font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-[border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+            className="hearth-press min-h-[44px] rounded-sm border border-border-subtle bg-transparent px-md font-sans text-sm font-medium text-text-secondary hover:border-border-medium hover:text-text-primary"
           >
             {noticeCopy.learnersRetry}
           </button>
@@ -48,7 +48,7 @@ export function WhoRow({ learners, selected, failed, onToggle, onReload }: WhoRo
           <p className="font-sans text-sm text-text-secondary">{noticeCopy.noLearners}</p>
           <Link
             href="/settings"
-            className="hearth-press inline-flex min-h-[44px] items-center rounded-sm border border-border-subtle px-md font-sans text-sm font-medium text-text-secondary hover:border-border-medium hover:text-text-primary transition-[border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)]"
+            className="hearth-press inline-flex min-h-[44px] items-center rounded-sm border border-border-subtle px-md font-sans text-sm font-medium text-text-secondary hover:border-border-medium hover:text-text-primary"
           >
             {noticeCopy.noLearnersAction}
           </Link>
@@ -65,7 +65,7 @@ export function WhoRow({ learners, selected, failed, onToggle, onReload }: WhoRo
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onToggle(learner.id)}
-                className={`hearth-press flex min-h-[44px] select-none items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium transition-[background-color,border-color,color] duration-[var(--motion-quick)] ease-[var(--ease-default)] ${
+                className={`hearth-press flex min-h-[44px] select-none items-center gap-sm rounded-full border-[1.5px] px-md py-sm font-sans text-[0.8125rem] font-medium ${
                   isSelected
                     ? `${colour.border} ${colour.bg} ${colour.text}`
                     : 'border-border-subtle text-text-secondary hover:border-border-medium hover:text-text-primary'

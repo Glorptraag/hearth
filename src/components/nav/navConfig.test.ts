@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isDirectTabActive } from './navConfig';
+import { getNavTabs, isDirectTabActive } from './navConfig';
 
 describe('isDirectTabActive', () => {
   describe('/log', () => {
@@ -37,5 +37,34 @@ describe('isDirectTabActive', () => {
       expect(isDirectTabActive('/log/batch', '/our-story')).toBe(false);
       expect(isDirectTabActive('/dashboard', '/our-story')).toBe(false);
     });
+  });
+});
+
+describe('getNavTabs', () => {
+  const hrefs = (expo: boolean) =>
+    getNavTabs(expo).flatMap((t) => (t.kind === 'trayed' ? t.destinations.map((d) => d.href) : [t.href]));
+
+  it('keeps the full five-tab nav outside expo scope', () => {
+    expect(getNavTabs(false).map((t) => t.id)).toEqual(['home', 'story', 'log', 'plan', 'explore']);
+    expect(hrefs(false)).toEqual(
+      expect.arrayContaining(['/build/badges', '/build/modules', '/planner', '/explore/marketplace']),
+    );
+  });
+
+  it('drops the emptied Plan tray in expo scope', () => {
+    expect(getNavTabs(true).map((t) => t.id)).toEqual(['home', 'story', 'log', 'explore']);
+  });
+
+  it('hides Module Builder, Planner, badges and Marketplace in expo scope', () => {
+    const expo = hrefs(true);
+    for (const cut of ['/build/badges', '/build/modules', '/planner', '/explore/marketplace']) {
+      expect(expo).not.toContain(cut);
+    }
+  });
+
+  it('keeps Explore and its remaining destinations in expo scope', () => {
+    expect(hrefs(true)).toEqual(
+      expect.arrayContaining(['/our-story/capabilities', '/library', '/explore/activities']),
+    );
   });
 });

@@ -11,6 +11,7 @@ import {
   Sparkle,
   Books,
 } from '@/components/icons';
+import { isExpoScope } from '@/lib/launch-scope';
 
 export type NavIcon = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>;
 
@@ -53,7 +54,7 @@ export type NavTabConfig = DirectTab | LogTab | TrayedTabConfig;
  * The five tabs of the parent-facing mobile bottom nav, in render order
  * (Home | Story | Log | Plan | Explore). Single source of truth for the IA.
  */
-export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
+const ALL_NAV_TABS: ReadonlyArray<NavTabConfig> = [
   { kind: 'direct', id: 'home', label: 'Home', href: '/dashboard', Icon: House },
   { kind: 'direct', id: 'story', label: 'Story', href: '/our-story', Icon: BookOpenText },
   { kind: 'log', id: 'log', label: 'Log', href: '/log', Icon: PencilSimpleLine },
@@ -81,6 +82,29 @@ export const NAV_TABS: ReadonlyArray<NavTabConfig> = [
     ],
   },
 ];
+
+/** Destinations cut from the expo launch scope (Module Builder, Planner, Marketplace, badges). */
+const EXPO_HIDDEN_HREFS: ReadonlyArray<string> = [
+  '/build/badges',
+  '/build/modules',
+  '/planner',
+  '/explore/marketplace',
+];
+
+/**
+ * Filters the nav for a launch scope. In expo scope the cut destinations are
+ * dropped, and a tray left with no destinations (Plan) is dropped entirely.
+ */
+export function getNavTabs(expo: boolean): ReadonlyArray<NavTabConfig> {
+  if (!expo) return ALL_NAV_TABS;
+  return ALL_NAV_TABS.flatMap((tab): NavTabConfig[] => {
+    if (tab.kind !== 'trayed') return [tab];
+    const destinations = tab.destinations.filter((d) => !EXPO_HIDDEN_HREFS.includes(d.href));
+    return destinations.length === 0 ? [] : [{ ...tab, destinations }];
+  });
+}
+
+export const NAV_TABS: ReadonlyArray<NavTabConfig> = getNavTabs(isExpoScope());
 
 /**
  * Active-state matchers for direct tabs. `Story` covers the entire `/our-story`

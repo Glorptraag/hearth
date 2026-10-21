@@ -242,6 +242,8 @@ export function ExpandedCardBody({
             <div className="mt-sm rounded-md bg-ember/10 border border-ember/20 px-md py-sm">
               <p className="inline-flex items-center gap-xs font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ember mb-xs"><Sparkle size={12} aria-hidden="true" /> Growth observation</p>
               <p className="font-serif text-sm italic text-text-secondary leading-relaxed">{entry.aiEnrichment.journey_observation.text}</p>
+              {/* cr-ai-content-framing — WORDING PENDING DREW SIGN-OFF, DO NOT SHIP AS-IS. See docs/batch-d/cr-ai-content-framing.md */}
+              <p className="mt-xs font-sans text-[10px] text-text-muted leading-relaxed">An AI starting point, drawn from your entry.</p>
             </div>
           )}
           {(() => {

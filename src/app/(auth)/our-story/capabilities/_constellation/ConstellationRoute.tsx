@@ -23,7 +23,7 @@ import {
   type ThreadNode,
 } from './topology';
 import { TableThreads, TableDLOs, TableMoments } from './TableView';
-import { GalleryDomains, GalleryThreads, GalleryDLOs, GalleryMoments } from './GalleryView';
+import { ConstellationGraph } from './ConstellationGraph';
 import { ExploreView } from './ExploreView';
 
 type Learner = {
@@ -34,7 +34,17 @@ type Learner = {
   colourToken: string | null;
 };
 
-type ViewMode = 'table' | 'gallery' | 'explore';
+type ViewMode = 'constellation' | 'table' | 'explore';
+
+/**
+ * Resolve `?view=`. The linked-graph constellation is the default; `gallery`
+ * is the retired SVG view's name, kept so old links land on its successor.
+ * Exported for tests.
+ */
+export function parseView(v: string | null): ViewMode {
+  if (v === 'table' || v === 'explore') return v;
+  return 'constellation';
+}
 type Depth = 1 | 2 | 3 | 4;
 type Focus = { domain: string | null; thread: string | null; dlo: string | null };
 
@@ -65,29 +75,6 @@ export function parseFocus(f: string | null): Focus {
   return { domain: null, thread: null, dlo: null };
 }
 
-/** Below this viewport width the Gallery's 1200-unit SVGs render labels at ~3px. */
-export const GALLERY_MIN_WIDTH_PX = 640;
-
-/**
- * True when the viewport is too narrow for the Gallery. The Gallery is a
- * fixed-viewBox SVG that shrinks to fit; at phone widths its 11px labels
- * render at under 3px, so phones get the Table instead and the toggle hides
- * the option. Reads matchMedia once and tracks changes; SSR and jsdom
- * without matchMedia report "wide".
- */
-function useNarrowViewport(): boolean {
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    const mq = window.matchMedia(`(max-width: ${GALLERY_MIN_WIDTH_PX - 1}px)`);
-    const update = () => setNarrow(mq.matches);
-    update();
-    mq.addEventListener?.('change', update);
-    return () => mq.removeEventListener?.('change', update);
-  }, []);
-  return narrow;
-}
-
 function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
   const active = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'active').length;
   const ghosts = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'ghost').length;
@@ -103,7 +90,7 @@ function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
         demonstrating {demonstrating} of them.
         {ghosts > 0 && (
           <>
-            {' '}The {ghosts === 1 ? 'thread' : `${ghosts} threads`} opening up on the right edge of each band {ghosts === 1 ? 'is' : 'are'} where the prerequisites have started lining up — they tend to come on of their own accord when the foundations settle.
+            {' '}{ghosts === 1 ? 'One thread is' : `${ghosts} threads are`} opening up — the threads {ghosts === 1 ? 'it builds' : 'they build'} on are lit, and they tend to come on of their own accord when the foundations settle.
           </>
         )}
       </p>
@@ -160,15 +147,15 @@ function Stepper({
   );
 }
 
-function ViewToggle({ view, onChange, hideGallery = false }: { view: ViewMode; onChange: (v: ViewMode) => void; hideGallery?: boolean }) {
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
   return (
     <div role="radiogroup" aria-label="View mode"
          className="inline-flex gap-[2px] rounded-md border border-border-subtle bg-surface-panel p-[3px]">
       {([
+        { id: 'constellation' as const, glyph: '✦', label: 'Constellation' },
         { id: 'table' as const, glyph: '☰', label: 'Table' },
-        { id: 'gallery' as const, glyph: '✦', label: 'Gallery' },
         { id: 'explore' as const, glyph: '◎', label: 'Explore' },
-      ]).filter((v) => !(hideGallery && v.id === 'gallery')).map((v) => {
+      ]).map((v) => {
         const active = view === v.id;
         return (
           <button
@@ -236,23 +223,16 @@ export function ConstellationRoute({
   const search = useSearchParams();
   const { toast } = useToast();
 
-  const initialView: ViewMode = (() => {
-    const v = search.get('view');
-    return v === 'gallery' ? 'gallery' : v === 'explore' ? 'explore' : 'table';
-  })();
+  const initialView: ViewMode = parseView(search.get('view'));
   const initialDepth: Depth = (() => {
     const n = Number(search.get('d') ?? '1');
     return n === 2 || n === 3 || n === 4 ? (n as Depth) : 1;
   })();
   const initialFocus: Focus = parseFocus(search.get('focus'));
 
-  const [requestedView, setView] = useState<ViewMode>(initialView);
+  const [view, setView] = useState<ViewMode>(initialView);
   const [depth, setDepth] = useState<Depth>(initialDepth);
   const [focus, setFocus] = useState<Focus>(initialFocus);
-  // Phones get the Table in place of the Gallery (see useNarrowViewport); the
-  // requested view is remembered so widening the window restores it.
-  const narrow = useNarrowViewport();
-  const view: ViewMode = narrow && requestedView === 'gallery' ? 'table' : requestedView;
 
   // Parent DLO confirmations. `assertOverrides` is the optimistic layer (dloId →
   // intended confirmed-state) laid over the snapshot's durable
@@ -351,7 +331,11 @@ export function ConstellationRoute({
     setDepth(d);
   };
 
-  const stageKey = `${view}-${depth}-${focus.domain ?? ''}-${focus.thread ?? ''}-${focus.dlo ?? ''}-${learnerId}`;
+  // The constellation keeps one stage across telescope moves so its layout
+  // morphs instead of remounting; the table/explore stages re-enter per step.
+  const stageKey = view === 'constellation'
+    ? `constellation-${learnerId}`
+    : `${view}-${depth}-${focus.domain ?? ''}-${focus.thread ?? ''}-${focus.dlo ?? ''}-${learnerId}`;
 
   const dloObj = useMemo<SynthDLO | null>(() => {
     if (!focus.thread || !focus.dlo) return null;
@@ -390,7 +374,7 @@ export function ConstellationRoute({
             <ContextLine snap={snap} depth={depth} focus={focus} dlosByThread={dlosByThread} />
           )}
         </div>
-        <ViewToggle view={view} onChange={setView} hideGallery={narrow} />
+        <ViewToggle view={view} onChange={setView} />
       </div>
 
       {depth === 1 && view !== 'explore' && <HearthVoiceCard snap={snap} />}
@@ -425,46 +409,21 @@ export function ConstellationRoute({
           <TableMoments snap={snap} dlo={dloObj} />
         )}
 
-        {view === 'gallery' && (
-          <div className="cap-gallery rounded-lg border border-border-subtle p-xl min-h-[540px]">
-            {depth === 1 && <GalleryDomains snap={snap} onDrill={drillToDomain} />}
-            {depth === 2 && focus.domain && <GalleryThreads snap={snap} domainKey={focus.domain} onDrill={drillToThread} />}
-            {depth === 3 && focus.thread && <GalleryDLOs snap={snap} threadId={focus.thread} dlosByThread={dlosByThread} onDrill={drillToDLO} />}
-            {depth === 4 && dloObj && (
-              <GalleryMoments
-                snap={snap}
-                dlo={dloObj}
-                confirmed={confirmedDloIds.has(dloObj.id)}
-                pending={pendingDlos.has(dloObj.id)}
-                onConfirm={(next) => handleConfirmDlo(dloObj.id, next)}
-              />
-            )}
-          </div>
+        {view === 'constellation' && (
+          <ConstellationGraph
+            snap={snap}
+            dlosByThread={dlosByThread}
+            depth={depth}
+            focus={focus}
+            confirmedDloIds={confirmedDloIds}
+            pendingDloIds={pendingDlos}
+            onConfirmDlo={handleConfirmDlo}
+            onTelescope={(f, d) => { setFocus(f); setDepth(d); }}
+            onOpenInTable={(f, d) => { setView('table'); setFocus(f); setDepth(d); }}
+            onReset={() => jump(1)}
+          />
         )}
       </div>
-
-      {view === 'gallery' && (
-        <div className="mt-md flex flex-wrap items-center gap-lg font-sans text-[0.75rem] text-text-muted">
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[14px] w-[14px] rounded-full bg-text-secondary" /> Active thread
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[14px] w-[14px] rounded-full border-[1.5px] border-text-secondary" /> Opening up (ghost)
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[14px] w-[14px] rounded-full border border-sage" /> Demonstrating tier (sage halo)
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[10px] w-[10px] rounded-full bg-sage" /> Badge earned
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[10px] w-[10px] rounded-full border-[1.5px] border-ember" /> Badge approaching
-          </span>
-          <span className="inline-flex items-center gap-[6px]">
-            <span className="inline-block h-[1px] w-[14px] bg-text-secondary" /> Enables (within domain)
-          </span>
-        </div>
-      )}
     </div>
   );
 }

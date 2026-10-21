@@ -18,7 +18,7 @@ import {
  * Depth-less "Explore" lens over the constellation: where this learner is thin
  * and what's worth a look next. Reads the per-child snapshot's gap_analysis +
  * curriculum_coverage (surfaced by GET /api/capabilities/[learnerId]). No drill
- * depth — a flat, scannable companion to the Table/Gallery progression views.
+ * depth — a flat, scannable companion to the Constellation/Table progression views.
  *
  * `suggested_focus_threads` is, concretely, "threads this child has lit before
  * but not in the last 30 days" (snapshot-rebuild.ts). The section says exactly

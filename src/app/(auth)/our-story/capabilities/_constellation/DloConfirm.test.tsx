@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { THREAD_NAMES } from '@/lib/capability-threads';
 import { TableDLOs } from './TableView';
-import { GalleryMoments } from './GalleryView';
+import { ConstellationGraph } from './ConstellationGraph';
 import { buildSnapshot, type SanityDLO, type DloStatusLite } from './topology';
 
 // The cold import of the capability-universe graph module can take well over
@@ -97,10 +97,10 @@ describe('DLO confirm control — TableView L3 (TableDLOs)', () => {
   });
 });
 
-describe('DLO confirm control — GalleryView L4 (GalleryMoments)', () => {
+describe('DLO confirm control — constellation telescoped onto an objective', () => {
   beforeEach(() => {
-    // GalleryMoments fetches evidence (then entries) on mount; return empty so
-    // it settles on the "no moments" state with the confirm toolbar still shown.
+    // The telescope fetches the objective's evidence (then entries) on mount;
+    // return empty so the panel settles on "no moments" with the control shown.
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
@@ -116,39 +116,36 @@ describe('DLO confirm control — GalleryView L4 (GalleryMoments)', () => {
     vi.restoreAllMocks();
   });
 
-  const dlo = {
-    id: DLO_ID,
-    thread: THREAD_ID,
-    domain: 'languageLiteracy',
-    tier: 'emerging' as const,
-    glyph: '○',
-    tierLabel: 'Emerging',
-    descriptor: sanityDlo.descriptor,
-    badgeLevel: 'foundation' as const,
-    status: 'not-started' as const,
-    source: 'sanity' as const,
-  };
+  function renderTelescope(confirmed: boolean, onConfirmDlo = vi.fn()) {
+    render(
+      <ConstellationGraph
+        snap={snapshot()}
+        dlosByThread={dlosByThread}
+        depth={4}
+        focus={{ domain: 'languageLiteracy', thread: THREAD_ID, dlo: DLO_ID }}
+        confirmedDloIds={confirmed ? new Set([DLO_ID]) : new Set()}
+        pendingDloIds={new Set()}
+        onConfirmDlo={onConfirmDlo}
+        onTelescope={vi.fn()}
+        onOpenInTable={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+    return onConfirmDlo;
+  }
 
-  it('shows the confirm toolbar even with zero moments, and toggles on', async () => {
-    const onConfirm = vi.fn();
-    render(<GalleryMoments snap={snapshot()} dlo={dlo} confirmed={false} pending={false} onConfirm={onConfirm} />);
-    const btn = await screen.findByRole('button', { name: /confirm you've seen/i });
-    fireEvent.click(btn);
-    await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(true));
+  it('shows the confirm control even with zero moments, and toggles on', async () => {
+    const onConfirmDlo = renderTelescope(false);
+    expect(await screen.findByText(/No moments yet for this objective/i)).toBeInTheDocument();
+    const panel = screen.getByRole('complementary', { name: 'Constellation details' });
+    fireEvent.click(within(panel).getByRole('button', { name: /confirm you've seen/i }));
+    expect(onConfirmDlo).toHaveBeenCalledWith(DLO_ID, true);
   });
 
   it('shows a confirmed control and toggles off', async () => {
-    const onConfirm = vi.fn();
-    render(<GalleryMoments snap={snapshot()} dlo={dlo} confirmed pending={false} onConfirm={onConfirm} />);
-    const btn = await screen.findByRole('button', { name: /you confirmed/i });
-    fireEvent.click(btn);
-    await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(false));
-  });
-
-  it('renders a bare timeline (no toolbar) when onConfirm is unset', async () => {
-    render(<GalleryMoments snap={snapshot()} dlo={dlo} />);
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /confirm you've seen/i })).toBeNull(),
-    );
+    const onConfirmDlo = renderTelescope(true);
+    const panel = screen.getByRole('complementary', { name: 'Constellation details' });
+    fireEvent.click(await within(panel).findByRole('button', { name: /^You confirmed "/ }));
+    expect(onConfirmDlo).toHaveBeenCalledWith(DLO_ID, false);
   });
 });

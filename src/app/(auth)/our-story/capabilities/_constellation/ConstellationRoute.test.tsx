@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { THREAD_NAMES } from '@/lib/capability-threads';
 import { ToastProvider } from '@/components/ui/Toast';
-import { ConstellationRoute, parseFocus, GALLERY_MIN_WIDTH_PX } from './ConstellationRoute';
+import { ConstellationRoute, parseFocus, parseView } from './ConstellationRoute';
 import { THREADS_BY_ID, buildSnapshot, type SanityDLO } from './topology';
 
 // The cold import of the capability-universe graph module can take well over
@@ -67,6 +67,17 @@ describe('parseFocus (deep links)', () => {
   });
 });
 
+describe('parseView', () => {
+  it('defaults to the constellation and maps the retired gallery view onto it', () => {
+    expect(parseView(null)).toBe('constellation');
+    expect(parseView('gallery')).toBe('constellation');
+    expect(parseView('constellation')).toBe('constellation');
+    expect(parseView('table')).toBe('table');
+    expect(parseView('explore')).toBe('explore');
+    expect(parseView('nonsense')).toBe('constellation');
+  });
+});
+
 describe('ConstellationRoute', () => {
   let replace: ReturnType<typeof vi.fn>;
 
@@ -80,7 +91,8 @@ describe('ConstellationRoute', () => {
       refresh: vi.fn(),
       prefetch: vi.fn(),
     } as unknown as ReturnType<typeof useRouter>);
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
+    // Most flows below drive the Table; the constellation default has its own tests.
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ view: 'table' }) as ReturnType<typeof useSearchParams>);
   });
 
   afterEach(() => {
@@ -100,21 +112,39 @@ describe('ConstellationRoute', () => {
       expect(nav).toHaveTextContent('Recognises a pattern');
     });
 
-    it('hides the Gallery option and renders the Table on a phone-width viewport', () => {
-      vi.mocked(useSearchParams).mockReturnValue(
-        new URLSearchParams({ view: 'gallery' }) as ReturnType<typeof useSearchParams>,
-      );
-      vi.stubGlobal('matchMedia', vi.fn((q: string) => ({
-        matches: q.includes(`${GALLERY_MIN_WIDTH_PX - 1}px`),
-        media: q,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })));
+    it('opens on the constellation graph when no view is given', () => {
+      vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
       renderRoute();
-      expect(screen.queryByRole('radio', { name: /Gallery/ })).toBeNull();
-      expect(screen.getByRole('radio', { name: /Table/ })).toHaveAttribute('aria-checked', 'true');
-      // The table renders (domain header rows), not the SVG gallery.
-      expect(screen.getAllByRole('button', { name: /Drill into/i }).length).toBeGreaterThan(0);
+      expect(screen.getByRole('radio', { name: /Constellation/ })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByRole('group', { name: /Emma's constellation/ })).toBeInTheDocument();
+      // Every thread is a node in the graph.
+      expect(screen.getByRole('button', { name: /^Oral Communication\. Thread/ })).toBeInTheDocument();
+    });
+
+    it('telescoping from the constellation panel drills to the node and syncs the URL', async () => {
+      vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ view: 'constellation' }) as ReturnType<typeof useSearchParams>);
+      renderRoute();
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${THREADS_BY_ID[THREAD_ID].name}\\. Thread`) }));
+      fireEvent.click(screen.getByRole('button', { name: 'Telescope from here' }));
+      await waitFor(() => {
+        const lastCall = replace.mock.calls.at(-1);
+        expect(lastCall?.[0]).toContain('view=constellation');
+        expect(lastCall?.[0]).toContain('d=3');
+        expect(lastCall?.[0]).toContain(`focus=${THREAD_ID}`);
+      });
+      expect(screen.getByRole('navigation', { name: 'Depth navigation' })).toHaveTextContent('Learning objectives');
+      // Back out to the whole sky from inside the graph.
+      fireEvent.click(screen.getByRole('button', { name: /Whole constellation/ }));
+      await waitFor(() => expect(screen.queryByText('Learning objectives')).toBeNull());
+    });
+
+    it('"Open in table" switches view at the same depth', async () => {
+      vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ view: 'constellation' }) as ReturnType<typeof useSearchParams>);
+      renderRoute();
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${THREADS_BY_ID[THREAD_ID].name}\\. Thread`) }));
+      fireEvent.click(screen.getByRole('button', { name: 'Open in table' }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: /Table/ })).toHaveAttribute('aria-checked', 'true'));
+      expect(await screen.findByRole('button', { name: /confirm you've seen/i })).toBeInTheDocument();
     });
   });
 
@@ -161,14 +191,15 @@ describe('ConstellationRoute', () => {
   });
 
   describe('view toggle', () => {
-    it('defaults to table view and switches to gallery / explore', () => {
+    it('switches between table / constellation / explore', () => {
       renderRoute();
       const radiogroup = screen.getByRole('radiogroup', { name: 'View mode' });
       expect(radiogroup).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Table/i })).toHaveAttribute('aria-checked', 'true');
 
-      const galleryRadio = screen.getByRole('radio', { name: /Gallery/i });
-      fireEvent.click(galleryRadio);
-      expect(galleryRadio).toHaveAttribute('aria-checked', 'true');
+      const constellationRadio = screen.getByRole('radio', { name: /Constellation/i });
+      fireEvent.click(constellationRadio);
+      expect(constellationRadio).toHaveAttribute('aria-checked', 'true');
 
       const exploreRadio = screen.getByRole('radio', { name: /Explore/i });
       fireEvent.click(exploreRadio);
@@ -183,12 +214,11 @@ describe('ConstellationRoute', () => {
       renderRoute();
       replace.mockClear();
 
-      const galleryRadio = screen.getByRole('radio', { name: /Gallery/i });
-      fireEvent.click(galleryRadio);
+      fireEvent.click(screen.getByRole('radio', { name: /Constellation/i }));
 
       await waitFor(() => {
         const lastCall = replace.mock.calls.at(-1);
-        expect(lastCall?.[0]).toContain('view=gallery');
+        expect(lastCall?.[0]).toContain('view=constellation');
       });
     });
 
@@ -204,13 +234,15 @@ describe('ConstellationRoute', () => {
       });
     });
 
-    it('reads initial view/depth/focus from the URL on mount', () => {
+    it('reads initial view/depth/focus from the URL on mount (legacy ?view=gallery lands on the constellation)', () => {
       vi.mocked(useSearchParams).mockReturnValue(
         new URLSearchParams({ view: 'gallery', d: '2', focus: DOMAIN_KEY }) as ReturnType<typeof useSearchParams>,
       );
       renderRoute();
-      expect(screen.getByRole('radio', { name: /Gallery/i })).toHaveAttribute('aria-checked', 'true');
-      expect(screen.getByText('Threads')).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Constellation/i })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByRole('navigation', { name: 'Depth navigation' })).toHaveTextContent('Threads');
+      // Telescoped onto the domain: the graph names its apex.
+      expect(screen.getByRole('group', { name: /^Telescope from / })).toBeInTheDocument();
     });
   });
 

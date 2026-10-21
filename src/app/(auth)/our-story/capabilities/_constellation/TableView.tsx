@@ -31,7 +31,7 @@ type DLO = SynthDLO;
  * Trajectory as the rebuild reads it (4-week window split in two halves) —
  * computed for every active thread since WS-4 but never shown until now.
  */
-const TRAJECTORY_LABEL: Record<ThreadTrajectory, { glyph: string; label: string; cls: string }> = {
+export const TRAJECTORY_LABEL: Record<ThreadTrajectory, { glyph: string; label: string; cls: string }> = {
   accelerating:  { glyph: '↗', label: 'Picking up',   cls: 'text-sage' },
   steady_growth: { glyph: '→', label: 'Steady',       cls: 'text-text-secondary' },
   plateau:       { glyph: '…', label: 'Quiet lately', cls: 'text-text-muted' },
@@ -51,7 +51,7 @@ type EvidenceEntry = {
 
 const NOW = () => new Date();
 
-function relTime(dateStr: string | null | undefined): string {
+export function relTime(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
   const days = Math.round((NOW().getTime() - new Date(dateStr).getTime()) / 86400000);
   if (days <= 0) return 'today';

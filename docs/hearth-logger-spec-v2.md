@@ -1,10 +1,10 @@
-<!-- Version: 2 | Date: 2026-10-07 | Changes: Initial creation. Supersedes hearth-logger-spec-v1.md for the capture (Notice) and post-save (Confirm) surfaces. Written alongside the Logger rebuild (branch claude/hearth-logger-rebuild-0b8907); decisions D-LPS-14/15/16, evidence R37–R39. -->
+<!-- Version: 2 | Date: 2026-10-07 | Changes: Initial creation. Supersedes hearth-logger-spec-v1.md for the capture (Notice) and post-save (Confirm) surfaces. Written alongside the Logger rebuild (branch claude/hearth-logger-rebuild-0b8907); decisions D-LPS-14/15/16, evidence R38–R40. -->
 
 # Hearth Logger v2 — Notice → Confirm
 
 > **Status:** Build spec of record for `/log`, `/log/batch`, `/log/import` and the post-save surface. Zero migrations.
 > **Supersedes:** `hearth-logger-spec-v1.md` §4 (completeness gate), §5 (insights panel) and §7.2 (density branch). v1 §3 field anatomy, §10 entry points and §11 data model remain useful history; where they disagree with this doc, this doc wins.
-> **Companions:** `hearth-decisions-log-v1.md` (D-LPS-14/15/16), `hearth-research-log.md` (R37–R39), `hearth-outcomes-spine-plan-v1.md`, `hearth-constellation-architecture-v1.md`, `hearth-pilot-personas-v1.md`, `hearth-parent-journey-v1.md`.
+> **Companions:** `hearth-decisions-log-v1.md` (D-LPS-14/15/16), `hearth-research-log.md` (R38–R40), `hearth-outcomes-spine-plan-v1.md`, `hearth-constellation-architecture-v1.md`, `hearth-pilot-personas-v1.md`, `hearth-parent-journey-v1.md`.
 
 ---
 
@@ -40,7 +40,7 @@ Pure types live in `src/lib/logger/notice.ts` (`NoticeFields`, `FELT_LEVELS`, `s
 | `felt[id]` | per child | no | `engagementPerLearner` (pruned to `learnerIds`) | enrich prompt, portfolio emoji row |
 | `noticed[id]` | per child | no | `discoveriesPerLearner` (trimmed, empties dropped, pruned) | enrich per-child block, portfolio |
 | `evidence` | shared | no | `evidenceUrls` (photos) + `evidence[]` (`deriveEvidenceRows`) | portfolio, report work samples |
-| source | — | derived | `source` ∈ `logger\|project_stage\|hearth_session`, `sourceSessionId`, **`sourceProjectId`**, **`sourceStageNumber: number`** | provenance (R37 fix) |
+| source | — | derived | `source` ∈ `logger\|project_stage\|hearth_session`, `sourceSessionId`, **`sourceProjectId`**, **`sourceStageNumber: number`** | provenance (R38 fix) |
 | — | — | — | `status: 'complete'` | triggers `after()` enrich |
 | removed | | | `subjects` (server-filled, §4), `observationDetails`, `mode`, `projectId`, `stageNumber` | nothing reads them from the Logger |
 | `loggerContext` (#292) | — | omitted | `loggerContext` (bounded zod, persisted to `learning_entries.logger_context`) | `formatStructuredNotes` (enrich prompt), `deriveSituationalSignals` (write-time pedagogy retrieval) |
@@ -125,7 +125,7 @@ When the proposed→confirmed ledger (Pass 2 §2.1) lands, it swaps in behind `c
 
 ## 6. Date capture — `WhenRow`
 
-Segmented sans control **Today · Yesterday · Another day** (`aria-pressed`, 44px). "Another day" reveals a native `<input type="date" max={todayIso}>` labelled "Pick the date". State is the resolved `yyyy-MM-dd` string (or `null` = today, resolved at save by `resolveDateOccurred`: null, future or unparsable → today). The highlighted segment is **derived** from the stored date by `whenKindFor()`, never stored, so a draft restored tomorrow still means what it meant. The old `'earlier'` option that silently meant today minus five days is gone (R38).
+Segmented sans control **Today · Yesterday · Another day** (`aria-pressed`, 44px). "Another day" reveals a native `<input type="date" max={todayIso}>` labelled "Pick the date". State is the resolved `yyyy-MM-dd` string (or `null` = today, resolved at save by `resolveDateOccurred`: null, future or unparsable → today). The highlighted segment is **derived** from the stored date by `whenKindFor()`, never stored, so a draft restored tomorrow still means what it meant. The old `'earlier'` option that silently meant today minus five days is gone (R39).
 
 ---
 
@@ -137,7 +137,7 @@ Segmented sans control **Today · Yesterday · Another day** (`aria-pressed`, 44
 |---|---|---|---|
 | `?scaffold=<sessionId>[&hearthId=]` | `hearth_session` | "Logging from {hearthName}" / "{title} · {date} · pre-filled from the shared record" | `useScaffoldFetch.onLoad` pre-fills `text` and `learnerIds`; `sourceSessionId` on save; `ReflectionModal` after |
 | `?source=project_stage&projectId=&stageNumber=` | `project_stage` | "Logging a project stage" / "Stage {n}" | `sourceProjectId` + numeric `sourceStageNumber` (NaN → omitted); missing `projectId` → `logger` |
-| `?source=check-in[&learner=][&thread=]` | `check_in` | "Checking in on {Name}'s {threadName}" (or "Checking in on {Name}") / "Jot what you noticed — we'll look for it after you save." | learner preselected once (never over a restored draft); `threadId` dropped if unknown or suppressed, never persisted, passed to `deriveProposals` as `preferThreadId` (R39) |
+| `?source=check-in[&learner=][&thread=]` | `check_in` | "Checking in on {Name}'s {threadName}" (or "Checking in on {Name}") / "Jot what you noticed — we'll look for it after you save." | learner preselected once (never over a restored draft); `threadId` dropped if unknown or suppressed, never persisted, passed to `deriveProposals` as `preferThreadId` (R40) |
 | anything else, incl. `?resume=` | `logger` | none | draft restore is automatic; `resume` is a documented no-op (B7) |
 
 The banner is `bg-surface-raised border-border-subtle` with a `ClipboardText` icon in `text-text-secondary` — a banner is not an action, so no ember.
@@ -250,7 +250,7 @@ Kept deliberately: `PedagogyAttribution` (only renderer of `pedagogy_sources`; t
 
 ## 17. BUILD follow-ups
 
-- [BUILD] B1 — Project-stage provenance fix (sourceProjectId + numeric sourceStageNumber) with unit + integration regression tests; 'earlier' = −5 days fix; check-in preselect + banner; nav /log/* active-state fix. *(Shipped in the rebuild — listed for traceability to R37–R39.)*
+- [BUILD] B1 — Project-stage provenance fix (sourceProjectId + numeric sourceStageNumber) with unit + integration regression tests; 'earlier' = −5 days fix; check-in preselect + banner; nav /log/* active-state fix. *(Shipped in the rebuild — listed for traceability to R38–R40.)*
 - [BUILD] B2 — Add checkWritePermission to POST /api/capabilities/[learnerId]/dlo/[dloId]/confirm + its first integration test (viewer 403, owner confirm/dispute, cross-family 404). *(Shipped in the rebuild.)*
 - [BUILD] B3 — demo/log and dev-preview/log still render the retired six-section form; update or delete in a standalone follow-up.
 - [BUILD] B4 — After #288 lands or closes, extract gateLearnersByNamedSignals into a pure db-free module and import it on both server and client (replacing the mirror + parity test).

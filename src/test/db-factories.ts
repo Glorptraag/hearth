@@ -29,9 +29,13 @@ import {
   facilitatorNotes,
   observationDloLinks,
   loggerDrafts,
+  hearths,
+  hearthMemberships,
+  hearthSessions,
+  sessionEvidence,
 } from '@/lib/db/schema';
 import type { LoggerDraft } from '@/lib/logger/draft';
-import type { InferInsertModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { encryptField } from '@/lib/crypto/field-encryption';
 import {
   buildFamily,
@@ -215,6 +219,52 @@ export async function createDloLink(
   };
   const result = await db.insert(observationDloLinks).values(row).returning();
   return result[0] as InferInsertModel<typeof observationDloLinks> & { id: string };
+}
+
+/** Insert a hearth (co-op group). `createdByFamilyId` is required. */
+export async function createHearth(
+  db: Db,
+  overrides: Pick<InferInsertModel<typeof hearths>, 'createdByFamilyId'> &
+    Partial<InferInsertModel<typeof hearths>>
+): Promise<InferSelectModel<typeof hearths>> {
+  const result = await db.insert(hearths).values({ name: 'Test Hearth', ...overrides }).returning();
+  return result[0];
+}
+
+/** Insert an active hearth membership. Consent flags default to the schema default (off). */
+export async function createHearthMembership(
+  db: Db,
+  overrides: Pick<InferInsertModel<typeof hearthMemberships>, 'hearthId' | 'familyId'> &
+    Partial<InferInsertModel<typeof hearthMemberships>>
+): Promise<InferSelectModel<typeof hearthMemberships>> {
+  const result = await db.insert(hearthMemberships).values(overrides).returning();
+  return result[0];
+}
+
+/** Insert a hearth session. `hearthId` and `facilitatorFamilyId` are required. */
+export async function createHearthSession(
+  db: Db,
+  overrides: Pick<InferInsertModel<typeof hearthSessions>, 'hearthId' | 'facilitatorFamilyId'> &
+    Partial<InferInsertModel<typeof hearthSessions>>
+): Promise<InferSelectModel<typeof hearthSessions>> {
+  const result = await db
+    .insert(hearthSessions)
+    .values({ title: 'Test Session', date: '2026-10-01', ...overrides })
+    .returning();
+  return result[0];
+}
+
+/** Insert a session_evidence row. `sessionId`, `uploadedByFamilyId` and `fileUrl` are required. */
+export async function createSessionEvidence(
+  db: Db,
+  overrides: Pick<InferInsertModel<typeof sessionEvidence>, 'sessionId' | 'uploadedByFamilyId' | 'fileUrl'> &
+    Partial<InferInsertModel<typeof sessionEvidence>>
+): Promise<InferSelectModel<typeof sessionEvidence>> {
+  const result = await db
+    .insert(sessionEvidence)
+    .values({ fileType: 'image/jpeg', ...overrides })
+    .returning();
+  return result[0];
 }
 
 // ---------------------------------------------------------------------------

@@ -172,7 +172,11 @@ describe('CapabilitiesPage — learner selection from the URL', () => {
     await waitFor(() => {
       expect(screen.getByTestId('constellation')).toHaveAttribute('data-learner', 'learner-2');
     });
-    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/capabilities/learner-2'))).toBe(true);
+    // The capabilities fetch fires in a passive effect after the render above
+    // commits, so under load it can trail the DOM change — wait for it too.
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/api/capabilities/learner-2'))).toBe(true);
+    });
   });
 
   it('ignores a ?learner= that is not one of the family\'s children', async () => {

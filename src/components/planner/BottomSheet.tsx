@@ -23,8 +23,21 @@ interface Recommendation {
 interface CatalogItem {
   title: string;
   moduleId: string;
+  /** Null for pack rows — their `moduleId` is the pack id, not a module. */
+  sanityModuleId: string | null;
   subjects: string[];
 }
+
+export interface PlannerSheetEntry {
+  date: string;
+  title: string;
+  learnerIds: string[];
+  session: string;
+  moduleId?: string;
+  subjects?: string[];
+}
+
+type PickedItem = Pick<PlannerSheetEntry, 'moduleId' | 'subjects'>;
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -33,7 +46,7 @@ interface BottomSheetProps {
   learners: Learner[];
   recommendations: Recommendation[];
   onClose: () => void;
-  onAdd: (entry: { date: string; title: string; learnerIds: string[]; session: string }) => Promise<void>;
+  onAdd: (entry: PlannerSheetEntry) => Promise<void>;
 }
 
 const COLOUR_CHIP: Record<string, string> = {
@@ -110,11 +123,18 @@ export default function BottomSheet({
     );
   }
 
-  async function handleSubmit(submittedTitle: string) {
+  async function handleSubmit(submittedTitle: string, picked: PickedItem = {}) {
     if (!targetDate || !submittedTitle.trim()) return;
     setSaving(true);
     try {
-      await onAdd({ date: targetDate, title: submittedTitle.trim(), learnerIds: selectedLearners, session });
+      await onAdd({
+        date: targetDate,
+        title: submittedTitle.trim(),
+        learnerIds: selectedLearners,
+        session,
+        ...(picked.moduleId ? { moduleId: picked.moduleId } : {}),
+        ...(picked.subjects?.length ? { subjects: picked.subjects } : {}),
+      });
       onClose();
     } finally {
       setSaving(false);
@@ -271,7 +291,10 @@ export default function BottomSheet({
                         });
                       });
                     }
-                    void handleSubmit(title);
+                    void handleSubmit(title, {
+                      moduleId: r.moduleId,
+                      subjects: r.subject ? [r.subject] : undefined,
+                    });
                   }}
                 />
               ))}
@@ -306,7 +329,12 @@ export default function BottomSheet({
                   key={item.moduleId}
                   title={item.title}
                   subject={item.subjects[0]}
-                  onAdd={handleSubmit}
+                  onAdd={(title) =>
+                    void handleSubmit(title, {
+                      moduleId: item.sanityModuleId ?? undefined,
+                      subjects: item.subjects,
+                    })
+                  }
                 />
               ))}
             </div>

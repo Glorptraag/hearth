@@ -1,0 +1,20 @@
+# Craft note · E1 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2 ("write one thing they said, exactly").
+id: craft.their-words
+kind: craft
+strand: record         # keeps evidence, not impressions: child's words captured (WF §7.1)
+stage: E1
+card: try
+tradition: neutral
+title: "Write down one thing they said"
+body: "When your child talks about what they're doing, write down one thing they say, word for word. One line is plenty. Their exact words show what they understand better than any summary."
+why:
+  short: "A child's exact words are the clearest sign of what they've understood."
+relates:
+  dlos: []
+  practices: [cm.narration, classical.narration-to-copywork]
+  methods: [cm.living-book, classical.history-story]
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

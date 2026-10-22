@@ -7,15 +7,7 @@
       "thread": "L3 Reading Comprehension",
       "tier": "emerging",
       "watchForNext": {
-        "neutral": "You might hear guesses about what will happen next, based on a clue in the picture or the words. Watch too for a story retold with a beginning, middle and end, and for questions about a word they didn't know.",
-        "variants": {
-          "charlotte_mason": "In early narration, listen for the story told back in order, beginning, middle and end, and for a new word from the book picked up and used in their own talk.",
-          "classical": "In the questions after a read-aloud, listen for answers that go beyond 'what happened?' to 'what will happen next?' and 'how do you know?'.",
-          "montessori": "After matching picture and word cards, watch for a story acted out or retold in sequence, and for the child asking what an unfamiliar word means.",
-          "waldorf_steiner": "As a story is told and retold over a few days, listen for the child filling in what comes next before you get there, and asking about old words like 'spindle' or 'yonder'.",
-          "unschooling": "Look for guesses about what happens next during a read-aloud, a show or a game, and for questions about words that catch their ear.",
-          "eclectic": "Whether it's a picture book or a reader, listen for predictions based on clues, and for the story told back in order."
-        }
+        "neutral": "You might hear guesses about what will happen next, based on a clue in the picture or the words. Watch too for a story retold with a beginning, middle and end, and for questions about a word they didn't know."
       }
     },
     {
@@ -23,15 +15,7 @@
       "thread": "L4 Spelling & Word Knowledge",
       "tier": "developing",
       "watchForNext": {
-        "neutral": "You might notice word parts used on purpose, such as 'un' to flip a word's meaning or 'ful' to build a new one. Watch too for them rereading their own writing and fixing a spelling without being asked.",
-        "variants": {
-          "charlotte_mason": "In prepared dictation, watch for the tricky words studied beforehand spelled correctly, and for the child catching their own errors before showing you.",
-          "classical": "As spelling rules and word roots are learned, listen for them used to work out a new word, and for words taken apart: 'unhappy is un and happy'.",
-          "montessori": "After word study work, watch for compound words and word endings built and sorted with interest, and for spellings checked against a card or dictionary independently.",
-          "waldorf_steiner": "Watch for words from the main lesson book spelled correctly in the child's own writing, and for wonder at word families, like 'light' hiding inside 'delight' and 'lightning'.",
-          "unschooling": "Look for spelling questions turning into self-checking: looking a word up, or comparing it with how it's written on the game box.",
-          "eclectic": "Watch for spelling patterns from lessons appearing in their own stories, and for a first go at proofreading: going back over a page and fixing a word unprompted."
-        }
+        "neutral": "You might notice word parts used on purpose, such as 'un' to flip a word's meaning or 'ful' to build a new one. Watch too for them rereading their own writing and fixing a spelling without being asked."
       }
     },
     {
@@ -39,15 +23,7 @@
       "thread": "M5 Measurement Sense",
       "tier": "developing",
       "watchForNext": {
-        "neutral": "Measuring may become more exact, reading the scales to the right line or a ruler from zero, with centimetres, grams and millilitres used by name. You might also hear time worked out in their head, like 'twenty minutes until the cake's ready'.",
-        "variants": {
-          "charlotte_mason": "In baking, gardening and nature study, watch for measuring with real tools done exactly, and for distances and times estimated on walks and then checked.",
-          "classical": "As units are learned and recited, watch for the right unit chosen for the job, grams for flour and millilitres for milk, and for the clock read to the quarter hour.",
-          "montessori": "In practical-life work, watch for exact measures in cooking and pouring, and for the child choosing the measuring tape or balance scale to answer a question of their own.",
-          "waldorf_steiner": "Measurement is often a whole main lesson block in the third year. Watch for the move from body measures to standard units, and for real purposes like baking bread or building a cubby.",
-          "unschooling": "Look for measuring in their own projects: doubling a recipe, timing how long an ice block takes to melt, or checking whether the new bookshelf will fit.",
-          "eclectic": "Whether in a maths lesson or the kitchen, watch for scales and rulers read precisely, and for time estimated before it's checked on the clock."
-        }
+        "neutral": "Measuring may become more exact, reading the scales to the right line or a ruler from zero, with centimetres, grams and millilitres used by name. You might also hear time worked out in their head, like 'twenty minutes until the cake's ready'."
       }
     },
     {
@@ -55,15 +31,7 @@
       "thread": "M4 Algebraic Thinking & Patterns",
       "tier": "emerging",
       "watchForNext": {
-        "neutral": "You might see patterns invented rather than copied, such as red, blue, blue, red, blue, blue, or changes in size as well as colour. Watch too for them telling you the rule: 'it goes two blue, then one red'.",
-        "variants": {
-          "charlotte_mason": "On nature walks and in handicrafts, watch for patterns noticed and made, leaf, stone, leaf, stone, and for the child describing the rule in their own words.",
-          "classical": "As skip counting and number patterns become memory work, watch for the child spotting and continuing a pattern on their own, and saying the rule out loud.",
-          "montessori": "Watch for patterns built with sensorial materials using two qualities at once, colour and size, and for sorting done by more than one attribute.",
-          "waldorf_steiner": "Watch for rhythm appearing in their play and art: beads strung in repeating colours, form drawings that repeat and grow, and clapping patterns of their own invention.",
-          "unschooling": "Look for patterns in their own play, a bead necklace, a striped tower, a dance with a repeat, and for them explaining how it goes.",
-          "eclectic": "Whether on a worksheet or with beads at the table, watch for patterns invented, not just copied, and for the rule described aloud."
-        }
+        "neutral": "You might see patterns invented rather than copied, such as red, blue, blue, red, blue, blue, or changes in size as well as colour. Watch too for them telling you the rule: 'it goes two blue, then one red'."
       }
     },
     {
@@ -71,15 +39,7 @@
       "thread": "S3 Earth & Environmental Systems",
       "tier": "developing",
       "watchForNext": {
-        "neutral": "You might hear questions about how places came to look the way they do, like why creek stones are round or why the bank has washed away. Watch too for noticing how people change the land, such as a cleared block or a new road.",
-        "variants": {
-          "charlotte_mason": "On regular visits to the same creek or hill, watch for the child noticing what water and weather have changed, and recording it in the nature notebook with a date and drawing.",
-          "classical": "As rock types and landforms are learned by name, watch for them identified out in the field, and for questions about how each one was formed.",
-          "montessori": "After the land and water forms and rock collections, watch for rocks sorted by how they formed, and for questions about how a creek shapes its banks.",
-          "waldorf_steiner": "Watch for wonder at the slow work of water and weather, smooth stones and carved banks, finding its way into stories, paintings and the nature table.",
-          "unschooling": "Look for questions sparked by outings: why beach sand is different from river sand, where the creek goes after rain, or how the rocks got their stripes.",
-          "eclectic": "Whether from a science unit or a day at the creek, watch for 'how did it get like that?' questions about rocks, rivers and landscapes."
-        }
+        "neutral": "You might hear questions about how places came to look the way they do, like why creek stones are round or why the bank has washed away. Watch too for noticing how people change the land, such as a cleared block or a new road."
       }
     },
     {
@@ -87,15 +47,7 @@
       "thread": "S1 Scientific Inquiry",
       "tier": "emerging",
       "watchForNext": {
-        "neutral": "Questions may start to turn into tests, like 'what if we put it in the freezer?'. You might also hear a guess before they try something, and a 'see, I was right' or 'that's not what I thought' afterwards.",
-        "variants": {
-          "charlotte_mason": "In nature study, watch for 'I wonder' questions followed up with a small experiment of the child's own, and for a careful telling back of what happened.",
-          "classical": "Watch for questions asked in order, what will happen, what happened, and why, and for simple experiments recorded with a few words and a picture.",
-          "montessori": "Watch for the child setting up a simple test on their own, sink or float, what dissolves, and repeating it to see whether it happens again.",
-          "waldorf_steiner": "Science begins in wonder and experience here. Watch for the child noticing what happens when ice melts in the sun or bread rises, and wanting to see it happen again.",
-          "unschooling": "Look for 'what if' questions acted on, dropping things off the trampoline or mixing potions in the garden, with a guess about what'll happen before they try.",
-          "eclectic": "In the kitchen, the bath or the backyard, watch for 'what if we...?' turning into a little test, with a guess made beforehand."
-        }
+        "neutral": "Questions may start to turn into tests, like 'what if we put it in the freezer?'. You might also hear a guess before they try something, and a 'see, I was right' or 'that's not what I thought' afterwards."
       }
     },
     {
@@ -103,15 +55,7 @@
       "thread": "P2 Fine Motor & Manipulation",
       "tier": "emerging",
       "watchForNext": {
-        "neutral": "You might see scissors following a line instead of snipping, and fiddly jobs like buttons, zips or tiny building pieces handled without help. Watch too for drawings with more small details in them.",
-        "variants": {
-          "charlotte_mason": "In early handicrafts like weaving, threading and paper folding, watch for small movements becoming steadier, and for satisfaction in a piece finished neatly.",
-          "classical": "Watch for pencil grip settling into a steady, comfortable hold, and for scissors following a line when shapes are cut out for a project.",
-          "montessori": "After practical-life work like pouring, spooning and the dressing frames, watch for the child doing up their own buttons and zips, and choosing finer work like sewing cards.",
-          "waldorf_steiner": "Through finger knitting, beeswax modelling and crafts, watch for small hands becoming more nimble, and for the child doing up their own shoes and buttons.",
-          "unschooling": "Look for fiddly tasks they take on themselves: threading a necklace, building with small pieces, cutting out pictures, or doing up their own buttons.",
-          "eclectic": "Watch for cutting along a line, buttons and zips done up without help, and small details added to drawings."
-        }
+        "neutral": "You might see scissors following a line instead of snipping, and fiddly jobs like buttons, zips or tiny building pieces handled without help. Watch too for drawings with more small details in them."
       }
     },
     {
@@ -119,15 +63,7 @@
       "thread": "H1 Historical Thinking & Chronology",
       "tier": "developing",
       "watchForNext": {
-        "neutral": "You might hear new time words being tried out, like 'century' or 'ancient', and questions about why things happened, not just what happened. Watch too for wondering how someone else in the story might have seen it.",
-        "variants": {
-          "charlotte_mason": "In history narrations, listen for the child explaining why something happened, and watch for interest in placing people and events in a Book of Centuries or on a family timeline.",
-          "classical": "As the timeline grows, listen for dates and eras used correctly, and for 'why' questions about how one event led to another.",
-          "montessori": "After the timelines and the study of human needs, watch for comparisons between how people met their needs long ago and today, and for a timeline made of something the child cares about.",
-          "waldorf_steiner": "Through legends and stories of other times, watch for the child asking what it would have been like to live then, and imagining the feelings of the people in the story.",
-          "unschooling": "Look for history questions sparked by a game, a museum visit or a family story: 'why did they build castles?' and 'what did kids do all day?'.",
-          "eclectic": "Whether the history comes from a curriculum or a museum trip, listen for time words like 'century', and for 'why did that happen?'."
-        }
+        "neutral": "You might hear new time words being tried out, like 'century' or 'ancient', and questions about why things happened, not just what happened. Watch too for wondering how someone else in the story might have seen it."
       }
     },
     {
@@ -135,15 +71,7 @@
       "thread": "L1 Oral Communication & Listening",
       "tier": "developing",
       "watchForNext": {
-        "neutral": "You might notice them telling the same story differently to a friend than to a grandparent, or building on what someone else said instead of changing the subject. Watch too for new words from a book or lesson turning up in their talk.",
-        "variants": {
-          "charlotte_mason": "In narration, listen for words borrowed from the book appearing in the child's own speech, and for a narration told to a visitor with confidence and in good order.",
-          "classical": "As recitation becomes familiar, watch for poems and passages spoken to an audience clearly and with expression, and for conversations that build on what another person said.",
-          "montessori": "Watch for the child presenting their work to a friend or sibling, or giving a younger child a lesson, explaining what to do and answering their questions.",
-          "waldorf_steiner": "Through verses, plays and retelling, watch for the child speaking with growing confidence in a group, and choosing words with care to suit the mood of a story.",
-          "unschooling": "Look for real conversations with all kinds of people, the librarian, a neighbour, a shopkeeper, and for the learner adjusting how they explain things for each one.",
-          "eclectic": "Watch for conversations that build on what others say, and for new words from books, shows or lessons appearing in everyday talk."
-        }
+        "neutral": "You might notice them telling the same story differently to a friend than to a grandparent, or building on what someone else said instead of changing the subject. Watch too for new words from a book or lesson turning up in their talk."
       }
     },
     {
@@ -151,15 +79,7 @@
       "thread": "M3 Fractional Thinking",
       "tier": "emerging",
       "watchForNext": {
-        "neutral": "You might hear 'that's not a fair half!' grow into thirds and quarters, especially when food is shared among more people. Watch too for the surprise that a quarter is smaller than a half, even though four is bigger than two.",
-        "variants": {
-          "charlotte_mason": "In baking and sharing out at meals, watch for halves, thirds and quarters named correctly, and for the child insisting the pieces be exactly equal.",
-          "classical": "As fractions are introduced by name, watch for halves, quarters and thirds recognised in pictures and food, and for 'more pieces means smaller pieces' explained in their own words.",
-          "montessori": "After the fraction circles and cutting fruit in practical life, watch for thirds and quarters named, and for pieces compared to see which is bigger.",
-          "waldorf_steiner": "Watch for sharing an apple or a loaf among the family becoming a chance to name halves, thirds and quarters, and for fairness carefully checked.",
-          "unschooling": "Look for fractions in daily negotiations: splitting a pizza four ways, sharing a chocolate bar evenly, or working out who gets the bigger piece.",
-          "eclectic": "Whether on a worksheet or a chopping board, watch for thirds and quarters named, and for the discovery that more pieces means smaller pieces."
-        }
+        "neutral": "You might hear 'that's not a fair half!' grow into thirds and quarters, especially when food is shared among more people. Watch too for the surprise that a quarter is smaller than a half, even though four is bigger than two."
       }
     }
   ]

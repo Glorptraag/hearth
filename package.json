@@ -25,6 +25,7 @@
     "promote:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/promote-packs/index.ts",
     "seed:shelf": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-shelf.ts",
     "seed:pedagogy:frameworks": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-pedagogy-frameworks.ts",
+    "push:knowledge-notes": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/push-knowledge-notes.ts",
     "seed:pedagogy:corpus": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts",
     "corpus:check": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/compile-pedagogy-corpus.ts --check",
     "corpus:review": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/corpus-review-manifest.ts",
@@ -91,6 +92,7 @@
     "pg": "^8.21.0",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "yaml": "^2.9.1"
   }
 }

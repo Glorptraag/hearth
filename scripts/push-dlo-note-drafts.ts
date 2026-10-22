@@ -30,26 +30,14 @@ const NOTES_DIR = path.resolve(process.cwd(), 'content/dlo-notes');
 const TARGETS_DOC = path.resolve(process.cwd(), 'docs/hearth-dlo-notes-targets-v1.md');
 const BATCH_NUMBERS = [1, 2, 3, 4, 5] as const;
 
-const PEDAGOGY_KEYS = [
-  'charlotte_mason',
-  'classical',
-  'montessori',
-  'waldorf_steiner',
-  'unschooling',
-  'eclectic',
-] as const;
-type PedagogyKey = (typeof PEDAGOGY_KEYS)[number];
-
 type Tier = 'emerging' | 'developing' | 'demonstrating';
 const DLO_ID = /^dlo\.([A-Z]+\d+)\.(emerging|developing|demonstrating)$/;
 const CONFIRMATION_FIELDS = ['watchForConfirmedAt', 'watchForConfirmedBy'] as const;
 
 const NEUTRAL_MAX_WORDS = 60;
-const VARIANT_MAX_WORDS = 45;
 
 type WatchForNext = {
   neutral: string;
-  variants?: Partial<Record<PedagogyKey, string>>;
 };
 
 type Note = {
@@ -125,42 +113,27 @@ function validateBatch(file: BatchFile, expectedBatch: number, expectedIds: stri
       errors.push(`${at}: watchForNext.neutral is required`);
       continue;
     }
-    const allowedKeys = new Set(['neutral', 'variants']);
+    const allowedKeys = new Set(['neutral']);
     for (const key of Object.keys(w)) {
       if (!allowedKeys.has(key)) errors.push(`${at}: unexpected watchForNext.${key}`);
     }
     if (wordCount(w.neutral) > NEUTRAL_MAX_WORDS) {
       errors.push(`${at}: neutral is ${wordCount(w.neutral)} words (max ${NEUTRAL_MAX_WORDS})`);
     }
-    for (const [key, text] of Object.entries(w.variants ?? {})) {
-      if (!(PEDAGOGY_KEYS as readonly string[]).includes(key)) {
-        errors.push(`${at}: unknown variant key "${key}"`);
-      } else if (typeof text !== 'string' || !text.trim()) {
-        errors.push(`${at}: variant "${key}" is empty`);
-      } else if (wordCount(text) > VARIANT_MAX_WORDS) {
-        errors.push(`${at}: variant "${key}" is ${wordCount(text)} words (max ${VARIANT_MAX_WORDS})`);
-      }
-    }
-    const all = [w.neutral, ...Object.values(w.variants ?? {})].join(' ');
-    if (/[–—]/.test(all)) errors.push(`${at}: contains an en/em dash (house style is commas)`);
+    if (/[–—]/.test(w.neutral)) errors.push(`${at}: contains an en/em dash (house style is commas)`);
   }
   return errors;
 }
 
 function sanityValue(w: WatchForNext): WatchForNext {
-  const variants = Object.fromEntries(
-    PEDAGOGY_KEYS.filter((k) => w.variants?.[k]).map((k) => [k, w.variants![k]!.trim()]),
-  ) as Partial<Record<PedagogyKey, string>>;
-  return Object.keys(variants).length
-    ? { neutral: w.neutral.trim(), variants }
-    : { neutral: w.neutral.trim() };
+  return { neutral: w.neutral.trim() };
 }
 
+/** True when the doc already carries exactly this note and no stale variants. */
 function sameNote(a: unknown, b: WatchForNext): boolean {
   if (!a || typeof a !== 'object') return false;
-  const x = a as WatchForNext;
-  if (x.neutral !== b.neutral) return false;
-  return PEDAGOGY_KEYS.every((k) => (x.variants?.[k] ?? undefined) === (b.variants?.[k] ?? undefined));
+  const x = a as WatchForNext & { variants?: unknown };
+  return x.neutral === b.neutral && x.variants === undefined;
 }
 
 /**
@@ -189,7 +162,7 @@ function buildMutations(
     mutations.push({ createIfNotExists: base as { _id: string; _type: string } });
   }
   mutations.push({
-    patch: { id: draftId, set: { watchForNext: value }, unset: [...CONFIRMATION_FIELDS] },
+    patch: { id: draftId, set: { watchForNext: value }, unset: [...CONFIRMATION_FIELDS, 'watchForNext.variants'] },
   });
   return mutations;
 }
@@ -261,9 +234,8 @@ async function main() {
       const placeholder: ExistingDoc = { _id: n.dloId, _type: 'discreteLearningObjective' };
       const mutations = buildMutations(n.dloId, n.watchForNext, placeholder, null);
       assertDraftOnly(mutations);
-      const variants = Object.keys(n.watchForNext.variants ?? {}).length;
       console.log(
-        `  batch ${n.batch}  drafts.${n.dloId.padEnd(22)} neutral ${String(wordCount(n.watchForNext.neutral)).padStart(2)}w · ${variants} variants`,
+        `  batch ${n.batch}  drafts.${n.dloId.padEnd(22)} neutral ${String(wordCount(n.watchForNext.neutral)).padStart(2)}w`,
       );
     }
     console.log(`\n[dry-run] nothing written. Pass --write --dataset <name> to patch drafts.`);

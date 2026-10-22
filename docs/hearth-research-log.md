@@ -290,15 +290,41 @@ The `?focus=` parser accepted only a one-letter tier suffix (`L3.e`) while the U
 **Regression test:** `topology.test.ts` (recency helpers, snapshot carries trajectory); `TableView.test.tsx` ("New" + trajectory); `ExploreView.test.tsx` ("Gone quiet lately").
 **Fix:** "New" chip, recent-activity dot and trajectory read on thread rows; honest "Gone quiet lately" label with explanation. **Date logged:** 2026-10-06.
 
+### R37 — Code audit (2026-10-07): project-stage provenance was silently dropped on every Logger save from a project page.
+
+The Logger payload sent `projectId` / `stageNumber` (strings); `POST /api/entries` validates `sourceProjectId` / `sourceStageNumber` (number) and its non-strict zod strips unknown keys, so no Logger entry ever carried project provenance. The unit test had enshrined the wrong key names, which is why it stayed green. Rebuilt payload (`buildEntrySavePayload`) sends the route's keys with a numeric stage; legacy queued outbox records still replay (the server strips the old keys).
+**Spec affected:** `hearth-logger-spec-v2.md` §2 (mapping table) and §7 (source banner); project-stage provenance in `Hearth_System_Interaction_Map.md`.
+**Regression test:** `src/lib/logger/entry-payload.test.ts` (`sourceProjectId` + numeric `sourceStageNumber`); `src/app/api/entries/route.integration.test.ts` project-stage `describe` (provenance persists; legacy keys still 201).
+**Fix:** Logger rebuild branch `claude/hearth-logger-rebuild-0b8907` (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R38 — Code audit (2026-10-07): the "Earlier" date option meant a hidden five days ago (rebuild follow-through on R30).
+
+Same defect as R30, found independently by the rebuild audit. R30's bounded "Earlier" picker lived in `WhenWhereSection`, which the rebuild deletes, so the fix is carried by the Notice form instead: **Today · Yesterday · Another day** (native date picker, `max` today); the stored value is the resolved `yyyy-MM-dd`, the segment highlight is derived from it, and a legacy draft that said "earlier" restores its R30 `earlierDate` when one was stored, otherwise resets to today with a banner saying so.
+**Spec affected:** `hearth-logger-spec-v2.md` §6 and §9 (draft migration `dateReset`).
+**Regression test:** `src/lib/logger/notice.test.ts` (`resolveDateOccurred`: null → today, yesterday across a month boundary, explicit date, future clamp, invalid → today; `whenKindFor`); `src/lib/logger/draft.test.ts` (`earlier` → null + `dateReset`; `earlier` + `earlierDate` keeps the date).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R39 — Code audit (2026-10-07): the constellation check-in deep link's `learner` and `thread` params were ignored.
+
+`/log?source=check-in&learner=<id>&thread=<id>` coerced to `source: 'logger'` and discarded both params, so a parent tapping "check in" on a thread arrived at a blank form. `parseNoticeSource` now yields a `check_in` source: the child is preselected once learners load (never over a restored draft), the banner reads "Checking in on {Name}'s {threadName}", and the thread is passed to `deriveProposals` as `preferThreadId` so the matching chip sorts first. The thread is never persisted (not an `ENTRY_SOURCES` value and no column — SIDEBAR S2); unknown or H6-suppressed thread ids are dropped.
+**Spec affected:** `hearth-logger-spec-v2.md` §7; `hearth-constellation-architecture-v1.md` (check-in entry point).
+**Regression test:** `src/lib/logger/source.test.ts` (four kinds; suppressed and unknown thread dropped; `resume` ignored); `src/lib/logger/proposals.test.ts` (`preferThreadId` ordering); `src/hooks/use-notice-form.test.tsx` (check-in preselect not over a restored draft).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+*Note (2026-10-07):* R13's regression test `src/app/(auth)/log/_components/WhoSection.test.tsx` was deleted with the old form in the Notice → Confirm rebuild; its guard (fan-out note shows at 2+ children) now lives in `src/app/(auth)/log/_components/WhoRow.test.tsx`.
+
+*Note (2026-10-20, rebuild rebase):* R30's regression test `src/app/(auth)/log/_components/WhenWhereSection.test.tsx` was deleted with `WhenWhereSection`; the guard now lives in `src/lib/logger/notice.test.ts` and `src/app/(auth)/log/_components/WhenRow.test.tsx` (R38). R31's `src/lib/logger/coaching/__tests__/retrieval-provider.test.ts` was deleted with the coach-hints rail (D-LPS-14); `logger_context` persistence, the structured-notes prompt block and `situational-signals.ts` keep their tests. The Notice form captures none of the R31 chips, so new `/log` saves write a null `logger_context`.
+
 ---
 
-### R37 — Founder review (2026-10-21): the constellation read as a static chart, not a network.
+### R40 — Founder review (2026-10-21): the constellation read as a static chart, not a network.
 
 Drew's read of the Gallery: "underwhelming and visualised terribly" — each depth was its own fixed chart (domain bands, a left-to-right DAG, tier columns, a timeline) rather than one sky of linked stars; nothing moved, nothing could be explored, and on phones it was forced off entirely. The ask: a networked node-to-node constellation like Obsidian's linked-note graph, extending as a cone when you look into it.
 **Spec affected:** `hearth-constellation-architecture-v1.md` (new §6); `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` Part C view modes; `hearth-motion-system-v1.md` "Constellation map" (the motion is the information); journey Stage 6 (Bec — the constellation as a thinking tool).
 **Regression test:** `graph-model.test.ts`, `force-layout.test.ts`, `ConstellationGraph.test.tsx`, `ConstellationRoute.test.tsx` (`parseView`, default view, telescope URL sync), `DloConfirm.test.tsx` (confirm in the telescope panel). The press-feedback / SVG-transform clash found while building it is pinned by the wrapper structure the graph tests query (`[data-node]` inside `[data-pos]`), and documented in the architecture doc §6.
 **Fix:** the Gallery is replaced by a force-directed graph of every domain, thread and objective (pan, zoom, drag, hover neighbourhoods, search, filters, links + backlinks panel); drill depths 2–4 telescope into a cone fanning out from the focused node, ring by ring, with moments as leaves of a telescoped objective. Default view; works at phone width. **Date logged:** 2026-10-21.
+*Note (2026-10-22, merge):* logged on `main` as R37 (`e6ca4b5`) while the launch-pivot branch already held R37–R39; renumbered R40 when the branches merged.
 
 ---
 
-*Next entry: R38. Append below; never edit above.*
+*Next entry: R41. Append below; never edit above.*

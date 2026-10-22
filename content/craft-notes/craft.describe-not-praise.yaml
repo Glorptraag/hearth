@@ -1,0 +1,20 @@
+# Craft note · E2 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2.
+id: craft.describe-not-praise
+kind: craft
+strand: craft          # a teaching tool chosen on purpose (WF §7.1)
+stage: E2
+card: try
+tradition: neutral
+title: "Say what you see"
+body: "Instead of \"Good job\", tell them what you noticed: \"You kept going when the tower fell\" or \"You used three colours in the sky.\" They hear that you really saw them."
+why:
+  short: "Describing what they did keeps their attention on the work, not on approval."
+relates:
+  dlos: []
+  practices: [classical.hold-the-standard]
+  methods: []
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

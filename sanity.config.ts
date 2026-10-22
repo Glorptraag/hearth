@@ -65,7 +65,66 @@ export default defineConfig({
                   .title('Reference Data')
                   .items([
                     S.documentTypeListItem('capabilityThread').title('Capability Threads'),
+                    S.listItem()
+                      .title('DLOs')
+                      .schemaType('discreteLearningObjective')
+                      .child(
+                        S.list()
+                          .title('DLOs')
+                          .items([
+                            S.listItem()
+                              .title('All')
+                              .child(S.documentTypeList('discreteLearningObjective').title('DLOs')),
+                            S.listItem()
+                              .title('Watch-for awaiting confirmation')
+                              .child(
+                                S.documentList()
+                                  .title('Watch-for awaiting confirmation')
+                                  .schemaType('discreteLearningObjective')
+                                  .filter(
+                                    '_type == "discreteLearningObjective" && defined(watchForNext) && !defined(watchForConfirmedAt)'
+                                  )
+                              ),
+                          ])
+                      ),
                     S.documentTypeListItem('badge').title('Badges'),
+                    S.documentTypeListItem('shelfResource').title('Shelf resources'),
+                  ])
+              ),
+
+            // ─── Knowledge Notes (Hearth Cycle, build plan §2.2) ──────────
+            S.listItem()
+              .title('Knowledge notes')
+              .schemaType('knowledgeNote')
+              .child(
+                S.list()
+                  .title('Knowledge notes')
+                  .items([
+                    S.listItem()
+                      .title('Craft notes')
+                      .child(
+                        S.documentList()
+                          .title('Craft notes')
+                          .schemaType('knowledgeNote')
+                          .filter('_type == "knowledgeNote" && kind == "craft"')
+                      ),
+                    S.listItem()
+                      .title('Lesson patterns')
+                      .child(
+                        S.documentList()
+                          .title('Lesson patterns')
+                          .schemaType('knowledgeNote')
+                          .filter('_type == "knowledgeNote" && kind == "pattern"')
+                      ),
+                    S.divider(),
+                    S.listItem()
+                      .title('Awaiting confirmation')
+                      .child(
+                        S.documentList()
+                          .title('Awaiting confirmation')
+                          .schemaType('knowledgeNote')
+                          .filter('_type == "knowledgeNote" && !defined(confirmedAt)')
+                      ),
                   ])
               ),
 

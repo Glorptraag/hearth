@@ -32,7 +32,7 @@
 - **Emotional state:** The knot. *"Did we do enough today? Would the department think this counts?"* This is the founding brief's hook scene — tea, Google Doc, stare, close.
 - **Touchpoints:** `/log` (the heartbeat screen), post-save enrichment surface, first Dashboard reflection of a logged day.
 - **Hearth's job:** Three things logged in three minutes; then the translation — learning areas touched, capability threads growing — that turns "we read a book about frogs" into evidence. The enrichment surfacing after save **is the relief moment**; if it's invisible, Hearth is a diary, not an antidote (this was alpha blocker #0, resolved via D-LPS-1…7).
-- **Success signals:** First `entry_created` within 48h of onboarding; `logger_completed_50pct`; `entry_enriched` following save; second entry within 7 days (the real retention hinge). Time-per-entry under 5 minutes — **the 5-minute rule is this stage's contract.**
+- **Success signals:** First `entry_created` within 48h of onboarding; `enrichment_viewed` on the Confirm surface (replaced `logger_completed_50pct` 2026-10-07 — there is no completeness score; D-LPS-14); `entry_enriched` following save; second entry within 7 days (the real retention hinge). Time-per-entry under 5 minutes — **the 5-minute rule is this stage's contract.**
 - **Open research questions:** Does the parent actually *see* the enrichment? Does the completeness gate read as protection (intended) or as the form fighting back? `[First-week diary prompt in onboarding packet + research log]`
 
 ## Stage 3 — Habit: logging becomes rhythm (week 2–8)
@@ -75,7 +75,7 @@
 |---|---|---|
 | 0 Deciding | — | landing conversion events |
 | 1 Arriving | `pedagogy_set` | `onboarding_started`, wizard step-drop |
-| 2 First log | `entry_created`, `entry_enriched`, `logger_completed_50pct` | time-per-entry, enrichment *viewed* (not just produced) |
+| 2 First log | `entry_created` (with `compose_ms`), `entry_enriched`, `enrichment_viewed` (replaced `logger_completed_50pct` 2026-10-07) | proposal-confirm rate (`logger_proposal_confirmed` / `enrichment_viewed`) |
 | 3 Habit | `entry_created` cadence | nothing for log-free visits |
 | 4 Compliance | `report_exported` | report-start→export duration, post-submission outcome (qualitative — research log) |
 | 5 Dreaming | `module_added_to_library`, `pack_purchased` | recommendation-acceptance, planner adoption |

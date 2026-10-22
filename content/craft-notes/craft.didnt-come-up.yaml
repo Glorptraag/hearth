@@ -1,0 +1,22 @@
+# Craft note · E1 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2 ("reassurance").
+# Strand note: an honest "Didn't come up" (rather than a guessed "Partly") is evidence over
+# impression, so this sits in `record`. `notice` was the other candidate; flagged for Drew.
+id: craft.didnt-come-up
+kind: craft
+strand: record
+stage: E1
+card: try
+tradition: neutral
+title: "\"Didn't come up\" is a real answer"
+body: "Some days the thing you were watching for just doesn't happen. That's normal. Tap \"Didn't come up\" and Hearth keeps it for another day. It's useful information, and nothing is lost."
+why:
+  short: "An honest answer keeps the record true and the next watch-for right."
+relates:
+  dlos: []
+  practices: []
+  methods: []
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

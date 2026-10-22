@@ -22,7 +22,7 @@ admin cost dashboard, runbooks).
 |---|---|---|
 | Pedagogy wizard | `e580ef4` | Full 4-step wizard (Philosophy / Values / Practices / Review with demo activity); onboarding Step 3; "Re-run wizard" modal in Settings; 9 new adapter-contract tests. |
 | Runbooks + branch hygiene | `f2bf51c` | `docs/deployment-runbook.md`, `docs/incident-runbook.md`, `docs/branch-hygiene.md`, `scripts/audit-stale-branches.mjs`. |
-| PostHog events | `b69145f` | Remaining 5 events (`entry_enriched`, `module_added_to_library`, `report_exported`, `logger_completed_50pct`, `pedagogy_set`) + server-side capture helper. |
+| PostHog events | `b69145f` | Remaining 5 events (`entry_enriched`, `module_added_to_library`, `report_exported`, `logger_completed_50pct` — retired 2026-10-07, replaced by `enrichment_viewed` / `entry_created` props, `pedagogy_set`) + server-side capture helper. |
 | AI cost dashboard | `5783437` | Admin "AI Cost" tab over `ai_pipeline_logs`, window selector, draft-vs-full split, top-20 families by spend. |
 | Critical-review fixes | `229b62d` | Bug fixes (PostHog distinct-ID mismatch, onboarding-skip regression) + a11y fixes (focus trap, ARIA tabs, dialog semantics, duplicate header). |
 
@@ -197,4 +197,4 @@ After the first prod deploy:
 
 - ✅ `entry_created`, `badge_awarded`, `badge_deferred` — prior session
 - ✅ `entry_enriched`, `module_added_to_library`, `report_exported`,
-     `logger_completed_50pct`, `pedagogy_set` — this sprint
+     `logger_completed_50pct` (retired 2026-10-07 → `enrichment_viewed`), `pedagogy_set` — this sprint

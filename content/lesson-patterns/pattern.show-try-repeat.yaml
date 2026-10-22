@@ -1,0 +1,59 @@
+# Lesson pattern · draft. Source: docs/hearth-cycle-brief-v1.md §4.1 (row "Show · Try · Repeat").
+# parentAction slots: only {activity} and {child}.
+id: pattern.show-try-repeat
+kind: pattern
+title: "Show · Try · Repeat"
+moves:
+  - key: show
+    label: "Show"
+    parentAction: "Show {activity} slowly, with as few words as you can. Let your hands do the explaining."
+  - key: try
+    label: "Try"
+    parentAction: "Hand it over and let {child} try. Watch for a little while before you help."
+  - key: repeat
+    label: "Leave it out"
+    parentAction: "Leave everything ready so {child} can come back and repeat {activity} on their own."
+watchForSlot:
+  prompt: "does it independently / self-corrects"
+  evidenceKinds: [does, chooses]
+whyItWorks: >-
+  Children copy what they see far better than what they're told, so a slow, quiet
+  demonstration carries more than a long explanation. Trying straight away turns watching
+  into doing. Leaving it out lets them repeat it until it's theirs, and the repeating is
+  where the skill settles.
+commonMistakes:
+  - "Talking too much in the demonstration."
+  - "Taking over the moment they fumble."
+  - "Packing it away before they've had a chance to do it again."
+  - "Showing three new steps at once."
+traditionFit:
+  - tradition: montessori
+    natural: true
+    note: "This is a presentation: shown slowly with few words, then left on the shelf to repeat."
+  - tradition: waldorf_steiner
+    natural: true
+    note: "Close to working alongside: do the real task well and let them join in."
+  - tradition: classical
+    natural: true
+    note: "Suits mastery lessons: show the new step, practise it, repeat until it's automatic."
+  - tradition: charlotte_mason
+    natural: false
+    note: "Fits handicraft and habit training; keep the showing short."
+  - tradition: unschooling
+    natural: false
+    note: "Works when they ask how something's done; they choose whether to repeat it."
+usedByMethods: [montessori.practical-life, classical.mastery-lesson]
+practices: [montessori.child-sized, montessori.shelf-it, waldorf.work-alongside, classical.mastery-first]
+ageBand: { min: 2, max: 10 }
+stage: E1
+example:
+  activity: "Cracking eggs for Sunday pikelets"
+  filledMoves:
+    - "Crack one egg into the bowl slowly, saying almost nothing. Let your hands show the steps."
+    - "Hand Ivy an egg and let her try. Watch for a little while before you help."
+    - "Leave the bowl and the rest of the eggs out so Ivy can crack them herself."
+  watchFor: "Ivy cracks an egg on her own and fishes out any shell without being asked."
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-cycle-brief-v1.md §4.1; method mapping docs/hearth-cycle-build-plan-v1.md §3"

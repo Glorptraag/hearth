@@ -217,6 +217,7 @@ export default async function DashboardPage() {
         title: p.title ?? null,
         status: p.status ?? null,
         moduleId: p.moduleId ?? null,
+        subjects: p.subjects ?? null,
       }))}
       learners={familyLearners.map((l) => ({
         id: l.id,

@@ -568,7 +568,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 > **The model:** 15 domains → 57 canonical threads → 171 DLOs (3 tier bands each: **emerging / developing / demonstrating**). Source of truth in Sanity + `src/lib/capability-universe-v2.ts`.
 > **The metaphor:** a night sky. Domains are clusters, threads are stars that light as evidence accrues, DLOs are the fill within a star, prerequisite/enables edges are the lines between them.
 > **The law:** Australian Curriculum / QLD codes stay **backend-only**. Parents see plain-language descriptors and thread names — never `AC9M3N01`. All intelligence is computed at **write-time**; the Constellation only *reads* the precomputed snapshot (zero read-time LLM).
-> **Two view modes:** **Gallery** (visual starfield) and **Table** (structured rows), both supporting a four-level drill: Domains → Threads → DLOs → Moments.
+> **View modes:** **Constellation** (the default — a linked graph after Obsidian's graph view, where the drill depths telescope into a cone fanning out from the focused node; see `hearth-constellation-architecture-v1.md` §6), **Table** (structured rows) and **Explore** (gap lens). Constellation and Table share the four-level drill: Domains → Threads → DLOs → Moments. *(The Gallery starfield described in UC-C-01/02 was retired 2026-10-21; the flows hold, the rendering is the graph.)*
 
 ---
 

@@ -317,4 +317,14 @@ Same defect as R30, found independently by the rebuild audit. R30's bounded "Ear
 
 ---
 
-*Next entry: R40. Append below; never edit above.*
+### R40 — Founder review (2026-10-21): the constellation read as a static chart, not a network.
+
+Drew's read of the Gallery: "underwhelming and visualised terribly" — each depth was its own fixed chart (domain bands, a left-to-right DAG, tier columns, a timeline) rather than one sky of linked stars; nothing moved, nothing could be explored, and on phones it was forced off entirely. The ask: a networked node-to-node constellation like Obsidian's linked-note graph, extending as a cone when you look into it.
+**Spec affected:** `hearth-constellation-architecture-v1.md` (new §6); `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` Part C view modes; `hearth-motion-system-v1.md` "Constellation map" (the motion is the information); journey Stage 6 (Bec — the constellation as a thinking tool).
+**Regression test:** `graph-model.test.ts`, `force-layout.test.ts`, `ConstellationGraph.test.tsx`, `ConstellationRoute.test.tsx` (`parseView`, default view, telescope URL sync), `DloConfirm.test.tsx` (confirm in the telescope panel). The press-feedback / SVG-transform clash found while building it is pinned by the wrapper structure the graph tests query (`[data-node]` inside `[data-pos]`), and documented in the architecture doc §6.
+**Fix:** the Gallery is replaced by a force-directed graph of every domain, thread and objective (pan, zoom, drag, hover neighbourhoods, search, filters, links + backlinks panel); drill depths 2–4 telescope into a cone fanning out from the focused node, ring by ring, with moments as leaves of a telescoped objective. Default view; works at phone width. **Date logged:** 2026-10-21.
+*Note (2026-10-22, merge):* logged on `main` as R37 (`e6ca4b5`) while the launch-pivot branch already held R37–R39; renumbered R40 when the branches merged.
+
+---
+
+*Next entry: R41. Append below; never edit above.*

@@ -177,7 +177,7 @@ export type CurriculumCoverage = Record<
   { total_entries: number; unique_descriptors: number; coverage_percentage: number }
 >;
 
-/* Snapshot consumed by TableView / GalleryView. Built from /api/capabilities/[learnerId]. */
+/* Snapshot consumed by TableView / the constellation graph. Built from /api/capabilities/[learnerId]. */
 export type LearnerSnapshot = {
   id: string;
   name: string;
@@ -316,7 +316,7 @@ export function indexDLOsByThread(dlos: SanityDLO[]): Record<string, SanityDLO[]
   return out;
 }
 
-/* DLO instance returned by buildDLOs — what GalleryDLOs / TableDLOs render.
+/* DLO instance returned by buildDLOs — what TableDLOs and the graph's objective nodes render.
    Descriptors come from Sanity (seed-dlos.ts authored 57 × 3 = 171). */
 export type DLO = {
   id: string;

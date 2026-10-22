@@ -230,6 +230,11 @@ Two writers feed Sanity. Both use the same schemas; they differ in tooling, audi
 4. **Refactor re-design** — the next structural pass is designed *from the refined use cases* once the research spine has real family data; entry criteria in `docs/hearth-refactor-postmortem-v1.md`. Do not salvage the old 35-task plan.
 5. **Editorial pass on three sample-pack drafts** — `First Term Foundations`, `Outdoor Naturalist`, `Storytellers` still `status: 'draft'`; AC mapping required before publish.
 6. **Ops cadence** — Neon PITR restore drill, quarterly `SANITY_API_TOKEN` rotation, Redis rate-limiter migration only when trigger conditions hit (`docs/redis-rate-limiter-plan.md`).
+7. **The Hearth Cycle (planned 21 Oct; nothing built yet)** — The spec chain (7–21 Oct) is now in `docs/`; start at `hearth-spec-chain-README.md`, then read the build plan of record, `hearth-cycle-build-plan-v1.md`. The chain covers watch-fors, rhythms with method turns, Today/Week, the conversational log, morning cards, the hidden educator path, and the Cycle brief (lesson patterns, Craft library, Know Your Child, My Teaching, linked community).
+   - **Expo:** only a thin everyday watch-for slice inside the launch pivot's W5.3, plus the DLO schema change to neutral + tradition `watchHow` (D-HC-4, D-HC-5).
+   - **After the expo:** the build starts the week of 17 Nov and is not gated on pilot evidence (D-HC-1, an explicit override of the postmortem §5 entry criteria, with compensating controls).
+   - **Base docs absent:** the chain's notes-architecture base docs aren't in the repo, so its nouns map onto existing tables (D-HC-3).
+   - **Decision IDs:** all of them (D36–D68, C10–C25, B1–B9) are logged as proposed in `hearth-decisions-log-v1.md`.
 
 ---
 

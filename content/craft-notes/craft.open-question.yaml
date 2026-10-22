@@ -1,0 +1,20 @@
+# Craft note · E2 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2.
+id: craft.open-question
+kind: craft
+strand: notice         # a question that draws out what the child sees and thinks (WF §7.1)
+stage: E2
+card: try
+tradition: neutral
+title: "Ask a question with more than one answer"
+body: "Swap \"What colour is it?\" for \"What do you notice?\" or \"How did you work that out?\" Questions without one right answer let them show you their thinking."
+why:
+  short: "Open questions show you how they think, not just what they remember."
+relates:
+  dlos: []
+  practices: []
+  methods: [cm.nature-walk]
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

@@ -129,7 +129,7 @@ The next migration number is **0032**, because the pivot holds 0031. Migrations 
 | Chain concept | Repo home | Notes |
 |---|---|---|
 | `knowledgeNote` | **new type** `knowledgeNote` with a `kind` discriminator: `method` (LC §3), `craft` (WF §8.1), `practice` (PL §5.7, plus WF `stage` and `why`), `signal` (PL §3), and later `pattern`, `guide`, `ageGuide` (brief) | Per-kind validation copies the chain's rules: method outcomes 3–4, steps ≤ 3, `why` ≤ 20 words; craft body ≤ 40 words at E1–E2 and ≤ 90 at E3–E4; a fixed trigger-kind list. IDs are dotted (`method.cm.living-book`, `craft.wait-time`), so browser reads go through `CLIENT_READ_QUERIES` (`src/lib/sanity/read-allowlist.ts`). |
-| tradition note | **extend** `pedagogicalFramework` | Gains the PL §4 fields (stance, lens prompt and signal, stages, signal table, rules, balance, nextBias), the WF §8.1 fields (`watchHow` `{does, says, makes, chooses}` + stage overrides, `notifyDefault`) and LC §6 `weekShape`. The slug is `waldorf` in the schema but `waldorf_steiner` in the pivot DLO notes; pick one (G11). |
+| tradition note | **extend** `pedagogicalFramework` | Gains the PL §4 fields (stance, lens prompt and signal, stages, signal table, rules, balance, nextBias), the WF §8.1 fields (`watchHow` `{does, says, makes, chooses}` + stage overrides, `notifyDefault`) and LC §6 `weekShape`. The schema slug is `waldorf_steiner`, matching the pivot DLO notes and `content/traditions/watch-how.yaml`. `PedagogyKey` in `src/types/capability-universe.ts` uses `waldorf` (and `charlotte-mason`), so align it on `waldorf_steiner` (G11). |
 | practice (PL §5.7, about 42 tradition-scoped notes such as `cm.narration`) | `knowledgeNote` kind `practice`, with `tags[]` drawn from `PRACTICE_KEYS` | The repo's `practice` document (12 cross-tradition keys, defined in `src/sanity/schemas/methodologyOverlay.ts`) stays as a tag set. One source of truth for the keys (G10). |
 | DLO `toNext[band].sign` (the look-for) | DLO `watchForNext.neutral` *(pivot)* | One observable sentence per `dlo.<THREAD>.<tier>` |
 | DLO `toNext[band].notYet[]` | DLO `watchForNext.notYet[]` `{ id, label, respond? }` *(new)* | `respond` references a practice note |
@@ -589,7 +589,7 @@ Owner: **D** = Drew, **C** = Claude (in a build session), **X** = external.
 | G8 | **DLOs and `shelfResource` missing from the Studio desk** (`sanity.config.ts`) | Drew can't browse the notes he must confirm from 23 Oct | HC-1a, before the first batch | C | HC-1b |
 | G9 | DLO `parentVersion` has two meanings | Wrong descriptor shown where they diverge | HC-2d | C | — |
 | G10 | `PRACTICE_KEYS` copied in 5+ places | Drift | Single source in HC-2c | C | — |
-| G11 | `waldorf` (schema) vs `waldorf_steiner` (pivot notes) | `watchHow` and notes keyed inconsistently | Pick one in HC-1a | C | HC-1b |
+| G11 | Pedagogy key drift: the schema, pivot notes and `watch-how.yaml` use `waldorf_steiner`, but `PedagogyKey` (`src/types/capability-universe.ts`) uses `waldorf` and `charlotte-mason` | Keys mismatch across layers | Align `PedagogyKey` on the schema slugs in HC-2c | C | HC-2c |
 | G12 | Content QA `DocType` closed; QA reads only pack trees | New types go unvalidated | HC-2b | C | — |
 | G13 | Corpus vault compiler is framework-scoped (`src/lib/pedagogy/corpus/`) | Cross-tradition notes can't be authored there | Use `content/*.yaml` + push scripts (HC-0 pattern) | C | — |
 | G14 | No adult attribution on entries | No educator path, My Teaching or per-parent briefs | HC-2a | C | HC-8, HC-9, HC-16 |

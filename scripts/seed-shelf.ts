@@ -39,7 +39,7 @@ export const SHELF_RESOURCES: ShelfSeed[] = [
     publisher: 'Demme Learning',
     kind: 'curriculum',
     aliases: ['Math U See', 'MathUSee', 'Math-U-See', 'Demme Learning', 'Steve Demme'],
-    lessonPattern: lessonRegex,
+    lessonNumberRegex: lessonRegex,
     levels: [
       { name: 'Primer' },
       { name: 'Alpha' },
@@ -69,7 +69,7 @@ export const SHELF_RESOURCES: ShelfSeed[] = [
       'TGATB',
       'goodandbeautiful.com',
     ],
-    lessonPattern: lessonRegex,
+    lessonNumberRegex: lessonRegex,
     levels: [
       { name: 'Language Arts K', aliases: ['Language Arts Kindergarten', 'Level K'] },
       { name: 'Language Arts 1', aliases: ['Language Arts Level 1', 'Level 1'] },
@@ -94,7 +94,7 @@ export const SHELF_RESOURCES: ShelfSeed[] = [
     publisher: 'All About Learning Press',
     kind: 'curriculum',
     aliases: ['AAR', 'All About Learning Press', 'AALP', 'allaboutlearningpress.com'],
-    lessonPattern: lessonRegex,
+    lessonNumberRegex: lessonRegex,
     levels: [
       { name: 'Pre-reading', aliases: ['Pre-Reading', 'Pre Reading', 'Pre-reading Level'] },
       { name: 'Level 1', aliases: ['Level One'] },
@@ -116,7 +116,7 @@ export const SHELF_RESOURCES: ShelfSeed[] = [
       'Peace Hill Press',
       'History for the Classical Child',
     ],
-    lessonPattern: chapterRegex,
+    lessonNumberRegex: chapterRegex,
     levels: [
       { name: 'Volume 1', aliases: ['Vol. 1', 'Vol 1', 'Ancient Times'] },
       { name: 'Volume 2', aliases: ['Vol. 2', 'Vol 2', 'The Middle Ages'] },

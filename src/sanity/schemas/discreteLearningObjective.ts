@@ -122,31 +122,73 @@ export const discreteLearningObjective = defineType({
       title: 'Watch for next',
       type: 'object',
       description:
-        'What a parent might notice next as this DLO develops. The neutral text is the canonical, philosophy-neutral version; per-pedagogy variants are optional overlays keyed by pedagogyKey.',
+        'What a parent might notice next as this DLO develops. The sign is philosophy-neutral; the family\'s tradition supplies the "how to watch" line from pedagogicalFramework.watchHow (D-HC-5, WF §3.4). No per-DLO tradition variants (PL D39).',
       fields: [
         defineField({
           name: 'neutral',
           title: 'Neutral text',
+          description: 'One observable sentence: the sign that this DLO is showing.',
           type: 'text',
           rows: 3,
           validation: (r) => r.required(),
         }),
         defineField({
-          name: 'variants',
-          title: 'Per-pedagogy variants',
-          type: 'object',
-          description: 'Optional. Fields are keyed by pedagogyKey; absent keys fall back to the neutral text.',
-          options: { collapsible: true, collapsed: true },
-          fields: [
-            { name: 'charlotte_mason', title: 'Charlotte Mason', type: 'text', rows: 3 },
-            { name: 'classical', title: 'Classical', type: 'text', rows: 3 },
-            { name: 'montessori', title: 'Montessori', type: 'text', rows: 3 },
-            { name: 'waldorf_steiner', title: 'Waldorf / Steiner', type: 'text', rows: 3 },
-            { name: 'unschooling', title: 'Unschooling', type: 'text', rows: 3 },
-            { name: 'eclectic', title: 'Eclectic', type: 'text', rows: 3 },
+          name: 'notYet',
+          title: 'Not-yet signs',
+          description:
+            'Optional. What "not yet" tends to look like, in parent words, each with an optional practice to respond with (WF §3, §8.1).',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'notYetSign',
+              fields: [
+                defineField({
+                  name: 'id',
+                  title: 'ID',
+                  type: 'string',
+                  description: 'Slug-like, unique within this DLO (e.g. "skips-some").',
+                  validation: (r) =>
+                    r.required().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { name: 'slug-like id' }),
+                }),
+                defineField({
+                  name: 'label',
+                  title: 'Label',
+                  type: 'string',
+                  description: 'Parent words, 8 words or fewer.',
+                  validation: (r) =>
+                    r.required().custom((value) =>
+                      typeof value === 'string' && value.trim().split(/\s+/).filter(Boolean).length > 8
+                        ? 'Keep the label to 8 words or fewer'
+                        : true,
+                    ),
+                }),
+                defineField({
+                  name: 'respond',
+                  title: 'Respond with (practice ID)',
+                  type: 'string',
+                  description: 'Optional practice note ID to offer in response, e.g. "cm.narration" (PL §5.7).',
+                }),
+              ],
+              preview: { select: { title: 'label', subtitle: 'id' } },
+            },
           ],
         }),
       ],
+    }),
+    defineField({
+      name: 'evidenceKind',
+      title: 'Evidence kind',
+      type: 'string',
+      description: 'How learning on this DLO shows (hearth-watch-for-v1.md §3.4)',
+      options: {
+        list: [
+          { title: 'Does', value: 'does' },
+          { title: 'Says', value: 'says' },
+          { title: 'Makes', value: 'makes' },
+          { title: 'Chooses', value: 'chooses' },
+        ],
+      },
     }),
     defineField({
       name: 'watchForConfirmedAt',

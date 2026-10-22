@@ -14,7 +14,7 @@ export interface ShelfResource {
   slug: { current: string };
   kind: ShelfResourceKind;
   aliases?: string[];
-  lessonPattern?: string;
+  lessonNumberRegex?: string;
   levels?: ShelfResourceLevel[];
   ageBand?: { min?: number; max?: number };
   isUniversal?: boolean;

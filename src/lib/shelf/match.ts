@@ -46,10 +46,10 @@ function detectLevel(haystack: string, resource: ShelfResource): string | undefi
 }
 
 function detectLesson(rawText: string, resource: ShelfResource): number | undefined {
-  if (!resource.lessonPattern) return undefined;
+  if (!resource.lessonNumberRegex) return undefined;
   let pattern: RegExp;
   try {
-    pattern = new RegExp(resource.lessonPattern, 'i');
+    pattern = new RegExp(resource.lessonNumberRegex, 'i');
   } catch {
     return undefined;
   }

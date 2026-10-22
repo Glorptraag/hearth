@@ -10,7 +10,7 @@ const SHELF_RESOURCES_QUERY = `*[_type == "shelfResource" && status == "publishe
   slug,
   kind,
   aliases,
-  lessonPattern,
+  lessonNumberRegex,
   levels[]{ name, aliases },
   ageBand,
   isUniversal,

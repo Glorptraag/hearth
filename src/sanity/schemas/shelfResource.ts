@@ -35,8 +35,10 @@ export const shelfResource = defineType({
       of: [{ type: 'string' }],
     }),
     defineField({
-      name: 'lessonPattern',
-      title: 'Lesson Pattern',
+      // Renamed from `lessonPattern` (build plan HC-1a) so it can't be confused with
+      // a lesson pattern (`knowledgeNote` kind `pattern`).
+      name: 'lessonNumberRegex',
+      title: 'Lesson number regex',
       description: 'Regex string capturing a lesson or chapter number in group 1 (e.g. "Lesson\\s+(\\d+)").',
       type: 'string',
     }),

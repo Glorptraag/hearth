@@ -9,7 +9,7 @@ export const MATH_U_SEE: ShelfResource = {
   slug: { current: 'math-u-see' },
   kind: 'curriculum',
   aliases: ['MathUSee', 'Math U See', 'Demme Learning'],
-  lessonPattern: 'Lesson\\s+(\\d+)',
+  lessonNumberRegex: 'Lesson\\s+(\\d+)',
   levels: [
     level('Primer'),
     level('Alpha'),
@@ -29,7 +29,7 @@ export const GOOD_AND_BEAUTIFUL: ShelfResource = {
   slug: { current: 'the-good-and-the-beautiful' },
   kind: 'curriculum',
   aliases: ['Good and the Beautiful', 'TGATB', 'goodandbeautiful.com'],
-  lessonPattern: 'Lesson\\s+(\\d+)',
+  lessonNumberRegex: 'Lesson\\s+(\\d+)',
   status: 'published',
 };
 
@@ -40,7 +40,7 @@ export const ALL_ABOUT_READING: ShelfResource = {
   slug: { current: 'all-about-reading' },
   kind: 'curriculum',
   aliases: ['AAR', 'All About Learning Press'],
-  lessonPattern: 'Lesson\\s+(\\d+)',
+  lessonNumberRegex: 'Lesson\\s+(\\d+)',
   levels: [
     level('Pre-reading', ['Pre reading', 'Prereading']),
     level('Level 1', ['Level One']),
@@ -58,7 +58,7 @@ export const STORY_OF_THE_WORLD: ShelfResource = {
   slug: { current: 'story-of-the-world' },
   kind: 'curriculum',
   aliases: ['SOTW', 'Peace Hill Press'],
-  lessonPattern: 'Chapter\\s+(\\d+)',
+  lessonNumberRegex: 'Chapter\\s+(\\d+)',
   levels: [
     level('Volume 1', ['Vol 1', 'Vol. 1', 'Ancient Times']),
     level('Volume 2', ['Vol 2', 'Vol. 2', 'The Middle Ages']),

@@ -145,8 +145,8 @@ describe('matchShelf', () => {
       expect(matchShelf('Math-U-See Alpha Lesson 1', [{ ...MATH_U_SEE, status: 'draft' }])).toBeNull();
     });
 
-    it('tolerates an invalid lessonPattern', () => {
-      const broken = { ...MATH_U_SEE, lessonPattern: '(' };
+    it('tolerates an invalid lessonNumberRegex', () => {
+      const broken = { ...MATH_U_SEE, lessonNumberRegex: '(' };
       expect(matchShelf('Math-U-See Alpha Lesson 1', [broken])).toEqual({
         resourceId: MATH_U_SEE._id,
         level: 'Alpha',

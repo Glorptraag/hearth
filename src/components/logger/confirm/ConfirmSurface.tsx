@@ -15,6 +15,9 @@ import type { Proposal } from '@/lib/logger/proposals';
 import { BadgeReadyRow } from './BadgeReadyRow';
 import { ConfirmExitRow } from './ConfirmExitRow';
 import { ProposalGroup } from './ProposalGroup';
+import { ReadDraftRow } from './ReadDraftRow';
+import { WorkingFromChip } from './WorkingFromChip';
+import { WatchForNext } from './WatchForNext';
 import { confirmCopy, joinNames } from './confirmCopy';
 
 export type ConfirmSurfaceProps = {
@@ -63,6 +66,7 @@ export function ConfirmSurface({
   const hashedEntryIdRef = useRef<string | null>(null);
 
   const onChipError = useCallback(() => toast(confirmCopy.chipError, 'error'), [toast]);
+  const onReadError = useCallback((message: string) => toast(message, 'error'), [toast]);
   const { confirmed, busy, toggle } = useProposalConfirm({ onError: onChipError });
 
   const entryId = state.kind === 'queued' ? null : state.entryId;
@@ -114,6 +118,10 @@ export function ConfirmSurface({
 
   const pedagogySources = state.kind === 'proposals' ? (state.enrichment.pedagogy_sources ?? []) : [];
   const enrichedKind = state.kind === 'proposals' || state.kind === 'nothing';
+  // Photo Read (W3.3): a labelled draft the parent may take, and a Working-from
+  // chip from the Shelf match on the photo's printed header. Never rendered as
+  // a claim — provenance rule, Logger spec v2 §5.2.
+  const read = enrichedKind ? (state.read ?? null) : null;
 
   return (
     <div
@@ -148,7 +156,9 @@ export function ConfirmSurface({
 
       {state.kind === 'pending' && (
         <>
-          <p className={SENTENCE_CLASS}>{confirmCopy.sentence.pending}</p>
+          <p className={SENTENCE_CLASS}>
+            {state.readingPhoto ? confirmCopy.sentence.pendingPhoto : confirmCopy.sentence.pending}
+          </p>
           <div aria-hidden="true" className="flex flex-wrap gap-sm">
             <span className="hearth-skeleton h-[44px] w-[150px] max-w-full rounded-full" />
             <span className="hearth-skeleton h-[44px] w-[120px] max-w-full rounded-full" />
@@ -157,19 +167,33 @@ export function ConfirmSurface({
         </>
       )}
 
+      {read && entryId && (read.draft || read.printedText) && (
+        <div className="flex flex-col gap-md">
+          {read.draft && <ReadDraftRow entryId={entryId} draft={read.draft} onError={onReadError} />}
+          {read.printedText && <WorkingFromChip entryId={entryId} onError={onReadError} />}
+        </div>
+      )}
+
       {state.kind === 'proposals' && (
         <>
           <div className="hearth-reveal flex flex-col gap-md">
             {groups.map((g) => (
-              <ProposalGroup
-                key={g.learnerId}
-                learnerName={g.learnerName}
-                colourToken={g.colourToken}
-                proposals={g.proposals}
-                confirmed={confirmed}
-                busy={busy}
-                onToggle={toggle}
-              />
+              <div key={g.learnerId} className="flex flex-col gap-sm">
+                <ProposalGroup
+                  learnerName={g.learnerName}
+                  colourToken={g.colourToken}
+                  proposals={g.proposals}
+                  confirmed={confirmed}
+                  busy={busy}
+                  onToggle={toggle}
+                />
+                {/* W4.4: a confirmed chip may carry its authored "watch for next". */}
+                {g.proposals
+                  .filter((p) => confirmed.has(p.key))
+                  .map((p) => (
+                    <WatchForNext key={p.key} learnerId={p.learnerId} dloId={p.dloId} threadName={p.threadName} />
+                  ))}
+              </div>
             ))}
           </div>
           <p className="font-sans text-[12px] text-text-muted">{confirmCopy.helper}</p>

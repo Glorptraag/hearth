@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, type Dispatch } from 'react';
 import type { DraftEvidenceItem } from '@/lib/logger/draft';
+import { photoDateDefault } from '@/lib/logger/photo-capture';
 import {
   EMPTY_NOTICE,
   pruneToLearners,
@@ -20,6 +21,12 @@ export type NoticeAction =
   | { type: 'set-noticed'; id: string; text: string }
   | { type: 'set-date'; dateOccurred: string | null }
   | { type: 'add-evidence'; item: DraftEvidenceItem }
+  /**
+   * A photo's EXIF capture time becomes the moment's date only while the
+   * parent hasn't picked one (photo-first capture, W3.1). `now` is passed in
+   * so the reducer stays pure.
+   */
+  | { type: 'photo-date'; takenAt: string | null; now: Date }
   | { type: 'remove-evidence'; index: number }
   | { type: 'restore'; fields: NoticeFields }
   /**
@@ -60,6 +67,10 @@ export function noticeReducer(state: NoticeFields, action: NoticeAction): Notice
       return { ...state, dateOccurred: action.dateOccurred };
     case 'add-evidence':
       return { ...state, evidence: [...state.evidence, action.item] };
+    case 'photo-date': {
+      const dateOccurred = photoDateDefault(action.takenAt, state.dateOccurred, action.now);
+      return dateOccurred ? { ...state, dateOccurred } : state;
+    }
     case 'remove-evidence':
       return { ...state, evidence: state.evidence.filter((_, i) => i !== action.index) };
     case 'restore':

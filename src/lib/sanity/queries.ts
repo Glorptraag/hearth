@@ -385,6 +385,37 @@ export const FRAMEWORK_BY_PEDAGOGY_KEY_QUERY = `*[_type == "pedagogicalFramework
   _id, slug
 }`;
 
+// ─── Watch-for (W4.4, D-HC-5; composed by src/lib/watch/compose.ts) ───
+// Both queries are gated on their human-confirmation field, so an unconfirmed
+// note or line never leaves Sanity (D-LP-8: unconfirmed → omitted, never
+// generated). Published documents only. Server-side reads (dotted DLO ids are
+// dark to the tokenless browser client) — served to the Confirm surface by
+// GET /api/watch-for, so neither is in CLIENT_READ_QUERIES.
+
+// Confirmed "watch for next" notes for a set of DLO ids ($dloIds).
+export const WATCH_FOR_NOTES_QUERY = `*[_type == "discreteLearningObjective"
+  && _id in $dloIds
+  && !(_id in path("drafts.**"))
+  && defined(watchForConfirmedAt)
+  && defined(watchForNext.neutral)]{
+  "dloId": _id,
+  "watchForNext": { "neutral": watchForNext.neutral },
+  evidenceKind,
+  watchForConfirmedAt
+}`;
+
+// A tradition's confirmed watchHow lines ($pedagogyKey = pedagogicalFramework.slug).
+export const FRAMEWORK_WATCH_HOW_QUERY = `*[_type == "pedagogicalFramework"
+  && slug == $pedagogyKey
+  && !(_id in path("drafts.**"))
+  && defined(watchHowConfirmedAt)][0]{
+  slug,
+  watchHow,
+  watchHowStageOverrides[]{ stage, kind, text },
+  watchHowFallback,
+  watchHowConfirmedAt
+}`;
+
 // PKB: Practice patterns for a given framework
 export const PRACTICE_PATTERNS_QUERY = `*[_type == "pedagogyPracticePattern" && references($frameworkId)]{
   _id, triggerTitle, triggerContext, traditionResponse, antiPattern, tags

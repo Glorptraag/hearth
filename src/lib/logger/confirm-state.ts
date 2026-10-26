@@ -5,6 +5,7 @@
  */
 import type { AiEnrichment } from '@/types/enrichment';
 import type { Proposal } from './proposals';
+import type { ConfirmRead } from './read-draft';
 import type { NoticeSource } from './source';
 
 export type ConfirmBase = {
@@ -13,6 +14,13 @@ export type ConfirmBase = {
   learnerIds: string[];
   evidenceCount: number;
   source: NoticeSource;
+  /**
+   * The save carried a photo and Photo Read can run for this family (flag,
+   * allowlist and opt-in) — `pending` then says "reading your photo".
+   */
+  readingPhoto?: boolean;
+  /** What the Photo Read offers once enriched: a draft and/or a printed header (W3.3). */
+  read?: ConfirmRead | null;
 };
 
 export type ConfirmState =

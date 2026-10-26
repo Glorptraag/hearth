@@ -273,7 +273,7 @@ async function findFamilySuccessor(
   return { memberId: row.memberId, clerkUserId: row.clerkUserId };
 }
 
-interface CommunityPlan {
+export interface CommunityPlan {
   transfers: { hearthId: string; toFamilyId: string }[];
   deletedHearthIds: string[];
 }
@@ -308,7 +308,7 @@ async function planCommunityHandover(familyId: string): Promise<CommunityPlan> {
   return plan;
 }
 
-function familyDeletionStatements(
+export function familyDeletionStatements(
   h: Handle,
   familyId: string,
   clerkUserId: string,

@@ -11,6 +11,7 @@ import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
+import { PhotoReadSetting } from '@/components/settings/PhotoReadSetting';
 import { FeedbackButton } from '@/components/feedback/FeedbackModal';
 import EmptyState from '@/components/ui/EmptyState';
 import {
@@ -572,6 +573,7 @@ export default function SettingsClient({
                 ? <span className="inline-flex items-center gap-xs">Saved <Check size={14} aria-hidden="true" /></span>
                 : 'Save changes'}
           </button>
+          <PhotoReadSetting />
         </div>
       )}
 

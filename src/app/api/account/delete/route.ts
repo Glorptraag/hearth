@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
 import { routeHandler } from '@/lib/api-helpers';
-import { deleteAccount } from '@/lib/account/delete';
+import { deleteAccount, previewAccountDeletion } from '@/lib/account/delete';
 
 const deleteSchema = z.object({
   confirmation: z.literal('DELETE MY ACCOUNT'),
@@ -35,3 +35,18 @@ export const POST = routeHandler(async (request: NextRequest) => {
 
   return NextResponse.json({ deleted: true, outcome: result.outcome });
 }, { route: 'POST /api/account/delete' });
+
+/**
+ * Read-only forecast of what deleting would do for the caller (who becomes
+ * owner, what happens to Hearths the family created). Drives the transfer step
+ * in the delete dialog; shares its rules with POST.
+ */
+export const GET = routeHandler(async () => {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const preview = await previewAccountDeletion(userId);
+  if (!preview) return NextResponse.json({ error: 'Family not found' }, { status: 404 });
+
+  return NextResponse.json(preview);
+}, { route: 'GET /api/account/delete' });

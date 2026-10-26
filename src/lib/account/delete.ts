@@ -165,6 +165,56 @@ export async function deleteAccount(clerkUserId: string): Promise<AccountDeletio
   };
 }
 
+export interface AccountDeletionPreview {
+  outcome: AccountDeletionOutcome;
+  /** Who becomes owner (`ownership_transferred` only). */
+  successor?: { email: string | null; role: string };
+  /** Community Hearths the family created that would pass to another family. */
+  hearthsHandedOver: number;
+  /** Community Hearths the family created that would be deleted. */
+  hearthsDeleted: number;
+}
+
+/**
+ * Read-only forecast of what `deleteAccount(clerkUserId)` would do, using the
+ * same successor and community-handover rules. Writes nothing. Returns null
+ * when the user has no family or membership.
+ */
+export async function previewAccountDeletion(
+  clerkUserId: string,
+): Promise<AccountDeletionPreview | null> {
+  const owned = await db.query.families.findFirst({
+    where: eq(families.clerkUserId, clerkUserId),
+  });
+  if (owned) {
+    const successor = await findFamilySuccessor(owned.id, clerkUserId);
+    if (successor) {
+      const member = await db.query.familyMembers.findFirst({
+        where: eq(familyMembers.id, successor.memberId),
+      });
+      return {
+        outcome: 'ownership_transferred',
+        successor: { email: member?.email ?? null, role: member?.role ?? 'editor' },
+        hearthsHandedOver: 0,
+        hearthsDeleted: 0,
+      };
+    }
+    const plan = await planCommunityHandover(owned.id);
+    return {
+      outcome: 'family_deleted',
+      hearthsHandedOver: plan.transfers.length,
+      hearthsDeleted: plan.deletedHearthIds.length,
+    };
+  }
+  const [membership] = await db
+    .select({ familyId: familyMembers.familyId })
+    .from(familyMembers)
+    .where(and(eq(familyMembers.clerkUserId, clerkUserId), eq(familyMembers.status, 'active')))
+    .limit(1);
+  if (!membership) return null;
+  return { outcome: 'member_removed', hearthsHandedOver: 0, hearthsDeleted: 0 };
+}
+
 /**
  * Run the statements as one transaction. Production's neon-http driver has no
  * interactive transactions; its `batch` is the atomic primitive. Drivers

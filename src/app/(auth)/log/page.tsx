@@ -103,6 +103,10 @@ export default function LogPage() {
     onError: (kind) => toast(noticeCopy.voiceErrors[kind], 'error'),
   });
 
+  // Photo Read consent (W3.2): drives the first-photo disclosure and whether
+  // Confirm may say "reading your photo" (flag + allowlist + opt-in).
+  const photoConsent = usePhotoReadConsent();
+
   // ─── Save → Confirm ───
   const resetForm = useCallback(() => dispatch({ type: 'reset' }), [dispatch]);
   const { state, isSaving, save, retryEnrichment, badgeReady, logAnother } = useNoticeSave({
@@ -111,6 +115,7 @@ export default function LogPage() {
     clearDraft: draft.clearDraft,
     resetForm,
     toast,
+    photoReadActive: photoConsent.optIn === true && photoConsent.readAvailable,
     analytics: {
       resumedFromDraft: draft.draftRestored,
       draftSavedAt: draft.draftSavedAt,
@@ -119,7 +124,6 @@ export default function LogPage() {
   });
 
   // ─── Photo first (W3.1) + the first-photo disclosure (W3.2) ───
-  const photoConsent = usePhotoReadConsent();
   const [disclosureOpen, setDisclosureOpen] = useState(false);
   const photo = usePhotoCapture({
     onAdded: useCallback(

@@ -10,6 +10,7 @@ import { pollEntryEnrichment } from '@/lib/logger/enrichment-poll';
 import { saveBlock, whenKindFor, type NoticeFields } from '@/lib/logger/notice';
 import { queueEntry } from '@/lib/logger/outbox';
 import { deriveProposals, isEnriched, nobodyNamed, type ProposalLearner } from '@/lib/logger/proposals';
+import { confirmReadFor, type ConfirmRead } from '@/lib/logger/read-draft';
 import type { NoticeSource } from '@/lib/logger/source';
 import type { AiEnrichment } from '@/types/enrichment';
 import { noticeCopy } from '@/app/(auth)/log/_components/noticeCopy';
@@ -23,6 +24,11 @@ export type UseNoticeSaveArgs = {
   clearDraft: () => void;
   resetForm: () => void;
   toast: (message: string, type?: 'info' | 'error') => void;
+  /**
+   * Photo Read will run on a photo save (flag + allowlist + opt-in, from
+   * `/api/family/photo-read`). Only then does `pending` say "reading your photo".
+   */
+  photoReadActive?: boolean;
   analytics?: {
     resumedFromDraft: boolean;
     draftSavedAt: number | null;
@@ -57,6 +63,8 @@ function baseOf(prev: Exclude<ConfirmState, { kind: 'queued' }>): ConfirmBase {
     learnerIds: prev.learnerIds,
     evidenceCount: prev.evidenceCount,
     source: prev.source,
+    ...(prev.readingPhoto ? { readingPhoto: true } : {}),
+    ...(prev.read ? { read: prev.read } : {}),
   };
 }
 
@@ -65,9 +73,10 @@ function resolveEnrichment(
   prev: Exclude<ConfirmState, { kind: 'queued' }>,
   enrichment: AiEnrichment,
   entryLearners: ProposalLearner[],
+  read: ConfirmRead | null = null,
 ): ConfirmState {
   if (enrichment.status === 'pending') return prev;
-  const base = baseOf(prev);
+  const base = { ...baseOf(prev), ...(read ? { read } : {}) };
   if (isEnriched(enrichment)) {
     const preferThreadId = prev.source.kind === 'check_in' ? prev.source.threadId : null;
     const proposals = deriveProposals(enrichment, entryLearners, { preferThreadId });
@@ -89,7 +98,7 @@ function resolveEnrichment(
  * `noticeCopy` / `confirmCopy`.
  */
 export function useNoticeSave(args: UseNoticeSaveArgs): UseNoticeSaveReturn {
-  const { source, learners, clearDraft, resetForm, toast, analytics } = args;
+  const { source, learners, clearDraft, resetForm, toast, analytics, photoReadActive = false } = args;
 
   const [state, setState] = useState<ConfirmState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -111,15 +120,21 @@ export function useNoticeSave(args: UseNoticeSaveArgs): UseNoticeSaveReturn {
 
   const runPoll = useCallback((entryId: string, entryLearners: ProposalLearner[]) => {
     activeEntryIdRef.current = entryId;
+    // The Photo Read lands in the same row update as the enrichment, so the
+    // fetch that carries a terminal enrichment also carries the Read.
+    let read: ConfirmRead | null = null;
     return pollEntryEnrichment(entryId, {
       isCurrent: () => activeEntryIdRef.current === entryId,
       clearCurrent: () => {
         activeEntryIdRef.current = null;
       },
+      onEntry: (entry) => {
+        read = confirmReadFor(entry);
+      },
       onEnrichment: (enrichment) => {
         setState((prev) =>
           prev && prev.kind === 'pending' && prev.entryId === entryId
-            ? resolveEnrichment(prev, enrichment, entryLearners)
+            ? resolveEnrichment(prev, enrichment, entryLearners, read)
             : prev,
         );
       },
@@ -207,6 +222,7 @@ export function useNoticeSave(args: UseNoticeSaveArgs): UseNoticeSaveReturn {
 
         if (entryId) {
           surfaceEntryIdRef.current = entryId;
+          const readingPhoto = photoReadActive && fields.evidence.some((e) => e.type === 'photo');
           setState({
             kind: 'pending',
             entryId,
@@ -214,6 +230,7 @@ export function useNoticeSave(args: UseNoticeSaveArgs): UseNoticeSaveReturn {
             learnerIds,
             evidenceCount: payload.evidence.length,
             source,
+            ...(readingPhoto ? { readingPhoto: true } : {}),
           });
         }
         clearDraft();
@@ -244,7 +261,7 @@ export function useNoticeSave(args: UseNoticeSaveArgs): UseNoticeSaveReturn {
         setIsSaving(false);
       }
     },
-    [source, learners, clearDraft, resetForm, toast, analytics, runPoll, runBadgeCheck],
+    [source, learners, clearDraft, resetForm, toast, analytics, photoReadActive, runPoll, runBadgeCheck],
   );
 
   const retryEnrichment = useCallback(async () => {

@@ -527,4 +527,54 @@ describe('useNoticeSave', () => {
       expect(hook.result.current.state?.kind).toBe('failed');
     });
   });
+  describe('Photo Read (W3.3)', () => {
+    const photoFields = () =>
+      fields({ evidence: [{ type: 'photo', content: 'evidence/fam/1.jpg', caption: '' }] });
+    const READ = {
+      seen: ['worksheet'],
+      doing: 'A child is writing numbers on a worksheet.',
+      artefact: 'worksheet',
+      printedText: 'Math-U-See Alpha Lesson 12',
+      peopleVisible: 1,
+      confidence: 'high',
+    };
+
+    it('pending says it is reading the photo only when Read is active and a photo was saved', async () => {
+      const active = setup({ photoReadActive: true });
+      await saveOk(active, photoFields());
+      expect(active.result.current.state).toMatchObject({ kind: 'pending', readingPhoto: true });
+
+      const noPhoto = setup({ photoReadActive: true });
+      await saveOk(noPhoto, fields(), 'e2');
+      expect(noPhoto.result.current.state).not.toHaveProperty('readingPhoto');
+
+      const off = setup({ photoReadActive: false });
+      await saveOk(off, photoFields(), 'e3');
+      expect(off.result.current.state).not.toHaveProperty('readingPhoto');
+    });
+
+    it('carries the fetched Read onto the enriched state', async () => {
+      const hook = setup({ photoReadActive: true });
+      await saveOk(hook, photoFields());
+      act(() => {
+        lastPoll().cb.onEntry?.({ readOutput: READ, description: '', draftedBy: 'parent' });
+        lastPoll().cb.onEnrichment(enriched());
+      });
+      expect(hook.result.current.state).toMatchObject({
+        kind: 'proposals',
+        read: { draft: READ.doing, printedText: READ.printedText },
+      });
+    });
+
+    it('carries no Read when the entry has none', async () => {
+      const hook = setup();
+      await saveOk(hook);
+      act(() => {
+        lastPoll().cb.onEntry?.({ readOutput: null, description: 'We baked.' });
+        lastPoll().cb.onEnrichment(enriched({ discrete_learning_objectives: [] }));
+      });
+      expect(hook.result.current.state).toMatchObject({ kind: 'nothing' });
+      expect(hook.result.current.state).not.toHaveProperty('read');
+    });
+  });
 });

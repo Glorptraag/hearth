@@ -330,3 +330,71 @@ describe('ConfirmSurface extras', () => {
     }
   });
 });
+
+describe('ConfirmSurface Photo Read (W3.3)', () => {
+  const READ = { draft: 'A child is writing numbers on a worksheet.', printedText: 'Math-U-See Alpha Lesson 12' };
+
+  it('pending says "reading your photo" only when a photo is being read', () => {
+    surface({ ...base, kind: 'pending', readingPhoto: true });
+    expect(screen.getByText(confirmCopy.sentence.pendingPhoto)).toBeInTheDocument();
+    expect(screen.queryByText(confirmCopy.sentence.pending)).not.toBeInTheDocument();
+    cleanup();
+    surface({ ...base, kind: 'pending' });
+    expect(screen.getByText(confirmCopy.sentence.pending)).toBeInTheDocument();
+  });
+
+  it('shows the Read only as a labelled draft the parent can take, beside the chips', () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ suggestion: null, resources: [], current: null })));
+    surface(proposalsState(enriched([dlo('dlo.M1.developing')]), [ada], { read: READ }));
+    const draft = screen.getByRole('region', { name: confirmCopy.readDraft.label });
+    expect(draft).toHaveTextContent(READ.draft);
+    expect(screen.getByRole('button', { name: confirmCopy.readDraft.use })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: confirmCopy.readDraft.edit })).toBeInTheDocument();
+    // The model sentence appears exactly once, and only inside the draft region.
+    expect(screen.getAllByText(READ.draft)).toHaveLength(1);
+  });
+
+  it('renders the draft on a nothing-to-confirm save too', () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ suggestion: null, resources: [], current: null })));
+    surface({ ...base, kind: 'nothing', enrichment: enriched([]), nobodyNamed: false, read: READ });
+    expect(screen.getByRole('region', { name: confirmCopy.readDraft.label })).toBeInTheDocument();
+  });
+
+  it('asks about Working from when the photo had a printed header', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestion: { resourceId: 'shelfResource.math-u-see', title: 'Math-U-See', level: 'Alpha', lesson: '12' },
+          resources: [{ id: 'shelfResource.math-u-see', title: 'Math-U-See', kind: 'curriculum', levels: ['Alpha'] }],
+          current: null,
+        }),
+      ),
+    );
+    surface(proposalsState(enriched([]), [ada], { read: { draft: null, printedText: READ.printedText } }));
+    expect(await screen.findByText(confirmCopy.workingFrom.prompt('Math-U-See Alpha · Lesson 12'))).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/entries/entry-1/working-from');
+    expect(screen.queryByRole('region', { name: confirmCopy.readDraft.label })).not.toBeInTheDocument();
+  });
+
+  it('renders no Read UI without a Read, or before enrichment lands', () => {
+    surface(proposalsState(enriched([dlo('dlo.M1.developing')])));
+    expect(screen.queryByRole('region', { name: confirmCopy.readDraft.label })).not.toBeInTheDocument();
+    cleanup();
+    surface({ ...base, kind: 'pending', read: READ });
+    expect(screen.queryByText(READ.draft)).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the new copy inside the Logger v2 rules', () => {
+    const copy = JSON.stringify({
+      p: confirmCopy.sentence.pendingPhoto,
+      r: confirmCopy.readDraft,
+      w: confirmCopy.workingFrom,
+      wp: confirmCopy.workingFrom.prompt('X'),
+    }).toLowerCase();
+    for (const word of ['try this', 'next time', 'should', 'sorry', 'insight', 'score', 'complete', '→']) {
+      expect(copy).not.toContain(word);
+    }
+    expect(copy).not.toMatch(/\bai\b/);
+  });
+});

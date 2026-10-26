@@ -144,6 +144,8 @@ export const learningEntries = pgTable(
     // on parent confirm; source records whether Read proposed it or the parent set it.
     workingFrom: jsonb('working_from').$type<{
       resourceId: string;
+      // The resource level as printed (e.g. "Alpha"); jsonb, so no migration.
+      level?: string;
       lesson?: string;
       source: 'read' | 'parent';
     }>(),

@@ -2,7 +2,7 @@
  * NoticeForm — composition of the Notice rows, banners and Save bar.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NoticeForm, type NoticeFormProps } from './NoticeForm';
 import { noticeCopy } from './noticeCopy';
 import { EMPTY_NOTICE } from '@/lib/logger/notice';
@@ -49,6 +49,7 @@ const baseProps = (): NoticeFormProps => ({
   onFelt: vi.fn(),
   onNoticed: vi.fn(),
   onDate: vi.fn(),
+  onAddPhoto: vi.fn(),
   onAddEvidence: vi.fn(),
   onRemoveEvidence: vi.fn(),
   save: { block: 'no-learner', saving: false, onSave: vi.fn() },
@@ -125,6 +126,16 @@ describe('NoticeForm', () => {
 
     renderForm({ save: { block: null, saving: true, onSave: vi.fn() } });
     expect(screen.getByRole('button', { name: noticeCopy.saving })).toBeDisabled();
+  });
+
+  it('puts the photo action first: after who, ahead of the words (W3.1)', () => {
+    const onAddPhoto = vi.fn();
+    renderForm({ onAddPhoto });
+    const photo = screen.getByRole('button', { name: noticeCopy.addPhoto });
+    const what = screen.getByLabelText(noticeCopy.what);
+    expect(photo.compareDocumentPosition(what) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(photo);
+    expect(onAddPhoto).toHaveBeenCalledTimes(1);
   });
 
   it('never renders a literal arrow glyph', () => {

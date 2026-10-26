@@ -88,6 +88,16 @@ describe('noticeReducer', () => {
     expect(reduce(added, { type: 'remove-evidence', index: 5 }).evidence).toEqual([photo, quote]);
   });
 
+  it('photo-date fills the date from the photo only while none is chosen (W3.1)', () => {
+    const now = new Date('2026-10-26T09:00:00');
+    expect(reduce(EMPTY_NOTICE, { type: 'photo-date', takenAt: '2026-10-20T14:05:33', now }).dateOccurred).toBe(
+      '2026-10-20',
+    );
+    const chosen = fields({ dateOccurred: '2026-10-25' });
+    expect(reduce(chosen, { type: 'photo-date', takenAt: '2026-10-20T14:05:33', now })).toBe(chosen);
+    expect(reduce(EMPTY_NOTICE, { type: 'photo-date', takenAt: null, now })).toBe(EMPTY_NOTICE);
+  });
+
   it('restore replaces the whole form with the given fields', () => {
     const restored = fields({
       learnerIds: ['a'],

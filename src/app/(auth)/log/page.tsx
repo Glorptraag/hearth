@@ -11,6 +11,8 @@ import { useNoticeForm } from '@/hooks/use-notice-form';
 import { useLoggerDraft } from '@/hooks/use-logger-draft';
 import { useAudioTranscription } from '@/hooks/use-audio-transcription';
 import { useNoticeSave } from '@/hooks/use-notice-save';
+import { usePhotoCapture } from '@/hooks/use-photo-capture';
+import { usePhotoReadConsent } from '@/hooks/use-photo-read-consent';
 import { parseNoticeSource } from '@/lib/logger/source';
 import { saveBlock } from '@/lib/logger/notice';
 import type { LoggerDraft } from '@/lib/logger/draft';
@@ -20,12 +22,13 @@ import { track } from '@/lib/analytics/posthog';
 import ReflectionModal from '@/components/hearth/ReflectionModal';
 import { AttachToModuleModal } from '@/components/log/AttachToModuleModal';
 import { ConfirmSurface } from '@/components/logger/confirm/ConfirmSurface';
+import { PhotoReadDisclosure } from '@/components/logger/PhotoReadDisclosure';
 import { SkeletonLoader } from './_components/LoggerSkeleton';
 import { NoticeForm } from './_components/NoticeForm';
 import { EvidenceModal } from './_components/EvidenceModal';
 import { noticeCopy } from './_components/noticeCopy';
 
-type EvidenceKind = 'photo' | 'quote' | 'link';
+type EvidenceKind = 'quote' | 'link';
 
 /**
  * The Logger — Notice, then Confirm.
@@ -114,6 +117,37 @@ export default function LogPage() {
       composeStartedAt,
     },
   });
+
+  // ─── Photo first (W3.1) + the first-photo disclosure (W3.2) ───
+  const photoConsent = usePhotoReadConsent();
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const photo = usePhotoCapture({
+    onAdded: useCallback(
+      (item, takenAt) => {
+        dispatch({ type: 'add-evidence', item });
+        dispatch({ type: 'photo-date', takenAt, now: new Date() });
+      },
+      [dispatch],
+    ),
+    onError: useCallback((message: string) => toast(message, 'error'), [toast]),
+  });
+  // The sheet shows once, before the first photo, while the family hasn't
+  // answered. A failed consent read never blocks capture.
+  const handleAddPhoto = () => {
+    if (photoConsent.loaded && !photoConsent.failed && photoConsent.optIn === null) {
+      setDisclosureOpen(true);
+      return;
+    }
+    photo.openPicker();
+  };
+  // Called inside the answer button's click, so the picker opens in the same
+  // gesture (iOS refuses a file input opened after an await).
+  const handleDisclosureAnswer = (optIn: boolean) => {
+    setDisclosureOpen(false);
+    photo.openPicker();
+    void photoConsent.setOptIn(optIn);
+  };
+  const handleDisclosureDismiss = () => setDisclosureOpen(false);
 
   const [evidenceKind, setEvidenceKind] = useState<EvidenceKind | null>(null);
   const [attachOpen, setAttachOpen] = useState(false);
@@ -223,10 +257,29 @@ export default function LogPage() {
         onFelt={(id, level) => dispatch({ type: 'set-felt', id, level })}
         onNoticed={(id, text) => dispatch({ type: 'set-noticed', id, text })}
         onDate={(dateOccurred) => dispatch({ type: 'set-date', dateOccurred })}
+        onAddPhoto={handleAddPhoto}
+        photoBusy={photo.uploading}
         onAddEvidence={setEvidenceKind}
         onRemoveEvidence={(index) => dispatch({ type: 'remove-evidence', index })}
         save={{ block: saveBlock(fields), saving: isSaving, onSave: () => void save(fields) }}
       />
+      <input
+        ref={photo.inputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => void photo.onFileChange(e)}
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        data-testid="notice-photo-input"
+      />
+      {disclosureOpen && (
+        <PhotoReadDisclosure
+          readAvailable={photoConsent.readAvailable}
+          onAnswer={handleDisclosureAnswer}
+          onDismiss={handleDisclosureDismiss}
+        />
+      )}
       {evidenceKind && (
         <EvidenceModal
           type={evidenceKind}

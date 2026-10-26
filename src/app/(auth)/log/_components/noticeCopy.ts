@@ -33,11 +33,21 @@ export const noticeCopy = {
   pickDate: 'Pick the date',
 
   add: 'Add',
-  addPhoto: 'Photo',
+  /** The primary, photo-first action (W3.1). */
+  addPhoto: 'Add a photo',
+  addPhotoHint: 'A photo on its own is enough to save.',
+  addingPhoto: 'Adding photo…',
+  /** An added photo in the evidence list. */
+  photoLabel: 'Photo',
+  addMore: 'Or add',
   addWords: 'Their words',
   addLink: 'Link',
   remove: (kind: string) => `Remove ${kind}`,
   photosNeedConnection: 'Photos need a connection',
+  photoUnreadable: 'That photo couldn’t be opened. Pick another one.',
+  photoTooLarge: 'That photo is too large to add. Pick a smaller one.',
+  photoUnavailable: 'Photos can’t be added just now. Your words still save.',
+  photoFailed: 'Couldn’t add that photo. Check your connection and try again.',
 
   catchUp: 'Catching up on a few days?',
   batchLog: 'Batch log',

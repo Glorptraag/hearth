@@ -38,7 +38,10 @@ export interface NoticeFormProps {
   onFelt: (id: string, level: FeltLevel) => void;
   onNoticed: (id: string, text: string) => void;
   onDate: (dateOccurred: string | null) => void;
-  onAddEvidence: (kind: EvidenceKind) => void;
+  /** Photo-first (W3.1): opens the camera / library, via the first-photo disclosure when unanswered. */
+  onAddPhoto: () => void;
+  photoBusy?: boolean;
+  onAddEvidence: (kind: Exclude<EvidenceKind, 'photo'>) => void;
   onRemoveEvidence: (index: number) => void;
   save: { block: SaveBlock; saving: boolean; onSave: () => void };
 }
@@ -47,7 +50,8 @@ const BANNER_BUTTON =
   'hearth-press min-h-[44px] rounded-sm px-sm font-sans text-xs font-medium text-text-secondary hover:text-text-primary';
 
 /**
- * The Notice form — every row the parent fills, in order, plus the honest
+ * The Notice form — every row the parent fills, in order (who · photo first ·
+ * what · per child · when), plus the honest
  * banners (offline, restored draft, working-from) and the Save bar. Pure
  * composition: state lives in the page's hooks, strings in noticeCopy.
  */
@@ -69,6 +73,8 @@ export function NoticeForm({
   onFelt,
   onNoticed,
   onDate,
+  onAddPhoto,
+  photoBusy = false,
   onAddEvidence,
   onRemoveEvidence,
   save,
@@ -134,6 +140,16 @@ export function NoticeForm({
           onReload={onReloadLearners}
         />
 
+        {/* Photo first (W3.1): the camera is the primary action, ahead of the words. */}
+        <EvidenceRow
+          evidence={fields.evidence}
+          online={online}
+          onAddPhoto={onAddPhoto}
+          photoBusy={photoBusy}
+          onAdd={onAddEvidence}
+          onRemove={onRemoveEvidence}
+        />
+
         <WhatField value={fields.text} onChange={onTextChange} placeholder={whatPlaceholder} voice={voice} />
 
         {selectedLearners.length > 0 && (
@@ -152,8 +168,6 @@ export function NoticeForm({
         )}
 
         <WhenRow dateOccurred={fields.dateOccurred} onChange={onDate} />
-
-        <EvidenceRow evidence={fields.evidence} online={online} onAdd={onAddEvidence} onRemove={onRemoveEvidence} />
 
         <p className="font-sans text-xs text-text-muted">
           {noticeCopy.catchUp}{' '}

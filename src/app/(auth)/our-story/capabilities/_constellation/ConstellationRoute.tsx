@@ -2,6 +2,7 @@
 
 import './constellation.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ChildSelector } from '@/components/ui/child-selector';
@@ -12,7 +13,8 @@ import {
   THREADS_BY_ID,
   buildDLOs,
   buildSnapshot,
-  threadCurrentTier,
+  isNewlyLit,
+  isRecentlyActive,
   type ActiveThreadRow,
   type CurriculumCoverage,
   type DloStatusLite,
@@ -25,6 +27,7 @@ import {
 import { TableThreads, TableDLOs, TableMoments } from './TableView';
 import { ConstellationGraph } from './ConstellationGraph';
 import { ExploreView } from './ExploreView';
+import { REPORT_HREF, constellationCopy, growingSentences, type GrowingSignals } from './constellationCopy';
 
 type Learner = {
   id: string;
@@ -75,24 +78,35 @@ export function parseFocus(f: string | null): Focus {
   return { domain: null, thread: null, dlo: null };
 }
 
-function HearthVoiceCard({ snap }: { snap: LearnerSnapshot }) {
-  const active = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'active').length;
-  const ghosts = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'ghost').length;
-  const demonstrating = ALL_THREADS.filter((t) => threadCurrentTier(t.id, snap) === 'demonstrating').length;
+/**
+ * Growth signals for the "What's growing" card — recency, "New", the
+ * rebuild's trajectory and opening threads, all already on the snapshot. The
+ * trajectory only counts once a thread has 3+ observations, the same bar the
+ * Table and panel use before showing it. Exported for tests.
+ */
+export function growingSignals(snap: LearnerSnapshot, now: Date = new Date()): GrowingSignals {
+  const lit = ALL_THREADS.filter((t) => snap.threadState[t.id] === 'active');
+  return {
+    lit: lit.length,
+    recent: lit.filter((t) => isRecentlyActive(snap, t.id, now)).length,
+    newlyLit: lit.filter((t) => isNewlyLit(snap, t.id, now)).length,
+    pickingUp: lit.filter(
+      (t) => snap.trajectoryByThread[t.id] === 'accelerating' && (snap.observationsByThread[t.id] ?? 0) >= 3,
+    ).length,
+    opening: ALL_THREADS.filter((t) => snap.threadState[t.id] === 'ghost').length,
+  };
+}
+
+function GrowingCard({ snap }: { snap: LearnerSnapshot }) {
+  const sentences = growingSentences(snap.name, growingSignals(snap));
 
   return (
     <div className="relative mb-lg rounded-lg border border-border-subtle p-lg [background:linear-gradient(135deg,var(--color-surface-panel)_0%,var(--color-surface-raised)_100%)]">
       <span className="absolute inset-x-0 top-0 h-[2px] rounded-t-lg opacity-40 [background:linear-gradient(90deg,transparent,var(--color-ember),transparent)]" />
       <span className="inline-block h-[6px] w-[6px] rounded-full bg-ember shadow-[0_0_8px_var(--color-ember)] mr-sm align-middle" />
-      <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-ember">Hearth noticed</span>
+      <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-ember">{constellationCopy.growingOverline}</span>
       <p className="mt-sm max-w-[70ch] font-serif italic leading-relaxed text-text-secondary">
-        {snap.name} is moving across <strong className="font-semibold text-text-primary">{active} {active === 1 ? 'thread' : 'threads'}</strong> right now,
-        demonstrating {demonstrating} of them.
-        {ghosts > 0 && (
-          <>
-            {' '}{ghosts === 1 ? 'One thread is' : `${ghosts} threads are`} opening up — the threads {ghosts === 1 ? 'it builds' : 'they build'} on are lit, and they tend to come on of their own accord when the foundations settle.
-          </>
-        )}
+        {sentences.join(' ')}
       </p>
     </div>
   );
@@ -349,13 +363,20 @@ export function ConstellationRoute({
         <div className="flex flex-wrap items-end justify-between gap-md">
           <div>
             <div className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">
-              OUR STORY · CAPABILITIES
+              {constellationCopy.overline}
             </div>
             <h1 className="mt-xs font-serif text-[2rem] font-normal leading-[1.3] text-text-primary">
-              {snap.name}&rsquo;s constellation
+              {constellationCopy.title(snap.name)}
             </h1>
             <p className="mt-xs max-w-[60ch] font-serif italic text-text-secondary">
-              A field of capability threads. Lit where {snap.name} has been observed, quietly waiting where they&rsquo;re heading.
+              {constellationCopy.subtitle(snap.name)}
+            </p>
+            <p className="mt-xs max-w-[60ch] font-sans text-[0.8rem] text-text-muted">
+              {constellationCopy.reportPointerLead}{' '}
+              <Link href={REPORT_HREF} className="font-medium text-ember hover:text-ember-hover transition-colors">
+                {constellationCopy.reportPointerLink}
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -377,7 +398,7 @@ export function ConstellationRoute({
         <ViewToggle view={view} onChange={setView} />
       </div>
 
-      {depth === 1 && view !== 'explore' && <HearthVoiceCard snap={snap} />}
+      {depth === 1 && view !== 'explore' && <GrowingCard snap={snap} />}
 
       <div key={stageKey} className="cap-stage">
         {view === 'explore' && (

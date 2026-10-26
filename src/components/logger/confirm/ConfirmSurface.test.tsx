@@ -22,6 +22,7 @@ vi.mock('@/lib/analytics/posthog', () => ({
 }));
 
 import { ConfirmSurface } from './ConfirmSurface';
+import { __resetWatchForCache } from './WatchForNext';
 import { confirmCopy } from './confirmCopy';
 
 const ada: LearnerRecord = { id: 'learner-ada', name: 'Ada', dateOfBirth: null, shapeIcon: null, colourToken: 'sage' };
@@ -103,6 +104,7 @@ beforeEach(() => {
   fetchMock = vi.fn().mockResolvedValue(ok());
   vi.stubGlobal('fetch', fetchMock);
   trackMock.mockReset();
+  __resetWatchForCache();
 });
 
 afterEach(() => {
@@ -214,12 +216,17 @@ describe('ConfirmSurface chips', () => {
     const chip = screen.getByRole('button', { pressed: false });
     expect(chip).toHaveTextContent('Number Sense · developing?');
 
+    // A confirmed chip also asks for its "watch for next" line (W4.4), so the
+    // confirm/dispute assertions are scoped to the DLO confirm endpoint.
+    const confirmCalls = () =>
+      fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/capabilities/'));
+
     await act(async () => {
       fireEvent.click(chip);
     });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/capabilities/learner-ada/dlo/dlo.M1.developing/confirm');
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ action: 'confirm' });
+    await waitFor(() => expect(confirmCalls()).toHaveLength(1));
+    expect(confirmCalls()[0][0]).toBe('/api/capabilities/learner-ada/dlo/dlo.M1.developing/confirm');
+    expect(JSON.parse(confirmCalls()[0][1].body)).toEqual({ action: 'confirm' });
     expect(chip).toHaveAttribute('aria-pressed', 'true');
     expect(chip).toHaveTextContent('Number Sense · developing');
     expect(chip.textContent).not.toContain('?');
@@ -227,9 +234,12 @@ describe('ConfirmSurface chips', () => {
     await act(async () => {
       fireEvent.click(chip);
     });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ action: 'dispute' });
+    await waitFor(() => expect(confirmCalls()).toHaveLength(2));
+    expect(JSON.parse(confirmCalls()[1][1].body)).toEqual({ action: 'dispute' });
     expect(chip).toHaveAttribute('aria-pressed', 'false');
+    expect(fetchMock.mock.calls.filter(([url]) => !String(url).startsWith('/api/capabilities/'))).toEqual([
+      ['/api/watch-for?learner=learner-ada&dlo=dlo.M1.developing'],
+    ]);
   });
 
   it('reverts the chip and toasts when the confirm request fails', async () => {
@@ -392,6 +402,60 @@ describe('ConfirmSurface Photo Read (W3.3)', () => {
       w: confirmCopy.workingFrom,
       wp: confirmCopy.workingFrom.prompt('X'),
     }).toLowerCase();
+    for (const word of ['try this', 'next time', 'should', 'sorry', 'insight', 'score', 'complete', '→']) {
+      expect(copy).not.toContain(word);
+    }
+    expect(copy).not.toMatch(/\bai\b/);
+  });
+});
+
+describe('ConfirmSurface watch-for (W4.4)', () => {
+  const LINE = {
+    dloId: 'dlo.M1.developing',
+    learnerId: 'learner-ada',
+    kind: 'does',
+    lookFor: 'Counting may land on the right number without starting over.',
+    how: 'Watch quietly, then ask Ada to tell you how they did it.',
+  };
+
+  function routeFetch(items: unknown[]) {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).startsWith('/api/watch-for') ? new Response(JSON.stringify({ items })) : ok(),
+    );
+  }
+
+  it('renders the confirmed "watch for next" only under a confirmed chip', async () => {
+    routeFetch([LINE]);
+    surface(proposalsState(enriched([dlo('dlo.M1.developing')])));
+    expect(screen.queryByText(LINE.lookFor)).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { pressed: false }));
+    });
+    expect(await screen.findByText(LINE.lookFor)).toBeInTheDocument();
+    expect(screen.getByText(LINE.how)).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { pressed: true }));
+    });
+    await waitFor(() => expect(screen.queryByText(LINE.lookFor)).not.toBeInTheDocument());
+  });
+
+  it('renders nothing extra for a confirmed chip whose note is unconfirmed', async () => {
+    routeFetch([]);
+    surface(proposalsState(enriched([dlo('dlo.M1.developing')])));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { pressed: false }));
+    });
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/watch-for'))).toBe(true),
+    );
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+
+  it('keeps the watch-for frame copy inside the Logger v2 rules', () => {
+    const copy = `${confirmCopy.watchFor.overline('X')} ${confirmCopy.watchFor.label('X')}`.toLowerCase();
     for (const word of ['try this', 'next time', 'should', 'sorry', 'insight', 'score', 'complete', '→']) {
       expect(copy).not.toContain(word);
     }

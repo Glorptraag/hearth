@@ -17,6 +17,7 @@ import { ConfirmExitRow } from './ConfirmExitRow';
 import { ProposalGroup } from './ProposalGroup';
 import { ReadDraftRow } from './ReadDraftRow';
 import { WorkingFromChip } from './WorkingFromChip';
+import { WatchForNext } from './WatchForNext';
 import { confirmCopy, joinNames } from './confirmCopy';
 
 export type ConfirmSurfaceProps = {
@@ -177,15 +178,22 @@ export function ConfirmSurface({
         <>
           <div className="hearth-reveal flex flex-col gap-md">
             {groups.map((g) => (
-              <ProposalGroup
-                key={g.learnerId}
-                learnerName={g.learnerName}
-                colourToken={g.colourToken}
-                proposals={g.proposals}
-                confirmed={confirmed}
-                busy={busy}
-                onToggle={toggle}
-              />
+              <div key={g.learnerId} className="flex flex-col gap-sm">
+                <ProposalGroup
+                  learnerName={g.learnerName}
+                  colourToken={g.colourToken}
+                  proposals={g.proposals}
+                  confirmed={confirmed}
+                  busy={busy}
+                  onToggle={toggle}
+                />
+                {/* W4.4: a confirmed chip may carry its authored "watch for next". */}
+                {g.proposals
+                  .filter((p) => confirmed.has(p.key))
+                  .map((p) => (
+                    <WatchForNext key={p.key} learnerId={p.learnerId} dloId={p.dloId} threadName={p.threadName} />
+                  ))}
+              </div>
             ))}
           </div>
           <p className="font-sans text-[12px] text-text-muted">{confirmCopy.helper}</p>

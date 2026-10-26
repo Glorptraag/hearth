@@ -72,6 +72,15 @@ export const confirmCopy = {
     error: 'Couldn’t save that. Tap again to retry.',
   },
 
+  /**
+   * "Watch for next" under a confirmed chip (W4.4, D-HC-5). Only the frame is
+   * copy; the lines are authored, human-confirmed notes composed server-side.
+   */
+  watchFor: {
+    overline: (threadName: string) => `Watch for next · ${threadName}`,
+    label: (threadName: string) => `What to watch for next in ${threadName}`,
+  },
+
   attachLink: 'From a module in your library? Link it',
   attached: (title: string) => `Linked to ${title}`,
 

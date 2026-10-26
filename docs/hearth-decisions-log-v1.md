@@ -497,3 +497,156 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 **Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A9), §2 W7.1
 **Date:** 2026-10-19
+
+## Spec chain and Hearth Cycle (21 Oct 2026)
+
+The seven spec-chain documents were committed to `docs/` on 21 Oct 2026: `hearth-spec-chain-README.md`, `hearth-coherent-system-passes-v1.md`, `hearth-launch-pivot-v1.md`, `hearth-pedagogy-layer-v1.md`, `hearth-learning-cycle-v1.md`, `hearth-watch-for-v1.md` and `hearth-cycle-brief-v1.md`. Precedence between them follows `hearth-spec-chain-README.md` (newest wins: watch-for, learning cycle, pedagogy layer, launch pivot, then the notes-architecture base docs; the brief sits above the chain as direction, not build spec). Every ID below is **Proposed** unless marked Decided. P1–P10 were amended and logged as D-LP-1…10 and A1–A9 on the unmerged launch-pivot branch (`claude/hearth-launch-pivot-v1-175462`); they are indexed here, not duplicated. The chain's base docs (`hearth-notes-architecture-v1.md`, `-v2.md`, `hearth-notes-handoff-plan-v1.md`) are absent from the repo, so D-HC-3 governs. The build plan of record is `docs/hearth-cycle-build-plan-v1.md`, which is being written alongside this section.
+
+### D-HC-1 — Build the Hearth Cycle on schedule; postmortem §5 evidence gate overridden
+
+**Decision:** Phase 2 build (HC-2 onward) starts after the expo soak week, regardless of pilot evidence. This explicitly overrides the entry criteria in `docs/hearth-refactor-postmortem-v1.md` §5, which are unmet: 0 captured profiles, and research log R7. The execution rules in postmortem §4 still bind. Compensating controls, in build plan §11:
+- success events land before or with each surface
+- one deliverable per PR, all four CI jobs green
+- a schema runs in production ≥3 days before dependent UI
+- e2e/integration verification, not flags
+- ≥3 persona profiles captured at the expo stand
+- a 27 Jan evidence checkpoint, logged as a decision either way
+- old routes stay behind a flag for a month after a screen-purpose pivot
+
+**Why:** Drew's call, made during the Hearth Cycle planning cycle: the build proceeds on schedule rather than waiting for pilot evidence that the postmortem's entry criteria would require. The override is explicit and the risk is carried by the compensating controls above rather than by the gate.
+
+**Document of record:** `docs/hearth-cycle-build-plan-v1.md` §11.
+**Date:** 2026-10-21
+
+---
+
+### D-HC-2 — Expo message: the record hooks, the Cycle deepens
+
+**Decision:** "Snap · Confirm · Report" and the banner "Any curriculum. Or none. Ready for the HEU." stay the hero of `/expo` (pivot `expoCopy.ts`). Below them sit one Cycle section ("every session makes the next one better"), 4 lesson-pattern cards, a printed stand card and a research card. Copy only, no in-app build. Source copy: `content/expo/hearth-cycle-section.md`. Relates to P1 / D-LP-1 and brief B9.
+
+**Why:** Drew's call, made during the Hearth Cycle planning cycle: the HEU-record message leads at the expo and the Cycle is shown as the deeper layer beneath it, without adding any in-app build to the expo scope.
+
+**Document of record:** `docs/hearth-cycle-build-plan-v1.md` §5 HC-1d.
+**Date:** 2026-10-21
+
+---
+
+### D-HC-3 — Spec-chain nouns map onto existing tables; base docs absent
+
+**Decision:** The notes-architecture base docs exist nowhere (not in `docs/`, any branch or git history). Rather than block, the chain's nouns map onto existing tables, extending pivot A2 ("no new moments tables"):
+
+| Chain noun | Maps to |
+|---|---|
+| Moment | `learning_entries` (+ `created_by_clerk_user_id`, `lookfor`, `outcome`, `rhythm_id`) |
+| moment_links | `observation_dlo_links` ("Saw it" → `asserted` via `confirmProposal()`) |
+| moment_runs | `ai_pipeline_logs` |
+| sessions | `planner_entries`, extended |
+| DLO band | repo tier |
+
+New tables only where nothing exists: `rhythms`, `rhythm_state`, `watch_fors`, `educator_profiles`, `educator_events`, `day_briefs`, `card_events`, `moment_signals`.
+
+**Why:** Drew's call, made during the Hearth Cycle planning cycle: the three base docs are not available, and blocking on them was rejected in favour of mapping the chain's nouns onto what the repo already has, adding tables only where nothing exists.
+
+**Document of record:** `docs/hearth-cycle-build-plan-v1.md` §2.
+**Date:** 2026-10-21
+
+---
+
+### D-HC-4 — Expo build = launch-pivot W0–W8 plus a thin everyday watch-for slice
+
+**Decision:** The pivot build plan (`hearth-launch-pivot-plan-v1.md`, on the pivot branch) stays the expo build. Inside W5.3, the "one watch-for line" becomes each child's composed everyday watch-for: look-for = the confirmed DLO `watchForNext.neutral`, plus the tradition `watchHow` line and per-child lines (WF §3), computed by pure `src/lib/watch/{select,compose}.ts` with zero model calls. "Log it" opens the existing check-in source. The rest of LC §13 / WF §13 expo scope moves to right after the expo: Today/Week, rhythms, conversational log, Plan something, morning cards, educator path.
+
+**Why:** Drew's call, made during the Hearth Cycle planning cycle: keep the pivot plan as the expo build and add only the thinnest slice of the watch-for work that fits inside it, deferring the remaining Cycle surfaces until after the expo.
+
+**Document of record:** `docs/hearth-cycle-build-plan-v1.md` §5 HC-1c.
+**Date:** 2026-10-21
+
+---
+
+### D-HC-5 — DLO watch-for = neutral sign + tradition watchHow; per-DLO variants dropped before deploy
+
+**Decision:** Implement PL D39 and WF D57 early. Drop `watchForNext.variants` from the pivot's DLO schema before its Studio deploy. Re-cut the 50 drafts in `content/dlo-notes/` (pivot) to neutral only. The 24 `watchHow` lines (WF §3.4, `content/traditions/watch-how.yaml`) carry the tradition. Drew's confirm load drops from about 350 texts to about 71.
+
+**Why:** Drew's call, made during the Hearth Cycle planning cycle: neutral DLO notes plus a small set of tradition lines carry the tradition at far lower authoring and confirmation load than per-DLO variants, and dropping the variants before the Studio deploy avoids shipping a schema that would be removed.
+
+**Document of record:** `docs/hearth-cycle-build-plan-v1.md` §5 HC-1a/HC-1b.
+**Date:** 2026-10-21
+
+---
+
+### Index — Proposed — awaiting Drew's confirmation
+
+Source abbreviations: LP = `hearth-launch-pivot-v1.md`, PL = `hearth-pedagogy-layer-v1.md`, LC = `hearth-learning-cycle-v1.md`, WF = `hearth-watch-for-v1.md`, CB = `hearth-cycle-brief-v1.md`.
+
+| ID | Decision (one line) | Source | Status | Repo note |
+|---|---|---|---|---|
+| P1 | Lead with the record, not the method: Hearth turns today into an HEU-accepted record and says what to watch for next. | LP §0 | Proposed in LP; amended and logged as D-LP-1 (pivot branch) | |
+| P2 | Photo Read: one Haiku vision call describes the photo and pre-fills "What happened" as an editable draft; AI may describe, only authored knowledge interprets. | LP §0, §4 | Proposed in LP; amended and logged as D-LP-2 (pivot branch) | A1 supersedes P2/P3 (≤1 call per save, Read post-save) |
+| P3 | Call budget per save: text ≤1, photo ≤2 (Read, then Propose only if Resolve is weak), structured 0. | LP §0 | Proposed in LP; amended and logged as D-LP-3 (pivot branch) | A1 supersedes P2/P3 (≤1 call per save, Read post-save) |
+| P4 | Photo Read is opt-in at the first photo with a one-screen disclosure; GPS stripped client-side, EXIF date kept. | LP §0 | Proposed in LP; amended and logged as D-LP-4 (pivot branch) | |
+| P5 | Exit the curriculum race: no generated curriculum, lesson plans or worksheets at launch; the Shelf is the curriculum strategy. | LP §0 | Proposed in LP; amended and logged as D-LP-5 (pivot branch) | |
+| P6 | "Working from" gains two universal sources: My own plan and An AI-made plan. | LP §0 | Proposed in LP; amended and logged as D-LP-6 (pivot branch) | |
+| P7 | HEU annotated work samples become the hero output: parent's words plus DLO plain-language line plus band sentence, collected per learning area. | LP §0 | Proposed in LP; amended and logged as D-LP-7 (pivot branch) | |
+| P8 | Narrow authored DLO scope to F–Year 3 (ages 4–9) before the expo, prioritised by what photos and Shelf wave 1 hit. | LP §0 | Proposed in LP; amended and logged as D-LP-8 (pivot branch) | |
+| P9 | Cut from launch scope: /ask, cue-suggestion job, coverage admin UI, Hearths in demo, Spark/Servo copy, tranche-3 mapping, Shelf Tier 2, Marketplace, Module Builder, Planner, badges. | LP §0 | Proposed in LP; amended and logged as D-LP-9 (pivot branch) | Planner cut superseded post-expo by C15 |
+| P10 | Constellation stays, simplified, as the visual of the same rows the Report prints: Constellation = what's growing, Report = what's evidenced. | LP §0 | Proposed in LP; amended and logged as D-LP-10 (pivot branch) | |
+| D36 | Two axes on every moment: what (DLO links, tracked and reported) and how (signals, read through the tradition); pedagogy reads only the how axis. | PL §0 | Proposed | |
+| D37 | 17 moment signals are the shared vocabulary between moments and traditions, detected by typed-cue machinery at zero calls; new `knowledgeNote` kind `signal`. | PL §0, §3 | Proposed | |
+| D38 | A tradition note is a full spec across six dimensions: stance, capture ask, stages, signal table, direction rules, balance map. | PL §0 | Proposed | |
+| D39 | DLO notes are neutral only: `variants` removed from DLO and opportunity notes; DLO gains a neutral `showed`. | PL §0 | Proposed | implemented early by D-HC-5 |
+| D40 | The Logger's `said` field becomes `lens`: one per-child prompt worded by the family's tradition; field count stays seven. | PL §0 | Proposed | |
+| D41 | Post-save insight is five fixed blocks in a fixed order, each with exactly one source. | PL §0, §7 | Proposed | "Through your lens" block removed by D53/C16 |
+| D42 | Ongoing direction is seven rule kinds in code, enabled and parameterised per tradition, with authored copy; weekly review and thread `watching` read them. | PL §0, §8 | Proposed | Folded into method turn and week shape by D48 |
+| D43 | Stage is computed from the child's age at the moment and changes weights, readings and holds per tradition. | PL §0 | Proposed | |
+| D44 | Eclectic reads every tradition's table and shows the strongest fit for that moment, named. | PL §0 | Proposed | Refined by D52 (any rhythm can use any method) |
+| D45 | Traditions are described by their methods in Hearth's own words; no source text is quoted or retrieved, and the corpus docs are retired, not demoted. | PL §0 | Proposed | conflicts with the shipped PKB/corpus (#287, #292); needs a formal re-open of C-PL1 / C-PA2; build plan Q-HC-1 |
+| C10 | Remove per-DLO variants entirely; pedagogy reads only the signal axis. | PL §13 | Proposed (default: Proceed) | Taken up early by D-HC-5 |
+| C11 | `said` becomes the tradition-worded `lens` field. | PL §13 | Proposed (default: Proceed) | Session logs follow WF D57/D68; spontaneous capture keeps `lens` |
+| C12 | Signals are removable but not confirmed, and never enter the Report or Constellation. | PL §13 | Proposed (default: Proceed) | |
+| C13 | Readings, moves, holds and rule copy in PL §5 and §8 are a first draft; Drew marks any cell to change. | PL §13 | Proposed (default: Proceed and refine) | |
+| D46 | Three parent-facing notes: Moment (capture), Thread (track, the Constellation), Rhythm (apply); knowledge notes are the authored library underneath. | LC §0 | Proposed | |
+| D47 | Method is the pedagogy unit: a `knowledgeNote` kind defining a unit of work, session, outcome scale, turn table, default cadence and week shape; about 3 per tradition. | LC §0 | Proposed | |
+| D48 | The turn: each outcome maps to actions from a fixed vocabulary of ten and writes the next session, with zero model calls. | LC §0, §4 | Proposed | conflicts with CLAUDE.md Principle 11 and C-PA4 forward-prescription guard; Q-HC-3 |
+| D49 | Logging a rhythm session is one outcome tap per child plus optional note or photo, targeting 20 seconds or less. | LC §0 | Proposed | |
+| D50 | Planning is never a blank page: the week is the set of next sessions the turns have written, laid onto each rhythm's cadence; parents move, skip or add. | LC §0 | Proposed | conflicts with CLAUDE.md Principle 11 and C-PA4 forward-prescription guard; Q-HC-3 |
+| D51 | Each tradition supplies a week shape: checks over the planned week that flag what its method would miss, with a one-tap fix. | LC §0, §6 | Proposed | |
+| D52 | Any rhythm can use any method; Eclectic is a family running methods from more than one tradition, and the family's tradition sets defaults only. | LC §0 | Proposed | |
+| D53 | Spontaneous moments offer attach ("count this as today's nature walk") or branch ("make this a rhythm"); "through your lens" is removed and every next step carries a one-line `why`. | LC §0, §8 | Proposed | |
+| D54 | Rhythms never read the Constellation; sessions with declared targets produce DLO chips that feed it, one direction only. | LC §0, §10 | Proposed | |
+| D55 | Onboarding ends with the family on the cycle: tradition, two or three starter rhythms, source attached, days set, Today populated, in 5 minutes or less. | LC §0, §9 | Proposed | |
+| C14 | Refine the locked principle to: "Logging is the core act. Every log produces the next step; planning is what logging produces, never a blank page." | LC §15 | Proposed (default: Proceed) | rewords CLAUDE.md Architecture Principle 1; Q-HC-2 |
+| C15 | Rhythm becomes the third parent-facing note; Planner and Dashboard are replaced by Today and Week. | LC §15 | Proposed (default: Proceed) | supersedes P9's Planner cut post-expo, per the README conflict table |
+| C16 | Remove the "through your lens" reading; each next step carries a one-line `why` instead. | LC §15 | Proposed (default: Proceed) | |
+| C17 | Onboarding ends with starter rhythms (skippable, but Today nudges until one exists). | LC §15 | Proposed (default: Proceed) | |
+| C18 | Name the third note "Rhythm" (alternatives: Routine, Thread of practice, Line). | LC §15 | Proposed (default: Rhythm) | |
+| D56 | One watch-for per session, targeting one DLO, with a per-child line where children sit at different bands. | WF §0 | Proposed | |
+| D57 | A watch-for is composed, never generated: what = the child's next band on a frontier DLO; how = the tradition's `watchHow` line for the DLO's evidence kind. | WF §0, §3 | Proposed | implemented early by D-HC-5 (with D39) |
+| D58 | Three watch-for scopes: session (rhythm or plan), everyday (one per child, for freeform and play), week (Monday with nothing planned). | WF §0, §3.2 | Proposed | Everyday scope is the D-HC-4 expo slice |
+| D59 | Loose plans are a new session source; a tailored watch-for is built at write time, cue index first with at most one Haiku constrained choice, context phrases only from the plan's own words. | WF §0, §4 | Proposed | |
+| D60 | Morning cards: event-based, shown once on first open of the day, at most 3, from a precomputed day brief; one morning notification on planned days and on empty Mondays, max one per day. | WF §0, §5 | Proposed | 7:00 default vs notification quiet hours ending 7am; Q-HC-9 |
+| D61 | The log is a short authored conversation opening with the watch-for; "Saw it" confirms the DLO link directly with no separate Confirm step for that DLO. | WF §0, §6 | Proposed | compatible with D-LPS-16 (same `confirmProposal()` seam) |
+| D62 | Two loops kept separate: method outcome to rhythm turn (never reads the Constellation), watch-for result to Constellation evidence to next watch-for. | WF §0 | Proposed | |
+| D63 | Educator path: a hidden four-stage model per parent across five strands, computed weekly from recorded behaviour, zero model calls, never shown as a number, level or badge, never demotes. | WF §0, §7 | Proposed | |
+| D64 | No question exists only to measure the parent; every log question has a functional consumer (turn, Constellation or next watch-for). | WF §0 | Proposed | |
+| D65 | Craft notes: new neutral `knowledgeNote` kind for teaching craft; practice notes gain a minimum educator stage; theory depth is gated by stage; cards chosen by relevance, never at random. | WF §0 | Proposed | |
+| D66 | Parent control: a "Teaching help" setting (Keep it simple, Adjusts as you go, Go deeper) with one honest line; starting stage from one onboarding question. | WF §0 | Proposed | |
+| D67 | Quiet mode: after 14 days with no logs, cards drop to the simplest form with no reference to the gap; stage kept; normal density returns after two logs. | WF §0 | Proposed | |
+| D68 | `felt` (mood) is removed from session logs; it survives only as an optional reason chip on "Not today" / "Not yet". | WF §0 | Proposed | session logs only; spontaneous capture keeps felt (Logger v2) |
+| C19 | One DLO per session, with per-child lines when siblings differ, rather than a separate watch-for per child. | WF §15 | Proposed (default: Proceed) | |
+| C20 | "Saw it" on the watch-for counts as confirming that DLO link, with no separate chip. | WF §15 | Proposed (default: Proceed) | |
+| C21 | Remove `felt`/mood from session logs; keep only as a reason on Not today / Not yet. | WF §15 | Proposed (default: Proceed) | |
+| C22 | Advancement thresholds in WF §7.4 are a first draft, tuned after the demo family. | WF §15 | Proposed (default: Proceed and tune) | |
+| C23 | A visible "Teaching help" setting with an honest description, even though the stages stay hidden. | WF §15 | Proposed (default: Proceed) | |
+| C24 | Starting stage from one onboarding question, including "I've taught professionally" mapping to E3. | WF §15 | Proposed (default: Proceed) | |
+| C25 | The parent-move question ("What did you try?") appears from E3, not E2. | WF §15 | Proposed (default: E3) | |
+| B1 | Name: "The Hearth Cycle" is the public umbrella (stages Prepare, Learn, Notice, Turn); "Educator path" stays internal. | CB §0, §13 | Proposed (default: Hearth Cycle) | |
+| B2 | The parent is the primary learner Hearth serves; every surface is judged by whether it makes the parent more capable. | CB §0 | Proposed | |
+| B3 | Content strategy shift: new authoring moves toward teaching craft, lesson patterns and child understanding; existing packs are re-framed as worked examples. | CB §0, §13 | Proposed (default: Proceed) | |
+| B4 | Lesson patterns are a new content type: reusable, philosophy-neutral session structures with watch-for slots, about 10 at launch. | CB §0, §13 | Proposed (default: Proceed) | |
+| B5 | The growth model stays hidden (WF D63); the parent sees only a private, unscored My Teaching view, or no growth view at all. | CB §0, §13 | Proposed (default: My Teaching, opt-in) | My Teaching needs Drew's call |
+| B6 | Community is linked, not a separate destination: threads attach to craft notes, patterns, methods and not-yet signs; open forum later (Phase 3). | CB §0, §13 | Proposed (default: Proceed) | |
+| B7 | Child privacy in community is absolute: nothing from a log, photo or child profile is shared automatically, and posting from a log strips names and photos by default. | CB §0 | Proposed | |
+| B8 | Invited "experienced guides" in community: paid, volunteer, or Hearth team only at first. | CB §13 | Proposed (default: Hearth team + a few volunteers) | |
+| B9 | Expo: show 3–4 lesson patterns on Today cards as "How this session is built". | CB §13 | Proposed (default: Proceed) | Expo handling is D-HC-2 (copy only, no in-app build) |
+
+Confirmations append below as dated successor entries; never edit the rows above.

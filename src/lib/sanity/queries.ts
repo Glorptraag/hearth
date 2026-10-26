@@ -404,6 +404,18 @@ export const WATCH_FOR_NOTES_QUERY = `*[_type == "discreteLearningObjective"
   watchForConfirmedAt
 }`;
 
+// Every confirmed watch-for note (no id filter) — the Dashboard's everyday
+// watch-for picks its frontier DLO from these (HC-1c). About 50 docs at the expo.
+export const WATCH_FOR_CONFIRMED_NOTES_QUERY = `*[_type == "discreteLearningObjective"
+  && !(_id in path("drafts.**"))
+  && defined(watchForConfirmedAt)
+  && defined(watchForNext.neutral)]{
+  "dloId": _id,
+  "watchForNext": { "neutral": watchForNext.neutral },
+  evidenceKind,
+  watchForConfirmedAt
+}`;
+
 // A tradition's confirmed watchHow lines ($pedagogyKey = pedagogicalFramework.slug).
 export const FRAMEWORK_WATCH_HOW_QUERY = `*[_type == "pedagogicalFramework"
   && slug == $pedagogyKey

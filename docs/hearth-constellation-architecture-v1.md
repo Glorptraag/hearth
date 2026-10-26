@@ -95,6 +95,15 @@ Two data quirks worth knowing:
   its labels at a constant screen size, so it works at phone width; the fallback is gone.
   `?view=gallery` links still resolve — `parseView()` maps them onto the constellation.
 
+- **Copy: what's growing (W5.2, D-LP-10, since 2026-10-26).** The Constellation words *growth*;
+  the Report words *evidence*. Headings and helper copy live in
+  `_constellation/constellationCopy.ts`: the header, the depth-1 "What's growing" card
+  (`growingSignals()` in `ConstellationRoute.tsx` counts lit threads active within
+  `RECENT_DAYS`, newly lit within `NEWLY_LIT_DAYS`, `accelerating` at 3+ observations, and
+  opening threads; it no longer prints a "demonstrating N" count), the panel overview and the
+  Explore intro. Each points to the Report (`/our-story/report`) for what's evidenced. Copy
+  rules: never "missing", "behind" or "gap"; "Not yet observed" stays. No evidence rule changed.
+
 ## 2. Dual alpha-suppression seams
 
 One capability thread — **H6, "First Nations Australian Perspectives"** — is held back from

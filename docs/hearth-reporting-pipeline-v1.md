@@ -34,6 +34,7 @@ pipeline consumes), `docs/hearth-canonical-design-tokens-v2.md` (report/portfoli
 | `/api/report/[reportId]/samples/[sampleId]/draft` | `POST` | **AI touchpoint 1** — generate a Haiku annotation draft for the slot's selected entry. |
 | `/api/report/[reportId]/progression` | `POST` | **AI touchpoint 2** — generate a 1–2 sentence early→late progression summary for one subject pair. |
 | `/api/report/coverage` | `GET` | Deterministic (or fallback) curriculum coverage for one learner — thin wrapper over `getDeterministicCoverage`. |
+| `/api/report/annotated-samples` | `GET` | Annotated work samples (W5.1, §5.1) for one learner, grouped per learning area. Read-only; optional `reportId` only tags a sample the parent also chose for a slot. |
 | `/api/report/export` | `GET` | Renders the full compliance PDF (jsPDF + jspdf-autotable) for a learner, tier-branched. |
 | `/api/portfolio/export` | — | Portfolio's own PDF export (separate from the compliance report export; reads the same entry/evidence data as a filtered view). |
 
@@ -221,6 +222,37 @@ Details block (name, age, `config.registrationLabel` value, family name, registr
    section in this branch.
 4. **Areas to Explore** — subjects with `count <= 1`, softer wording than the `cd_level` tier's
    equivalent section.
+
+### 5.1 Annotated work samples (both tiers — W5.1, D-LP-7)
+
+The hero output. Assembled by the pure `assembleAnnotatedSamples()`
+(`src/lib/report/annotated-samples.ts`), loaded by `loadAnnotatedSamples()`
+(`annotated-samples-data.ts`), rendered on screen by
+`src/components/report/AnnotatedSamples.tsx` and in the PDF by
+`src/lib/pdf/annotated-samples.ts` (its own page; `cd_level` after Progression
+Summaries, `learning_area` after the Learning Areas table).
+
+- **What counts:** a `complete` entry for the learner with at least one photo
+  (`learning_entry_evidence` photo rows, else legacy `evidenceUrls`) and at least
+  one **confirmed** DLO. Confirmed = the parent's assertion
+  (`observation_dlo_links.provenance = 'asserted'`, written by the Confirm surface
+  with `observation_id` null) for that (learner, DLO) **and** the entry's own
+  `observed` link for that DLO. An `opportunity` tie, an H6-suppressed thread
+  and a malformed id never count.
+- **What prints:** the entry text and the parent's per-child "noticed" note
+  (parent-owned); the DLO's `coalesce(parentVersion, descriptor)` from
+  `ALL_DLOS_QUERY`, else the authored thread name; an authored band sentence
+  (`BAND_SENTENCE`). Link `rationale` (model text) is never read.
+- **Grouping/order:** per learning area by the entry's first known subject
+  (parent-chosen before detected), canonical subject order, unassigned last;
+  oldest first within an area.
+- **Curation:** read-only beside the six slots. It never fills, reorders or
+  annotates a `workSamples` row; a sample whose entry is also a slot pick carries
+  that slot label. `workSampleAnnotations` stay the slot path's own narrative.
+- **Photos in the PDF:** read server-side with the `/api/evidence` checks
+  (`authorizeEvidenceRef` family prefix, private then public access);
+  JPEG/PNG/WEBP only, ≤ 6 MB, first photo per sample, ≤ 40 per export
+  (`src/lib/pdf/evidence-images.ts`). Anything else prints "Photo kept in Hearth".
 
 ### Shared footer (both tiers)
 

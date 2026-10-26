@@ -114,6 +114,7 @@ export type HearthEvent =
   | 'portfolio_exported'
   | 'logger_proposal_confirmed'
   | 'logger_proposal_cleared'
+  | 'watch_for_viewed'
   | 'logger_attach_opened'
   | 'onboarding_started'
   | 'pedagogy_set'

@@ -18,6 +18,8 @@
  *   - A missing or unknown `evidenceKind` falls back to `does`.
  */
 
+import { isDloReached } from '@/lib/capabilities/next-dlo';
+
 export const EVIDENCE_KINDS = ['does', 'says', 'makes', 'chooses'] as const;
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
@@ -117,4 +119,28 @@ export function composeWatchFor(input: {
     lookFor: fillChild(neutral, child.name),
     how: composeHow(framework, kind, child),
   };
+}
+
+/** A sibling's stored status on the same DLO (null = no evidence yet). */
+export type SiblingStatus = { name: string; status: string | null | undefined };
+
+/**
+ * Per-child lines for siblings on the same DLO (WF §3.1 "where siblings
+ * differ"). Only says what the record holds: a sibling who has shown it, or
+ * one who has been seen at it once. Nothing is said about a sibling with no
+ * evidence — that would be a claim the record can't make.
+ */
+export function composeSiblingLines(
+  tier: 'emerging' | 'developing' | 'demonstrating',
+  siblings: readonly SiblingStatus[],
+): string[] {
+  const lines: string[] = [];
+  for (const s of siblings) {
+    const name = s.name.trim().split(/\s+/)[0];
+    if (!name || s.status == null) continue;
+    lines.push(
+      isDloReached(s.status, tier) ? `${name} already shows this.` : `${name}: seen once so far.`,
+    );
+  }
+  return lines;
 }

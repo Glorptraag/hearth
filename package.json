@@ -23,6 +23,7 @@
     "seed:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/seed-sample-packs/index.ts",
     "generate:audio": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/generate-commons-audio.ts",
     "promote:packs": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs src/scripts/promote-packs/index.ts",
+    "seed:demo": "node node_modules/tsx/dist/cli.mjs scripts/seed-demo-family.ts",
     "seed:shelf": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-shelf.ts",
     "seed:pedagogy:frameworks": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/seed-pedagogy-frameworks.ts",
     "push:knowledge-notes": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs scripts/push-knowledge-notes.ts",

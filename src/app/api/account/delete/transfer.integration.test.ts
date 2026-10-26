@@ -24,7 +24,7 @@ import {
   loggerDrafts,
 } from '@/lib/db/schema';
 import { deleteAccount } from '@/lib/account/delete';
-import { POST } from './route';
+import { GET, POST } from './route';
 import { deleteUser, installAccountDeletionDoubles } from './test-support';
 
 installAccountDeletionDoubles();
@@ -204,5 +204,46 @@ describe('account deletion — transaction + post-commit cleanup', () => {
     expect(logged.some((m) => m.includes('clerk-delete-user'))).toBe(true);
     expect(logged.some((m) => m.includes('blob-delete'))).toBe(true);
     errorSpy.mockRestore();
+  });
+});
+
+describe('GET /api/account/delete — preview matches what POST does', () => {
+  it('forecasts the same successor the POST then promotes, and writes nothing', async () => {
+    const { ownerId, family } = await ownedFamily();
+    await addMember(family.id, 'viewer', 1);
+    const editor = await addMember(family.id, 'editor', 5);
+
+    asUser({ userId: ownerId });
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.outcome).toBe('ownership_transferred');
+    expect(body.successor).toEqual({ email: editor.email, role: 'editor' });
+
+    // Read-only: the family is still the caller's.
+    const [still] = await db.select().from(families).where(eq(families.id, family.id));
+    expect(still.clerkUserId).toBe(ownerId);
+
+    const post = await deleteAs(ownerId);
+    expect((await post.json()).outcome).toBe('ownership_transferred');
+    const [after] = await db.select().from(families).where(eq(families.id, family.id));
+    expect(after.clerkUserId).toBe(editor.clerkUserId);
+  });
+
+  it('forecasts family_deleted for a sole owner and member_removed for a co-facilitator', async () => {
+    const { ownerId, family } = await ownedFamily();
+    asUser({ userId: ownerId });
+    expect((await (await GET()).json()).outcome).toBe('family_deleted');
+
+    const member = await addMember(family.id, 'editor', 1);
+    // Member owns nothing, so for them deletion only removes their own access.
+    asUser({ userId: member.clerkUserId! });
+    expect((await (await GET()).json()).outcome).toBe('member_removed');
+  });
+
+  it('is 401 when signed out', async () => {
+    const { asSignedOut } = await import('@/test/clerk-helpers');
+    asSignedOut();
+    expect((await GET()).status).toBe(401);
   });
 });

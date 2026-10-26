@@ -8,6 +8,7 @@ import PedagogySelector from '@/components/settings/PedagogySelector';
 import { PedagogyProfilePanel } from '@/components/settings/PedagogyProfilePanel';
 import { PedagogyLearnMore } from '@/components/settings/PedagogyLearnMore';
 import { PedagogyWizard, type PedagogyWizardResult } from '@/components/pedagogy/PedagogyWizard';
+import AccountDelete from '@/components/settings/AccountDelete';
 import ReportingFields from '@/components/settings/ReportingFields';
 import { getJurisdiction } from '@/config/jurisdictions';
 import NotificationPreferences from '@/components/settings/NotificationPreferences';
@@ -32,32 +33,6 @@ import { PEDAGOGIES, type Pedagogy } from '@/types';
 import { track } from '@/lib/analytics/posthog';
 
 function AccountSecurityPanel() {
-  const [showDelete, setShowDelete] = useState(false);
-  const [confirmation, setConfirmation] = useState('');
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleDelete() {
-    if (confirmation !== 'DELETE MY ACCOUNT') return;
-    setDeleting(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/account/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation }),
-      });
-      if (res.ok) {
-        window.location.href = '/sign-in';
-      } else {
-        const data = await res.json();
-        setError(data.error ?? 'Deletion failed');
-      }
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-md">
       <div>
@@ -84,50 +59,7 @@ function AccountSecurityPanel() {
         </button>
       </div>
 
-      {/* Danger zone */}
-      <div className="mt-lg rounded-[10px] border border-red-900/30 bg-red-900/10 p-lg">
-        <h3 className="font-sans text-sm font-semibold text-red-400">Danger Zone</h3>
-        <p className="mt-sm font-sans text-sm text-text-secondary">
-          Deleting your account permanently removes all family data, learning entries, portfolio evidence, badge awards, and planner history. This cannot be undone.
-        </p>
-        {!showDelete ? (
-          <button
-            onClick={() => setShowDelete(true)}
-            className="mt-md rounded-[6px] border border-red-900/30 bg-red-900/20 px-md py-sm font-sans text-sm font-semibold text-red-400 transition hover:bg-red-900/30"
-          >
-            Delete account
-          </button>
-        ) : (
-          <div className="mt-md flex flex-col gap-sm">
-            <p className="font-sans text-xs text-red-400">
-              Type <strong>DELETE MY ACCOUNT</strong> to confirm:
-            </p>
-            <input
-              type="text"
-              value={confirmation}
-              onChange={(e) => setConfirmation(e.target.value)}
-              placeholder="DELETE MY ACCOUNT"
-              className="w-full rounded-[6px] border border-red-900/30 bg-surface-raised px-md py-sm font-mono text-sm text-text-primary placeholder:text-text-muted focus:border-red-400 focus:outline-none"
-            />
-            {error && <p className="font-sans text-xs text-red-400">{error}</p>}
-            <div className="flex gap-sm">
-              <button
-                onClick={handleDelete}
-                disabled={confirmation !== 'DELETE MY ACCOUNT' || deleting}
-                className="rounded-[6px] bg-red-600 px-md py-sm font-sans text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-40"
-              >
-                {deleting ? 'Deleting...' : 'Permanently delete'}
-              </button>
-              <button
-                onClick={() => { setShowDelete(false); setConfirmation(''); setError(null); }}
-                className="rounded-[6px] border border-border-subtle px-md py-sm font-sans text-sm text-text-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <AccountDelete />
     </div>
   );
 }

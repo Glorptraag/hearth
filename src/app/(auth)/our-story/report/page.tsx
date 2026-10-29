@@ -18,6 +18,8 @@ type ReportIconC = ComponentType<{ size?: number; weight?: 'regular' | 'fill' }>
 import WorkSampleCuration from '@/components/report/WorkSampleCuration';
 import ProgressionConnector from '@/components/report/ProgressionConnector';
 import CoverageInContext from '@/components/report/CoverageInContext';
+import AnnotatedSamples from '@/components/report/AnnotatedSamples';
+import type { AnnotatedSampleGroup } from '@/lib/report/annotated-samples';
 import { getJurisdiction } from '@/config/jurisdictions';
 import { track } from '@/lib/analytics/posthog';
 import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
@@ -124,6 +126,10 @@ const SUBJECT_DOMAIN_CLASSES: Record<string, { bar: string; pill: string; border
   languages:    { bar: 'bg-domain-languages',     pill: 'bg-domain-languages/15 text-domain-languages',       border: 'border-t-domain-languages' },
 };
 
+const SUBJECT_DOMAIN_PILLS: Record<string, string> = Object.fromEntries(
+  Object.entries(SUBJECT_DOMAIN_CLASSES).map(([key, { pill }]) => [key, pill]),
+);
+
 type WorkSampleSlot = {
   id: number;
   slotKey: string;
@@ -173,6 +179,9 @@ export default function ReportPage() {
   // Deterministic curriculum coverage (WS-5). `null` until fetched, or whenever
   // the framework has no authored mappings → render stays exactly as today.
   const [coverage, setCoverage] = useState<CoverageResponse | null>(null);
+  // Annotated work samples (W5.1). Keyed by learner so switching child never
+  // shows the previous child's samples while the next fetch is in flight.
+  const [annotated, setAnnotated] = useState<{ learnerId: string; groups: AnnotatedSampleGroup[] } | null>(null);
 
   const config = useMemo(() => getJurisdiction(settings?.state ?? null), [settings?.state]);
   const isCdLevel = config.reportTier === 'cd_level';
@@ -253,6 +262,28 @@ export default function ReportPage() {
       })
       .catch(() => setCoverage(null));
   }, [selectedLearnerId]);
+
+  // Annotated work samples (W5.1) — read-only. reportId only tags a sample the
+  // parent also chose for a required slot. A failed fetch renders the empty
+  // copy rather than an error: the rest of the report stands on its own.
+  const reportIdForSamples = report?.learnerId === selectedLearnerId ? report.id : null;
+  useEffect(() => {
+    if (!selectedLearnerId) return;
+    let cancelled = false;
+    const qs = new URLSearchParams({ learnerId: selectedLearnerId });
+    if (reportIdForSamples) qs.set('reportId', reportIdForSamples);
+    fetch(`/api/report/annotated-samples?${qs.toString()}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { groups?: AnnotatedSampleGroup[] } | null) => {
+        if (cancelled) return;
+        setAnnotated({ learnerId: selectedLearnerId, groups: Array.isArray(data?.groups) ? data.groups : [] });
+      })
+      .catch(() => {
+        if (!cancelled) setAnnotated({ learnerId: selectedLearnerId, groups: [] });
+      });
+    return () => { cancelled = true; };
+  }, [selectedLearnerId, reportIdForSamples]);
+  const annotatedGroups = annotated?.learnerId === selectedLearnerId ? annotated.groups : null;
 
   // Timeline
   const dueDateStr = settings?.nextReportDate ?? null;
@@ -485,6 +516,17 @@ export default function ReportPage() {
           coverageFrame={vocab.coverageFrame}
           subjectLabels={SUBJECT_LABELS}
           isCdLevel={isCdLevel}
+        />
+      )}
+
+      {/* Annotated work samples (W5.1) — the hero output: the parent's words,
+          the confirmed objective and its band, grouped per learning area.
+          Both tiers; the same samples print in the PDF. */}
+      {entries.length > 0 && (
+        <AnnotatedSamples
+          groups={annotatedGroups}
+          learnerName={learners.find((l) => l.id === selectedLearnerId)?.name ?? 'Your child'}
+          domainPill={SUBJECT_DOMAIN_PILLS}
         />
       )}
 

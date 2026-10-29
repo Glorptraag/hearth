@@ -1,0 +1,86 @@
+{
+  "batch": 1,
+  "source": "docs/hearth-dlo-notes-targets-v1.md",
+  "notes": [
+    {
+      "dloId": "dlo.L2.developing",
+      "thread": "L2 Phonological Awareness & Decoding",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Short words may start to come out whole instead of sound by sound, and letter pairs like 'sh', 'ch' and 'st' stop being a stumbling block. You might also hear their reading voice begin to follow the story, not just the letters."
+      }
+    },
+    {
+      "dloId": "dlo.M2.developing",
+      "thread": "M2 Operations & Computation",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Small sums may start arriving without fingers or counting, and you might hear a shortcut explained out loud, such as 'seven and three make ten, so seven and five is twelve'. Some children also begin checking a take-away by adding it back."
+      }
+    },
+    {
+      "dloId": "dlo.L3.developing",
+      "thread": "L3 Reading Comprehension",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might start to hear comparisons between books, like 'this is like the other dragon story', and questions about why the author chose something. Some children also begin to notice when they've lost the thread and flick back a page to find it."
+      }
+    },
+    {
+      "dloId": "dlo.L6.developing",
+      "thread": "L6 Handwriting & Text Production",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Writing may begin to keep pace with their thoughts, so a sentence gets finished before the idea slips away. You might also see the first joins between letters, or hear a request to learn 'running writing'."
+      }
+    },
+    {
+      "dloId": "dlo.M1.developing",
+      "thread": "M1 Number Sense & Place Value",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Numbers may start to be pulled apart in more than one way, like hearing 38 as 30 and 8, or as 20 and 18. You might also notice them checking whether an answer looks about right before they say it."
+      }
+    },
+    {
+      "dloId": "dlo.S5.developing",
+      "thread": "S5 Scientific Observation",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might see them wanting to record what they notice, with a quick drawing, a photo or a few words, and coming back later to compare. Listen too for 'I saw...' being kept apart from 'I think...'."
+      }
+    },
+    {
+      "dloId": "dlo.C5.developing",
+      "thread": "C5 Visual Expression & Design",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Pictures may start to carry a feeling or a story, not just a subject, with colours and sizes chosen on purpose. You might also notice a style that's recognisably theirs, or hear them explain why they drew something the way they did."
+      }
+    },
+    {
+      "dloId": "dlo.C6.emerging",
+      "thread": "C6 Design & Construction",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might notice a plan appearing before the build, either a quick drawing or a clear 'I'm going to make...'. Watch too for testing what they've made and changing it when it doesn't work, like a bridge that keeps falling over."
+      }
+    },
+    {
+      "dloId": "dlo.M5.emerging",
+      "thread": "M5 Measurement Sense",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Comparing may turn into measuring: counting how many cups fill the jug, or how many hand spans long the table is. You might also hear them notice that a measure only works if every cup or step is the same size."
+      }
+    },
+    {
+      "dloId": "dlo.L9.emerging",
+      "thread": "L9 Literary Response & Appreciation",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Reactions may start to come with reasons, like 'I didn't like it when the wolf tricked them', pointing to a particular part of the story. You might also hear them wondering why a character did something, or recommending a book to someone else."
+      }
+    }
+  ]
+}

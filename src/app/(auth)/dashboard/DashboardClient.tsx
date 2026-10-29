@@ -10,6 +10,10 @@ import EmptyState from '@/components/ui/EmptyState';
 import { JurisdictionBanner } from '@/components/ui/JurisdictionBanner';
 import HearthDashboardCard from '@/components/hearth/HearthDashboardCard';
 import HearthNoticed, { type NoticedItem } from '@/components/dashboard/HearthNoticed';
+import WatchForCards from '@/components/dashboard/WatchForCards';
+import ChipsToConfirm from '@/components/dashboard/ChipsToConfirm';
+import type { EverydayWatchFor } from '@/lib/watch/everyday';
+import type { ChipsToConfirmEntry } from '@/lib/dashboard/chips-to-confirm';
 import { LEARNER_COLOUR_MAP } from '@/components/ui/LearnerAvatar';
 import { PackIndicators } from '@/components/ui/PackIndicators';
 import { sanityClient } from '@/lib/sanity/client';
@@ -93,6 +97,10 @@ interface DashboardClientProps {
   hasMissingNarrative?: boolean;
   /** Freshest insights across children, from each child's snapshot feed. */
   noticed?: NoticedItem[];
+  /** Each child's everyday watch-for, composed server-side (W5.3, HC-1c). */
+  watchFors?: EverydayWatchFor[];
+  /** Recent moments with chips the parent hasn't confirmed yet (W5.3). */
+  chipsToConfirm?: ChipsToConfirmEntry[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -245,6 +253,8 @@ export default function DashboardClient({
   hearths,
   hasMissingNarrative = false,
   noticed = [],
+  watchFors = [],
+  chipsToConfirm = [],
 }: DashboardClientProps) {
   // Fire a debounced background snapshot rebuild when any child has a stale
   // monthly narrative. The endpoint itself enforces a 24h debounce so a
@@ -374,6 +384,12 @@ export default function DashboardClient({
 
         {/* Hearth noticed — the enrichment's insights, carried forward */}
         <HearthNoticed items={noticed} basePath={basePath} />
+
+        {/* Watch for — one everyday line per child (W5.3, HC-1c) */}
+        <WatchForCards items={watchFors} basePath={basePath} />
+
+        {/* To confirm — chips on recent moments not yet confirmed (W5.3) */}
+        <ChipsToConfirm entries={chipsToConfirm} basePath={basePath} />
 
         {/* Your Learners */}
         {learners.length > 0 && (
@@ -540,6 +556,7 @@ export default function DashboardClient({
                           key={entry.id}
                           entry={entry}
                           learners={learners}
+                          href={`${basePath}/our-story/portfolio#entry-${entry.id}`}
                         />
                       )
                     )}
@@ -669,9 +686,11 @@ export default function DashboardClient({
 function MomentCard({
   entry,
   learners,
+  href,
 }: {
   entry: LearningEntry;
   learners: Learner[];
+  href: string;
 }) {
   const entryLearners = learners.filter((l) =>
     entry.learnerIds?.includes(l.id)
@@ -679,7 +698,10 @@ function MomentCard({
   const isTogether = entryLearners.length > 1;
 
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] cursor-pointer hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
+    <Link
+      href={href}
+      data-testid="moment-card"
+      className="group relative block min-w-0 overflow-hidden rounded-[16px] border border-border-subtle bg-surface-panel p-xl shadow-card transition duration-[var(--motion-gentle)] ease-[var(--ease-default)] hover:-translate-y-[2px] hover:border-border-medium hover:shadow-hover">
       {/* Ember top-line on hover */}
       <div className="absolute left-0 right-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--color-ember),transparent)] opacity-0 transition-opacity duration-[var(--motion-gentle)] group-hover:opacity-100" />
 
@@ -728,7 +750,7 @@ function MomentCard({
           ))}
         </div>
       )}
-    </div>
+    </Link>
   );
 }
 

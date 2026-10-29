@@ -1,0 +1,86 @@
+{
+  "batch": 5,
+  "source": "docs/hearth-dlo-notes-targets-v1.md",
+  "notes": [
+    {
+      "dloId": "dlo.EF1.developing",
+      "thread": "EF1 Sustained Attention & Focus",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might notice longer stretches of deep focus, half an hour or more on a build or a book, when something has really caught them. Watch too for them managing their own attention, like moving somewhere quieter or asking a sibling to wait."
+      }
+    },
+    {
+      "dloId": "dlo.EF3.developing",
+      "thread": "EF3 Memory & Recall",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might hear connections across subjects, like 'that's like the pyramids we read about' while building a sandcastle. Watch too for little memory tricks of their own, such as a rhyme or a made-up song to remember something."
+      }
+    },
+    {
+      "dloId": "dlo.C1.emerging",
+      "thread": "C1 Narrative & Storytelling",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might notice a problem appearing in their stories, like the dragon stealing the cake, and then a way it gets solved. Watch too for characters with their own personalities, and for the same story told with toys, drawings and words."
+      }
+    },
+    {
+      "dloId": "dlo.M6.emerging",
+      "thread": "M6 Spatial Reasoning & Geometry",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear them counting the corners and sides of shapes, and naming solid shapes like cubes, cones and cylinders in the pantry or the toy box. Watch too for a triangle recognised even when it's upside down."
+      }
+    },
+    {
+      "dloId": "dlo.M6.developing",
+      "thread": "M6 Spatial Reasoning & Geometry",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might see them working out what a box looks like flattened out, or picturing how a shape will look turned around before they try it. Watch too for shapes grouped with a reason, like 'these all have a square face'."
+      }
+    },
+    {
+      "dloId": "dlo.M7.emerging",
+      "thread": "M7 Data & Statistical Thinking",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear them asking their own counting questions, like 'what's everyone's favourite fruit?', and keeping track with tally marks. Watch too for a simple chart or picture graph made to show what they found."
+      }
+    },
+    {
+      "dloId": "dlo.C7.emerging",
+      "thread": "C7 Digital Creation",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might see the tablet used to make something rather than watch something, such as a short stop-motion film, a slideshow or a drawing with layers. Watch too for step-by-step instructions given to a person or a toy robot, and for a step fixed when it goes wrong."
+      }
+    },
+    {
+      "dloId": "dlo.PS7.emerging",
+      "thread": "PS7 Digital Citizenship",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might notice family screen rules followed without a reminder, and the device put down when the agreed time is up. Watch too for them coming to tell you when something online feels strange or uncomfortable."
+      }
+    },
+    {
+      "dloId": "dlo.L5.developing",
+      "thread": "L5 Written Expression",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might see a little planning before writing, like a list of ideas or a quick sketch of the story's parts. Watch too for writing shaped for a reader, like a joke saved for the end, or a sentence changed because 'it sounds better this way'."
+      }
+    },
+    {
+      "dloId": "dlo.C3.emerging",
+      "thread": "C3 Poetic & Rhythmic Expression",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear rhymes and silly sound words being invented, not just repeated, like 'the busy buzzy bee went zoom'. Watch too for a favourite poem said with its rhythm and expression, or a poem made up on the spot."
+      }
+    }
+  ]
+}

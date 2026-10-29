@@ -1,8 +1,8 @@
 /**
  * The H6 alpha-suppression contract, pinned in one place: the module itself
- * plus every pure parent-facing seam that consumes it (keyword matcher,
- * post-save nudge, constellation topology, deterministic coverage, portfolio
- * thread grouping). The snapshot-write and capabilities-API seams are covered
+ * plus every pure parent-facing seam that consumes it (post-save nudge,
+ * post-save proposals, constellation topology, deterministic coverage,
+ * portfolio thread grouping). The snapshot-write and capabilities-API seams are covered
  * at the integration layer (capabilities route.integration.test.ts).
  */
 import { describe, it, expect } from 'vitest';
@@ -12,7 +12,6 @@ import {
   filterSuppressedThreadIds,
   omitSuppressedKeys,
 } from './capability-alpha-suppression';
-import { matchKeywords, generateReflectionPrompts } from '@/lib/ai/keyword-matcher';
 import { TemplateNudgeProvider } from '@/lib/logger/coaching/nudge-provider';
 import {
   ALL_THREADS,
@@ -23,6 +22,7 @@ import {
 } from '@/app/(auth)/our-story/capabilities/_constellation/topology';
 import { rollupCoverage, deriveCoverageSignals } from '@/lib/report/deterministic-coverage';
 import { topThreadId, threadGroupName, UNCATEGORIZED_GROUP } from '@/lib/portfolio/thread-grouping';
+import { deriveProposals } from '@/lib/logger/proposals';
 
 describe('capability-alpha-suppression module', () => {
   it('suppresses H6 in every id form the pipeline uses', () => {
@@ -57,33 +57,6 @@ describe('capability-alpha-suppression module', () => {
 
   it('documents the current suppression set', () => {
     expect(ALPHA_SUPPRESSED_THREAD_IDS).toEqual(['H6']);
-  });
-});
-
-describe('keyword matcher seam', () => {
-  it('never emits a suppressed thread even when its keywords match', () => {
-    // 'cultural' and 'tradition' are H6 keywords; 'reading' hits L3.
-    const result = matchKeywords('We explored a cultural tradition and did some reading', []);
-    expect(result.threads).not.toContain('H6');
-    expect(result.threads).toContain('L3');
-    // Subject detection is untouched — HASS still matches on 'tradition'.
-    expect(result.subjects).toContain('HASS');
-  });
-
-  it('gap-linked reflection prompts skip suppressed quiet threads', () => {
-    // activityType 'outing' maps to H1/H3/H6/S6; only H6 is quiet → no
-    // H6-based gap prompt may render, so no prompt mentions culture & identity.
-    const prompts = generateReflectionPrompts({
-      match: null,
-      descriptionLength: 100,
-      observations: [],
-      activityType: 'outing',
-      engagementByName: {},
-      discoveryByName: {},
-      snapshotSignals: { perChild: { 'learner-1': { quiet: ['H6'], active: [] } } },
-      learnerNamesById: { 'learner-1': 'Sage' },
-    });
-    expect(prompts.every((p) => !p.id.includes('H6'))).toBe(true);
   });
 });
 
@@ -163,16 +136,34 @@ describe('deterministic coverage seam', () => {
   });
 });
 
-describe('post-save top-thread seam', () => {
-  it('the first NON-suppressed thread wins the post-save line', () => {
-    // Mirrors PostSaveSurface's pick: enrichment may rank H6 first (evidence
-    // preserved), but the parent-facing line takes the next thread.
-    const threads = [
-      { thread_id: 'H6', confidence: 0.9 },
-      { thread_id: 'S5', confidence: 0.7 },
-    ];
-    const top = threads.find((t) => !isSuppressedThread(t.thread_id));
-    expect(top?.thread_id).toBe('S5');
+describe('post-save proposals seam', () => {
+  const learners = [{ id: 'learner-1', name: 'Sage', colourToken: null }];
+
+  it('a suppressed DLO never becomes a Confirm chip; the next thread does', () => {
+    const chips = deriveProposals(
+      {
+        status: 'enriched',
+        per_child_signals: {},
+        discrete_learning_objectives: [
+          { dlo_id: 'dlo.H6.emerging', tier: 'emerging', confidence: 0.9 },
+          { dlo_id: 'dlo.S5.developing', tier: 'developing', confidence: 0.7 },
+        ],
+      },
+      learners,
+    );
+    expect(chips.map((c) => c.threadId)).toEqual(['S5']);
+  });
+
+  it('an entry whose only DLO is suppressed proposes nothing', () => {
+    const chips = deriveProposals(
+      {
+        status: 'enriched',
+        per_child_signals: {},
+        discrete_learning_objectives: [{ dlo_id: 'dlo.H6.emerging', tier: 'emerging', confidence: 0.9 }],
+      },
+      learners,
+    );
+    expect(chips).toEqual([]);
   });
 });
 

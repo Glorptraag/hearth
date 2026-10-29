@@ -1,0 +1,86 @@
+{
+  "batch": 2,
+  "source": "docs/hearth-dlo-notes-targets-v1.md",
+  "notes": [
+    {
+      "dloId": "dlo.L2.emerging",
+      "thread": "L2 Phonological Awareness & Decoding",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear them playing with sounds, like 'c-a-t, cat!' or 'what starts with mmm?', and pairing letters with the sounds they make, not just their names. Some children start spotting a familiar short word on a page or a sign."
+      }
+    },
+    {
+      "dloId": "dlo.M2.emerging",
+      "thread": "M2 Operations & Computation",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Instead of counting everything from one, you might notice them starting from the bigger number and counting on. Watch too for a few small sums, like doubles, being known without needing to count."
+      }
+    },
+    {
+      "dloId": "dlo.M1.emerging",
+      "thread": "M1 Number Sense & Place Value",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear counting start from a number other than one, or run backwards like a rocket launch. Watch too for a guess at 'how many' before counting, and for interest in numbers past twenty."
+      }
+    },
+    {
+      "dloId": "dlo.L6.emerging",
+      "thread": "L6 Handwriting & Text Production",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Letters may start to settle into a steadier size and sit along an imagined line. Watch too for small gaps appearing between words, and for writing beyond their own name, like a label or a sibling's name."
+      }
+    },
+    {
+      "dloId": "dlo.L5.emerging",
+      "thread": "L5 Written Expression",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "A label may grow into a sentence, and one sentence into two or three that follow on from each other. You might also notice describing words creeping in, like 'the huge, scary dog'."
+      }
+    },
+    {
+      "dloId": "dlo.S5.emerging",
+      "thread": "S5 Scientific Observation",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might notice them stopping to look closely without being asked, and pointing out more than one thing at once: the colour, the legs, the way it moves. Watch too for 'it's different from last time' about a plant or puddle they've seen before."
+      }
+    },
+    {
+      "dloId": "dlo.S2.emerging",
+      "thread": "S2 Living Systems",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Questions may move from 'is it alive?' to 'what does it turn into?', with an interest in eggs, seeds and caterpillars. You might also see them sorting creatures or plants by what they have in common, such as legs, wings or shells."
+      }
+    },
+    {
+      "dloId": "dlo.L4.emerging",
+      "thread": "L4 Spelling & Word Knowledge",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Spelling may start to follow patterns, such as cat, hat and mat, and common words like 'the' and 'said' come out right more often. You might also see them pause, frown at a word, and try it another way."
+      }
+    },
+    {
+      "dloId": "dlo.H1.emerging",
+      "thread": "H1 Historical Thinking & Chronology",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Questions about the past may grow bigger, like 'did they have cars when Nan was little?'. You might also notice events put in order beyond their own life, and wondering about how people lived long ago."
+      }
+    },
+    {
+      "dloId": "dlo.C6.developing",
+      "thread": "C6 Design & Construction",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Builds may start to be made for someone, a ramp for a little sibling or a box that a toy actually fits in, with that person in mind. You might also hear them weighing up choices, like 'taller looks better but it keeps falling'."
+      }
+    }
+  ]
+}

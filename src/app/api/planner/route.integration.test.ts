@@ -3,7 +3,7 @@
  *
  * A planner entry created from a Suggested / Browse-Library pick must keep its
  * moduleId (and activityId, subjects) so ModuleCard can link to the runner and
- * the dashboard can show today's subjects (G27/G28, R38).
+ * the dashboard can show today's subjects (G27/G28, R41).
  */
 import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';

@@ -20,7 +20,7 @@ export function AttachToModuleModal({
 }: {
   entryId: string;
   onClose: () => void;
-  onAttached?: (moduleId: string) => void;
+  onAttached?: (moduleId: string, title?: string) => void;
 }) {
   const [modules, setModules] = useState<LibraryModuleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ export function AttachToModuleModal({
         setError(`Couldn't attach (${res.status})`);
         return;
       }
-      onAttached?.(moduleId);
+      onAttached?.(moduleId, modules.find((m) => m.id === moduleId)?.title);
       onClose();
     } catch {
       setError('Network error — please try again');

@@ -39,6 +39,12 @@ export interface EnrichmentPollCallbacks {
    */
   onEnrichment: (enrichment: AiEnrichment) => void;
   /**
+   * The whole fetched entry, before `onEnrichment` on the same fetch. Lets the
+   * Confirm surface read the columns that land with enrichment (the Photo
+   * Read's `readOutput`, `description`, `draftedBy`) without a second request.
+   */
+  onEntry?: (entry: Record<string, unknown>) => void;
+  /**
    * Resolve the surface after the loop ends (terminal or timeout). The call
    * site no-ops when the entry already reached a terminal state.
    */
@@ -91,13 +97,14 @@ export async function pollEntryEnrichment(
     try {
       const res = await fetchImpl(`/api/entries/${entryId}`, { signal: controller.signal });
       if (!res.ok) continue;
-      const body = (await res.json()) as { aiEnrichment?: AiEnrichment | null };
+      const body = (await res.json()) as { aiEnrichment?: AiEnrichment | null } & Record<string, unknown>;
       const enrichment = body?.aiEnrichment;
       if (!enrichment) continue;
       // Re-check the guard — the parent may have started a new entry while the
       // fetch was in flight.
       if (!cb.isCurrent()) break;
 
+      cb.onEntry?.(body);
       cb.onEnrichment(enrichment);
 
       // Keep polling while pending (the row exists but enrichment hasn't

@@ -1,8 +1,8 @@
 /**
- * Integration test for /api/account/delete — exercises auth → owner-only
- * guard → confirmation phrase → cascade delete against a real Neon test
- * branch. The cascade is the load-bearing piece: every family-scoped table
- * must end up empty after a successful delete.
+ * Integration test for /api/account/delete — exercises auth → confirmation
+ * phrase → delete against real Postgres. Exhaustive FK coverage lives in
+ * orphan-tables.integration.test.ts; ownership transfer (D1) in
+ * transfer.integration.test.ts.
  *
  * Note on rate limiting: the route's `rateLimit()` keeps an in-memory
  * bucket per userId. With `isolate: false`, that map persists across test
@@ -33,6 +33,9 @@ import {
 } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { POST } from './route';
+import { deleteUser, installAccountDeletionDoubles } from './test-support';
+
+installAccountDeletionDoubles();
 
 function jsonReq(body: unknown) {
   return new NextRequest('http://x/api/account/delete', {
@@ -67,8 +70,9 @@ describe('POST /api/account/delete — real DB', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 403 when caller is a member but not the owner', async () => {
-    // Owner is one user; the editor calling delete is another.
+  it('removes only the caller when they are a co-facilitator, not the owner', async () => {
+    // Owner is one user; the editor calling delete is another. Since D1 the
+    // editor may delete their own account — but never the family.
     const ownerId = `user_${randomUUID()}`;
     const editorId = `user_${randomUUID()}`;
     const family = await createFamily(db, { clerkUserId: ownerId });
@@ -82,11 +86,21 @@ describe('POST /api/account/delete — real DB', () => {
 
     asUser({ userId: editorId });
     const res = await POST(jsonReq({ confirmation: 'DELETE MY ACCOUNT' }));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ deleted: true, outcome: 'member_removed' });
 
-    // Family must still exist after the rejected delete.
     const stillThere = await db.select().from(families).where(eq(families.id, family.id));
     expect(stillThere).toHaveLength(1);
+    expect(stillThere[0].clerkUserId).toBe(ownerId);
+    expect(await db.select().from(familyMembers).where(eq(familyMembers.familyId, family.id))).toHaveLength(0);
+    expect(deleteUser).toHaveBeenCalledWith(editorId);
+  });
+
+  it('returns 404 when the caller has no family', async () => {
+    asUser({ userId: `user_${randomUUID()}` });
+    const res = await POST(jsonReq({ confirmation: 'DELETE MY ACCOUNT' }));
+    expect(res.status).toBe(404);
+    expect(deleteUser).not.toHaveBeenCalled();
   });
 
   it('cascade-deletes every family-scoped row on the happy path', async () => {
@@ -98,8 +112,8 @@ describe('POST /api/account/delete — real DB', () => {
 
     const res = await POST(jsonReq({ confirmation: 'DELETE MY ACCOUNT' }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { deleted: boolean };
-    expect(body.deleted).toBe(true);
+    const body = (await res.json()) as { deleted: boolean; outcome: string };
+    expect(body).toEqual({ deleted: true, outcome: 'family_deleted' });
 
     // Every table the route deletes from must be empty for this familyId
     // (or learnerId). Loop them so a missed table surfaces immediately.
@@ -120,5 +134,6 @@ describe('POST /api/account/delete — real DB', () => {
     expect(await db.select().from(aiPipelineLogs).where(eq(aiPipelineLogs.familyId, familyId))).toHaveLength(0);
     expect(await db.select().from(badgeAwards).where(eq(badgeAwards.learnerId, learnerId))).toHaveLength(0);
     expect(await db.select().from(badgeAssessmentLogs).where(eq(badgeAssessmentLogs.learnerId, learnerId))).toHaveLength(0);
+    expect(deleteUser).toHaveBeenCalledWith(userId);
   });
 });

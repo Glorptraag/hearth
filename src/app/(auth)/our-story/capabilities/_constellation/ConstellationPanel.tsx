@@ -19,6 +19,7 @@ import {
   type GraphNode,
 } from './graph-model';
 import { ORDERED_DOMAINS, TIER_LABEL, type LearnerSnapshot } from './topology';
+import { REPORT_HREF, constellationCopy } from './constellationCopy';
 
 const PROVENANCE_LABEL: Record<string, string> = {
   inferred: 'Hearth noticed',
@@ -47,9 +48,16 @@ function Overview({ name, litThreads, totalThreads }: { name: string; litThreads
   return (
     <>
       <div>
-        <div className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Reading the sky</div>
+        <div className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-text-muted">{constellationCopy.overviewHeading}</div>
         <p className="mt-xs font-serif text-text-primary">
           <span className="font-semibold">{litThreads}</span> of {totalThreads} threads lit for {name}.
+        </p>
+        <p className="mt-xs font-serif text-sm text-text-secondary">
+          {constellationCopy.overviewGrowth} {constellationCopy.overviewReportLead}{' '}
+          <Link href={REPORT_HREF} className="font-sans font-medium text-ember hover:text-ember-hover transition-colors">
+            {constellationCopy.overviewReportLink}
+          </Link>
+          .
         </p>
       </div>
       <ul className="flex flex-col gap-sm font-sans text-[0.78rem] text-text-secondary">

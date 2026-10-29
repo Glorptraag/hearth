@@ -25,7 +25,7 @@ Save these as a browser folder. The five seconds spent typing them mid-incident 
 
 | Switch | Effect | How |
 |---|---|---|
-| `DRAFT_INSIGHTS_ENABLED=false` | Kills the live Logger draft-insight stream. Write-time enrichment still runs; entries are unaffected. | Vercel → Project → Settings → Environment Variables → flip → Redeploy (~1 min) |
+| ~~`DRAFT_INSIGHTS_ENABLED=false`~~ | **Retired 2026-10-07** — the Logger draft-insight endpoint (`/api/entries/draft-insight`) and coach-hints endpoint (`/api/logger/coach-hints`) were deleted in the Notice → Confirm rebuild (D-LPS-14); the only Claude call on the Logger path is write-time `enrichEntry`. The env var is inert; remove it from Vercel when convenient. | — |
 | `NEXT_PUBLIC_DISABLE_SW=1` | Unregisters the service worker and drops its caches on every client's next load. Reach for this if a deploy leaves users on stale assets or a broken shell. **Note:** a shipped worker outlives the deploy that shipped it, so rolling back alone does NOT remove it — you need this flag. | Vercel → Settings → Environment Variables → set → Redeploy |
 | Roll back a bad deploy | Reverts prod to a known-good build | Vercel → Deployments → pick the previous green build → "Promote to Production" |
 | Pause a noisy cron | Stops `/api/admin/retention` or `/api/admin/invitations/expire` from firing | Vercel → Project → Settings → Crons → Pause |

@@ -13,6 +13,8 @@ import { getDeterministicCoverage } from '@/lib/report/coverage';
 import { descriptorToSubject } from '@/lib/report/deterministic-coverage';
 import { derivePosture, POSTURE_LABEL, subjectActivityLabel } from '@/lib/report/coverage-narrative';
 import { resolveExportSlotData } from '@/lib/report/export-slots';
+import { loadAnnotatedSamples } from '@/lib/report/annotated-samples-data';
+import { loadSampleImages, renderAnnotatedSamples } from '@/lib/pdf/annotated-samples';
 
 const SUBJECT_CONFIG: Record<string, { label: string; emoji: string }> = {
   english: { label: 'English', emoji: '📖' },
@@ -83,6 +85,18 @@ export const GET = routeHandler(async (request: NextRequest) => {
   // silently scored against QLD's mappings here.
   const coverage = await getDeterministicCoverage({ learnerId, state: settings?.state ?? null });
   const isDeterministic = coverage.mode === 'deterministic';
+
+  // Annotated work samples (W5.1): photo + parent-confirmed DLO entries,
+  // grouped per learning area. Read-only beside the six persisted slots; the
+  // reportId only tags a sample the parent also chose for a slot. Photos are
+  // read server-side under the same family-ownership check as /api/evidence.
+  const annotatedGroups = await loadAnnotatedSamples({
+    familyId: family.id,
+    learnerId,
+    learnerName: learner.name,
+    reportId: request.nextUrl.searchParams.get('reportId'),
+  });
+  const annotatedImages = await loadSampleImages(annotatedGroups, family.id);
 
   // Subject coverage
   const entryCounts: Record<string, number> = {};
@@ -406,6 +420,14 @@ export const GET = routeHandler(async (request: NextRequest) => {
       y += 4;
     }
 
+    // Annotated work samples — the parent's words + confirmed objective + band.
+    y = renderAnnotatedSamples(doc, {
+      groups: annotatedGroups,
+      images: annotatedImages,
+      learnerName: learner.name,
+      startY: y,
+    });
+
     // Areas to round out — opportunities, framed gently (no "Critical"/severity).
     const gaps = subjectCoverage.filter((s) => s.count <= 1);
     if (gaps.length > 0) {
@@ -478,6 +500,15 @@ export const GET = routeHandler(async (request: NextRequest) => {
     });
 
     y = doc.lastAutoTable.finalY + 10;
+
+    // Annotated work samples — the parent's words + confirmed objective + band,
+    // grouped per learning area, ahead of the full per-area entry lists.
+    y = renderAnnotatedSamples(doc, {
+      groups: annotatedGroups,
+      images: annotatedImages,
+      learnerName: learner.name,
+      startY: y,
+    });
 
     // Portfolio sections — entries grouped by learning area
     const areasWithEntries = subjectCoverage.filter((s) => s.count > 0);

@@ -301,4 +301,13 @@ Drew's read of the Gallery: "underwhelming and visualised terribly" — each dep
 
 ---
 
-*Next entry: R38. Append below; never edit above.*
+### R38 — Code audit (2026-10-22): planner entries picked from Suggested or the Library lost their module.
+
+The Weekly Planner's bottom sheet called `onAdd({ date, title, learnerIds, session })` for every pick, so an entry chosen from Suggested or Browse Library was saved title-only even though `POST /api/planner` accepts `moduleId`. ModuleCard links to `/module/[id]?plannerEntryId=…` only when `moduleId` is set, so planned modules could not open the runner, no `plannerEntryId` provenance reached the Logger, and `planner_entry_created` always reported `has_module: false`. Separately, the dashboard projected today's planner entries without `subjects`, so the "Today's subjects" pips never rendered (and the sheet never sent subjects anyway). Found during Hearth Cycle planning (build-plan gaps G27/G28).
+**Spec affected:** `Hearth_System_Interaction_Map.md` Planner → Runner → Logger; architecture principle 1 (forward planning supported, never primary — but it must hand off to the runner when used).
+**Regression test:** `src/components/planner/BottomSheet.test.tsx` (Suggested and Library picks carry `moduleId`; a pack row is never passed off as a module; Custom stays title-only); `src/app/api/planner/route.integration.test.ts` (`moduleId` / `activityId` / `subjects` persist; title-only leaves them null).
+**Fix:** the sheet passes `moduleId` and `subjects` from the picked item (Library uses `sanityModuleId`, since pack rows reuse `moduleId` for the pack id); the dashboard passes `subjects` through. Neither pick source carries an `activityId` today, so none is sent. **Date logged:** 2026-10-22.
+
+---
+
+*Next entry: R39. Append below; never edit above.*

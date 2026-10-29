@@ -103,18 +103,13 @@ export async function createLoggerDraft(
   }
 ) {
   const draftData: LoggerDraft = {
-    description: 'Draft in progress',
-    selectedLearners: [],
-    discoveries: {},
-    activityType: null,
-    lessonSubjects: [],
-    engagement: {},
-    whenDate: 'today',
-    duration: null,
-    location: null,
-    observations: [],
+    v: 2,
+    learnerIds: [],
+    text: 'Draft in progress',
+    dateOccurred: null,
+    felt: {},
+    noticed: {},
     evidence: [],
-    observationDetails: {},
     savedAt: 1_700_000_000_000,
     ...args.draftData,
   };

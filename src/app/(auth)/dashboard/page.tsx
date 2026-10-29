@@ -20,6 +20,13 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Lifebuoy } from '@/components/icons';
 import DashboardClient from './DashboardClient';
 import { collectNoticed } from '@/components/dashboard/HearthNoticed';
+import { isExpoScope } from '@/lib/launch-scope';
+import { sanityFetch } from '@/lib/sanity/server-fetch';
+import { FRAMEWORK_WATCH_HOW_QUERY, WATCH_FOR_CONFIRMED_NOTES_QUERY } from '@/lib/sanity/queries';
+import type { DloWatchNote, FrameworkWatchHow } from '@/lib/watch/compose';
+import { buildEverydayWatchFors, type EverydayWatchFor } from '@/lib/watch/everyday';
+import { buildChipsToConfirm, type ChipsToConfirmEntry } from '@/lib/dashboard/chips-to-confirm';
+import { loadDashboardEvidence } from '@/lib/dashboard/evidence';
 
 function DashboardErrorState() {
   return (
@@ -56,10 +63,13 @@ export default async function DashboardPage() {
         .where(eq(learningEntries.familyId, family.id))
         .orderBy(desc(learningEntries.dateOccurred), desc(learningEntries.createdAt))
         .limit(5),
-      db
-        .select()
-        .from(plannerEntries)
-        .where(and(eq(plannerEntries.familyId, family.id), eq(plannerEntries.date, today))),
+      // Expo scope cuts the Planner (W7.1), so its cards stay off the Dashboard too.
+      isExpoScope()
+        ? Promise.resolve([] as Array<typeof plannerEntries.$inferSelect>)
+        : db
+            .select()
+            .from(plannerEntries)
+            .where(and(eq(plannerEntries.familyId, family.id), eq(plannerEntries.date, today))),
       db
         .select()
         .from(learners)
@@ -194,6 +204,54 @@ export default async function DashboardPage() {
     weekStats: snapshotData.weekStats,
     recommendations: snapshotData.recommendations,
   };
+  // W5.3 + HC-1c: everyday watch-for per child and chips still to confirm.
+  // Computed here from learner_dlo_status + confirmed Sanity notes — zero model
+  // calls, no snapshot change. Either section degrades to nothing on failure.
+  let watchFors: EverydayWatchFor[] = [];
+  let chipsToConfirm: ChipsToConfirmEntry[] = [];
+  if (familyLearners.length > 0) {
+    const extras = await safeLoad('dashboard:watch-for', async () => {
+      const evidence = await loadDashboardEvidence(familyLearners.map((l) => l.id));
+      let notes: DloWatchNote[] = [];
+      let framework: FrameworkWatchHow | null = null;
+      try {
+        [notes, framework] = await Promise.all([
+          sanityFetch<DloWatchNote[]>(WATCH_FOR_CONFIRMED_NOTES_QUERY),
+          sanityFetch<FrameworkWatchHow | null>(FRAMEWORK_WATCH_HOW_QUERY, { pedagogyKey: pedagogy }),
+        ]);
+      } catch (err) {
+        console.error('[dashboard] watch-for Sanity read failed:', err);
+      }
+      const proposalLearners = familyLearners.map((l) => ({ id: l.id, name: l.name, colourToken: l.colourToken ?? null }));
+      return {
+        watchFors: buildEverydayWatchFors({
+          learners: familyLearners.map((l) => ({
+            id: l.id,
+            name: l.name,
+            colourToken: l.colourToken ?? null,
+            dateOfBirth: l.dateOfBirth ?? null,
+          })),
+          statusRowsByLearner: evidence.statusRowsByLearner,
+          notes: Array.isArray(notes) ? notes : [],
+          framework,
+          threadLogCounts14d: evidence.threadLogCounts14d,
+        }),
+        chipsToConfirm: buildChipsToConfirm(
+          recentEntries.map((e) => ({
+            id: e.id,
+            title: e.title,
+            dateOccurred: e.dateOccurred,
+            learnerIds: e.learnerIds?.map(String) ?? null,
+            aiEnrichment: e.aiEnrichment,
+          })),
+          proposalLearners,
+          evidence.assertedKeys,
+        ),
+      };
+    });
+    if (extras.ok) ({ watchFors, chipsToConfirm } = extras.data);
+  }
+
   const noticed = collectNoticed(
     familyLearners.map((l) => ({ id: l.id, name: l.name, insights: snapshotData.children?.[l.id]?.recent_insights })),
   );
@@ -203,6 +261,8 @@ export default async function DashboardPage() {
       familyName={family.familyName}
       snapshot={clientSnapshot}
       noticed={noticed}
+      watchFors={watchFors}
+      chipsToConfirm={chipsToConfirm}
       recentEntries={recentEntries.map((e) => ({
         id: e.id,
         title: e.title,
@@ -217,6 +277,7 @@ export default async function DashboardPage() {
         title: p.title ?? null,
         status: p.status ?? null,
         moduleId: p.moduleId ?? null,
+        subjects: p.subjects ?? null,
       }))}
       learners={familyLearners.map((l) => ({
         id: l.id,

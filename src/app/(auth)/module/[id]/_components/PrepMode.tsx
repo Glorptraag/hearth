@@ -33,6 +33,11 @@ export default function PrepMode({
 }) {
   const approach = module.approaches?.[approachIdx];
   const activities = approach?.activities ?? [];
+  // Defensive: a capabilityThread ref that doesn't resolve (a dangling ref to a
+  // deleted/unpublished thread, or a tokenless read) derefs to null, leaving null
+  // elements here. Drop them so the .map below can't crash on a null `.title`
+  // (Sentry HEARTH-9). See the DEREF-EXISTENCE GUARD note in src/lib/sanity/queries.ts.
+  const threads = (module.capabilityThreads ?? []).filter(Boolean);
   const firstActivityMaterials = activities[0]?.materials ?? [];
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
@@ -292,9 +297,9 @@ export default function PrepMode({
         <p className="font-serif text-base text-text-primary leading-relaxed mb-md">
           {module.targetUnderstanding}
         </p>
-        {module.capabilityThreads && module.capabilityThreads.length > 0 && (
+        {threads.length > 0 && (
           <div className="flex flex-wrap gap-xs">
-            {module.capabilityThreads.map((thread) => (
+            {threads.map((thread) => (
               <span
                 key={thread._id}
                 className="font-sans text-[11px] text-text-muted bg-surface-raised rounded-full px-sm py-xs border border-border-subtle"

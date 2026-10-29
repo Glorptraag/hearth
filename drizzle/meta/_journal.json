@@ -218,6 +218,13 @@
       "when": 1791331200000,
       "tag": "0030_logger_context",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792000000000,
+      "tag": "0031_photo_read",
+      "breakpoints": true
     }
   ]
 }

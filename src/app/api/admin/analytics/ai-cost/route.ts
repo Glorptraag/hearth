@@ -11,6 +11,9 @@ import { priceFor } from '@/config/ai-pricing';
  * Splits draft (`%-draft` model_used suffix) from full enrichment so the
  * draft-insight kill-switch threshold ($3/family/month, see deployment
  * runbook §3) is observable separately from write-time enrichment spend.
+ * Enrichment calls that carried Photo Read images log `model_used` with a
+ * `-read` suffix (enrich.ts READ_MODEL_SUFFIX); they count as full enrichment
+ * and surface as their own model row, so the image cost is visible per family.
  *
  * Pricing is model-aware and lives in `src/config/ai-pricing.ts` —
  * `priceFor(model)` resolves any `model_used` value to per-Mtok rates.

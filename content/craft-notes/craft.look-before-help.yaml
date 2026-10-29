@@ -1,0 +1,20 @@
+# Craft note · E1 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2 ("watch ten seconds before helping").
+id: craft.look-before-help
+kind: craft
+strand: notice         # actually seeing what the child does before stepping in (WF §7.1)
+stage: E1
+card: try
+tradition: neutral
+title: "Watch for ten seconds before you help"
+body: "When they get stuck, count to ten before stepping in. Watch what they try. Often they find a way, and if they don't, you'll know exactly where to help."
+why:
+  short: "What they try when stuck shows you where the learning is."
+relates:
+  dlos: []
+  practices: [unschool.stay-available, montessori.observe-then-add]
+  methods: [montessori.practical-life]
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

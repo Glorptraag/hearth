@@ -1,5 +1,5 @@
 /**
- * Integration tests for Hearth session photo privacy (research log R38).
+ * Integration tests for Hearth session photo privacy (research log R42).
  *
  * Real Postgres via transaction-rollback isolation; blob storage stays mocked.
  * Session photos are children's photos shared across families, so:

@@ -1,0 +1,27 @@
+# Craft note · E2 · draft. title, body, why.short and strand are verbatim from the worked
+# example in docs/hearth-watch-for-v1.md §8.1.
+# Trigger: copied from the same §8.1 example. It derives from WF §7.7 row 1 (same not-yet sign x2
+# on one DLO). That row's first choice is the sign's own `respond` practice; this note is the
+# fallback when the sign has no respond practice. Flagged for Drew.
+# why.deeper is omitted on purpose: it belongs to the E3+ `understand` card (§7.7 last row).
+id: craft.wait-time
+kind: craft
+strand: notice
+stage: E2
+card: try
+tradition: neutral
+title: "Count to five before you help"
+body: "After you ask a question, count to five in your head before you say anything. Most children answer in the gap."
+why:
+  short: "Thinking takes a moment; filling the silence takes the thinking away."
+relates:
+  dlos: []
+  practices: [cm.read-once]
+  methods: [cm.living-book, montessori.presentation]
+trigger:
+  - { kind: notyet-repeat, count: 2, days: 14 }
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

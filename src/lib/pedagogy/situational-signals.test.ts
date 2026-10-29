@@ -7,7 +7,18 @@ import {
   CHIP_SIGNALS,
   ACTIVITY_TYPE_ALIASES,
 } from './situational-signals';
-import { OBSERVATION_CATEGORIES, ACTIVITY_TYPES } from '@/app/(auth)/log/_components/loggerConstants';
+
+// The Logger chip vocabulary as it was persisted to `logger_context` before the
+// Notice → Confirm rebuild (D-LPS-14) removed the chips from the form. Rows
+// saved in that window still carry these labels, so the mapping must keep
+// covering them. Frozen here because the form's catalog was deleted with it.
+const LEGACY_OBSERVATION_CHIPS = [
+  'Deeply focused', 'Curious', 'Enthusiastic', 'Reluctant at first', 'Easily distracted', 'Self-directed',
+  'Worked alone', 'Collaborated', 'Led others', 'Asked for help', 'Taught someone', 'Negotiated / compromised',
+  'Asked questions', 'Tried alternatives', 'Persisted through difficulty', 'Made connections', 'Self-corrected', 'Explained reasoning',
+  'Proud of work', 'Joyful', 'Calm & settled', 'Frustrated → resolved', 'Surprised / delighted', 'Confident',
+];
+const LEGACY_ACTIVITY_KEYS = ['nature', 'cooking', 'reading', 'art', 'physical', 'social', 'structured', 'freeplay'];
 
 type TagRegistry = Record<string, { category: string }>;
 const tags: TagRegistry = JSON.parse(
@@ -24,14 +35,13 @@ describe('situational-signals — vocabulary contract', () => {
     expect(wrongCategory).toEqual([]);
   });
 
-  it('every Logger observation chip has a mapping entry (or an explicit decision not to)', () => {
-    const chips = OBSERVATION_CATEGORIES.flatMap((c) => c.chips);
-    const unmapped = chips.filter((c) => !(c in CHIP_SIGNALS));
+  it('every legacy Logger observation chip has a mapping entry (or an explicit decision not to)', () => {
+    const unmapped = LEGACY_OBSERVATION_CHIPS.filter((c) => !(c in CHIP_SIGNALS));
     expect(unmapped).toEqual([]);
   });
 
-  it('every Logger activity-type key has an activityType alias', () => {
-    const missing = ACTIVITY_TYPES.map((a) => a.key).filter((k) => !(k in ACTIVITY_TYPE_ALIASES));
+  it('every legacy Logger activity-type key has an activityType alias', () => {
+    const missing = LEGACY_ACTIVITY_KEYS.filter((k) => !(k in ACTIVITY_TYPE_ALIASES));
     expect(missing).toEqual([]);
   });
 });

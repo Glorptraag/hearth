@@ -2,13 +2,12 @@
    Layered on top of globals.css tokens. No new tokens introduced. */
 
 .cap-route {
-  --edge-opacity: 0.12;
   --ghost-duration: 2.2s;
   --ghost-min: 0.3;
   --ghost-max: 0.6;
 }
 
-/* ----- Ghost pulse (Opening Up threads) ----- */
+/* ----- Ghost pulse (opening-up nodes) ----- */
 @keyframes cap-ghost-pulse {
   0%, 100% { opacity: var(--ghost-min, 0.3); }
   50%      { opacity: var(--ghost-max, 0.6); }
@@ -32,80 +31,144 @@
   animation: cap-stage-enter var(--motion-gentle, 400ms) var(--ease-default, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
-/* ----- Gallery atmospheric background ----- */
-.cap-gallery {
-  background:
-    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(217, 123, 58, 0.04), transparent 70%),
-    radial-gradient(ellipse 50% 60% at 80% 70%, rgba(217, 123, 58, 0.03), transparent 70%),
-    var(--color-surface-panel);
-  position: relative;
-  overflow: hidden;
+/* ----- Constellation graph (ConstellationGraph.tsx) -----
+   World units scale with zoom like Obsidian's graph; labels and strokes are
+   counter-scaled by --cg-k (the camera zoom, written by the painter) so they
+   stay legible at any zoom. data-zoom (far | mid | near) fades labels in as
+   the parent zooms, Obsidian's "text fade threshold". */
+.cg-svg {
+  --cg-k: 1;
+  display: block;
+  width: 100%;
+  height: clamp(360px, 62vh, 720px);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.cap-gallery::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.025;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  border-radius: inherit;
-}
-.cap-gallery-svg { display: block; width: 100%; height: auto; }
+.cg-svg:active { cursor: grabbing; }
 
-/* ----- Edges in SVG ----- */
-.cap-edge {
-  fill: none;
-  stroke: var(--color-text-secondary);
-  stroke-width: 1;
-  opacity: var(--edge-opacity, 0.12);
-  transition: opacity var(--motion-quick) var(--ease-default), stroke-width var(--motion-quick) var(--ease-default);
+.cg-link {
+  stroke: var(--color-text-muted);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.28;
+  transition: opacity var(--motion-quick) var(--ease-default), stroke var(--motion-quick) var(--ease-default);
 }
-.cap-edge.cross-domain {
-  stroke-dasharray: 4 4;
-  opacity: calc(var(--edge-opacity, 0.12) * 0.7);
-}
-.cap-edge.highlighted {
-  opacity: 0.7;
-  stroke-width: 1.6;
-  stroke: var(--color-ember);
-}
+.cg-link-part-of { opacity: 0.18; }
+.cg-link-next { opacity: 0.22; }
+.cg-link.is-cross { stroke-dasharray: 3 4; }
+/* A constellation line: both ends lit. */
+.cg-link.is-lit { stroke: var(--color-text-secondary); opacity: 0.55; }
+.cg-svg.has-highlight .cg-link { opacity: 0.05; }
+.cg-svg.has-highlight .cg-link.is-hl { stroke: var(--color-ember); opacity: 0.85; }
 
-/* ----- Nodes ----- */
-.cap-node {
+.cg-node {
   cursor: pointer;
-  transition: filter var(--motion-quick) var(--ease-default), transform var(--motion-quick) var(--ease-default);
-  transform-origin: center;
+  outline: none;
+  /* The global press scale shrinks the star about its own centre. */
   transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity var(--motion-quick) var(--ease-default);
 }
-.cap-node:hover { filter: brightness(1.2); }
-.cap-node.selected { filter: drop-shadow(0 0 8px var(--color-ember-strong)); }
-
-.cap-node-label {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  fill: var(--color-text-secondary);
-  pointer-events: none;
-  text-anchor: middle;
+.cg-svg.has-highlight .cg-node:not(.is-hl):not(.is-apex) { opacity: 0.16; }
+.cg-hit { fill: transparent; }
+.cg-dot { transition: opacity var(--motion-quick) var(--ease-default); }
+.cg-node.is-unlit .cg-dot { opacity: 0.38; }
+.cg-node.is-opening .cg-dot {
+  fill: transparent;
+  stroke-width: 1.4px;
+  vector-effect: non-scaling-stroke;
 }
-.cap-node-label-active { fill: var(--color-text-primary); }
-.cap-node-label-ghost  { fill: var(--color-text-muted); }
+.cg-domain.is-lit .cg-dot { filter: brightness(1.08); }
+.cg-ring-growth {
+  fill: none;
+  stroke: var(--color-sage);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.75;
+}
+.cg-badge-earned { fill: var(--color-sage); }
+.cg-badge-near {
+  fill: none;
+  stroke: var(--color-ember);
+  stroke-width: 1.2px;
+  vector-effect: non-scaling-stroke;
+}
+/* Focus / selection / apex ring — ember: something is happening here. */
+.cg-ring-focus {
+  fill: none;
+  stroke: var(--color-ember);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transition: opacity var(--motion-quick) var(--ease-default);
+}
+.cg-node:hover .cg-ring-focus { opacity: 0.45; }
+.cg-node.is-selected .cg-ring-focus,
+.cg-node.is-apex .cg-ring-focus,
+.cg-node:focus-visible .cg-ring-focus { opacity: 1; }
 
-/* ----- Band labels ----- */
-.cap-band-label {
+.cg-label {
   font-family: var(--font-serif);
-  font-size: 14px;
+  font-size: calc(11px / var(--cg-k));
+  fill: var(--color-text-secondary);
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--color-surface-panel);
+  stroke-width: calc(3px / var(--cg-k));
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity var(--motion-quick) var(--ease-default);
+}
+.cg-label-side {
+  text-anchor: start;
+  dominant-baseline: central;
+}
+.cg-domain .cg-label {
+  font-size: calc(13px / var(--cg-k));
   font-weight: 600;
   fill: var(--color-text-primary);
+  opacity: 1;
 }
-.cap-band-meta {
+.cg-thread.is-lit .cg-label { fill: var(--color-text-primary); }
+.cg-objective .cg-label,
+.cg-moment .cg-label { font-size: calc(10px / var(--cg-k)); font-style: italic; }
+/* Fade-in by zoom: lit threads from mid zoom, everything up close. */
+.cg-svg[data-zoom="mid"] .cg-thread.is-lit .cg-label,
+.cg-svg[data-zoom="near"] .cg-thread .cg-label,
+.cg-svg[data-zoom="near"] .cg-objective:not(.is-unlit) .cg-label { opacity: 1; }
+/* A telescope is small enough to name everything in it. */
+.cg-svg[data-mode="telescope"] .cg-label { opacity: 1; }
+.cg-svg[data-mode="telescope"][data-zoom="far"] .cg-objective .cg-label { opacity: 0; }
+/* Whatever is lit by hover / selection / search is always named. */
+.cg-svg.has-highlight .cg-node.is-hl .cg-label,
+.cg-node.is-apex .cg-label,
+.cg-node:focus-visible .cg-label { opacity: 1; }
+.cg-svg.has-highlight .cg-node:not(.is-hl):not(.is-apex) .cg-label { opacity: 0; }
+
+/* Telescope guides: the cone's field, its edges, one ring per link of reach. */
+.cg-cone-field {
+  fill: var(--color-text-primary);
+  opacity: 0.025;
+}
+.cg-cone-edge,
+.cg-ring {
+  fill: none;
+  stroke: var(--color-text-muted);
+  opacity: 0.4;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 2 6;
+}
+.cg-ring-label {
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  fill: var(--color-text-muted);
-  text-transform: uppercase;
+  font-size: calc(10px / var(--cg-k));
   letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--color-text-muted);
 }
 
 /* ----- Filter chips ----- */
@@ -152,25 +215,9 @@
   animation: cap-pulse-soft 2s ease-in-out infinite;
 }
 
-/* SVG badge marks (gallery view, per-thread overlays) */
-.cap-badge-mark-approaching circle {
-  animation: cap-pulse-soft 2s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-/* Keyboard focus indicators on interactive SVG groups */
-.cap-interactive { outline: none; }
-.cap-interactive:focus-visible {
-  outline: 2px solid var(--color-ember);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
 /* Reduced motion — zero all motion */
 @media (prefers-reduced-motion: reduce) {
   .cap-ghost,
   .cap-stage,
-  .cap-badge-mark-approaching circle,
   .cap-badge-approaching::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; }
 }

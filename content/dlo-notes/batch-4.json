@@ -1,0 +1,86 @@
+{
+  "batch": 4,
+  "source": "docs/hearth-dlo-notes-targets-v1.md",
+  "notes": [
+    {
+      "dloId": "dlo.L2.demonstrating",
+      "thread": "L2 Phonological Awareness & Decoding",
+      "tier": "demonstrating",
+      "watchForNext": {
+        "neutral": "Reading may start to happen silently, with lips still and eyes moving faster than a voice could keep up. You might also see longer books picked up by choice, with tricky words worked out mid-sentence without breaking the flow."
+      }
+    },
+    {
+      "dloId": "dlo.M1.demonstrating",
+      "thread": "M1 Number Sense & Place Value",
+      "tier": "demonstrating",
+      "watchForNext": {
+        "neutral": "You might hear rounding used for a quick estimate, like 'about three hundred people', and curiosity about really big numbers, such as how long a million seconds would take. Some children also start asking about the numbers between whole numbers, like two and a half on a ruler."
+      }
+    },
+    {
+      "dloId": "dlo.M4.developing",
+      "thread": "M4 Algebraic Thinking & Patterns",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might see a box or a question mark used to stand for a mystery number, and a pattern's rule described clearly enough to predict the tenth step without drawing them all. Watch too for step-by-step instructions written for someone else to follow."
+      }
+    },
+    {
+      "dloId": "dlo.S2.developing",
+      "thread": "S2 Living Systems",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might hear questions about why a creature is built the way it is, like why a frog's legs are so long or how a gecko climbs walls. Watch too for noticing how living things depend on each other, and how people's actions can help or harm them."
+      }
+    },
+    {
+      "dloId": "dlo.S3.emerging",
+      "thread": "S3 Earth & Environmental Systems",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear questions about where rain comes from or where puddles go, and interest in different kinds of rocks, sand and soil. Watch too for them noticing weather patterns, like afternoon storms in summer."
+      }
+    },
+    {
+      "dloId": "dlo.S4.emerging",
+      "thread": "S4 Physical & Chemical Sciences",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear them linking what something is made of to what it's for, like 'the cup is plastic so it won't break'. Watch too for noticing which changes can be undone, like ice melting back to water, and which can't, like a cake that can never be batter again."
+      }
+    },
+    {
+      "dloId": "dlo.C5.emerging",
+      "thread": "C5 Visual Expression & Design",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might see pictures with a clear subject start to gather details: fingers on hands, windows on houses, a sun with a face. Watch too for a material chosen on purpose, like 'I want paint for the sky'."
+      }
+    },
+    {
+      "dloId": "dlo.P2.developing",
+      "thread": "P2 Fine Motor & Manipulation",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might see more intricate jobs taken on, like threading a needle, tying shoelaces or building a tiny model, with the patience to finish. Watch too for pressure adjusted to suit the tool, lighter for a pencil sketch and firmer for a crayon."
+      }
+    },
+    {
+      "dloId": "dlo.H3.emerging",
+      "thread": "H3 Geography & Environmental Awareness",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might see maps appearing in play: the backyard, the way to the park, a treasure hunt marked with an X. Watch too for comparisons between places, like how the beach is different from the bush, and for noticing how people have changed a place."
+      }
+    },
+    {
+      "dloId": "dlo.L9.developing",
+      "thread": "L9 Literary Response & Appreciation",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might hear them notice that two different stories are really about the same thing, like being brave or being left out. Watch too for comments on how the author made them feel something, such as 'the short sentences made it scary'."
+      }
+    }
+  ]
+}

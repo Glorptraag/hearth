@@ -39,10 +39,11 @@ entry save (Log)
         goes through the authed proxy, per project convention)
       — builds a LearnerSnapshot via buildSnapshotFromApi() → topology.ts buildSnapshot()
   → ConstellationRoute.tsx (src/app/(auth)/our-story/capabilities/_constellation/)
-      — owns view mode (table/gallery/explore), drill depth (1–4: domains →
+      — owns view mode (constellation/table/explore), drill depth (1–4: domains →
         threads → DLOs → moments), URL sync, and the DLO confirm/dispute
         optimistic-update loop (POST /api/capabilities/[learnerId]/dlo/[dloId]/confirm)
-      — renders TableView / GalleryView / ExploreView per current view+depth
+      — renders ConstellationGraph / TableView / ExploreView per current view+depth
+        (the linked graph is the default view; see §6)
 ```
 
 Key files:
@@ -56,7 +57,9 @@ Key files:
 | Page (data fetch + orchestration) | `src/app/(auth)/our-story/capabilities/page.tsx` |
 | Route shell (view/depth/URL state, confirm loop) | `src/app/(auth)/our-story/capabilities/_constellation/ConstellationRoute.tsx` |
 | Pure data-shaping helpers (thread DAG, tier glyphs, DLO building) | `src/app/(auth)/our-story/capabilities/_constellation/topology.ts` |
-| Depth-specific render surfaces | `TableView.tsx`, `GalleryView.tsx`, `ExploreView.tsx` (same directory) |
+| Graph model (nodes, links, telescope reach, relations) | `_constellation/graph-model.ts` |
+| Force layout (springs, repulsion, collision, cone) | `_constellation/force-layout.ts` |
+| Render surfaces | `ConstellationGraph.tsx` + `ConstellationPanel.tsx` (the linked graph, §6), `TableView.tsx`, `ExploreView.tsx` (same directory) |
 
 Two data quirks worth knowing:
 
@@ -86,9 +89,20 @@ Two data quirks worth knowing:
 - **Deep links.** `?focus=` accepts a real Sanity DLO id (`dlo.L3.emerging`, the shape the
   URL sync writes at depth 4) via `parseFocus()`; the old parser only understood `L3.e`, so
   reloading a depth-4 view rendered an empty stage.
-- **Phones get the Table.** Below 640px the Gallery option is hidden and a requested Gallery
-  view renders as Table (`useNarrowViewport`): the fixed-viewBox SVGs render their 11px
-  labels at roughly 3px on a 375px phone.
+- **Phones get the graph too (since 2026-10-21).** The retired Gallery was a fixed-viewBox
+  SVG whose 11px labels rendered at ~3px on a 375px phone, so phones were forced onto the
+  Table (`useNarrowViewport`, now deleted). The linked graph pans and pinch-zooms and draws
+  its labels at a constant screen size, so it works at phone width; the fallback is gone.
+  `?view=gallery` links still resolve — `parseView()` maps them onto the constellation.
+
+- **Copy: what's growing (W5.2, D-LP-10, since 2026-10-26).** The Constellation words *growth*;
+  the Report words *evidence*. Headings and helper copy live in
+  `_constellation/constellationCopy.ts`: the header, the depth-1 "What's growing" card
+  (`growingSignals()` in `ConstellationRoute.tsx` counts lit threads active within
+  `RECENT_DAYS`, newly lit within `NEWLY_LIT_DAYS`, `accelerating` at 3+ observations, and
+  opening threads; it no longer prints a "demonstrating N" count), the panel overview and the
+  Explore intro. Each points to the Report (`/our-story/report`) for what's evidenced. Copy
+  rules: never "missing", "behind" or "gap"; "Not yet observed" stays. No evidence rule changed.
 
 ## 2. Dual alpha-suppression seams
 
@@ -206,7 +220,10 @@ tunable starting point — it is not what the constellation honours.
 | DLO evidence route | `src/app/api/capabilities/[learnerId]/dlo-evidence/route.integration.test.ts` | Evidence drill-down endpoint |
 | Capabilities page (data orchestration) | `src/app/(auth)/our-story/capabilities/page.test.tsx` | Fetch/loading/error states, learner switch, legacy-array fallback |
 | ExploreView (gap lens) | `src/app/(auth)/our-story/capabilities/_constellation/ExploreView.test.tsx` | Suggested-thread chips, underserved-subject section |
-| DLO confirm control | `src/app/(auth)/our-story/capabilities/_constellation/DloConfirm.test.tsx` | Tests `DloConfirmButton` (confirm/dispute UI unit) |
+| DLO confirm control | `src/app/(auth)/our-story/capabilities/_constellation/DloConfirm.test.tsx` | `DloConfirmButton` in the Table (L3) and in the graph's panel when telescoped onto an objective |
+| Graph model | `_constellation/graph-model.test.ts` | Node/link construction, suppression, glow states, filters, telescope reach (`neighbourhood`, `telescopeHops`), focus ↔ node mapping, relations, moment leaves |
+| Force layout | `_constellation/force-layout.test.ts` | Settling, determinism, cluster separation, collision, pinning, cone rings + angles, seeding |
+| Constellation graph | `_constellation/ConstellationGraph.test.tsx` | Every node rendered, selection → panel (links + backlinks), panel traversal, telescope (panel / double-click / Enter-twice), arrow-key walking, search, filters, reach, out-of-reach re-rooting, moment leaves + cap |
 
 **Gaps — no dedicated tests today:**
 
@@ -215,7 +232,7 @@ tunable starting point — it is not what the constellation honours.
   component itself, which is covered), learner-switch reset behaviour.
 - `TableView.tsx` — `TableThreads` / `TableDLOs` / `TableMoments` render paths, no tests.
 - `GalleryView.tsx` — `GalleryDomains` / `GalleryThreads` / `GalleryDLOs` / `GalleryMoments`
-  render paths, no tests.
+  render paths, no tests. *(Retired 2026-10-21 — replaced by the linked graph, §6, which is tested.)*
 
 These three are called out because they carry real interaction logic (drill navigation, the
 confirm/dispute optimistic-update flow surfaced through Gallery's `GalleryMoments`, deep-link
@@ -227,6 +244,9 @@ legacy / thread / domain), a depth-4 deep link rendering the Moments step, and t
 Gallery→Table fallback; `TableView.test.tsx` covers the four-state DLO chip, the
 "Watch for this next" marker, the "New" / trajectory markers, and a parent confirmation row;
 `topology.test.ts` covers the status mapping, `nextDloToWatch`, and the recency helpers.
+2026-10-21: the Gallery and its phone fallback are gone; `ConstellationRoute.test.tsx` now
+covers `parseView` (legacy `gallery` → constellation), the constellation default, telescoping
+from the panel with URL sync, and "Open in table".
 
 ## 5. Vestigial `/constellation` route
 
@@ -245,3 +265,65 @@ This is a known finding, not new: prior session memory (`project_dlo_relight_chi
 already flagged `/constellation` as "a vestigial unlinked scaffold." **Keep-or-delete is a Drew
 decision** — this doc does not resolve it, only records the current state so nobody mistakes it
 for a second, competing constellation implementation.
+
+## 6. The constellation graph (since 2026-10-21)
+
+The default view is a linked graph in the manner of Obsidian's graph view: the capability
+universe drawn as one network of notes and links rather than per-depth charts. It replaced the
+Gallery (four fixed-viewBox SVGs — banded domains, a left-to-right thread DAG, tier columns, a
+moments timeline), which read as a static chart and was illegible on phones.
+
+**Model (`graph-model.ts`, pure).** `buildConstellationGraph(snap, dlosByThread, options)`
+makes a node for every domain, every visible thread (H6 stays suppressed through
+`ALL_THREADS`) and, optionally, every learning objective; links are `part-of` (thread → domain,
+objective → thread), `leads-to` (the catalog's `THREAD_CONNECTIONS`, flagged `crossDomain`) and
+`next` (objective → the next objective of its thread, tier order). Each node carries a `glow`:
+`lit` (observed — or, for an objective, reached or parent-confirmed), `opening` (a ghost thread,
+or the objective `nextDloToWatch` names) or `unlit`. Empty domains (Classical Languages,
+Theology) stay as unlit orphans. `withMoments()` adds `evidence` leaves for the telescoped
+objective. `relationsOf()` groups a node's links in plain language ("Part of", "Builds on",
+"Leads to", "Threads", "Objectives", "Moments") — the panel's links + backlinks.
+
+**Layout (`force-layout.ts`, pure, deterministic).** A small d3-force-style simulation: link
+springs biased by degree, pairwise many-body repulsion, collision, and a centre pull scaled by
+the viewport's aspect so a wide stage gets a wide sky. Seeded starting positions
+(`seedClusters`: domain hubs on a circle, threads near their hub, objectives near their thread)
+make a reload lay the same child out the same way. The simulation cools and stops — no
+perpetual CPU.
+
+**Telescope = the drill depths.** Depth 1 is the whole sky. Depth 2/3/4 telescope onto the
+focused domain / thread / objective: `telescopeHops()` keeps everything within *reach* (1–3
+links, Obsidian's local-graph depth; other threads' objectives are left out so the cone stays
+about the apex), and the layout switches to a **cone**: the apex is pinned at the origin, each
+node is drawn to the ring `hop × 140` and to an evenly spaced resting angle (`coneAngles`, BFS
+order so neighbours share a stretch of ring), clamped within a half-angle wide enough for the
+busiest ring. The guides draw the cone's field, its edges and one ring per link ("1 link
+away"). Moving between depths morphs the existing positions into the new shape instead of
+re-mounting; returning to depth 1 restores the whole-sky layout as it was. The URL scheme is
+unchanged (`?view=constellation&d=3&focus=L3`), so deep links and the Table share one focus.
+
+**Interaction.** Drag the background to pan, wheel/pinch to zoom (labels and strokes are
+counter-scaled by `--cg-k`, so they stay legible; labels fade in by zoom band), drag a star to
+tug its links. Hover lights a node's neighbourhood and dims the rest. Click selects into the
+panel (`ConstellationPanel.tsx`): state in plain language, the parent's confirm control for an
+objective, the moments behind a telescoped objective, and every link as a button — selecting a
+link out of reach re-roots the telescope onto it. "Telescope from here" (or double-click, or
+Enter on the selected node) telescopes; "Open in table" switches view at the same depth.
+
+**Accessibility.** Nodes are `role="button"` with a roving tab stop (one tab stop into the
+graph); arrow keys walk to the neighbour in that direction, Enter selects and Enter again
+telescopes, Escape clears, +/− zoom. Each node's accessible name is its label, kind, state
+and link count; a polite live region announces the selection. The panel's link buttons are a
+complete keyboard path through the graph, and the Table remains the text-first view.
+
+**Gotcha — positions live on a wrapper.** The app-wide press feedback
+(`[role='button']:active { transform: scale(0.98) }` in `globals.css`) is a CSS `transform`,
+which *replaces* an SVG `transform` attribute. Each star is therefore positioned on an outer
+`<g data-pos>` the painter moves, with the button role on an inner `<g data-node>`; putting
+both on one element drops the star at the origin mid-press and swallows the click.
+
+**Performance.** React renders structure and state classes; the simulation writes positions
+straight to the DOM in a `requestAnimationFrame` loop (two ticks a frame) that stops when it
+settles. A full sky is ~250 nodes; the pairwise pass is well inside a frame. Under
+`prefers-reduced-motion` the layout settles synchronously and the camera jumps instead of
+easing.

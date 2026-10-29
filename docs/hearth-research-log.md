@@ -290,6 +290,62 @@ The `?focus=` parser accepted only a one-letter tier suffix (`L3.e`) while the U
 **Regression test:** `topology.test.ts` (recency helpers, snapshot carries trajectory); `TableView.test.tsx` ("New" + trajectory); `ExploreView.test.tsx` ("Gone quiet lately").
 **Fix:** "New" chip, recent-activity dot and trajectory read on thread rows; honest "Gone quiet lately" label with explanation. **Date logged:** 2026-10-06.
 
+### R37 — Code audit (2026-10-07): project-stage provenance was silently dropped on every Logger save from a project page.
+
+The Logger payload sent `projectId` / `stageNumber` (strings); `POST /api/entries` validates `sourceProjectId` / `sourceStageNumber` (number) and its non-strict zod strips unknown keys, so no Logger entry ever carried project provenance. The unit test had enshrined the wrong key names, which is why it stayed green. Rebuilt payload (`buildEntrySavePayload`) sends the route's keys with a numeric stage; legacy queued outbox records still replay (the server strips the old keys).
+**Spec affected:** `hearth-logger-spec-v2.md` §2 (mapping table) and §7 (source banner); project-stage provenance in `Hearth_System_Interaction_Map.md`.
+**Regression test:** `src/lib/logger/entry-payload.test.ts` (`sourceProjectId` + numeric `sourceStageNumber`); `src/app/api/entries/route.integration.test.ts` project-stage `describe` (provenance persists; legacy keys still 201).
+**Fix:** Logger rebuild branch `claude/hearth-logger-rebuild-0b8907` (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R38 — Code audit (2026-10-07): the "Earlier" date option meant a hidden five days ago (rebuild follow-through on R30).
+
+Same defect as R30, found independently by the rebuild audit. R30's bounded "Earlier" picker lived in `WhenWhereSection`, which the rebuild deletes, so the fix is carried by the Notice form instead: **Today · Yesterday · Another day** (native date picker, `max` today); the stored value is the resolved `yyyy-MM-dd`, the segment highlight is derived from it, and a legacy draft that said "earlier" restores its R30 `earlierDate` when one was stored, otherwise resets to today with a banner saying so.
+**Spec affected:** `hearth-logger-spec-v2.md` §6 and §9 (draft migration `dateReset`).
+**Regression test:** `src/lib/logger/notice.test.ts` (`resolveDateOccurred`: null → today, yesterday across a month boundary, explicit date, future clamp, invalid → today; `whenKindFor`); `src/lib/logger/draft.test.ts` (`earlier` → null + `dateReset`; `earlier` + `earlierDate` keeps the date).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+### R39 — Code audit (2026-10-07): the constellation check-in deep link's `learner` and `thread` params were ignored.
+
+`/log?source=check-in&learner=<id>&thread=<id>` coerced to `source: 'logger'` and discarded both params, so a parent tapping "check in" on a thread arrived at a blank form. `parseNoticeSource` now yields a `check_in` source: the child is preselected once learners load (never over a restored draft), the banner reads "Checking in on {Name}'s {threadName}", and the thread is passed to `deriveProposals` as `preferThreadId` so the matching chip sorts first. The thread is never persisted (not an `ENTRY_SOURCES` value and no column — SIDEBAR S2); unknown or H6-suppressed thread ids are dropped.
+**Spec affected:** `hearth-logger-spec-v2.md` §7; `hearth-constellation-architecture-v1.md` (check-in entry point).
+**Regression test:** `src/lib/logger/source.test.ts` (four kinds; suppressed and unknown thread dropped; `resume` ignored); `src/lib/logger/proposals.test.ts` (`preferThreadId` ordering); `src/hooks/use-notice-form.test.tsx` (check-in preselect not over a restored draft).
+**Fix:** Logger rebuild branch (D-LPS-14). **Date logged:** 2026-10-07.
+
+*Note (2026-10-07):* R13's regression test `src/app/(auth)/log/_components/WhoSection.test.tsx` was deleted with the old form in the Notice → Confirm rebuild; its guard (fan-out note shows at 2+ children) now lives in `src/app/(auth)/log/_components/WhoRow.test.tsx`.
+
+*Note (2026-10-20, rebuild rebase):* R30's regression test `src/app/(auth)/log/_components/WhenWhereSection.test.tsx` was deleted with `WhenWhereSection`; the guard now lives in `src/lib/logger/notice.test.ts` and `src/app/(auth)/log/_components/WhenRow.test.tsx` (R38). R31's `src/lib/logger/coaching/__tests__/retrieval-provider.test.ts` was deleted with the coach-hints rail (D-LPS-14); `logger_context` persistence, the structured-notes prompt block and `situational-signals.ts` keep their tests. The Notice form captures none of the R31 chips, so new `/log` saves write a null `logger_context`.
+
 ---
 
-*Next entry: R37. Append below; never edit above.*
+### R40 — Founder review (2026-10-21): the constellation read as a static chart, not a network.
+
+Drew's read of the Gallery: "underwhelming and visualised terribly" — each depth was its own fixed chart (domain bands, a left-to-right DAG, tier columns, a timeline) rather than one sky of linked stars; nothing moved, nothing could be explored, and on phones it was forced off entirely. The ask: a networked node-to-node constellation like Obsidian's linked-note graph, extending as a cone when you look into it.
+**Spec affected:** `hearth-constellation-architecture-v1.md` (new §6); `hearth-ux-use-cases-logger-portfolio-capabilities-v1.md` Part C view modes; `hearth-motion-system-v1.md` "Constellation map" (the motion is the information); journey Stage 6 (Bec — the constellation as a thinking tool).
+**Regression test:** `graph-model.test.ts`, `force-layout.test.ts`, `ConstellationGraph.test.tsx`, `ConstellationRoute.test.tsx` (`parseView`, default view, telescope URL sync), `DloConfirm.test.tsx` (confirm in the telescope panel). The press-feedback / SVG-transform clash found while building it is pinned by the wrapper structure the graph tests query (`[data-node]` inside `[data-pos]`), and documented in the architecture doc §6.
+**Fix:** the Gallery is replaced by a force-directed graph of every domain, thread and objective (pan, zoom, drag, hover neighbourhoods, search, filters, links + backlinks panel); drill depths 2–4 telescope into a cone fanning out from the focused node, ring by ring, with moments as leaves of a telescoped objective. Default view; works at phone width. **Date logged:** 2026-10-21.
+*Note (2026-10-22, merge):* logged on `main` as R37 (`e6ca4b5`) while the launch-pivot branch already held R37–R39; renumbered R40 when the branches merged.
+
+---
+
+### R41 — Code audit (2026-10-22): planner entries picked from Suggested or the Library lost their module.
+
+The Weekly Planner's bottom sheet called `onAdd({ date, title, learnerIds, session })` for every pick, so an entry chosen from Suggested or Browse Library was saved title-only even though `POST /api/planner` accepts `moduleId`. ModuleCard links to `/module/[id]?plannerEntryId=…` only when `moduleId` is set, so planned modules could not open the runner, no `plannerEntryId` provenance reached the Logger, and `planner_entry_created` always reported `has_module: false`. Separately, the dashboard projected today's planner entries without `subjects`, so the "Today's subjects" pips never rendered (and the sheet never sent subjects anyway). Found during Hearth Cycle planning (build-plan gaps G27/G28).
+**Spec affected:** `Hearth_System_Interaction_Map.md` Planner → Runner → Logger; architecture principle 1 (forward planning supported, never primary — but it must hand off to the runner when used).
+**Regression test:** `src/components/planner/BottomSheet.test.tsx` (Suggested and Library picks carry `moduleId`; a pack row is never passed off as a module; Custom stays title-only); `src/app/api/planner/route.integration.test.ts` (`moduleId` / `activityId` / `subjects` persist; title-only leaves them null).
+**Fix:** the sheet passes `moduleId` and `subjects` from the picked item (Library uses `sanityModuleId`, since pack rows reuse `moduleId` for the pack id); the dashboard passes `subjects` through. Neither pick source carries an `activityId` today, so none is sent. **Date logged:** 2026-10-22.
+*Note (2026-10-29, merge):* logged on `main` as R38 (#299) while the launch-pivot branch already held R37–R40; renumbered R41 when the branches merged.
+
+---
+
+### R42 — Code audit (2026-10-22, Hearth Cycle build-plan gap G42): Hearth session photos were public blobs, and families' evidence-sharing consent was never enforced.
+
+`POST /api/hearths/[id]/sessions/[sessionId]/evidence` stored co-op session photos with `access: 'public'` and returned the raw blob URL to members, so anyone holding a URL could fetch a child's photo. Family evidence moved to private blobs behind an authenticated proxy in June; Hearth photos never did. `hearth_memberships.consent_evidence_sharing` ("Allow your children to appear in shared session photos" at join) was written and displayed but checked by no read or write path. The upload also accepted any `image/*` type (SVG included) and put the parent's original file name, often a child's name, into the blob path.
+**Spec affected:** none. No spec covers Hearth session evidence or the meaning of the two join-time consents, which is a gap in the spec set. Nearest docs: `Hearth_System_Interaction_Map.md` (cross-family flows) and `hearth-data-architecture-overview-v1.md` (Postgres boundary). The rule is now written down in the header of `src/lib/hearth-evidence.ts`.
+**Regression test:** `src/app/api/hearths/[id]/evidence/route.integration.test.ts` (non-member and departed-member 403s; member 200 over private access; non-consenting and departed families' photos hidden from the proxy, the session list, session detail and Our Story counts/gallery; a non-consenting upload refused with nothing stored; a consenting upload stored privately under the hearth prefix; SVG rejected), `src/app/api/hearths/[id]/evidence/route.test.ts` (proxy refuses before membership or storage for out-of-hearth, traversal, URL and family-evidence refs; private access only, no public fallback), `src/lib/hearth-evidence.test.ts` (path authorisation and consent filtering).
+**Fix:** uploads are private under `hearth-evidence/<hearthId>/<sessionId>/<familyId>/<ts>.<ext>` (JPEG/PNG/WebP/HEIC only), and `file_url` holds the pathname. `GET /api/hearths/[id]/evidence?ref=` streams them only to active members and only when the uploader is the viewer or a consenting active member (`private, max-age=300`, `nosniff`, CSP `sandbox`). Every read path (session list, session detail, Our Story, logger scaffold, session page) filters through `visibleHearthEvidence`. **Decision:** a family without consent can't upload (403). Uploading to a shared session is itself sharing, and there's no UI to change consent after joining, so accepting the photo would store children's photos nobody else may see. Legacy public blobs move with `scripts/migrate-hearth-evidence-private.ts` (dry-run by default; not yet run against production).
+**Still open:** consent is enforced on the *uploader*, but the join copy promises something about the *subject*: a consenting family can still upload a photo showing a non-consenting family's child, and nothing can detect that without tagging who appears in each photo. Session photos also keep their EXIF metadata (the family upload path re-encodes through sharp; this one doesn't). Families can't change either consent after joining. These need a product decision before co-op photo sharing goes beyond the pilot. **Date logged:** 2026-10-22.
+*Note (2026-10-29, merge):* logged on its branch as R38 (#300) while `main` already held R37–R41; renumbered R42 when it merged.
+
+---
+
+*Next entry: R43. Append below; never edit above.*

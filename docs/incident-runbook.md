@@ -18,7 +18,7 @@
 ## Table of contents
 
 1. Enrichment pipeline failing (`entry_created` but no insights)
-2. Draft-insight cost spike (Haiku spend trending over budget)
+2. Draft-insight cost spike (Haiku spend trending over budget) — **retired 2026-10-07**, kept for history
 3. Rate limits tripping legitimate users
 4. Anthropic outage or degraded service
 5. Sentry event storm / quota pressure
@@ -53,7 +53,7 @@
 | Condition | Action |
 |---|---|
 | Anthropic transient outage | Do nothing — enrichment already has a fallback keyword matcher (`src/lib/ai/enrich.ts`). Entries are persisted; insights degrade gracefully. |
-| Systematic prompt/parse failure | Flip `DRAFT_INSIGHTS_ENABLED=false` in Vercel (kill switch for the in-Logger draft-insights stream). Note: this only disables the live draft — the write-time enrichment path still runs. |
+| Systematic prompt/parse failure | ~~Flip `DRAFT_INSIGHTS_ENABLED=false`~~ — the draft-insight stream was retired 2026-10-07 (D-LPS-14); there is no in-Logger Claude call to switch off. Treat as the row below. |
 | Write-time enrichment systematically failing | Roll back the deploy (`vercel rollback <deployment-id>`). Do not disable enrichment silently — entries without snapshots mean stale Dashboards. |
 
 ### Root cause + postmortem
@@ -64,6 +64,8 @@
 ---
 
 ## 2. Draft-insight cost spike
+
+> **Retired 2026-10-07.** `/api/entries/draft-insight`, `/api/logger/coach-hints`, `src/lib/ai/draft-insight.ts` and `src/hooks/use-draft-insight.ts` were deleted in the Logger Notice → Confirm rebuild (D-LPS-14). The section below is kept as history; a Haiku spend spike now means write-time enrichment (section 1) or the module-builder draft enrichment.
 
 **Symptoms:** Anthropic dashboard shows daily spend above the expected baseline; weekly `ai_pipeline_logs` aggregate for `%-draft` rows jumps 5–10× the running average.
 

@@ -10,6 +10,22 @@ import type { ProfileNudge } from '@/lib/logger/coaching/types';
 
 export type AiEnrichmentStatus = 'pending' | 'enriched' | 'failed';
 
+/**
+ * One proposed discrete learning objective from write-time enrichment. Written
+ * by `enrichEntry` (validated against the Sanity DLO catalogue) and read by the
+ * Logger's Confirm surface, which renders each as a tappable proposal chip.
+ * Mirrors `DloEnrichmentItem` in `src/lib/ai/dlo-persistence.ts`; declared here
+ * so client code never imports the server module (it pulls in `@/lib/db`).
+ */
+export type DloEnrichmentItem = {
+  dlo_id: string;
+  tier: 'emerging' | 'developing' | 'demonstrating';
+  confidence: number;
+  rationale?: string;
+  /** Set by validateDlos when the model's claimed tier differed from the authored tier. */
+  claimed_tier?: string | null;
+};
+
 export type AiEnrichmentBody = {
   subjects_detected: string[];
   capability_threads: { thread_id: string; confidence: number }[];
@@ -20,6 +36,9 @@ export type AiEnrichmentBody = {
     notable: string | null;
   }>;
   insight_suggestions: string[];
+  // Proposed DLO evidence (≤3). Persisted by enrich.ts since WS-6; surfaced as
+  // Confirm chips on the Logger post-save screen.
+  discrete_learning_objectives?: DloEnrichmentItem[];
   confidence: number;
   quality_indicators: {
     description_richness: 'thin' | 'adequate' | 'rich';

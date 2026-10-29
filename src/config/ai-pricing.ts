@@ -11,7 +11,7 @@
  * in PR #221 (board card f8); re-verify before launch and after any model bump.
  *
  * `priceFor(model)` resolves any `model_used` value (with or without a
- * `-draft` suffix, with or without a `-YYYYMMDD` date stamp) by falling
+ * `-draft` or `-read` suffix, with or without a `-YYYYMMDD` date stamp) by falling
  * back through (1) exact match, (2) `claude-{family}-{tier}` prefix match
  * (e.g. `claude-haiku-4-5`), (3) family-only match (`claude-haiku`),
  * (4) Haiku-equivalent default so unknown models do not silently
@@ -45,7 +45,9 @@ export const PRICING_PER_MTOK: Record<string, { input: number; output: number }>
 
 export function priceFor(model: string): { input: number; output: number } {
   // Strip suffixes that don't change the price.
-  const base = model.replace(/-draft$/, '').replace(/-(\d{8}|\d{6})$/, '');
+  // `-read` marks an enrichment call that carried Photo Read image blocks
+  // (enrich.ts READ_MODEL_SUFFIX) — same model, same per-token rates.
+  const base = model.replace(/-(draft|read)$/, '').replace(/-(\d{8}|\d{6})$/, '');
   // 1) exact match on what's left
   if (PRICING_PER_MTOK[base]) return PRICING_PER_MTOK[base];
   // 2) walk back the dashed segments — `claude-haiku-4-5-20251001` ->

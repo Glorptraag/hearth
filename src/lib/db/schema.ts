@@ -26,6 +26,9 @@ export const families = pgTable('families', {
   onboardingComplete: boolean('onboarding_complete').default(false).notNull(),
   welcomeCompletedAt: timestamp('welcome_completed_at'),
   loggerDefaultMode: text('logger_default_mode'),
+  // Photo Read consent. null = never asked (the first-photo disclosure sheet
+  // has not been answered); true/false = the family's explicit answer.
+  photoReadOptIn: boolean('photo_read_opt_in'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -133,6 +136,19 @@ export const learningEntries = pgTable(
     // chips, where, how long). Read by the enrichment prompt and by pedagogy
     // retrieval's situational signals. Null on rows saved before it existed.
     loggerContext: jsonb('logger_context').$type<import('@/types/logger-context').LoggerContext>(),
+    // Who wrote the entry text: the parent, or an accepted/edited Photo Read draft.
+    draftedBy: text('drafted_by').notNull().default('parent'),
+    // The validated Photo Read output. Null when no Read ran.
+    readOutput: jsonb('read_output').$type<Record<string, unknown>>(),
+    // The shelf resource (and lesson) this entry was worked from. Written only
+    // on parent confirm; source records whether Read proposed it or the parent set it.
+    workingFrom: jsonb('working_from').$type<{
+      resourceId: string;
+      // The resource level as printed (e.g. "Alpha"); jsonb, so no migration.
+      level?: string;
+      lesson?: string;
+      source: 'read' | 'parent';
+    }>(),
     aiEnrichment: jsonb('ai_enrichment').$type<import('@/types/enrichment').AiEnrichment>(),
     workSampleCandidate: boolean('work_sample_candidate').default(false),
     workSampleQuality: decimal('work_sample_quality', { precision: 3, scale: 2 }),
@@ -144,6 +160,7 @@ export const learningEntries = pgTable(
   (table) => [
     index('le_family_date_idx').on(table.familyId, table.dateOccurred),
     index('le_family_status_idx').on(table.familyId, table.status),
+    check('le_drafted_by_check', sql`${table.draftedBy} IN ('parent', 'read')`),
   ]
 );
 

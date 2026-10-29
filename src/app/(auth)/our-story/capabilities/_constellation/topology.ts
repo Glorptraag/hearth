@@ -9,6 +9,7 @@ import {
   getV2DomainKey,
 } from '@/lib/capability-universe-v2';
 import { isSuppressedThread } from '@/lib/capability-alpha-suppression';
+import { nextDloToWatch } from '@/lib/capabilities/next-dlo';
 
 export type Tier = 'emerging' | 'developing' | 'demonstrating' | 'unobserved';
 export type ThreadState = 'active' | 'ghost' | 'dormant';
@@ -177,7 +178,7 @@ export type CurriculumCoverage = Record<
   { total_entries: number; unique_descriptors: number; coverage_percentage: number }
 >;
 
-/* Snapshot consumed by TableView / GalleryView. Built from /api/capabilities/[learnerId]. */
+/* Snapshot consumed by TableView / the constellation graph. Built from /api/capabilities/[learnerId]. */
 export type LearnerSnapshot = {
   id: string;
   name: string;
@@ -316,7 +317,7 @@ export function indexDLOsByThread(dlos: SanityDLO[]): Record<string, SanityDLO[]
   return out;
 }
 
-/* DLO instance returned by buildDLOs — what GalleryDLOs / TableDLOs render.
+/* DLO instance returned by buildDLOs — what TableDLOs and the graph's objective nodes render.
    Descriptors come from Sanity (seed-dlos.ts authored 57 × 3 = 171). */
 export type DLO = {
   id: string;
@@ -353,18 +354,11 @@ export const DLO_STATUS_RANK: Record<DloRenderStatus, number> = {
 };
 
 /**
- * The next objective worth watching for: the first DLO in tier order whose
- * learner status has not yet reached its own tier. Returns null when every
- * DLO is at or above its tier (the thread is fully evidenced) or the list
- * is empty.
+ * The next objective worth watching for — shared with the Dashboard
+ * watch-for (`src/lib/capabilities/next-dlo.ts`, HC-1c). Re-exported so the
+ * constellation's call sites are unchanged.
  */
-export function nextDloToWatch(dlos: DLO[]): DLO | null {
-  for (const d of dlos) {
-    const reached = DLO_STATUS_RANK[d.status] >= TIER_RANK[d.tier];
-    if (!reached) return d;
-  }
-  return null;
-}
+export { nextDloToWatch };
 
 /* Back-compat alias — keeps SynthDLO importable while call sites migrate. */
 export type SynthDLO = DLO;

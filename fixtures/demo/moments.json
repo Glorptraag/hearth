@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "note": "Demo family for the expo stand. read_output is pre-baked (valid against src/lib/ai/read-schema.ts); the seed validates every one with parseReadOutput and refuses to run if any fails. Replace the images (see README.md) and re-record read_output from a real Read when real photos land.",
+  "family": {
+    "id": "00000000-0000-4000-8000-0000de100001",
+    "clerkUserId": "demo_family_expo",
+    "familyName": "The Demo Family",
+    "state": "QLD"
+  },
+  "learners": [
+    { "key": "ada", "name": "Ada", "dateOfBirth": "2018-04-12", "shapeIcon": "circle", "colourToken": "rose", "displayOrder": 0 },
+    { "key": "leo", "name": "Leo", "dateOfBirth": "2020-09-03", "shapeIcon": "square", "colourToken": "blue", "displayOrder": 1 }
+  ],
+  "moments": [
+    {
+      "key": "moment-1-worksheet",
+      "image": "images/moment-1-worksheet.jpg",
+      "daysAgo": 1,
+      "learner": "ada",
+      "title": "Maths worksheet",
+      "draftedBy": "read",
+      "subjects": ["mathematics"],
+      "workingFrom": { "resourceId": "shelfResource.math-u-see", "lesson": "12", "source": "read" },
+      "readOutput": {
+        "seen": ["maths worksheet", "pencil", "eraser", "wooden desk"],
+        "doing": "A child is writing answers on a maths worksheet at a desk.",
+        "artefact": "worksheet",
+        "printedText": "Math-U-See Beta Lesson 12",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "dloLinks": [{ "dloId": "dlo.M2.developing", "tier": "developing" }]
+    },
+    {
+      "key": "moment-2-book",
+      "image": "images/moment-2-book.jpg",
+      "daysAgo": 2,
+      "learner": "ada",
+      "title": "Reading together on the couch",
+      "draftedBy": "read",
+      "subjects": ["history"],
+      "workingFrom": { "resourceId": "shelfResource.story-of-the-world", "lesson": "4", "source": "read" },
+      "readOutput": {
+        "seen": ["open book", "illustrated page", "blanket"],
+        "doing": "An adult is holding an open book on a couch.",
+        "artefact": "book",
+        "printedText": "Story of the World Volume 1 Chapter 4",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "dloLinks": [{ "dloId": "dlo.H1.emerging", "tier": "emerging" }]
+    },
+    {
+      "key": "moment-3-drawing",
+      "image": "images/moment-3-drawing.jpg",
+      "daysAgo": 4,
+      "learner": "leo",
+      "title": "Our house and garden",
+      "draftedBy": "parent",
+      "description": "Leo spent ages on this one and told me about every room.",
+      "subjects": ["art"],
+      "workingFrom": null,
+      "readOutput": {
+        "seen": ["crayon drawing", "house", "sun", "green grass", "crayons"],
+        "doing": "A child holds up a crayon drawing of a house.",
+        "artefact": "drawing",
+        "printedText": "",
+        "peopleVisible": 1,
+        "confidence": "high"
+      },
+      "dloLinks": [{ "dloId": "dlo.C5.emerging", "tier": "emerging" }]
+    },
+    {
+      "key": "moment-4-build",
+      "image": "images/moment-4-build.jpg",
+      "daysAgo": 6,
+      "learner": "leo",
+      "alsoLearners": ["ada"],
+      "title": "Brick bridge",
+      "draftedBy": "read",
+      "subjects": ["design"],
+      "workingFrom": null,
+      "readOutput": {
+        "seen": ["LEGO bridge", "plastic bricks", "toy cars", "rug"],
+        "doing": "Two children are building a bridge from plastic bricks on the floor.",
+        "artefact": "build",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "dloLinks": [
+        { "dloId": "dlo.C6.developing", "tier": "developing", "learner": "ada" },
+        { "dloId": "dlo.EF6.emerging", "tier": "emerging", "learner": "leo" }
+      ]
+    },
+    {
+      "key": "moment-5-nature",
+      "image": "images/moment-5-nature.jpg",
+      "daysAgo": 8,
+      "learner": "ada",
+      "alsoLearners": ["leo"],
+      "title": "Creek rocks",
+      "draftedBy": "parent",
+      "description": "Turned over rocks at the creek and counted what lived underneath.",
+      "subjects": ["science"],
+      "workingFrom": null,
+      "readOutput": {
+        "seen": ["shallow creek", "river rocks", "bucket", "gum trees"],
+        "doing": "Children are lifting rocks in a shallow creek.",
+        "artefact": "nature",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "dloLinks": [{ "dloId": "dlo.PS5.developing", "tier": "developing", "learner": "ada" }]
+    },
+    {
+      "key": "moment-6-baking",
+      "image": "images/moment-6-baking.jpg",
+      "daysAgo": 10,
+      "learner": "ada",
+      "title": "Pancake batter",
+      "draftedBy": "read",
+      "subjects": ["mathematics"],
+      "workingFrom": null,
+      "readOutput": {
+        "seen": ["mixing bowl", "measuring cups", "flour", "wooden spoon", "kitchen bench"],
+        "doing": "A child is stirring batter in a mixing bowl on a kitchen bench.",
+        "artefact": "cooking",
+        "printedText": "",
+        "peopleVisible": 2,
+        "confidence": "high"
+      },
+      "dloLinks": [{ "dloId": "dlo.M5.developing", "tier": "developing" }]
+    }
+  ]
+}

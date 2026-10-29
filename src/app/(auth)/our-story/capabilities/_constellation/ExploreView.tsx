@@ -13,12 +13,13 @@ import {
   type GapAnalysis,
   type LearnerSnapshot,
 } from './topology';
+import { REPORT_HREF, constellationCopy } from './constellationCopy';
 
 /**
  * Depth-less "Explore" lens over the constellation: where this learner is thin
  * and what's worth a look next. Reads the per-child snapshot's gap_analysis +
  * curriculum_coverage (surfaced by GET /api/capabilities/[learnerId]). No drill
- * depth — a flat, scannable companion to the Table/Gallery progression views.
+ * depth — a flat, scannable companion to the Constellation/Table progression views.
  *
  * `suggested_focus_threads` is, concretely, "threads this child has lit before
  * but not in the last 30 days" (snapshot-rebuild.ts). The section says exactly
@@ -61,8 +62,7 @@ export function ExploreView({
   return (
     <div className="flex flex-col gap-lg">
       <p className="max-w-[60ch] font-serif italic leading-relaxed text-text-secondary">
-        Where {snap.name} has room to grow — and a few threads worth a look next. Nothing here is
-        a gap to fix; it&rsquo;s just where the light hasn&rsquo;t fallen yet.
+        {constellationCopy.exploreIntro(snap.name)}
       </p>
 
       {/* ── Worth a look next ── */}
@@ -137,7 +137,12 @@ export function ExploreView({
       <section className="rounded-lg border border-border-subtle bg-surface-panel p-xl">
         <h2 className="font-serif text-lg font-semibold text-text-primary">Activity by subject</h2>
         <p className="mt-xs font-sans text-[0.75rem] text-text-muted">
-          How much {snap.name} has been logged in each area — a rhythm signal, not a score.
+          {constellationCopy.exploreActivityHelper(snap.name)}{' '}
+          {constellationCopy.exploreReportLead}{' '}
+          <Link href={REPORT_HREF} className="font-medium text-ember hover:text-ember-hover transition-colors">
+            {constellationCopy.exploreReportLink}
+          </Link>
+          .
         </p>
         <ul className="mt-md flex flex-col gap-md">
           {subjectRows.map((r) => (

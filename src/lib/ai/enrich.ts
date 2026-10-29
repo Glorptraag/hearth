@@ -4,8 +4,10 @@ import {
   learningEntries,
   learners,
   familySettings,
+  families,
+  learningEntryEvidence,
 } from '@/lib/db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, asc, desc, inArray } from 'drizzle-orm';
 import { aiPipelineLogs } from '@/lib/db/schema';
 import { buildPedagogyContextWithSources, type PedagogySource } from './pedagogy-context';
 import { rebuildSnapshot } from './snapshot-rebuild';
@@ -29,6 +31,10 @@ import { AC9_CODE_PATTERN } from '@/lib/curriculum/ac9';
 import type { SnapshotData } from '@/types/snapshot';
 import type { LoggerContext } from '@/types/logger-context';
 import { deriveSituationalSignals } from '@/lib/pedagogy/situational-signals';
+import { subjectsFill } from './subjects-normalise';
+import { READ_OUTPUT_KEY, READ_PROMPT_VERSION, buildReadPromptSection, parseReadOutput } from './read-schema';
+import { PHOTO_READ_LIMITS, photoReadAvailableFor, photoReadGate } from './read-flags';
+import { loadReadImages, type ReadImage } from './read-images';
 
 // Haiku 4.5 frequently wraps JSON output in ```json … ``` fences even when
 // the system prompt asks for raw JSON. Tracker #34 root cause: JSON.parse
@@ -577,8 +583,13 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
         }
       : null;
 
+  // The Photo Read key is validated separately (parseReadOutput) and stored in
+  // its own column; the model's raw value never lands in ai_enrichment.
+  const { [READ_OUTPUT_KEY]: _rawRead, ...rest } = raw as EnrichmentResult & Record<string, unknown>;
+  void _rawRead;
+
   return {
-    ...raw,
+    ...(rest as EnrichmentResult),
     capability_threads: (raw.capability_threads ?? []).filter(
       (t) => VALID_THREAD_IDS.has(t.thread_id) && t.confidence >= 0 && t.confidence <= 1
     ),
@@ -610,6 +621,99 @@ function validateEnrichment(raw: EnrichmentResult, childNames: string[]): Enrich
 // pinpointable from Vercel logs alone.
 const TAPE_ENABLED = process.env.ENRICH_TAPE === '1';
 
+export const ENRICH_MODEL = 'claude-haiku-4-5-20251001';
+// 1024 truncated rich/multi-child entries mid-JSON (per-child threads + DLOs +
+// signals exceed it), so JSON.parse threw and the entry failed enrichment
+// outright. 4096 gives headroom; calls still bill only the tokens produced.
+export const ENRICH_MAX_TOKENS = 4096;
+/**
+ * `ai_pipeline_logs.model_used` suffix for a call that carried Photo Read image
+ * blocks — the run tape's `stage = 'read'` marker (A2). It follows the existing
+ * `-draft` convention, so the AI cost dashboard splits it out per model row and
+ * `priceFor()` prices it as the base model.
+ */
+export const READ_MODEL_SUFFIX = '-read';
+
+/**
+ * The exact Messages API request enrichEntry sends. Pure.
+ *
+ * With no images this is, byte for byte, the request enrichEntry sent before
+ * Photo Read existed (pinned in enrich-request.test.ts): same keys, same order,
+ * string user content, cache-controlled system prompt. With images (Photo Read,
+ * flag-gated in read-flags.ts) the SAME single call gains image blocks ahead of
+ * the user text, the Read prompt section after it, and output headroom for the
+ * Read. The system prompt never changes, so the prompt cache holds either way.
+ */
+export function buildEnrichRequest(
+  userPrompt: string,
+  images: readonly ReadImage[] = [],
+): Anthropic.MessageCreateParamsNonStreaming {
+  const system: Anthropic.TextBlockParam[] = [
+    { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+  ];
+  if (images.length === 0) {
+    return {
+      model: ENRICH_MODEL,
+      max_tokens: ENRICH_MAX_TOKENS,
+      system,
+      messages: [{ role: 'user', content: userPrompt }],
+    };
+  }
+  return {
+    model: ENRICH_MODEL,
+    max_tokens: ENRICH_MAX_TOKENS + PHOTO_READ_LIMITS.readOutputTokenCap,
+    system,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          ...images.map(
+            (img): Anthropic.ImageBlockParam => ({
+              type: 'image',
+              source: { type: 'base64', media_type: img.mediaType, data: img.data },
+            }),
+          ),
+          { type: 'text', text: `${userPrompt}\n\n${buildReadPromptSection()}` },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * The entry's Photo Read images, or [] when any gate fails (read-flags.ts).
+ * The flag + allowlist check runs first with no I/O, so with the flag off this
+ * touches neither the database nor blob storage. Never throws — the Read is an
+ * add-on and must never fail the enrichment it rides in.
+ */
+async function loadEntryReadImages(
+  entry: { id: string; evidenceUrls: string[] | null },
+  familyId: string,
+): Promise<ReadImage[]> {
+  if (!photoReadAvailableFor(familyId)) return [];
+  try {
+    const [family, photoRows] = await Promise.all([
+      db.query.families.findFirst({
+        where: eq(families.id, familyId),
+        columns: { photoReadOptIn: true },
+      }),
+      db
+        .select({ content: learningEntryEvidence.content })
+        .from(learningEntryEvidence)
+        .where(and(eq(learningEntryEvidence.entryId, entry.id), eq(learningEntryEvidence.kind, 'photo')))
+        .orderBy(asc(learningEntryEvidence.sortOrder)),
+    ]);
+    // Prefer the caption-carrying evidence rows; fall back to the legacy column.
+    const refs = photoRows.length > 0 ? photoRows.map((r) => r.content) : (entry.evidenceUrls ?? []);
+    const gate = photoReadGate({ familyId, optIn: family?.photoReadOptIn, photoCount: refs.length });
+    if (!gate.read) return [];
+    return await loadReadImages(refs, familyId);
+  } catch (err) {
+    console.error('[enrichEntry] photo read image load failed:', err);
+    return [];
+  }
+}
+
 export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Promise<void> {
   const startTime = Date.now();
   let retried = false;
@@ -629,6 +733,12 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     tape('prompt-built');
     const childNames = ctx.childRecords.map((c) => c.name);
 
+    // Photo Read (A1, D-LP-3): image blocks ride in this SAME call when every
+    // gate in read-flags.ts holds. With the flag off this is [] and the request
+    // is byte-identical to the pre-Read one.
+    const readImages = await loadEntryReadImages(ctx.entry, familyId);
+    if (readImages.length > 0) tape(`photo-read-images=${readImages.length}`);
+
     const client = new Anthropic();
 
     // Sonnet fallback per AI Intelligence Layer spec §3.4 is implemented as an
@@ -636,18 +746,15 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
     // validated.confidence < 0.5 (see sonnetFallback() below and its call site).
     // It is intentionally fire-and-forget rather than an inline blocking retry
     // so entry save stays fast; revisit if pilot data shows the async path lags.
-    const callLLM = async (): Promise<EnrichmentResult> => {
+    //
+    // The retry is the existing failure path. When the first attempt carried a
+    // photo, the retry goes text-only: a refused or unparseable photo call then
+    // still lands the enrichment, with an empty Read (never an invented one).
+    let readSent = false;
+    const callLLM = async (images: readonly ReadImage[]): Promise<EnrichmentResult> => {
       tape(retried ? 'anthropic-call-retry' : 'anthropic-call-start');
-      const response = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        // 1024 truncated rich/multi-child entries mid-JSON (per-child threads +
-        // DLOs + signals exceed it), so JSON.parse threw and the entry failed
-        // enrichment outright. 4096 gives headroom; calls still bill only the
-        // tokens actually produced.
-        max_tokens: 4096,
-        system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: userPrompt }],
-      });
+      readSent = images.length > 0;
+      const response = await client.messages.create(buildEnrichRequest(userPrompt, images));
       tape('anthropic-call-returned');
 
       const text = response.content
@@ -663,7 +770,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       await db.insert(aiPipelineLogs).values({
         familyId,
         entryId,
-        modelUsed: 'claude-haiku-4-5-20251001',
+        modelUsed: readSent ? `${ENRICH_MODEL}${READ_MODEL_SUFFIX}` : ENRICH_MODEL,
         inputTokens,
         outputTokens,
         latencyMs: Date.now() - startTime,
@@ -677,11 +784,23 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
     let result: EnrichmentResult;
     try {
-      result = await callLLM();
+      result = await callLLM(readImages);
     } catch {
       retried = true;
-      result = await callLLM();
+      result = await callLLM([]);
     }
+
+    // Validate the Read on its own (read-schema.ts). Refusal, null or anything
+    // invalid → null: an empty Read, never repaired into one. Written only when
+    // a Read was attempted, so a re-enrich with the flag off keeps a prior Read.
+    const readAttempted = readImages.length > 0;
+    const readOutput =
+      readAttempted && readSent
+        ? parseReadOutput((result as unknown as Record<string, unknown>)[READ_OUTPUT_KEY], {
+            forbiddenNames: childNames,
+          })
+        : null;
+    if (readAttempted) tape(`photo-read-${readOutput ? 'valid' : 'empty'}`);
 
     const validated = validateEnrichment(result, childNames);
     if (pedagogySources.length > 0) {
@@ -812,11 +931,18 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
       wsUpdate.workSampleCandidate = validated.work_sample.flag;
       wsUpdate.workSampleQuality = validated.work_sample.quality.toFixed(2);
     }
+    // The Logger no longer asks for subjects: fill `subjects` from the reading
+    // when the parent gave none; never overwrite a writer-set value (runner /
+    // batch / CSV / Portfolio edit).
     await db
       .update(learningEntries)
       .set({
         aiEnrichment: { ...validated, status: 'enriched' as const },
         ...wsUpdate,
+        ...subjectsFill(ctx.entry.subjects, validated.subjects_detected),
+        ...(readAttempted
+          ? { readOutput: readOutput ? { ...readOutput, promptVersion: READ_PROMPT_VERSION } : null }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(learningEntries.id, entryId));
@@ -830,7 +956,7 @@ export async function enrichEntry({ entryId, familyId }: EnrichmentContext): Pro
 
     // If low confidence, queue async Sonnet re-enrichment
     if (validated.confidence < 0.5) {
-      sonnetFallback(entryId, familyId, userPrompt, childNames)
+      sonnetFallback(entryId, familyId, userPrompt, childNames, ctx.entry.subjects ?? null)
         .catch((err) => console.error('[enrichEntry] Sonnet fallback failed:', err));
     }
   } catch (error) {
@@ -877,6 +1003,7 @@ async function sonnetFallback(
   familyId: string,
   userPrompt: string,
   childNames: string[],
+  existingSubjects: string[] | null,
 ): Promise<void> {
   const startTime = Date.now();
   const client = new Anthropic();
@@ -935,6 +1062,7 @@ async function sonnetFallback(
     .set({
       aiEnrichment: { ...validated, status: 'enriched' as const },
       ...wsUpdate,
+      ...subjectsFill(existingSubjects, validated.subjects_detected),
       updatedAt: new Date(),
     })
     .where(eq(learningEntries.id, entryId));

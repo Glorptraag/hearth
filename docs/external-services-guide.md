@@ -201,7 +201,7 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 
 **What it is:** The maker of Claude — a family of large language models (Haiku, Sonnet, Opus) accessible via a REST API. Anthropic positions itself around Constitutional AI: alignment training that makes the models safer and more steerable on long-form, structured outputs than the typical instruction-tuned generation.
 
-**What we use it for:** Two specific call sites. (1) Write-time enrichment in `src/lib/ai/enrich.ts` — when a parent saves a complete entry, the entry text plus their pedagogy profile goes to Haiku 4.5, which returns capability threads, curriculum descriptors, and an insight summary. The result is stored in `learning_entries.aiEnrichment` and powers the Capabilities Constellation, the report PDFs, and the family intelligence snapshot. (2) Draft insights in `src/lib/ai/draft-insight.ts` — a debounced (2 s) call fired while the parent is typing, returning the "Hearth is noticing" panel that softly nudges them toward richer reflection. Both are write-time only; **no Claude call ever happens at read time** (architecture rule per `CLAUDE.md`).
+**What we use it for:** Two specific call sites. (1) Write-time enrichment in `src/lib/ai/enrich.ts` — when a parent saves a complete entry, the entry text plus their pedagogy profile goes to Haiku 4.5, which returns capability threads, curriculum descriptors, and an insight summary. The result is stored in `learning_entries.aiEnrichment` and powers the Capabilities Constellation, the report PDFs, and the family intelligence snapshot. (2) ~~Draft insights in `src/lib/ai/draft-insight.ts`~~ — **retired 2026-10-07** (the while-typing draft-insight and coach-hints endpoints were deleted in the Logger Notice → Confirm rebuild, D-LPS-14); the other remaining call site is module-builder draft enrichment (`enrichModuleDraft`). All are write-time only; **no Claude call ever happens at read time** (architecture rule per `CLAUDE.md`).
 
 **Why this over alternatives:**
 - **Vs. OpenAI (GPT-4o, GPT-4-turbo):** comparable raw capability for our task. Anthropic wins on three Hearth-specific axes: (a) Constitutional alignment is well-suited to philosophy-neutral content generation — Claude resists drifting into prescriptive parenting advice in a way that GPT does not by default; (b) safety profile for children's-data context — Anthropic's terms forbid training on customer data, which we cite in the Privacy Policy; (c) Haiku's price/quality ratio for the "structured JSON out of a few paragraphs of text" task is currently the cheapest in its tier.
@@ -236,7 +236,7 @@ A fifth cross-cutting principle keeps showing up in the per-service rationale: *
 - API keys — `https://console.anthropic.com/settings/keys`
 - Internal: `/admin/analytics` → AI Cost panel
 
-**Hearth env vars from this:** `ANTHROPIC_API_KEY`. Plus `DRAFT_INSIGHTS_ENABLED` (kill switch — flip to `false` for emergency cost containment).
+**Hearth env vars from this:** `ANTHROPIC_API_KEY`. (`DRAFT_INSIGHTS_ENABLED` is inert since 2026-10-07 — the endpoint it gated was deleted.)
 
 ---
 

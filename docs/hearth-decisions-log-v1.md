@@ -236,6 +236,45 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 
 ---
 
+### D-LPS-14 — The Logger is Notice → Confirm: one capture set, one post-save surface
+
+**Decision:** The Logger captures exactly the **consumption set** — the union of what downstream actually reads: who (`learnerIds`), what happened (`text`, typed or dictated), when (`dateOccurred`, a real date), per-child felt experience (`felt`, ordinal 1..4 → `engagementPerLearner`), per-child "said / asked / noticed" (`noticed` → `discoveriesPerLearner`), and evidence (photo / their words / link). The completeness score and ring, the Quick/Full view, the Guided/Quick mode, the activity grid, lesson subjects, duration/location, the 24 observation chips, and the while-typing insights rail (keyword matcher, draft-insight, coach hints) are **removed**. The save gate is `saveBlock()`: ≥1 child AND (any text OR any evidence). Every save lands on **one Confirm surface** with **five honest states** — `queued` (offline, outbox accepted), `pending` (reading it now, exit row live immediately), `proposals` (per-child DLO chips with provenance), `nothing` (single-child / nobody-named / other-multi sentences, "It still counts"), `failed` (safe in Portfolio, parent-initiated "Read it again"). The thin-entry fast path is collapsed into the same surface. Binding provenance rule: every node on Confirm is the parent's own words, a chip with provenance, human-authored copy, or licence attribution — no `insight_suggestions`, `journey_observation`, `profile_nudge`, "builds the X thread" line, or work-sample pill.
+
+**Why:** The owner's "Hearth — Three Passes Toward a Coherent System" (v1, 2026-10-07; Pass 1 §1.4, Pass 2 §2.5) names the model: Logger = Notice, post-save = Confirm, and the proposal chips *are* the insight. Every removed field was captured and then read by nothing (duration, location, observation chips, activity type) or only by the score that justified it; the score itself read as a grade (R14, R18) and the insights rail was decoration with a runtime Haiku cost. One surface with honest states keeps the 5-minute rule and the Stage-2 relief moment without a density branch to tune. **Supersedes D-LPS-3** (density states), **D-LPS-11** (completeness ring) and **D-LPS-13** (two-tier Quick/Full); **keeps D-LPS-1, 2, 4, 5, 6, 7, 8, 9 and 12.**
+
+**Document of record:** `docs/hearth-logger-spec-v2.md`
+**Implementation:** `src/app/(auth)/log/page.tsx` (~240-line composition root (under 300 by construction)), `src/app/(auth)/log/_components/` (`NoticeForm`, `WhoRow`, `WhatField`, `PerChildRow`, `WhenRow`, `EvidenceRow`, `SourceBanner`, `SaveBar`, `noticeCopy.ts`), `src/components/logger/confirm/` (`ConfirmSurface`, `ProposalGroup`, `ProposalChip`, `BadgeReadyRow`, `ConfirmExitRow`, `confirmCopy.ts`), `src/hooks/use-notice-form.ts`, `src/hooks/use-notice-save.ts`, `src/lib/logger/{notice,source,proposals,confirm-state,entry-payload,draft}.ts`
+**Tests:** `src/lib/logger/notice.test.ts`, `source.test.ts`, `proposals.test.ts` (incl. parity with `gateLearnersByNamedSignals`), `entry-payload.test.ts`, `draft.test.ts`, `src/hooks/use-notice-form.test.tsx`, `use-notice-save.test.tsx`, `src/components/logger/confirm/ConfirmSurface.test.tsx`, `ProposalChip.test.tsx`, `src/app/(auth)/log/_components/*.test.tsx`
+**Date:** 2026-10-07
+
+---
+
+### D-LPS-15 — Subjects are filled server-side from enrichment when the parent gave none
+
+**Decision:** `learning_entries.subjects` is filled inside `enrichEntry` from `subjects_detected` (normalised onto the lowercase `SUBJECTS` enum via `src/lib/ai/subjects-normalise.ts`) **only when the entry's existing `subjects` is empty**. A writer-set value — module runner, batch log, CSV import, Portfolio edit — is never overwritten. The fill is applied at both `status: 'enriched'` write sites (the main path and `sonnetFallback`, which gained an `existingSubjects` parameter). The Logger no longer sends `subjects`.
+
+**Why:** Removing the activity grid (D-LPS-14) would otherwise leave Logger entries with no subjects and send the weekly/monthly subject balance in `snapshot-rebuild.ts` dark. A client PATCH of `subjects` would trigger `needsReenrich` and loop; a server fill inside `enrichEntry` is loop-free and benefits the retry route, PATCH re-enrich, batch and import alike, and `rebuildSnapshot` runs after it in the same `after()`. Known trade: a failed enrichment leaves subjects empty until retry (SIDEBAR S4 in the v2 spec).
+
+**Document of record:** `docs/hearth-logger-spec-v2.md` §4
+**Implementation:** `src/lib/ai/subjects-normalise.ts` (`normaliseDetectedSubjects`, `subjectsFill`); `src/lib/ai/enrich.ts` (both enriched writes)
+**Tests:** `src/lib/ai/subjects-normalise.test.ts`; `src/lib/ai/__tests__/enrich-subjects-fill.integration.test.ts`
+**Date:** 2026-10-07
+
+---
+
+### D-LPS-16 — Confirm chips reuse the DLO parent-assertion endpoint behind one seam
+
+**Decision:** A chip on the Confirm surface calls exactly one function, `confirmProposal(p, action)` in `src/lib/logger/confirm-client.ts`, which today POSTs to the existing `/api/capabilities/[learnerId]/dlo/[dloId]/confirm`. **First tap = `confirm`** → `upsertParentAssertion` (one `asserted` row at the DLO's tier, idempotent). **Second tap = `dispute`** → `clearParentAssertion` (the `inferred` row stays). Optimistic UI, revert + retry toast on failure, one in-flight request per key (`useProposalConfirm`). The route now runs `checkWritePermission` (viewer → 403). When the proposed→confirmed ledger (Three Passes, Pass 2 §2.1) lands, it swaps in behind `confirmProposal()`; the surface does not change.
+
+**Why:** The assertion endpoint already exists, is cross-family safe and recomputes `learner_dlo_status`, so the rebuild ships Confirm without a schema change (zero migrations). Isolating the call behind one function keeps the ledger a drop-in rather than a second surface rewrite. Under `PRODUCTION_TIER_BAR` a tap is the corroboration that can lift a thread to demonstrating, which is why the vocabulary ("confirm you've seen this", undo on second tap) is kept modest — what a tap *should* mean long-term is SIDEBAR S1; shared vocabulary with PR #288 is SIDEBAR S5.
+
+**Document of record:** `docs/hearth-logger-spec-v2.md` §5.4
+**Implementation:** `src/lib/logger/confirm-client.ts`; `src/hooks/use-proposal-confirm.ts`; `src/app/api/capabilities/[learnerId]/dlo/[dloId]/confirm/route.ts` (write check)
+**Tests:** `src/lib/logger/confirm-client.test.ts`; `src/hooks/use-proposal-confirm.test.tsx`; `src/app/api/capabilities/[learnerId]/dlo/[dloId]/confirm/route.integration.test.ts`
+**Date:** 2026-10-07
+
+---
+
 ## Process
 
 ### PR-1 — Research spine: personas, journey map, research log + bug→regression-test convention
@@ -247,6 +286,217 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Document of record:** `docs/hearth-research-log.md` (header: "The convention").
 **Companions:** `docs/hearth-pilot-personas-v1.md`, `docs/hearth-parent-journey-v1.md`
 **Date:** 2026-06-10
+
+---
+
+## Launch Pivot (Expo, 9 Nov 2026)
+
+### D-LP-1 — Lead with the record: one capture is the evidence base
+
+**Decision:** The expo leads with the parent's record: what happened, with whom, when, the child's felt experience and the evidence. Every launch surface starts from that capture. The foundation is the Logger Notice → Confirm rebuild (D-LPS-14/15/16), not the S0–S2 moments tables the pivot assumed. No `moments`, `moment_runs` or `moment_links` tables are created: `learning_entries` carries the record and the existing DLO link/assertion rows serve as moment links (A2). The foundation lands first and in order: #285, then #286 (re-opened as #292), then #288, then #287, then the logger rebuild rebased on top (A8).
+
+**Why:** The reality check (plan §0) found S0–S2 absent from the repo, while the Notice → Confirm rebuild already captures the consumption set. New tables would duplicate a working record and create a second writer on `/log`. One record also means the Report and the Constellation read the same rows (P10).
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §0, §1 (P1, A2, A8)
+**Date:** 2026-10-19
+
+---
+
+### D-LP-2 — Photo Read describes; authored notes interpret
+
+**Decision:** When a parent attaches a photo, Read describes what is visible (the printed page, the activity, the artefact). It does not interpret. Read output is factual text validated against a Zod schema. Any developmental interpretation comes from the authored, confirmed "watch for next" notes (D-LP-8). Under A1, Read runs post-save inside `enrichEntry`, in the same call that proposes DLOs. The photo saves instantly and the Read draft appears on the Confirm surface as "Use this / Edit". Only an accepted or edited draft becomes entry text (`drafted_by: 'read'`). The raw output is kept in `read_output` (A2). A refusal or invalid output produces an empty Read, never an invented one.
+
+**Why:** Pre-filling before save would hold the save behind a model call and put model text into the record before the parent has seen it. A describing Read is checkable against the photo, and interpretation stays with notes a human has reviewed.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P2, A1, A2)
+**Date:** 2026-10-19
+
+---
+
+### D-LP-3 — At most one model call per save
+
+**Decision:** Each save makes at most one model call, with or without a photo. Photo Read folds into the existing Haiku enrichment call (A1). An image block is added only when the flag allows it, the family has opted in and the entry has photo evidence. The cap is about 1,300 input tokens for the image and 250 output tokens for the Read section. The Sonnet fallback remains the existing failure path and adds no call on the happy path. Architecture principle 4 stays intact: the call runs at write time, after save, and nothing runs at read time.
+
+**Why:** P3 as first written budgeted two calls per photo. That doubles the cost of the most common save and adds latency the parent feels at the stand. One combined call keeps the AI cost dashboard honest and the photo save instant.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P3, A1), §2 W1.4
+**Date:** 2026-10-19
+
+---
+
+### D-LP-4 — Photo Read is opt-in, disclosed first, and off in production until ZDR
+
+**Decision:** A family opts in to Photo Read through a disclosure sheet shown at its first photo capture (P4). The choice is stored in `families.photo_read_opt_in`. The opt-in is built regardless of provider status. Read is gated by two flags, `PHOTO_READ_ENABLED` and `PHOTO_READ_FAMILY_ALLOWLIST`. Production stays off until Anthropic zero-data-retention is in place for the API org (A3). Until then the stand runs only on the allowlisted demo family, with curated photos that contain no faces. A visitor's own photo is stored and can be confirmed, but it is not read.
+
+**Why:** Children's photographs should not reach a model provider on retention terms the family has not been told about. Consent and provider retention both have to hold before an image leaves our systems. Building the opt-in now means the ZDR go-live is a flag change, not a code change.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P4, A3), §3 (ZDR and disclosure-copy gates)
+**Date:** 2026-10-19
+
+---
+
+### D-LP-5 — Exit the curriculum race: any curriculum, or none
+
+**Decision:** Hearth stops competing on curriculum coverage. The expo line is "Any curriculum. Or none. Ready for the HEU." Hearth reads what a family already uses rather than supplying a programme. The Shelf (A4) records the resource a family already owns, and matching against it is deterministic. No launch surface implies that Hearth's content is the course a family must follow.
+
+**Why:** A curriculum race against established publishers cannot be won in the expo window. The material a family already owns is what they will photograph, and positioning around it fits the philosophy-neutral principle (architecture principle 3).
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P5, A4), §2 W7.3
+**Date:** 2026-10-19
+
+---
+
+### D-LP-6 — The Shelf: four resources and two universal sources
+
+**Decision:** The Shelf is a Sanity `shelfResource` document type (A4). Wave 1 holds four resources: Math-U-See, The Good and the Beautiful, All About Reading and Story of the World. Two universal sources sit alongside them: "My own plan" and "An AI-made plan" (P6). A family whose material is neither a named resource nor a plan from Hearth can still record what it is working from. Matching is deterministic, using aliases and a lesson-number regex over `read_output.printedText`, with zero LLM calls. A matched resource and lesson is written to `learning_entries.working_from` only when the parent confirms (W2.4).
+
+**Why:** A document type lets Drew edit the list without a deploy. The universal sources give every family an honest option. A regex match cannot invent a lesson number the way a model guess can, and writing only on confirm keeps the parent in charge of the record.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P6, A4), §2 W2
+**Date:** 2026-10-19
+
+---
+
+### D-LP-7 — HEU annotated work samples are the hero output
+
+**Decision:** The hero output is the annotated work sample (P7). An entry with a photo and a confirmed DLO renders as the parent's own words, a DLO plain-language line and a band sentence. Samples are grouped per learning area in the Report and in the PDF. This needs no data-model change (W5.1). Work samples are on the never-cut list in plan §2.
+
+**Why:** The HEU audience checks evidence against the curriculum. A sample that pairs the child's work with the parent's words is the form they can check. Building it on the existing entry, DLO links and report pipeline avoids a new surface before the expo.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P7), §2 W5.1 and never-cut list
+**Date:** 2026-10-19
+
+---
+
+### D-LP-8 — "Watch for next" notes: F–Y3 scope, authored and confirmed
+
+**Decision:** The "watch for next" notes cover F–Y3 only (P8). About 50 are selected from F–Y3 DLOs, ranked by fixture and wave-1 hits and weighted toward early literacy, early number, science and nature, and art and making. Claude drafts them into Sanity as unpublished drafts in batches of about 10, starting Fri 23 Oct. Drew confirms each one (A5). Only notes with `confirmedAt` render. An unconfirmed note is omitted and is never generated at read time, and a test pins that omission.
+
+**Why:** Notes are authored and human-confirmed, which keeps interpretation reviewed (P2). Generating them at read time would reintroduce the runtime AI that architecture principle 4 forbids. The confirmation backlog degrades gracefully: a short list shows fewer notes and nothing breaks.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P8, A5), §2 W4
+**Date:** 2026-10-19
+
+---
+
+### D-LP-9 — Launch cuts are flags, not deletions; the expo runs on the web
+
+**Decision:** Launch scope is set by `LAUNCH_SCOPE=expo`, which hides Module Builder, Planner, Marketplace and badges from nav and routes (A9). The code stays. `/ask` and cue suggestions were never built and stay unbuilt. The expo vehicle is the web app: a QR code leads to `www` sign-up and then add to home screen (A6). Native store submission follows the expo, and Apple enrolment and the Play closed track start this week. Account deletion (A7) is not a cut. It is a go-live gate: ownership transfers when another adult member exists, a sole owner deletes Hearth outright, and the Clerk user and every Blob evidence object are removed.
+
+**Why:** Flags are reversible, so the cut can be undone after the expo without a re-land. Native submission depends on Drew-side enrolment that the calendar cannot carry, and a web demo avoids promising a store build. Deletion is a legal exposure, so it must be fixed before go-live rather than cut.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P9, A6, A7, A9), §2 W6 and W7
+**Date:** 2026-10-19
+
+---
+
+### D-LP-10 — Constellation shows what is growing; the Report shows what is evidenced
+
+**Decision:** The two surfaces make different claims (P10). The Constellation says what is growing, in trajectory language drawn from the existing recent-activity and "New" signals. The Report says what is evidenced, meaning tiers corroborated under `PRODUCTION_TIER_BAR` and DLO links backed by confirmed evidence. The Constellation copy changes and the evidence rules do not. The Dashboard line (W5.3) may point to either surface and is among the first cuts if the calendar slips.
+
+**Why:** If growth and evidence were blurred, an unconfirmed trajectory could read as a claim the HEU can check, which is the exposure the Report exists to avoid. Keeping the rule in one place (the tier bar) stops the copy drifting from the evidence.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (P10), §2 W5.2 and W5.3
+**Date:** 2026-10-19
+
+---
+
+### A1 — Photo Read runs post-save, inside `enrichEntry`
+
+**Decision:** One vision call both reads and proposes, inside `enrichEntry`. The photo saves instantly. The Read draft shows on the Confirm surface as "Use this / Edit", and only an accepted or edited draft becomes entry text (`drafted_by: 'read'`). The budget is at most one call per save, photo or not. The Sonnet fallback remains the existing failure path. This replaces P2's pre-fill-before-save and P3's two-call photo budget.
+
+**Why:** The save stays instant, and model text reaches the record only once a parent accepts it. Architecture principle 4 stays intact.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A1)
+**Date:** 2026-10-19
+
+---
+
+### A2 — No new `moments` tables
+
+**Decision:** `learning_entries` gains `drafted_by` (`parent` | `read`, default `parent`) and `read_output` (jsonb, the validated Read schema). The run tape is the existing enrichment and AI-usage logging, plus `stage = 'read'` token records. `moment_links` is the existing DLO link and assertion rows. This replaces pivot §4.3.
+
+**Why:** The repo has no moments tables, and the existing tables already hold the record. The schema change is limited to the two entry columns, plus `families.photo_read_opt_in` (W1.1).
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A2), §2 W1.1
+**Date:** 2026-10-19
+
+---
+
+### A3 — Read is off in production until zero-data-retention is in place
+
+**Decision:** Read is gated by `PHOTO_READ_ENABLED` and `PHOTO_READ_FAMILY_ALLOWLIST`. The allowlist is the stand demo family only, with curated photos that contain no faces. `families.photo_read_opt_in` is built regardless. Demo step 6 is a visitor's own photo, which is stored and can be confirmed but is not read until ZDR lands. This replaces the go-live assumption in P4.
+
+**Why:** Child photographs go to the provider only after retention terms are in place. The expo still works without it, since the Confirm and Report surfaces do not depend on Read.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A3), §3 (ZDR gate)
+**Date:** 2026-10-19
+
+---
+
+### A4 — The Shelf is a Sanity `shelfResource` document type
+
+**Decision:** Wave 1 has four resources: Math-U-See, The Good and the Beautiful, All About Reading and Story of the World. The universal sources are "My own plan" and "An AI-made plan". Matching is deterministic (alias plus lesson-number regex on `read_output.printedText`, zero LLM). This replaces the "three resources" wording in the pivot.
+
+**Why:** A document type keeps the list editable in Sanity without a deploy. Deterministic matching is testable against fixtures.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A4), §2 W2
+**Date:** 2026-10-19
+
+---
+
+### A5 — DLO "watch for next" notes are drafted by Claude and confirmed by Drew
+
+**Decision:** Claude drafts about 50 F–Y3 notes into Sanity. Drew confirms each one. Only notes with `confirmedAt` render. Batches are about 10, starting Fri 23 Oct. This replaces the authoring source named in the pivot's §4.
+
+**Why:** Human confirmation is the review step for developmental content, and it is cheap at about five minutes per batch.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A5), §2 W4
+**Date:** 2026-10-19
+
+---
+
+### A6 — The expo vehicle is the web app
+
+**Decision:** The stand uses a QR code that leads to `www` sign-up, then add to home screen. Native store submission runs after the expo. Drew starts Apple enrolment and the Play closed track (12 testers over 14 days) this week. This replaces the native trial the pivot assumed.
+
+**Why:** Native submission depends on enrolment and tester windows that cannot finish before 9 Nov. The web app is already the working product.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A6), §3 (store gates)
+**Date:** 2026-10-19
+
+---
+
+### A7 — Account deletion is fixed before go-live, with D1 = transfer ownership
+
+**Decision:** If another adult member exists, ownership transfers to that member and the deleting user leaves. A sole owner deletes Hearth outright. Deletion also removes the Clerk user and every Blob evidence object. The fix covers all 27 foreign keys, and the `it.fails` pin in `orphan-tables.integration.test.ts` flips to passing. This is D1 in `docs/hearth-account-deletion-defect-v1.md` §3.
+
+**Why:** The current route returns 500 for most real families, the Clerk identity survives deletion, and child evidence persists in Blob storage. These are launch blockers, not scope items.
+
+**Document of record:** `docs/hearth-account-deletion-defect-v1.md` §3; `docs/hearth-launch-pivot-plan-v1.md` §1 (A7), §2 W6
+**Date:** 2026-10-19
+
+---
+
+### A8 — Merge order for the stacked passes, then rebase the logger rebuild
+
+**Decision:** Merge #285, then #286, then #288 (stacked), then #287. Rebase the logger rebuild onto the result. Conflicts are expected in `dlo-persistence` (#288), the logger context (#286), the insights rail (#285) and motion classes (#290). Status at log time (20 Oct): #286 was re-opened as #292 and merged, #285, #287, #288 and #292 are on `main`, and the logger rebuild is merged into the pivot branch (`1359e68`).
+
+**Why:** The rebuild depends on the context plumbing and the DLO persistence that these passes provide. Landing them first, one at a time, keeps each CI run attributable.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A8), §2 W0.2 and W0.3
+**Date:** 2026-10-19
+
+---
+
+### A9 — Launch cuts are flags, not deletions
+
+**Decision:** `LAUNCH_SCOPE=expo` hides Module Builder, Planner, Marketplace and badges from nav and routes. The code stays in the repo and the flag reverses the change. `/ask` and cue suggestions were never built and stay unbuilt. This replaces the "launch cuts" wording of P9 as first written.
+
+**Why:** Flags are reversible and need no re-land. Deletions would make the post-expo restore a large, risky change.
+
+**Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A9), §2 W7.1
+**Date:** 2026-10-19
 
 ---
 

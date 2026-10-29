@@ -15,6 +15,15 @@
 // with a comment that references this invariant.
 //
 // A CI script (scripts/check-sanity-gating.mjs) enforces this on every PR.
+//
+// DEREF-EXISTENCE GUARD: ref arrays whose targets may be unreadable or absent
+// (notably `capabilityThread` docs — see the dark-constellation root cause — but
+// also any dangling ref to a deleted/unpublished doc) must filter on
+// `defined(@->_id)` BEFORE the deref, e.g. `capabilityThreads[defined(@->_id)]->{...}`.
+// Without it, an unresolvable ref dereferences to `null`, leaving a null element
+// in the array; a component that `.map`s it and reads `.title`/`._id` then throws
+// "null is not an object (evaluating 'e.title')" (Sentry HEARTH-9). The filter
+// keeps resolvable refs and silently drops the rest — graceful absence, not a crash.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Reusable projection for the pack/module indicators feature.
@@ -72,7 +81,7 @@ export const PACK_DETAIL_QUERY = `*[_type == "pack" && slug.current == $slug && 
       }
     }
   },
-  badges[]->{ _id, title, emoji, description }
+  badges[defined(@->_id)]->{ _id, title, emoji, description }
 }`;
 
 // Single module with approaches and activities
@@ -89,8 +98,8 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
     ...,
     "activities": activities[@->status == "published"]->{
       ...,
-      capabilityThreads[]->{ _id, title, domain },
-      enabledBadges[]->{ _id, title, emoji },
+      capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+      enabledBadges[defined(@->_id)]->{ _id, title, emoji },
       "assets": assets[@.asset->status == "published"]{
         _key, role, notes,
         asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
@@ -106,16 +115,16 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $id && status 
       }
     }
   },
-  capabilityThreads[]->{ _id, title, domain, description },
-  badges[]->{ _id, title, emoji, criteriaSummary }
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain, description },
+  badges[defined(@->_id)]->{ _id, title, emoji, criteriaSummary }
 }`;
 
 // Single activity with full content
 // NOTE: fileUrl intentionally excluded — this query runs client-side.
 export const ACTIVITY_DETAIL_QUERY = `*[_type == "activity" && _id == $id && status == "published"][0]{
   ...,
-  capabilityThreads[]->{ _id, title, domain },
-  enabledBadges[]->{ _id, title, emoji },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+  enabledBadges[defined(@->_id)]->{ _id, title, emoji },
   "assets": assets[@.asset->status == "published"]{
     _key, role, notes,
     asset->{ _id, title, slug, kind, pageCount, description, printGuidance, ageBand, status,
@@ -148,16 +157,16 @@ export const PROJECT_DETAIL_QUERY = `*[_type == "project" && _id == $id && statu
     _id, title, slug, stageNumber, instructions, materials,
     estimatedDuration, artifactDescription, dependsOn, status
   } | order(stageNumber asc),
-  capabilityThreads[]->{ _id, title, domain },
-  badges[]->{ _id, title, emoji, criteriaSummary }
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain },
+  badges[defined(@->_id)]->{ _id, title, emoji, criteriaSummary }
 }`;
 
 // All published projects for explore/browse
 export const ALL_PROJECTS_QUERY = `*[_type == "project" && status == "published"]{
   _id, title, slug, description, subjects, ageRange, duration,
   "stageCount": count(stages[@->status == "published"]),
-  badges[]->{ _id, title, emoji },
-  capabilityThreads[]->{ _id, title, domain }
+  badges[defined(@->_id)]->{ _id, title, emoji },
+  capabilityThreads[defined(@->_id)]->{ _id, title, domain }
 }`;
 
 // All capability threads (reference data)
@@ -302,14 +311,14 @@ export const ASSET_DETAIL_QUERY = `*[_type == "asset" && _id == $id && status ==
   ...,
   "fileUrl": file.asset->url,
   "thumbnailUrl": thumbnail.asset->url,
-  relatedCommonsTexts[]->{ _id, title, slug, kind }
+  relatedCommonsTexts[defined(@->_id)]->{ _id, title, slug, kind }
 }`;
 
 // Single commons text with full content
 export const COMMONS_TEXT_DETAIL_QUERY = `*[_type == "commonsText" && _id == $id && status == "published"][0]{
   ...,
-  relatedAssets[]->{ _id, title, slug, kind },
-  relatedTexts[]->{ _id, title, slug, kind }
+  relatedAssets[defined(@->_id)]->{ _id, title, slug, kind },
+  relatedTexts[defined(@->_id)]->{ _id, title, slug, kind }
 }`;
 
 // All assets and commons texts for a set of activities (batch fetch for planner/module)
@@ -383,6 +392,49 @@ export const PACK_MATERIALS_QUERY = `*[_type == "pack" && _id == $packId && stat
 // Pedagogical framework by pedagogy key (slug field)
 export const FRAMEWORK_BY_PEDAGOGY_KEY_QUERY = `*[_type == "pedagogicalFramework" && slug == $pedagogyKey][0]{
   _id, slug
+}`;
+
+// ─── Watch-for (W4.4, D-HC-5; composed by src/lib/watch/compose.ts) ───
+// Both queries are gated on their human-confirmation field, so an unconfirmed
+// note or line never leaves Sanity (D-LP-8: unconfirmed → omitted, never
+// generated). Published documents only. Server-side reads (dotted DLO ids are
+// dark to the tokenless browser client) — served to the Confirm surface by
+// GET /api/watch-for, so neither is in CLIENT_READ_QUERIES.
+
+// Confirmed "watch for next" notes for a set of DLO ids ($dloIds).
+export const WATCH_FOR_NOTES_QUERY = `*[_type == "discreteLearningObjective"
+  && _id in $dloIds
+  && !(_id in path("drafts.**"))
+  && defined(watchForConfirmedAt)
+  && defined(watchForNext.neutral)]{
+  "dloId": _id,
+  "watchForNext": { "neutral": watchForNext.neutral },
+  evidenceKind,
+  watchForConfirmedAt
+}`;
+
+// Every confirmed watch-for note (no id filter) — the Dashboard's everyday
+// watch-for picks its frontier DLO from these (HC-1c). About 50 docs at the expo.
+export const WATCH_FOR_CONFIRMED_NOTES_QUERY = `*[_type == "discreteLearningObjective"
+  && !(_id in path("drafts.**"))
+  && defined(watchForConfirmedAt)
+  && defined(watchForNext.neutral)]{
+  "dloId": _id,
+  "watchForNext": { "neutral": watchForNext.neutral },
+  evidenceKind,
+  watchForConfirmedAt
+}`;
+
+// A tradition's confirmed watchHow lines ($pedagogyKey = pedagogicalFramework.slug).
+export const FRAMEWORK_WATCH_HOW_QUERY = `*[_type == "pedagogicalFramework"
+  && slug == $pedagogyKey
+  && !(_id in path("drafts.**"))
+  && defined(watchHowConfirmedAt)][0]{
+  slug,
+  watchHow,
+  watchHowStageOverrides[]{ stage, kind, text },
+  watchHowFallback,
+  watchHowConfirmedAt
 }`;
 
 // PKB: Practice patterns for a given framework

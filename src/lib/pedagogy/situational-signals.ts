@@ -17,8 +17,8 @@
  *    canonical form where tags.json carries near-duplicates.
  *  - Map conservatively: a chip maps to a tag only when the tag's meaning is
  *    what the chip actually says. Absence beats guesswork.
- *  - Pure and dependency-free so both the write-time enrichment path and the
- *    pre-save coach-hints path can call it.
+ *  - Pure and dependency-free. The write-time enrichment path calls it; the
+ *    pre-save coach-hints caller was retired with the Logger rebuild (D-LPS-14).
  */
 import type { LoggerContext } from '@/types/logger-context';
 

@@ -498,6 +498,8 @@ The `observedPatterns` sub-object on the Pedagogy Engine profile is superseded b
 **Document of record:** `docs/hearth-launch-pivot-plan-v1.md` §1 (A9), §2 W7.1
 **Date:** 2026-10-19
 
+---
+
 ## Spec chain and Hearth Cycle (21 Oct 2026)
 
 The seven spec-chain documents were committed to `docs/` on 21 Oct 2026: `hearth-spec-chain-README.md`, `hearth-coherent-system-passes-v1.md`, `hearth-launch-pivot-v1.md`, `hearth-pedagogy-layer-v1.md`, `hearth-learning-cycle-v1.md`, `hearth-watch-for-v1.md` and `hearth-cycle-brief-v1.md`. Precedence between them follows `hearth-spec-chain-README.md` (newest wins: watch-for, learning cycle, pedagogy layer, launch pivot, then the notes-architecture base docs; the brief sits above the chain as direction, not build spec). Every ID below is **Proposed** unless marked Decided. P1–P10 were amended and logged as D-LP-1…10 and A1–A9 on the unmerged launch-pivot branch (`claude/hearth-launch-pivot-v1-175462`); they are indexed here, not duplicated. The chain's base docs (`hearth-notes-architecture-v1.md`, `-v2.md`, `hearth-notes-handoff-plan-v1.md`) are absent from the repo, so D-HC-3 governs. The build plan of record is `docs/hearth-cycle-build-plan-v1.md`, which is being written alongside this section.

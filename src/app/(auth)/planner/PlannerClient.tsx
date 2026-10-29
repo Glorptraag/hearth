@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { addDays, startOfWeek, format, isSameWeek } from 'date-fns';
 import PlannerGrid from '@/components/planner/PlannerGrid';
-import BottomSheet from '@/components/planner/BottomSheet';
+import BottomSheet, { type PlannerSheetEntry } from '@/components/planner/BottomSheet';
 import { PrintSheet } from '@/components/content/PrintSheet';
 import { usePedagogy } from '@/hooks/use-pedagogy';
 import { track } from '@/lib/analytics/posthog';
@@ -128,7 +128,7 @@ export default function PlannerClient({
     setSheetOpen(true);
   }
 
-  async function handleAddEntry(payload: { date: string; title: string; learnerIds: string[]; session: string }) {
+  async function handleAddEntry(payload: PlannerSheetEntry) {
     const res = await fetch('/api/planner', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

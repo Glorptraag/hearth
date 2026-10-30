@@ -4,7 +4,7 @@
 
 > **Status:** Plan of record from 2026-10-28. Drew decided on a native Swift/Xcode app that ships **alongside** the web app (two clients, one backend, one repo) and will **pay Apple's commission** in exchange for App Store placement. Within reason, Swift is preferred over hosted web.
 > **Supersedes:** [`hearth-native-app-plan-v1.md`](hearth-native-app-plan-v1.md) Phase 2 (Capacitor shell) and its "strip digital purchases from native" decision. v1 Phase 1 (offline/PWA, for the web) and Phase 4 (store compliance) still apply. Where this doc and v1 disagree, this doc wins.
-> **Code:** [`apple/`](../apple/README.md). N0 (scaffold) is built; the N3 StoreKit client layer is started.
+> **Code:** [`apple/`](../apple/README.md). N0 (scaffold) and N1 (web bridge, server in PR #304) are built; the N3 StoreKit client layer is started.
 
 ---
 
@@ -144,7 +144,9 @@ Each phase is one or more small PRs that are each green (re-land house style, `h
 ### N0 — Scaffold ✅
 XcodeGen project (`apple/project.yml`, synced folders), iOS 18+, iPhone + iPad, Swift 6 with MainActor default isolation, ClerkKit 1.6. Design system parity. Adaptive shell. Native Home, Story and Quick Log (outbox). `WebFeatureView`. Settings shell. Unit tests (contract fixtures, outbox, navigation policy, theme). Debug-only `-HearthDemo` / `-HearthTab` launch arguments for screenshots without a Clerk session.
 
-### N1 — Web bridge (server)
+### N1 — Web bridge (server) ✅ built in PR #304
+The app side shipped with N0, plus the update gate (`UpdateGate`, `UpdateRequiredView`), which reads `GET /api/native/config` at launch and on foreground and fails open. Not yet built: `nativeSurfaces` and PostHog tagging. The `X-Hearth-Client` Sentry tag is done.
+
 `POST /api/native/web-session` + public `/native/handoff` (ticket strategy, relative-`next` guard, tests); add `/native/handoff` to `isPublicRoute`. Chromeless `(auth)/layout.tsx` when `isNativeRequest()`. `GET /api/native/config`. Tag `X-Hearth-Client` in Sentry and PostHog.
 
 ### N2 — Native Logger

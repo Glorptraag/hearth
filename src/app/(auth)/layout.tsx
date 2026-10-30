@@ -18,6 +18,7 @@ import {
   UsersThree,
 } from "@/components/icons";
 import { NAV_TABS, type NavTabConfig } from "@/components/nav/navConfig";
+import { useIsNative } from "@/components/platform/NativeProvider";
 
 type NavIcon = ComponentType<{ size?: number; weight?: "regular" | "fill" }>;
 
@@ -70,6 +71,9 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
   const { user } = useUser();
+  // Inside the iOS app the native tab bar / sidebar owns navigation, so the
+  // web renders chromeless (docs/hearth-native-ios-plan-v2.md §2, principle 3).
+  const isNative = useIsNative();
   const [familyNameFromDb, setFamilyNameFromDb] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hearths, setHearths] = useState<Array<{ id: string; name: string; pendingCount: number }>>([]);
@@ -145,113 +149,117 @@ export default function AuthLayout({
         what makes iOS Safari snapshot-and-resettle it during momentum scroll. */}
     <div className="flex h-dvh overflow-hidden bg-surface-body">
       {/* Desktop sidebar — hidden below lg */}
-      <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel">
-        {/* Top corner: home + notifications */}
-        <div className="flex shrink-0 items-center gap-sm px-xl pt-xl pb-2xl">
-          <Link
-            href="/dashboard"
-            className="relative inline-flex items-center transition-opacity duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:opacity-80 focus:outline-none focus-visible:opacity-80"
-            aria-label={`Hearth — home${unreadCount > 0 ? ` (${unreadCount} unread notifications)` : ''}`}
-          >
-            <Wordmark
-              iconHeight={40}
-              textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
-              className="inline-flex items-center gap-md"
-            />
-            {unreadCount > 0 && (
-              <span
-                aria-hidden="true"
-                className="hearth-pop-in pointer-events-none absolute left-[24px] top-[-2px] h-2.5 w-2.5 rounded-full bg-ember ring-2 ring-surface-panel"
-              />
-            )}
-          </Link>
-          <Link
-            href="/notifications"
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            className={`relative ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
-              isActive(pathname, '/notifications')
-                ? 'bg-surface-raised text-ember'
-                : 'text-text-muted hover:bg-ember-glow hover:text-text-primary'
-            }`}
-          >
-            <Bell size={18} aria-hidden="true" />
-            {unreadCount > 0 && (
-              <span className="absolute right-1 top-1">
-                <NotificationBadge count={unreadCount} />
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* Scrollable middle: primary nav + community */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-xl">
-          {PRIMARY_NAV.map((row) => (
-            <DesktopNavRow key={row.label} row={row} pathname={pathname} />
-          ))}
-          {hearths.length > 0 && (
-            <DesktopCommunityRow hearths={hearths} pathname={pathname} hasUnread={hasUnreadHearth} />
-          )}
-        </div>
-
-        {/* Pinned bottom: user badge → settings */}
-        <div className="shrink-0 border-t border-border-subtle px-xl py-xl">
-          <Link
-            href="/settings"
-            aria-label={`Settings — ${firstName}`}
-            className={`flex items-center gap-md rounded-md border p-md text-left transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
-              isActive(pathname, '/settings')
-                ? 'border-border-medium bg-surface-raised shadow-card'
-                : 'border-border-subtle bg-surface-raised hover:border-border-medium'
-            }`}
-          >
-            <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-gradient-to-br from-ember to-ember-hover font-serif text-[0.9rem] font-semibold text-surface-body shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-sans text-[0.85rem] font-semibold text-text-primary">
-                {firstName}
-              </div>
-              <div className="font-sans text-[0.75rem] text-text-muted">
-                Facilitator
-              </div>
-            </div>
-            <Gear size={16} aria-hidden="true" className="text-text-muted" />
-          </Link>
-        </div>
-      </nav>
-
-      {/* Mobile top header — hidden at lg */}
-      <div className="flex flex-1 flex-col min-w-0 lg:ml-[240px]">
-        <header className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
-          <Link href="/dashboard" className="inline-flex items-center" aria-label="Hearth — home">
-            <Wordmark
-              iconHeight={24}
-              textClassName="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]"
-            />
-          </Link>
-          <div className="flex items-center gap-md">
+      {!isNative && (
+        <nav className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-border-subtle bg-surface-panel">
+          {/* Top corner: home + notifications */}
+          <div className="flex shrink-0 items-center gap-sm px-xl pt-xl pb-2xl">
             <Link
-              href="/settings?tab=profile"
-              aria-label={`${familyName} — family settings`}
-              className="max-w-[45vw] truncate font-sans text-sm text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary focus:outline-none focus-visible:text-text-primary"
+              href="/dashboard"
+              className="relative inline-flex items-center transition-opacity duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:opacity-80 focus:outline-none focus-visible:opacity-80"
+              aria-label={`Hearth — home${unreadCount > 0 ? ` (${unreadCount} unread notifications)` : ''}`}
             >
-              {familyName}
+              <Wordmark
+                iconHeight={40}
+                textClassName="font-serif text-2xl font-bold text-text-primary tracking-[-0.02em]"
+                className="inline-flex items-center gap-md"
+              />
+              {unreadCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="hearth-pop-in pointer-events-none absolute left-[24px] top-[-2px] h-2.5 w-2.5 rounded-full bg-ember ring-2 ring-surface-panel"
+                />
+              )}
             </Link>
             <Link
               href="/notifications"
-              className="hit-target hearth-press relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted hover:bg-ember-glow hover:text-text-primary"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+              className={`relative ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+                isActive(pathname, '/notifications')
+                  ? 'bg-surface-raised text-ember'
+                  : 'text-text-muted hover:bg-ember-glow hover:text-text-primary'
+              }`}
             >
               <Bell size={18} aria-hidden="true" />
               {unreadCount > 0 && (
-                <span className="absolute right-[2px] top-[2px]">
+                <span className="absolute right-1 top-1">
                   <NotificationBadge count={unreadCount} />
                 </span>
               )}
             </Link>
-            <SettingsMenu />
           </div>
-        </header>
+
+          {/* Scrollable middle: primary nav + community */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-xl">
+            {PRIMARY_NAV.map((row) => (
+              <DesktopNavRow key={row.label} row={row} pathname={pathname} />
+            ))}
+            {hearths.length > 0 && (
+              <DesktopCommunityRow hearths={hearths} pathname={pathname} hasUnread={hasUnreadHearth} />
+            )}
+          </div>
+
+          {/* Pinned bottom: user badge → settings */}
+          <div className="shrink-0 border-t border-border-subtle px-xl py-xl">
+            <Link
+              href="/settings"
+              aria-label={`Settings — ${firstName}`}
+              className={`flex items-center gap-md rounded-md border p-md text-left transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ember)] ${
+                isActive(pathname, '/settings')
+                  ? 'border-border-medium bg-surface-raised shadow-card'
+                  : 'border-border-subtle bg-surface-raised hover:border-border-medium'
+              }`}
+            >
+              <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-gradient-to-br from-ember to-ember-hover font-serif text-[0.9rem] font-semibold text-surface-body shadow-[0_2px_8px_rgba(217,123,58,0.3)]">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-sans text-[0.85rem] font-semibold text-text-primary">
+                  {firstName}
+                </div>
+                <div className="font-sans text-[0.75rem] text-text-muted">
+                  Facilitator
+                </div>
+              </div>
+              <Gear size={16} aria-hidden="true" className="text-text-muted" />
+            </Link>
+          </div>
+        </nav>
+      )}
+
+      {/* Mobile top header — hidden at lg */}
+      <div className={`flex flex-1 flex-col min-w-0 ${isNative ? "" : "lg:ml-[240px]"}`}>
+        {!isNative && (
+          <header className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-surface-panel px-md py-sm lg:hidden">
+            <Link href="/dashboard" className="inline-flex items-center" aria-label="Hearth — home">
+              <Wordmark
+                iconHeight={24}
+                textClassName="font-serif text-lg font-semibold text-text-primary tracking-[-0.02em]"
+              />
+            </Link>
+            <div className="flex items-center gap-md">
+              <Link
+                href="/settings?tab=profile"
+                aria-label={`${familyName} — family settings`}
+                className="max-w-[45vw] truncate font-sans text-sm text-text-secondary transition-colors duration-[var(--motion-quick)] ease-[var(--ease-default)] hover:text-text-primary focus:outline-none focus-visible:text-text-primary"
+              >
+                {familyName}
+              </Link>
+              <Link
+                href="/notifications"
+                className="hit-target hearth-press relative flex h-[36px] w-[36px] items-center justify-center rounded-md text-text-muted hover:bg-ember-glow hover:text-text-primary"
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+              >
+                <Bell size={18} aria-hidden="true" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-[2px] top-[2px]">
+                    <NotificationBadge count={unreadCount} />
+                  </span>
+                )}
+              </Link>
+              <SettingsMenu />
+            </div>
+          </header>
+        )}
 
         {/* Main content. This is the only scroll container on mobile — the shell
             and body stay fixed at viewport height. min-h-0 lets a flex child
@@ -268,7 +276,7 @@ export default function AuthLayout({
         </main>
 
         {/* Mobile bottom nav — in-flow sibling of the scroll area, hidden at lg */}
-        <MobileBottomNav />
+        {!isNative && <MobileBottomNav />}
       </div>
     </div>
     </PostHogProvider>

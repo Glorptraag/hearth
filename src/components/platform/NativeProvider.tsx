@@ -7,7 +7,7 @@ import { createContext, useContext } from 'react';
  *
  * The value is resolved once per request in the root layout (a server
  * component) via `isNativeRequest()` and passed down. Client components must
- * read it from here rather than sniffing `window.Capacitor` themselves — a
+ * read it from here rather than sniffing a client global themselves — a
  * global read during render would disagree with the server's HTML and produce
  * a hydration mismatch on exactly the surfaces (purchase CTAs) where being
  * wrong is an App Store problem.
@@ -27,7 +27,7 @@ export function NativeProvider({
   return <NativeContext.Provider value={isNative}>{children}</NativeContext.Provider>;
 }
 
-/** True when running inside the Capacitor shell. */
+/** True when the page is hosted inside the iOS app. */
 export function useIsNative(): boolean {
   return useContext(NativeContext);
 }

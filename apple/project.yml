@@ -1,0 +1,101 @@
+# XcodeGen spec. Hearth.xcodeproj is generated from this file and committed
+# so Xcode opens it directly; regenerate after editing: `xcodegen` in apple/.
+# Sources are synced folders, so adding a Swift file needs no regeneration.
+name: Hearth
+options:
+  bundleIdPrefix: com.hearthlms
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Hearth.xcconfig
+  Release: Config/Hearth.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+packages:
+  Clerk:
+    url: https://github.com/clerk/clerk-ios
+    from: "1.6.0"
+targets:
+  Hearth:
+    type: application
+    platform: iOS
+    sources:
+      - path: Hearth
+        type: syncedFolder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hearthlms.app
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - package: Clerk
+        product: ClerkKit
+      - package: Clerk
+        product: ClerkKitUI
+    info:
+      path: Support/Info.plist
+      properties:
+        CFBundleDisplayName: Hearth
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: ""
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIAppFonts:
+          - Fraunces-Variable.ttf
+          - DMSans-Variable.ttf
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        HearthWebOrigin: $(HEARTH_WEB_ORIGIN)
+        ClerkPublishableKey: $(CLERK_PUBLISHABLE_KEY)
+  HearthTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: HearthTests
+        type: syncedFolder
+      # Local StoreKit configuration, read by SKTestSession in StoreTests.
+      - path: Store/Hearth.storekit
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hearthlms.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+    dependencies:
+      - target: Hearth
+schemes:
+  Hearth:
+    build:
+      targets:
+        Hearth: all
+        HearthTests: [test]
+    run:
+      config: Debug
+      # Local StoreKit config: purchases work in the simulator with no
+      # App Store Connect setup (native plan v2.1 §4.1).
+      storeKitConfiguration: Store/Hearth.storekit
+    test:
+      config: Debug
+      targets:
+        - HearthTests

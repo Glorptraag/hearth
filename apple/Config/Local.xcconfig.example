@@ -1,0 +1,12 @@
+// Copy to Local.xcconfig (gitignored) and fill in.
+//
+// The publishable key and the web origin must belong to the SAME Clerk
+// instance: a pk_test session token is rejected by production, and vice versa.
+//
+// Local dev server (npm run dev), Clerk development instance:
+//   HEARTH_WEB_ORIGIN = http:/$()/localhost:3000
+//   CLERK_PUBLISHABLE_KEY = pk_test_...
+//
+// Production, Clerk production instance (Native API enabled in the dashboard):
+//   HEARTH_WEB_ORIGIN = https:/$()/www.hearth-lms.com
+//   CLERK_PUBLISHABLE_KEY = pk_live_...

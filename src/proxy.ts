@@ -27,6 +27,11 @@ const isPublicRoute = createRouteMatcher([
   // and Google's verifier fetch these unauthenticated; a 307 to /sign-in
   // permanently breaks app-link verification for the native builds.
   "/.well-known(.*)",
+  // iOS app → web sign-in handoff. The WKWebView arrives here signed out
+  // carrying a single-use ticket (docs/hearth-native-ios-plan-v2.md §4).
+  "/native/handoff",
+  // Native update gate. Read before sign-in; carries no family data.
+  "/api/native/config",
   // Sanity webhooks — these self-authenticate via SANITY_WEBHOOK_SECRET
   // (Bearer header). They must bypass Clerk or the unauthenticated webhook
   // request is 307-redirected to /sign-in and never reaches the handler.

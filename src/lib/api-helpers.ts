@@ -108,8 +108,16 @@ export function routeHandler<TArgs extends unknown[]>(
       console.error(`[routeHandler ${tag}] (${errorKind})`, err);
       try {
         const Sentry = await import('@sentry/nextjs');
+        // The iOS app identifies itself (`ios/<version>(<build>)`), so a
+        // failure can be pinned to the build that hit it.
+        const client = args[0] instanceof Request ? args[0].headers.get('x-hearth-client') : null;
         Sentry.captureException(err, {
-          tags: { pipeline: 'route-handler', route: tag, error_kind: errorKind },
+          tags: {
+            pipeline: 'route-handler',
+            route: tag,
+            error_kind: errorKind,
+            ...(client ? { client } : {}),
+          },
         });
       } catch {
         // Sentry import can fail in test env or if the SDK is misconfigured.

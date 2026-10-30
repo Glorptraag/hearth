@@ -23,7 +23,9 @@ struct HearthApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if services.isDemo {
+                if services.requiresUpdate {
+                    UpdateRequiredView()
+                } else if services.isDemo {
                     AppShell()
                 } else if services.config.isAuthConfigured {
                     RootView()
@@ -39,6 +41,7 @@ struct HearthApp: App {
             .environment(services.theme)
             .preferredColorScheme(services.theme.resolved.colorScheme)
             .tint(HearthColor.ember)
+            .task { await services.checkForRequiredUpdate() }
             .task {
                 // Automatic theme flips at 6am/6pm while the app stays open.
                 while !Task.isCancelled {
@@ -51,6 +54,7 @@ struct HearthApp: App {
             guard phase == .active else { return }
             services.theme.refreshClock()
             Task { await services.flushOutbox() }
+            Task { await services.checkForRequiredUpdate() }
             if services.config.isAuthConfigured && !services.isDemo {
                 Task { await services.store.processUnfinished() }
             }

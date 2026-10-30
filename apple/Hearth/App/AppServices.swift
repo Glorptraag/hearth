@@ -15,6 +15,8 @@ final class AppServices {
     /// Debug demo mode (`DemoMode`): no Clerk session exists.
     let isDemo: Bool
     private(set) var isOnline = true
+    /// Set by `checkForRequiredUpdate()`; the app shows `UpdateRequiredView`.
+    private(set) var requiresUpdate = false
 
     @ObservationIgnored private let pathMonitor = NWPathMonitor()
 
@@ -35,6 +37,13 @@ final class AppServices {
             store.start()
         }
         startMonitoringConnectivity()
+    }
+
+    /// Reads the server's minimum supported build. Offline, an older server
+    /// without the route, or a bad reply all leave the app usable.
+    func checkForRequiredUpdate() async {
+        guard !isDemo, let config: NativeConfig = try? await api.getPublic("api/native/config") else { return }
+        requiresUpdate = UpdateGate.requiresUpdate(build: UpdateGate.currentBuild, minimum: config.minSupportedBuild)
     }
 
     /// Sends queued Logger entries. Safe to call often; runs coalesce.

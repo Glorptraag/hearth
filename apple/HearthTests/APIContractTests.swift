@@ -38,6 +38,22 @@ struct APIContractTests {
         #expect(json["mode"] as? String == "quick")
     }
 
+    @Test func decodesNativeConfig() throws {
+        let config = try JSONDecoder().decode(NativeConfig.self, from: fixture("native-config"))
+        #expect(config.minSupportedBuild == 3)
+    }
+
+    @Test(arguments: [
+        ("2", 3, true),
+        ("3", 3, false),
+        ("10", 3, false),
+        ("not-a-number", 3, false),
+        (nil, 99, false),
+    ] as [(String?, Int, Bool)])
+    func updateGateOnlyLocksOnADefiniteOldBuild(build: String?, minimum: Int, expected: Bool) {
+        #expect(UpdateGate.requiresUpdate(build: build, minimum: minimum) == expected)
+    }
+
     @Test func unknownLearnerColourFallsBackToRose() {
         #expect(LearnerColour(token: nil) == .rose)
         #expect(LearnerColour(token: "teal") == .rose)

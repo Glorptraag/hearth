@@ -45,6 +45,13 @@ final class APIClient: Sendable {
         return try await send(request)
     }
 
+    /// For the few public routes (e.g. `/api/native/config`) that must work
+    /// before sign-in. Sends no Authorization header.
+    func getPublic<Response: Decodable>(_ path: String, as type: Response.Type = Response.self) async throws -> Response {
+        let request = try await makeRequest(path: path, method: "GET", query: [], body: nil, authenticated: false)
+        return try await send(request)
+    }
+
     func post<Body: Encodable, Response: Decodable>(_ path: String, body: Body, as type: Response.Type = Response.self) async throws -> Response {
         let data = try JSONEncoder().encode(body)
         let request = try await makeRequest(path: path, method: "POST", query: [], body: data)
@@ -65,8 +72,12 @@ final class APIClient: Sendable {
         return (response.statusCode, data)
     }
 
-    private func makeRequest(path: String, method: String, query: [URLQueryItem], body: Data?) async throws -> URLRequest {
-        guard let token = try await tokens.sessionToken() else { throw APIError.notSignedIn }
+    private func makeRequest(path: String, method: String, query: [URLQueryItem], body: Data?, authenticated: Bool = true) async throws -> URLRequest {
+        var token: String?
+        if authenticated {
+            token = try await tokens.sessionToken()
+            guard token != nil else { throw APIError.notSignedIn }
+        }
 
         var components = URLComponents(url: baseURL.appending(path: path), resolvingAgainstBaseURL: false)
         if !query.isEmpty { components?.queryItems = query }
@@ -75,7 +86,9 @@ final class APIClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.httpBody = body
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(AppConfig.clientIdentifier, forHTTPHeaderField: "X-Hearth-Client")
         if body != nil {

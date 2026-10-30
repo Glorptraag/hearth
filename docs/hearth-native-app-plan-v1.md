@@ -2,6 +2,8 @@
 
 # Hearth → App Store + Play Store: Native Pivot Plan v1
 
+> **2026-10-28: Phase 2 (Capacitor shell) is superseded** by [`hearth-native-ios-plan-v2.md`](hearth-native-ios-plan-v2.md): a native SwiftUI app in `apple/` that hosts web features in-app. v2.1 also reverses this plan's "strip digital purchases from native" decision: premium packs sell in-app through StoreKit. Phases 1, 3 and 4 still apply as v2 describes. Close #281 rather than merging it.
+
 > **Status:** Plan, approved 2026-08-03. Execution follows the re-land house style in `hearth-refactor-postmortem-v1.md` §4 — one deliverable per PR, each green.
 > **Audience:** Drew + any agent picking up a phase. Read the Context and Current-state findings before touching any phase; the store rules drive the architecture here, not the other way round.
 > **Companion docs:** `docs/PROJECT_STATUS.md`, `hearth-notification-system-spec.md` (Phase 3 push scope), `drizzle-snapshot-recovery.md` (Phase 3 migration), `deployment-runbook.md`, `test-pilot-runbook.md`.

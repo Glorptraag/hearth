@@ -1,0 +1,8 @@
+// Shared build settings for every configuration.
+// `//` starts a comment in xcconfig, hence the $() break inside URLs.
+
+HEARTH_WEB_ORIGIN = https:/$()/www.hearth-lms.com
+CLERK_PUBLISHABLE_KEY =
+
+// Per-machine overrides (gitignored). Copy Local.xcconfig.example to start.
+#include? "Local.xcconfig"

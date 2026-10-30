@@ -1,0 +1,32 @@
+{
+  "identifier": "4C1D6E2A",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "14.99",
+      "familyShareable": false,
+      "internalID": "6740000001",
+      "localizations": [
+        {
+          "description": "Local test product. Not a real pack.",
+          "displayName": "Sample Premium Pack",
+          "locale": "en_AU"
+        }
+      ],
+      "productID": "com.hearthlms.app.pack.sample",
+      "referenceName": "Sample Premium Pack (local test)",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_AU",
+    "_storefront": "AUS",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

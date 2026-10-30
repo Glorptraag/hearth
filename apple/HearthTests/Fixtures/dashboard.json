@@ -1,0 +1,69 @@
+{
+  "snapshot": { "children": [], "recent_insights": [] },
+  "recentEntries": [
+    {
+      "id": "6f1c1f9e-1c1a-4c55-9a77-8b0a8f0e2f01",
+      "familyId": "0d4a8a9e-5b52-4f0a-9d5e-3b0b8a1c2d03",
+      "title": "Measured the garden beds",
+      "description": "Used a tape measure and drew a plan.",
+      "dateOccurred": "2026-10-27",
+      "subjects": ["mathematics"],
+      "learnerIds": ["9a3f2b10-7c1d-4e5f-8a9b-0c1d2e3f4a50"],
+      "engagementPerLearner": {},
+      "discoveriesPerLearner": {},
+      "evidenceUrls": [],
+      "source": "logger",
+      "sourceModuleId": null,
+      "status": "draft",
+      "observationDetails": {},
+      "loggerContext": null,
+      "aiEnrichment": null,
+      "createdAt": "2026-10-27T03:12:45.120Z",
+      "updatedAt": "2026-10-27T03:12:45.120Z"
+    }
+  ],
+  "todayPlanner": [
+    {
+      "id": "1b2c3d4e-5f60-4718-9a0b-1c2d3e4f5a60",
+      "familyId": "0d4a8a9e-5b52-4f0a-9d5e-3b0b8a1c2d03",
+      "date": "2026-10-28",
+      "title": "Nature walk",
+      "moduleId": null,
+      "activityId": null,
+      "learnerIds": null,
+      "status": "planned",
+      "session": "morning",
+      "subjects": null,
+      "notes": null,
+      "displayOrder": 0,
+      "createdAt": "2026-10-26T22:00:00.000Z",
+      "updatedAt": "2026-10-26T22:00:00.000Z"
+    }
+  ],
+  "learners": [
+    {
+      "id": "9a3f2b10-7c1d-4e5f-8a9b-0c1d2e3f4a50",
+      "familyId": "0d4a8a9e-5b52-4f0a-9d5e-3b0b8a1c2d03",
+      "name": "Ada",
+      "dateOfBirth": "2018-04-02",
+      "shapeIcon": null,
+      "colourToken": "sage",
+      "displayOrder": 0,
+      "profileData": { "interests": ["insects"] },
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "c4d5e6f7-0819-4a2b-8c3d-4e5f60718293",
+      "familyId": "0d4a8a9e-5b52-4f0a-9d5e-3b0b8a1c2d03",
+      "name": "Theo",
+      "dateOfBirth": null,
+      "shapeIcon": null,
+      "colourToken": null,
+      "displayOrder": null,
+      "profileData": null,
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    }
+  ],
+  "familyName": "Douglas",
+  "todayEntryCount": 0
+}

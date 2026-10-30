@@ -15,6 +15,7 @@ In Hearth the account is the **family**, not the person. One person signs up and
 - **Clerk** owns the login itself: email, password or social sign-in, sessions, and the sign-in screens (themed to match Hearth's light and dark modes).
 - Hearth links each Clerk user to a family (`families.clerk_user_id` for the owner, `family_members` for co-facilitators).
 - Every API call first asks Clerk "who is this?", then looks up their family and role. A request without a signed-in user gets **401**; a request from a user without a family gets **404**.
+- **The iOS app** signs in natively with Clerk's iOS SDK and sends its session token as `Authorization: Bearer` on every API call, so the same routes serve both apps. Web pages the app shows inside itself (reports, constellation, builders) have their own cookie session. When one of them lands on the sign-in page, the app asks `POST /api/native/web-session` (bearer only) for a single-use Clerk sign-in ticket that expires after 60 seconds, and loads `/native/handoff`, which redeems it and continues to the page. The page to continue to is only accepted as a Hearth path, so the handoff can't redirect anywhere else. Plan: [`docs/hearth-native-ios-plan-v2.md`](../hearth-native-ios-plan-v2.md) §4.
 
 ### Roles
 
@@ -78,6 +79,7 @@ Why it isn't fixed yet: the fix needs a **product decision from Drew** about wha
 |---|---|
 | Auth helpers and roles | `src/lib/auth/helpers.ts`, `src/lib/auth/admin.ts` |
 | Clerk theming | `src/app/clerk-theme.ts`, `src/components/ClerkThemeProvider.tsx` |
+| iOS app → web sign-in handoff | `src/lib/platform/handoff.ts`, `/api/native/web-session`, `src/app/native/handoff/` |
 | Family, members, invites | `/api/family`, `/api/family/members`, `/api/family/invite`, `/api/invitations/*` |
 | Settings | `/api/settings`, `src/app/(auth)/settings/` |
 | Export and delete | `/api/account/export`, `/api/account/delete` |
@@ -91,6 +93,7 @@ Why it isn't fixed yet: the fix needs a **product decision from Drew** about wha
 | "Insufficient permissions" error (403) | A viewer, or a non-owner trying an owner-only action | Check the role on `family_members` |
 | "Invalid or expired invitation" | Co-facilitator link already used or revoked; pilot code past its 30 days | Issue a new invite or code |
 | "Family not found" after sign-in | A Clerk user exists but isn't linked to a family (onboarding not finished, or an invite never accepted) | Have them finish onboarding or accept the invite |
+| In the iOS app, a web page keeps asking them to sign in | The handoff ticket failed (expired, already used, or the route rate-limited the app at 10 a minute) | They can sign in once on that page and it sticks. Check Sentry for `POST /api/native/web-session`; errors carry the app build in the `client` tag |
 | "I can't delete my account" | **Known defect** (above) | Escalate for manual deletion. Don't ask them to retry |
 | Report shows the wrong state's wording | State not set, or set to the wrong state | Fix the state in Settings |
 

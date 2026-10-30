@@ -4,6 +4,7 @@
 
 > **Author hat:** UX Lead / UX Research
 > **Version:** v1 — 2026-06-08
+> **Revised:** 2026-10-07 — Logger rebuilt as Notice → Confirm (D-LPS-14, `hearth-logger-spec-v2.md`). UC-L-07 (thin fast path), UC-L-12 (proactive attach modal) and UC-L-13 (completeness signal) are **superseded**; UC-L-05's while-typing draft-insight / keyword matcher and the coach-hints endpoint are **retired** — the proposal chips on the Confirm surface are now the insight. Logger flows below are kept as history where marked.
 > **Revised:** 2026-06-14 — Logger gap reconciliation. Closed: cross-device drafts (UC-L-11/E9), multi-child fan-out comprehension (UC-L-03), image compression (E8 was PARTIAL), completeness grade-anxiety (UC-L-13), voice-unsupported fallback (UC-L-09/E7). Confirmed deferred with a recorded decision: audio capture (UC-L-06) and the offline sync queue (UC-L-10) — see D-LPS-10. Decisions D-LPS-8…11 in `hearth-decisions-log-v1.md`; evidence in `hearth-research-log.md`.
 > **Scope:** The three surfaces that form Hearth's evidence spine — the **Logger** (capture), the **Portfolio / Learning Journey** (reflection + compliance), and the **Capabilities Constellation** (growth model). These three are deliberately treated as one continuous experience because they are one continuous *data object* seen through three lenses.
 > **Grounding:** Every use case below is grounded in the live implementation (`src/app/(auth)/log`, `.../our-story/portfolio`, `.../our-story/report`, `.../our-story/capabilities`), the enrichment pipeline, and the canonical specs (`Hearth_System_Interaction_Map.md`, `hearth-data-architecture-overview-v1.md`, `hearth-heu-work-sample-curation-spec-v1.md`, `hearth-logger-post-save-resolution-v1.md`). Where a behaviour is spec'd-but-not-built it is flagged **[SPEC]**; where it is live it is flagged **[BUILT]**.
@@ -183,7 +184,7 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 - **Primary actor:** P4 Nadia / P3 Steph
 - **JTBD:** J2 — log the messy thing and let the system surface what's pedagogically real.
 - **Trigger:** Parent logs something they suspect is "just play" ("we dug for worms for an hour").
-- **Preconditions:** Description long enough (≥50 chars) to trigger server draft-insight.
+- **Preconditions:** ~~Description long enough (≥50 chars) to trigger server draft-insight.~~ **Retired 2026-10-07** — the draft-insight and keyword-matcher steps below no longer exist; the "oh, that counts" moment now happens on the Confirm surface after save (`hearth-logger-spec-v2.md` §5).
 - **Main flow:**
   1. While typing, the **instant keyword matcher** (1.5s debounce, client-side) lights up "Subjects Detected" (nature/science).
   2. At ≥50 chars, a **Haiku draft-insight** (800ms debounce, one call/session, capped 20) adds a "Hearth is noticing…" card — a warm 1–2 sentence reflection plus suggested capability threads.
@@ -220,6 +221,8 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 ---
 
 ## UC-L-07 — The thin-entry fast path (quality gate as kindness)
+
+> **Superseded 2026-10-07 by D-LPS-14.** There is no thin branch: every save lands on the one Confirm surface, whose `pending` state exposes the exit row immediately so a sparse save is still a two-tap exit. See `hearth-logger-spec-v2.md` §5.1 and SIDEBAR S6.
 
 - **Primary actor:** P2 Dan (rushed) / any parent on a low-signal day
 - **JTBD:** J1 — get a sparse moment down without being dragged into a reflection screen.
@@ -312,6 +315,8 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 
 ## UC-L-12 — Proactive module attachment after save
 
+> **Superseded 2026-10-07 by D-LPS-14.** The modal no longer pops and the `hearth_skip_attach` session flag is gone; attaching is a quiet link on the Confirm surface ("From a module in your library? Link it"), hidden for queued and scaffold saves. See `hearth-logger-spec-v2.md` §5.1.
+
 - **Primary actor:** P1 Mara, P5 Rachel
 - **JTBD:** J4 — connect a spontaneous log to structured content I'm using.
 - **Trigger:** Substantive save with no existing `sourceModuleId`, on a non-scaffold entry.
@@ -325,6 +330,8 @@ The use cases cluster around six jobs. Keeping them visible prevents feature-thi
 ---
 
 ## UC-L-13 — Reading the completeness signal (the ambient guidance loop)
+
+> **Superseded 2026-10-07 by D-LPS-14.** The completeness score, ring and section indicators are removed. The save gate is two conditions (a child, and any words or a photo) with a one-line hint naming the missing one. See `hearth-logger-spec-v2.md` §3.
 
 - **Primary actor:** All Logger personas
 - **JTBD:** J3 — know when I've done "enough," without anxiety.

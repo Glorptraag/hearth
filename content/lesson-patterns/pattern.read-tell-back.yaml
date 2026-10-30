@@ -1,0 +1,60 @@
+# Lesson pattern · draft. Source: docs/hearth-cycle-brief-v1.md §4.1 (row "Read · Tell back").
+# Pattern vs method: a pattern is a neutral session shape; tradition methods reference it
+# (docs/hearth-cycle-build-plan-v1.md §3, Q-HC-7). Tradition specifics live only in traditionFit.
+# parentAction slots: only {activity} and {child}.
+id: pattern.read-tell-back
+kind: pattern
+title: "Read · Tell back"
+moves:
+  - key: read
+    label: "Read once"
+    parentAction: "Read {activity} aloud once, straight through, without stopping to explain."
+  - key: tell
+    label: "Tell back"
+    parentAction: "Ask {child} to tell it back. Listen all the way to the end without correcting."
+  - key: write
+    label: "Write one line"
+    parentAction: "Write down one line of what {child} said, in their exact words."
+watchForSlot:
+  prompt: "what they tell back"
+  evidenceKinds: [says]
+whyItWorks: >-
+  Telling something back makes a child do the work of knowing: they have to sort it, order it
+  and find their own words. Hearing it only once means they listen properly the first time.
+  The one written line gives you real evidence without turning the session into a test.
+commonMistakes:
+  - "Reading it twice, or summing it up for them before they've had a go."
+  - "Jumping in to fix a detail halfway through their telling."
+  - "Asking lots of little questions instead of letting them tell it."
+  - "Picking a passage too long to tell back in one go."
+traditionFit:
+  - tradition: charlotte_mason
+    natural: true
+    note: "This is narration: one reading, then the child tells it in their own words."
+  - tradition: classical
+    natural: true
+    note: "The telling back becomes the first step toward copywork and writing."
+  - tradition: montessori
+    natural: false
+    note: "Suits read-alouds; for new words, the three-step naming does more of this work."
+  - tradition: waldorf_steiner
+    natural: false
+    note: "Under seven, tell the story rather than read it, and let the telling back come later."
+  - tradition: unschooling
+    natural: false
+    note: "Works with a book they've asked for; drop the telling back if it starts to feel like a test."
+usedByMethods: [cm.living-book, classical.history-story]
+practices: [cm.narration, cm.read-once, classical.narration-to-copywork]
+ageBand: { min: 4, max: 12 }
+stage: E1
+example:
+  activity: "Reading Possum Magic together after lunch"
+  filledMoves:
+    - "Read Possum Magic aloud once, straight through, without stopping to explain."
+    - "Ask Sam to tell it back. Listen all the way to the end without correcting."
+    - "Write down one line of what Sam said, in his exact words."
+  watchFor: "Sam tells the story back in order, using some of the book's own words."
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-cycle-brief-v1.md §4.1; method mapping docs/hearth-cycle-build-plan-v1.md §3"

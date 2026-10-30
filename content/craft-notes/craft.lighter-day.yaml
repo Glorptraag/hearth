@@ -1,0 +1,27 @@
+# Craft note · E2 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2.
+# Trigger: WF §7.7 row 6, sessions often moved or skipped on one weekday. "Often" is not
+# quantified in the spec; count 2 in 14 days means both recent occurrences of that weekday.
+# Draft threshold, flagged for Drew.
+# Strand note: reshaping the week ahead reads as `prime` (planning); `respond` was the other
+# candidate.
+id: craft.lighter-day
+kind: craft
+strand: prime
+stage: E2
+card: try
+tradition: neutral
+title: "Make one day lighter"
+body: "If one day of the week keeps getting moved, it might just be a full day. Try something shorter or gentler then, like a read-aloud or a walk, and keep the bigger work for other days."
+why:
+  short: "A week that fits your real days is easier to keep."
+relates:
+  dlos: []
+  practices: [waldorf.rhythm-anchor]
+  methods: []
+trigger:
+  - { kind: weekday-skips, count: 2, days: 14 }
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

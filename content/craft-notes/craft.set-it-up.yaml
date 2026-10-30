@@ -1,0 +1,24 @@
+# Craft note · E1 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2 ("make space for it to happen").
+# Trigger: WF §7.7 row 2, "Didn't come up" >= 3 across watch-fors in 14 days.
+# Body says "leave things out", not "set up a lesson", so it stays safe for Unschooling families (WF §12).
+id: craft.set-it-up
+kind: craft
+strand: prime          # shaping the setting before learning happens (WF §7.1)
+stage: E1
+card: try
+tradition: neutral
+title: "Make space for it to happen"
+body: "If it hasn't come up lately, give it a chance. Leave a few things within reach, like five spoons and a bowl, then step back and see what they do."
+why:
+  short: "Learning shows up more often when the right things are close at hand."
+relates:
+  dlos: []
+  practices: [unschool.strew, montessori.shelf-it]
+  methods: [unschool.strewing, montessori.shelf]
+trigger:
+  - { kind: didnt-come-up-repeat, count: 3, days: 14 }
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

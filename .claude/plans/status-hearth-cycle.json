@@ -1,0 +1,1293 @@
+{
+  "plan": "PLAN-hearth-cycle",
+  "generated": "2026-10-21",
+  "mode": "manual",
+  "doc": "docs/hearth-cycle-build-plan-v1.md",
+  "note": "Executable graph derived from the build plan. Expo tasks HC-1a…f run on the pivot branch claude/hearth-launch-pivot-v1-175462; the rest are one branch per PR off main. \"soak\" edges mean the upstream schema task must be in production ≥3 days before the dependent starts.",
+  "tasks": {
+    "HC-0": {
+      "id": "HC-0",
+      "title": "Spec chain + build plan + content drafts",
+      "status": "in_progress",
+      "blocked_by": [],
+      "gate": null,
+      "branch": "claude/dreamy-allen-469dno",
+      "model": "OPUS",
+      "phase": "Phase 0",
+      "parallel_group": "p0",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1a": {
+      "id": "HC-1a",
+      "title": "Pivot schema edits before Studio deploy, plus desk entries",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Drew's schema approval (pivot plan §3, due 21 Oct); Q-HC-11 note only",
+      "branch": "claude/hearth-launch-pivot-v1-175462",
+      "model": "OPUS",
+      "phase": "Expo",
+      "parallel_group": "expo-1",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1b": {
+      "id": "HC-1b",
+      "title": "Re-cut 50 DLO notes to neutral, add watchHow push",
+      "status": "pending",
+      "blocked_by": [
+        "HC-1a"
+      ],
+      "gate": "Drew confirms batches from Fri 23 Oct (about 71 texts)",
+      "branch": "claude/hearth-launch-pivot-v1-175462",
+      "model": "SONNET",
+      "phase": "Expo",
+      "parallel_group": "expo-2",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1c": {
+      "id": "HC-1c",
+      "title": "Everyday watch-for slice inside W5.3",
+      "status": "pending",
+      "blocked_by": [
+        "HC-1a",
+        "HC-1b"
+      ],
+      "gate": "Needs at least one Drew-confirmed note batch and pivot W0.3 merged; first to cut if the calendar slips",
+      "branch": "claude/hearth-launch-pivot-v1-175462",
+      "model": "OPUS",
+      "phase": "Expo",
+      "parallel_group": "expo-2",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1d": {
+      "id": "HC-1d",
+      "title": "Expo page: Cycle section, stand card, research card",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Pivot W7.3 landed; Drew's copy approval (B1, B9 as amended, Q-HC-12); Q-HC-11 note only",
+      "branch": "claude/hearth-launch-pivot-v1-175462",
+      "model": "SONNET",
+      "phase": "Expo",
+      "parallel_group": "expo-3",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1e": {
+      "id": "HC-1e",
+      "title": "Drew confirms 11 craft notes and 4 patterns",
+      "status": "pending",
+      "blocked_by": [
+        "HC-0"
+      ],
+      "gate": "Drew confirms 11 craft notes and 4 patterns (about 35 min)",
+      "branch": "n/a (Sanity Studio, drafts to confirmed)",
+      "model": "SONNET",
+      "phase": "Expo",
+      "parallel_group": "expo-3",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-1f": {
+      "id": "HC-1f",
+      "title": "Reconcile status-launch-pivot.json with git log",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": null,
+      "branch": "claude/hearth-launch-pivot-v1-175462",
+      "model": "SONNET",
+      "phase": "Expo",
+      "parallel_group": "expo-1",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2a": {
+      "id": "HC-2a",
+      "title": "Migration 0032: adult attribution and family timezone",
+      "status": "pending",
+      "blocked_by": [
+        "HC-1c",
+        "HC-1d"
+      ],
+      "gate": "Expo passed (9 Nov); pivot PR merged to main; soak week 10–14 Nov; schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-foundations",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2b": {
+      "id": "HC-2b",
+      "title": "knowledgeNote Sanity type, queries and QA plumbing",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Drew approves the schema before the Studio deploy",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-foundations",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2c": {
+      "id": "HC-2c",
+      "title": "Tradition note extension and single PRACTICE_KEYS",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2b"
+      ],
+      "gate": "Drew confirms the six tradition notes (about 90 min)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-parallel",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2d": {
+      "id": "HC-2d",
+      "title": "DLO evidenceKind x171, notYet chips, parentVersion fix",
+      "status": "pending",
+      "blocked_by": [
+        "HC-1a"
+      ],
+      "gate": "Drew confirm batch for evidenceKind values",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-parallel",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2e": {
+      "id": "HC-2e",
+      "title": "Standalone fixes: BottomSheet moduleId, dashboard subjects, Planner un-cut",
+      "status": "pending",
+      "blocked_by": [
+        "HC-1f"
+      ],
+      "gate": "Q-HC-13 (Planner un-cut as Week shell)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-parallel",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-2f": {
+      "id": "HC-2f",
+      "title": "Docs PR: amend CLAUDE.md Principle 1 and 11",
+      "status": "pending",
+      "blocked_by": [
+        "HC-0"
+      ],
+      "gate": "Q-HC-2 and Q-HC-3 answered by Drew (10–14 Nov)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-parallel",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-3a": {
+      "id": "HC-3a",
+      "title": "Rhythms tables",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2a",
+        "HC-2f"
+      ],
+      "gate": "Schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-foundations",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-3b": {
+      "id": "HC-3b",
+      "title": "Turn engine, schedule, week shape, 15 method notes, session API",
+      "status": "pending",
+      "blocked_by": [
+        "HC-3a",
+        "HC-2b",
+        "HC-2c"
+      ],
+      "gate": "Q-HC-3 answered; Drew confirms the method notes (about 60 min)",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-engine",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-19": {
+      "id": "HC-19",
+      "title": "Design reference for every new screen",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Drew signs off each reference before its UI PR",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Cross-cutting",
+      "parallel_group": "2a-parallel",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4a": {
+      "id": "HC-4a",
+      "title": "Today (replaces dashboard content)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-3a",
+        "HC-3b",
+        "HC-19"
+      ],
+      "gate": "C15, C16, C17 confirmed or held as defaults; Q-HC-2, Q-HC-4, Q-HC-13; design sign-off (HC-19)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4b": {
+      "id": "HC-4b",
+      "title": "Log a session (one-tap)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4a",
+        "HC-2a",
+        "HC-3a"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        },
+        {
+          "after": "HC-2a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4c": {
+      "id": "HC-4c",
+      "title": "Turn surface (ConfirmSurface state)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4b",
+        "HC-3a"
+      ],
+      "gate": "Q-HC-3, Q-HC-4 (Logger copy rules for Turn)",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4d": {
+      "id": "HC-4d",
+      "title": "Rhythm note page /rhythm/[id]",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4a",
+        "HC-3a"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4e": {
+      "id": "HC-4e",
+      "title": "Week (replaces planner content)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4a",
+        "HC-2e",
+        "HC-19",
+        "HC-3a"
+      ],
+      "gate": "Q-HC-13",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-4f": {
+      "id": "HC-4f",
+      "title": "Onboarding starters (D55)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4a",
+        "HC-3a"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-3a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-5a": {
+      "id": "HC-5a",
+      "title": "watch_fors table, carry and write-time composition",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4a",
+        "HC-2d"
+      ],
+      "gate": "C19; schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2a",
+      "parallel_group": "2a-foundations",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-5b": {
+      "id": "HC-5b",
+      "title": "Watch-fors on Today cards and session start",
+      "status": "pending",
+      "blocked_by": [
+        "HC-5a",
+        "HC-4b"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2a UI",
+      "parallel_group": "2a-ui",
+      "soak": [
+        {
+          "after": "HC-5a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-6a": {
+      "id": "HC-6a",
+      "title": "Cue index",
+      "status": "pending",
+      "blocked_by": [
+        "HC-5b"
+      ],
+      "gate": "Evidence checkpoint 27 Jan logged as a decision (D-HC-1 control 6)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-a",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-6b": {
+      "id": "HC-6b",
+      "title": "Plan something: watch/plan with one constrained Haiku call",
+      "status": "pending",
+      "blocked_by": [
+        "HC-6a",
+        "HC-19"
+      ],
+      "gate": "Evidence checkpoint 27 Jan logged as a decision (D-HC-1 control 6)",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-a",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-7a": {
+      "id": "HC-7a",
+      "title": "Logger spec v3",
+      "status": "pending",
+      "blocked_by": [
+        "HC-5b",
+        "HC-2d"
+      ],
+      "gate": "Q-HC-4, Q-HC-5, Q-HC-6",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-b",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-7b": {
+      "id": "HC-7b",
+      "title": "Conversational session log: script and absorb",
+      "status": "pending",
+      "blocked_by": [
+        "HC-7a",
+        "HC-4b",
+        "HC-19",
+        "HC-2d"
+      ],
+      "gate": "Q-HC-6, C20, C21, C25",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-b",
+      "soak": [
+        {
+          "after": "HC-2d",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-7c": {
+      "id": "HC-7c",
+      "title": "Spontaneous capture chips and lens label",
+      "status": "pending",
+      "blocked_by": [
+        "HC-7b"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-b",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-8a": {
+      "id": "HC-8a",
+      "title": "Educator tables and event side effects",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2a",
+        "HC-7b"
+      ],
+      "gate": "C22, C23, C24; schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-c",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-8b": {
+      "id": "HC-8b",
+      "title": "Educator evaluation weekly cron",
+      "status": "pending",
+      "blocked_by": [
+        "HC-8a"
+      ],
+      "gate": "C22, C23, C24; G56 privacy review",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-c",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-8c": {
+      "id": "HC-8c",
+      "title": "Teaching help UI, onboarding question, privacy line",
+      "status": "pending",
+      "blocked_by": [
+        "HC-8b",
+        "HC-8a"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-c",
+      "soak": [
+        {
+          "after": "HC-8a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-9a": {
+      "id": "HC-9a",
+      "title": "day_briefs and card_events tables, timezone helper",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2a",
+        "HC-8a"
+      ],
+      "gate": "Schema approval; Q-HC-9, Q-HC-10",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-d",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-9b": {
+      "id": "HC-9b",
+      "title": "Day brief builder and hourly cron",
+      "status": "pending",
+      "blocked_by": [
+        "HC-9a",
+        "HC-5b",
+        "HC-8b"
+      ],
+      "gate": "Q-HC-9, Q-HC-10",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-d",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-9c": {
+      "id": "HC-9c",
+      "title": "Morning cards and notification delivery",
+      "status": "pending",
+      "blocked_by": [
+        "HC-9b",
+        "HC-19",
+        "HC-9a"
+      ],
+      "gate": "Q-HC-9 (quiet hours end 6:30), Q-HC-10 (in-app first)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-d",
+      "soak": [
+        {
+          "after": "HC-9a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-10a": {
+      "id": "HC-10a",
+      "title": "Craft card triggers and cooldowns",
+      "status": "pending",
+      "blocked_by": [
+        "HC-9b",
+        "HC-2b"
+      ],
+      "gate": "Drew confirms the E3–E4 craft notes",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-e",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-10b": {
+      "id": "HC-10b",
+      "title": "Craft library /craft with offline precache",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2b",
+        "HC-10a",
+        "HC-19"
+      ],
+      "gate": "Drew confirms the E3–E4 craft notes; airplane-mode rule (G53)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-e",
+      "soak": [
+        {
+          "after": "HC-2b",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-11": {
+      "id": "HC-11",
+      "title": "Week shape and Turn the week",
+      "status": "pending",
+      "blocked_by": [
+        "HC-4e",
+        "HC-2c",
+        "HC-3b"
+      ],
+      "gate": "Q-HC-3",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 2b",
+      "parallel_group": "2b-f",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-12a": {
+      "id": "HC-12a",
+      "title": "Strangler 1: signals as knowledgeNote plus moment_signals table",
+      "status": "pending",
+      "blocked_by": [
+        "HC-7b",
+        "HC-2c",
+        "HC-2b"
+      ],
+      "gate": "Q-HC-1 (formal re-open of C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment); schema approval; C10–C13",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-pedagogy",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-12b": {
+      "id": "HC-12b",
+      "title": "Strangler 2: spontaneous post-save signal write (D53)",
+      "status": "pending",
+      "blocked_by": [
+        "HC-12a"
+      ],
+      "gate": "Q-HC-1 (formal re-open of C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment); C10–C13",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-pedagogy",
+      "soak": [
+        {
+          "after": "HC-12a",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-12c": {
+      "id": "HC-12c",
+      "title": "Strangler 3: read cutover to tradition notes",
+      "status": "pending",
+      "blocked_by": [
+        "HC-12b"
+      ],
+      "gate": "Q-HC-1 (formal re-open of C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment); shadow diff reviewed by Drew; C10–C13",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-pedagogy",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-12d": {
+      "id": "HC-12d",
+      "title": "Strangler 4: retire lens bundles and methodology overlays",
+      "status": "pending",
+      "blocked_by": [
+        "HC-12c"
+      ],
+      "gate": "Q-HC-1 (formal re-open of C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment); C10–C13",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-pedagogy",
+      "soak": [
+        {
+          "after": "HC-12c",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-12e": {
+      "id": "HC-12e",
+      "title": "Strangler 5: retire PKB and corpus path",
+      "status": "pending",
+      "blocked_by": [
+        "HC-12d"
+      ],
+      "gate": "Q-HC-1 (formal re-open of C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment); PedagogyAttribution removed only when no CC-BY source renders; C10–C13",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-pedagogy",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-13": {
+      "id": "HC-13",
+      "title": "Lesson patterns and Lesson Builder",
+      "status": "pending",
+      "blocked_by": [
+        "HC-6b",
+        "HC-8b",
+        "HC-19"
+      ],
+      "gate": "B1–B9 confirmed + own spec (spec-chain README); B4, Q-HC-7",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Brief-only phase (Mar–May)",
+      "parallel_group": "brief-a",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-14": {
+      "id": "HC-14",
+      "title": "Modules as worked examples",
+      "status": "pending",
+      "blocked_by": [
+        "HC-13"
+      ],
+      "gate": "B1–B9 confirmed + own spec (spec-chain README); B3, B4; kindling learns patternRef (external, G37)",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Brief-only phase (Mar–May)",
+      "parallel_group": "brief-b",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-15": {
+      "id": "HC-15",
+      "title": "Know Your Child",
+      "status": "pending",
+      "blocked_by": [
+        "HC-7b",
+        "HC-12b",
+        "HC-19"
+      ],
+      "gate": "B1–B9 confirmed + own spec (spec-chain README); Q-HC-8; G16 time-of-day decision",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Brief-only phase (Mar–May)",
+      "parallel_group": "brief-c",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-16": {
+      "id": "HC-16",
+      "title": "My Teaching",
+      "status": "pending",
+      "blocked_by": [
+        "HC-8b",
+        "HC-9c",
+        "HC-19"
+      ],
+      "gate": "B1–B9 confirmed + own spec (spec-chain README); B5",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Brief-only phase (Mar–May)",
+      "parallel_group": "brief-c",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17a": {
+      "id": "HC-17a",
+      "title": "Session photos private and consent enforced (fix now)",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "None; standalone HIGH-severity fix (G42), may land any time",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-prereq",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17b": {
+      "id": "HC-17b",
+      "title": "Redaction helper and narrative name fix",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Q-HC-14 (community naming, identity, legal)",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-prereq",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17c": {
+      "id": "HC-17c",
+      "title": "family_members.display_name",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Q-HC-14 (community naming, identity, legal); schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-prereq",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17d": {
+      "id": "HC-17d",
+      "title": "UGC terms, privacy policy, contributor licence",
+      "status": "pending",
+      "blocked_by": [
+        "HC-0"
+      ],
+      "gate": "Q-HC-14 (community naming, identity, legal); Drew/legal review; Apple 1.2, eSafety BOSE, OAIC children privacy code",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-prereq",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17e": {
+      "id": "HC-17e",
+      "title": "Account deletion cascade policy (pivot W6 prerequisite)",
+      "status": "pending",
+      "blocked_by": [],
+      "gate": "Pivot W6 deletion fix merged; cascade-or-anonymise policy decided (Q-HC-14)",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-prereq",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17f": {
+      "id": "HC-17f",
+      "title": "Community tables",
+      "status": "pending",
+      "blocked_by": [
+        "HC-17a",
+        "HC-17b",
+        "HC-17c",
+        "HC-17d",
+        "HC-17e",
+        "HC-19"
+      ],
+      "gate": "B6, B7, B8, Q-HC-14; legal review (G47); schema approval",
+      "branch": "main (one branch per PR)",
+      "model": "OPUS",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-schema",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17g": {
+      "id": "HC-17g",
+      "title": "Moderation: admin queue, COMMUNITY_ENABLED, rate limits",
+      "status": "pending",
+      "blocked_by": [
+        "HC-17f"
+      ],
+      "gate": "B6, B7, B8, Q-HC-14",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-schema",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17h": {
+      "id": "HC-17h",
+      "title": "Linked topics UI",
+      "status": "pending",
+      "blocked_by": [
+        "HC-17g",
+        "HC-19",
+        "HC-17f"
+      ],
+      "gate": "B6, B7, B8, Q-HC-14",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-ui",
+      "soak": [
+        {
+          "after": "HC-17f",
+          "days": 3
+        }
+      ],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17i": {
+      "id": "HC-17i",
+      "title": "Ask other parents from a Portfolio entry",
+      "status": "pending",
+      "blocked_by": [
+        "HC-17h",
+        "HC-17b"
+      ],
+      "gate": "B6, B7, B8, Q-HC-14",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-ui",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-17j": {
+      "id": "HC-17j",
+      "title": "Guides, answer promotion with credit, threshold counts",
+      "status": "pending",
+      "blocked_by": [
+        "HC-17h"
+      ],
+      "gate": "B6, B7, B8, Q-HC-14",
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "3-community-ui",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    },
+    "HC-18": {
+      "id": "HC-18",
+      "title": "Curated resources",
+      "status": "pending",
+      "blocked_by": [
+        "HC-2b"
+      ],
+      "gate": null,
+      "branch": "main (one branch per PR)",
+      "model": "SONNET",
+      "phase": "Phase 3 (Mar–May)",
+      "parallel_group": "brief-d",
+      "soak": [],
+      "completed_by": null,
+      "completed_at": null
+    }
+  },
+  "human_gates": [
+    {
+      "id": "GH1",
+      "description": "HC-1a schema approval (pivot plan §3)",
+      "blocks": [
+        "HC-1a"
+      ]
+    },
+    {
+      "id": "GH2",
+      "description": "Confirm batches: DLO notes + watchHow (about 71 texts) from Fri 23 Oct; craft notes and patterns (HC-1e)",
+      "blocks": [
+        "HC-1b",
+        "HC-1c",
+        "HC-1e"
+      ]
+    },
+    {
+      "id": "GH3",
+      "description": "Soak week 10–14 Nov: answer Q-HC-1…3, confirm C- and B-items",
+      "blocks": [
+        "HC-2a",
+        "HC-2f"
+      ]
+    },
+    {
+      "id": "GH4",
+      "description": "B1–B9 confirmed and a spec per brief-only slice (chain README)",
+      "blocks": [
+        "HC-13",
+        "HC-14",
+        "HC-15",
+        "HC-16"
+      ]
+    },
+    {
+      "id": "GH5",
+      "description": "Evidence checkpoint Tue 27 Jan 2027, logged as a decision (D-HC-1 control 6)",
+      "blocks": [
+        "HC-6a",
+        "HC-6b"
+      ]
+    },
+    {
+      "id": "GH6",
+      "description": "Community legal review and Q-HC-14",
+      "blocks": [
+        "HC-17d",
+        "HC-17f"
+      ]
+    }
+  ],
+  "decision_queue": [
+    {
+      "id": "D-HC-1",
+      "question": "Build on schedule: Phase 2 UI starts after the expo regardless of pilot evidence; overrides postmortem §5; §4 execution rules and §11 controls still bind.",
+      "recommendation": "Decided by Drew 21 Oct 2026",
+      "resolved": "2026-10-21",
+      "blocks": []
+    },
+    {
+      "id": "D-HC-2",
+      "question": "Expo message: the record hooks, the Cycle deepens. Copy only.",
+      "recommendation": "Decided by Drew 21 Oct 2026",
+      "resolved": "2026-10-21",
+      "blocks": []
+    },
+    {
+      "id": "D-HC-3",
+      "question": "Notes-architecture nouns map onto existing tables (build plan §2 is binding).",
+      "recommendation": "Decided by Drew 21 Oct 2026",
+      "resolved": "2026-10-21",
+      "blocks": []
+    },
+    {
+      "id": "D-HC-4",
+      "question": "Expo build = pivot W0–W8 plus a thin everyday watch-for slice inside W5.3.",
+      "recommendation": "Decided by Drew 21 Oct 2026",
+      "resolved": "2026-10-21",
+      "blocks": []
+    },
+    {
+      "id": "D-HC-5",
+      "question": "DLO watch-for = neutral sign + tradition watchHow; drop watchForNext.variants before schema deploy.",
+      "recommendation": "Decided by Drew 21 Oct 2026",
+      "resolved": "2026-10-21",
+      "blocks": []
+    },
+    {
+      "id": "Q-HC-1",
+      "question": "PL D45 retires the PKB, corpus and lens bundles, but main shipped corpus calibration (#287) and PKB Logger context (#292) on 19 Oct.",
+      "recommendation": "Confirm D45 direction; formally re-open C-PL1/C-PM1/C-PA2/C-PA5; freeze new corpus investment (pause wave 2–5 acks); PEDAGOGY_KB_ENABLED stays off; HC-12 retires pieces as a strangler.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-12a",
+        "HC-12b",
+        "HC-12c",
+        "HC-12d",
+        "HC-12e"
+      ]
+    },
+    {
+      "id": "Q-HC-2",
+      "question": "LC C14 rewords Architecture Principle 1.",
+      "recommendation": "Confirm. Edit CLAUDE.md and PROJECT_STATUS.md core principles in one docs PR before HC-3.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-2f",
+        "HC-3a",
+        "HC-4a"
+      ]
+    },
+    {
+      "id": "Q-HC-3",
+      "question": "Principle 11 and C-PA1/C-PA4 forbid forward task lists; LC turns write the week.",
+      "recommendation": "Amend to: \"Pedagogy does not generate content or curriculum. A method may write the next step of a rhythm the family chose, from a fixed action vocabulary, deterministically.\" Guard still applies to authored text.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-2f",
+        "HC-3b",
+        "HC-11"
+      ]
+    },
+    {
+      "id": "Q-HC-4",
+      "question": "Logger v2 forbidden words collide with WF respond hints, Turn \"Next:\" and craft.try cards.",
+      "recommendation": "Scope the D-LPS-14 list to spontaneous Notice and Confirm. Session logs, Turn and cards get their own rules in Logger spec v3: no \"should\", no praise of the parent, why ≤ 20 words.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-4a",
+        "HC-4c",
+        "HC-7a",
+        "HC-7b"
+      ]
+    },
+    {
+      "id": "Q-HC-5",
+      "question": "Provenance: TP §1.2 has two values, repo has four; WF D61 says Saw it = confirm.",
+      "recommendation": "No change now. Saw it writes asserted. TP §2.1 ledger stays post-expo behind confirmProposal().",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-7a"
+      ]
+    },
+    {
+      "id": "Q-HC-6",
+      "question": "What \"Partly\" writes under PRODUCTION_TIER_BAR.",
+      "recommendation": "Write asserted at the current tier only if the child already has observed evidence there; otherwise no row.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-7a",
+        "HC-7b"
+      ]
+    },
+    {
+      "id": "Q-HC-7",
+      "question": "B4 lesson patterns vs LC methods.",
+      "recommendation": "A pattern is a neutral shape; a method references a pattern (§3 ruling).",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-13"
+      ]
+    },
+    {
+      "id": "Q-HC-8",
+      "question": "Learner-profile spec (\"identity portrait, not a progress tracker\") vs Know Your Child.",
+      "recommendation": "Separate learner tab, \"What we've noticed\"; portrait untouched.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-15"
+      ]
+    },
+    {
+      "id": "Q-HC-9",
+      "question": "WF defaults morning notification to 7:00 but quiet hours end at 7:00.",
+      "recommendation": "Exempt the chosen morning time from quiet hours; move default quiet-hours end to 6:30.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-9a",
+        "HC-9b",
+        "HC-9c"
+      ]
+    },
+    {
+      "id": "Q-HC-10",
+      "question": "Push and email: iOS web push needs install, native push waits, no email sender.",
+      "recommendation": "In-app layer first; add an email vendor only when the opt-in fallback is wanted, recorded in external-services-guide.md.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-9a",
+        "HC-9b",
+        "HC-9c"
+      ]
+    },
+    {
+      "id": "Q-HC-11",
+      "question": "/expo banner says \"Ready for the HEU\" to non-QLD visitors.",
+      "recommendation": "Note only; pivot copy is Drew's call.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": []
+    },
+    {
+      "id": "Q-HC-12",
+      "question": "Brief §1 \"You'll be a better teacher in three months\".",
+      "recommendation": "Do not use as a claim without substantiation (Australian Consumer Law); use \"Every session makes the next one better\".",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-1d"
+      ]
+    },
+    {
+      "id": "Q-HC-13",
+      "question": "Planner fate after the expo.",
+      "recommendation": "Un-cut as the Week shell (HC-2e); the sheet becomes Plan something plus Add a rhythm.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-2e",
+        "HC-4a",
+        "HC-4e"
+      ]
+    },
+    {
+      "id": "Q-HC-14",
+      "question": "Community naming, parent identity and legal (B6–B8).",
+      "recommendation": "community_* tables; family_members.display_name; UGC terms and a contributor licence before promoting answers.",
+      "confidence": "medium",
+      "resolved": false,
+      "blocks": [
+        "HC-17c",
+        "HC-17d",
+        "HC-17e",
+        "HC-17f",
+        "HC-17g",
+        "HC-17h",
+        "HC-17i",
+        "HC-17j"
+      ]
+    }
+  ]
+}

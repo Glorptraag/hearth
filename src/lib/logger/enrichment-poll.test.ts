@@ -37,6 +37,19 @@ describe('pollEntryEnrichment', () => {
     expect(cb.onTimeout).toHaveBeenCalledTimes(1); // always called; call site no-ops on terminal
   });
 
+  it('hands the whole fetched entry to onEntry before onEnrichment (Photo Read, W3.3)', async () => {
+    const order: string[] = [];
+    const onEntry = vi.fn(() => order.push('entry'));
+    const cb = { ...makeCallbacks({ onEnrichment: vi.fn(() => order.push('enrichment')) }), onEntry };
+    const body = { aiEnrichment: enrichment('enriched'), readOutput: { doing: 'x' }, description: '' };
+    const fetchImpl = vi.fn().mockResolvedValue(res(body));
+
+    await pollEntryEnrichment('e1', cb, { fetchImpl: fetchImpl as unknown as typeof fetch, sleep: noSleep });
+
+    expect(onEntry).toHaveBeenCalledWith(body);
+    expect(order).toEqual(['entry', 'enrichment']);
+  });
+
   it('keeps polling while pending, then stops when it turns terminal', async () => {
     const cb = makeCallbacks();
     const fetchImpl = vi

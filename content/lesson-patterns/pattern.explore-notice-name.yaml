@@ -1,0 +1,57 @@
+# Lesson pattern · draft. Source: docs/hearth-cycle-brief-v1.md §4.1 (row "Explore · Notice · Name").
+# parentAction slots: only {activity} and {child}.
+id: pattern.explore-notice-name
+kind: pattern
+title: "Explore · Notice · Name"
+moves:
+  - key: explore
+    label: "Explore"
+    parentAction: "Let {child} explore {activity} freely for a while. Hold back on teaching."
+  - key: notice
+    label: "Notice"
+    parentAction: "Ask \"What do you notice?\" and listen. Follow whatever {child} points out."
+  - key: name
+    label: "Name"
+    parentAction: "Give the proper word for what they noticed, once, then use it again naturally."
+watchForSlot:
+  prompt: "names the property"
+  evidenceKinds: [says]
+whyItWorks: >-
+  When a child notices something first, the word you give them has somewhere to land.
+  Exploring before naming means the idea comes from their own looking, not from being told.
+  The name then turns a loose impression into something they can hold onto and use.
+commonMistakes:
+  - "Naming everything before they've had a proper look."
+  - "Asking a question that has only one right answer."
+  - "Cutting the exploring short to get to the lesson."
+traditionFit:
+  - tradition: charlotte_mason
+    natural: true
+    note: "This is a nature walk: first-hand looking first, then the name."
+  - tradition: unschooling
+    natural: true
+    note: "Leave something interesting out and let the questions come; give the word when they want it."
+  - tradition: montessori
+    natural: false
+    note: "Works with a tray of real objects; give new words in three clear steps."
+  - tradition: classical
+    natural: false
+    note: "Make the name the precise term, and add it to the memory list afterwards."
+  - tradition: waldorf_steiner
+    natural: false
+    note: "Under seven, let the exploring stay in play and leave the naming for later."
+usedByMethods: [cm.nature-walk, unschool.strewing]
+practices: [classical.proper-term, cm.return-to-the-place, unschool.strew, montessori.cultural-tray, waldorf.nature-table]
+ageBand: { min: 3, max: 10 }
+stage: E1
+example:
+  activity: "A walk along the creek"
+  filledMoves:
+    - "Let Sam poke about at the creek's edge for a while. Hold back on teaching."
+    - "Ask \"What do you notice about the water?\" and follow whatever he points out."
+    - "When he says it's quicker over the rocks, give him the word: current."
+  watchFor: "Sam uses a word for what he noticed, like \"current\", on his own."
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-cycle-brief-v1.md §4.1; method mapping docs/hearth-cycle-build-plan-v1.md §3"

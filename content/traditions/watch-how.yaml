@@ -1,0 +1,107 @@
+# Tradition watchHow lines: draft extension of the `pedagogicalFramework` document.
+#
+# Source: docs/hearth-watch-for-v1.md §3.4 (table + stage-override line) and §8.1
+# (`watchHow`, `notifyDefault`). The does/says/makes/chooses lines below are transcribed
+# VERBATIM from the §3.4 table, punctuation included. Do not edit them here; change the
+# spec first, then re-transcribe. The `{child}` token is kept as written. Some lines say
+# "they"/"them" instead of {child}; that is the spec's wording, not an omission.
+#
+# How it's used (WF §3.1, D57): a watch-for's "how" line = this file's line for the family's
+# tradition and the DLO's `evidence` kind. Composed, never generated.
+#
+# Keys are the repo's `pedagogicalFramework.slug` values
+# (src/sanity/schemas/pedagogicalFramework.ts): charlotte_mason, classical, montessori,
+# waldorf_steiner, unschooling, eclectic.
+#
+# SLUG DRIFT (G11 in docs/hearth-cycle-build-plan-v1.md), flagged for Drew:
+#   - The pedagogicalFramework schema on this branch, on main and on the pivot branch all use
+#     `waldorf_steiner`, and so do the pivot's content/dlo-notes/ drafts. That's the key used here.
+#   - The build plan (§2 table and G11) says the schema uses `waldorf`; on this branch it doesn't.
+#   - `waldorf` (with `charlotte-mason`, hyphenated) does appear in the PedagogyKey type in
+#     src/types/capability-universe.ts, in src/__tests__/ai-pipeline.test.ts, and as the
+#     `short` name in src/lib/pedagogy/corpus/types.ts.
+#   HC-1a settles one spelling; the push script needs to map whichever it picks.
+#
+# Expo scope (WF §13): only charlotte_mason, classical and eclectic are needed for 9 Nov.
+# The rest are transcribed now because the lines already exist in the spec.
+
+id: tradition.watch-how
+kind: tradition-extension
+target: pedagogicalFramework
+field: watchHow
+evidenceKinds: [does, says, makes, chooses]   # WF §3.4 `evidence` kinds
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §3.4, §8.1"
+
+traditions:
+  charlotte_mason:
+    title: "Charlotte Mason"
+    watchHow:
+      does: "Watch quietly, then ask {child} to tell you how they did it."
+      says: "Afterwards, ask {child} to tell it back in their own words."
+      makes: "Let them finish, then ask them to tell you about it."
+      chooses: "Notice what they go back to on their own."
+    notifyDefault: planned
+
+  classical:
+    title: "Classical"
+    watchHow:
+      does: "Ask {child} to say each step aloud as they do it."
+      says: "Ask the question and have them answer in a full sentence."
+      makes: "Have them name what they made, using the proper word."
+      chooses: "Notice what they ask to repeat."
+    notifyDefault: planned
+
+  montessori:
+    title: "Montessori"
+    watchHow:
+      does: "Say nothing. Watch whether {child} notices and fixes their own mistake."
+      says: 'Use three steps: "This is…", "Show me…", "What is this?"'
+      makes: "Watch whether they check their own work against the model."
+      chooses: "Watch what they choose and how many times they repeat it."
+    notifyDefault: planned
+
+  # Key: see SLUG DRIFT note above. The spec table row is headed "Waldorf".
+  waldorf_steiner:
+    title: "Waldorf"
+    watchHow:
+      does: "Do it alongside {child} in a rhythm — clap, step or sing each one."
+      says: "Tell it as a story first; listen for what they say back later."
+      makes: "Watch their hands, not the result."
+      chooses: "Notice what they bring into their play."
+    # WF §3.4: "Stage overrides use the tradition's existing stage keys (e.g. Waldorf `first`,
+    # under 7 ...)". WF §8.1 calls these `stages` overrides; named `stageOverrides` here (as in
+    # build plan HC-1a) so they don't collide with the tradition note's age→stage `stages` list
+    # (pedagogy layer §4). Waldorf stage keys: first 0–7 · second 7–14 · third 14+.
+    stageOverrides:
+      first:
+        says: "Don't ask for explanation. Notice if it turns up in their play."
+    notifyDefault: planned
+
+  unschooling:
+    title: "Unschooling"
+    watchHow:
+      does: "Don't set it up. Notice if it shows up on its own."
+      says: "Answer their questions honestly and listen for what they say."
+      makes: "Notice what they make without being asked."
+      chooses: "Notice what they keep coming back to."
+    notifyDefault: monday       # WF §8.1: Unschooling defaults to Monday notifications
+
+  eclectic:
+    title: "Eclectic"
+    # Verbatim from the WF §3.4 table. Eclectic has no lines of its own: it borrows the
+    # strongest-weighted tradition's line and names it.
+    rule: 'Uses the strongest-weighted tradition for the DLO''s typical signal (pedagogy layer §5.6), named: "A Montessori way to watch:"'
+    labelTemplate: "A {tradition} way to watch:"
+    # DRAFT, written for Hearth, NOT from the spec. The rule needs a per-DLO "typical signal"
+    # and the signal weights from pedagogy layer §5, and neither is authored onto DLOs yet.
+    # Until then an Eclectic family sees these neutral lines, with no tradition label.
+    expoFallback:
+      status: draft
+      does: "Watch what {child} does before you say anything, then ask how they did it."
+      says: "Afterwards, ask {child} to tell you about it in their own words."
+      makes: "Let {child} finish, then ask them to tell you about what they made."
+      chooses: "Notice what {child} goes back to without being asked."
+    notifyDefault: planned

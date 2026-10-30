@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { format, subDays } from 'date-fns';
 import { useLoggerDraft } from './use-logger-draft';
 import {
   DRAFT_KEY,
@@ -12,18 +13,30 @@ const DRAFT_ENDPOINT = '/api/logger/draft';
 const RESUME_ENDPOINT = '/api/notifications/trigger';
 
 const baseFields = (overrides: Partial<LoggerDraftFields> = {}): LoggerDraftFields => ({
-  description: '',
-  selectedLearners: [],
-  discoveries: {},
-  activityType: null,
-  lessonSubjects: [],
-  engagement: {},
+  learnerIds: [],
+  text: '',
+  dateOccurred: null,
+  felt: {},
+  noticed: {},
+  evidence: [],
+  ...overrides,
+});
+
+/** A six-section (v1) Logger draft as the old page serialised it. */
+const legacyDraft = (overrides: Record<string, unknown> = {}) => ({
+  description: 'Nature walk',
+  selectedLearners: ['l1'],
+  discoveries: { l1: 'found a beetle' },
+  activityType: 'nature',
+  lessonSubjects: ['science'],
+  engagement: { l1: 4 },
   whenDate: 'today',
-  duration: null,
-  location: null,
+  duration: '45',
+  location: 'outdoor',
   observations: [],
   evidence: [],
   observationDetails: {},
+  savedAt: Date.now(),
   ...overrides,
 });
 
@@ -66,6 +79,7 @@ describe('useLoggerDraft', () => {
       );
       expect(onRestore).not.toHaveBeenCalled();
       expect(result.current.draftRestored).toBe(false);
+      expect(result.current.dateReset).toBe(false);
       // We still best-effort GET the server mirror, but never the resume notification.
       expect(callsTo(fetchMock, RESUME_ENDPOINT)).toHaveLength(0);
     });
@@ -80,9 +94,9 @@ describe('useLoggerDraft', () => {
       expect(result.current.draftRestored).toBe(false);
     });
 
-    it('hands the parsed draft to onRestore and raises the banner for real content', () => {
+    it('hands the parsed v2 draft to onRestore and raises the banner for real content', () => {
       const stored = serializeDraft(
-        baseFields({ description: 'Nature walk', selectedLearners: ['l1'] }),
+        baseFields({ text: 'Nature walk', learnerIds: ['l1'], felt: { l1: 3 } }),
         Date.now(),
       );
       localStorage.setItem(DRAFT_KEY, stored);
@@ -94,13 +108,18 @@ describe('useLoggerDraft', () => {
 
       expect(onRestore).toHaveBeenCalledTimes(1);
       expect(onRestore.mock.calls[0][0]).toMatchObject({
-        description: 'Nature walk',
-        selectedLearners: ['l1'],
+        v: 2,
+        text: 'Nature walk',
+        learnerIds: ['l1'],
+        felt: { l1: 3 },
       });
+      expect(onRestore.mock.calls[0][1]).toEqual({ dateReset: false });
       expect(result.current.draftRestored).toBe(true);
+      expect(result.current.dateReset).toBe(false);
+      expect(result.current.draftSavedAt).toBe(Date.now());
     });
 
-    it('does not raise the banner when the parsed draft has no real content', () => {
+    it('skips restore entirely when the stored draft has no real content', () => {
       const stored = serializeDraft(baseFields(), Date.now());
       localStorage.setItem(DRAFT_KEY, stored);
 
@@ -109,15 +128,61 @@ describe('useLoggerDraft', () => {
         useLoggerDraft({ state: baseFields(), onRestore }),
       );
 
-      expect(onRestore).toHaveBeenCalledTimes(1);
+      // An empty draft migrates to null, so there is nothing to hand back.
+      expect(onRestore).not.toHaveBeenCalled();
       expect(result.current.draftRestored).toBe(false);
+    });
+
+    it('restores a legacy v1 draft with migrated fields', () => {
+      const now = 1_700_000_000_000;
+      vi.setSystemTime(now);
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify(legacyDraft({ whenDate: 'yesterday', savedAt: now - 1000 })),
+      );
+
+      const onRestore = vi.fn();
+      const { result } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]).toEqual({
+        v: 2,
+        learnerIds: ['l1'],
+        text: 'Nature walk',
+        dateOccurred: format(subDays(new Date(now - 1000), 1), 'yyyy-MM-dd'),
+        felt: { l1: 4 },
+        noticed: { l1: 'found a beetle' },
+        evidence: [],
+        savedAt: now - 1000,
+      });
+      expect(onRestore.mock.calls[0][1]).toEqual({ dateReset: false });
+      expect(result.current.draftRestored).toBe(true);
+      expect(result.current.dateReset).toBe(false);
+      expect(result.current.draftSavedAt).toBe(now - 1000);
+    });
+
+    it("flags dateReset when a legacy draft's whenDate was 'earlier'", () => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(legacyDraft({ whenDate: 'earlier' })));
+
+      const onRestore = vi.fn();
+      const { result } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]).toMatchObject({ v: 2, dateOccurred: null });
+      expect(onRestore.mock.calls[0][1]).toEqual({ dateReset: true });
+      expect(result.current.draftRestored).toBe(true);
+      expect(result.current.dateReset).toBe(true);
     });
 
     it('fires a draft_resume notification when the draft is stale (>4 h)', () => {
       const now = 1_700_000_000_000;
       vi.setSystemTime(now);
       const stored = serializeDraft(
-        baseFields({ description: 'A long ago session that drifted off' }),
+        baseFields({ text: 'A long ago session that drifted off into the afternoon' }),
         now - DRAFT_STALE_MS - 1,
       );
       localStorage.setItem(DRAFT_KEY, stored);
@@ -132,16 +197,31 @@ describe('useLoggerDraft', () => {
       expect(init.method).toBe('POST');
       const body = JSON.parse(init.body);
       expect(body.type).toBe('draft_resume');
-      expect(body.draftTitle).toBe('A long ago session that drifted off');
+      // draftTitle is the first 40 characters of the text.
+      expect(body.draftTitle).toBe('A long ago session that drifted off into');
+    });
+
+    it('omits draftTitle from the stale notification when the draft has no text', () => {
+      const now = 1_700_000_000_000;
+      vi.setSystemTime(now);
+      localStorage.setItem(
+        DRAFT_KEY,
+        serializeDraft(baseFields({ learnerIds: ['l1'] }), now - DRAFT_STALE_MS - 1),
+      );
+
+      renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore: vi.fn() }),
+      );
+
+      const resumeCalls = callsTo(fetchMock, RESUME_ENDPOINT);
+      expect(resumeCalls).toHaveLength(1);
+      expect(JSON.parse(resumeCalls[0][1].body)).toEqual({ type: 'draft_resume' });
     });
 
     it('does not fire a notification for a fresh draft', () => {
       const now = 1_700_000_000_000;
       vi.setSystemTime(now);
-      const stored = serializeDraft(
-        baseFields({ description: 'Fresh entry' }),
-        now - 1000,
-      );
+      const stored = serializeDraft(baseFields({ text: 'Fresh entry' }), now - 1000);
       localStorage.setItem(DRAFT_KEY, stored);
 
       renderHook(() =>
@@ -154,10 +234,7 @@ describe('useLoggerDraft', () => {
     it('swallows fetch failure on the stale-resume notification', () => {
       const now = 1_700_000_000_000;
       vi.setSystemTime(now);
-      const stored = serializeDraft(
-        baseFields({ description: 'stale' }),
-        now - DRAFT_STALE_MS - 1,
-      );
+      const stored = serializeDraft(baseFields({ text: 'stale' }), now - DRAFT_STALE_MS - 1);
       localStorage.setItem(DRAFT_KEY, stored);
       fetchMock.mockRejectedValueOnce(new Error('offline'));
 
@@ -183,11 +260,11 @@ describe('useLoggerDraft', () => {
       expect(result.current.lastSavedAt).toBeNull();
     });
 
-    it('writes the draft and stamps lastSavedAt after one tick', () => {
+    it('writes a v2 draft and stamps lastSavedAt after one tick', () => {
       const start = 1_700_000_000_000;
       vi.setSystemTime(start);
 
-      const state = baseFields({ description: 'We baked bread' });
+      const state = baseFields({ text: 'We baked bread', learnerIds: ['l1'], felt: { l1: 4 } });
       const { result } = renderHook(() =>
         useLoggerDraft({ state, onRestore: vi.fn() }),
       );
@@ -199,7 +276,9 @@ describe('useLoggerDraft', () => {
       const stored = localStorage.getItem(DRAFT_KEY);
       expect(stored).not.toBeNull();
       const parsed = JSON.parse(stored as string);
-      expect(parsed.description).toBe('We baked bread');
+      expect(parsed.v).toBe(2);
+      expect(parsed.text).toBe('We baked bread');
+      expect(parsed.felt).toEqual({ l1: 4 });
       // Fake timers advance Date.now() too — savedAt is the moment the interval fires.
       expect(parsed.savedAt).toBe(start + 10_000);
       expect(result.current.lastSavedAt).toBe(start + 10_000);
@@ -207,7 +286,7 @@ describe('useLoggerDraft', () => {
 
     it('writes again on each subsequent tick while state stays persistable', () => {
       vi.setSystemTime(0);
-      const state = baseFields({ selectedLearners: ['l1'] });
+      const state = baseFields({ learnerIds: ['l1'] });
       const { result } = renderHook(() =>
         useLoggerDraft({ state, onRestore: vi.fn() }),
       );
@@ -226,16 +305,13 @@ describe('useLoggerDraft', () => {
 
   describe('clearDraft', () => {
     it('removes the persisted draft and resets banner + timestamp', () => {
-      const stored = serializeDraft(
-        baseFields({ description: 'something' }),
-        Date.now(),
-      );
-      localStorage.setItem(DRAFT_KEY, stored);
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(legacyDraft({ whenDate: 'earlier' })));
 
       const { result } = renderHook(() =>
         useLoggerDraft({ state: baseFields(), onRestore: vi.fn() }),
       );
       expect(result.current.draftRestored).toBe(true);
+      expect(result.current.dateReset).toBe(true);
 
       act(() => {
         result.current.clearDraft();
@@ -243,16 +319,14 @@ describe('useLoggerDraft', () => {
 
       expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
       expect(result.current.draftRestored).toBe(false);
+      expect(result.current.dateReset).toBe(false);
       expect(result.current.lastSavedAt).toBeNull();
     });
   });
 
   describe('dismissDraftRestored', () => {
     it('hides the banner without touching storage', () => {
-      const stored = serializeDraft(
-        baseFields({ description: 'something' }),
-        Date.now(),
-      );
+      const stored = serializeDraft(baseFields({ text: 'something' }), Date.now());
       localStorage.setItem(DRAFT_KEY, stored);
 
       const { result } = renderHook(() =>
@@ -265,6 +339,7 @@ describe('useLoggerDraft', () => {
       });
 
       expect(result.current.draftRestored).toBe(false);
+      expect(result.current.dateReset).toBe(false);
       expect(localStorage.getItem(DRAFT_KEY)).toBe(stored);
     });
   });
@@ -275,27 +350,68 @@ describe('useLoggerDraft', () => {
       const now = 1_700_000_000_000;
       localStorage.setItem(
         DRAFT_KEY,
-        serializeDraft(baseFields({ description: 'local older' }), now - 10_000),
+        serializeDraft(baseFields({ text: 'local older' }), now - 10_000),
       );
-      const serverDraft = { ...baseFields({ description: 'server newer' }), savedAt: now };
+      const serverDraft = { ...baseFields({ text: 'server newer' }), v: 2, savedAt: now };
       fetchMock.mockImplementation(async (url: string) =>
         url === DRAFT_ENDPOINT ? jsonResponse({ draft: serverDraft }) : jsonResponse({ ok: true }),
       );
 
       const onRestore = vi.fn();
-      const { unmount } = renderHook(() =>
+      const { result, unmount } = renderHook(() =>
         useLoggerDraft({ state: baseFields(), onRestore }),
       );
 
       await waitFor(() =>
         expect(onRestore).toHaveBeenCalledWith(
-          expect.objectContaining({ description: 'server newer' }),
+          expect.objectContaining({ text: 'server newer' }),
+          { dateReset: false },
         ),
       );
       // Server draft is mirrored back into localStorage so it survives reload.
-      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).description).toBe(
-        'server newer',
+      const mirrored = JSON.parse(localStorage.getItem(DRAFT_KEY) as string);
+      expect(mirrored.text).toBe('server newer');
+      expect(mirrored.v).toBe(2);
+      expect(result.current.draftSavedAt).toBe(now);
+      unmount();
+    });
+
+    it('migrates a legacy server blob before comparing it with the local draft', async () => {
+      vi.useRealTimers();
+      const now = 1_700_000_000_000;
+      localStorage.setItem(
+        DRAFT_KEY,
+        serializeDraft(baseFields({ text: 'local older' }), now - 10_000),
       );
+      // The route hands back whatever is stored — a pre-rebuild row is still v1.
+      const serverBlob = legacyDraft({ description: 'server legacy newer', whenDate: 'earlier', savedAt: now });
+      fetchMock.mockImplementation(async (url: string) =>
+        url === DRAFT_ENDPOINT ? jsonResponse({ draft: serverBlob }) : jsonResponse({ ok: true }),
+      );
+
+      const onRestore = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      await waitFor(() =>
+        expect(onRestore).toHaveBeenCalledWith(
+          expect.objectContaining({
+            v: 2,
+            text: 'server legacy newer',
+            learnerIds: ['l1'],
+            felt: { l1: 4 },
+            dateOccurred: null,
+          }),
+          { dateReset: true },
+        ),
+      );
+      expect(result.current.dateReset).toBe(true);
+      // The migrated (v2) draft is what gets written back, never the raw v1 blob.
+      const mirrored = JSON.parse(localStorage.getItem(DRAFT_KEY) as string);
+      expect(mirrored.v).toBe(2);
+      expect(mirrored.text).toBe('server legacy newer');
+      expect(mirrored.description).toBeUndefined();
       unmount();
     });
 
@@ -304,9 +420,9 @@ describe('useLoggerDraft', () => {
       const now = 1_700_000_000_000;
       localStorage.setItem(
         DRAFT_KEY,
-        serializeDraft(baseFields({ description: 'local newer' }), now),
+        serializeDraft(baseFields({ text: 'local newer' }), now),
       );
-      const serverDraft = { ...baseFields({ description: 'server older' }), savedAt: now - 10_000 };
+      const serverDraft = { ...baseFields({ text: 'server older' }), v: 2, savedAt: now - 10_000 };
       fetchMock.mockImplementation(async (url: string) =>
         url === DRAFT_ENDPOINT ? jsonResponse({ draft: serverDraft }) : jsonResponse({ ok: true }),
       );
@@ -319,15 +435,38 @@ describe('useLoggerDraft', () => {
       await waitFor(() => expect(callsTo(fetchMock, DRAFT_ENDPOINT).length).toBeGreaterThan(0));
       // Local restore happened; the older server draft was never applied.
       expect(onRestore).not.toHaveBeenCalledWith(
-        expect.objectContaining({ description: 'server older' }),
+        expect.objectContaining({ text: 'server older' }),
+        expect.anything(),
       );
-      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).description).toBe('local newer');
+      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).text).toBe('local newer');
       unmount();
     });
 
-    it('mirrors each autosave to the server with a PUT when online', () => {
+    it('ignores a server blob from an unknown future version', async () => {
+      vi.useRealTimers();
+      const now = 1_700_000_000_000;
+      localStorage.setItem(DRAFT_KEY, serializeDraft(baseFields({ text: 'local' }), now - 10_000));
+      fetchMock.mockImplementation(async (url: string) =>
+        url === DRAFT_ENDPOINT
+          ? jsonResponse({ draft: { v: 3, text: 'future', learnerIds: ['l1'], savedAt: now } })
+          : jsonResponse({ ok: true }),
+      );
+
+      const onRestore = vi.fn();
+      const { unmount } = renderHook(() =>
+        useLoggerDraft({ state: baseFields(), onRestore }),
+      );
+
+      await waitFor(() => expect(callsTo(fetchMock, DRAFT_ENDPOINT).length).toBeGreaterThan(0));
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]).toMatchObject({ text: 'local' });
+      expect(JSON.parse(localStorage.getItem(DRAFT_KEY) as string).text).toBe('local');
+      unmount();
+    });
+
+    it('mirrors each autosave to the server as a v2 PUT when online', () => {
       vi.setSystemTime(1_700_000_000_000);
-      const state = baseFields({ description: 'We baked bread' });
+      const state = baseFields({ text: 'We baked bread' });
       renderHook(() => useLoggerDraft({ state, onRestore: vi.fn() }));
 
       act(() => {
@@ -337,8 +476,11 @@ describe('useLoggerDraft', () => {
       const puts = callsTo(fetchMock, DRAFT_ENDPOINT).filter(([, init]) => init?.method === 'PUT');
       expect(puts).toHaveLength(1);
       const body = JSON.parse(puts[0][1].body);
-      expect(body.draft.description).toBe('We baked bread');
-      expect(body.draft.savedAt).toBe(1_700_000_000_000 + 10_000);
+      expect(body.draft).toEqual({
+        ...state,
+        v: 2,
+        savedAt: 1_700_000_000_000 + 10_000,
+      });
     });
 
     it('clears the server mirror with a DELETE on clearDraft', () => {
@@ -356,7 +498,7 @@ describe('useLoggerDraft', () => {
 
     it('makes no network calls (mount GET or autosave PUT) while offline', () => {
       setOnline(false);
-      const state = baseFields({ description: 'offline note' });
+      const state = baseFields({ text: 'offline note' });
       renderHook(() => useLoggerDraft({ state, onRestore: vi.fn() }));
 
       act(() => {

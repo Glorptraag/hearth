@@ -1,75 +1,31 @@
 import { describe, it, expect } from 'vitest';
 import {
-  ACTIVITY_SUBJECT_MAP,
-  deriveSubjects,
   deriveEntryTitle,
   deriveFallbackTitle,
+  pickSelectedLearners,
+  deriveNoticed,
   derivePhotoEvidenceUrls,
   deriveEvidenceRows,
-  isThinEntry,
   buildEntrySavePayload,
-  coerceEntrySource,
-  warmThinSaveMessage,
-  THIN_SAVE_MESSAGES,
-  type EntrySaveForm,
   buildLoggerContext,
-  type EntrySaveContext,
 } from './entry-payload';
-
-describe('coerceEntrySource', () => {
-  it('keeps a valid entry source', () => {
-    expect(coerceEntrySource('logger')).toBe('logger');
-    expect(coerceEntrySource('module_log')).toBe('module_log');
-    expect(coerceEntrySource('project_stage')).toBe('project_stage');
-    expect(coerceEntrySource('hearth_session')).toBe('hearth_session');
-  });
-
-  it("falls back to 'logger' for an unknown, empty, or absent value", () => {
-    expect(coerceEntrySource('garbage')).toBe('logger');
-    expect(coerceEntrySource('retro')).toBe('logger');
-    expect(coerceEntrySource('')).toBe('logger');
-    expect(coerceEntrySource(null)).toBe('logger');
-    expect(coerceEntrySource(undefined)).toBe('logger');
-  });
-});
-
-describe('deriveSubjects', () => {
-  it('uses the explicit lesson subjects for a structured lesson', () => {
-    expect(deriveSubjects('structured', ['english', 'hass'])).toEqual(['english', 'hass']);
-  });
-
-  it('ignores lesson subjects for a non-structured activity', () => {
-    expect(deriveSubjects('cooking', ['english'])).toEqual(['mathematics', 'science']);
-  });
-
-  it('maps each known activity type to its curriculum subjects', () => {
-    for (const [type, subjects] of Object.entries(ACTIVITY_SUBJECT_MAP)) {
-      if (type === 'structured') continue; // structured reads from the picker
-      expect(deriveSubjects(type, [])).toEqual(subjects);
-    }
-  });
-
-  it('returns no subjects for an unknown or absent activity type', () => {
-    expect(deriveSubjects('made-up', [])).toEqual([]);
-    expect(deriveSubjects(null, [])).toEqual([]);
-  });
-});
+import type { NoticeFields } from './notice';
+import type { NoticeSource } from './source';
 
 describe('deriveEntryTitle', () => {
-  it('returns a short description untouched (no ellipsis)', () => {
+  it('returns a short text untouched (no ellipsis)', () => {
     expect(deriveEntryTitle('We baked sourdough')).toBe('We baked sourdough');
   });
 
   it('truncates to 60 chars and appends an ellipsis when longer', () => {
     const long = 'x'.repeat(80);
-    const title = deriveEntryTitle(long);
-    expect(title).toBe('x'.repeat(60) + '...');
+    expect(deriveEntryTitle(long)).toBe('x'.repeat(60) + '...');
   });
 
   it('trims trailing whitespace before any ellipsis', () => {
-    // 58 visible chars + 2 trailing spaces = 60-char slice; description is longer.
-    const desc = 'a'.repeat(58) + '  trailing tail beyond sixty chars';
-    expect(deriveEntryTitle(desc)).toBe('a'.repeat(58) + '...');
+    // 58 visible chars + 2 trailing spaces = 60-char slice; text is longer.
+    const text = 'a'.repeat(58) + '  trailing tail beyond sixty chars';
+    expect(deriveEntryTitle(text)).toBe('a'.repeat(58) + '...');
   });
 
   it('does not add an ellipsis at exactly 60 chars', () => {
@@ -79,17 +35,58 @@ describe('deriveEntryTitle', () => {
 });
 
 describe('deriveFallbackTitle', () => {
-  it('labels by the first subject when one is present', () => {
-    expect(deriveFallbackTitle(['mathematics'], '2026-06-01')).toBe('Maths learning');
-    expect(deriveFallbackTitle(['science', 'arts'], '2026-06-01')).toBe('Science learning');
+  it('labels by the first evidence kind on the resolved day', () => {
+    expect(deriveFallbackTitle('2026-10-06', 'photo')).toBe('Photo on 6 Oct');
+    expect(deriveFallbackTitle('2026-10-06', 'quote')).toBe('Their words on 6 Oct');
+    expect(deriveFallbackTitle('2026-10-06', 'link')).toBe('Link on 6 Oct');
+    expect(deriveFallbackTitle('2026-10-06', 'note')).toBe('Note on 6 Oct');
   });
 
-  it('falls back to the date when there are no subjects', () => {
-    expect(deriveFallbackTitle([], '2026-06-01')).toBe('Learning on 2026-06-01');
+  it('falls back to a generic label when there is no evidence', () => {
+    expect(deriveFallbackTitle('2026-10-06', null)).toBe('Learning on 6 Oct');
   });
 
-  it('falls back to a generic label when there is no subject or date', () => {
-    expect(deriveFallbackTitle([], '')).toBe('Learning entry');
+  it('falls back to the raw string when the date is unparsable', () => {
+    expect(deriveFallbackTitle('not-a-date', null)).toBe('Learning on not-a-date');
+    expect(deriveFallbackTitle('not-a-date', 'photo')).toBe('Photo on not-a-date');
+  });
+
+  it('is never empty', () => {
+    expect(deriveFallbackTitle('', null).length).toBeGreaterThan(0);
+  });
+});
+
+describe('pickSelectedLearners', () => {
+  it('keeps only the selected learners, preserving their values', () => {
+    expect(pickSelectedLearners({ L1: 4, L2: 3, L3: 2 }, ['L1', 'L3'])).toEqual({ L1: 4, L3: 2 });
+  });
+
+  it('returns an empty record when nobody is selected', () => {
+    expect(pickSelectedLearners({ L1: 4 }, [])).toEqual({});
+  });
+
+  it('ignores selected learners with no value', () => {
+    expect(pickSelectedLearners({ L1: 4 }, ['L1', 'L2'])).toEqual({ L1: 4 });
+  });
+});
+
+describe('deriveNoticed', () => {
+  it('trims each entry', () => {
+    expect(deriveNoticed({ L1: '  asked why the sky is blue  ' }, ['L1'])).toEqual({
+      L1: 'asked why the sky is blue',
+    });
+  });
+
+  it('drops blank and whitespace-only entries', () => {
+    expect(deriveNoticed({ L1: '', L2: '   ', L3: 'counted to 20' }, ['L1', 'L2', 'L3'])).toEqual({
+      L3: 'counted to 20',
+    });
+  });
+
+  it('prunes entries for learners no longer selected', () => {
+    expect(deriveNoticed({ L1: 'gravity', L3: 'friction' }, ['L1', 'L2'])).toEqual({
+      L1: 'gravity',
+    });
   });
 });
 
@@ -166,169 +163,184 @@ describe('deriveEvidenceRows', () => {
   });
 });
 
-describe('isThinEntry', () => {
-  const thin = {
-    description: 'short',
-    observationDetails: {},
-    evidenceUrlCount: 0,
-    completeness: 40,
-  };
-
-  it('is true only when all four signals agree', () => {
-    expect(isThinEntry(thin)).toBe(true);
-  });
-
-  it('is false when the description is long', () => {
-    expect(isThinEntry({ ...thin, description: 'q'.repeat(60) })).toBe(false);
-  });
-
-  it('is false when there are observation details', () => {
-    expect(isThinEntry({ ...thin, observationDetails: { focus: 'deep' } })).toBe(false);
-  });
-
-  it('is false when evidence is attached', () => {
-    expect(isThinEntry({ ...thin, evidenceUrlCount: 1 })).toBe(false);
-  });
-
-  it('is false when completeness reaches the Strong threshold', () => {
-    expect(isThinEntry({ ...thin, completeness: 55 })).toBe(false);
-  });
-
-  it('treats undefined observation details as empty', () => {
-    expect(isThinEntry({ ...thin, observationDetails: undefined })).toBe(true);
-  });
-});
-
 describe('buildEntrySavePayload', () => {
-  const baseForm: EntrySaveForm = {
-    description: 'Built a marble run and tested ramps',
-    dateOccurred: '2026-06-01',
-    activityType: 'cooking',
-    lessonSubjects: [],
-    selectedLearners: ['L1', 'L2'],
-    engagement: { L1: 4, L2: 3 },
-    discoveries: { L1: 'gravity' },
+  // Local-time constructor: `todayIso` formats in local time, so the test is
+  // stable regardless of the runner's TZ.
+  const NOW = new Date(2026, 9, 6, 10, 30); // Tue 6 Oct 2026
+
+  const baseFields: NoticeFields = {
+    learnerIds: ['L1', 'L2'],
+    text: 'Built a marble run and tested ramps',
+    dateOccurred: null,
+    felt: { L1: 4, L2: 3 },
+    noticed: { L1: '  gravity  ', L2: '' },
     evidence: [
       { type: 'photo', content: 'https://img/1', caption: 'Marble run' },
       { type: 'note', content: 'Stuck with it past frustration' },
     ],
-    loggerMode: 'quick',
-    observationDetails: { L1: { chip: 'focused' } },
   };
-  const baseCtx: EntrySaveContext = {
-    scaffoldSessionId: undefined,
-    projectSource: 'logger',
-    projectId: undefined,
-    stageNumber: undefined,
-  };
+  const logger: NoticeSource = { kind: 'logger' };
 
-  it('composes the derived fields (title, subjects, evidence URLs)', () => {
-    const p = buildEntrySavePayload(baseForm, baseCtx);
-    expect(p.title).toBe('Built a marble run and tested ramps');
-    expect(p.subjects).toEqual(['mathematics', 'science']); // cooking
-    expect(p.evidenceUrls).toEqual(['https://img/1']); // photos only (legacy column)
-    // The dual-write rows carry every kind (photo caption + the note), while
-    // evidenceUrls above stays photos-only for the dual-write window.
-    expect(p.evidence).toEqual([
-      { kind: 'photo', content: 'https://img/1', caption: 'Marble run' },
-      { kind: 'note', content: 'Stuck with it past frustration' },
-    ]);
+  it('maps felt to engagementPerLearner and noticed to discoveriesPerLearner', () => {
+    const p = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    expect(p.learnerIds).toEqual(['L1', 'L2']);
+    expect(p.engagementPerLearner).toEqual({ L1: 4, L2: 3 });
+    expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' }); // trimmed, blank dropped
+    expect(p.description).toBe('Built a marble run and tested ramps');
     expect(p.status).toBe('complete');
   });
 
-  it('never produces an empty title for a description-less Quick log', () => {
-    // Tap-only Quick log: no typed description. Title must fall back to the
-    // first subject (otherwise the server's title.min(1) check 400s the save).
-    const p = buildEntrySavePayload({ ...baseForm, description: '' }, baseCtx);
-    expect(p.title).toBe('Maths learning'); // cooking → mathematics first
-    expect(p.title.length).toBeGreaterThan(0);
-  });
-
-  it('falls back to a date title when there is no description and no subject', () => {
-    const p = buildEntrySavePayload(
-      { ...baseForm, description: '   ', activityType: null, lessonSubjects: [] },
-      baseCtx,
-    );
-    expect(p.title).toBe('Learning on 2026-06-01');
-  });
-
-  it('passes form fields straight through', () => {
-    const p = buildEntrySavePayload(baseForm, baseCtx);
-    expect(p.learnerIds).toEqual(['L1', 'L2']);
-    expect(p.engagementPerLearner).toEqual({ L1: 4, L2: 3 });
-    expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' });
-    expect(p.dateOccurred).toBe('2026-06-01');
-    expect(p.mode).toBe('quick');
-  });
-
-  it('drops engagement/discovery for a learner no longer selected (orphan purge)', () => {
-    // Select 3, rate all 3 + write discoveries, then deselect L3: the payload
-    // must carry only the two still-selected learners' per-child data, never the
-    // orphaned L3 rating (which would otherwise persist and reach enrichment).
-    const p = buildEntrySavePayload(
-      {
-        ...baseForm,
-        selectedLearners: ['L1', 'L2'],
-        engagement: { L1: 4, L2: 3, L3: 2 },
-        discoveries: { L1: 'gravity', L3: 'friction' },
+  it('prunes felt/noticed for a learner no longer selected (orphan purge)', () => {
+    // Rate 3, deselect L3: the payload must carry only the two still-selected
+    // learners' per-child data, never the orphaned L3 rating.
+    const p = buildEntrySavePayload({
+      fields: {
+        ...baseFields,
+        learnerIds: ['L1', 'L2'],
+        felt: { L1: 4, L2: 3, L3: 2 },
+        noticed: { L1: 'gravity', L3: 'friction' },
       },
-      baseCtx,
-    );
+      source: logger,
+      now: NOW,
+    });
     expect(p.engagementPerLearner).toEqual({ L1: 4, L2: 3 });
     expect(p.discoveriesPerLearner).toEqual({ L1: 'gravity' });
     expect(p.engagementPerLearner).not.toHaveProperty('L3');
     expect(p.discoveriesPerLearner).not.toHaveProperty('L3');
   });
 
-  it('omits observation details in Quick mode and includes them in Guided mode', () => {
-    expect(buildEntrySavePayload(baseForm, baseCtx).observationDetails).toBeUndefined();
-    const guided = buildEntrySavePayload({ ...baseForm, loggerMode: 'guided' }, baseCtx);
-    expect(guided.observationDetails).toEqual({ L1: { chip: 'focused' } });
+  it('derives the title from the text when there is any', () => {
+    const p = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    expect(p.title).toBe('Built a marble run and tested ramps');
+
+    const long = buildEntrySavePayload({
+      fields: { ...baseFields, text: 'z'.repeat(80) },
+      source: logger,
+      now: NOW,
+    });
+    expect(long.title).toBe('z'.repeat(60) + '...');
   });
 
-  it('uses the project-context source/ids when not scaffolded', () => {
-    const p = buildEntrySavePayload(baseForm, {
-      scaffoldSessionId: undefined,
-      projectSource: 'project',
-      projectId: 'proj-1',
-      stageNumber: '2',
+  it('never produces an empty title for a photo-only moment', () => {
+    const p = buildEntrySavePayload({
+      fields: { ...baseFields, text: '   ' },
+      source: logger,
+      now: NOW,
     });
-    expect(p.source).toBe('project');
-    expect(p.sourceSessionId).toBeUndefined();
-    expect(p.projectId).toBe('proj-1');
-    expect(p.stageNumber).toBe('2');
+    expect(p.title).toBe('Photo on 6 Oct');
+    expect(p.description).toBe('');
+  });
+
+  it('falls back to a generic dated title when there is no text and no evidence', () => {
+    const p = buildEntrySavePayload({
+      fields: { ...baseFields, text: '', evidence: [] },
+      source: logger,
+      now: NOW,
+    });
+    expect(p.title).toBe('Learning on 6 Oct');
+  });
+
+  it('resolves a null date to today and keeps a past date', () => {
+    const today = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    expect(today.dateOccurred).toBe('2026-10-06');
+
+    const past = buildEntrySavePayload({
+      fields: { ...baseFields, dateOccurred: '2026-09-28' },
+      source: logger,
+      now: NOW,
+    });
+    expect(past.dateOccurred).toBe('2026-09-28');
+  });
+
+  it('carries photos-only evidenceUrls alongside the full evidence rows', () => {
+    const p = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    expect(p.evidenceUrls).toEqual(['https://img/1']);
+    expect(p.evidence).toEqual([
+      { kind: 'photo', content: 'https://img/1', caption: 'Marble run' },
+      { kind: 'note', content: 'Stuck with it past frustration' },
+    ]);
+  });
+
+  it("reports source 'logger' with no provenance keys for a plain visit", () => {
+    const p = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    expect(p.source).toBe('logger');
+    expect(p).not.toHaveProperty('sourceSessionId');
+    expect(p).not.toHaveProperty('sourceProjectId');
+    expect(p).not.toHaveProperty('sourceStageNumber');
+  });
+
+  it("reports source 'logger' for a constellation check-in (check-in is not an entry source)", () => {
+    const p = buildEntrySavePayload({
+      fields: baseFields,
+      source: { kind: 'check_in', learnerId: 'L1', threadId: 'M1' },
+      now: NOW,
+    });
+    expect(p.source).toBe('logger');
+    expect(p).not.toHaveProperty('sourceSessionId');
+    expect(p).not.toHaveProperty('sourceProjectId');
+    expect(p).not.toHaveProperty('sourceStageNumber');
   });
 
   it("reports source 'hearth_session' and carries the session id when scaffolded", () => {
-    const p = buildEntrySavePayload(baseForm, { ...baseCtx, scaffoldSessionId: 'sess-9' });
+    const p = buildEntrySavePayload({
+      fields: baseFields,
+      source: { kind: 'hearth_session', sessionId: 'sess-9', hearthId: 'hearth-1' },
+      now: NOW,
+    });
     expect(p.source).toBe('hearth_session');
     expect(p.sourceSessionId).toBe('sess-9');
-  });
-});
-
-describe('warmThinSaveMessage', () => {
-  it('always returns one of the warm thin-save confirmations', () => {
-    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0));
-    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0.999999));
-    expect(THIN_SAVE_MESSAGES).toContain(warmThinSaveMessage(() => 0.5));
+    expect(p).not.toHaveProperty('sourceProjectId');
+    expect(p).not.toHaveProperty('sourceStageNumber');
   });
 
-  it('maps the injected pick deterministically across the full set', () => {
-    THIN_SAVE_MESSAGES.forEach((msg, i) => {
-      // pick lands mid-bucket for index i
-      const pick = () => (i + 0.5) / THIN_SAVE_MESSAGES.length;
-      expect(warmThinSaveMessage(pick)).toBe(msg);
+  it("reports source 'project_stage' with sourceProjectId and a numeric sourceStageNumber", () => {
+    // The old payload sent `projectId` / `stageNumber` (a string), which the
+    // route silently stripped — provenance never persisted.
+    const p = buildEntrySavePayload({
+      fields: baseFields,
+      source: { kind: 'project_stage', projectId: 'proj-1', stageNumber: 2 },
+      now: NOW,
     });
+    expect(p.source).toBe('project_stage');
+    expect(p.sourceProjectId).toBe('proj-1');
+    expect(p.sourceStageNumber).toBe(2);
+    expect(typeof p.sourceStageNumber).toBe('number');
+    expect(p).not.toHaveProperty('sourceSessionId');
   });
 
-  it('never returns a flat or empty confirmation', () => {
-    for (const msg of THIN_SAVE_MESSAGES) {
-      expect(msg.trim().length).toBeGreaterThan(0);
-      expect(msg.toLowerCase()).not.toBe('learning entry saved!');
+  it('omits sourceStageNumber entirely when the stage is unknown', () => {
+    const p = buildEntrySavePayload({
+      fields: baseFields,
+      source: { kind: 'project_stage', projectId: 'proj-1', stageNumber: null },
+      now: NOW,
+    });
+    expect(p.source).toBe('project_stage');
+    expect(p.sourceProjectId).toBe('proj-1');
+    expect(p).not.toHaveProperty('sourceStageNumber');
+  });
+
+  it('never sends the retired keys', () => {
+    const sources: NoticeSource[] = [
+      logger,
+      { kind: 'check_in', learnerId: null, threadId: null },
+      { kind: 'hearth_session', sessionId: 'sess-9', hearthId: null },
+      { kind: 'project_stage', projectId: 'proj-1', stageNumber: 2 },
+    ];
+    for (const source of sources) {
+      const p = buildEntrySavePayload({ fields: baseFields, source, now: NOW });
+      expect(p).not.toHaveProperty('subjects');
+      expect(p).not.toHaveProperty('mode');
+      expect(p).not.toHaveProperty('observationDetails');
+      expect(p).not.toHaveProperty('projectId');
+      expect(p).not.toHaveProperty('stageNumber');
     }
   });
-});
 
+  it('omits optional keys rather than sending undefined', () => {
+    const p = buildEntrySavePayload({ fields: baseFields, source: logger, now: NOW });
+    for (const value of Object.values(p)) expect(value).not.toBeUndefined();
+  });
+});
 
 describe('buildLoggerContext', () => {
   it('is undefined when the parent set no structured context', () => {
@@ -352,22 +364,19 @@ describe('buildLoggerContext', () => {
     });
   });
 
-  it('rides the save payload in both Quick and Guided modes', () => {
-    const form = {
-      description: 'Built a marble run',
-      dateOccurred: '2026-06-01',
-      activityType: 'cooking',
-      lessonSubjects: [],
-      selectedLearners: ['L1'],
-      engagement: {},
-      discoveries: {},
-      evidence: [],
-      loggerMode: 'quick' as const,
-      observationDetails: {},
-      observations: ['Curious'],
-    };
-    const ctx = { scaffoldSessionId: undefined, projectSource: 'logger', projectId: undefined, stageNumber: undefined };
-    expect(buildEntrySavePayload(form, ctx).loggerContext).toEqual({ activityType: 'cooking', observations: ['Curious'] });
-    expect(buildEntrySavePayload({ ...form, loggerMode: 'guided' }, ctx).loggerContext).toEqual({ activityType: 'cooking', observations: ['Curious'] });
+  it('is omitted from the Notice save payload — the form captures none of its chips (D-LPS-14)', () => {
+    const p = buildEntrySavePayload({
+      fields: {
+        learnerIds: ['L1'],
+        text: 'Built a marble run',
+        dateOccurred: null,
+        felt: { L1: 4 },
+        noticed: { L1: 'gravity' },
+        evidence: [],
+      },
+      source: { kind: 'logger' },
+      now: new Date(2026, 9, 6, 10, 30),
+    });
+    expect(p).not.toHaveProperty('loggerContext');
   });
 });

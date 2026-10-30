@@ -5,6 +5,7 @@ import {
   learners,
   hearthMemberships,
   hearthSessions,
+  sessionEvidence,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { differenceInYears } from 'date-fns';
@@ -162,6 +163,47 @@ export async function sanitizeMembersForExposure(
   }
 
   return results;
+}
+
+// ─── Session evidence consent ───
+// Families whose session photos other members may see: active members with
+// consentEvidenceSharing on. See src/lib/hearth-evidence.ts for the rule.
+
+export async function getEvidenceSharingFamilyIds(hearthId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ familyId: hearthMemberships.familyId })
+    .from(hearthMemberships)
+    .where(
+      and(
+        eq(hearthMemberships.hearthId, hearthId),
+        eq(hearthMemberships.status, 'active'),
+        eq(hearthMemberships.consentEvidenceSharing, true)
+      )
+    );
+  return new Set(rows.map((r) => r.familyId));
+}
+
+/**
+ * Whether `viewerFamilyId` may read the session photo stored at `pathname` in
+ * this hearth: the row must exist on one of the hearth's sessions, and its
+ * uploader must be the viewer or a consenting active member. The caller has
+ * already checked the viewer's own membership.
+ */
+export async function canViewHearthEvidencePath(
+  hearthId: string,
+  pathname: string,
+  viewerFamilyId: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ uploadedByFamilyId: sessionEvidence.uploadedByFamilyId })
+    .from(sessionEvidence)
+    .innerJoin(hearthSessions, eq(hearthSessions.id, sessionEvidence.sessionId))
+    .where(and(eq(sessionEvidence.fileUrl, pathname), eq(hearthSessions.hearthId, hearthId)))
+    .limit(1);
+  if (!row) return false;
+  if (row.uploadedByFamilyId === viewerFamilyId) return true;
+  const sharing = await getEvidenceSharingFamilyIds(hearthId);
+  return sharing.has(row.uploadedByFamilyId);
 }
 
 // ─── Session access helper ───

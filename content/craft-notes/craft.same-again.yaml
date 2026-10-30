@@ -1,0 +1,22 @@
+# Craft note · E2 · draft. Starter catalogue: docs/hearth-watch-for-v1.md §8.2
+# ("repeating isn't falling behind"). The copy states the idea positively so it doesn't plant
+# the "behind" worry it's meant to settle.
+id: craft.same-again
+kind: craft
+strand: respond        # following the child's need to repeat rather than pushing on (WF §7.1)
+stage: E2
+card: try
+tradition: neutral
+title: "Doing it again is still learning"
+body: "If they want the same book, the same work or the same game again, let them. Repeating is how something new settles in, and the next step will still be there."
+why:
+  short: "Repetition turns something new into something they own."
+relates:
+  dlos: []
+  practices: [classical.mastery-first, montessori.shelf-it, waldorf.tell-it-again]
+  methods: [montessori.shelf, waldorf.daily-rhythm, classical.mastery-lesson]
+cooldown: 28
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-watch-for-v1.md §8.2"

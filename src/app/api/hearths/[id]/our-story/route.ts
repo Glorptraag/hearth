@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { apiError, routeHandler } from '@/lib/api-helpers';
-import { requireHearthMember } from '@/lib/auth/hearth-helpers';
+import { getEvidenceSharingFamilyIds, requireHearthMember } from '@/lib/auth/hearth-helpers';
+import { visibleHearthEvidence } from '@/lib/hearth-evidence';
 import {
   hearths, hearthMemberships, hearthSessions, sessionEvidence,
   suggestedObservations, sessionReflections, families,
@@ -37,8 +38,9 @@ export const GET = routeHandler(async (
     [memberCountRow],
     [observationCountRow],
     hearth,
-    allEvidence,
+    rawEvidence,
     allReflections,
+    sharing,
   ] = await Promise.all([
     db
       .select({ value: count() })
@@ -60,7 +62,11 @@ export const GET = routeHandler(async (
     sessionIds.length > 0
       ? db.select().from(sessionReflections).where(inArray(sessionReflections.sessionId, sessionIds))
       : Promise.resolve([]),
+    getEvidenceSharingFamilyIds(hearthId),
   ]);
+
+  // Counts and gallery only ever reflect photos this family may see.
+  const allEvidence = visibleHearthEvidence(rawEvidence, hearthId, result.family.id, sharing);
 
   const memberCount = Number(memberCountRow?.value ?? 0);
   const observationCount = Number(observationCountRow?.value ?? 0);

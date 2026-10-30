@@ -1,0 +1,58 @@
+# Lesson pattern · draft. Source: docs/hearth-cycle-brief-v1.md §4.1 (row "Story · Draw · Recall").
+# The three moves happen on three days, so one "session" here spans a short block.
+# parentAction slots: only {activity} and {child}.
+id: pattern.story-draw-recall
+kind: pattern
+title: "Story · Draw · Recall"
+moves:
+  - key: story
+    label: "Tell the story"
+    parentAction: "Tell {activity} as a story in your own words. Leave the meaning for {child} to find."
+  - key: draw
+    label: "Draw it (next day)"
+    parentAction: "The next day, ask {child} to draw a picture from the story."
+  - key: recall
+    label: "Say it back (day three)"
+    parentAction: "On day three, ask {child} to tell the story again, with their drawing nearby if they like."
+watchForSlot:
+  prompt: "what returns on day three"
+  evidenceKinds: [says, makes]
+whyItWorks: >-
+  A story that's told rather than read lets a child make their own pictures. A night's sleep
+  lets those pictures settle, so the drawing the next day shows what stuck. By day three,
+  what they tell back is what they've really kept.
+commonMistakes:
+  - "Explaining what the story meant straight after telling it."
+  - "Correcting the drawing to match the story."
+  - "Squeezing all three moves into one day."
+traditionFit:
+  - tradition: waldorf_steiner
+    natural: true
+    note: "This is the main-lesson rhythm: story, then drawing, then recall across three days."
+  - tradition: charlotte_mason
+    natural: false
+    note: "Close to narration, though the telling back usually follows straight after one reading."
+  - tradition: classical
+    natural: false
+    note: "Works for history stories; place it on the timeline on day three."
+  - tradition: montessori
+    natural: false
+    note: "Fits the big stories for older children, offered as an invitation."
+  - tradition: unschooling
+    natural: false
+    note: "Works for a story they've asked for; the drawing stays optional."
+usedByMethods: [waldorf.main-lesson-block]
+practices: [waldorf.tell-it-again, waldorf.main-lesson-picture, cm.narration]
+ageBand: { min: 5, max: 10 }
+stage: E1
+example:
+  activity: "The story of the banksia seeds that wait for a bushfire"
+  filledMoves:
+    - "Tell the story of the banksia seeds that wait for a bushfire, in your own words."
+    - "The next day, ask Sam to draw a picture from the story."
+    - "On day three, ask Sam to tell the story again, with his drawing nearby if he likes."
+  watchFor: "What Sam brings back on day three: the fire, the seeds, and the order things happened."
+status: draft
+confirmedAt: null
+confirmedBy: null
+source: "docs/hearth-cycle-brief-v1.md §4.1; method mapping docs/hearth-cycle-build-plan-v1.md §3"

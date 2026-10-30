@@ -29,6 +29,8 @@ import { moduleSkeleton } from './moduleSkeleton';
 import { asset } from './asset';
 import { commonsText } from './commonsText';
 import { kit } from './kit';
+import { shelfResource } from './shelfResource';
+import { knowledgeNote } from './knowledgeNote';
 
 export const schemaTypes = [
   // Pedagogical Knowledge Base
@@ -41,6 +43,8 @@ export const schemaTypes = [
   pedagogyWorkedExample,
   // Practices (methodology layer)
   practice,
+  // Hearth Cycle knowledge notes (craft, lesson patterns; build plan §2.2)
+  knowledgeNote,
   // Per-module bundle/overlay objects
   pedagogyLensBundle,
   methodologyOverlay,
@@ -59,6 +63,7 @@ export const schemaTypes = [
   asset,
   commonsText,
   kit,
+  shelfResource,
   activity,
   approach,
   moduleSchema,

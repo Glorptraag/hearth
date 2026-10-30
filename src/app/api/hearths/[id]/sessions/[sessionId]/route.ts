@@ -13,7 +13,8 @@ import {
   hearths,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { requireHearthMember } from '@/lib/auth/hearth-helpers';
+import { getEvidenceSharingFamilyIds, requireHearthMember } from '@/lib/auth/hearth-helpers';
+import { visibleHearthEvidence } from '@/lib/hearth-evidence';
 import { triggerSessionCompleted } from '@/lib/notifications/triggers';
 
 export const GET = routeHandler(async (
@@ -33,7 +34,7 @@ export const GET = routeHandler(async (
   });
   if (!session) return apiError('Session not found', 404);
 
-  const [evidence, attendance, reflections, observations] = await Promise.all([
+  const [evidence, attendance, reflections, observations, sharing] = await Promise.all([
     db
       .select()
       .from(sessionEvidence)
@@ -55,9 +56,16 @@ export const GET = routeHandler(async (
           eq(suggestedObservations.targetFamilyId, family.id)
         )
       ),
+    getEvidenceSharingFamilyIds(id),
   ]);
 
-  return NextResponse.json({ session, evidence, attendance, reflections, observations });
+  return NextResponse.json({
+    session,
+    evidence: visibleHearthEvidence(evidence, id, family.id, sharing),
+    attendance,
+    reflections,
+    observations,
+  });
 }, { route: 'GET /api/hearths/[id]/sessions/[sessionId]' });
 
 const patchSessionSchema = z.object({

@@ -13,7 +13,8 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { getFamilyByClerkId } from '@/lib/auth/helpers';
-import { getHearthMembership } from '@/lib/auth/hearth-helpers';
+import { getEvidenceSharingFamilyIds, getHearthMembership } from '@/lib/auth/hearth-helpers';
+import { visibleHearthEvidence } from '@/lib/hearth-evidence';
 import { safeLoad } from '@/lib/server/safe-load';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -54,7 +55,7 @@ export default async function SessionDetailPage({
   if (!membership) redirect('/dashboard');
 
   const result = await safeLoad('hearths/[hearthId]/sessions/[sessionId]', async () => {
-    const [hearth, session, evidence, observations, familyLearners] = await Promise.all([
+    const [hearth, session, rawEvidence, observations, familyLearners, sharing] = await Promise.all([
       db.query.hearths.findFirst({ where: eq(hearths.id, hearthId) }),
       db.query.hearthSessions.findFirst({
         where: and(eq(hearthSessions.id, sessionId), eq(hearthSessions.hearthId, hearthId)),
@@ -72,7 +73,11 @@ export default async function SessionDetailPage({
       db.query.learners.findMany({
         where: eq(learners.familyId, family.id),
       }),
+      getEvidenceSharingFamilyIds(hearthId),
     ]);
+
+    // PRIVACY: only photos this family may see, served via the private proxy
+    const evidence = visibleHearthEvidence(rawEvidence, hearthId, family.id, sharing);
 
     if (!hearth || !session) {
       return { hearth, session, evidence, observations, familyLearners, facilitatorFamily: null, observerFamilyMap: new Map<string, string>() };

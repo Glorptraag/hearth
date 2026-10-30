@@ -9,6 +9,8 @@ import {
   hearths,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getEvidenceSharingFamilyIds } from '@/lib/auth/hearth-helpers';
+import { visibleHearthEvidence } from '@/lib/hearth-evidence';
 
 export const GET = routeHandler(async (
   _request: NextRequest,
@@ -40,10 +42,11 @@ export const GET = routeHandler(async (
 
   if (!attendance) return apiError('Forbidden', 403);
 
-  const [evidenceRows, observationRows, hearthRecord] = await Promise.all([
+  const [evidenceRows, observationRows, hearthRecord, sharing] = await Promise.all([
     db
       .select({
         id: sessionEvidence.id,
+        uploadedByFamilyId: sessionEvidence.uploadedByFamilyId,
         fileUrl: sessionEvidence.fileUrl,
         fileType: sessionEvidence.fileType,
         caption: sessionEvidence.caption,
@@ -72,6 +75,8 @@ export const GET = routeHandler(async (
       .from(hearths)
       .where(eq(hearths.id, session.hearthId))
       .then((rows) => rows[0] ?? null),
+
+    getEvidenceSharingFamilyIds(session.hearthId),
   ]);
 
   return NextResponse.json({
@@ -85,7 +90,9 @@ export const GET = routeHandler(async (
       hearthId: session.hearthId,
       hearthName: hearthRecord?.name ?? null,
     },
-    evidence: evidenceRows,
+    evidence: visibleHearthEvidence(evidenceRows, session.hearthId, family.id, sharing).map(
+      ({ uploadedByFamilyId: _uploader, ...e }) => e
+    ),
     observations: observationRows,
     attendingLearnerIds: attendance.learnerIds ?? [],
   });

@@ -1,0 +1,86 @@
+{
+  "batch": 3,
+  "source": "docs/hearth-dlo-notes-targets-v1.md",
+  "notes": [
+    {
+      "dloId": "dlo.L3.emerging",
+      "thread": "L3 Reading Comprehension",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear guesses about what will happen next, based on a clue in the picture or the words. Watch too for a story retold with a beginning, middle and end, and for questions about a word they didn't know."
+      }
+    },
+    {
+      "dloId": "dlo.L4.developing",
+      "thread": "L4 Spelling & Word Knowledge",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might notice word parts used on purpose, such as 'un' to flip a word's meaning or 'ful' to build a new one. Watch too for them rereading their own writing and fixing a spelling without being asked."
+      }
+    },
+    {
+      "dloId": "dlo.M5.developing",
+      "thread": "M5 Measurement Sense",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "Measuring may become more exact, reading the scales to the right line or a ruler from zero, with centimetres, grams and millilitres used by name. You might also hear time worked out in their head, like 'twenty minutes until the cake's ready'."
+      }
+    },
+    {
+      "dloId": "dlo.M4.emerging",
+      "thread": "M4 Algebraic Thinking & Patterns",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might see patterns invented rather than copied, such as red, blue, blue, red, blue, blue, or changes in size as well as colour. Watch too for them telling you the rule: 'it goes two blue, then one red'."
+      }
+    },
+    {
+      "dloId": "dlo.S3.developing",
+      "thread": "S3 Earth & Environmental Systems",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might hear questions about how places came to look the way they do, like why creek stones are round or why the bank has washed away. Watch too for noticing how people change the land, such as a cleared block or a new road."
+      }
+    },
+    {
+      "dloId": "dlo.S1.emerging",
+      "thread": "S1 Scientific Inquiry",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "Questions may start to turn into tests, like 'what if we put it in the freezer?'. You might also hear a guess before they try something, and a 'see, I was right' or 'that's not what I thought' afterwards."
+      }
+    },
+    {
+      "dloId": "dlo.P2.emerging",
+      "thread": "P2 Fine Motor & Manipulation",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might see scissors following a line instead of snipping, and fiddly jobs like buttons, zips or tiny building pieces handled without help. Watch too for drawings with more small details in them."
+      }
+    },
+    {
+      "dloId": "dlo.H1.developing",
+      "thread": "H1 Historical Thinking & Chronology",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might hear new time words being tried out, like 'century' or 'ancient', and questions about why things happened, not just what happened. Watch too for wondering how someone else in the story might have seen it."
+      }
+    },
+    {
+      "dloId": "dlo.L1.developing",
+      "thread": "L1 Oral Communication & Listening",
+      "tier": "developing",
+      "watchForNext": {
+        "neutral": "You might notice them telling the same story differently to a friend than to a grandparent, or building on what someone else said instead of changing the subject. Watch too for new words from a book or lesson turning up in their talk."
+      }
+    },
+    {
+      "dloId": "dlo.M3.emerging",
+      "thread": "M3 Fractional Thinking",
+      "tier": "emerging",
+      "watchForNext": {
+        "neutral": "You might hear 'that's not a fair half!' grow into thirds and quarters, especially when food is shared among more people. Watch too for the surprise that a quarter is smaller than a half, even though four is bigger than two."
+      }
+    }
+  ]
+}
